@@ -40,7 +40,7 @@ services:
       dockerfile: ./docker/nginx_docker/dockerfile
     container_name: nginx-container
     ports:
-      - "443:443"
+      - 8080:8080
     networks:
       - transcendence
 
