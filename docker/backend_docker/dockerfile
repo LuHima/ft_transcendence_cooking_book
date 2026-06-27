@@ -8,7 +8,7 @@ RUN mkdir volumes
 
 RUN pwd
 
-COPY ../src/backend/package*.json ./
+COPY ./src/backend/package*.json ./
 
 RUN npm install
 

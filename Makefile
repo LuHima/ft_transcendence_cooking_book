@@ -1,5 +1,9 @@
 NAME = netsjs
 
+PATH_DOCKER_COMPOSE= ./docker/docker-compose.yml
+
+PATH_EXE= -f  $(PATH_DOCKER_COMPOSE)
+
 RED := \e[31m
 GREEN := \e[32m
 RESET := \e[0m
@@ -8,20 +12,14 @@ RESET := \e[0m
 all: $(NAME)
 
 $(NAME):
-	$(SUDO) docker compose up --build
+	$(SUDO) docker compose $(PATH_EXE)  up --build
 #	$(MAKE) in_backend
 
-frontend:
-	$(SUDO) docker compose up --build
-
-backend:
-	$(SUDO) docker compose up --build
-
 ps:
-	$(SUDO) docker compose ps
+	$(SUDO) docker compose $(PATH_EXE) ps
 
-stop:
-	$(SUDO) docker compose down
+down:
+	$(SUDO) docker compose $(PATH_EXE) down
 
 prune:
 	$(SUDO) docker container prune -f

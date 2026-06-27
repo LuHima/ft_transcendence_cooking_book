@@ -12,8 +12,8 @@ export class AppController {
 		return{
 			stato: "successo",
 			ricette:[
-				{ id: 1, titolo: "Carbonara Spaziale", difficolta: "Media" },
-        		{ id: 2, titolo: "Tiramisù del Dev", difficolta: "Facile" }
+				{ id: 1, titolo: "Carbonara", difficolta: "Media" },
+        		{ id: 2, titolo: "Tiramisù", difficolta: "Facile" }
 			]
 		}
 	}
