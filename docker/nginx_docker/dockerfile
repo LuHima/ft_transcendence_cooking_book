@@ -17,6 +17,6 @@ RUN openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
 # COPY ssl/transcendence.crt /etc/nginx/ssl/transcendence.crt
 # COPY ssl/transcendence.key /etc/nginx/ssl/transcendence.key
 
-EXPOSE 443
+EXPOSE 8443
 
 CMD ["nginx", "-g", "daemon off;"]
