@@ -1,7 +1,7 @@
 # Node modules (installati dai container o localmente)
 # **/node_modules/
 
-src/frontend_test/
+src/backend_material/
 
 
 

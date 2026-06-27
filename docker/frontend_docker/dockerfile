@@ -4,7 +4,7 @@ WORKDIR /usr/src/app/
 
 # RUN	npm i -g @nestjs/cli
 
-COPY ../../src/frontend/package*.json ./
+COPY ./src/frontend/package*.json ./
 
 RUN npm install vite
 

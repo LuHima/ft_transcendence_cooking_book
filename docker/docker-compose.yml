@@ -1,16 +1,18 @@
 # version: '3.8'
 
 services:
+# il contex è necessario che sia ../ altrimenti il dockerfile usa come default la posizione del docker-compose e non puo andare piu indietro dalla posizione del di partenza
 
 #------------------------------------------------------------------------------#
 #                               BACKEND
   backend:
     image: backend:1.0
     build:
+      context: ../
       dockerfile: ./docker/backend_docker/dockerfile
     container_name: backend-container
     volumes:
-      - ./src/backend:/usr/src/app
+      - ../src/backend:/usr/src/app
       - /usr/src/app/node_modules
     networks:
       - transcendence
@@ -21,10 +23,11 @@ services:
   frontend:
     image: frontend:1.0
     build:
+      context: ../
       dockerfile: ./docker/frontend_docker/dockerfile
     container_name: frontend-container
     volumes:
-      - ./src/frontend:/usr/src/app
+      - ../src/frontend:/usr/src/app
       - /usr/src/app/node_modules
     networks:
       - transcendence
@@ -36,7 +39,8 @@ services:
     depends_on:
       - frontend
     image: nginx:1.0
-    build: 
+    build:
+      context: ../
       dockerfile: ./docker/nginx_docker/dockerfile
     container_name: nginx-container
     ports:
