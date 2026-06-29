@@ -9,7 +9,7 @@ services:
     image: backend:1.0
     build:
       context: ../
-      dockerfile: ./docker/backend_docker/dockerfile
+      dockerfile: ./docker/backend/dockerfile
     container_name: backend-container
     volumes:
       - ../src/backend:/usr/src/app
@@ -21,10 +21,12 @@ services:
 #------------------------------------------------------------------------------#
 #                               FRONTEND
   frontend:
+    depends_on:
+      - backend
     image: frontend:1.0
     build:
       context: ../
-      dockerfile: ./docker/frontend_docker/dockerfile
+      dockerfile: ./docker/frontend/dockerfile
     container_name: frontend-container
     volumes:
       - ../src/frontend:/usr/src/app
@@ -41,7 +43,7 @@ services:
     image: nginx:1.0
     build:
       context: ../
-      dockerfile: ./docker/nginx_docker/dockerfile
+      dockerfile: ./docker/nginx/dockerfile
     container_name: nginx-container
     ports:
       - 8443:8443

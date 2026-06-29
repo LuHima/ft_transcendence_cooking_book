@@ -26,3 +26,7 @@ prune:
 
 in_backend:
 	$(SUDO) docker exec -it backend-container bash
+
+fclean: down prune
+
+re: fclean all
