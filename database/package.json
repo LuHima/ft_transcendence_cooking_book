@@ -1,0 +1,28 @@
+{
+  "name": "recipe-db",
+  "version": "1.0.0",
+  "scripts": {
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "seed": "ts-node prisma/seed.ts",
+    "test:queries": "ts-node prisma/test-queries.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "prisma": "^7.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@types/pg": "^8.20.0",
+    "bcrypt": "^5.1.0",
+    "dotenv": "^17.4.2",
+    "pg": "^8.22.0"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.8.0": true,
+    "bcrypt@5.1.1": true,
+    "prisma@7.8.0": true
+  }
+}
