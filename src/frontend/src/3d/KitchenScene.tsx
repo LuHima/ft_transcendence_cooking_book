@@ -91,11 +91,11 @@ export default function Scene() {
 
 	return (
 		<Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
-			<ambientLight intensity={1.2} color="#ffffff" />
+			<ambientLight intensity={1.5} color="#ffffff" />
 
 			<directionalLight
 				position={[-100, 20, 0]}
-				intensity={5}
+				intensity={10}
 				color="#ffd9a8"
 				target-position={[-3, 1.5, 0]}
 				castShadow
