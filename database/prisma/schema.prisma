@@ -23,6 +23,11 @@ enum MealType {
   snack
 }
 
+enum MediaType {
+  image
+  video
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,6 +70,7 @@ model Recipe {
   comments           Comment[]
   likes              Like[]
   meal_plan_recipes  MealPlanRecipe[]
+  recipe_media       RecipeMedia[]
 
   @@map("recipes")
 }
@@ -193,4 +199,17 @@ model ShoppingListItem {
   ingredient    Ingredient   @relation(fields: [ingredient_id], references: [id])
 
   @@map("shopping_list_items")
+}
+
+model RecipeMedia {
+  id         Int       @id @default(autoincrement())
+  recipe_id  Int
+  url        String    @db.VarChar(500)
+  media_type MediaType
+  order      Int       @default(0)
+  created_at DateTime  @default(now())
+
+  recipe Recipe @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+
+  @@map("recipe_media")
 }

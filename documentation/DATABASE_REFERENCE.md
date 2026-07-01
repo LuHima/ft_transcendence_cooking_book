@@ -137,8 +137,10 @@ owner_type   → 'user' = ricetta dell'utente | 'platform' = ricetta della piatt
 title        → titolo (max 255 caratteri)
 description  → descrizione breve (opzionale)
 instructions → istruzioni di preparazione (opzionale)
+
 prep_time    → tempo di preparazione in minuti (opzionale)
 created_at   → data di creazione
+recipe_media → foto e video della ricetta
 ```
 
 **Nota:** `user_id` può essere NULL. Quando un utente elimina il proprio account, le sue ricette non vengono cancellate: `user_id` diventa NULL e `owner_type` diventa `'platform'`. In questo modo la ricetta resta visibile sul sito ma appare come "di dominio della piattaforma".
