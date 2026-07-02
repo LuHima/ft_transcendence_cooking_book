@@ -1,31 +1,62 @@
-import { Suspense, useMemo, useRef } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Suspense, useMemo, useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF, ContactShadows, Text } from '@react-three/drei'
 import { Object3D } from 'three'
 import kitchenUrl from '../assets/kitchen3.0.glb?url'
 import titleFontUrl from '../assets/Playfair-ExtraBoldItalic.ttf?url'
 
-function Book() {
-	const coverGroupRef = useRef<any>(null)
-	const currentAngle = useRef(0)
-	const targetAngle = -Math.PI * 0.25 // ~45°, "apertura a metà"
+interface BookProps {
+	controlsRef: React.RefObject<any>
+}
 
-	useFrame(() => {
-		// lerp verso il target
-		currentAngle.current += (targetAngle - currentAngle.current) * 0.05
+// esempio
+const recipes = [
+  { id: 1, title: "Pasta al Pomodoro" },
+  { id: 2, title: "Risotto ai Funghi" },
+  { id: 3, title: "Tiramisù" },
+]
+
+function Book({controlsRef} : BookProps) {
+	const [isOpen, setIsOpen] = useState(false)
+	const coverGroupRef = useRef<any>(null)
+
+	const currentAngle = useRef(0)
+	const progress = useRef(0) // va da 0 a 1
+
+	useFrame((_, delta) => {
+		const targetProgress = isOpen ? 1 : 0
+		const speed = 1.2 // secondi per completare, abbassa per più veloce
+
+		// muovi progress linearmente verso il target
+		progress.current += (targetProgress - progress.current) * (delta * speed * 3)
+		progress.current = Math.max(0, Math.min(1, progress.current))
+
+		// ease-out cubico: rallenta verso la fine, niente oscillazione
+		const eased = 1 - Math.pow(1 - progress.current, 3)
+
+		currentAngle.current = eased * (-Math.PI * 0.98)
+
 		if (coverGroupRef.current) {
 			coverGroupRef.current.rotation.x = currentAngle.current
 		}
 	})
 
 	return (
-		<group position={[-2.5, 1.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-
-			{/* cerniera */}
-			<mesh position={[0, 0.155, 0.0305]} rotation={[0, 0, -Math.PI * 1.5]} castShadow receiveShadow>
-				<cylinderGeometry args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]} />
-				<meshStandardMaterial color="#3d1f10" />
-			</mesh>
+		<group
+			position={[-2.5, 1.05, 0]}
+			rotation={[-Math.PI / 2, 0, 0]}
+			onClick={(e) => {
+				e.stopPropagation();
+				setIsOpen(prev => !prev)
+			}}
+			onPointerDown={(e) => {
+				e.stopPropagation();
+				if (controlsRef.current) controlsRef.current.enabled = false
+			}}
+			onPointerUp={(e) => {
+				if (controlsRef.current) controlsRef.current.enabled = true
+			}}
+			>
 
 			{/* copertina bassa (fissa) */}
 			<mesh position={[0, 0.005, 0.005]} castShadow receiveShadow>
@@ -35,6 +66,12 @@ function Book() {
 
 			{/* copertina alta -> ora è un hinge che ruota */}
 			<group ref={coverGroupRef} position={[0, 0.155, 0.055]} rotation={[0, 0, 0]}>
+				{/* cerniera */}
+				<mesh position={[0, 0, -0.025]} rotation={[0, 0, -Math.PI * 1.5]} castShadow receiveShadow>
+					<cylinderGeometry args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]} />
+					<meshStandardMaterial color="#3d1f10" />
+				</mesh>
+
 				<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
 					<boxGeometry args={[0.4, 0.3, 0.02]} />
 					<meshStandardMaterial color="#5a2e1b" />
@@ -51,15 +88,24 @@ function Book() {
 					anchorX="center"
 					anchorY="middle"
 				>
-					{"THE\nCOOK\nBOOK"}
+					{"WeCook"}
 				</Text>
 			</group>
 
-			{/* fogli */}
-			<mesh position={[0, 0.005, 0.03]} castShadow receiveShadow>
-				<boxGeometry args={[0.4, 0.3, 0.03]} />
-				<meshStandardMaterial color="#d4d4d4" />
-			</mesh>
+			{recipes.map((recipe, index) => {
+				const zOffset = 0.01 + index * (0.025 / recipes.length)
+				return (
+					<group key={recipe.id} position={[0, 0.155, zOffset]}>
+						<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
+							<boxGeometry args={[0.39, 0.28, 0.002]} /> {/* leggermente più piccola della copertina */}
+							<meshStandardMaterial color="#f5e6c8" />
+						</mesh>
+						<Text position={[0, -0.14, 0.002]} rotation={[0, 0, -Math.PI / 2]} fontSize={0.03} color="#3d1f10" anchorX="center" anchorY="middle">
+							{recipe.title}
+						</Text>
+					</group>
+				)
+			})}
 		</group>
 	)
 }
@@ -91,29 +137,30 @@ export default function Scene() {
 
 	return (
 		<Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
-			<ambientLight intensity={1.5} color="#ffffff" />
+			<ambientLight intensity={1.7} color="#fff5e0" />
 
 			<directionalLight
-				position={[-100, 20, 0]}
-				intensity={10}
-				color="#ffd9a8"
-				target-position={[-3, 1.5, 0]}
-				castShadow
-				shadow-mapSize-width={2048}
-				shadow-mapSize-height={2048}
-				shadow-camera-left={-20}
-				shadow-camera-right={20}
-				shadow-camera-top={20}
-				shadow-camera-bottom={-20}
+			position={[-9, 4, 1]}
+			intensity={3}
+			color="#ffd9a8"
+			target-position={[-2.5, 1.05, 0]}
+			castShadow
+			shadow-mapSize-width={2048}
+			shadow-mapSize-height={2048}
+			shadow-camera-left={-10}
+			shadow-camera-right={10}
+			shadow-camera-top={10}
+			shadow-camera-bottom={-10}
 			/>
 
-			<pointLight position={[-10.5, 2, 1]} intensity={0.7} color="#fff8dc" distance={15} decay={2} />
-			<pointLight position={[-10.5, 2, -1]} intensity={0.7} color="#fff8dc" distance={15} decay={2} />
-			<pointLight position={[-10.2, 1.5, 0]} intensity={0.5} color="#fffacd" distance={12} decay={2} />
+			<directionalLight position={[-5, 3, 4]} intensity={2} color="#ffffff" />
+			<directionalLight position={[-5, 3, -4]} intensity={1.5} color="#ffe8cc" />
+
+			<pointLight position={[-2.5, 2.5, 0]} intensity={2} color="#ffe4b0" distance={4} decay={2} />
 
 			<Suspense fallback={<LoadingFallback />}>
 				<KitchenModel scene={scene} />
-				<Book />
+				<Book controlsRef={controlsRef} />
 			</Suspense>
 			<ContactShadows position={[-10, 0, 0]} opacity={0.35} scale={8} blur={2} far={2} />
 			<OrbitControls
