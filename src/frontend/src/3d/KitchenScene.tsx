@@ -18,26 +18,30 @@ const recipes = [
 
 function Book({controlsRef} : BookProps) {
 	const [isOpen, setIsOpen] = useState(false)
-	const coverGroupRef = useRef<any>(null)
+	const coverBottomRef = useRef<any>(null)
+	const coverTopRef = useRef<any>(null)
+	const hingeRef = useRef<any>(null)
 
-	const currentAngle = useRef(0)
-	const progress = useRef(0) // va da 0 a 1
+	const progress = useRef(0)
 
 	useFrame((_, delta) => {
 		const targetProgress = isOpen ? 1 : 0
-		const speed = 1.2 // secondi per completare, abbassa per più veloce
+		const speed = 0.8
 
-		// muovi progress linearmente verso il target
-		progress.current += (targetProgress - progress.current) * (delta * speed * 3)
+		const direction = targetProgress === 1 ? 1 : -1
+		progress.current += direction * (delta / speed)
 		progress.current = Math.max(0, Math.min(1, progress.current))
 
-		// ease-out cubico: rallenta verso la fine, niente oscillazione
 		const eased = 1 - Math.pow(1 - progress.current, 3)
+		const angle = eased * -Math.PI
 
-		currentAngle.current = eased * (-Math.PI * 0.98)
-
-		if (coverGroupRef.current) {
-			coverGroupRef.current.rotation.x = currentAngle.current
+		if (coverTopRef.current) {
+			coverTopRef.current.rotation.x = angle
+			coverTopRef.current.position.y = 0.155 - (eased * 0.13)
+			coverTopRef.current.position.z = 0.055 - (eased * 0.03)
+		}
+		if (hingeRef.current) {
+			hingeRef.current.visible = progress.current < 0.01
 		}
 	})
 
@@ -59,15 +63,17 @@ function Book({controlsRef} : BookProps) {
 			>
 
 			{/* copertina bassa (fissa) */}
-			<mesh position={[0, 0.005, 0.005]} castShadow receiveShadow>
-				<boxGeometry args={[0.4, 0.3, 0.02]} />
-				<meshStandardMaterial color="#5a2e1b" />
-			</mesh>
+			<group ref={coverBottomRef} position={[0, 0.005, 0.005]} rotation={[0, 0, 0]}>
+				<mesh position={[0, 0, 0]} castShadow receiveShadow>
+					<boxGeometry args={[0.4, 0.3, 0.02]} />
+					<meshStandardMaterial color="#5a2e1b" />
+				</mesh>
+			</group>
 
-			{/* copertina alta -> ora è un hinge che ruota */}
-			<group ref={coverGroupRef} position={[0, 0.155, 0.055]} rotation={[0, 0, 0]}>
-				{/* cerniera */}
-				<mesh position={[0, 0, -0.025]} rotation={[0, 0, -Math.PI * 1.5]} castShadow receiveShadow>
+			{/* copertina alta (ruota verso l'alto) */}
+			<group ref={coverTopRef} position={[0, 0.155, 0.055]} rotation={[0, 0, 0]}>
+				{/* cerniera - sparisce quando il libro è completamente aperto */}
+				<mesh ref={hingeRef} position={[0, 0, -0.025]} rotation={[0, 0, -Math.PI * 1.5]} castShadow receiveShadow>
 					<cylinderGeometry args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]} />
 					<meshStandardMaterial color="#3d1f10" />
 				</mesh>
@@ -77,7 +83,6 @@ function Book({controlsRef} : BookProps) {
 					<meshStandardMaterial color="#5a2e1b" />
 				</mesh>
 
-				{/* il titolo segue la copertina, quindi va dentro lo stesso group */}
 				<Text
 					position={[0, -0.14, 0.011]}
 					rotation={[0, 0, -Math.PI / 2]}
@@ -97,7 +102,7 @@ function Book({controlsRef} : BookProps) {
 				return (
 					<group key={recipe.id} position={[0, 0.155, zOffset]}>
 						<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
-							<boxGeometry args={[0.39, 0.28, 0.002]} /> {/* leggermente più piccola della copertina */}
+							<boxGeometry args={[0.39, 0.28, 0.002]} />
 							<meshStandardMaterial color="#f5e6c8" />
 						</mesh>
 						<Text position={[0, -0.14, 0.002]} rotation={[0, 0, -Math.PI / 2]} fontSize={0.03} color="#3d1f10" anchorX="center" anchorY="middle">
@@ -172,10 +177,10 @@ export default function Scene() {
 				enablePan={false}
 				minDistance={1}
 				maxDistance={2.5}
-				minPolarAngle={Math.PI * 0.35}
-				maxPolarAngle={Math.PI * 0.55}
-				minAzimuthAngle={-Math.PI * 0.8}
-				maxAzimuthAngle={-Math.PI * 0.20}
+				// minPolarAngle={Math.PI * 0.35}
+				// maxPolarAngle={Math.PI * 0.55}
+				// minAzimuthAngle={-Math.PI * 0.8}
+				// maxAzimuthAngle={-Math.PI * 0.20}
 			/>
 		</Canvas>
 	)
