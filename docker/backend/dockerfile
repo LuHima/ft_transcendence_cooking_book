@@ -4,10 +4,7 @@ WORKDIR /usr/src/app/
 
 RUN	npm i -g @nestjs/cli
 
-# RUN mkdir volumes
-
 RUN apt-get update && apt install -y netcat-openbsd
-
 
 COPY ./src/backend/package*.json ./
 
@@ -18,7 +15,5 @@ EXPOSE 3000
 COPY ./docker/backend/entrypoint.sh /usr/src
 
 RUN chmod +x /usr/src/entrypoint.sh
-
-# CMD ["npm", "run", "start:dev"]
 
 ENTRYPOINT ["../entrypoint.sh"]

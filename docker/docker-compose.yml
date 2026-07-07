@@ -4,13 +4,32 @@ services:
 # il contex è necessario che sia ../ altrimenti il dockerfile usa come default la posizione del docker-compose e non puo andare piu indietro dalla posizione del di partenza
 
 #------------------------------------------------------------------------------#
+#                               DATABASE
+  database:
+    image: database:1.0
+    build:
+      context: ../
+      dockerfile: ./docker/database/dockerfile
+    container_name: database-container
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - transcendence
+
+#------------------------------------------------------------------------------#
 #                               BACKEND
   backend:
+    depends_on:
+      - database
     image: backend:1.0
     build:
       context: ../
       dockerfile: ./docker/backend/dockerfile
     container_name: backend-container
+    env_file:
+      - .env
     volumes:
       - ../src/backend:/usr/src/app
       - /usr/src/app/node_modules
@@ -57,3 +76,8 @@ services:
 networks:
   transcendence:
     driver: bridge
+
+#------------------------------------------------------------------------------#
+#                               VOLUMES
+volumes:
+  db_data:
