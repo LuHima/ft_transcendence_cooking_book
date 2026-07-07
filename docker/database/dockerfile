@@ -1,1 +1,11 @@
-FORM 
+FROM postgres:16-alpine
+
+# Installa utility utili per il controllo e debug del database
+RUN apk add --no-cache bash netcat-openbsd
+
+# Espone la porta standard di PostgreSQL
+EXPOSE 5432
+
+# Controllo dello stato di salute del database all'interno del container
+ HEALTHCHECK --interval=5s --timeout=5s --retries=5 \
+      CMD pg_isready -U postgres
