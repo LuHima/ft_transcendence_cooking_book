@@ -1,7 +1,7 @@
 import { Suspense, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF, ContactShadows, Text } from '@react-three/drei'
-import { Object3D } from 'three'
+import { Object3D, BackSide, AdditiveBlending } from 'three'
 import kitchenUrl from '../assets/kitchen3.0.glb?url'
 import titleFontUrl from '../assets/Playfair-ExtraBoldItalic.ttf?url'
 
@@ -21,6 +21,7 @@ function Book({controlsRef} : BookProps) {
 	const coverBottomRef = useRef<any>(null)
 	const coverTopRef = useRef<any>(null)
 	const hingeRef = useRef<any>(null)
+	const [hovered, setHovered] = useState(false)
 
 	const progress = useRef(0)
 
@@ -37,18 +38,27 @@ function Book({controlsRef} : BookProps) {
 
 		if (coverTopRef.current) {
 			coverTopRef.current.rotation.x = angle
-			coverTopRef.current.position.y = 0.155 - (eased * 0.13)
+			coverTopRef.current.position.y = 0.155
 			coverTopRef.current.position.z = 0.055 - (eased * 0.03)
+			if (isOpen)
+			{
+				for (let i = 0; i < 20; i++)
+				{
+					coverTopRef.current.position.z -= (targetProgress * 0.001)
+				}
+			}
 		}
 		if (hingeRef.current) {
-			hingeRef.current.visible = progress.current < 0.01
+			hingeRef.current.visible = progress.current < 0.225
 		}
 	})
-
+	
 	return (
 		<group
 			position={[-2.5, 1.05, 0]}
 			rotation={[-Math.PI / 2, 0, 0]}
+			onPointerOver={(e) => { e.stopPropagation(); setHovered(true) }}
+			onPointerOut={(e) => { e.stopPropagation(); setHovered(false) }}
 			onClick={(e) => {
 				e.stopPropagation();
 				setIsOpen(prev => !prev)
@@ -68,6 +78,11 @@ function Book({controlsRef} : BookProps) {
 					<boxGeometry args={[0.4, 0.3, 0.02]} />
 					<meshStandardMaterial color="#5a2e1b" />
 				</mesh>
+				{/* outline for hover */}
+				<mesh visible={hovered} position={[0, 0, 0]} renderOrder={999} scale={[1.03, 1.03, 1.06]}>
+					<boxGeometry args={[0.4, 0.3, 0.02]} />
+					<meshBasicMaterial color="#ffd97a" side={BackSide} transparent opacity={0.95} blending={AdditiveBlending} toneMapped={false} />
+				</mesh>
 			</group>
 
 			{/* copertina alta (ruota verso l'alto) */}
@@ -81,6 +96,11 @@ function Book({controlsRef} : BookProps) {
 				<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
 					<boxGeometry args={[0.4, 0.3, 0.02]} />
 					<meshStandardMaterial color="#5a2e1b" />
+				</mesh>
+				{/* outline for hover - follows the coverTop transforms */}
+				<mesh visible={hovered} position={[0, -0.15, 0]} renderOrder={999} scale={[1.03, 1.03, 1.06]}> 
+					<boxGeometry args={[0.4, 0.3, 0.02]} />
+					<meshBasicMaterial color="#ffd97a" side={BackSide} transparent opacity={0.95} blending={AdditiveBlending} toneMapped={false} />
 				</mesh>
 
 				<Text
@@ -177,10 +197,10 @@ export default function Scene() {
 				enablePan={false}
 				minDistance={1}
 				maxDistance={2.5}
-				// minPolarAngle={Math.PI * 0.35}
-				// maxPolarAngle={Math.PI * 0.55}
-				// minAzimuthAngle={-Math.PI * 0.8}
-				// maxAzimuthAngle={-Math.PI * 0.20}
+				minPolarAngle={Math.PI * 0.35}
+				maxPolarAngle={Math.PI * 0.55}
+				minAzimuthAngle={-Math.PI * 0.8}
+				maxAzimuthAngle={-Math.PI * 0.20}
 			/>
 		</Canvas>
 	)
