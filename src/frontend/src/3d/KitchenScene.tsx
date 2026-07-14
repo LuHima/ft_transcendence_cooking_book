@@ -1,9 +1,60 @@
 import { Suspense, useMemo, useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, useGLTF, ContactShadows, Text } from '@react-three/drei'
-import { Object3D, BackSide, AdditiveBlending } from 'three'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { OrbitControls, useGLTF, ContactShadows, Text, useTexture } from '@react-three/drei'
+import { Object3D, BackSide, AdditiveBlending, RepeatWrapping, SRGBColorSpace, Vector3 } from 'three'
+
+// FROM ASSETS
+
 import kitchenUrl from '../assets/kitchen3.0.glb?url'
 import titleFontUrl from '../assets/Playfair-ExtraBoldItalic.ttf?url'
+
+import leatherColorUrl from '../assets/fabric_leather_02_diff_4k.jpg?url'
+import leatherRoughnessUrl from '../assets/fabric_leather_02_rough_4k.jpg?url'
+import leatherDispUrl from '../assets/fabric_leather_02_disp_4k.png?url'
+import leatherNormalUrl from '../assets/fabric_leather_02_nor_gl_4k.jpg'
+
+import leatherColorUrl1 from '../assets/brown_leather_albedo_4k.jpg'
+import leatherRoughnessUrl1 from '../assets/brown_leather_rough_4k.jpg?url'
+import leatherDispUrl1 from '../assets/brown_leather_disp_4k.png?url'
+import leatherNormalUrl1 from '../assets/brown_leather_nor_gl_4k.jpg'
+
+// END ASSETS
+
+function useLeatherMaterial() {
+	const [colorMap, roughnessMap, normalMap, dispMap] = useTexture([
+		leatherColorUrl,
+		leatherRoughnessUrl,
+		leatherNormalUrl,
+		leatherDispUrl,
+	]);
+
+	colorMap.colorSpace = SRGBColorSpace;
+
+	[colorMap, roughnessMap, normalMap, dispMap].forEach((tex) => {
+		tex.wrapS = tex.wrapT = RepeatWrapping
+		tex.repeat.set(1, 1)
+	})
+
+	return { colorMap, roughnessMap, normalMap, dispMap }
+}
+
+function useLeatherMaterial1() {
+	const [colorMap1, roughnessMap1, normalMap1, dispMap1] = useTexture([
+		leatherColorUrl1,
+		leatherRoughnessUrl1,
+		leatherNormalUrl1,
+		leatherDispUrl1,
+	]);
+
+	colorMap1.colorSpace = SRGBColorSpace;
+
+	[colorMap1, roughnessMap1, normalMap1, dispMap1].forEach((tex) => {
+		tex.wrapS = tex.wrapT = RepeatWrapping
+		tex.repeat.set(1, 1)
+	})
+
+	return { colorMap1, roughnessMap1, normalMap1, dispMap1 }
+}
 
 interface BookProps {
 	controlsRef: React.RefObject<any>
@@ -16,7 +67,29 @@ const recipes = [
   { id: 3, title: "Tiramisù" },
 ]
 
+
+
 function Book({controlsRef} : BookProps) {
+	
+	const originalLimits = useRef({
+		minPolarAngle: Math.PI * 0.35,
+		maxPolarAngle: Math.PI * 0.55,
+		minAzimuthAngle: -Math.PI * 0.8,
+		maxAzimuthAngle: -Math.PI * 0.20,
+		minDistance: 1,
+		maxDistance: 2.5,
+	})
+
+	function setControlsLimits(limits: Partial<typeof originalLimits.current>) {
+		const c = controlsRef.current
+		if (!c) return
+		Object.assign(c, limits)
+		c.update()
+	}
+	
+	const { colorMap, normalMap, roughnessMap } = useLeatherMaterial()
+	const { colorMap1, normalMap1, roughnessMap1 } = useLeatherMaterial1()
+
 	const [isOpen, setIsOpen] = useState(false)
 	const coverBottomRef = useRef<any>(null)
 	const coverTopRef = useRef<any>(null)
@@ -25,27 +98,64 @@ function Book({controlsRef} : BookProps) {
 
 	const progress = useRef(0)
 
-	useFrame((_, delta) => {
-		const targetProgress = isOpen ? 1 : 0
-		const speed = 0.8
+	const { camera } = useThree()
+	const camPhase = useRef<'idle' | 'zooming-in' | 'zooming-out'>('idle')
+	const camProgress = useRef(0)
 
+	const initialCamPos = useRef(new Vector3(-10, 1.5, 0))
+	const initialTarget = useRef(new Vector3(-3, 1.5, 0))
+
+	// da tarare
+	const zoomedCamPos = useRef(new Vector3(-2.51, 1.3, -0.1))
+	const zoomedTarget = useRef(new Vector3(-2.5, 1, -0.1))
+
+	useFrame((_, delta) => {
+		const camSpeed = 1
+
+		if (camPhase.current === 'zooming-in' || camPhase.current === 'zooming-out') {
+			const dir = camPhase.current ==='zooming-in' ? 1 : -1
+			camProgress.current = Math.max(0, Math.min(1, camProgress.current + dir * (delta / camSpeed)))
+			const t = 1 - Math.pow(1 - camProgress.current, 3);
+
+			camera.position.lerpVectors(initialCamPos.current, zoomedCamPos.current, t)
+			if (controlsRef.current) {
+				controlsRef.current.target.lerpVectors(initialTarget.current, zoomedTarget.current, t)
+				controlsRef.current.update()
+			}
+
+			if (camPhase.current === 'zooming-in' && camProgress.current >= 1){
+				camPhase.current = 'idle'
+				setIsOpen(true)
+			}
+
+			if (camPhase.current === 'zooming-out' && camProgress.current <= 0) {
+				camPhase.current = 'idle'
+				if (controlsRef.current) controlsRef.current.enabled = true
+					setControlsLimits(originalLimits.current)
+			}
+		}
+
+		const targetProgress = isOpen ? 1 : 0
+		const speed = 1
 		const direction = targetProgress === 1 ? 1 : -1
+		const wasOpen = progress.current > 0
+
 		progress.current += direction * (delta / speed)
 		progress.current = Math.max(0, Math.min(1, progress.current))
+
+		if (wasOpen && progress.current === 0 && camPhase.current == 'idle')
+			camPhase.current = 'zooming-out'
 
 		const eased = 1 - Math.pow(1 - progress.current, 3)
 		const angle = eased * -Math.PI
 
 		if (coverTopRef.current) {
-			coverTopRef.current.rotation.x = angle
-			coverTopRef.current.position.y = 0.155
-			coverTopRef.current.position.z = 0.055 - (eased * 0.03)
-			if (isOpen)
+			if (coverTopRef.current)
 			{
-				for (let i = 0; i < 20; i++)
-				{
-					coverTopRef.current.position.z -= (targetProgress * 0.001)
-				}
+				coverTopRef.current.rotation.x = angle
+				coverTopRef.current.position.y = 0.155
+				const extraSink = 0.02
+				coverTopRef.current.position.z = 0.055 - (eased * 0.03) - (eased * extraSink)
 			}
 		}
 		if (hingeRef.current) {
@@ -61,14 +171,27 @@ function Book({controlsRef} : BookProps) {
 			onPointerOut={(e) => { e.stopPropagation(); setHovered(false) }}
 			onClick={(e) => {
 				e.stopPropagation();
-				setIsOpen(prev => !prev)
+				if (camPhase.current !== 'idle') return
+				if (!isOpen) {
+					if (controlsRef.current) controlsRef.current.enabled = false
+					setControlsLimits({
+						minPolarAngle: 0,
+						maxPolarAngle: Math.PI * 0.55,
+						minAzimuthAngle: -Infinity,
+						maxAzimuthAngle: Infinity,
+						maxDistance: 1
+					})
+					camPhase.current = 'zooming-in'
+				}
+				else
+					setIsOpen(false)
 			}}
 			onPointerDown={(e) => {
 				e.stopPropagation();
-				if (controlsRef.current) controlsRef.current.enabled = false
+				if (controlsRef.current && camPhase.current === 'idle') controlsRef.current.enabled = false
 			}}
 			onPointerUp={(e) => {
-				if (controlsRef.current) controlsRef.current.enabled = true
+				if (controlsRef.current && camPhase.current === 'idle') controlsRef.current.enabled = true
 			}}
 			>
 
@@ -76,7 +199,14 @@ function Book({controlsRef} : BookProps) {
 			<group ref={coverBottomRef} position={[0, 0.005, 0.005]} rotation={[0, 0, 0]}>
 				<mesh position={[0, 0, 0]} castShadow receiveShadow>
 					<boxGeometry args={[0.4, 0.3, 0.02]} />
-					<meshStandardMaterial color="#5a2e1b" />
+					<meshStandardMaterial
+						map={colorMap}
+						normalMap={normalMap}
+						roughnessMap={roughnessMap}
+						normalScale={[0.6, 0.6]}
+						metalness={0.3}
+						roughness={1}
+					/>
 				</mesh>
 				{/* outline for hover */}
 				<mesh visible={hovered} position={[0, 0, 0]} renderOrder={999} scale={[1.03, 1.03, 1.06]}>
@@ -90,12 +220,26 @@ function Book({controlsRef} : BookProps) {
 				{/* cerniera - sparisce quando il libro è completamente aperto */}
 				<mesh ref={hingeRef} position={[0, 0, -0.025]} rotation={[0, 0, -Math.PI * 1.5]} castShadow receiveShadow>
 					<cylinderGeometry args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]} />
-					<meshStandardMaterial color="#3d1f10" />
+					<meshStandardMaterial
+						map={colorMap1}
+						normalMap={normalMap1}
+						roughnessMap={roughnessMap1}
+						normalScale={[0.6, 0.6]}
+						metalness={0}
+						roughness={1}
+					/>
 				</mesh>
 
 				<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
 					<boxGeometry args={[0.4, 0.3, 0.02]} />
-					<meshStandardMaterial color="#5a2e1b" />
+					<meshStandardMaterial
+						map={colorMap}
+						normalMap={normalMap}
+						roughnessMap={roughnessMap}
+						normalScale={[0.6, 0.6]}
+						metalness={0.3}
+						roughness={1}
+					/>
 				</mesh>
 				{/* outline for hover - follows the coverTop transforms */}
 				<mesh visible={hovered} position={[0, -0.15, 0]} renderOrder={999} scale={[1.03, 1.03, 1.06]}> 
