@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, useGLTF, ContactShadows, Text, useTexture } from '@react-three/drei'
+import { OrbitControls, useGLTF, ContactShadows, Text, useTexture, Tube } from '@react-three/drei'
 import { Object3D, BackSide, AdditiveBlending, RepeatWrapping, SRGBColorSpace, Vector3 } from 'three'
 
 // FROM ASSETS
@@ -18,7 +18,14 @@ import leatherRoughnessUrl1 from '../assets/brown_leather_rough_4k.jpg?url'
 import leatherDispUrl1 from '../assets/brown_leather_disp_4k.png?url'
 import leatherNormalUrl1 from '../assets/brown_leather_nor_gl_4k.jpg'
 
+import logoUrl from '../assets/biggernobg.png'
 // END ASSETS
+
+function useLogoTexture() {
+	const logoMap = useTexture(logoUrl)
+	logoMap.colorSpace = SRGBColorSpace
+	return logoMap
+}
 
 function useLeatherMaterial() {
 	const [colorMap, roughnessMap, normalMap, dispMap] = useTexture([
@@ -67,8 +74,6 @@ const recipes = [
   { id: 3, title: "Tiramisù" },
 ]
 
-
-
 function Book({controlsRef} : BookProps) {
 	
 	const originalLimits = useRef({
@@ -76,7 +81,7 @@ function Book({controlsRef} : BookProps) {
 		maxPolarAngle: Math.PI * 0.55,
 		minAzimuthAngle: -Math.PI * 0.8,
 		maxAzimuthAngle: -Math.PI * 0.20,
-		minDistance: 1,
+		minDistance: 0.5,
 		maxDistance: 2.5,
 	})
 
@@ -162,6 +167,8 @@ function Book({controlsRef} : BookProps) {
 			hingeRef.current.visible = progress.current < 0.225
 		}
 	})
+
+	const logoMap = useLogoTexture() 
 	
 	return (
 		<group
@@ -179,7 +186,8 @@ function Book({controlsRef} : BookProps) {
 						maxPolarAngle: Math.PI * 0.55,
 						minAzimuthAngle: -Infinity,
 						maxAzimuthAngle: Infinity,
-						maxDistance: 1
+						maxDistance: 1,
+						minDistance: 1,
 					})
 					camPhase.current = 'zooming-in'
 				}
@@ -247,18 +255,13 @@ function Book({controlsRef} : BookProps) {
 					<meshBasicMaterial color="#ffd97a" side={BackSide} transparent opacity={0.95} blending={AdditiveBlending} toneMapped={false} />
 				</mesh>
 
-				<Text
-					position={[0, -0.14, 0.011]}
+				<mesh
+					position={[0.01, -0.1455, 0.011]}
 					rotation={[0, 0, -Math.PI / 2]}
-					font={titleFontUrl}
-					fontSize={0.07}
-					textAlign="center"
-					color="#f5e6c8"
-					anchorX="center"
-					anchorY="middle"
 				>
-					{"WeCook"}
-				</Text>
+					<planeGeometry args={[0.35, 0.2]} />
+					<meshStandardMaterial map={logoMap} transparent metalness={0.1} toneMapped={true} alphaTest={0.5} />
+				</mesh>
 			</group>
 
 			{recipes.map((recipe, index) => {
@@ -339,7 +342,7 @@ export default function Scene() {
 				enableDamping
 				dampingFactor={0.05}
 				enablePan={false}
-				minDistance={1}
+				minDistance={0.5}
 				maxDistance={2.5}
 				minPolarAngle={Math.PI * 0.35}
 				maxPolarAngle={Math.PI * 0.55}
