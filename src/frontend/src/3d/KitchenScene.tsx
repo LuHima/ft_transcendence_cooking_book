@@ -1,7 +1,9 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, useGLTF, ContactShadows, Text, useTexture } from '@react-three/drei'
-import { Object3D, RepeatWrapping, SRGBColorSpace, Vector3 } from 'three'
+import { CanvasTexture, Object3D, RepeatWrapping, SRGBColorSpace, Vector3 } from 'three'
+import { Page } from './Page'
+import { useBookPages } from './hooks/useBookPages'
 
 // FROM ASSETS
 
@@ -72,6 +74,39 @@ const recipes = [
   { id: 3, title: "Tiramisù" },
 ]
 
+function createRecipeTexture(title: string, accent: string, background: string) {
+	const canvas = document.createElement('canvas')
+	canvas.width = 512
+	canvas.height = 512
+
+	const ctx = canvas.getContext('2d')
+	if (!ctx) return null
+
+	const gradient = ctx.createLinearGradient(0, 0, 512, 512)
+	gradient.addColorStop(0, background)
+	gradient.addColorStop(1, accent)
+	ctx.fillStyle = gradient
+	ctx.fillRect(0, 0, 512, 512)
+
+	ctx.fillStyle = '#5b2c16'
+	ctx.font = 'bold 48px serif'
+	ctx.textAlign = 'center'
+	ctx.fillText(title, 256, 210)
+
+	ctx.font = '24px serif'
+	ctx.fillStyle = '#8f5e39'
+	ctx.fillText('Ricetta del giorno', 256, 300)
+
+	ctx.strokeStyle = '#c49962'
+	ctx.lineWidth = 8
+	ctx.strokeRect(42, 42, 428, 428)
+
+	const texture = new CanvasTexture(canvas)
+	texture.colorSpace = SRGBColorSpace
+	texture.needsUpdate = true
+	return texture
+}
+
 function Book({controlsRef} : BookProps) {
 	
 	const originalLimits = useRef({
@@ -98,19 +133,37 @@ function Book({controlsRef} : BookProps) {
 	const coverTopRef = useRef<any>(null)
 	const hingeRef = useRef<any>(null)
 	const [hovered, setHovered] = useState(false)
+	const pageProgressRefs = useRef<Array<{ current: number }>>([])
+	const { pageProgress, nextPage, prevPage } = useBookPages(recipes.length)
 
 	const progress = useRef(0)
+	const recipeTextures = useMemo(() => {
+		return recipes.map((recipe, index) => {
+			const frontMap = createRecipeTexture(recipe.title, index % 2 === 0 ? '#f4e7bf' : '#e3c08b', index % 2 === 0 ? '#f9f1dd' : '#d7a765')
+			const backMap = createRecipeTexture(`Recipe ${recipe.id}`, index % 2 === 0 ? '#d9c7a1' : '#b78958', index % 2 === 0 ? '#f0e4c7' : '#8d5f2f')
+			return { frontMap, backMap }
+		})
+	}, [])
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key !== 'Escape' || !isOpen || camPhase.current !== 'idle') return
-			event.preventDefault()
-			setIsOpen(false)
+			if (event.key === 'Escape' && isOpen && camPhase.current === 'idle') {
+				event.preventDefault()
+				setIsOpen(false)
+			}
+			if (event.key === 'ArrowRight' && isOpen) {
+				event.preventDefault()
+				nextPage()
+			}
+			if (event.key === 'ArrowLeft' && isOpen) {
+				event.preventDefault()
+				prevPage()
+			}
 		}
 
 		window.addEventListener('keydown', handleKeyDown)
 		return () => window.removeEventListener('keydown', handleKeyDown)
-	}, [isOpen])
+	}, [isOpen, nextPage, prevPage])
 
 	const { camera } = useThree()
 	const camPhase = useRef<'idle' | 'zooming-in' | 'zooming-out'>('idle')
@@ -119,11 +172,14 @@ function Book({controlsRef} : BookProps) {
 	const initialCamPos = useRef(new Vector3(-10, 1.5, 0))
 	const initialTarget = useRef(new Vector3(-3, 1.5, 0))
 
-	// da tarare
 	const zoomedCamPos = useRef(new Vector3(-2.51, 1.3, -0.1))
 	const zoomedTarget = useRef(new Vector3(-2.5, 1, -0.1))
 
 	useFrame((_, delta) => {
+		pageProgressRefs.current.forEach((ref, index) => {
+			if (ref) ref.current = pageProgress.current[index] ?? 0
+		})
+
 		const camSpeed = 1
 
 		if (camPhase.current === 'zooming-in' || camPhase.current === 'zooming-out') {
@@ -286,15 +342,20 @@ function Book({controlsRef} : BookProps) {
 
 			{recipes.map((recipe, index) => {
 				const zOffset = 0.01 + index * (0.025 / recipes.length)
+				const pageRef = (pageProgressRefs.current[index] ??= { current: 0 })
+				const textures = recipeTextures[index]
+				if (!textures?.frontMap || !textures.backMap) return null
+
 				return (
 					<group key={recipe.id} position={[0, 0.155, zOffset]}>
-						<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
-							<boxGeometry args={[0.39, 0.28, 0.002]} />
-							<meshStandardMaterial color="#f5e6c8" />
-						</mesh>
-						<Text position={[0, -0.14, 0.002]} rotation={[0, 0, -Math.PI / 2]} fontSize={0.03} color="#3d1f10" anchorX="center" anchorY="middle">
-							{recipe.title}
-						</Text>
+						<Page
+							progressRef={pageRef}
+							frontMap={textures.frontMap}
+							backMap={textures.backMap}
+							width={0.39}
+							height={0.28}
+							position={[0, -0.15, 0.001]}
+						/>
 					</group>
 				)
 			})}
