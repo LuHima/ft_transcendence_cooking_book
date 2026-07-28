@@ -1,20 +1,22 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { AppService } from './app.service';
-import { get } from 'http';
+//import { get } from 'http';
+import { MyQueryService } from './query';
+
+
 
 @Controller('api')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService, private readonly queryService: MyQueryService) {}
 
   @Get('ricette')
-	getRicette()
+	async getRicette()
 	{
-		return{
-			stato: "successo",
-			ricette:[
-				{ id: 1, titolo: "Carbonara", difficolta: "Media" },
-        		{ id: 2, titolo: "Tiramisù", difficolta: "Facile" }
-			]
-		}
+		return await this.queryService.getAllRecipe();
+	}
+	@Get('ricetta')
+	async getRicetta(name :string)
+	{
+		return await this.queryService.getRecipe(name);
 	}
 }

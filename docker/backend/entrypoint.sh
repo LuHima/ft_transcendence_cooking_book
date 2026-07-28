@@ -7,6 +7,9 @@ done
 
 echo "Database is ready!"
 
+# Esegue le migrazioni del database
+npx prisma migrate deploy
+
 # Rigenera il Prisma Client
 npx prisma generate
 
