@@ -30,11 +30,10 @@ export function Page({ progressRef, progress, frontMap, backMap, width, height, 
 				ref={matRef}
 				uMapFront={frontMap}
 				uMapBack={backMap}
-				uPageWidth={width}
-				uRadius={0.05}
+				uPageHeight={height}
+				uHingeOffset={0.025}
 				side={DoubleSide}
-				transparent
-			/>
+				/>
 		</mesh>
 	)
 }

@@ -2,81 +2,76 @@ import { shaderMaterial } from '@react-three/drei'
 import { extend } from '@react-three/fiber'
 import { Texture } from 'three'
 
+// materiale personalizzato per la piega delle pagine
+// uProgress: controlla quanto la pagina è piegata
+// uRadius: raggio della curva della pagina
+// uPageWidth: larghezza della pagina
+// uMapFront / uMapBack: texture per fronte e retro pagina
+// uShadowStrength: intensità dell'ombra sulla piega
 export const PageCurlMaterial = shaderMaterial(
     {
         uProgress: 0,
-        uRadius: 0.06,
-        uPageWidth: 0.39,
-        uMapFront: null as Texture | null,
-        uMapBack: null as Texture | null,
+				uPageHeight: 0.28,
+				uHingeOffset: 0.025, // stesso valore di -0.025 usato per hingeRef in Book.tsx
+				uMapFront: null as Texture | null,
+				uMapBack: null as Texture | null,
         uShadowStrength: 0.5,
     },
-    	// vertex shader
+    	// vertex shader: qui viene calcolata la deformazione della pagina durante la piega
 	/* glsl */ `
-    uniform float uProgress;
-    uniform float uRadius;
-    uniform float uPageWidth;
+		// vertex shader — togli uHingeOffset dal pivot
+		uniform float uProgress;
+		uniform float uPageHeight;
 
-    varying vec2 vUv;
-    varying float vCurlAngle;
-    varying vec3 vNormalW;
+		varying vec2 vUv;
+		varying vec3 vNormalW;
 
-    void main() {
-      vUv = uv;
-      vec3 pos = position;
-      vec3 nrm = normal;
+		void main() {
+			vUv = uv;
+			vec3 pos = position;
+			vec3 nrm = normal;
 
-      // hinge in x = 0, la pagina si estende verso +x
-      float hingeDist = pos.x;
+			float halfHeight = uPageHeight * 0.5;
+			float y = pos.y - halfHeight;
+			float z = pos.z; // niente più offset qui
 
-      // il punto dove inizia la curva si sposta da destra verso sinistra
-      float curlStart = mix(uPageWidth, -uPageWidth * 0.05, uProgress);
+			float theta = uProgress * -3.14159265;
+			float c = cos(theta);
+			float s = sin(theta);
 
-      float d = hingeDist - curlStart;
+			float rotY = y * c - z * s;
+			float rotZ = y * s + z * c;
 
-      if (d > 0.0) {
-        float theta = min(d / uRadius, 3.14159265);
+			pos.y = rotY + halfHeight;
+			pos.z = rotZ;
 
-        pos.x = curlStart + uRadius * sin(theta);
-        pos.z += uRadius * (1.0 - cos(theta));
+			nrm.y = normal.y * c - normal.z * s;
+			nrm.z = normal.y * s + normal.z * c;
 
-        nrm.x = normal.x * cos(theta) - normal.z * sin(theta);
-        nrm.z = normal.x * sin(theta) + normal.z * cos(theta);
+			vNormalW = normalize(normalMatrix * nrm);
 
-        vCurlAngle = theta;
-      } else {
-        vCurlAngle = 0.0;
-      }
-
-      vNormalW = normalize(normalMatrix * nrm);
-
-      vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-      gl_Position = projectionMatrix * mvPosition;
-    }
+			vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+			gl_Position = projectionMatrix * mvPosition;
+		}
   `,
-	// fragment shader
+	// fragment shader: decide il colore finale della pagina in base al fronte/retro e all'illuminazione
 	/* glsl */ `
-    uniform sampler2D uMapFront;
-    uniform sampler2D uMapBack;
-    uniform float uShadowStrength;
+		uniform sampler2D uMapFront;
+		uniform sampler2D uMapBack;
 
-    varying vec2 vUv;
-    varying float vCurlAngle;
-    varying vec3 vNormalW;
+		varying vec2 vUv;
+		varying vec3 vNormalW;
 
-    void main() {
-      bool back = !gl_FrontFacing;
-      vec2 uv = back ? vec2(1.0 - vUv.x, vUv.y) : vUv;
-      vec4 tex = back ? texture2D(uMapBack, uv) : texture2D(uMapFront, uv);
+		void main() {
+			bool back = !gl_FrontFacing;
+			vec2 uv = back ? vec2(1.0 - vUv.x, vUv.y) : vUv;
+			vec4 tex = back ? texture2D(uMapBack, uv) : texture2D(uMapFront, uv);
 
-      // ombra procedurale sulla piega (max scurimento verso theta = PI/2)
-      float shadow = 1.0 - sin(min(vCurlAngle, 1.5708)) * uShadowStrength;
+			vec3 lightDir = normalize(vec3(0.3, 0.5, 1.0));
+			float diff = max(dot(normalize(vNormalW), lightDir), 0.35);
 
-      vec3 lightDir = normalize(vec3(0.3, 0.5, 1.0));
-      float diff = max(dot(normalize(vNormalW), lightDir), 0.35);
-
-      gl_FragColor = vec4(tex.rgb * shadow * diff, tex.a);
-    }
+			gl_FragColor = vec4(tex.rgb * diff, tex.a);
+		}
   `
 )
 
