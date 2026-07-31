@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, useGLTF, ContactShadows, useTexture } from '@react-three/drei'
-import { CanvasTexture, Object3D, RepeatWrapping, SRGBColorSpace, Vector3 } from 'three'
+import { OrbitControls, useGLTF, ContactShadows, useTexture, Environment } from '@react-three/drei'
+import { CanvasTexture, Object3D, RepeatWrapping, SRGBColorSpace, Vector3, NoToneMapping } from 'three'
 import { Page } from './Page'
 import { useBookPages } from './hooks/useBookPages'
 
@@ -434,13 +434,22 @@ function Book({controlsRef} : BookProps) {
 }
 
 function KitchenModel({ scene }: { scene: Object3D }) {
-	// abilita ombra per tutte le mesh importate dal modello GLB
 	useMemo(() => {
 		scene.traverse((c: any) => {
 			if (c.isMesh) {
 				c.castShadow = true
 				c.receiveShadow = true
 			}
+			if (c.isLight) {
+				c.castShadow = true
+				if (c.shadow) {
+					c.shadow.mapSize.set(1024, 1024)
+					c.shadow.camera.near = 0.1
+					c.shadow.camera.far = 20
+					c.shadow.bias = -0.001
+					c.shadow.normalBias = 0.02
+	}
+}
 		})
 	}, [scene])
 	return <primitive object={scene} dispose={null} />
@@ -461,28 +470,19 @@ export default function Scene() {
 	const controlsRef = useRef<any>(null)
 
 	return (
-		<Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
-			<ambientLight intensity={1.1} color="#fff5e0" />
+		
+		<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
+		
+			<Environment preset="apartment" environmentIntensity={0.1} />
+			<ambientLight intensity={0.2} color="#ffffff" />
 
-			<directionalLight
-			position={[-9, 4, 1]}
-			intensity={1.3}
-			color="#ffd9a8"
-			target-position={[-2.5, 1.05, 0]}
-			castShadow={false}
-			/>
-
-			<directionalLight position={[-5, 3, 4]} intensity={1} color="#ffffff" />
-			<directionalLight position={[-5, 3, -4]} intensity={1} color="#ffe8cc" />
-
-			<pointLight position={[-2.5, 2.5, 0]} intensity={1} color="#ffe4b0" distance={4} decay={2} />
+			<pointLight position={[-2.5, 2, -0.1]} intensity={100} color="#4e310b" distance={4} decay={2} />
 
 			<Suspense fallback={<LoadingFallback />}>
 				<KitchenModel scene={scene} />
 				<Book controlsRef={controlsRef} />
 			</Suspense>
-			<ContactShadows position={[-10, 0, 0]} opacity={0.35} scale={8} blur={2} far={2} />
-			{/* controlli orbitali per muovere la camera e guardare la scena */}
+
 			<OrbitControls
 				ref={controlsRef}
 				makeDefault
@@ -497,6 +497,7 @@ export default function Scene() {
 				minAzimuthAngle={-Math.PI * 0.8}
 				maxAzimuthAngle={-Math.PI * 0.20}
 			/>
+
 		</Canvas>
 	)
 }
