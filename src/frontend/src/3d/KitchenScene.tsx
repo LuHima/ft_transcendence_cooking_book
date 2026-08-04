@@ -468,36 +468,67 @@ function LoadingFallback() {
 export default function Scene() {
 	const { scene } = useGLTF(kitchenUrl)
 	const controlsRef = useRef<any>(null)
+	const [isSkylightOn, setIsSkylightOn] = useState(true)
 
 	return (
-		
-		<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
-		
-			<Environment preset="apartment" environmentIntensity={0.1} />
-			<ambientLight intensity={0.2} color="#ffffff" />
+		<div className="relative h-full w-full">
+			<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
+				<Environment preset="apartment" environmentIntensity={0.1} />
+				<ambientLight intensity={0.2} color="#ffffff" />
 
-			<pointLight position={[-2.5, 2, -0.1]} intensity={100} color="#4e310b" distance={4} decay={2} />
+				{/* luci soffuse in background */}
+				<pointLight position={[-1.85, 1.8, -0.65]} intensity={50} color="#4e310b" distance={4} decay={2} />
+				<pointLight position={[-1.85, 1.8, 1.25]} intensity={50} color="#4e310b" distance={4} decay={2} />
+				<pointLight position={[-1.85, 1.8, 3.2]} intensity={50} color="#4e310b" distance={4} decay={2} />
 
-			<Suspense fallback={<LoadingFallback />}>
-				<KitchenModel scene={scene} />
-				<Book controlsRef={controlsRef} />
-			</Suspense>
+				{/* occhio di bue */}
+				<pointLight
+					position={[-2.5, 2, -0.1]}
+					intensity={isSkylightOn ? 100 : 0}
+					color="#4e310b"
+					distance={4}
+					decay={2}
+				/>
+				
+				<Suspense fallback={<LoadingFallback />}>
+					<KitchenModel scene={scene} />
+					<Book controlsRef={controlsRef} />
+				</Suspense>
 
-			<OrbitControls
-				ref={controlsRef}
-				makeDefault
-				target={[-3, 1.5, 0]}
-				enableDamping
-				dampingFactor={0.05}
-				enablePan={false}
-				minDistance={0.5}
-				maxDistance={2.5}
-				minPolarAngle={Math.PI * 0.35}
-				maxPolarAngle={Math.PI * 0.55}
-				minAzimuthAngle={-Math.PI * 0.8}
-				maxAzimuthAngle={-Math.PI * 0.20}
-			/>
+				<OrbitControls
+					ref={controlsRef}
+					makeDefault
+					target={[-3, 1.5, 0]}
+					enableDamping
+					dampingFactor={0.05}
+					enablePan={false}
+					minDistance={0.5}
+					maxDistance={2.5}
+					minPolarAngle={Math.PI * 0.35}
+					maxPolarAngle={Math.PI * 0.55}
+					minAzimuthAngle={-Math.PI * 0.8}
+					maxAzimuthAngle={-Math.PI * 0.20}
+				/>
+			</Canvas>
 
-		</Canvas>
+			<button
+				type="button"
+				onClick={() => setIsSkylightOn((value) => !value)}
+				// absolute: lo posiziona liberamente nella pagina
+				// left-4 top-4: lo sposta in alto a sinistra
+				// z-10: lo mette sopra agli altri elementi
+				// rounded-full: lo rende tondo/ovalizzato
+				// border border-[#d8b97a]: aggiunge un bordo colorato
+				// bg-[#1f140a]/90: sfondo scuro quasi nero con trasparenza
+				// px-4 py-2: padding orizzontale e verticale
+				// text-sm font-medium text-[#f7e8c8]: testo piccolo e medio, colore chiaro
+				// shadow-lg: ombra pronunciata
+				// backdrop-blur: effetto sfocatura sullo sfondo dietro il pulsante
+				// transition hover:bg-[#2c1f11]: animazione al passaggio del mouse
+				className="absolute left-4 top-4 z-10 rounded-full border border-[#d8b97a] bg-[#1f140a]/90 px-4 py-2 text-sm font-medium text-[#f7e8c8] shadow-lg backdrop-blur transition hover:bg-[#2c1f11]"
+			>
+				Occhio di bue: {isSkylightOn ? 'ON' : 'OFF'}
+			</button>
+		</div>
 	)
 }
