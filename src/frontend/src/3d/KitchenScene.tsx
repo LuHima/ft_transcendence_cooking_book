@@ -107,11 +107,6 @@ const recipes = [
 	{ id: 28, title: "Pasta al Pomodoro" },
 	{ id: 29, title: "Risotto ai Funghi" },
 	{ id: 30, title: "Tiramisù" },
-	{ id: 31, title: "Pasta al Pomodoro" },
-	{ id: 32, title: "Risotto ai Funghi" },
-	{ id: 33, title: "Tiramisù" },
-	{ id: 34, title: "Pasta al Pomodoro" },
-	{ id: 35, title: "Risotto ai Funghi" },
 ]
 
 function createRecipeTexture(title: string, accent: string, background: string) {
@@ -181,7 +176,7 @@ function Book({controlsRef} : BookProps) {
 	const hingeRef = useRef<any>(null)
 	const [hovered, setHovered] = useState(false)
 	const pageProgressRefs = useRef<Array<{ current: number }>>([])
-	const { pageProgress, nextPage, prevPage } = useBookPages(recipes.length)
+	const { pageProgress, nextPage, prevPage, closePages} = useBookPages(recipes.length)
 
 	// stato dell'animazione di apertura del libro
 	const progress = useRef(0)
@@ -215,6 +210,12 @@ function Book({controlsRef} : BookProps) {
 		return () => window.removeEventListener('keydown', handleKeyDown)
 	}, [isOpen, nextPage, prevPage])
 
+	useEffect(() => {
+		if (!isOpen) {
+			closePages()
+		}
+	}, [isOpen, closePages])
+
 	const { camera } = useThree()
 	const camPhase = useRef<'idle' | 'zooming-in' | 'zooming-out'>('idle')
 	const camProgress = useRef(0)
@@ -236,11 +237,16 @@ function Book({controlsRef} : BookProps) {
 				const group = pageGroupRefs.current[index]
 				if (group) {
 					const zStep = 0.001
-					const flipped = p > 0.5
-					group.position.z = flipped
-						? 0.01 - (index + 1) * zStep          // girate: stack invertito, vicino alla copertina anteriore
-						: 0.01 + (recipes.length - 1 - index) * zStep // non girate: stack normale
-			}
+					const yClosed = 0.164
+					const yOpened = 0.166
+					const stackOffsetY = 0.0004
+
+					const frontStackZ = 0.01 + (recipes.length - 1 - index) * zStep
+					const backStackZ = 0.01 - (index + 1) * zStep
+
+					group.position.z = frontStackZ * (1 - p) + backStackZ * p
+					group.position.y = yClosed * (1 - p) + (yOpened + index * stackOffsetY) * p
+				}
 		})
 		const camSpeed = 1
 
@@ -417,7 +423,10 @@ function Book({controlsRef} : BookProps) {
 				if (!textures?.frontMap || !textures.backMap) return null
 
 				return (
-					<group key={recipe.id} position={[0, 0.164, zOffset + 0.01]}>
+					<group
+						key={recipe.id}
+						ref={(el) => (pageGroupRefs.current[index] = el)}
+						position={[0, 0.164, zOffset + 0.01]}>
 						<Page
 							progressRef={pageRef}
 							frontMap={textures.frontMap}
@@ -468,7 +477,6 @@ function LoadingFallback() {
 export default function Scene() {
 	const { scene } = useGLTF(kitchenUrl)
 	const controlsRef = useRef<any>(null)
-	const [isSkylightOn, setIsSkylightOn] = useState(true)
 
 	return (
 		<div className="relative h-full w-full">
@@ -484,7 +492,7 @@ export default function Scene() {
 				{/* occhio di bue */}
 				<pointLight
 					position={[-2.5, 2, -0.1]}
-					intensity={isSkylightOn ? 100 : 0}
+					intensity={100}
 					color="#4e310b"
 					distance={4}
 					decay={2}
@@ -509,26 +517,8 @@ export default function Scene() {
 					minAzimuthAngle={-Math.PI * 0.8}
 					maxAzimuthAngle={-Math.PI * 0.20}
 				/>
-			</Canvas>
 
-			<button
-				type="button"
-				onClick={() => setIsSkylightOn((value) => !value)}
-				// absolute: lo posiziona liberamente nella pagina
-				// left-4 top-4: lo sposta in alto a sinistra
-				// z-10: lo mette sopra agli altri elementi
-				// rounded-full: lo rende tondo/ovalizzato
-				// border border-[#d8b97a]: aggiunge un bordo colorato
-				// bg-[#1f140a]/90: sfondo scuro quasi nero con trasparenza
-				// px-4 py-2: padding orizzontale e verticale
-				// text-sm font-medium text-[#f7e8c8]: testo piccolo e medio, colore chiaro
-				// shadow-lg: ombra pronunciata
-				// backdrop-blur: effetto sfocatura sullo sfondo dietro il pulsante
-				// transition hover:bg-[#2c1f11]: animazione al passaggio del mouse
-				className="absolute left-4 top-4 z-10 rounded-full border border-[#d8b97a] bg-[#1f140a]/90 px-4 py-2 text-sm font-medium text-[#f7e8c8] shadow-lg backdrop-blur transition hover:bg-[#2c1f11]"
-			>
-				Occhio di bue: {isSkylightOn ? 'ON' : 'OFF'}
-			</button>
+			</Canvas>
 		</div>
 	)
 }
