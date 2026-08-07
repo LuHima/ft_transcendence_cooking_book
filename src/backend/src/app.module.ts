@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from '../prisma/prisma.module';
-import { MyQueryService } from './query';
+import { MyQueryService } from './handler/query';
 
 
 // SI IMPORTA IL FILE SPECIFICANDO IL PERCORSO QUI IN CIMA (non si mette .ts alla fine)
 // import { nome della classe nel file scelto } from './percorso del file';
-import { GetController } from './api/get/api_get';
+import { GetController } from './api/get';
 
 @Module({
   imports: [PrismaModule],
