@@ -239,13 +239,12 @@ function Book({controlsRef} : BookProps) {
 					const zStep = 0.001
 					const yClosed = 0.164
 					const yOpened = 0.166
-					const stackOffsetY = 0.0004
 
-					const frontStackZ = 0.01 + (recipes.length - 1 - index) * zStep
-					const backStackZ = 0.01 - (index + 1) * zStep
+					const closedStackZ = 0.01 + (recipes.length - 1 - index) * zStep
+					const openStackZ = 0.01 + index * zStep
 
-					group.position.z = frontStackZ * (1 - p) + backStackZ * p
-					group.position.y = yClosed * (1 - p) + (yOpened + index * stackOffsetY) * p
+					group.position.z = closedStackZ * (1 - p) + openStackZ * p
+					group.position.y = yClosed * (1 - p) + (yOpened) * p
 				}
 		})
 		const camSpeed = 1
@@ -433,7 +432,7 @@ function Book({controlsRef} : BookProps) {
 							backMap={textures.backMap}
 							width={0.39}
 							height={0.28}
-							position={[0, -0.15, 0.0005]}
+							position={[0, -0.152, 0.0052]}
 						/>
 					</group>
 				)
@@ -477,9 +476,18 @@ function LoadingFallback() {
 export default function Scene() {
 	const { scene } = useGLTF(kitchenUrl)
 	const controlsRef = useRef<any>(null)
+	const [isBullseyeOn, setIsBullseyeOn] = useState(true)
 
 	return (
 		<div className="relative h-full w-full">
+			<button
+				type="button"
+				onClick={() => setIsBullseyeOn((prev) => !prev)}
+				className="absolute left-4 top-4 z-10 rounded-full border border-amber-200/60 bg-[#2b1a0d]/80 px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 shadow-lg backdrop-blur-sm transition hover:bg-[#3b260f]"
+			>
+				{isBullseyeOn ? 'Occhio di bue: on' : 'Occhio di bue: off'}
+			</button>
+
 			<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
 				<Environment preset="apartment" environmentIntensity={0.1} />
 				<ambientLight intensity={0.2} color="#ffffff" />
@@ -490,13 +498,15 @@ export default function Scene() {
 				<pointLight position={[-1.85, 1.8, 3.2]} intensity={50} color="#4e310b" distance={4} decay={2} />
 
 				{/* occhio di bue */}
-				<pointLight
-					position={[-2.5, 2, -0.1]}
-					intensity={100}
-					color="#4e310b"
-					distance={4}
-					decay={2}
-				/>
+				{isBullseyeOn && (
+					<pointLight
+						position={[-2.5, 2, -0.1]}
+						intensity={100}
+						color="#4e310b"
+						distance={4}
+						decay={2}
+					/>
+				)}
 				
 				<Suspense fallback={<LoadingFallback />}>
 					<KitchenModel scene={scene} />
