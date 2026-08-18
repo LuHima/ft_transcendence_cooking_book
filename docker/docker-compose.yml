@@ -28,6 +28,8 @@ services:
       context: ../
       dockerfile: ./docker/backend/dockerfile
     container_name: backend-container
+    ports:
+      - 3000:3000 # da togliere in consegna, serve solo per testare le API
     env_file:
       - .env
     volumes:
