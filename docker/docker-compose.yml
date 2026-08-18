@@ -11,6 +11,8 @@ services:
       context: ../
       dockerfile: ./docker/database/dockerfile
     container_name: database-container
+    ports:
+      - 5432:5432 # da togliere in consegna, serve solo per testare le API
     env_file:
       - .env
     volumes:
