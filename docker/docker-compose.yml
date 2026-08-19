@@ -12,7 +12,7 @@ services:
       dockerfile: ./docker/database/dockerfile
     container_name: database-container
     ports:
-      - 5432:5432 # da togliere in consegna, serve solo per testare le API
+      - 5432:5432 # TODO: da togliere in consegna, serve solo per testare le API
     env_file:
       - .env
     volumes:
@@ -31,7 +31,7 @@ services:
       dockerfile: ./docker/backend/dockerfile
     container_name: backend-container
     ports:
-      - 3000:3000 # da togliere in consegna, serve solo per testare le API
+      - 3000:3000 # TODO: da togliere in consegna, serve solo per testare le API
     env_file:
       - .env
     volumes:

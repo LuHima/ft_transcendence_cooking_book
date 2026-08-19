@@ -23,7 +23,7 @@ down:
 
 prune:
 	$(SUDO) docker container prune -f
-#	$(SUDO) docker container prune -a --volumes -f
+	$(SUDO) docker system prune -a --volumes -f
 
 
 in_backend:
