@@ -6,7 +6,8 @@ import { MyQueryService } from '../handler/query';
 
 
 @Controller('api')
-export class GetController {
+export class GetController 
+{
   constructor(private readonly appService: AppService, private readonly queryService: MyQueryService) {}
 
   @Get('recipes')
