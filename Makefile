@@ -22,8 +22,11 @@ down:
 	$(SUDO) docker compose $(PATH_EXE) down
 
 prune:
-	$(SUDO) docker container prune -f
 	$(SUDO) docker system prune -a --volumes -f
+
+stats_memory:
+	docker system df
+
 
 
 in_backend:
@@ -32,3 +35,9 @@ in_backend:
 fclean: down prune
 
 re: fclean all
+
+
+# nest g module "name" crea una cartella con quel module nome 
+# $ nest g module "name"
+# $ nest g controller "name" crea il file controller 
+# $ nest g service "name" crea il service
