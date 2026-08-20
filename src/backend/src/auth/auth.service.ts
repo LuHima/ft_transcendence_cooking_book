@@ -11,7 +11,7 @@ export class AuthService
 {
   constructor(private UsersService:UsersService){}
 
-  async check(user:string, password: string) Promise<any>
+  async check(user:string, password: string)
   {
 
     return true;
