@@ -15,8 +15,6 @@ $(NAME):
 	$(SUDO) docker compose $(PATH_EXE)  up --build
 #	$(MAKE) in_backend
 
-ps:
-	$(SUDO) docker compose $(PATH_EXE) ps
 
 down:
 	$(SUDO) docker compose $(PATH_EXE) down
@@ -24,18 +22,23 @@ down:
 prune:
 	$(SUDO) docker system prune -a --volumes -f
 
-stats_memory:
-	docker system df
-
-
-
-in_backend:
-	$(SUDO) docker exec -it backend-container bash
 
 fclean: down prune
 
 re: fclean all
 
+#-----------------------------------------------------------
+#						DEBUG							   |
+#-----------------------------------------------------------
+
+in_backend:
+	$(SUDO) docker exec -it backend-container bash
+
+stats_memory:
+	docker system df
+
+ps:
+	$(SUDO) docker compose $(PATH_EXE) ps
 
 # nest g module "name" crea una cartella con quel module nome 
 # $ nest g module "name"
