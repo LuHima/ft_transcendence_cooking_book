@@ -1,5 +1,8 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query} from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe} from '@nestjs/common';
 import { RecipeService } from './recipe.service';
+import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { UpdateRecipeDto } from './dto/update-recipe.dto';
+
 
 @Controller('recipes')
 export class RecipeController 
@@ -9,7 +12,7 @@ export class RecipeController
     
 
     @Get('/id/:id')
-    async getRecipeById(@Param('id') id: number)
+    async getRecipeById(@Param('id', ParseIntPipe) id: number)
     {
         return await this.recipeService.getRecipeById(Number(id));
     }
@@ -31,18 +34,17 @@ export class RecipeController
     // ---------------------------------------------------------------------
     // TODO
     @Post() //aggiunge
-    addRecipe(@Body()recipe: {})
+    addRecipe(@Body()createRecipeDto: CreateRecipeDto)
     {
-        return recipe; 
+        return createRecipeDto; 
     }
     @Patch(':id') // modifica una ricetta 
-    async updateRecipe(@Param('id') id: number, @Body() recipeUpdate: {})
+    async updateRecipe(@Param('id', ParseIntPipe) id: number, @Body() updateRecipeDto: UpdateRecipeDto)
     {
-        this.recipeService.getRecipeById(id)
-        return({id, ...recipeUpdate})
+        return this.recipeService.updateRecipe(id, updateRecipeDto)
     }
     @Delete(':id') // cancella una ricetta 
-    async deleteRecipe(@Param('id') id: number)
+    async deleteRecipe(@Param('id', ParseIntPipe) id: number)
     {
         return(this.recipeService.deleteRecipe(Number(id)))
     }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RecipeService {
@@ -36,6 +37,23 @@ export class RecipeService {
             }
         })
     }
+    async updateRecipe(id :number, recipeUpdate: Prisma.RecipeUpdateInput)
+    {
+        const existingRecipe = this.prisma.recipe.findUnique({
+            where: {
+                id: id
+            }
+        });
+        if(existingRecipe == null)
+        {
+            return "update Not possible";
+        }
+        return this.prisma.recipe.update({
+            where: {id},
+            data: recipeUpdate
+        });
+    }
+
     async deleteRecipe(id :number)//TODO
     { 
         return this.prisma.recipe.delete({
