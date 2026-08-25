@@ -31,12 +31,15 @@ re: fclean all
 #						DEBUG							   |
 #-----------------------------------------------------------
 
+<<<<<<< HEAD
 log_database:
 	docker compose -f docker/docker-compose.yml logs database --tail 500
 
 log_database_real_time:
 	docker compose -f docker/docker-compose.yml logs -f database
 
+=======
+>>>>>>> c671b6e7bd3ec97acbb6bb6039e1b4a9a9b2b1a9
 in_backend:
 	$(SUDO) docker exec -it backend-container bash
 

@@ -1,11 +1,9 @@
 # Node modules (installati dai container o localmente)
 # **/node_modules/
 
-backend_material/
 
 documentation/
 src/backend/node_modules
-agy
 
 # Environment files
 .env
