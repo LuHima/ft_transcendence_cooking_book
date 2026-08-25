@@ -1,0 +1,22 @@
+FROM node:22-slim
+
+WORKDIR /usr/src/app/
+
+# RUN	npm i -g @nestjs/cli
+
+COPY ./src/frontend/package*.json ./
+
+RUN apt-get update && apt install -y netcat-openbsd
+#serve netcat per controllare che il container sia avviato
+
+# RUN npm install vite
+
+RUN npm install
+
+EXPOSE 5173
+
+COPY ./docker/frontend/entrypoint.sh /usr/src
+
+RUN chmod +x /usr/src/entrypoint.sh
+
+ENTRYPOINT ["../entrypoint.sh"]

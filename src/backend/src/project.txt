@@ -1,0 +1,10 @@
+backend/                  <-- La radice del tuo progetto backend
+├── src/                  <-- LA TUA CARTELLA DI LAVORO PRINCIPALE (Scrivi il codice qui)
+│   ├── app.controller.ts <-- Qui si creano le API (i famosi endpoint GET, POST)
+│   ├── app.module.ts     <-- Il modulo principale che coordina l'applicazione
+│   ├── app.service.ts    <-- Qui si scrive la logica (es. calcoli, database)
+│   └── main.ts           <-- Il punto di ingresso (accende il server sulla porta 3000)
+├── node_modules/         <-- Le librerie installate
+├── package.json          <-- I comandi e le dipendenze del progetto
+├── tsconfig.json         <-- La configurazione di TypeScript
+└── nest-cli.json         <-- La configurazione interna di NestJS
