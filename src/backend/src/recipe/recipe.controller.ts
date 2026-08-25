@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe} from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe, ValidationPipe} from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -34,12 +34,12 @@ export class RecipeController
     // ---------------------------------------------------------------------
     // TODO
     @Post() //aggiunge
-    addRecipe(@Body()createRecipeDto: CreateRecipeDto)
+    addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto)
     {
         return createRecipeDto; 
     }
     @Patch(':id') // modifica una ricetta 
-    async updateRecipe(@Param('id', ParseIntPipe) id: number, @Body() updateRecipeDto: UpdateRecipeDto)
+    async updateRecipe(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto)
     {
         return this.recipeService.updateRecipe(id, updateRecipeDto)
     }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { Prisma } from '@prisma/client';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class RecipeService {
@@ -18,7 +19,7 @@ export class RecipeService {
     
     async getRecipesByName(name :string)
     {
-        return this.prisma.recipe.findMany({
+        const recipe = this.prisma.recipe.findMany({
             where: {
                 title: name
             },
@@ -28,26 +29,37 @@ export class RecipeService {
                 description: true
         }
         })
+
+        if(!recipe)
+            throw new NotFoundException('Recipes not found');
+
+        return recipe;
     }
+
     async getRecipeById(id :number)
     {
-        return this.prisma.recipe.findUnique({
+        const recipe = this.prisma.recipe.findUnique({
             where: {
                 id: id
             }
         })
+
+        if(!recipe)
+            throw new NotFoundException('Recipe not found');
+
+        return recipe;
     }
     async updateRecipe(id :number, recipeUpdate: Prisma.RecipeUpdateInput)
     {
-        const existingRecipe = this.prisma.recipe.findUnique({
+        const recipe = this.prisma.recipe.findUnique({
             where: {
                 id: id
             }
-        });
-        if(existingRecipe == null)
-        {
-            return "update Not possible";
-        }
+        })
+
+        if(!recipe)
+            throw new NotFoundException('Recipe not found');
+
         return this.prisma.recipe.update({
             where: {id},
             data: recipeUpdate
@@ -56,6 +68,15 @@ export class RecipeService {
 
     async deleteRecipe(id :number)//TODO
     { 
+        const recipe = this.prisma.recipe.findUnique({
+            where: {
+                id: id
+            }
+        })
+
+        if(!recipe)
+            throw new NotFoundException('Recipe not found');
+
         return this.prisma.recipe.delete({
             where: {
                 id: id
