@@ -36,7 +36,7 @@ export class RecipeController
     @Post() //aggiunge
     addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto)
     {
-        return createRecipeDto; 
+        return this.recipeService.createRecipe(createRecipeDto); 
     }
     @Patch(':id') // modifica una ricetta 
     async updateRecipe(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto)

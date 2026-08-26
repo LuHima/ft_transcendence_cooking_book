@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { Prisma } from '@prisma/client';
 import { NotFoundException } from '@nestjs/common';
+import { CreateRecipeDto } from './dto/create-recipe.dto';
 
 @Injectable()
 export class RecipeService {
@@ -49,18 +50,27 @@ export class RecipeService {
 
         return recipe;
     }
+
+	async createRecipe(recipe: CreateRecipeDto)
+	{
+		return await this.prisma.recipe.create({
+			data: recipe
+		});
+	}
+
+
     async updateRecipe(id :number, recipeUpdate: Prisma.RecipeUpdateInput)
     {
-        const recipe = this.prisma.recipe.findUnique({
+        const recipe = await this.prisma.recipe.findUnique({
             where: {
-                id: id
+                id
             }
         })
 
         if(!recipe)
             throw new NotFoundException('Recipe not found');
 
-        return this.prisma.recipe.update({
+        return await this.prisma.recipe.update({
             where: {id},
             data: recipeUpdate
         });
