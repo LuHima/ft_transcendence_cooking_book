@@ -11,13 +11,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RecipeModule } from './recipe/recipe.module';
-import { RecipeController } from './recipe/recipe.controller';
-import { RecipeService } from './recipe/recipe.service';
+
 
 @Module({
   // NELL'ARRAY SI METTE SOLO IL NOME DELLA CLASSE, NON LA STRINGA DEL PERCORSO!
   imports: [PrismaModule, AuthModule, UsersModule, RecipeModule], // gli import degli altri module creati
-  controllers: [AppController, RecipeController],
-  providers: [AppService, RecipeService], //@injection qui dentro
+  controllers: [AppController], //qui ci vanno i file controller
+  providers: [AppService], //qui ci vanno i file service 
 })
 export class AppModule {}
