@@ -20,9 +20,12 @@ export class RecipeService {
     
     async getRecipesByName(name :string)
     {
-        const recipe = this.prisma.recipe.findMany({
+        const recipe = await this.prisma.recipe.findMany({
             where: {
-                title: name
+                title: {
+                    contains: name,
+                    mode: 'insensitive', 
+                },
             },
             select: {
                 id: true,

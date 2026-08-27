@@ -24,9 +24,11 @@ export class RecipeController
         return await this.recipeService.getAllRecipe();
     }
 
-    @Get(':name')
-    async getRecipe(@Param('name') name: string)
+    @Get('search')
+    async getRecipe(@Query('value') name: string)
     {
+        if (!name)
+            return [];
         return await this.recipeService.getRecipesByName(name);
     }
 
