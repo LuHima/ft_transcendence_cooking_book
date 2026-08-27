@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-    app.useGlobalPipes(                                                                 
-        new ValidationPipe({                                                              
+    app.useGlobalPipes(
+		new GlobalNotEmptyBodyPipe(), // Blocca {} vuoti su tutti i body
+        new ValidationPipe({ 
           whitelist: true,            // Ignora i campi non presenti nel DTO
           forbidNonWhitelisted: true, // da errore se riceve campi non esistenti per i DTO
 		}),
