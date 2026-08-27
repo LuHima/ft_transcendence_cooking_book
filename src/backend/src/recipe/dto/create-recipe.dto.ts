@@ -1,5 +1,5 @@
 import { OwnerType } from "@prisma/client";
-import { /* isEmail, */IsEnum, IsNumber, IsNotEmpty, IsString} from "class-validator";
+import { MinLength, MaxLength, IsEnum, IsNumber, IsNotEmpty, IsString} from "class-validator";
 
 
 export class CreateRecipeDto
@@ -7,14 +7,19 @@ export class CreateRecipeDto
 
   @IsNotEmpty()
   @IsString()
+  @MinLength(3, {message: 'The Recipe must be at least 3 characters long'})
+  @MaxLength(30, {message: 'The Recipe cannot exceed 30 characters'})
   title: string;
   
   @IsNotEmpty()
   @IsString()
+  @MinLength(25, {message: 'The description must be at least 25 characters long'})
+  @MaxLength(500, {message: 'The description cannot exceed 500 characters'})
   description: string;
 
   @IsNotEmpty()
   @IsString()
+  @MinLength(50, {message: 'The instruction must be at least 50 characters long'})
   instructions: string;
 
   @IsNumber()

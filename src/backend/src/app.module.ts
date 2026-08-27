@@ -15,8 +15,8 @@ import { RecipeController } from './recipe/recipe.controller';
 import { RecipeService } from './recipe/recipe.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, RecipeModule],
-  // 2. NELL'ARRAY SI METTE SOLO IL NOME DELLA CLASSE, NON LA STRINGA DEL PERCORSO!
+  // NELL'ARRAY SI METTE SOLO IL NOME DELLA CLASSE, NON LA STRINGA DEL PERCORSO!
+  imports: [PrismaModule, AuthModule, UsersModule, RecipeModule], // gli import degli altri module creati
   controllers: [AppController, RecipeController],
   providers: [AppService, RecipeService], //@injection qui dentro
 })

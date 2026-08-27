@@ -10,17 +10,9 @@ export class RecipeController
 
     constructor(private readonly recipeService: RecipeService) {}
     
-
-    @Get('/id/:id')
-    async getRecipeById(@Param('id', ParseIntPipe) id: number)
-    {
-        return await this.recipeService.getRecipeById(Number(id));
-    }
-
     @Get()
     async getRecipes(@Query("who") who?: 'user' | 'id')
     {
-
         return await this.recipeService.getAllRecipe();
     }
 
@@ -31,10 +23,15 @@ export class RecipeController
             return [];
         return await this.recipeService.getRecipesByName(name);
     }
-
+    
+    @Get(':id')
+    async getRecipeById(@Param('id', ParseIntPipe) id: number)
+    {
+        return await this.recipeService.getRecipeById(Number(id));
+    }
 
     // ---------------------------------------------------------------------
-    // TODO
+    // TODO da verificare che l'utente modichi solo cio che e' suo e che abbia i permessi per farlo
     @Post() //aggiunge
     addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto)
     {
@@ -50,7 +47,6 @@ export class RecipeController
     {
         return(this.recipeService.deleteRecipe(Number(id)))
     }
-
 }
 
 /* 

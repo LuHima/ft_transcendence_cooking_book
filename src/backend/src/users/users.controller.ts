@@ -1,12 +1,12 @@
-import { Controller, Get, Patch, Post, Delete } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, Query } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController 
 {
-   /*  @Get(:name)
-    async getUser(name:string)
+    @Get('search')
+    async getUser(name:string, @Query('value') username: string)
     {
-
-    } */
+        
+    }
 
 }

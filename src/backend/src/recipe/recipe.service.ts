@@ -15,7 +15,7 @@ export class RecipeService {
         {
             return "hello";
         }
-        return	this.prisma.recipe.findMany();
+        return await this.prisma.recipe.findMany();
     }
     
     async getRecipesByName(name :string)
@@ -42,7 +42,7 @@ export class RecipeService {
 
     async getRecipeById(id :number)
     {
-        const recipe = this.prisma.recipe.findUnique({
+        const recipe = await this.prisma.recipe.findUnique({
             where: {
                 id: id
             }
@@ -90,7 +90,7 @@ export class RecipeService {
         if(!recipe)
             throw new NotFoundException('Recipe not found');
 
-        return this.prisma.recipe.delete({
+        return await this.prisma.recipe.delete({
             where: {
                 id: id
             }
