@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength, MinLength} from 'class-validator';
 
-export class registerUserDto
+export class SignInUserDto
 {
     @IsString()
     @IsNotEmpty({ message: 'The username cannot be empty' })

@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+import e from 'express';
 
 
 // This should be a real class/interface representing a user entity
@@ -11,13 +12,15 @@ export class AuthService
 
   constructor(private usersService:UsersService){}
 
-  async signIn(username:string, pass: string)
+  async signIn(email:string, pass: string)
   {
-    const user = await this.usersService.getUser(1);
-    if (user.password !== pass) {
+    const user = await this.usersService.getUserByEmail(email)
+
+    if (user.password_hash !== pass) 
+    {
       throw new UnauthorizedException();
     }
-    const { password, ...result } = user;
+    const { password_hash, ...result } = user;
     // TODO: Generate a JWT and return it here
     // instead of the user object
     return result;
