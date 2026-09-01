@@ -10,7 +10,7 @@ export type User = any;
 export class AuthService 
 {
 
-  constructor(private usersService:UsersService, private jwtService: JwtService){}
+  constructor(private usersService: UsersService, private jwtService: JwtService){}
 
   async signIn(email:string, pass: string) : Promise<{ access_token: string }>
   {

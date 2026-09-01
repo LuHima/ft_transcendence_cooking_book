@@ -1,7 +1,10 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, APP_GUARD } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pipe';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
