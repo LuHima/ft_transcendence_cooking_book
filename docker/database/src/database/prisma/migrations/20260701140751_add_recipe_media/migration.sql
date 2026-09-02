@@ -1,17 +1,18 @@
+-- DropTable: shopping list feature removed
+DROP TABLE "shopping_list_items";
+DROP TABLE "shopping_lists";
+
 -- CreateEnum
-CREATE TYPE "MediaType" AS ENUM ('image', 'video');
+CREATE TYPE "RecipeDifficulty" AS ENUM ('easy', 'medium', 'hard');
 
--- CreateTable
-CREATE TABLE "recipe_media" (
-    "id" SERIAL NOT NULL,
-    "recipe_id" INTEGER NOT NULL,
-    "url" VARCHAR(500) NOT NULL,
-    "media_type" "MediaType" NOT NULL,
-    "order" INTEGER NOT NULL DEFAULT 0,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- AlterTable: recipes
+ALTER TABLE "recipes" ADD COLUMN "difficulty" "RecipeDifficulty" NOT NULL DEFAULT 'easy';
 
-    CONSTRAINT "recipe_media_pkey" PRIMARY KEY ("id")
-);
-
--- AddForeignKey
-ALTER TABLE "recipe_media" ADD CONSTRAINT "recipe_media_recipe_id_fkey" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AlterTable: users (anagrafica estesa)
+ALTER TABLE "users" ADD COLUMN "first_name" VARCHAR(100);
+ALTER TABLE "users" ADD COLUMN "last_name" VARCHAR(100);
+ALTER TABLE "users" ADD COLUMN "birth_date" DATE;
+ALTER TABLE "users" ADD COLUMN "phone" VARCHAR(30);
+ALTER TABLE "users" ADD COLUMN "address" VARCHAR(255);
+ALTER TABLE "users" ADD COLUMN "city" VARCHAR(100);
+ALTER TABLE "users" ADD COLUMN "postal_code" VARCHAR(10);

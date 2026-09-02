@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+	provider = "prisma-client-js"
 }
 
 datasource db {
@@ -28,6 +27,12 @@ enum MediaType {
   video
 }
 
+enum RecipeDifficulty {
+  easy
+  medium
+  hard
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,6 +43,13 @@ model User {
   email         String    @unique @db.VarChar(255)
   password_hash String    @db.VarChar(255)
   avatar_url    String?   @db.VarChar(255)
+  first_name    String?   @db.VarChar(100)
+  last_name     String?   @db.VarChar(100)
+  birth_date    DateTime? @db.Date
+  phone         String?   @db.VarChar(30)
+  address       String?   @db.VarChar(255)
+  city          String?   @db.VarChar(100)
+  postal_code   String?   @db.VarChar(10)
   is_active     Boolean   @default(true)
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
@@ -45,7 +57,6 @@ model User {
   recipes        Recipe[]
   comments       Comment[]
   likes          Like[]
-  shopping_lists ShoppingList[]
   meal_plans     MealPlan[]
 
   @@map("users")
@@ -63,6 +74,7 @@ model Recipe {
   description  String?
   instructions String?
   prep_time    Int?
+  difficulty   RecipeDifficulty @default(easy)
   created_at   DateTime  @default(now())
 
   user               User?              @relation(fields: [user_id], references: [id])
@@ -84,7 +96,6 @@ model Ingredient {
   name String @unique @db.VarChar(100)
 
   recipe_ingredients  RecipeIngredient[]
-  shopping_list_items ShoppingListItem[]
 
   @@map("ingredients")
 }
@@ -152,7 +163,6 @@ model MealPlan {
 
   user              User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
   meal_plan_recipes MealPlanRecipe[]
-  shopping_lists    ShoppingList[]
 
   @@map("meal_plans")
 }
@@ -168,37 +178,6 @@ model MealPlanRecipe {
 
   @@id([meal_plan_id, recipe_id, planned_date])
   @@map("meal_plan_recipes")
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SHOPPING LISTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-model ShoppingList {
-  id           Int      @id @default(autoincrement())
-  user_id      Int
-  meal_plan_id Int?
-  created_at   DateTime @default(now())
-
-  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  meal_plan MealPlan? @relation(fields: [meal_plan_id], references: [id])
-  items     ShoppingListItem[]
-
-  @@map("shopping_lists")
-}
-
-model ShoppingListItem {
-  id               Int     @id @default(autoincrement())
-  shopping_list_id Int
-  ingredient_id    Int
-  quantity         Decimal @db.Decimal(10, 2)
-  unit             String  @db.VarChar(50)
-  checked          Boolean @default(false)
-
-  shopping_list ShoppingList @relation(fields: [shopping_list_id], references: [id], onDelete: Cascade)
-  ingredient    Ingredient   @relation(fields: [ingredient_id], references: [id])
-
-  @@map("shopping_list_items")
 }
 
 model RecipeMedia {
