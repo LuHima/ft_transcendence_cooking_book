@@ -11,12 +11,16 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RecipeModule } from './recipe/recipe.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
   // NELL'ARRAY SI METTE SOLO IL NOME DELLA CLASSE, NON LA STRINGA DEL PERCORSO!
-  imports: [PrismaModule, AuthModule, UsersModule, RecipeModule], // gli import degli altri module creati
+  imports: [PrismaModule, AuthModule, UsersModule, RecipeModule,
+    ThrottlerModule.forRoot([{ttl: 1000, limit: 4,}]), ], 
+  // gli import degli altri module creati
   controllers: [AppController], //qui ci vanno i file controller
-  providers: [AppService], //qui ci vanno i file service 
+  providers: [AppService, {provide: APP_GUARD, useClass: ThrottlerGuard,}], //qui ci vanno i file service 
 })
 export class AppModule {}
