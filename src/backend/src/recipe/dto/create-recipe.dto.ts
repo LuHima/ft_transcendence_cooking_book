@@ -14,7 +14,7 @@ export class CreateRecipeDto
   @IsNotEmpty()
   @IsString()
   @MinLength(25, {message: 'The description must be at least 25 characters long'})
-  @MaxLength(500, {message: 'The description cannot exceed 500 characters'})
+  @MaxLength(5000, {message: 'The description cannot exceed 5000 characters'})
   description: string;
 
   @IsNotEmpty()

@@ -30,7 +30,7 @@ export class RecipeService {
                 id: true,
                 title: true,
                 description: true
-        }
+            }
         })
 
         if(!recipe)
