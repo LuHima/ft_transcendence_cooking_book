@@ -21,9 +21,12 @@ down:
 
 prune:
 	$(SUDO) docker system prune -a --volumes -f
+	$(SUDO) docker volume prune -a -f
 
-
-fclean: down prune
+fclean:
+	$(SUDO) docker compose $(PATH_EXE) down -v
+	$(SUDO) docker system prune -a --volumes -f
+	$(SUDO) docker volume prune -a -f
 
 re: fclean all
 
