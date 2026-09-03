@@ -1,7 +1,14 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, useGLTF, ContactShadows, Text, useTexture } from '@react-three/drei'
-import { Object3D, RepeatWrapping, SRGBColorSpace, Vector3 } from 'three'
+import { OrbitControls, useGLTF, ContactShadows, useTexture, Environment } from '@react-three/drei'
+import { CanvasTexture, Object3D, RepeatWrapping, SRGBColorSpace, Vector3, NoToneMapping } from 'three'
+import { Page } from './Page'
+import { useBookPages } from './hooks/useBookPages'
+
+// Import delle risorse 3D e delle texture dalla cartella assets
+// Le texture vengono usate per il materiale del libro e per il logo sulla copertina
+// useGLTF carica il modello della cucina in formato GLB
+// OrbitControls gestisce la vista orbitale attorno alla scena
 
 // FROM ASSETS
 
@@ -20,12 +27,14 @@ import logoUrl from '../assets/biggernobg.png'
 // END ASSETS
 
 function useLogoTexture() {
+	// carica la texture del logo usata sulla copertina del libro
 	const logoMap = useTexture(logoUrl)
 	logoMap.colorSpace = SRGBColorSpace
 	return logoMap
 }
 
 function useLeatherMaterial() {
+	// carica le texture della pelle per la copertina principale del libro
 	const [colorMap, roughnessMap, normalMap, dispMap] = useTexture([
 		leatherColorUrl,
 		leatherRoughnessUrl,
@@ -44,6 +53,7 @@ function useLeatherMaterial() {
 }
 
 function useLeatherMaterial1() {
+	// carica un altro set di texture per il materiale della cerniera del libro
 	const [colorMap1, roughnessMap1, normalMap1, dispMap1] = useTexture([
 		leatherColorUrl1,
 		leatherRoughnessUrl1,
@@ -65,15 +75,81 @@ interface BookProps {
 	controlsRef: React.RefObject<any>
 }
 
-// esempio
+// elenco delle ricette usato per generare le pagine del libro
 const recipes = [
-  { id: 1, title: "Pasta al Pomodoro" },
-  { id: 2, title: "Risotto ai Funghi" },
-  { id: 3, title: "Tiramisù" },
+	{ id: 1, title: "Pasta al Pomodoro" },
+	{ id: 2, title: "Risotto ai Funghi" },
+	{ id: 3, title: "Tiramisù" },
+	{ id: 4, title: "Pasta al Pomodoro" },
+	{ id: 5, title: "Risotto ai Funghi" },
+	{ id: 6, title: "Tiramisù" },
+	{ id: 7, title: "Pasta al Pomodoro" },
+	{ id: 8, title: "Risotto ai Funghi" },
+	{ id: 9, title: "Tiramisù" },
+	{ id: 10, title: "Pasta al Pomodoro" },
+	{ id: 11, title: "Risotto ai Funghi" },
+	{ id: 12, title: "Tiramisù" },
+	{ id: 13, title: "Pasta al Pomodoro" },
+	{ id: 14, title: "Risotto ai Funghi" },
+	{ id: 15, title: "Tiramisù" },
+	{ id: 16, title: "Pasta al Pomodoro" },
+	{ id: 17, title: "Risotto ai Funghi" },
+	{ id: 18, title: "Tiramisù" },
+	{ id: 19, title: "Pasta al Pomodoro" },
+	{ id: 20, title: "Risotto ai Funghi" },
+	{ id: 21, title: "Tiramisù" },
+	{ id: 22, title: "Pasta al Pomodoro" },
+	{ id: 23, title: "Risotto ai Funghi" },
+	{ id: 24, title: "Tiramisù" },
+	{ id: 25, title: "Pasta al Pomodoro" },
+	{ id: 26, title: "Risotto ai Funghi" },
+	{ id: 27, title: "Tiramisù" },
+	{ id: 28, title: "Pasta al Pomodoro" },
+	{ id: 29, title: "Risotto ai Funghi" },
+	{ id: 30, title: "Tiramisù" },
 ]
 
+function createRecipeTexture(title: string, accent: string, background: string) {
+	// crea un canvas 2D per generare una texture al volo
+	const canvas = document.createElement('canvas')
+	canvas.width = 512
+	canvas.height = 512
+
+	const ctx = canvas.getContext('2d')
+	if (!ctx) return null
+
+	// sfondo marroncino per dare un aspetto di carta vecchia
+	const gradient = ctx.createLinearGradient(0, 0, 512, 512)
+	gradient.addColorStop(0, background)
+	gradient.addColorStop(1, accent)
+	ctx.fillStyle = gradient
+	ctx.fillRect(0, 0, 512, 512)
+
+	// titolo principale della ricetta, centrato nella texture
+	ctx.fillStyle = '#4a331f'
+	ctx.font = 'bold 48px serif'
+	ctx.textAlign = 'center'
+	ctx.fillText(title, 256, 210)
+
+	// testo secondario fisso sotto il titolo
+	ctx.font = '24px serif'
+	ctx.fillStyle = '#5a442b'
+	ctx.fillText('Ricetta del giorno', 256, 300)
+
+	// bordo leggermente scuro attorno alla pagina per farla sembrare antica
+	ctx.strokeStyle = '#a58362'
+	ctx.lineWidth = 6
+	ctx.strokeRect(42, 42, 428, 428)
+
+	// converte il canvas in una CanvasTexture Three.js
+	const texture = new CanvasTexture(canvas)
+	texture.colorSpace = SRGBColorSpace
+	texture.needsUpdate = true
+	return texture
+}
+
 function Book({controlsRef} : BookProps) {
-	
+	// limiti iniziali per la camera quando si ruota intorno alla scena
 	const originalLimits = useRef({
 		minPolarAngle: Math.PI * 0.35,
 		maxPolarAngle: Math.PI * 0.55,
@@ -90,6 +166,7 @@ function Book({controlsRef} : BookProps) {
 		c.update()
 	}
 	
+	// materiali usati per la copertina e la cerniera del libro
 	const { colorMap, normalMap, roughnessMap } = useLeatherMaterial()
 	const { colorMap1, normalMap1, roughnessMap1 } = useLeatherMaterial1()
 
@@ -98,32 +175,78 @@ function Book({controlsRef} : BookProps) {
 	const coverTopRef = useRef<any>(null)
 	const hingeRef = useRef<any>(null)
 	const [hovered, setHovered] = useState(false)
+	const pageProgressRefs = useRef<Array<{ current: number }>>([])
+	const { pageProgress, nextPage, prevPage, closePages} = useBookPages(recipes.length)
 
+	// stato dell'animazione di apertura del libro
 	const progress = useRef(0)
+	const recipeTextures = useMemo(() => {
+		return recipes.map((recipe) => {
+			const frontMap = createRecipeTexture(recipe.title, '#f0d9b0', '#fbefe0')
+			const backMap = createRecipeTexture(`Recipe ${recipe.id}`, '#dfc39b', '#f7ead2')
+			return { frontMap, backMap }
+		})
+	}, [])
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key !== 'Escape' || !isOpen || camPhase.current !== 'idle') return
-			event.preventDefault()
-			setIsOpen(false)
+			// chiude il libro con Esc solo quando la camera è ferma
+			if (event.key === 'Escape' && isOpen && camPhase.current === 'idle') {
+				event.preventDefault()
+				setIsOpen(false)
+			}
+			// avanti/indietro pagina con le frecce solo se il libro è aperto
+			if (event.key === 'ArrowRight' && isOpen) {
+				event.preventDefault()
+				nextPage()
+			}
+			if (event.key === 'ArrowLeft' && isOpen) {
+				event.preventDefault()
+				prevPage()
+			}
 		}
 
 		window.addEventListener('keydown', handleKeyDown)
 		return () => window.removeEventListener('keydown', handleKeyDown)
-	}, [isOpen])
+	}, [isOpen, nextPage, prevPage])
+
+	useEffect(() => {
+		if (!isOpen) {
+			closePages()
+		}
+	}, [isOpen, closePages])
 
 	const { camera } = useThree()
 	const camPhase = useRef<'idle' | 'zooming-in' | 'zooming-out'>('idle')
 	const camProgress = useRef(0)
 
+	// posizione iniziale e target della camera prima dell'apertura del libro
 	const initialCamPos = useRef(new Vector3(-10, 1.5, 0))
 	const initialTarget = useRef(new Vector3(-3, 1.5, 0))
 
-	// da tarare
+	// posizione target della camera durante l'ingrandimento sul libro
 	const zoomedCamPos = useRef(new Vector3(-2.51, 1.3, -0.1))
 	const zoomedTarget = useRef(new Vector3(-2.5, 1, -0.1))
+		const pageGroupRefs = useRef<Array<any>>([])
 
-	useFrame((_, delta) => {
+		useFrame((_, delta) => {
+			pageProgressRefs.current.forEach((ref, index) => {
+				const p = pageProgress.current[index] ?? 0
+				if (ref) ref.current = p
+
+				const group = pageGroupRefs.current[index]
+				if (group) {
+					const zStep = 0.001
+					const yClosed = 0.164
+					const yOpened = 0.166
+
+					const closedStackZ = 0.01 + (recipes.length - 1 - index) * zStep
+					const openStackZ = 0.01 + index * zStep
+
+					group.position.z = closedStackZ * (1 - p) + openStackZ * p
+					group.position.y = yClosed * (1 - p) + (yOpened) * p
+				}
+		})
 		const camSpeed = 1
 
 		if (camPhase.current === 'zooming-in' || camPhase.current === 'zooming-out') {
@@ -131,6 +254,7 @@ function Book({controlsRef} : BookProps) {
 			camProgress.current = Math.max(0, Math.min(1, camProgress.current + dir * (delta / camSpeed)))
 			const t = 1 - Math.pow(1 - camProgress.current, 3);
 
+			// interpolazione dolce della camera e del target quando si fa zoom sul libro
 			camera.position.lerpVectors(initialCamPos.current, zoomedCamPos.current, t)
 			if (controlsRef.current) {
 				controlsRef.current.target.lerpVectors(initialTarget.current, zoomedTarget.current, t)
@@ -145,10 +269,11 @@ function Book({controlsRef} : BookProps) {
 			if (camPhase.current === 'zooming-out' && camProgress.current <= 0) {
 				camPhase.current = 'idle'
 				if (controlsRef.current) controlsRef.current.enabled = true
-					setControlsLimits(originalLimits.current)
+				setControlsLimits(originalLimits.current)
 			}
 		}
 
+		// progress di apertura della copertina del libro
 		const targetProgress = isOpen ? 1 : 0
 		const speed = 1
 		const direction = targetProgress === 1 ? 1 : -1
@@ -157,9 +282,11 @@ function Book({controlsRef} : BookProps) {
 		progress.current += direction * (delta / speed)
 		progress.current = Math.max(0, Math.min(1, progress.current))
 
+		// quando il libro è chiuso e il progresso torna a 0, inizia lo zoom out della camera
 		if (wasOpen && progress.current === 0 && camPhase.current == 'idle')
 			camPhase.current = 'zooming-out'
 
+		// easing cubico per chiusura/apertura più morbida
 		const eased = 1 - Math.pow(1 - progress.current, 3)
 		const angle = eased * -Math.PI
 
@@ -183,6 +310,7 @@ function Book({controlsRef} : BookProps) {
 		<group
 			position={[-2.5, 1.05, 0]}
 			rotation={[-Math.PI / 2, 0, 0]}
+			// cliccare sul libro avvia l'animazione di zooming e apre la copertina
 			onClick={(e) => {
 				e.stopPropagation()
 				if (camPhase.current !== 'idle' || isOpen) return
@@ -202,6 +330,7 @@ function Book({controlsRef} : BookProps) {
 				if (isOpen || !controlsRef.current || camPhase.current !== 'idle') return
 				controlsRef.current.enabled = false
 			}}
+			// riattiva i controlli dell'orbita quando il puntatore viene rilasciato
 			onPointerUp={() => {
 				if (isOpen || !controlsRef.current || camPhase.current !== 'idle') return
 				controlsRef.current.enabled = true
@@ -214,6 +343,7 @@ function Book({controlsRef} : BookProps) {
 				onPointerOver={(e) => { e.stopPropagation(); setHovered(true) }}
 				onPointerOut={(e) => { e.stopPropagation(); setHovered(false) }}
 			>
+				{/* area invisibile sopra il libro per catturare hover e click */}
 				<boxGeometry args={[0.48, 0.42, 0.08]} />
 				<meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
 			</mesh>
@@ -231,7 +361,7 @@ function Book({controlsRef} : BookProps) {
 						roughness={1}
 					/>
 				</mesh>
-				{/* outline for hover */}
+				{/* outline for hover: evidenzia il libro quando il cursore è sopra e il libro è chiuso */}
 				<mesh visible={(!isOpen && hovered) && progress.current <= 0.001} position={[0, 0, 0]} renderOrder={999} scale={[1.002, 1.002, 1.002]}>
 					<boxGeometry args={[0.4, 0.3, 0.02]} />
 					<meshBasicMaterial color="#ffffff" transparent opacity={0.18} depthWrite={false} toneMapped={false} />
@@ -284,17 +414,26 @@ function Book({controlsRef} : BookProps) {
 				</mesh>
 			</group>
 
+			{/* pagine all'interno del libro, ciascuna con texture frontale e retro */}
 			{recipes.map((recipe, index) => {
-				const zOffset = 0.01 + index * (0.025 / recipes.length)
+				const zOffset =  0.01 + (recipes.length - 1 - index) * 0.001
+				const pageRef = (pageProgressRefs.current[index] ??= { current: 0 })
+				const textures = recipeTextures[index]
+				if (!textures?.frontMap || !textures.backMap) return null
+
 				return (
-					<group key={recipe.id} position={[0, 0.155, zOffset]}>
-						<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
-							<boxGeometry args={[0.39, 0.28, 0.002]} />
-							<meshStandardMaterial color="#f5e6c8" />
-						</mesh>
-						<Text position={[0, -0.14, 0.002]} rotation={[0, 0, -Math.PI / 2]} fontSize={0.03} color="#3d1f10" anchorX="center" anchorY="middle">
-							{recipe.title}
-						</Text>
+					<group
+						key={recipe.id}
+						ref={(el) => (pageGroupRefs.current[index] = el)}
+						position={[0, 0.164, zOffset + 0.01]}>
+						<Page
+							progressRef={pageRef}
+							frontMap={textures.frontMap}
+							backMap={textures.backMap}
+							width={0.39}
+							height={0.28}
+							position={[0, -0.152, 0.0052]}
+						/>
 					</group>
 				)
 			})}
@@ -309,12 +448,23 @@ function KitchenModel({ scene }: { scene: Object3D }) {
 				c.castShadow = true
 				c.receiveShadow = true
 			}
+			if (c.isLight) {
+				c.castShadow = true
+				if (c.shadow) {
+					c.shadow.mapSize.set(1024, 1024)
+					c.shadow.camera.near = 0.1
+					c.shadow.camera.far = 20
+					c.shadow.bias = -0.001
+					c.shadow.normalBias = 0.02
+	}
+}
 		})
 	}, [scene])
 	return <primitive object={scene} dispose={null} />
 }
 
 function LoadingFallback() {
+	// mesh di fallback mostrata mentre il modello è in caricamento
 	return (
 		<mesh>
 			<boxGeometry args={[1, 1, 1]} />
@@ -326,43 +476,59 @@ function LoadingFallback() {
 export default function Scene() {
 	const { scene } = useGLTF(kitchenUrl)
 	const controlsRef = useRef<any>(null)
+	const [isBullseyeOn, setIsBullseyeOn] = useState(true)
 
 	return (
-		<Canvas shadows="percentage" dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
-			<ambientLight intensity={1.1} color="#fff5e0" />
+		<div className="relative h-full w-full">
+			<button
+				type="button"
+				onClick={() => setIsBullseyeOn((prev) => !prev)}
+				className="absolute left-4 top-4 z-10 rounded-full border border-amber-200/60 bg-[#2b1a0d]/80 px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 shadow-lg backdrop-blur-sm transition hover:bg-[#3b260f]"
+			>
+				{isBullseyeOn ? 'Occhio di bue: on' : 'Occhio di bue: off'}
+			</button>
 
-			<directionalLight
-			position={[-9, 4, 1]}
-			intensity={1.3}
-			color="#ffd9a8"
-			target-position={[-2.5, 1.05, 0]}
-			castShadow={false}
-			/>
+			<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
+				<Environment preset="apartment" environmentIntensity={0.1} />
+				<ambientLight intensity={0.2} color="#ffffff" />
 
-			<directionalLight position={[-5, 3, 4]} intensity={1} color="#ffffff" />
-			<directionalLight position={[-5, 3, -4]} intensity={1} color="#ffe8cc" />
+				{/* luci soffuse in background */}
+				<pointLight position={[-1.85, 1.8, -0.65]} intensity={50} color="#4e310b" distance={4} decay={2} />
+				<pointLight position={[-1.85, 1.8, 1.25]} intensity={50} color="#4e310b" distance={4} decay={2} />
+				<pointLight position={[-1.85, 1.8, 3.2]} intensity={50} color="#4e310b" distance={4} decay={2} />
 
-			<pointLight position={[-2.5, 2.5, 0]} intensity={1} color="#ffe4b0" distance={4} decay={2} />
+				{/* occhio di bue */}
+				{isBullseyeOn && (
+					<pointLight
+						position={[-2.5, 2, -0.1]}
+						intensity={100}
+						color="#4e310b"
+						distance={4}
+						decay={2}
+					/>
+				)}
+				
+				<Suspense fallback={<LoadingFallback />}>
+					<KitchenModel scene={scene} />
+					<Book controlsRef={controlsRef} />
+				</Suspense>
 
-			<Suspense fallback={<LoadingFallback />}>
-				<KitchenModel scene={scene} />
-				<Book controlsRef={controlsRef} />
-			</Suspense>
-			<ContactShadows position={[-10, 0, 0]} opacity={0.35} scale={8} blur={2} far={2} />
-			<OrbitControls
-				ref={controlsRef}
-				makeDefault
-				target={[-3, 1.5, 0]}
-				enableDamping
-				dampingFactor={0.05}
-				enablePan={false}
-				minDistance={0.5}
-				maxDistance={2.5}
-				minPolarAngle={Math.PI * 0.35}
-				maxPolarAngle={Math.PI * 0.55}
-				minAzimuthAngle={-Math.PI * 0.8}
-				maxAzimuthAngle={-Math.PI * 0.20}
-			/>
-		</Canvas>
+				<OrbitControls
+					ref={controlsRef}
+					makeDefault
+					target={[-3, 1.5, 0]}
+					enableDamping
+					dampingFactor={0.05}
+					enablePan={false}
+					minDistance={0.5}
+					maxDistance={2.5}
+					minPolarAngle={Math.PI * 0.35}
+					maxPolarAngle={Math.PI * 0.55}
+					minAzimuthAngle={-Math.PI * 0.8}
+					maxAzimuthAngle={-Math.PI * 0.20}
+				/>
+
+			</Canvas>
+		</div>
 	)
 }
