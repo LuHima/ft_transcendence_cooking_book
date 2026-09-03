@@ -7,7 +7,15 @@ done
 
 echo "Database is ready!"
 
-# Rigenera il Prisma Client
+#npm install -D typescript tsx @types/node @prisma/adapter-pg pg @types/pg dotenv
+
+# Rigenera il Prisma Client prima di usare il client
 npx prisma generate
+
+# Esegue le migrazioni del database
+npx prisma migrate deploy
+
+# Esegue lo seed (idempotente)
+npx prisma db seed
 
 exec npm run start:dev

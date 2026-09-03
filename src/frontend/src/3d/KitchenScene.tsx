@@ -107,11 +107,6 @@ const recipes = [
 	{ id: 28, title: "Pasta al Pomodoro" },
 	{ id: 29, title: "Risotto ai Funghi" },
 	{ id: 30, title: "Tiramisù" },
-	{ id: 31, title: "Pasta al Pomodoro" },
-	{ id: 32, title: "Risotto ai Funghi" },
-	{ id: 33, title: "Tiramisù" },
-	{ id: 34, title: "Pasta al Pomodoro" },
-	{ id: 35, title: "Risotto ai Funghi" },
 ]
 
 function createRecipeTexture(title: string, accent: string, background: string) {
@@ -181,7 +176,7 @@ function Book({controlsRef} : BookProps) {
 	const hingeRef = useRef<any>(null)
 	const [hovered, setHovered] = useState(false)
 	const pageProgressRefs = useRef<Array<{ current: number }>>([])
-	const { pageProgress, nextPage, prevPage } = useBookPages(recipes.length)
+	const { pageProgress, nextPage, prevPage, closePages} = useBookPages(recipes.length)
 
 	// stato dell'animazione di apertura del libro
 	const progress = useRef(0)
@@ -215,6 +210,12 @@ function Book({controlsRef} : BookProps) {
 		return () => window.removeEventListener('keydown', handleKeyDown)
 	}, [isOpen, nextPage, prevPage])
 
+	useEffect(() => {
+		if (!isOpen) {
+			closePages()
+		}
+	}, [isOpen, closePages])
+
 	const { camera } = useThree()
 	const camPhase = useRef<'idle' | 'zooming-in' | 'zooming-out'>('idle')
 	const camProgress = useRef(0)
@@ -236,11 +237,15 @@ function Book({controlsRef} : BookProps) {
 				const group = pageGroupRefs.current[index]
 				if (group) {
 					const zStep = 0.001
-					const flipped = p > 0.5
-					group.position.z = flipped
-						? 0.01 - (index + 1) * zStep          // girate: stack invertito, vicino alla copertina anteriore
-						: 0.01 + (recipes.length - 1 - index) * zStep // non girate: stack normale
-			}
+					const yClosed = 0.164
+					const yOpened = 0.166
+
+					const closedStackZ = 0.01 + (recipes.length - 1 - index) * zStep
+					const openStackZ = 0.01 + index * zStep
+
+					group.position.z = closedStackZ * (1 - p) + openStackZ * p
+					group.position.y = yClosed * (1 - p) + (yOpened) * p
+				}
 		})
 		const camSpeed = 1
 
@@ -417,14 +422,17 @@ function Book({controlsRef} : BookProps) {
 				if (!textures?.frontMap || !textures.backMap) return null
 
 				return (
-					<group key={recipe.id} position={[0, 0.164, zOffset + 0.01]}>
+					<group
+						key={recipe.id}
+						ref={(el) => (pageGroupRefs.current[index] = el)}
+						position={[0, 0.164, zOffset + 0.01]}>
 						<Page
 							progressRef={pageRef}
 							frontMap={textures.frontMap}
 							backMap={textures.backMap}
 							width={0.39}
 							height={0.28}
-							position={[0, -0.15, 0.0005]}
+							position={[0, -0.152, 0.0052]}
 						/>
 					</group>
 				)
@@ -468,36 +476,59 @@ function LoadingFallback() {
 export default function Scene() {
 	const { scene } = useGLTF(kitchenUrl)
 	const controlsRef = useRef<any>(null)
+	const [isBullseyeOn, setIsBullseyeOn] = useState(true)
 
 	return (
-		
-		<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
-		
-			<Environment preset="apartment" environmentIntensity={0.1} />
-			<ambientLight intensity={0.2} color="#ffffff" />
+		<div className="relative h-full w-full">
+			<button
+				type="button"
+				onClick={() => setIsBullseyeOn((prev) => !prev)}
+				className="absolute left-4 top-4 z-10 rounded-full border border-amber-200/60 bg-[#2b1a0d]/80 px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 shadow-lg backdrop-blur-sm transition hover:bg-[#3b260f]"
+			>
+				{isBullseyeOn ? 'Occhio di bue: on' : 'Occhio di bue: off'}
+			</button>
 
-			<pointLight position={[-2.5, 2, -0.1]} intensity={100} color="#4e310b" distance={4} decay={2} />
+			<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
+				<Environment preset="apartment" environmentIntensity={0.1} />
+				<ambientLight intensity={0.2} color="#ffffff" />
 
-			<Suspense fallback={<LoadingFallback />}>
-				<KitchenModel scene={scene} />
-				<Book controlsRef={controlsRef} />
-			</Suspense>
+				{/* luci soffuse in background */}
+				<pointLight position={[-1.85, 1.8, -0.65]} intensity={50} color="#4e310b" distance={4} decay={2} />
+				<pointLight position={[-1.85, 1.8, 1.25]} intensity={50} color="#4e310b" distance={4} decay={2} />
+				<pointLight position={[-1.85, 1.8, 3.2]} intensity={50} color="#4e310b" distance={4} decay={2} />
 
-			<OrbitControls
-				ref={controlsRef}
-				makeDefault
-				target={[-3, 1.5, 0]}
-				enableDamping
-				dampingFactor={0.05}
-				enablePan={false}
-				minDistance={0.5}
-				maxDistance={2.5}
-				minPolarAngle={Math.PI * 0.35}
-				maxPolarAngle={Math.PI * 0.55}
-				minAzimuthAngle={-Math.PI * 0.8}
-				maxAzimuthAngle={-Math.PI * 0.20}
-			/>
+				{/* occhio di bue */}
+				{isBullseyeOn && (
+					<pointLight
+						position={[-2.5, 2, -0.1]}
+						intensity={100}
+						color="#4e310b"
+						distance={4}
+						decay={2}
+					/>
+				)}
+				
+				<Suspense fallback={<LoadingFallback />}>
+					<KitchenModel scene={scene} />
+					<Book controlsRef={controlsRef} />
+				</Suspense>
 
-		</Canvas>
+				<OrbitControls
+					ref={controlsRef}
+					makeDefault
+					target={[-3, 1.5, 0]}
+					enableDamping
+					dampingFactor={0.05}
+					enablePan={false}
+					minDistance={0.5}
+					maxDistance={2.5}
+					minPolarAngle={Math.PI * 0.35}
+					maxPolarAngle={Math.PI * 0.55}
+					minAzimuthAngle={-Math.PI * 0.8}
+					maxAzimuthAngle={-Math.PI * 0.20}
+				/>
+
+			</Canvas>
+		</div>
 	)
 }

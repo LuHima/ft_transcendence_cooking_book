@@ -15,18 +15,41 @@ $(NAME):
 	$(SUDO) docker compose $(PATH_EXE)  up --build
 #	$(MAKE) in_backend
 
-ps:
-	$(SUDO) docker compose $(PATH_EXE) ps
 
 down:
 	$(SUDO) docker compose $(PATH_EXE) down
 
 prune:
-	$(SUDO) docker container prune -f
+	$(SUDO) docker system prune -a --volumes -f
+	$(SUDO) docker volume prune -a -f
+
+fclean:
+	$(SUDO) docker compose $(PATH_EXE) down -v
+	$(SUDO) docker system prune -a --volumes -f
+	$(SUDO) docker volume prune -a -f
+
+re: fclean all
+
+#-----------------------------------------------------------
+#						DEBUG							   |
+#-----------------------------------------------------------
+
+log_database:
+	docker compose -f docker/docker-compose.yml logs database --tail 500
+
+log_database_real_time:
+	docker compose -f docker/docker-compose.yml logs -f database
 
 in_backend:
 	$(SUDO) docker exec -it backend-container bash
 
-fclean: down prune
+stats_memory:
+	docker system df
 
-re: fclean all
+ps:
+	$(SUDO) docker compose $(PATH_EXE) ps
+
+# nest g module "name" crea una cartella con quel module nome 
+# $ nest g module "name"
+# $ nest g controller "name" crea il file controller 
+# $ nest g service "name" crea il service

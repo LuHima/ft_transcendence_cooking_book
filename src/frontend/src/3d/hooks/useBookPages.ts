@@ -7,10 +7,31 @@ export function useBookPages(numPages: number) {
 	const currentPage = useRef(0) // indice della pagina "attiva" in transizione
 	const turning = useRef(false)
 	const direction = useRef(1) // 1 = avanti, -1 = indietro
+	const closing = useRef(false)
+
+	function closePages() {
+		closing.current = true
+		turning.current = false
+	}
 
 	useFrame((_, delta) => {
-		if (!turning.current) return;
-		const speed = 0.4
+		const speed = 1
+
+		if (closing.current) {
+			let done = true
+			pageProgress.current = pageProgress.current.map((p) => {
+				const next = Math.max(0, p - delta / speed)
+				if (next > 0) done = false
+				return next
+			})
+
+			if (done) {
+				closing.current = false
+				currentPage.current = 0
+			}
+		}
+
+		if (!turning.current) return
 		const i = currentPage.current
 		pageProgress.current[i] = Math.max(
 			0,
@@ -39,5 +60,5 @@ export function useBookPages(numPages: number) {
 		turning.current = true
 	}
 
-	return { pageProgress, currentPage, nextPage, prevPage, turning }
+	return { pageProgress, currentPage, nextPage, prevPage, turning, closePages }
 }

@@ -11,6 +11,8 @@ services:
       context: ../
       dockerfile: ./docker/database/dockerfile
     container_name: database-container
+    ports:
+      - 5432:5432 # TODO: da togliere in consegna, serve solo per testare le API
     env_file:
       - .env
     volumes:
@@ -28,6 +30,8 @@ services:
       context: ../
       dockerfile: ./docker/backend/dockerfile
     container_name: backend-container
+    ports:
+      - 3000:3000 # TODO: da togliere in consegna, serve solo per testare le API
     env_file:
       - .env
     volumes:
@@ -68,8 +72,6 @@ services:
       - 8443:8443
     networks:
       - transcendence
-
-
 
 #------------------------------------------------------------------------------#
 #                               NETWORKS

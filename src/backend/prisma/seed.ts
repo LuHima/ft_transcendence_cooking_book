@@ -133,23 +133,6 @@ async function main() {
     },
   });
 
-  await prisma.shoppingList.create({
-    data: {
-      user_id: mario.id,
-      meal_plan_id: mealPlan.id,
-      items: {
-        create: [
-          { ingredient_id: pasta.id, quantity: 320, unit: 'g' },
-          { ingredient_id: uova.id, quantity: 4, unit: 'pz' },
-          { ingredient_id: guanciale.id, quantity: 150, unit: 'g' },
-          { ingredient_id: pecorino.id, quantity: 80, unit: 'g' },
-          { ingredient_id: pomodoro.id, quantity: 500, unit: 'g' },
-          { ingredient_id: basilico.id, quantity: 10, unit: 'g' },
-        ],
-      },
-    },
-  });
-
   console.log('Seed completato!');
 }
 
