@@ -134,12 +134,11 @@ function createRecipeTexture(title: string, accent: string, background: string) 
 	// testo secondario fisso sotto il titolo
 	ctx.font = '24px serif'
 	ctx.fillStyle = '#5a442b'
-	ctx.fillText('Ricetta del giorno', 256, 300)
 
 	// bordo leggermente scuro attorno alla pagina per farla sembrare antica
 	ctx.strokeStyle = '#a58362'
-	ctx.lineWidth = 6
-	ctx.strokeRect(42, 42, 428, 428)
+	ctx.lineWidth = 3
+	ctx.strokeRect(10, 15, 490, 485)
 
 	// converte il canvas in una CanvasTexture Three.js
 	const texture = new CanvasTexture(canvas)
@@ -183,7 +182,7 @@ function Book({controlsRef} : BookProps) {
 	const recipeTextures = useMemo(() => {
 		return recipes.map((recipe) => {
 			const frontMap = createRecipeTexture(recipe.title, '#f0d9b0', '#fbefe0')
-			const backMap = createRecipeTexture(`Recipe ${recipe.id}`, '#dfc39b', '#f7ead2')
+			const backMap = createRecipeTexture('', '#dfc39b', '#f7ead2')
 			return { frontMap, backMap }
 		})
 	}, [])
@@ -416,7 +415,7 @@ function Book({controlsRef} : BookProps) {
 
 			{/* pagine all'interno del libro, ciascuna con texture frontale e retro */}
 			{recipes.map((recipe, index) => {
-				const zOffset =  0.01 + (recipes.length - 1 - index) * 0.001
+				const zOffset =  0.1 + (recipes.length - 1 - index) * 0.001
 				const pageRef = (pageProgressRefs.current[index] ??= { current: 0 })
 				const textures = recipeTextures[index]
 				if (!textures?.frontMap || !textures.backMap) return null
@@ -432,7 +431,7 @@ function Book({controlsRef} : BookProps) {
 							backMap={textures.backMap}
 							width={0.39}
 							height={0.28}
-							position={[0, -0.152, 0.0052]}
+							position={[0, -0.15, 0.0052]}
 						/>
 					</group>
 				)
