@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { Prisma } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
+
 
 @Injectable()
 export class RecipeService {
@@ -16,7 +17,41 @@ export class RecipeService {
         }
         return await this.prisma.recipe.findMany();
     }
-    
+
+/*     public async checkExistinRecipe(page: number)
+    {
+        if (!page || page < 1) {
+            throw new BadRequestException('Page number must be greater than 0');
+        }
+        const return_page =  await this.prisma.recipe.findMany({
+            skip: (page - 1) * 30,          
+            take: 30,
+            orderBy: {
+              id: 'asc',
+            },
+        });
+        if (return_page.length === 0 )
+            throw new NotFoundException('Recipes not found');
+        return true;
+    } */
+
+    public async getRecipeStack(page: number)
+    {
+        if (!page || page < 1) {
+            throw new BadRequestException('Page number must be greater than 0');
+        }
+        const return_page =  await this.prisma.recipe.findMany({
+            skip: (page - 1) * 30,          
+            take: 30,
+            orderBy: {
+              id: 'asc',
+            },
+        });
+        if (return_page.length === 0 )
+            throw new NotFoundException('Recipes not found');
+        return return_page;
+    }
+
     async getRecipesByName(name :string)
     {
         const recipe = await this.prisma.recipe.findMany({

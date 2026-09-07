@@ -16,6 +16,19 @@ export class RecipeController
         return await this.recipeService.getAllRecipe();
     }
 
+    @Get('page')
+    async getRecipe(@Query('value') id: number)
+    {
+        if (!id)
+            return [];
+        return await this.recipeService.getRecipesByName(id);
+    }
+    
+    @Get(':id')
+    async getRecipeById(@Param('id', ParseIntPipe) id: number)
+    {
+        return await this.recipeService.getRecipeById(Number(id));
+    }
     @Get('search')
     async getRecipe(@Query('value') name: string)
     {
