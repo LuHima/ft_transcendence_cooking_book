@@ -65,10 +65,6 @@ export class RecipeService {
                 description: true
             }
         })
-
-        if(!recipe)
-            throw new NotFoundException('Recipes not found');
-
         return recipe;
     }
 
