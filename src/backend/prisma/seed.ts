@@ -20,6 +20,7 @@ async function main() {
       username: 'marghe_dallolio',
       email: 'marghe@example.com',
       password_hash: passwordHash,
+      roles: ['admin', 'user'],
     },
   });
 
