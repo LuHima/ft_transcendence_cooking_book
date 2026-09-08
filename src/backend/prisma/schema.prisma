@@ -33,6 +33,11 @@ enum RecipeDifficulty {
   hard
 }
 
+enum Role {
+  admin
+  user
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,6 +58,7 @@ model User {
   is_active     Boolean   @default(true)
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
+  roles         Role[]    @default([user])
 
   recipes        Recipe[]
   comments       Comment[]
