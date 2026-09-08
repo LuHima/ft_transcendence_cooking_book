@@ -2,11 +2,11 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength, MinLength}
 
 export class SignInUserDto
 {
-    @IsString()
+/*     @IsString()
     @IsNotEmpty({ message: 'The username cannot be empty' })
     @MinLength(3, { message: 'Username must be at least 3 characters long' })
     @MaxLength(30, { message: 'Username cannot exceed 30 characters' })
-    username: string;
+    username: string; */
 
     @IsEmail()
     @IsNotEmpty(({ message: 'The email can not be empty' }))
@@ -18,9 +18,9 @@ export class SignInUserDto
     @MinLength(6, { message: 'The password must have at least 6 character' })
     password: string
 
-    @IsUrl()
+/*     @IsUrl()
     @IsString()
     @IsOptional()
     @MaxLength(255)
-    avatar_url: string | null;
+    avatar_url: string | null; */
 }
