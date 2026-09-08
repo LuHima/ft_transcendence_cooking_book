@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber"
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 
 export function useBookPages(numPages: number) {
 	// un ref di progress per pagina, così non ri-renderizzi ad ogni frame
@@ -8,6 +8,17 @@ export function useBookPages(numPages: number) {
 	const turning = useRef(false)
 	const direction = useRef(1) // 1 = avanti, -1 = indietro
 	const closing = useRef(false)
+
+	useEffect(() => {
+		// Aggiorna la lunghezza dell'array di progressi quando il numero di pagine cambia
+		pageProgress.current = Array.from(
+			{ length: numPages }, // nuova lunghezza dell'array
+			(_, index) => pageProgress.current[index] ?? 0, // mantiene i progressi delle pagine esistenti (?? 0 usa il valore solo se esiste, altrimenti 0)
+		)
+		currentPage.current = Math.min(currentPage.current, numPages)
+	}, [numPages])
+
+	
 
 	function closePages() {
 		closing.current = true

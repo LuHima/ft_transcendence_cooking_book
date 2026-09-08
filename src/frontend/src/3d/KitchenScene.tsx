@@ -75,39 +75,19 @@ interface BookProps {
 	controlsRef: React.RefObject<any>
 }
 
-// elenco delle ricette usato per generare le pagine del libro
-const recipes = [
-	{ id: 1, title: "Pasta al Pomodoro" },
-	{ id: 2, title: "Risotto ai Funghi" },
-	{ id: 3, title: "Tiramisù" },
-	{ id: 4, title: "Pasta al Pomodoro" },
-	{ id: 5, title: "Risotto ai Funghi" },
-	{ id: 6, title: "Tiramisù" },
-	{ id: 7, title: "Pasta al Pomodoro" },
-	{ id: 8, title: "Risotto ai Funghi" },
-	{ id: 9, title: "Tiramisù" },
-	{ id: 10, title: "Pasta al Pomodoro" },
-	{ id: 11, title: "Risotto ai Funghi" },
-	{ id: 12, title: "Tiramisù" },
-	{ id: 13, title: "Pasta al Pomodoro" },
-	{ id: 14, title: "Risotto ai Funghi" },
-	{ id: 15, title: "Tiramisù" },
-	{ id: 16, title: "Pasta al Pomodoro" },
-	{ id: 17, title: "Risotto ai Funghi" },
-	{ id: 18, title: "Tiramisù" },
-	{ id: 19, title: "Pasta al Pomodoro" },
-	{ id: 20, title: "Risotto ai Funghi" },
-	{ id: 21, title: "Tiramisù" },
-	{ id: 22, title: "Pasta al Pomodoro" },
-	{ id: 23, title: "Risotto ai Funghi" },
-	{ id: 24, title: "Tiramisù" },
-	{ id: 25, title: "Pasta al Pomodoro" },
-	{ id: 26, title: "Risotto ai Funghi" },
-	{ id: 27, title: "Tiramisù" },
-	{ id: 28, title: "Pasta al Pomodoro" },
-	{ id: 29, title: "Risotto ai Funghi" },
-	{ id: 30, title: "Tiramisù" },
-]
+interface Recipe {
+	id: number
+	title: string
+}
+
+async function fetchData(url: string) {
+	const response = await fetch(url)
+	if (!response.ok) {
+		throw new Error('Failed to fetch data')
+	}
+
+	return response.json()
+}
 
 function createRecipeTexture(title: string, accent: string, background: string) {
 	// crea un canvas 2D per generare una texture al volo
@@ -148,6 +128,14 @@ function createRecipeTexture(title: string, accent: string, background: string) 
 }
 
 function Book({controlsRef} : BookProps) {
+	const [recipes, setRecipes] = useState<Recipe[]>([])
+
+	useEffect(() => {
+		fetchData('http://localhost:3000/recipes')
+			.then(setRecipes)
+			.catch((error) => console.error('Failed to load recipes:', error))
+	}, [])
+
 	// limiti iniziali per la camera quando si ruota intorno alla scena
 	const originalLimits = useRef({
 		minPolarAngle: Math.PI * 0.35,
@@ -185,7 +173,7 @@ function Book({controlsRef} : BookProps) {
 			const backMap = createRecipeTexture('', '#dfc39b', '#f7ead2')
 			return { frontMap, backMap }
 		})
-	}, [])
+	}, [recipes])
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {

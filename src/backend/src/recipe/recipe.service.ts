@@ -16,7 +16,7 @@ export class RecipeService {
         {
             return "hello";
         }
-        return await this.prisma.recipe.findMany();
+        return await this.prisma.recipe.findMany({select: {id: true, title: true}});
     }
 
     public async getRecipeStack(page: number)

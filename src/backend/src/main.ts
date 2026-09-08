@@ -17,7 +17,7 @@ async function bootstrap() {
 		}),
 	);
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:8443'],
+    origin: ['http://localhost:5173', 'https://localhost:8443'],
     credentials: true,
   });
   await app.listen(process.env.PORT ?? 3000);
