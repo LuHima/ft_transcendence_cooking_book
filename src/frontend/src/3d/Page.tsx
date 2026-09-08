@@ -26,19 +26,20 @@ export function Page({ progressRef, progress, frontMap, backMap, width, height, 
 	useFrame(() => {
 		if (matRef.current) {
 			const rawProgress = progressRef?.current ?? progress ?? 0
-			matRef.current.uProgress = easeInOutCubic(rawProgress)
+			matRef.current.uProgress = easeInOutCubic(rawProgress + 0.1) // aggiungi un piccolo offset per evitare problemi di precisione
 		}
 	})
 
 	return (
 		<mesh position={position}>
-			<planeGeometry args={[width, height, 32, 32]} />
+			<planeGeometry args={[width - 0.02, height, 32, 32]} />
 			{/* @ts-expect-error - ignores the following error */}
 			<pageCurlMaterial
 				ref={matRef}
 				uMapFront={frontMap}
 				uMapBack={backMap}
 				uPageHeight={height}
+				uPageWidth={width - 0.02}
 				uHingeOffset={0.025}
 				side={DoubleSide}
 				/>
