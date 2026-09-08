@@ -2,7 +2,8 @@ import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe,
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
-
+import { Roles } from 'src/common/decorators/role.decorator';
+ import { Role } from '@prisma/client';
 
 @Controller('recipes')
 export class RecipeController 
@@ -10,6 +11,7 @@ export class RecipeController
 
     constructor(private readonly recipeService: RecipeService) {}
     
+    @Roles(Role.admin)
     @Get()
     async getRecipes(@Query("who") who?: 'user' | 'id')
     {
