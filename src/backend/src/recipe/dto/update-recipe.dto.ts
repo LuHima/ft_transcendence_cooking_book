@@ -1,6 +1,6 @@
 import { CreateRecipeDto } from "./create-recipe.dto";
-import {PartialType} from "@nestjs/mapped-types"
-export class UpdateRecipeDto extends PartialType(CreateRecipeDto)
+import {PartialType, OmitType} from "@nestjs/mapped-types"
+export class UpdateRecipeDto extends PartialType(OmitType(CreateRecipeDto, ['owner_type', 'user_id'] as  const))
 {
 
 }
