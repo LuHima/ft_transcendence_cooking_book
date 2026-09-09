@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from '../prisma/prisma.module';
-
+import { AuthGuard } from './common/guards/auth.guard';   
 
 
 // SI IMPORTA IL FILE SPECIFICANDO IL PERCORSO QUI IN CIMA (non si mette .ts alla fine)
@@ -23,6 +23,17 @@ import { APP_GUARD } from '@nestjs/core';
   ], 
   // gli import degli altri module creati
   controllers: [AppController], //qui ci vanno i file controller
-  providers: [AppService, {provide: APP_GUARD, useClass: ThrottlerGuard,}], //qui ci vanno i file service 
+  providers: [AppService, 
+    {provide:
+      APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard, 
+    },
+
+
+  ], //qui ci vanno i file service 
 })
 export class AppModule {}
