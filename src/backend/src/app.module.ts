@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { CaslModule } from './auth/casl/casl.module';
 
 
 
@@ -20,6 +21,7 @@ import { APP_GUARD } from '@nestjs/core';
   // NELL'ARRAY SI METTE SOLO IL NOME DELLA CLASSE, NON LA STRINGA DEL PERCORSO!
   imports: [PrismaModule, AuthModule, UsersModule, RecipeModule,
    ThrottlerModule.forRoot([{ttl: 100, limit: 4,}]),
+   CaslModule,
   ], 
   // gli import degli altri module creati
   controllers: [AppController], //qui ci vanno i file controller
