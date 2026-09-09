@@ -30,10 +30,10 @@ import { CaslModule } from './auth/casl/casl.module';
       APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard, 
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: AuthGuard, 
+    // },
 
 
   ], //qui ci vanno i file service 
