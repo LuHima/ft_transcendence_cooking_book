@@ -75,39 +75,19 @@ interface BookProps {
 	controlsRef: React.RefObject<any>
 }
 
-// elenco delle ricette usato per generare le pagine del libro
-const recipes = [
-	{ id: 1, title: "Pasta al Pomodoro" },
-	{ id: 2, title: "Risotto ai Funghi" },
-	{ id: 3, title: "Tiramisù" },
-	{ id: 4, title: "Pasta al Pomodoro" },
-	{ id: 5, title: "Risotto ai Funghi" },
-	{ id: 6, title: "Tiramisù" },
-	{ id: 7, title: "Pasta al Pomodoro" },
-	{ id: 8, title: "Risotto ai Funghi" },
-	{ id: 9, title: "Tiramisù" },
-	{ id: 10, title: "Pasta al Pomodoro" },
-	{ id: 11, title: "Risotto ai Funghi" },
-	{ id: 12, title: "Tiramisù" },
-	{ id: 13, title: "Pasta al Pomodoro" },
-	{ id: 14, title: "Risotto ai Funghi" },
-	{ id: 15, title: "Tiramisù" },
-	{ id: 16, title: "Pasta al Pomodoro" },
-	{ id: 17, title: "Risotto ai Funghi" },
-	{ id: 18, title: "Tiramisù" },
-	{ id: 19, title: "Pasta al Pomodoro" },
-	{ id: 20, title: "Risotto ai Funghi" },
-	{ id: 21, title: "Tiramisù" },
-	{ id: 22, title: "Pasta al Pomodoro" },
-	{ id: 23, title: "Risotto ai Funghi" },
-	{ id: 24, title: "Tiramisù" },
-	{ id: 25, title: "Pasta al Pomodoro" },
-	{ id: 26, title: "Risotto ai Funghi" },
-	{ id: 27, title: "Tiramisù" },
-	{ id: 28, title: "Pasta al Pomodoro" },
-	{ id: 29, title: "Risotto ai Funghi" },
-	{ id: 30, title: "Tiramisù" },
-]
+interface Recipe {
+	id: number
+	title: string
+}
+
+async function fetchData(url: string) {
+	const response = await fetch(url)
+	if (!response.ok) {
+		throw new Error('Failed to fetch data')
+	}
+
+	return response.json()
+}
 
 function createRecipeTexture(title: string, accent: string, background: string) {
 	// crea un canvas 2D per generare una texture al volo
@@ -134,12 +114,11 @@ function createRecipeTexture(title: string, accent: string, background: string) 
 	// testo secondario fisso sotto il titolo
 	ctx.font = '24px serif'
 	ctx.fillStyle = '#5a442b'
-	ctx.fillText('Ricetta del giorno', 256, 300)
 
 	// bordo leggermente scuro attorno alla pagina per farla sembrare antica
 	ctx.strokeStyle = '#a58362'
-	ctx.lineWidth = 6
-	ctx.strokeRect(42, 42, 428, 428)
+	ctx.lineWidth = 3
+	ctx.strokeRect(10, 15, 490, 485)
 
 	// converte il canvas in una CanvasTexture Three.js
 	const texture = new CanvasTexture(canvas)
@@ -149,6 +128,14 @@ function createRecipeTexture(title: string, accent: string, background: string) 
 }
 
 function Book({controlsRef} : BookProps) {
+	const [recipes, setRecipes] = useState<Recipe[]>([])
+
+	useEffect(() => {
+		fetchData('http://localhost:3000/recipes')
+			.then(setRecipes)
+			.catch((error) => console.error('Failed to load recipes:', error))
+	}, [])
+
 	// limiti iniziali per la camera quando si ruota intorno alla scena
 	const originalLimits = useRef({
 		minPolarAngle: Math.PI * 0.35,
@@ -183,10 +170,10 @@ function Book({controlsRef} : BookProps) {
 	const recipeTextures = useMemo(() => {
 		return recipes.map((recipe) => {
 			const frontMap = createRecipeTexture(recipe.title, '#f0d9b0', '#fbefe0')
-			const backMap = createRecipeTexture(`Recipe ${recipe.id}`, '#dfc39b', '#f7ead2')
+			const backMap = createRecipeTexture('', '#dfc39b', '#f7ead2')
 			return { frontMap, backMap }
 		})
-	}, [])
+	}, [recipes])
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
@@ -416,7 +403,7 @@ function Book({controlsRef} : BookProps) {
 
 			{/* pagine all'interno del libro, ciascuna con texture frontale e retro */}
 			{recipes.map((recipe, index) => {
-				const zOffset =  0.01 + (recipes.length - 1 - index) * 0.001
+				const zOffset =  0.1 + (recipes.length - 1 - index) * 0.001
 				const pageRef = (pageProgressRefs.current[index] ??= { current: 0 })
 				const textures = recipeTextures[index]
 				if (!textures?.frontMap || !textures.backMap) return null
@@ -432,7 +419,7 @@ function Book({controlsRef} : BookProps) {
 							backMap={textures.backMap}
 							width={0.39}
 							height={0.28}
-							position={[0, -0.152, 0.0052]}
+							position={[0, -0.15, 0.0052]}
 						/>
 					</group>
 				)
