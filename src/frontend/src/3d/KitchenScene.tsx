@@ -131,7 +131,7 @@ function Book({controlsRef} : BookProps) {
 	const [recipes, setRecipes] = useState<Recipe[]>([])
 
 	useEffect(() => {
-		fetchData('http://localhost:3000/recipes')
+		fetchData('/api/recipes')
 			.then(setRecipes)
 			.catch((error) => console.error('Failed to load recipes:', error))
 	}, [])
