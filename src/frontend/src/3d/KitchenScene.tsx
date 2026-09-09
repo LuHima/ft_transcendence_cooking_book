@@ -1,9 +1,10 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, useGLTF, ContactShadows, useTexture, Environment } from '@react-three/drei'
-import { CanvasTexture, Object3D, RepeatWrapping, SRGBColorSpace, Vector3, NoToneMapping } from 'three'
+import { OrbitControls, useGLTF, useTexture, Environment } from '@react-three/drei'
+import { CanvasTexture, Object3D, RepeatWrapping, SRGBColorSpace, Vector3 } from 'three'
 import { Page } from './Page'
 import { useBookPages } from './hooks/useBookPages'
+import { wrapLongLines } from './utils/wrapLongLines.ts'
 
 // Import delle risorse 3D e delle texture dalla cartella assets
 // Le texture vengono usate per il materiale del libro e per il logo sulla copertina
@@ -92,33 +93,58 @@ async function fetchData(url: string) {
 function createRecipeTexture(title: string, accent: string, background: string) {
 	// crea un canvas 2D per generare una texture al volo
 	const canvas = document.createElement('canvas')
-	canvas.width = 512
+	canvas.width = 640
 	canvas.height = 512
 
 	const ctx = canvas.getContext('2d')
 	if (!ctx) return null
 
 	// sfondo marroncino per dare un aspetto di carta vecchia
-	const gradient = ctx.createLinearGradient(0, 0, 512, 512)
+	const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
 	gradient.addColorStop(0, background)
 	gradient.addColorStop(1, accent)
 	ctx.fillStyle = gradient
-	ctx.fillRect(0, 0, 512, 512)
+	ctx.fillRect(0, 0, canvas.width, canvas.height)
 
 	// titolo principale della ricetta, centrato nella texture
 	ctx.fillStyle = '#4a331f'
-	ctx.font = 'bold 48px serif'
 	ctx.textAlign = 'center'
-	ctx.fillText(title, 256, 210)
+	ctx.textBaseline = 'middle'
+	ctx.save()
+	ctx.translate(canvas.width - 100, canvas.height / 2) // sposta il contesto per centrare il testo	)
+	ctx.rotate(Math.PI / 2)
+	let fontSize = 35
+	ctx.font = `bold ${fontSize}px Arial, sans-serif`
+	while (ctx.measureText(title).width > canvas.height - 64 && fontSize > 24) {
+		fontSize -= 2
+		ctx.font = `bold ${fontSize}px serif`
+	}
+	ctx.fillText(title, 0, 0)
 
-	// testo secondario fisso sotto il titolo
-	ctx.font = '24px serif'
-	ctx.fillStyle = '#5a442b'
+	if (title) {
+		// testo secondario fisso sotto il titolo
+		ctx.font = '24px serif'
+		ctx.fillStyle = '#5a442b'
+		const lines = wrapLongLines('ricetta: PALLE AL SUGO DEL DIOSBORRAAUSTRALOPITECOPATETICO')
 
+		ctx.textAlign = 'center'
+		const lineHeight = 30
+		const startY = canvas.height / 2 - ((lines.length - 1) * lineHeight) / 2
+		lines.forEach((line, index) => {
+			ctx.fillText(line, canvas.width / 2 - 320 , startY + index * lineHeight)
+		})
+
+		// autore
+		ctx.font = 'italic 24px Georgia, serif'
+		ctx.fillStyle = '#5a442b'
+		ctx.textAlign = 'left'
+		ctx.fillText("firma dell'autore sconosciuto dio cane", -200 , 480)
+	}
+	ctx.restore()
 	// bordo leggermente scuro attorno alla pagina per farla sembrare antica
 	ctx.strokeStyle = '#a58362'
 	ctx.lineWidth = 3
-	ctx.strokeRect(10, 15, 490, 485)
+	ctx.strokeRect(10, 15, canvas.width - 20, canvas.height - 30)
 
 	// converte il canvas in una CanvasTexture Three.js
 	const texture = new CanvasTexture(canvas)

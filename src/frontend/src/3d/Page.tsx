@@ -1,7 +1,6 @@
-import { useRef, type RefObject, useMemo } from 'react'
+import { useRef, type RefObject } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { DoubleSide, Texture } from 'three'
-import * as THREE from 'three'
 import './materials/PageCurlMaterial' // side-effect: registra extend()
 
 interface PageProps {
