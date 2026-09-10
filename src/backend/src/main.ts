@@ -8,8 +8,8 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableShutdownHooks();
-  app.setGlobalPrefix('api');
+  app.enableShutdownHooks(); // serve per avere uno spegnimanto pulito in caso di SIGINT ecc..
+  app.setGlobalPrefix('api');  //al posto di scrivere http://localhost:3000 si srive /api/
     app.useGlobalPipes(
 		new GlobalNotEmptyBodyPipe(), // Blocca {} vuoti su tutti i body
         new ValidationPipe({ 

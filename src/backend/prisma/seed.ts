@@ -4,6 +4,7 @@ dotenv.config();
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' });
 const prisma = new PrismaClient({ adapter });
@@ -20,7 +21,7 @@ async function main() {
       username: 'marghe_dallolio',
       email: 'marghe@example.com',
       password_hash: passwordHash,
-      roles: ['admin', 'user'],
+      role: Role.admin,
     },
   });
 
@@ -31,6 +32,7 @@ async function main() {
       username: 'mario_bianchi',
       email: 'mario@example.com',
       password_hash: passwordHash,
+      role: Role.user,
     },
   });
 

@@ -11,7 +11,7 @@ export class RecipeController
 
     constructor(private readonly recipeService: RecipeService) {}
     
-    @Roles(Role.admin)
+    // @Roles(Role.admin)
     @Get()
     async getRecipes(@Query("who") who?: 'user' | 'id')
     {
