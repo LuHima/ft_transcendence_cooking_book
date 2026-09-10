@@ -2,7 +2,7 @@ import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe,
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
-import { Roles } from 'src/common/decorators/role.decorator';
+import { Roles } from 'src/common/decorators/policies.decorator';
  import { Role } from '@prisma/client';
 
 @Controller('recipes')
