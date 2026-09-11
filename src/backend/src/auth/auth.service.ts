@@ -9,7 +9,6 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class AuthService 
 {
-
   constructor(private usersService: UsersService, private jwtService: JwtService, private prisma: PrismaService){}
 
   async signIn(email:string, pass: string) : Promise<{ access_token: string }>
@@ -21,8 +20,10 @@ export class AuthService
     }
     const payload = { sub: user.id, username: user.username, role: user.role };
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: await this.jwtService.signAsync(payload, {expiresIn: '10m'}),
     };
+
+
   }
 
   async signUp(user: SignUpUserDto)
@@ -52,4 +53,11 @@ export class AuthService
         created_at: true,                                               
       },})
   }
+
+  
+  async logOut()
+  {
+
+  }
+    
 }

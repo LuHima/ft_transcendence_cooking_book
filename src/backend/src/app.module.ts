@@ -27,11 +27,10 @@ import { APP_GUARD } from '@nestjs/core';
   controllers: [AppController], //qui ci vanno i file controller
   providers: [AppService, 
     {provide:
-      APP_GUARD,
+      APP_GUARD, // rende la classe chiamata di default ovunque nelle API(Credo solo nelle API), poi si possono personalizzare 
       useClass: ThrottlerGuard,
     },
     // {
-    //   provide: APP_GUARD,
     //   useClass: AuthGuard, 
     // },
 

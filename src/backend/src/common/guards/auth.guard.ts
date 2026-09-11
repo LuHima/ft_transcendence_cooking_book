@@ -12,6 +12,20 @@ export class AuthGuard implements CanActivate {
 
   //e un metodo che chiamiamo dopo aver creato la Variabile request 
   // dalla richiesta HTTP
+/*   Non fa un confronto tra due token memorizzati (perché il token non 
+  è salvato da nessuna parte).
+  
+  Un JWT è composto da 3 parti separate da punti: HEADER . PAYLOAD . 
+  SIGNATURE
+  
+    eyJhbGciOiJIUzI1Ni... . eyJzdWIiOjEsInVzZXJu... . 4Zl5d9k...     
+           [Header]                 [Payload]            [Firma]     
+  
+  Quando chiami this.jwtService.verifyAsync(token):
+  
+  1. Separa i pezzi: Prende l'Header e il Payload ricevuti dal client.
+  2. Ricalcola la firma crittografica: Prende il tuo secret (la      
+  chiave segreta del backend) e ricalcola la formula: */
     private extractTokenFromHeader(request: Request): string | undefined 
     {
         const [type, token] = request.headers.authorization?.split(' ') ?? [];
@@ -37,6 +51,12 @@ export class AuthGuard implements CanActivate {
           username: payload.username,
           role: payload.role,
       };
+      /*
+      request è una variabile/oggetto JavaScript che vive nella RAM del  
+      server solo per i pochi millisecondi necessari a gestire quella    
+      specifica chiamata. AuthGuard ci "appiccica" sopra i dati          
+      dell'utente per passarli comodamente alle funzioni successive.
+      */
     }catch {
       throw new UnauthorizedException();
     }

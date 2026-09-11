@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Delete, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInUserDto } from 'src/users/dto/signin-user.dto';
 import { SignUpUserDto } from 'src/users/dto/signup-user';
@@ -22,5 +22,17 @@ export class AuthController
   signUp(@Body() signUpDto: SignUpUserDto)
   {
     return this.authService.signUp(signUpDto);
+  }
+  @Delete('logout')
+  logOut(@Body() signUpDto: SignUpUserDto)
+  {
+    return this.authService.logOut();
+  }
+
+  @Post('refresh')                                                 
+  async refresh(@Body('refreshToken') refreshToken: string) {      
+                                                              
+    // 2. Se valido, genera un NUOVO access token:                 
+    return this.authService.refreshAccessToken(refreshToken);      
   }
 }
