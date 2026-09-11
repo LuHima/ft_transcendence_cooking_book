@@ -5,9 +5,9 @@ import { CaslAbilityFactory, AppAbility } from 'src/auth/casl/casl-ability.facto
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private casl: CaslAbilityFactory) {}
+	constructor(private casl: CaslAbilityFactory) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    return true;
-  }
+	canActivate(context: ExecutionContext): boolean {
+		return true;
+	}
 }
