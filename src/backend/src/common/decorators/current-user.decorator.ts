@@ -5,12 +5,7 @@ import { createParamDecorator, ExecutionContext, Injectable } from '@nestjs/comm
 // dove posso estrare la richiesta http
 
 // Definisco una interfaccia di cosa puo contenere l'utente all'interno del JWT
-@Injectable()
-export interface ActiveUserData {                              
-    id: number;                                                  
-    username: string;                                            
-    role: Role;                                                  
-}
+
 /* 
     keyof è un operatore di tipo di TypeScript che estrae l'unione di
     tutte le chiavi (proprietà) di un'interfaccia o tipo.            
@@ -42,6 +37,14 @@ export interface ActiveUserData {
       • Se nel controller viene passato @CurrentUser('id'), data varrà 'id'. 
       • Se si usa @CurrentUser(), data sarà undefined.
     */
+
+//@Injectable()
+export interface ActiveUserData {                              
+    id: number;                                                  
+    username: string;                                            
+    role: Role;                                                  
+}
+
 export const CurrentUser = createParamDecorator(
     
     (data: keyof ActiveUserData | undefined, ctx: ExecutionContext) => {
