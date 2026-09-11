@@ -29,10 +29,9 @@ export class AuthController
     return this.authService.logOut();
   }
 
-  @Post('refresh')                                                 
+/*   @Post('refresh')                                                 
   async refresh(@Body('refreshToken') refreshToken: string) {      
                                                               
-    // 2. Se valido, genera un NUOVO access token:                 
     return this.authService.refreshAccessToken(refreshToken);      
-  }
+  } */
 }
