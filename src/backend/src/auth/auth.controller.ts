@@ -27,7 +27,7 @@ export class AuthController
 
 	@UseGuards(AuthGuard) 
 	@Delete('signout')
-	logOut(@Body() signUpDto: SignUpUserDto)
+	signOut(@Body() signUpDto: SignUpUserDto)
 	{
 		return this.authService.signOut();
 	}
