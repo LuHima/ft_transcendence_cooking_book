@@ -3,19 +3,27 @@ import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 
-
 @Controller('recipes')
 export class RecipeController 
 {
 
     constructor(private readonly recipeService: RecipeService) {}
     
+    // @Roles(Role.admin)
     @Get()
     async getRecipes(@Query("who") who?: 'user' | 'id')
     {
         return await this.recipeService.getAllRecipe();
     }
 
+    @Get('page')
+    async getRecipeStack(@Query('value') id: number)
+    {
+        if (!id)
+            return [];
+        return await this.recipeService.getRecipeStack(id);
+    }
+    
     @Get('search')
     async getRecipe(@Query('value') name: string)
     {
@@ -23,7 +31,7 @@ export class RecipeController
             return [];
         return await this.recipeService.getRecipesByName(name);
     }
-    
+
     @Get(':id')
     async getRecipeById(@Param('id', ParseIntPipe) id: number)
     {

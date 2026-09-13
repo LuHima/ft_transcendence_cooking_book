@@ -26,6 +26,10 @@ export class CreateRecipeDto
   @IsNotEmpty()
   prep_time: number;
 
+
+//  TODO: questi 2 attributi da togliere e aggiustare 
+// TODO: perche non puo essere l'utente a passarceli
+// il TOKEN JWT Contiene gia l'id dell'utente quindi un'idea ce per cambiare
   @IsNumber()
   @IsNotEmpty()
   user_id: number;
