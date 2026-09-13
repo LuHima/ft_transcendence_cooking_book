@@ -59,7 +59,8 @@ model User {
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
   role         Role    @default(user)
-
+  hashed_refresh_token String?   @db.VarChar(255)
+  
   recipes        Recipe[]
   comments       Comment[]
   likes          Like[]
