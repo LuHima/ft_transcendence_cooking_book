@@ -522,7 +522,7 @@ export default function Scene() {
 
 
 
-export async function signUp(
+/* export async function signUp(
     username: string,
     email: string,
     password: string,
@@ -563,4 +563,4 @@ try {
     console.log('Registrazione completata:', user)
 } catch (error) {
     console.error(error)
-}
+} */
