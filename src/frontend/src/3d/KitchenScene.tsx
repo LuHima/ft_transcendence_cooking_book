@@ -591,6 +591,36 @@ export default function Scene() {
   const { scene } = useGLTF(kitchenUrl);
   const controlsRef = useRef<any>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
+  const [webglSupported, setWebglSupported] = useState(true);
+
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    const context =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+    if (!context) {
+      setWebglSupported(false);
+    }
+  }, []);
+
+  if (!webglSupported) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
+        <div className="max-w-lg space-y-3">
+          <p className="text-xs font-medium uppercase tracking-[0.3em] text-amber-200/80">
+            3D preview unavailable
+          </p>
+          <h2 className="text-2xl font-semibold text-amber-50">
+            WebGL is disabled in this browser
+          </h2>
+          <p className="text-sm text-amber-100/80">
+            The kitchen scene needs a working WebGL context to render the 3D
+            cookbook experience.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full w-full">
