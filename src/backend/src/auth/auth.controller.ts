@@ -1,4 +1,4 @@
-import { Controller, Delete, Post, Body, Res, Req, HttpCode, HttpStatus, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Delete, Post, Body, Res, Get, Req, HttpCode, HttpStatus, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInUserDto } from 'src/users/dto/signin-user.dto';
 import { SignUpUserDto } from 'src/users/dto/signup-user';
@@ -92,4 +92,11 @@ export class AuthController
 		});
 		return { message: 'Token refreshed successfully' }; 
 	}
+
+	@Get('user')
+	async infoMe(@CurrentUser('id') id:number)
+	{
+		return (await this.authService.infoUser(id));
+	}
+
 }

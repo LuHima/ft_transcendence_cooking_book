@@ -89,7 +89,6 @@ export class AuthService
         });
 	};
 
-
 	async refreshToken(refreshToken :string)
 	{
 		let payload :PayLoadInterface; //l ascio any perche tanto dovrebbe contenere solo id e la uso solo qui quindi va bene cosi
@@ -115,5 +114,20 @@ export class AuthService
 
 		const newPayload = { sub: user.id, username: user.username, role: user.role };
 		return await this.jwtService.signAsync(newPayload, { expiresIn: '10m' });
+	}
+
+	async infoUser(id: number)
+	{
+		const user = await this.prisma.user.findUnique({
+            where:
+            {
+                id: id
+            },
+			select: {
+				username: true,
+				avatar_url: true
+			}
+		});
+		return user;
 	}
 }
