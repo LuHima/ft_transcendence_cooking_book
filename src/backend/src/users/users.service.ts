@@ -15,8 +15,28 @@ export class UsersService
                 email:email
             },
         });
-        if (!user)
-            throw new NotFoundException('User not found');
+        return user;
+    }
+
+    async getUserByUsername(username: string)
+    {
+        const user = await this.prisma.user.findUnique({
+            where:
+            {
+                username:username
+            },
+        });
+        return user;
+    }
+
+	async getUserById(id: number)
+    {
+        const user = await this.prisma.user.findUnique({
+            where:
+            {
+                id: id
+            },
+        });
         return user;
     }
 
