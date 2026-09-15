@@ -1,15 +1,19 @@
 # version: '3.8'
 
 services:
-# il contex è necessario che sia ../ altrimenti il dockerfile usa come default la posizione del docker-compose e non puo andare piu indietro dalla posizione del di partenza
+# il contex è necessario che sia ../ altrimenti il dockerfile usa come default 
+# la posizione del docker-compose e non puo andare piu indietro dalla posizione
+# del di partenza.                                                    Luis
+# Ma e' un problema di sicurezza. Lo risolvero' poi!                  Dario
 
 #------------------------------------------------------------------------------#
 #                               DATABASE
   database:
     image: database:1.0
     build:
-      context: ../
-      dockerfile: ./docker/database/dockerfile
+#      context: ../
+      context: ./database/
+#      dockerfile: ./docker/database/dockerfile
     container_name: database-container
     ports:
       - 5432:5432 # TODO: da togliere in consegna, serve solo per testare le API
@@ -65,11 +69,10 @@ services:
       - frontend
     image: nginx:1.0
     build:
-      context: ../
-      dockerfile: ./docker/nginx/dockerfile
+      context: ./nginx/
     container_name: nginx-container
     ports:
-      - 8443:8443
+      - 8443:443
     networks:
       - transcendence
 

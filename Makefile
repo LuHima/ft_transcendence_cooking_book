@@ -2,7 +2,7 @@ NAME = netsjs
 
 PATH_DOCKER_COMPOSE= ./docker/docker-compose.yml
 
-PATH_EXE= -f  $(PATH_DOCKER_COMPOSE)
+PATH_EXE= -f $(PATH_DOCKER_COMPOSE)
 
 RED := \e[31m
 GREEN := \e[32m
@@ -12,7 +12,7 @@ RESET := \e[0m
 all: $(NAME)
 
 $(NAME):
-	$(SUDO) docker compose $(PATH_EXE)  up --build
+	$(SUDO) docker compose $(PATH_EXE) up --build
 #	$(MAKE) in_backend
 
 
