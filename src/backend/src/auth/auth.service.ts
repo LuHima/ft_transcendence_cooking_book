@@ -27,12 +27,14 @@ export class AuthService
 		/* if(user.hashed_refresh_token)
 		{
 			throw new UnauthorizedException('user already authenticated from antother device');
-		} */
+		} 
+		*/
 		
 		const refreshToken  = await this.jwtService.signAsync({id: user.id}, {secret:  process.env.JWT_REFRESH_SECRET, expiresIn: '7d'})
 		const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
-		await this.prisma.user.update({
+		this.prisma.jwt
+		await this.prisma. .update({
 			where: {
 				id: user.id,
 			},
@@ -102,8 +104,9 @@ export class AuthService
 		}
 		
 
-		const user = await this.usersService.getUserById(payload.id);                
-		if (!user || !user.hashed_refresh_token) {
+		const user = await this.usersService.getUserById(payload.id);
+		const table = await this.usersService.
+		if (!user || !user.) {
 			throw new UnauthorizedException('Access denied');
 		}
 

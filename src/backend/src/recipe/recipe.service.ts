@@ -40,7 +40,7 @@ export class RecipeService {
         if (return_page.length === 0 )
             throw new NotFoundException('Recipes not found');
 
-        const hasNextPage = return_page.length > limit;           
+        const hasNextPage = return_page.length > limit;
   
         const hasPreviousPage = page > 1;
   
@@ -82,45 +82,50 @@ export class RecipeService {
         return recipe;
     }
 
-	async createRecipe(recipe: CreateRecipeDto)
+	async createRecipe(recipe: CreateRecipeDto, userId: number)
 	{
 		return await this.prisma.recipe.create({
-			data: recipe
+			data: {
+                title: recipe.title,
+                user_id: userId,
+            } 
 		});
 	}
 
 
-    async updateRecipe(id :number, recipeUpdate: Prisma.RecipeUpdateInput)
+    async updateRecipe(userId: number, recipeId :number, recipeUpdate: Prisma.RecipeUpdateInput)
     {
         const recipe = await this.prisma.recipe.findUnique({
             where: {
-                id
+                id: recipeId
             }
         })
 
-        if(!recipe)
+        if(!recipe || recipe.user_id != userId)
             throw new NotFoundException('Recipe not found');
 
         return await this.prisma.recipe.update({
-            where: {id},
+            where: {
+                id: recipeId
+            },
             data: recipeUpdate
         });
     }
 
-    async deleteRecipe(id :number)//TODO
+    async deleteRecipe(recipeId :number, userId: number)
     { 
-        const recipe = this.prisma.recipe.findUnique({
+        const recipe = await this.prisma.recipe.findUnique({
             where: {
-                id: id
+                id: recipeId
             }
         })
 
-        if(!recipe)
+        if(!recipe || recipe.user_id != userId)
             throw new NotFoundException('Recipe not found');
 
         return await this.prisma.recipe.delete({
             where: {
-                id: id
+                id: recipeId
             }
         });
     }
