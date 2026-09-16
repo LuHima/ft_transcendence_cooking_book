@@ -61,20 +61,42 @@ services:
     networks:
       - transcendence
 
-
-#------------------------------------------------------------------------------#
-#                               NGINX
+  # -------------------------------------------------------------------------- #
+  # Nginx web server (reverse proxy + TLS termination)
   nginx:
-    depends_on:
-      - frontend
-    image: nginx:1.0
+    # Build from local Dockerfile
     build:
       context: ./nginx/
+    # Fixed container name (instead of auto-generated)
     container_name: nginx-container
+    # Tag the built image (uses APP_VERSION from .env or '1.0')
+    image: nginx:${APP_VERSION:-1.0}
+    # Never pull from registry; always use local build
+    pull_policy: never
+    # Give nginx 10s to shut down gracefully (not really needed, added
+    #   only for consistency between different services)
+    stop_grace_period: 10s
+    # Load environment variables from .env file
+    env_file:
+      - path: .env
+        required: true
+    # Non-sensitive environment variables defaults used when missing in .env.
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      NGINX_PORT: "${NGINX_PORT:-443}"
+    # Expose HTTPS to host. Ports in docker compose are written in the form
+    #   HOST_PORT:CONTAINER_PORT
     ports:
-      - 8443:443
+      - "${NGINX_PORT}:443"
+    # Connect to custom bridge network
     networks:
       - transcendence
+    # Start only after frontend is running and healthy
+    depends_on:
+      frontend:
+        condition: service_started # to be changed with service_healthy
+    # Auto-restart on crash or system reboot. Do not restart if manually stopped
+    restart: unless-stopped
 
 #------------------------------------------------------------------------------#
 #                               NETWORKS
