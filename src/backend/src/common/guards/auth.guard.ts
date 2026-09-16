@@ -18,30 +18,30 @@ export class AuthGuard implements CanActivate {
   Un JWT è composto da 3 parti separate da punti: HEADER . PAYLOAD . 
   SIGNATURE
   
-    eyJhbGciOiJIUzI1Ni... . eyJzdWIiOjEsInVzZXJu... . 4Zl5d9k...     
-           [Header]                 [Payload]            [Firma]     
+	eyJhbGciOiJIUzI1Ni... . eyJzdWIiOjEsInVzZXJu... . 4Zl5d9k...     
+		   [Header]                 [Payload]            [Firma]     
   
   Quando chiami this.jwtService.verifyAsync(token):
   
   1. Separa i pezzi: Prende l'Header e il Payload ricevuti dal client.
   2. Ricalcola la firma crittografica: Prende il tuo secret (la      
   chiave segreta del backend) e ricalcola la formula: */
-    private extractTokenFromHeader(request: Request): string | undefined 
-    {
-        if(request.cookies?.accessToken) //cookie?  il ? è solo nel caso non vengano passati i cookie non da errore ma non fa l'if e ritorna undefined
+	private extractTokenFromHeader(request: Request): string | undefined 
+	{
+		if(request.cookies?.accessToken) //cookie?  il ? è solo nel caso non vengano passati i cookie non da errore ma non fa l'if e ritorna undefined
 		{
 			return request.cookies.accessToken;
 		}
 		return undefined;
-    }
+	}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> 
-    {
-        const request = context.switchToHttp().getRequest(); // sto pigliando la richiesta http è basta qui.
-        const token = this.extractTokenFromHeader(request);
-        if (!token) {
-          throw new UnauthorizedException();
-        }
+	async canActivate(context: ExecutionContext): Promise<boolean> 
+	{
+		const request = context.switchToHttp().getRequest(); // sto pigliando la richiesta http è basta qui.
+		const token = this.extractTokenFromHeader(request);
+		if (!token) {
+		  throw new UnauthorizedException();
+		}
 
 		try {
 			const payload = await this.jwtService.verifyAsync(token);
@@ -61,91 +61,5 @@ export class AuthGuard implements CanActivate {
 			throw new UnauthorizedException();
 		}
 		return true;
-    }
+	}
 }
-
-
-/* 
- ### 1. I dati della richiesta (in base al protocollo)                              
-                                                                                     
-  ExecutionContext estende ArgumentsHost, permettendoti di fare il "cast" verso il   
-  tipo di protocollo attivo:                                                         
-                                                                                     
-  #### A. In ambito HTTP (REST API / Express o Fastify)                              
-                                                                                     
-  Tramite context.switchToHttp() puoi estrarre:                                      
-                                                                                     
-  • getRequest<Request>(): L'oggetto Request di Express (o Fastify). Contiene:       
-      • headers (es. authorization, content-type, cookie)                            
-      • body (i dati inviati via POST/PUT)                                           
-      • query (parametri query string ?page=1)                                       
-      • params (parametri di rotta /users/:id)                                       
-      • Proprietà custom iniettate (es. request['user'] = payload come fai in        
-      auth.guard.ts:33).                                                             
-  • getResponse<Response>(): L'oggetto Response (per manipolare cookie, header o     
-  inviare risposte direttamente).                                                    
-  • getNext(): La funzione next() del ciclo middleware di Express.                   
-                                                                                     
-  #### B. In ambito WebSockets                                                       
-                                                                                     
-  Se la richiesta proviene da un Gateway WebSocket (context.switchToWs()):           
-                                                                                     
-  • getClient(): Il socket del client connesso (es. Socket.IO socket).               
-  • getData(): Il payload del messaggio inviato dal client.                          
-                                                                                     
-  #### C. In ambito Microservizi (RPC / RabbitMQ / Kafka / Redis)                    
-                                                                                     
-  Tramite context.switchToRpc():
-  
-  • getData(): Il payload del messaggio inviato dal broker.
-  • getContext(): I metadati del messaggio/canale specifici del transport (routing   
-  key, headers RPC, ecc.).
-  ──────
-  ### 2. I metadati del codice in esecuzione (Reflection)
-  
-  A differenza di un semplice middleware Express, ExecutionContext sa quale          
-  Controller e quale metodo stanno per essere eseguiti:
-  
-  • context.getClass(): Restituisce la classe del controller corrente (es.           
-  UsersController).
-  • context.getHandler(): Restituisce il metodo specifico della rotta (es.           
-  getProfile() o login()).
-  • context.getType(): Restituisce una stringa con il tipo di esecuzione attuale     
-  ('http', 'ws', 'rpc', ecc.).
-  
-  #### A cosa servono getClass() e getHandler()?
-  
-  Servono soprattutto a leggere i metadati personalizzati tramite Reflector (ad      
-  esempio per verificare ruoli @Roles('admin') o rotte pubbliche @Public()):         
-  
-    // Esempio: verificare se una rotta ha un decoratore personalizzato @Public()    
-    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [         
-      context.getHandler(), // controlla il metodo
-      context.getClass(),   // controlla la classe (controller)
-    ]);
-  ──────
-  ### Riepilogo schematico
-  
-   Metodo / Proprietà        │ Valore / Oggetto ottenuto │ Caso d'uso principale
-  ───────────────────────────┼───────────────────────────┼───────────────────────────
-   context.switchToHttp().ge │ Oggetto Request (headers, │ Estrarre token JWT,
-   tRequest()                │ body, query, user, ip)    │ leggere cookie, validare
-                             │                           │ l'utente
-   context.switchToHttp().ge │ Oggetto Response          │ Impostare header o cookie
-   tResponse()               │                           │ di risposta
-   context.switchToWs().getC │ Connessione Socket        │ Identificare e
-   lient()                   │                           │ autenticare un client
-                             │                           │ WebSocket
-   context.getClass()        │ Riferimento alla classe   │ Leggere
-                             │ del Controller            │ annotazioni/decoratori a
-                             │                           │ livello di Controller
-   context.getHandler()      │ Riferimento alla funzione │ Leggere
-                             │ della rotta               │ annotazioni/decoratori a
-                             │                           │ livello di singolo
-                             │                           │ endpoint
-   context.getType()         │ 'http', 'ws', 'rpc'       │ Scrivere guard o
-                             │                           │ interceptor polimorfici
-
-
-
-*/
