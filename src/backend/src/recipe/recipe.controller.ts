@@ -1,60 +1,64 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe, ValidationPipe} from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe, ValidationPipe, UseGuards} from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 @Controller('recipes')
 export class RecipeController 
 {
 
-    constructor(private readonly recipeService: RecipeService) {}
-    
-    // @Roles(Role.admin)
-    @Get()
-    async getRecipes(@Query("who") who?: 'user' | 'id')
-    {
-        return await this.recipeService.getAllRecipe();
-    }
+	constructor(private readonly recipeService: RecipeService) {}
+	
+	// TODO @Roles(Role.admin)
+	@Get()
+	async getRecipes()
+	{
+		return await this.recipeService.getAllRecipe();
+	}
 
-    @Get('page')
-    async getRecipeStack(@Query('value') id: number)
-    {
-        if (!id)
-            return [];
-        return await this.recipeService.getRecipeStack(id);
-    }
-    
-    @Get('search')
-    async getRecipe(@Query('value') name: string)
-    {
-        if (!name)
-            return [];
-        return await this.recipeService.getRecipesByName(name);
-    }
+	@Get('page')
+	async getRecipeStack(@Query('value') id: number)
+	{
+		if (!id)
+			return [];
+		return await this.recipeService.getRecipeStack(id);
+	}
+	
+	@Get('search')
+	async getRecipe(@Query('value') name: string)
+	{
+		if (!name)
+			return [];
+		return await this.recipeService.getRecipesByName(name);
+	}
 
-    @Get(':id')
-    async getRecipeById(@Param('id', ParseIntPipe) id: number)
-    {
-        return await this.recipeService.getRecipeById(Number(id));
-    }
+	@Get(':id')
+	async getRecipeById(@Param('id', ParseIntPipe) id: number)
+	{
+		return await this.recipeService.getRecipeById(Number(id));
+	}
 
-    // ---------------------------------------------------------------------
-    // TODO da verificare che l'utente modichi solo cio che e' suo e che abbia i permessi per farlo
-    @Post() //aggiunge
-    addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto)
-    {
-        return this.recipeService.createRecipe(createRecipeDto); 
-    }
-    @Patch(':id') // modifica una ricetta 
-    async updateRecipe(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto)
-    {
-        return this.recipeService.updateRecipe(id, updateRecipeDto)
-    }
-    @Delete(':id') // cancella una ricetta 
-    async deleteRecipe(@Param('id', ParseIntPipe) id: number)
-    {
-        return(this.recipeService.deleteRecipe(Number(id)))
-    }
+	@UseGuards(AuthGuard)
+	@Post() //aggiunge
+	addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto, @CurrentUser('id') id: number)
+	{
+		return this.recipeService.createRecipe(createRecipeDto, id); 
+	}
+
+	@UseGuards(AuthGuard)
+	@Patch(':id') // modifica una ricetta 
+	async updateRecipe(@Param('id', ParseIntPipe) recipeId: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto, @CurrentUser('id')userId:number)
+	{
+		return this.recipeService.updateRecipe(userId, recipeId, updateRecipeDto)
+	}
+	@UseGuards(AuthGuard)
+	@Delete(':id') // cancella una ricetta 
+	async deleteRecipe(@Param('id', ParseIntPipe) recipeId: number, @CurrentUser('id') userId: number)
+	{
+		return(this.recipeService.deleteRecipe(recipeId, userId))
+	}
 }
 
 /* 

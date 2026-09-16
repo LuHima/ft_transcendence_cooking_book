@@ -1,22 +1,40 @@
+# Base image: official Node.js 22 image based on Debian slim
 FROM node:22-slim
 
-WORKDIR /usr/src/app/
+# Set working directory inside the container
+WORKDIR /usr/src/app
 
-# RUN	npm i -g @nestjs/cli
+# Install system dependencies:
+#   - curl: used for healthcheck to verify Vite development server availability
+# Clean apt cache to keep the image minimal
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+  && rm -rf /var/lib/apt/lists/*
 
+# Copy package descriptors first to leverage Docker layer caching
 COPY ./src/frontend/package*.json ./
 
-RUN apt-get update && apt install -y netcat-openbsd
-#serve netcat per controllare che il container sia avviato
-
-# RUN npm install vite
-
+# Install frontend dependencies
 RUN npm install
 
+# Copy the entrypoint script and make it executable
+COPY ./docker/frontend/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Expose Vite development server port
 EXPOSE 5173
 
-COPY ./docker/frontend/entrypoint.sh /usr/src
+# Health check: verifies that the Vite development server is serving pages.
+# Flags:
+#   --interval=10s:		check every 10 seconds
+#   --timeout=5s:		fail check if response exceeds 5 seconds
+#   --start-period=10s:	grace period allowing Vite to bundle and bind to port
+#   --retries=3:		mark unhealthy after 3 consecutive failures
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:5173/ || exit 1
 
-RUN chmod +x /usr/src/entrypoint.sh
+# Define the entrypoint script
+ENTRYPOINT ["entrypoint.sh"]
 
-ENTRYPOINT ["../entrypoint.sh"]
+# Default command: start Vite dev server listening on all network interfaces
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

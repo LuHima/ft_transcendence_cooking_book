@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+	"preserveWatchOutput": true, // needed to preserve log when starting 'nest start --watch'
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,

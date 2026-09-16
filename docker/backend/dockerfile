@@ -1,19 +1,46 @@
+# Base image: official Node.js 22 image based on Debian slim
 FROM node:22-slim
 
-WORKDIR /usr/src/app/
+# Set working directory inside the container
+WORKDIR /usr/src/app
 
-RUN	npm i -g @nestjs/cli
+# Install system dependencies:
+#   - openssl: required by Prisma ORM query engine binaries
+#   - curl: used for healthcheck to verify NestJS API availability
+# Clean apt cache to keep the image minimal
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    curl \
+  && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt install -y netcat-openbsd openssl
+# Install NestJS CLI globally for development commands and build tools
+RUN npm install -g @nestjs/cli
 
+# Copy package descriptors first to leverage Docker layer caching
 COPY ./src/backend/package*.json ./
 
+# Install project dependencies
 RUN npm install
 
+# Copy the entrypoint script and make it executable
+COPY ./docker/backend/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Expose backend NestJS port
 EXPOSE 3000
 
-COPY ./docker/backend/entrypoint.sh /usr/src
+# Health check: verifies that the NestJS API server is responding.
+# Flags:
+#   --interval=10s:		check every 10 seconds
+#   --timeout=5s:		fail check if response exceeds 5 seconds
+#   --start-period=30s: grace period allowing Prisma migrations and NestJS dev
+#						build to boot
+#   --retries=3:		mark unhealthy after 3 consecutive failures
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3000/api/test || exit 1
 
-RUN chmod +x /usr/src/entrypoint.sh
+# Define the entrypoint script
+ENTRYPOINT ["entrypoint.sh"]
 
-ENTRYPOINT ["../entrypoint.sh"]
+# Default command: start NestJS in watch/dev mode
+CMD ["npm", "run", "start:dev"]
