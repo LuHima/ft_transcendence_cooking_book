@@ -1,4 +1,4 @@
-NAME = netsjs
+NAME = WeCook
 
 PATH_DOCKER_COMPOSE= ./docker/docker-compose.yml
 
@@ -15,6 +15,8 @@ $(NAME):
 	$(SUDO) docker compose $(PATH_EXE) up --build
 #	$(MAKE) in_backend
 
+rebuild:
+	$(SUDO) docker compose $(PATH_EXE) --progress plain build --no-cache 2>&1 | tee build.log
 
 down:
 	$(SUDO) docker compose $(PATH_EXE) down
