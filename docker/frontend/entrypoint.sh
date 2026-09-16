@@ -1,10 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 
-while ! nc -z backend 3000 2>/dev/null; do
-  echo "Waiting for backend on backend:3000..."
-  sleep 2
-done
+# Exit immediately if any command returns a non-zero exit code (an error)
+set -e
 
-echo "Backend is ready!"
+echo ""
+echo "=== Starting Frontend Service ==="
+echo "Frontend dev server is launching on port 5173..."
+echo ""
 
-exec npm run dev -- --host 0.0.0.0 --port 5173
+# Execute the command passed as argument to the Dockerfile (CMD). Using 'exec'
+# is ESSENTIAL because exec replaces the shell process with the application process.
+# This way the Node process becomes PID 1 and correctly receives stop signals.
+exec "$@"
