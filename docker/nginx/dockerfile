@@ -1,50 +1,41 @@
 # Base image: official Nginx stable image based on Alpine Linux
 FROM nginx:stable-alpine
 
-# Copy the configuration file overwriting the default one.
+# Remove default configuration files
+RUN rm -rf /etc/nginx/conf.d
+
+# Copy the configuration file overwriting the default one
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Update packages and install OpenSSL and curl. The --no-cache flag
-# automatically updates indexes in memory and cleans them up. It is
-# needed to make the image smaller by not saving the package manager
-# cache; it also makes 'apk update' redundant and not necessary.
-# Openssl is used to generate a self-signed certificate for the app.
-# Curl is used for healthcheck to test HTTPS endpoint availability.
+# Install OpenSSL (for runtime self-signed certificate generation) and curl
+# (for healthcheck).The --no-cache flag keeps the image minimal by not saving
+# package manager cache; it also makes 'apk update' redundant and not needed.
 RUN apk add --no-cache openssl curl
 
 # Copy the entrypoint script and make it executable
 COPY nginx_entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/nginx_entrypoint.sh
 
-# Health check: verifies that Nginx can serve HTTPS requests.
-# Uses curl to test the actual HTTPS endpoint.
+# Health check: verifies that Nginx can serve HTTPS requests on the dedicated
+# health endpoint.
 # Flags:
 #   -f: fail on HTTP errors (4xx, 5xx)
-#   -k: insecure, skip SSL certificate verification (self-signed cert)
-#	-I: use HEAD method instead of GET
+#   -k: skip SSL verification for self-signed certificate
 # Options:
-#   --interval=30s: check every 30 seconds  
-#   --timeout=5s: fail the check if it takes longer than 5s
-#   --start-period=10s: grace period after container start
-#   --retries=3: mark unhealthy after 3 consecutive failures
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-CMD curl -fkI https://localhost/healthz || exit 1
+#   --interval=10s:		check every 10 seconds
+#   --timeout=5s:		fail check if response exceeds 5 seconds
+#   --start-period=5s:	grace period after container start
+#   --retries=3:		mark unhealthy after 3 consecutive failures
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -fk https://localhost/healthz || exit 1
 
-# Expose port 443.
+# Expose HTTPS port
 EXPOSE 443
 
-# Define the entrypoint
+# Define the entrypoint script
 ENTRYPOINT ["nginx_entrypoint.sh"]
 
-# Use SIGQUIT so Nginx shuts down gracefully (finishes active requests)
-# instead of the default SIGTERM.
-# STOPSIGNAL SIGQUIT
-# The nginx Docker image already did this!
-
 # Define the default command: starts Nginx in foreground.
-# The flag -g is used to pass to Nginx a global directive instead of putting
-# it in the config file.
-# The directive 'daemon off;' starts Nginx in the foreground: this is crucial
-# for Docker because the main container process must stay in the foreground;
-# if Nginx daemonizes (runs in the background), the container exits.
+# The flag -g passes global directives to Nginx: 'daemon off;' is crucial in
+# Docker so the main process stays in foreground (PID 1).
 CMD ["nginx", "-g", "daemon off;"]

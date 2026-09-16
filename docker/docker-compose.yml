@@ -1,110 +1,154 @@
-# version: '3.8'
-
 services:
-# il contex è necessario che sia ../ altrimenti il dockerfile usa come default 
-# la posizione del docker-compose e non puo andare piu indietro dalla posizione
-# del di partenza.                                                    Luis
-# Ma e' un problema di sicurezza. Lo risolvero' poi!                  Dario
 
-#------------------------------------------------------------------------------#
-#                               DATABASE
+  #----------------------------------------------------------------------------#
+  #                              DATABASE SERVICE                              #
+  #----------------------------------------------------------------------------#
+  # PostgreSQL 16 database storage with health check probe
   database:
-    image: database:1.0
+    # Build image from local Dockerfile in docker/database/
     build:
-#      context: ../
       context: ./database/
-#      dockerfile: ./docker/database/dockerfile
+    # Tag built image (uses APP_VERSION from .env or '1.0')
+    image: database:${APP_VERSION:-1.0}
+    # Fixed container name
     container_name: database-container
+    # Always use locally built image
+    pull_policy: never
+    # Graceful shutdown timeout
+    stop_grace_period: 10s
+    # Expose PostgreSQL port to host (TODO: remove in final production release)
     ports:
-      - 5432:5432 # TODO: da togliere in consegna, serve solo per testare le API
+      - "5432:5432"
+    # Load database credentials and config from .env
     env_file:
       - .env
+    # Persistent volume for PostgreSQL data
     volumes:
       - db_data:/var/lib/postgresql/data
-    networks:
-      - transcendence
-
-#------------------------------------------------------------------------------#
-#                               BACKEND
-  backend:
-    depends_on:
-      - database
-    image: backend:1.0
-    build:
-      context: ../
-      dockerfile: ./docker/backend/dockerfile
-    container_name: backend-container
-#    ports:
-#     - 3000:3000  TODO: da togliere in consegna, serve solo per testare le API
-    env_file:
-      - .env
-    volumes:
-      - ../src/backend:/usr/src/app
-      - /usr/src/app/node_modules
-    networks:
-      - transcendence
-
-
-#------------------------------------------------------------------------------#
-#                               FRONTEND
-  frontend:
-    depends_on:
-      - backend
-    image: frontend:1.0
-    build:
-      context: ../
-      dockerfile: ./docker/frontend/dockerfile
-    container_name: frontend-container
-    volumes:
-      - ../src/frontend:/usr/src/app
-      - /usr/src/app/node_modules
-    networks:
-      - transcendence
-
-  # -------------------------------------------------------------------------- #
-  # Nginx web server (reverse proxy + TLS termination)
-  nginx:
-    # Build from local Dockerfile
-    build:
-      context: ./nginx/
-    # Fixed container name (instead of auto-generated)
-    container_name: nginx-container
-    # Tag the built image (uses APP_VERSION from .env or '1.0')
-    image: nginx:${APP_VERSION:-1.0}
-    # Never pull from registry; always use local build
-    pull_policy: never
-    # Give nginx 10s to shut down gracefully (not really needed, added
-    #   only for consistency between different services)
-    stop_grace_period: 10s
-    # Load environment variables from .env file
-    env_file:
-      - path: .env
-        required: true
-    # Non-sensitive environment variables defaults used when missing in .env.
-    environment:
-      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
-      NGINX_PORT: "${NGINX_PORT:-443}"
-    # Expose HTTPS to host. Ports in docker compose are written in the form
-    #   HOST_PORT:CONTAINER_PORT
-    ports:
-      - "${NGINX_PORT}:443"
     # Connect to custom bridge network
     networks:
       - transcendence
-    # Start only after frontend is running and healthy
-    depends_on:
-      frontend:
-        condition: service_started # to be changed with service_healthy
-    # Auto-restart on crash or system reboot. Do not restart if manually stopped
+    # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
+  #----------------------------------------------------------------------------#
+  #                              BACKEND SERVICE                               #
+  #----------------------------------------------------------------------------#
+  # NestJS backend API application
+  backend:
+    # Build context is repo root so Dockerfile can copy
+    # src/backend/package*.json.
+    # Non-build files (.git, .env, etc.) are excluded via root .dockerignore.
+    build:
+      context: ../
+      dockerfile: ./docker/backend/dockerfile
+    # Tag built image (uses APP_VERSION from .env or '1.0')
+    image: backend:${APP_VERSION:-1.0}
+    # Fixed container name
+    container_name: backend-container
+    # Always use locally built image
+    pull_policy: never
+    # Graceful shutdown timeout
+    stop_grace_period: 10s
+    # Load environment variables from .env
+    env_file:
+      - .env
+    # Mount backend source code for live development and protect container
+    # node_modules
+    volumes:
+      - ../src/backend:/usr/src/app
+      - /usr/src/app/node_modules
+    # Connect to custom bridge network
+    networks:
+      - transcendence
+    # Start backend only after database is completely ready and healthy
+    depends_on:
+      database:
+        condition: service_healthy
+    # Auto-restart on crash or reboot unless manually stopped
+    restart: unless-stopped
+
+  #----------------------------------------------------------------------------#
+  #                              FRONTEND SERVICE                              #
+  #----------------------------------------------------------------------------#
+  # Vite + React frontend web application
+  frontend:
+    # Build context is repo root so Dockerfile can copy
+    # src/frontend/package*.json.
+    # Non-build files (.git, .env, etc.) are excluded via root .dockerignore.
+    build:
+      context: ../
+      dockerfile: ./docker/frontend/dockerfile
+    # Tag built image (uses APP_VERSION from .env or '1.0')
+    image: frontend:${APP_VERSION:-1.0}
+    # Fixed container name
+    container_name: frontend-container
+    # Always use locally built image
+    pull_policy: never
+    # Graceful shutdown timeout
+    stop_grace_period: 10s
+    # Mount frontend source code for live development and protect container
+    # node_modules
+    volumes:
+      - ../src/frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    # Connect to custom bridge network
+    networks:
+      - transcendence
+    # Start frontend only after backend API is completely ready and healthy
+    depends_on:
+      backend:
+        condition: service_healthy
+    # Auto-restart on crash or reboot unless manually stopped
+    restart: unless-stopped
+
+  #----------------------------------------------------------------------------#
+  #                               NGINX SERVICE                                #
+  #----------------------------------------------------------------------------#
+  # Nginx reverse proxy and TLS termination gateway
+  nginx:
+    # Build image from local Dockerfile in docker/nginx/
+    build:
+      context: ./nginx/
+    # Tag built image (uses APP_VERSION from .env or '1.0')
+    image: nginx:${APP_VERSION:-1.0}
+    # Fixed container name
+    container_name: nginx-container
+    # Always use locally built image
+    pull_policy: never
+    # Graceful shutdown timeout
+    stop_grace_period: 10s
+    # Load environment variables from .env
+    env_file:
+      - .env
+    # Non-sensitive environment variable default for TLS certificate SAN/CN
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+    # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
+    ports:
+      - "8443:443"
+    # Connect to custom bridge network
+    networks:
+      - transcendence
+    # Start Nginx only when both upstream services are ready and healthy
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    # Auto-restart on crash or reboot unless manually stopped
+    restart: unless-stopped
+
+
 #------------------------------------------------------------------------------#
-#                               NETWORKS
+#                                  NETWORKS                                    #
+#------------------------------------------------------------------------------#
 networks:
   transcendence:
     driver: bridge
 
 #------------------------------------------------------------------------------#
-#                               VOLUMES
+#                                  VOLUMES                                     #
+#------------------------------------------------------------------------------#
 volumes:
   db_data:

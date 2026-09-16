@@ -1,11 +1,22 @@
+# Base image: official PostgreSQL 16 image based on Alpine Linux
 FROM postgres:16-alpine
 
-# Installa utility utili per il controllo e debug del database
-RUN apk add --no-cache bash netcat-openbsd
-
-# Espone la porta standard di PostgreSQL
+# Expose the standard PostgreSQL port
 EXPOSE 5432
 
-# Controllo dello stato di salute del database all'interno del container
- HEALTHCHECK --interval=5s --timeout=5s --retries=5 \
-      CMD pg_isready -U postgres
+# Health check: verifies that the PostgreSQL server is ready to accept
+# connections.
+# Flags and parameters:
+#   --interval=5s:		check every 5 seconds
+#   --timeout=5s:		fail the check if it takes longer than 5 seconds
+#   --start-period=5s:	initial grace period while database initializes
+#   --retries=5:		mark unhealthy after 5 consecutive failures
+# Command pg_isready is the native PostgreSQL utility to check connection
+# status for user and database
+HEALTHCHECK --interval=5s --timeout=5s --start-period=5s --retries=5 \
+  CMD pg_isready -U ${POSTGRES_USER:-postgres} \
+    -d ${POSTGRES_DB:-recipe_platform} || exit 1
+
+# Default command: run postgres server in the foreground
+# (inherits from base image)
+CMD ["postgres"]
