@@ -58,8 +58,8 @@ model User {
   is_active     Boolean   @default(true)
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
-  role         Role    @default(user)
-  hashed_refresh_token String?   @db.VarChar(255)
+  role          Role    @default(user)
+  jwt_sessions  JwtSession[]
   
   recipes        Recipe[]
   comments       Comment[]
@@ -187,6 +187,10 @@ model MealPlanRecipe {
   @@map("meal_plan_recipes")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RECIPE MEDIA
+// ─────────────────────────────────────────────────────────────────────────────
+
 model RecipeMedia {
   id         Int       @id @default(autoincrement())
   recipe_id  Int
@@ -198,4 +202,19 @@ model RecipeMedia {
   recipe Recipe @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
 
   @@map("recipe_media")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOKEN JWT
+// ─────────────────────────────────────────────────────────────────────────────
+
+model JwtSession {
+  id_session      Int      @id @default(autoincrement())
+  id_user         Int
+  hashed_jwt_token String  @db.VarChar(255)
+  expire_time_jwt DateTime
+
+  user User @relation(fields: [id_user], references: [id], onDelete: Cascade)
+
+  @@map("jwt_sessions")
 }
