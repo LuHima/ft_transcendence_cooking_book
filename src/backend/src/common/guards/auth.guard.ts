@@ -49,6 +49,7 @@ export class AuthGuard implements CanActivate {
 			id: payload.sub,
 			username: payload.username,
 			role: payload.role,
+			session: payload.session,
 		};
 		/*
 		request è una variabile/oggetto JavaScript che vive nella RAM del  

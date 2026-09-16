@@ -14,7 +14,6 @@ Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente pe
 @Controller('auth')
 export class AuthController
 {
-	
 	constructor(private authService: AuthService){} 
 
 	@Throttle({ default: { limit: 5, ttl: minutes(1)}})
@@ -28,18 +27,18 @@ export class AuthController
 			secure: true, // li invia solo su connessioni protetta (HTTPS)
 			sameSite: 'strict',	// non invia i codice se la richiesta non parte dallo stesso sito
 			maxAge: minutes(10), 
-			path: '/',               // Valido per tutti i path
-    	})
+			path: '/',			// Valido per tutti i path
+		})
 		// è normale si vedeno negli header e non siano nascosti però sono protetti da httpOnly che impedisce a script di toccarli o vederli
 		response.cookie('refresh_token', jwts.refreshToken, {
 			httpOnly: true,
 			secure: true,
 			sameSite: 'strict',
 			maxAge: days(7),
-			path: '/api/auth/refresh',           // Il browser lo invia solo a questa API
-    });
+			path: '/api/auth/refresh',			// Il browser lo invia solo a questa API
+	});
 	return {
-     	 message: 'Authentication append with success',
+	 	 message: 'Authentication append with success',
    		};
 	}
 
@@ -49,10 +48,6 @@ export class AuthController
 	{
 		return this.authService.signUp(signUpDto);
 	}
-
-
-
-
 /* 
 	• @Req() (Request): serve a leggere la richiesta in arrivo inviata dal client (es. i   
 	dati che ricevi, l'IP, gli header in entrata). (richiesta http in arrivo)
@@ -65,36 +60,37 @@ export class AuthController
 */
 	@UseGuards(AuthGuard) 
 	@Delete('signout')
-	async signOut(@CurrentUser('id') id: number, @Res({ passthrough: true }) res: Response)
+	async signOut(@CurrentUser('session') id: number, @Res({ passthrough: true }) res: Response)
 	{
 		await this.authService.signOut(id);
 		res.clearCookie('accessToken', { path: '/' });
-        res.clearCookie('refresh_token', { path: '/api/auth/refresh' });
+		res.clearCookie('refresh_token', { path: '/api/auth/refresh' });
 		return { message: 'Signed out successfully' };
 	}
 
 	
 	@HttpCode(HttpStatus.OK)
 	@Post('refresh')
-	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {      
+	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
 		const refreshToken = req.cookies?.['refresh_token'];
 		if (!refreshToken) {
-            throw new UnauthorizedException('Refresh token missing');
-        }
+			throw new UnauthorizedException('Refresh token missing');
+		}
 		const newAccessToken= await this.authService.refreshToken(refreshToken);
 		
 		res.cookie('accessToken', newAccessToken, {
 			httpOnly: true,
-            secure: true,
-            sameSite: 'strict',
-            maxAge: minutes(10),
-            path: '/',
+			secure: true,
+			sameSite: 'strict',
+			maxAge: minutes(10),
+			path: '/',
 		});
 		return { message: 'Token refreshed successfully' }; 
 	}
 
+	@UseGuards(AuthGuard)
 	@Get('user')
-	async infoMe(@CurrentUser('id') id:number)
+	async infoMe(@CurrentUser('id') id :number)
 	{
 		return (await this.authService.infoUser(id));
 	}
