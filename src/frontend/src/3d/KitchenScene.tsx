@@ -1,9 +1,24 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, useGLTF, ContactShadows, useTexture, Environment } from '@react-three/drei'
-import { CanvasTexture, Object3D, RepeatWrapping, SRGBColorSpace, Vector3, NoToneMapping } from 'three'
-import { Page } from './Page'
-import { useBookPages } from './hooks/useBookPages'
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import {
+  OrbitControls,
+  useGLTF,
+  useTexture,
+  Environment,
+} from "@react-three/drei";
+import {
+  CanvasTexture,
+  Group,
+  Object3D,
+  PCFShadowMap,
+  RepeatWrapping,
+  SRGBColorSpace,
+  SpotLight,
+  Vector3,
+} from "three";
+import { Page } from "./Page";
+import { useBookPages } from "./hooks/useBookPages";
+import { wrapLongLines } from "./utils/wrapLongLines.ts";
 
 // Import delle risorse 3D e delle texture dalla cartella assets
 // Le texture vengono usate per il materiale del libro e per il logo sulla copertina
@@ -12,510 +27,692 @@ import { useBookPages } from './hooks/useBookPages'
 
 // FROM ASSETS
 
-import kitchenUrl from '../assets/kitchen3.0.glb?url'
-import leatherColorUrl from '../assets/fabric_leather_02_diff_4k.jpg?url'
-import leatherRoughnessUrl from '../assets/fabric_leather_02_rough_4k.jpg?url'
-import leatherDispUrl from '../assets/fabric_leather_02_disp_4k.png?url'
-import leatherNormalUrl from '../assets/fabric_leather_02_nor_gl_4k.jpg'
+import kitchenUrl from "../assets/kitchen3.1.glb?url";
+import leatherColorUrl from "../assets/fabric_leather_02_diff_4k.jpg?url";
+import leatherRoughnessUrl from "../assets/fabric_leather_02_rough_4k.jpg?url";
+import leatherDispUrl from "../assets/fabric_leather_02_disp_4k.png?url";
+import leatherNormalUrl from "../assets/fabric_leather_02_nor_gl_4k.jpg";
 
-import leatherColorUrl1 from '../assets/brown_leather_albedo_4k.jpg'
-import leatherRoughnessUrl1 from '../assets/brown_leather_rough_4k.jpg?url'
-import leatherDispUrl1 from '../assets/brown_leather_disp_4k.png?url'
-import leatherNormalUrl1 from '../assets/brown_leather_nor_gl_4k.jpg'
+import leatherColorUrl1 from "../assets/brown_leather_albedo_4k.jpg";
+import leatherRoughnessUrl1 from "../assets/brown_leather_rough_4k.jpg?url";
+import leatherDispUrl1 from "../assets/brown_leather_disp_4k.png?url";
+import leatherNormalUrl1 from "../assets/brown_leather_nor_gl_4k.jpg";
 
-import logoUrl from '../assets/biggernobg.png'
+import logoUrl from "../assets/biggernobg.png";
 // END ASSETS
 
 function useLogoTexture() {
-	// carica la texture del logo usata sulla copertina del libro
-	const logoMap = useTexture(logoUrl)
-	logoMap.colorSpace = SRGBColorSpace
-	return logoMap
+  // carica la texture del logo usata sulla copertina del libro
+  const logoMap = useTexture(logoUrl);
+  logoMap.colorSpace = SRGBColorSpace;
+  return logoMap;
 }
 
 function useLeatherMaterial() {
-	// carica le texture della pelle per la copertina principale del libro
-	const [colorMap, roughnessMap, normalMap, dispMap] = useTexture([
-		leatherColorUrl,
-		leatherRoughnessUrl,
-		leatherNormalUrl,
-		leatherDispUrl,
-	]);
+  // carica le texture della pelle per la copertina principale del libro
+  const [colorMap, roughnessMap, normalMap, dispMap] = useTexture([
+    leatherColorUrl,
+    leatherRoughnessUrl,
+    leatherNormalUrl,
+    leatherDispUrl,
+  ]);
 
-	colorMap.colorSpace = SRGBColorSpace;
+  colorMap.colorSpace = SRGBColorSpace;
 
-	[colorMap, roughnessMap, normalMap, dispMap].forEach((tex) => {
-		tex.wrapS = tex.wrapT = RepeatWrapping
-		tex.repeat.set(1, 1)
-	})
+  [colorMap, roughnessMap, normalMap, dispMap].forEach((tex) => {
+    tex.wrapS = tex.wrapT = RepeatWrapping;
+    tex.repeat.set(1, 1);
+  });
 
-	return { colorMap, roughnessMap, normalMap, dispMap }
+  return { colorMap, roughnessMap, normalMap, dispMap };
 }
 
 function useLeatherMaterial1() {
-	// carica un altro set di texture per il materiale della cerniera del libro
-	const [colorMap1, roughnessMap1, normalMap1, dispMap1] = useTexture([
-		leatherColorUrl1,
-		leatherRoughnessUrl1,
-		leatherNormalUrl1,
-		leatherDispUrl1,
-	]);
+  // carica un altro set di texture per il materiale della cerniera del libro
+  const [colorMap1, roughnessMap1, normalMap1, dispMap1] = useTexture([
+    leatherColorUrl1,
+    leatherRoughnessUrl1,
+    leatherNormalUrl1,
+    leatherDispUrl1,
+  ]);
 
-	colorMap1.colorSpace = SRGBColorSpace;
+  colorMap1.colorSpace = SRGBColorSpace;
 
-	[colorMap1, roughnessMap1, normalMap1, dispMap1].forEach((tex) => {
-		tex.wrapS = tex.wrapT = RepeatWrapping
-		tex.repeat.set(1, 1)
-	})
+  [colorMap1, roughnessMap1, normalMap1, dispMap1].forEach((tex) => {
+    tex.wrapS = tex.wrapT = RepeatWrapping;
+    tex.repeat.set(1, 1);
+  });
 
-	return { colorMap1, roughnessMap1, normalMap1, dispMap1 }
+  return { colorMap1, roughnessMap1, normalMap1, dispMap1 };
 }
 
 interface BookProps {
-	controlsRef: React.RefObject<any>
+  controlsRef: React.RefObject<any>;
 }
 
 interface Recipe {
-	id: number
-	title: string
+  id: number;
+  title: string;
 }
 
 async function fetchData(url: string) {
-	const response = await fetch(url)
-	if (!response.ok) {
-		throw new Error('Failed to fetch data')
-	}
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to fetch data");
+  }
 
-	return response.json()
+  return response.json();
 }
 
-function createRecipeTexture(title: string, accent: string, background: string) {
-	// crea un canvas 2D per generare una texture al volo
-	const canvas = document.createElement('canvas')
-	canvas.width = 512
-	canvas.height = 512
+function createRecipeTexture(
+  title: string,
+  accent: string,
+  background: string,
+) {
+  // crea un canvas 2D per generare una texture al volo
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 512;
 
-	const ctx = canvas.getContext('2d')
-	if (!ctx) return null
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
 
-	// sfondo marroncino per dare un aspetto di carta vecchia
-	const gradient = ctx.createLinearGradient(0, 0, 512, 512)
-	gradient.addColorStop(0, background)
-	gradient.addColorStop(1, accent)
-	ctx.fillStyle = gradient
-	ctx.fillRect(0, 0, 512, 512)
+  // sfondo marroncino per dare un aspetto di carta vecchia
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, background);
+  gradient.addColorStop(1, accent);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-	// titolo principale della ricetta, centrato nella texture
-	ctx.fillStyle = '#4a331f'
-	ctx.font = 'bold 48px serif'
-	ctx.textAlign = 'center'
-	ctx.fillText(title, 256, 210)
+  // titolo principale della ricetta, centrato nella texture
+  ctx.fillStyle = "#4a331f";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.save();
+  ctx.translate(canvas.width - 100, canvas.height / 2); // sposta il contesto per centrare il testo	)
+  ctx.rotate(Math.PI / 2);
+  let fontSize = 35;
+  ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+  while (ctx.measureText(title).width > canvas.height - 64 && fontSize > 24) {
+    fontSize -= 2;
+    ctx.font = `bold ${fontSize}px serif`;
+  }
+  ctx.fillText(title, 0, 0);
 
-	// testo secondario fisso sotto il titolo
-	ctx.font = '24px serif'
-	ctx.fillStyle = '#5a442b'
+  if (title) {
+    // testo secondario fisso sotto il titolo
+    ctx.font = "24px serif";
+    ctx.fillStyle = "#5a442b";
+    const lines = wrapLongLines(
+      "ricetta: PALLE AL SUGO DEL DIOSBORRAAUSTRALOPITECOPATETICO",
+    );
 
-	// bordo leggermente scuro attorno alla pagina per farla sembrare antica
-	ctx.strokeStyle = '#a58362'
-	ctx.lineWidth = 3
-	ctx.strokeRect(10, 15, 490, 485)
+    ctx.textAlign = "center";
+    const lineHeight = 30;
+    const startY = canvas.height / 2 - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((line, index) => {
+      ctx.fillText(line, canvas.width / 2 - 320, startY + index * lineHeight);
+    });
 
-	// converte il canvas in una CanvasTexture Three.js
-	const texture = new CanvasTexture(canvas)
-	texture.colorSpace = SRGBColorSpace
-	texture.needsUpdate = true
-	return texture
+    // autore
+    ctx.font = "italic 24px Georgia, serif";
+    ctx.fillStyle = "#5a442b";
+    ctx.textAlign = "left";
+    ctx.fillText("firma dell'autore sconosciuto dio cane", -200, 480);
+  }
+  ctx.restore();
+  // bordo leggermente scuro attorno alla pagina per farla sembrare antica
+  ctx.strokeStyle = "#a58362";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(10, 15, canvas.width - 20, canvas.height - 30);
+
+  // converte il canvas in una CanvasTexture Three.js
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
 }
 
-function Book({controlsRef} : BookProps) {
-	const [recipes, setRecipes] = useState<Recipe[]>([])
+function Book({ controlsRef }: BookProps) {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
 
-	useEffect(() => {
-		fetchData('/api/recipes')
-			.then(setRecipes)
-			.catch((error) => console.error('Failed to load recipes:', error))
-	}, [])
+  useEffect(() => {
+    fetchData("/api/recipes")
+      .then(setRecipes)
+      .catch((error) => console.error("Failed to load recipes:", error));
+  }, []);
 
-	// limiti iniziali per la camera quando si ruota intorno alla scena
-	const originalLimits = useRef({
-		minPolarAngle: Math.PI * 0.35,
-		maxPolarAngle: Math.PI * 0.55,
-		minAzimuthAngle: -Math.PI * 0.8,
-		maxAzimuthAngle: -Math.PI * 0.20,
-		minDistance: 0.5,
-		maxDistance: 2.5,
-	})
+  // limiti iniziali per la camera quando si ruota intorno alla scena
+  const originalLimits = useRef({
+    minPolarAngle: Math.PI * 0.35,
+    maxPolarAngle: Math.PI * 0.55,
+    minAzimuthAngle: -Math.PI * 0.8,
+    maxAzimuthAngle: -Math.PI * 0.2,
+    minDistance: 0.5,
+    maxDistance: 2.5,
+  });
 
-	function setControlsLimits(limits: Partial<typeof originalLimits.current>) {
-		const c = controlsRef.current
-		if (!c) return
-		Object.assign(c, limits)
-		c.update()
-	}
-	
-	// materiali usati per la copertina e la cerniera del libro
-	const { colorMap, normalMap, roughnessMap } = useLeatherMaterial()
-	const { colorMap1, normalMap1, roughnessMap1 } = useLeatherMaterial1()
+  function setControlsLimits(limits: Partial<typeof originalLimits.current>) {
+    const c = controlsRef.current;
+    if (!c) return;
+    Object.assign(c, limits);
+    c.update();
+  }
 
-	const [isOpen, setIsOpen] = useState(false)
-	const coverBottomRef = useRef<any>(null)
-	const coverTopRef = useRef<any>(null)
-	const hingeRef = useRef<any>(null)
-	const [hovered, setHovered] = useState(false)
-	const pageProgressRefs = useRef<Array<{ current: number }>>([])
-	const { pageProgress, nextPage, prevPage, closePages} = useBookPages(recipes.length)
+  // materiali usati per la copertina e la cerniera del libro
+  const { colorMap, normalMap, roughnessMap } = useLeatherMaterial();
+  const { colorMap1, normalMap1, roughnessMap1 } = useLeatherMaterial1();
 
-	// stato dell'animazione di apertura del libro
-	const progress = useRef(0)
-	const recipeTextures = useMemo(() => {
-		return recipes.map((recipe) => {
-			const frontMap = createRecipeTexture(recipe.title, '#f0d9b0', '#fbefe0')
-			const backMap = createRecipeTexture('', '#dfc39b', '#f7ead2')
-			return { frontMap, backMap }
-		})
-	}, [recipes])
+  const [isOpen, setIsOpen] = useState(false);
+  const coverBottomRef = useRef<any>(null);
+  const coverTopRef = useRef<any>(null);
+  const hingeRef = useRef<any>(null);
+  const [hovered, setHovered] = useState(false);
+  const pageProgressRefs = useRef<Array<{ current: number }>>([]);
+  const { pageProgress, nextPage, prevPage, closePages } = useBookPages(
+    recipes.length,
+  );
 
-	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
-			// chiude il libro con Esc solo quando la camera è ferma
-			if (event.key === 'Escape' && isOpen && camPhase.current === 'idle') {
-				event.preventDefault()
-				setIsOpen(false)
-			}
-			// avanti/indietro pagina con le frecce solo se il libro è aperto
-			if (event.key === 'ArrowRight' && isOpen) {
-				event.preventDefault()
-				nextPage()
-			}
-			if (event.key === 'ArrowLeft' && isOpen) {
-				event.preventDefault()
-				prevPage()
-			}
-		}
+  // stato dell'animazione di apertura del libro
+  const progress = useRef(0);
+  const recipeTextures = useMemo(() => {
+    return recipes.map((recipe) => {
+      const frontMap = createRecipeTexture(recipe.title, "#f0d9b0", "#fbefe0");
+      const backMap = createRecipeTexture("", "#dfc39b", "#f7ead2");
+      return { frontMap, backMap };
+    });
+  }, [recipes]);
 
-		window.addEventListener('keydown', handleKeyDown)
-		return () => window.removeEventListener('keydown', handleKeyDown)
-	}, [isOpen, nextPage, prevPage])
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // chiude il libro con Esc solo quando la camera è ferma
+      if (event.key === "Escape" && isOpen && camPhase.current === "idle") {
+        event.preventDefault();
+        setIsOpen(false);
+      }
+      // avanti/indietro pagina con le frecce solo se il libro è aperto
+      if (event.key === "ArrowRight" && isOpen) {
+        event.preventDefault();
+        nextPage();
+      }
+      if (event.key === "ArrowLeft" && isOpen) {
+        event.preventDefault();
+        prevPage();
+      }
+    };
 
-	useEffect(() => {
-		if (!isOpen) {
-			closePages()
-		}
-	}, [isOpen, closePages])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, nextPage, prevPage]);
 
-	const { camera } = useThree()
-	const camPhase = useRef<'idle' | 'zooming-in' | 'zooming-out'>('idle')
-	const camProgress = useRef(0)
+  useEffect(() => {
+    if (!isOpen) {
+      closePages();
+    }
+  }, [isOpen, closePages]);
 
-	// posizione iniziale e target della camera prima dell'apertura del libro
-	const initialCamPos = useRef(new Vector3(-10, 1.5, 0))
-	const initialTarget = useRef(new Vector3(-3, 1.5, 0))
+  const { camera } = useThree();
+  const camPhase = useRef<"idle" | "zooming-in" | "zooming-out">("idle");
+  const camProgress = useRef(0);
 
-	// posizione target della camera durante l'ingrandimento sul libro
-	const zoomedCamPos = useRef(new Vector3(-2.51, 1.3, -0.1))
-	const zoomedTarget = useRef(new Vector3(-2.5, 1, -0.1))
-		const pageGroupRefs = useRef<Array<any>>([])
+  // posizione iniziale e target della camera prima dell'apertura del libro
+  const initialCamPos = useRef(new Vector3(-10, 1.5, 0));
+  const initialTarget = useRef(new Vector3(-3, 1.5, 0));
 
-		useFrame((_, delta) => {
-			pageProgressRefs.current.forEach((ref, index) => {
-				const p = pageProgress.current[index] ?? 0
-				if (ref) ref.current = p
+  // posizione target della camera durante l'ingrandimento sul libro
+  const zoomedCamPos = useRef(new Vector3(-2.51, 1.3, -0.1));
+  const zoomedTarget = useRef(new Vector3(-2.5, 1, -0.1));
+  const pageGroupRefs = useRef<Array<any>>([]);
 
-				const group = pageGroupRefs.current[index]
-				if (group) {
-					const zStep = 0.001
-					const yClosed = 0.164
-					const yOpened = 0.166
+  useFrame((_, delta) => {
+    pageProgressRefs.current.forEach((ref, index) => {
+      const p = pageProgress.current[index] ?? 0;
+      if (ref) ref.current = p;
 
-					const closedStackZ = 0.01 + (recipes.length - 1 - index) * zStep
-					const openStackZ = 0.01 + index * zStep
+      const group = pageGroupRefs.current[index];
+      if (group) {
+        const zStep = 0.001;
+        const yClosed = 0.164;
+        const yOpened = 0.166;
 
-					group.position.z = closedStackZ * (1 - p) + openStackZ * p
-					group.position.y = yClosed * (1 - p) + (yOpened) * p
-				}
-		})
-		const camSpeed = 1
+        const closedStackZ = 0.01 + (recipes.length - 1 - index) * zStep;
+        const openStackZ = 0.01 + index * zStep;
 
-		if (camPhase.current === 'zooming-in' || camPhase.current === 'zooming-out') {
-			const dir = camPhase.current ==='zooming-in' ? 1 : -1
-			camProgress.current = Math.max(0, Math.min(1, camProgress.current + dir * (delta / camSpeed)))
-			const t = 1 - Math.pow(1 - camProgress.current, 3);
+        group.position.z = closedStackZ * (1 - p) + openStackZ * p;
+        group.position.y = yClosed * (1 - p) + yOpened * p;
+      }
+    });
+    const camSpeed = 1;
 
-			// interpolazione dolce della camera e del target quando si fa zoom sul libro
-			camera.position.lerpVectors(initialCamPos.current, zoomedCamPos.current, t)
-			if (controlsRef.current) {
-				controlsRef.current.target.lerpVectors(initialTarget.current, zoomedTarget.current, t)
-				controlsRef.current.update()
-			}
+    if (
+      camPhase.current === "zooming-in" ||
+      camPhase.current === "zooming-out"
+    ) {
+      const dir = camPhase.current === "zooming-in" ? 1 : -1;
+      camProgress.current = Math.max(
+        0,
+        Math.min(1, camProgress.current + dir * (delta / camSpeed)),
+      );
+      const t = 1 - Math.pow(1 - camProgress.current, 3);
 
-			if (camPhase.current === 'zooming-in' && camProgress.current >= 1){
-				camPhase.current = 'idle'
-				setIsOpen(true)
-			}
+      // interpolazione dolce della camera e del target quando si fa zoom sul libro
+      camera.position.lerpVectors(
+        initialCamPos.current,
+        zoomedCamPos.current,
+        t,
+      );
+      if (controlsRef.current) {
+        controlsRef.current.target.lerpVectors(
+          initialTarget.current,
+          zoomedTarget.current,
+          t,
+        );
+        controlsRef.current.update();
+      }
 
-			if (camPhase.current === 'zooming-out' && camProgress.current <= 0) {
-				camPhase.current = 'idle'
-				if (controlsRef.current) controlsRef.current.enabled = true
-				setControlsLimits(originalLimits.current)
-			}
-		}
+      if (camPhase.current === "zooming-in" && camProgress.current >= 1) {
+        camPhase.current = "idle";
+        setIsOpen(true);
+      }
 
-		// progress di apertura della copertina del libro
-		const targetProgress = isOpen ? 1 : 0
-		const speed = 1
-		const direction = targetProgress === 1 ? 1 : -1
-		const wasOpen = progress.current > 0
+      if (camPhase.current === "zooming-out" && camProgress.current <= 0) {
+        camPhase.current = "idle";
+        if (controlsRef.current) controlsRef.current.enabled = true;
+        setControlsLimits(originalLimits.current);
+      }
+    }
 
-		progress.current += direction * (delta / speed)
-		progress.current = Math.max(0, Math.min(1, progress.current))
+    // progress di apertura della copertina del libro
+    const targetProgress = isOpen ? 1 : 0;
+    const speed = 1;
+    const direction = targetProgress === 1 ? 1 : -1;
+    const wasOpen = progress.current > 0;
 
-		// quando il libro è chiuso e il progresso torna a 0, inizia lo zoom out della camera
-		if (wasOpen && progress.current === 0 && camPhase.current == 'idle')
-			camPhase.current = 'zooming-out'
+    progress.current += direction * (delta / speed);
+    progress.current = Math.max(0, Math.min(1, progress.current));
 
-		// easing cubico per chiusura/apertura più morbida
-		const eased = 1 - Math.pow(1 - progress.current, 3)
-		const angle = eased * -Math.PI
+    // quando il libro è chiuso e il progresso torna a 0, inizia lo zoom out della camera
+    if (wasOpen && progress.current === 0 && camPhase.current == "idle")
+      camPhase.current = "zooming-out";
 
-		if (coverTopRef.current) {
-			if (coverTopRef.current)
-			{
-				coverTopRef.current.rotation.x = angle
-				coverTopRef.current.position.y = 0.155
-				const extraSink = 0.02
-				coverTopRef.current.position.z = 0.055 - (eased * 0.03) - (eased * extraSink)
-			}
-		}
-		if (hingeRef.current) {
-			hingeRef.current.visible = progress.current < 0.225
-		}
-	})
+    // easing cubico per chiusura/apertura più morbida
+    const eased = 1 - Math.pow(1 - progress.current, 3);
+    const angle = eased * -Math.PI;
 
-	const logoMap = useLogoTexture() 
-	
-	return (
-		<group
-			position={[-2.5, 1.05, 0]}
-			rotation={[-Math.PI / 2, 0, 0]}
-			// cliccare sul libro avvia l'animazione di zooming e apre la copertina
-			onClick={(e) => {
-				e.stopPropagation()
-				if (camPhase.current !== 'idle' || isOpen) return
-				if (controlsRef.current) controlsRef.current.enabled = false
-				setControlsLimits({
-					minPolarAngle: 0,
-					maxPolarAngle: Math.PI * 0.55,
-					minAzimuthAngle: -Infinity,
-					maxAzimuthAngle: Infinity,
-					maxDistance: 1,
-					minDistance: 1,
-				})
-				camPhase.current = 'zooming-in'
-			}}
-			onPointerDown={(e) => {
-				e.stopPropagation()
-				if (isOpen || !controlsRef.current || camPhase.current !== 'idle') return
-				controlsRef.current.enabled = false
-			}}
-			// riattiva i controlli dell'orbita quando il puntatore viene rilasciato
-			onPointerUp={() => {
-				if (isOpen || !controlsRef.current || camPhase.current !== 'idle') return
-				controlsRef.current.enabled = true
-			}}
-			>
+    if (coverTopRef.current) {
+      if (coverTopRef.current) {
+        coverTopRef.current.rotation.x = angle;
+        coverTopRef.current.position.y = 0.155;
+        const extraSink = 0.02;
+        coverTopRef.current.position.z =
+          0.055 - eased * 0.03 - eased * extraSink;
+      }
+    }
+    if (hingeRef.current) {
+      hingeRef.current.visible = progress.current < 0.225;
+    }
+  });
 
-			<mesh
-				position={[0, 0, 0.03]}
-				renderOrder={998}
-				onPointerOver={(e) => { e.stopPropagation(); setHovered(true) }}
-				onPointerOut={(e) => { e.stopPropagation(); setHovered(false) }}
-			>
-				{/* area invisibile sopra il libro per catturare hover e click */}
-				<boxGeometry args={[0.48, 0.42, 0.08]} />
-				<meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
-			</mesh>
+  const logoMap = useLogoTexture();
 
-			{/* copertina bassa (fissa) */}
-			<group ref={coverBottomRef} position={[0, 0.005, 0.005]} rotation={[0, 0, 0]}>
-				<mesh position={[0, 0, 0]} castShadow receiveShadow>
-					<boxGeometry args={[0.4, 0.3, 0.02]} />
-					<meshStandardMaterial
-						map={colorMap}
-						normalMap={normalMap}
-						roughnessMap={roughnessMap}
-						normalScale={[0.6, 0.6]}
-						metalness={0.3}
-						roughness={1}
-					/>
-				</mesh>
-				{/* outline for hover: evidenzia il libro quando il cursore è sopra e il libro è chiuso */}
-				<mesh visible={(!isOpen && hovered) && progress.current <= 0.001} position={[0, 0, 0]} renderOrder={999} scale={[1.002, 1.002, 1.002]}>
-					<boxGeometry args={[0.4, 0.3, 0.02]} />
-					<meshBasicMaterial color="#ffffff" transparent opacity={0.18} depthWrite={false} toneMapped={false} />
-				</mesh>
-			</group>
+  return (
+    <group
+      position={[-2.5, 1.05, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      // cliccare sul libro avvia l'animazione di zooming e apre la copertina
+      onClick={(e) => {
+        e.stopPropagation();
+        if (camPhase.current !== "idle" || isOpen) return;
+        if (controlsRef.current) controlsRef.current.enabled = false;
+        setControlsLimits({
+          minPolarAngle: 0,
+          maxPolarAngle: Math.PI * 0.55,
+          minAzimuthAngle: -Infinity,
+          maxAzimuthAngle: Infinity,
+          maxDistance: 1,
+          minDistance: 1,
+        });
+        camPhase.current = "zooming-in";
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        if (isOpen || !controlsRef.current || camPhase.current !== "idle")
+          return;
+        controlsRef.current.enabled = false;
+      }}
+      // riattiva i controlli dell'orbita quando il puntatore viene rilasciato
+      onPointerUp={() => {
+        if (isOpen || !controlsRef.current || camPhase.current !== "idle")
+          return;
+        controlsRef.current.enabled = true;
+      }}
+    >
+      <mesh
+        position={[0, 0, 0.03]}
+        renderOrder={998}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHovered(true);
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          setHovered(false);
+        }}
+      >
+        {/* area invisibile sopra il libro per catturare hover e click */}
+        <boxGeometry args={[0.48, 0.42, 0.08]} />
+        <meshBasicMaterial
+          transparent
+          opacity={0}
+          depthWrite={false}
+          colorWrite={false}
+        />
+      </mesh>
 
-			{/* copertina alta (ruota verso l'alto) */}
-			<group ref={coverTopRef} position={[0, 0.155, 0.055]} rotation={[0, 0, 0]}>
-				{/* cerniera - sparisce quando il libro è completamente aperto */}
-				<mesh ref={hingeRef} position={[0, 0, -0.025]} rotation={[0, 0, -Math.PI * 1.5]} castShadow receiveShadow>
-					<cylinderGeometry args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]} />
-					<meshStandardMaterial
-						map={colorMap1}
-						normalMap={normalMap1}
-						roughnessMap={roughnessMap1}
-						normalScale={[0.6, 0.6]}
-						metalness={0}
-						roughness={1}
-					/>
-				</mesh>
+      {/* copertina bassa (fissa) */}
+      <group
+        ref={coverBottomRef}
+        position={[0, 0.005, 0.005]}
+        rotation={[0, 0, 0]}
+      >
+        <mesh position={[0, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.4, 0.3, 0.02]} />
+          <meshStandardMaterial
+            map={colorMap}
+            normalMap={normalMap}
+            roughnessMap={roughnessMap}
+            normalScale={[0.6, 0.6]}
+            metalness={0.3}
+            roughness={1}
+          />
+        </mesh>
+        {/* outline for hover: evidenzia il libro quando il cursore è sopra e il libro è chiuso */}
+        <mesh
+          visible={!isOpen && hovered && progress.current <= 0.001}
+          position={[0, 0, 0]}
+          renderOrder={999}
+          scale={[1.002, 1.002, 1.002]}
+        >
+          <boxGeometry args={[0.4, 0.3, 0.02]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={0.18}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+      </group>
 
-				<mesh visible={(!isOpen && hovered) && progress.current <= 0.001} position={[0, 0, -0.025]} rotation={[0, 0, -Math.PI * 1.5]} renderOrder={999} scale={[1.004, 1.004, 1.004]}>
-					<cylinderGeometry args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]} />
-					<meshBasicMaterial color="#ffffff" transparent opacity={0.16} depthWrite={false} toneMapped={false} />
-				</mesh>
+      {/* copertina alta (ruota verso l'alto) */}
+      <group
+        ref={coverTopRef}
+        position={[0, 0.155, 0.055]}
+        rotation={[0, 0, 0]}
+      >
+        {/* cerniera - sparisce quando il libro è completamente aperto */}
+        <mesh
+          ref={hingeRef}
+          position={[0, 0, -0.025]}
+          rotation={[0, 0, -Math.PI * 1.5]}
+          castShadow
+          receiveShadow
+        >
+          <cylinderGeometry
+            args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]}
+          />
+          <meshStandardMaterial
+            map={colorMap1}
+            normalMap={normalMap1}
+            roughnessMap={roughnessMap1}
+            normalScale={[0.6, 0.6]}
+            metalness={0}
+            roughness={1}
+          />
+        </mesh>
 
-				<mesh position={[0, -0.15, 0]} castShadow receiveShadow>
-					<boxGeometry args={[0.4, 0.3, 0.02]} />
-					<meshStandardMaterial
-						map={colorMap}
-						normalMap={normalMap}
-						roughnessMap={roughnessMap}
-						normalScale={[0.6, 0.6]}
-						metalness={0.3}
-						roughness={1}
-					/>
-				</mesh>
-				{/* outline for hover - follows the coverTop transforms */}
-				<mesh visible={(!isOpen && hovered) && progress.current <= 0.001} position={[0, -0.15, 0]} renderOrder={999} scale={[1.002, 1.002, 1.002]}> 
-					<boxGeometry args={[0.4, 0.3, 0.02]} />
-					<meshBasicMaterial color="#ffffff" transparent opacity={0.18} depthWrite={false} toneMapped={false} />
-				</mesh>
+        <mesh
+          visible={!isOpen && hovered && progress.current <= 0.001}
+          position={[0, 0, -0.025]}
+          rotation={[0, 0, -Math.PI * 1.5]}
+          renderOrder={999}
+          scale={[1.004, 1.004, 1.004]}
+        >
+          <cylinderGeometry
+            args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]}
+          />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={0.16}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
 
-				<mesh
-					position={[0.01, -0.1455, 0.011]}
-					rotation={[0, 0, -Math.PI / 2]}
-				>
-					<planeGeometry args={[0.35, 0.2]} />
-					<meshStandardMaterial map={logoMap} transparent metalness={0.1} toneMapped={true} alphaTest={0.5} />
-				</mesh>
-			</group>
+        <mesh position={[0, -0.15, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.4, 0.3, 0.02]} />
+          <meshStandardMaterial
+            map={colorMap}
+            normalMap={normalMap}
+            roughnessMap={roughnessMap}
+            normalScale={[0.6, 0.6]}
+            metalness={0.3}
+            roughness={1}
+          />
+        </mesh>
+        {/* outline for hover - follows the coverTop transforms */}
+        <mesh
+          visible={!isOpen && hovered && progress.current <= 0.001}
+          position={[0, -0.15, 0]}
+          renderOrder={999}
+          scale={[1.002, 1.002, 1.002]}
+        >
+          <boxGeometry args={[0.4, 0.3, 0.02]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={0.18}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
 
-			{/* pagine all'interno del libro, ciascuna con texture frontale e retro */}
-			{recipes.map((recipe, index) => {
-				const zOffset =  0.1 + (recipes.length - 1 - index) * 0.001
-				const pageRef = (pageProgressRefs.current[index] ??= { current: 0 })
-				const textures = recipeTextures[index]
-				if (!textures?.frontMap || !textures.backMap) return null
+        <mesh position={[0.01, -0.1455, 0.011]} rotation={[0, 0, -Math.PI / 2]}>
+          <planeGeometry args={[0.35, 0.2]} />
+          <meshStandardMaterial
+            map={logoMap}
+            transparent
+            metalness={0.1}
+            toneMapped={true}
+            alphaTest={0.5}
+          />
+        </mesh>
+      </group>
 
-				return (
-					<group
-						key={recipe.id}
-						ref={(el) => (pageGroupRefs.current[index] = el)}
-						position={[0, 0.164, zOffset + 0.01]}>
-						<Page
-							progressRef={pageRef}
-							frontMap={textures.frontMap}
-							backMap={textures.backMap}
-							width={0.39}
-							height={0.28}
-							position={[0, -0.15, 0.0052]}
-						/>
-					</group>
-				)
-			})}
-		</group>
-	)
+      {/* pagine all'interno del libro, ciascuna con texture frontale e retro */}
+      {recipes.map((recipe, index) => {
+        const zOffset = 0.1 + (recipes.length - 1 - index) * 0.001;
+        const pageRef = (pageProgressRefs.current[index] ??= { current: 0 });
+        const textures = recipeTextures[index];
+        if (!textures?.frontMap || !textures.backMap) return null;
+
+        return (
+          <group
+            key={recipe.id}
+            ref={(el) => (pageGroupRefs.current[index] = el)}
+            position={[0, 0.164, zOffset + 0.01]}
+          >
+            <Page
+              progressRef={pageRef}
+              frontMap={textures.frontMap}
+              backMap={textures.backMap}
+              width={0.39}
+              height={0.28}
+              position={[0, -0.15, 0.0052]}
+            />
+          </group>
+        );
+      })}
+    </group>
+  );
 }
 
 function KitchenModel({ scene }: { scene: Object3D }) {
-	useMemo(() => {
-		scene.traverse((c: any) => {
-			if (c.isMesh) {
-				c.castShadow = true
-				c.receiveShadow = true
-			}
-			if (c.isLight) {
-				c.castShadow = true
-				if (c.shadow) {
-					c.shadow.mapSize.set(1024, 1024)
-					c.shadow.camera.near = 0.1
-					c.shadow.camera.far = 20
-					c.shadow.bias = -0.001
-					c.shadow.normalBias = 0.02
-	}
-}
-		})
-	}, [scene])
-	return <primitive object={scene} dispose={null} />
+  useMemo(() => {
+    scene.traverse((c: any) => {
+      if (c.isMesh) {
+        c.castShadow = true;
+        c.receiveShadow = true;
+      }
+      if (c.isLight) {
+        c.castShadow = true;
+        if (c.shadow) {
+          c.shadow.mapSize.set(1024, 1024);
+          c.shadow.camera.near = 0.1;
+          c.shadow.camera.far = 20;
+          c.shadow.bias = -0.001;
+          c.shadow.normalBias = 0.02;
+        }
+      }
+    });
+  }, [scene]);
+  return <primitive object={scene} dispose={null} />;
 }
 
 function LoadingFallback() {
-	// mesh di fallback mostrata mentre il modello è in caricamento
-	return (
-		<mesh>
-			<boxGeometry args={[1, 1, 1]} />
-			<meshBasicMaterial color="white" wireframe />
-		</mesh>
-	)
+  // mesh di fallback mostrata mentre il modello è in caricamento
+  return (
+    <mesh>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial color="white" wireframe />
+    </mesh>
+  );
 }
 
 export default function Scene() {
-	const { scene } = useGLTF(kitchenUrl)
-	const controlsRef = useRef<any>(null)
-	const [isBullseyeOn, setIsBullseyeOn] = useState(true)
+  const { scene } = useGLTF(kitchenUrl);
+  const controlsRef = useRef<any>(null);
+  const sideLightRef = useRef<SpotLight | null>(null);
+  const sideTargetRef = useRef<Group | null>(null);
+  const [isBullseyeOn, setIsBullseyeOn] = useState(true);
+  const [webglSupported, setWebglSupported] = useState(true);
 
-	return (
-		<div className="relative h-full w-full">
-			<button
-				type="button"
-				onClick={() => setIsBullseyeOn((prev) => !prev)}
-				className="absolute left-4 top-4 z-10 rounded-full border border-amber-200/60 bg-[#2b1a0d]/80 px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 shadow-lg backdrop-blur-sm transition hover:bg-[#3b260f]"
-			>
-				{isBullseyeOn ? 'Occhio di bue: on' : 'Occhio di bue: off'}
-			</button>
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    const context =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 
-			<Canvas shadows dpr={[1, 2]} camera={{ position: [-10, 1.5, 0], fov: 45 }}>
-				<Environment preset="apartment" environmentIntensity={0.1} />
-				<ambientLight intensity={0.2} color="#ffffff" />
+    if (!context) {
+      setWebglSupported(false);
+    }
+  }, []);
 
-				{/* luci soffuse in background */}
-				<pointLight position={[-1.85, 1.8, -0.65]} intensity={50} color="#4e310b" distance={4} decay={2} />
-				<pointLight position={[-1.85, 1.8, 1.25]} intensity={50} color="#4e310b" distance={4} decay={2} />
-				<pointLight position={[-1.85, 1.8, 3.2]} intensity={50} color="#4e310b" distance={4} decay={2} />
+  useEffect(() => {
+    if (sideLightRef.current && sideTargetRef.current) {
+      sideLightRef.current.target = sideTargetRef.current;
+      sideLightRef.current.target.updateMatrixWorld();
+    }
+  }, []);
 
-				{/* occhio di bue */}
-				{isBullseyeOn && (
-					<pointLight
-						position={[-2.5, 2, -0.1]}
-						intensity={100}
-						color="#4e310b"
-						distance={4}
-						decay={2}
-					/>
-				)}
-				
-				<Suspense fallback={<LoadingFallback />}>
-					<KitchenModel scene={scene} />
-					<Book controlsRef={controlsRef} />
-				</Suspense>
+  if (!webglSupported) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
+        <div className="max-w-lg space-y-3">
+          <p className="text-xs font-medium uppercase tracking-[0.3em] text-amber-200/80">
+            3D preview unavailable
+          </p>
+          <h2 className="text-2xl font-semibold text-amber-50">
+            WebGL is disabled in this browser
+          </h2>
+          <p className="text-sm text-amber-100/80">
+            The kitchen scene needs a working WebGL context to render the 3D
+            cookbook experience.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-				<OrbitControls
-					ref={controlsRef}
-					makeDefault
-					target={[-3, 1.5, 0]}
-					enableDamping
-					dampingFactor={0.05}
-					enablePan={false}
-					minDistance={0.5}
-					maxDistance={2.5}
-					minPolarAngle={Math.PI * 0.35}
-					maxPolarAngle={Math.PI * 0.55}
-					minAzimuthAngle={-Math.PI * 0.8}
-					maxAzimuthAngle={-Math.PI * 0.20}
-				/>
+  return (
+    <div className="relative h-full w-full">
+      <button
+        type="button"
+        onClick={() => setIsBullseyeOn((prev) => !prev)}
+        className="absolute left-4 top-4 z-10 rounded-full border border-amber-200/60 bg-[#2b1a0d]/80 px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 shadow-lg backdrop-blur-sm transition hover:bg-[#3b260f]"
+      >
+        {isBullseyeOn ? "Occhio di bue: on" : "Occhio di bue: off"}
+      </button>
 
-			</Canvas>
-		</div>
-	)
+      <Canvas
+        shadows={{ type: PCFShadowMap }}
+        dpr={[1, 2]}
+        camera={{ position: [-10, 1.5, 0], fov: 45 }}
+      >
+        <Environment preset="apartment" environmentIntensity={0.1} />
+        <ambientLight intensity={0.2} color="#ffffff" />
+
+        {/* luci soffuse in background */}
+        <pointLight
+          position={[-1.85, 1.8, -0.65]}
+          intensity={50}
+          color="#4e310b"
+          distance={4}
+          decay={2}
+        />
+        <pointLight
+          position={[-1.85, 1.8, 1.25]}
+          intensity={50}
+          color="#4e310b"
+          distance={4}
+          decay={2}
+        />
+        <pointLight
+          position={[-1.85, 1.8, 3.2]}
+          intensity={50}
+          color="#4e310b"
+          distance={4}
+          decay={2}
+        />
+
+        {/* occhio di bue */}
+        {isBullseyeOn && (
+          <spotLight
+            ref={sideLightRef}
+            position={[-2.283, 1.9, -0.065]}
+            intensity={100}
+            color="#4e310b"
+            distance={3}
+            angle={-Math.PI / 2}
+            penumbra={0.3}
+            decay={2}
+            castShadow
+          />
+        )}
+
+        {/* bersaglio laterale del fascio luminoso */}
+        <group ref={sideTargetRef} position={[-2.283, 1, -0.065]} />
+
+        <Suspense fallback={<LoadingFallback />}>
+          <KitchenModel scene={scene} />
+          <Book controlsRef={controlsRef} />
+        </Suspense>
+
+        <OrbitControls
+          ref={controlsRef}
+          makeDefault
+          target={[-3, 1.5, 0]}
+          enableDamping
+          dampingFactor={0.05}
+          enablePan={false}
+          minDistance={0.5}
+          maxDistance={2.5}
+          minPolarAngle={Math.PI * 0.35}
+          maxPolarAngle={Math.PI * 0.55}
+          minAzimuthAngle={-Math.PI * 0.8}
+          maxAzimuthAngle={-Math.PI * 0.2}
+        />
+      </Canvas>
+    </div>
+  );
 }

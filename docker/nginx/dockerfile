@@ -1,34 +1,41 @@
+# Base image: official Nginx stable image based on Alpine Linux
 FROM nginx:stable-alpine
 
-RUN rm /etc/nginx/conf.d/default.conf
+# Remove default configuration files
+RUN rm -rf /etc/nginx/conf.d
 
-COPY ./docker/nginx/nginx.conf /etc/nginx/conf.d/
+# Copy the configuration file overwriting the default one
+COPY nginx.conf /etc/nginx/nginx.conf
 
-RUN apk add --no-cache openssl
+# Install OpenSSL (for runtime self-signed certificate generation) and curl
+# (for healthcheck).The --no-cache flag keeps the image minimal by not saving
+# package manager cache; it also makes 'apk update' redundant and not needed.
+RUN apk add --no-cache openssl curl
 
-RUN mkdir -p /etc/nginx/ssl
+# Copy the entrypoint script and make it executable
+COPY nginx_entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/nginx_entrypoint.sh
 
-RUN openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
-  -keyout /etc/nginx/ssl/transcendence.key \
-  -out /etc/nginx/ssl/transcendence.crt \
-  -subj "/C=IT/ST=Italy/L=Italy/O=Dev/CN=localhost" \
-  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+# Health check: verifies that Nginx can serve HTTPS requests on the dedicated
+# health endpoint.
+# Flags:
+#   -f: fail on HTTP errors (4xx, 5xx)
+#   -k: skip SSL verification for self-signed certificate
+# Options:
+#   --interval=10s:		check every 10 seconds
+#   --timeout=5s:		fail check if response exceeds 5 seconds
+#   --start-period=5s:	grace period after container start
+#   --retries=3:		mark unhealthy after 3 consecutive failures
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -fk https://localhost/healthz || exit 1
 
-# COPY ssl/transcendence.crt /etc/nginx/ssl/transcendence.crt
-# COPY ssl/transcendence.key /etc/nginx/ssl/transcendence.key
+# Expose HTTPS port
+EXPOSE 443
 
+# Define the entrypoint script
+ENTRYPOINT ["nginx_entrypoint.sh"]
 
-# Disabilita i log di [notice] all'avvio
-RUN ln -sf /dev/null /var/log/nginx/error.log
-
-RUN apk add --no-cache netcat-openbsd
-
-
-EXPOSE 8443
-
-COPY ./docker/nginx/entrypoint.sh /etc/nginx/entrypoint.sh
-
-
-RUN chmod +x ./etc/nginx/entrypoint.sh
-
-ENTRYPOINT ["./etc/nginx/entrypoint.sh"]
+# Define the default command: starts Nginx in foreground.
+# The flag -g passes global directives to Nginx: 'daemon off;' is crucial in
+# Docker so the main process stays in foreground (PID 1).
+CMD ["nginx", "-g", "daemon off;"]
