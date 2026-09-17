@@ -6,26 +6,27 @@ import { createParamDecorator, ExecutionContext, Injectable } from '@nestjs/comm
 
 
 /* 
-    keyof è un operatore di tipo di TypeScript che estrae l'unione di
-    tutte le chiavi (proprietà) di un'interfaccia o tipo.            
-                                   
-    definendo questo
+	keyof è un operatore di tipo di TypeScript che estrae l'unione di
+	tutte le chiavi (proprietà) di un'interfaccia o tipo.
 
-        export interface ActiveUserData {                              
-        id: number;                                                  
-        username: string;                                            
-        role: Role;                                                  
-        }                                                              
-                                                                    
-    Applicare keyof ActiveUserData equivale a:                       
-                                                                    
-        'id' | 'username' | 'role'                                     
-                                                                    
+	definendo questo
+
+		export interface ActiveUserData {
+		id: number;
+		username: string;
+		role: Role;
+		}
+
+	Applicare keyof ActiveUserData equivale a:
+
+		'id' | 'username' | 'role'
+
 */
-export interface ActiveUserData {                              
-    id: number;
-    username: string;
-    role: Role;
+export interface ActiveUserData {
+	id: number;
+	username: string;
+	role: Role;
+	session: number
 }
 
 /*
@@ -35,8 +36,8 @@ export interface ActiveUserData {
   	Guard, appena risponde al frontend con un return distrugge quell'oggetto
 */
 export const CurrentUser = createParamDecorator(
-    
-    (data: keyof ActiveUserData | undefined, ctx: ExecutionContext) => {
+	
+	(data: keyof ActiveUserData | undefined, ctx: ExecutionContext) => {
 /* 		
 		1. ctx (ExecutionContext): NestJS è un framework polivalente. Può gestire sia normali  
 		chiamate web (HTTP), sia connessioni in tempo reale (WebSockets), sia code di messaggi 
@@ -46,19 +47,19 @@ export const CurrentUser = createParamDecorator(
 		3. .getRequest(): Estrae l'oggetto Request di Express. È lo stesso identico oggetto che
   		contiene headers, cookies, body, params, ecc.
  */
-        const request = ctx.switchToHttp().getRequest(); //acceddo all
+		const request = ctx.switchToHttp().getRequest(); //acceddo all
 
 		/*
 		prima, durante l'esecuzione, il tuo auth.guard.ts:52 ha fatto questo lavoro:
-        request.user = { id: payload.sub, username: payload.username, role: payload.role 
-	    };*/
-        const user = request.user;
+		request.user = { id: payload.sub, username: payload.username, role: payload.role 
+		};*/
+		const user = request.user;
 		// controllo se ritornare username, id, role oppure tutto user
-        if (data) {                                                
-          return user ? user[data] : undefined;                    
-        }
-        return user;
-    }
+		if (data) {
+		  return user ? user[data] : undefined;
+		}
+		return user;
+	}
 
 
 
