@@ -22,7 +22,7 @@ function Privacy() {
 					<h2 className="mb-1 text-lg font-semibold text-[var(--wc-text)]">I tuoi diritti</h2>
 					<p>
 						Puoi in qualsiasi momento aggiornare i tuoi dati dalla pagina Profilo o richiedere la cancellazione
-						dell'account scrivendo a supporto@wecook.example.
+						dell'account scrivendo a wecook.support@gmail.com
 					</p>
 				</section>
 			</div>

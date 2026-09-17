@@ -9,6 +9,6 @@ export class SignInUserDto
 
 	@IsNotEmpty(({ message: 'The password cannot be empty' }))
 	@IsString()
-	@MinLength(6, { message: 'The password must have at least 6 character' })
+	@MinLength(9, { message: 'The password must have at least 9 character' })
 	password: string
 }

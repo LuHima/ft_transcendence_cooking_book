@@ -9,7 +9,7 @@ function Contacts() {
 			<div className="mt-8 space-y-4 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-6">
 				<div>
 					<dt className="text-xs uppercase tracking-wide text-[var(--wc-text-muted)]">Email</dt>
-					<dd className="text-[var(--wc-text)]">supporto@wecook.example</dd>
+					<dd className="text-[var(--wc-text)]">wecook.support@gmail.com</dd>
 				</div>
 				<div>
 					<dt className="text-xs uppercase tracking-wide text-[var(--wc-text-muted)]">Community</dt>
@@ -17,7 +17,7 @@ function Contacts() {
 				</div>
 				<div>
 					<dt className="text-xs uppercase tracking-wide text-[var(--wc-text-muted)]">Sede</dt>
-					<dd className="text-[var(--wc-text)]">Bologna, Italia</dd>
+					<dd className="text-[var(--wc-text)]">Firenze, Italia</dd>
 				</div>
 			</div>
 		</div>
