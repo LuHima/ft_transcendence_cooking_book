@@ -61,9 +61,11 @@ services:
     # Connect to custom bridge network
     networks:
       - transcendence
-    # Start backend only after database is completely ready and healthy
+    # Start backend only after database and translation service are ready and healthy
     depends_on:
       database:
+        condition: service_healthy
+      libretranslate:
         condition: service_healthy
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
@@ -139,6 +141,33 @@ services:
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
+  #----------------------------------------------------------------------------#
+  #                           LIBRETRANSLATE SERVICE                           #
+  #----------------------------------------------------------------------------#
+  # LibreTranslate machine translation engine (offline en, it, fr)
+  libretranslate:
+    # Build image from local Dockerfile in docker/translate/
+    build:
+      context: ./translate/
+    # Tag built image (uses APP_VERSION from .env or '1.0')
+    image: libretranslate:${APP_VERSION:-1.0}
+    # Fixed container name
+    container_name: libretranslate-container
+    # Always use locally built image
+    pull_policy: never
+    # Graceful shutdown timeout
+    stop_grace_period: 10s
+    # Runtime configuration: models are pre-installed in image; updates disabled
+    environment:
+      - LT_HOST=0.0.0.0
+      - LT_PORT=5000
+      - LT_LOAD_ONLY=en,it,fr
+      - LT_UPDATE_MODELS=false
+    # Connect to custom bridge network
+    networks:
+      - transcendence
+    # Auto-restart on crash or reboot unless manually stopped
+    restart: unless-stopped
 
 #------------------------------------------------------------------------------#
 #                                  NETWORKS                                    #
@@ -151,4 +180,5 @@ networks:
 #                                  VOLUMES                                     #
 #------------------------------------------------------------------------------#
 volumes:
+  # Persistent volume for PostgreSQL database
   db_data:
