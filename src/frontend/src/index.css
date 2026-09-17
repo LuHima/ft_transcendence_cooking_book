@@ -1,1 +1,40 @@
 @import "tailwindcss";
+
+@font-face {
+	font-family: 'Playfair Display';
+	src: url('./assets/Playfair-ExtraBoldItalic.ttf') format('truetype');
+	font-weight: 800;
+	font-style: italic;
+	font-display: swap;
+}
+
+:root {
+	--wc-bg: #1c1a17;
+	--wc-surface: #262119;
+	--wc-surface-raised: #322b20;
+	--wc-border: #4a4033;
+	--wc-text: #f2ece0;
+	--wc-text-muted: #b3a894;
+	--wc-basil: #7a9a56;
+	--wc-basil-dark: #5f7a41;
+	--wc-saffron: #e2a33d;
+	--wc-paprika: #c1543a;
+}
+
+html,
+body,
+#root {
+	height: 100%;
+}
+
+body {
+	background: var(--wc-bg);
+	color: var(--wc-text);
+	font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.font-display {
+	font-family: 'Playfair Display', Georgia, serif;
+	font-style: italic;
+	font-weight: 800;
+}
