@@ -13,28 +13,26 @@ import { UsersModule } from './users/users.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 //mport { CaslModule } from './auth/casl/casl.module';
-
+import { CleanExpiredToken } from './common/task/clean-expired-token.service';
 
 
 @Module({
   // NELL'ARRAY SI METTE SOLO IL NOME DELLA CLASSE, NON LA STRINGA DEL PERCORSO!
-  imports: [PrismaModule, AuthModule, UsersModule, RecipeModule,
-   ThrottlerModule.forRoot([{ttl: 100, limit: 4,}]),
+  imports: [PrismaModule, AuthModule, UsersModule, RecipeModule, ScheduleModule.forRoot(), // ScheduleModule cerca in tutti i provider per un @Cron vede quanto manca al tempo stabilito
+   ThrottlerModule.forRoot([{ttl: 100, limit: 4,}]),										// e setta un timer per chiamare quella funzione non appena finisce il sistemma setta in automatico un'altro timer per la volta successiva
    /* CaslModule, */
   ], 
   // gli import degli altri module creati
   controllers: [AppController], //qui ci vanno i file controller
-  providers: [AppService, 
-    {provide:
-      APP_GUARD, // rende la classe chiamata di default ovunque nelle API(Credo solo nelle API), poi si possono personalizzare 
-      useClass: ThrottlerGuard,
-    },
-    // {
-    //   useClass: AuthGuard, 
-    // },
+  providers: [AppService, CleanExpiredToken, // in providers si mettono le classi service di cui si voglio creare le istanze all'avvio 
+	{
+		provide:
+			APP_GUARD, // rende la classe chiamata di default ovunque nelle API(Credo solo nelle API), poi si possono personalizzare per singole chiamate i Throttler
+			useClass: ThrottlerGuard, 
+	},
 
-
-  ], //qui ci vanno i file service 
+  ],
 })
 export class AppModule {}

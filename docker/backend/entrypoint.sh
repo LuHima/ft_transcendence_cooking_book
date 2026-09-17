@@ -1,21 +1,27 @@
-#!/bin/bash
+#!/bin/sh
 
-while ! nc -z database 5432 2>/dev/null; do
-  echo "Waiting for database on database:5432..."
-  sleep 2
-done
+# Exit immediately if any command returns a non-zero exit code (an error)
+set -e
 
-echo "Database is ready!"
+echo ""
+echo "=== Starting Backend Service ==="
 
-#npm install -D typescript tsx @types/node @prisma/adapter-pg pg @types/pg dotenv
-
-# Rigenera il Prisma Client prima di usare il client
+# Generate Prisma client based on current schema
+echo "Generating Prisma Client..."
 npx prisma generate
 
-# Esegue le migrazioni del database
+# Apply any pending database migrations
+echo "Applying database migrations..."
 npx prisma migrate deploy
 
-# Esegue lo seed (idempotente)
+# Run database seed (idempotent initial data)
+echo "Seeding database..."
 npx prisma db seed
 
-exec npm run start:dev
+echo "Backend initialization complete! Starting application..."
+echo ""
+
+# Execute the command passed as argument to the Dockerfile (CMD). Using 'exec'
+# is ESSENTIAL because exec replaces the shell process with the application process.
+# This way the Node process becomes PID 1 and correctly receives stop signals.
+exec "$@"

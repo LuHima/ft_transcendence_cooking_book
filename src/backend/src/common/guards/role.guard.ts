@@ -1,6 +1,5 @@
 
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-
 import { CaslAbilityFactory, AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 
 @Injectable()

@@ -1,6 +1,6 @@
 import { CreateRecipeDto } from "./create-recipe.dto";
 import {PartialType, OmitType} from "@nestjs/mapped-types"
-export class UpdateRecipeDto extends PartialType(OmitType(CreateRecipeDto, ['owner_type', 'user_id'] as  const))
+export class UpdateRecipeDto extends PartialType(CreateRecipeDto)
 {
 
 }
@@ -17,7 +17,7 @@ La funzione PartialType(CreateRecipeDto) fa due cose in
   class-validator (come @IsString(), @IsEnum(), ecc.)             
   aggiungendovi automaticamente @IsOptional(). In questo modo:    
       • Se il client non invia un campo, non ci saranno errori di 
-      validazione (es. non richiederà @IsNotEmpty()).             
+      validazione (es. non richiederà @IsNotEmpty()).
       • Se il client invia quel campo per aggiornarlo, il campo   
       verrà comunque validato con le stesse regole definite in    
       CreateRecipeDto.
