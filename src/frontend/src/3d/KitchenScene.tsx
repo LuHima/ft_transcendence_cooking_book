@@ -8,9 +8,12 @@ import {
 } from "@react-three/drei";
 import {
   CanvasTexture,
+  Group,
   Object3D,
+  PCFShadowMap,
   RepeatWrapping,
   SRGBColorSpace,
+  SpotLight,
   Vector3,
 } from "three";
 import { Page } from "./Page";
@@ -24,7 +27,7 @@ import { wrapLongLines } from "./utils/wrapLongLines.ts";
 
 // FROM ASSETS
 
-import kitchenUrl from "../assets/kitchen3.0.glb?url";
+import kitchenUrl from "../assets/kitchen3.1.glb?url";
 import leatherColorUrl from "../assets/fabric_leather_02_diff_4k.jpg?url";
 import leatherRoughnessUrl from "../assets/fabric_leather_02_rough_4k.jpg?url";
 import leatherDispUrl from "../assets/fabric_leather_02_disp_4k.png?url";
@@ -590,6 +593,8 @@ function LoadingFallback() {
 export default function Scene() {
   const { scene } = useGLTF(kitchenUrl);
   const controlsRef = useRef<any>(null);
+  const sideLightRef = useRef<SpotLight | null>(null);
+  const sideTargetRef = useRef<Group | null>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
   const [webglSupported, setWebglSupported] = useState(true);
 
@@ -600,6 +605,13 @@ export default function Scene() {
 
     if (!context) {
       setWebglSupported(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (sideLightRef.current && sideTargetRef.current) {
+      sideLightRef.current.target = sideTargetRef.current;
+      sideLightRef.current.target.updateMatrixWorld();
     }
   }, []);
 
@@ -633,7 +645,7 @@ export default function Scene() {
       </button>
 
       <Canvas
-        shadows
+        shadows={{ type: PCFShadowMap }}
         dpr={[1, 2]}
         camera={{ position: [-10, 1.5, 0], fov: 45 }}
       >
@@ -665,14 +677,21 @@ export default function Scene() {
 
         {/* occhio di bue */}
         {isBullseyeOn && (
-          <pointLight
-            position={[-2.5, 2, -0.1]}
+          <spotLight
+            ref={sideLightRef}
+            position={[-2.283, 1.9, -0.065]}
             intensity={100}
             color="#4e310b"
-            distance={4}
+            distance={3}
+            angle={-Math.PI / 2}
+            penumbra={0.3}
             decay={2}
+            castShadow
           />
         )}
+
+        {/* bersaglio laterale del fascio luminoso */}
+        <group ref={sideTargetRef} position={[-2.283, 1, -0.065]} />
 
         <Suspense fallback={<LoadingFallback />}>
           <KitchenModel scene={scene} />
