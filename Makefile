@@ -20,6 +20,10 @@ GID =			$(shell id -g)
 export UID
 export GID
 
+# Enable Docker compose build delegation for better performance
+COMPOSE_BAKE =	true
+export COMPOSE_BAKE
+
 # Detect if Docker is running in rootless mode:
 # 1. Checks if 'docker info' reports "rootless" under Security Options
 # 2. Checks if active Docker context endpoint or DOCKER_HOST points to
@@ -90,22 +94,38 @@ endif
 .PHONY: all
 all: env-check ## |Start containers (detached mode)
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
+	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
+	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
+	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
 
 # Build docker-compose images without starting containers
 .PHONY: build
-build: env-check ## |Build images without starting containers
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) build
+build: env-check ## |Build images with cache and log to file
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
+		| tee $(BUILD_LOG)
 
 # Rebuild docker-compose images (cached) and start containers
 .PHONY: up-build
-up-build: env-check ## |Rebuild images and start containers (cached)
+up-build: env-check ## |Rebuild images (cached) and start containers
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) up --build -d
+	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
+	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
+	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
 
 # Rebuild images without cache and log output to build.log
 .PHONY: rebuild
 rebuild: env-check ## |Rebuild images with no-cache and log to file
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
 		--no-cache 2>&1 | tee $(BUILD_LOG)
+
+# Rebuild docker-compose images (no-cache) and start containers
+.PHONY: up-rebuild
+up-rebuild: env-check ## |Rebuild images (no-cache) and start containers
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) build --no-cache
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
+	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
+	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
+	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
 
 # Stops and removes containers and networks, preserving volumes and images
 .PHONY: down
@@ -148,11 +168,11 @@ clean-cache: wipe ## |Remove project resources and global builder cache
 	@echo "Pruning Docker builder cache (global, not project-scoped)..."
 	@$(SUDO) docker builder prune -af
 
-# Runs a full project cleanup first via wipe, then prunes unused Docker
+# Runs a full project cleanup first via fclean, then prunes unused Docker
 # resources globally on the host: stopped containers, unused networks,
 # images, and volumes
 .PHONY: prune
-prune: wipe ## |Prune Docker resources globally on the host
+prune: fclean ## |fclean + prune Docker resources globally on the host
 	@echo "Pruning everything o.o"
 	@$(SUDO) docker system prune -a --volumes -f
 	@$(SUDO) docker volume prune -a -f
@@ -274,14 +294,16 @@ env-check: ## |Verify .env exists and required vars are present
 		exit 1; \
 	fi; \
 	missing=0; \
-	for var in DOMAIN_NAME POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET; do \
+	for var in DOMAIN_NAME POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
+	DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET; do \
 		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
 			echo "Missing variable in $(ENV_FILE): $$var"; \
 			missing=1; \
 		fi; \
 	done; \
 	if [ $$missing -ne 0 ]; then \
-		echo "Some required variables are missing in $(ENV_FILE). Check $(ENV_EXAMPLE)."; \
+		echo -n "Some required variables are missing in $(ENV_FILE)."; \
+		echo " Check $(ENV_EXAMPLE)."; \
 		exit 1; \
 	fi
 
@@ -290,7 +312,8 @@ env-check: ## |Verify .env exists and required vars are present
 .PHONY: env-init
 env-init: ## |Initialize .env from .env.example
 	@echo "This feature is not implemented yet!"; \
-	echo "Manually copy the $(ENV_EXAMPLE) file into $(ENV_FILE) and adjust the values."
+	echo -n "Manually copy the $(ENV_EXAMPLE) file into "; \
+	echo "$(ENV_FILE) and adjust the values."
 
 # Quick project setup rule
 .PHONY: setup
@@ -311,9 +334,11 @@ help: ## |Show this help message
 		desc = part[2]; \
 		cmd = "make " $$1; \
 		if (args != "") cmd = cmd " " args; \
-		printf "  %-35s %s\n", cmd, desc \
+		printf "  %-30s %s\n", cmd, desc \
 	}' Makefile
 	@echo ""
 	@echo "Notes:"
-	@echo "  - Docker mode: $(if $(filter 1,$(IS_ROOTLESS)),rootless (no sudo),root (SUDO=$(SUDO)))"
-	@echo "  - Run: make exec <name> [cmd], make inspect <name>, make logs [service]."
+	@echo "  - Docker mode:" \
+	"$(if $(filter 1,$(IS_ROOTLESS)),rootless (no sudo),root (sudo=$(SUDO)))"
+	@echo "  - Run: make exec <name> [cmd], make inspect <name>," \
+	"make logs [service]."
