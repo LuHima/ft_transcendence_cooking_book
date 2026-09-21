@@ -89,6 +89,9 @@ services:
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
+    # Runtime configuration
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
     # Mount frontend source code for live development and protect container
     # node_modules
     volumes:
@@ -123,9 +126,17 @@ services:
     # Load environment variables from .env
     env_file:
       - .env
-    # Non-sensitive environment variable default for TLS certificate SAN/CN
+    # Environment variables for TLS certificate generation
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      PRODUCTION_FLAG: ${PRODUCTION_FLAG:-false}
+      INFOMANIAK_API_TOKEN: ${INFOMANIAK_API_TOKEN:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      ACME_STAGING: ${ACME_STAGING:-false}
+    # Persistent volumes for SSL certificates and ACME state to avoid rate limits
+    volumes:
+      - nginx_ssl:/etc/nginx/ssl
+      - acme_data:/root/.acme.sh
     # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
     ports:
       - "8443:443"
@@ -182,3 +193,7 @@ networks:
 volumes:
   # Persistent volume for PostgreSQL database
   db_data:
+  # Persistent volume for Nginx TLS certificates
+  nginx_ssl:
+  # Persistent volume for acme.sh account data and certificate configs
+  acme_data:
