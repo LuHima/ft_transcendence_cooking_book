@@ -98,6 +98,10 @@ all: env-check ## |Start containers (detached mode)
 	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
 	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
 
+# Start docker-compose without rebuilding images every time (alias for all)
+.PHONY: up
+up: all ## |Alias for 'make all'
+
 # Build docker-compose images without starting containers
 .PHONY: build
 build: env-check ## |Build images with cache and log to file
