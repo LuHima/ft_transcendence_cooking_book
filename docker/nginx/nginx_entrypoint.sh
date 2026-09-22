@@ -99,10 +99,10 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 		echo "challenge for domain: ${DOMAIN}..."
 
 		# Check if Let's Encrypt staging environment is requested
-		STAGING_ARG=""
+		STAGING_SERVER="letsencrypt"
 		case "$(echo "${ACME_STAGING:-false}" | tr '[:upper:]' '[:lower:]')" in
 			true|1|yes|on)
-				STAGING_ARG="--staging"
+				STAGING_SERVER="letsencrypt_test"
 				echo -n "[STAGING] ACME_STAGING is enabled: using "
 				echo "Let's Encrypt Staging environment."
 				;;
@@ -113,26 +113,25 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 		export INFOMANIAK_API_TOKEN
 
 		# Set default CA to Let's Encrypt
-		"$ACME_BIN" --set-default-ca --server letsencrypt >/dev/null 2>&1 \
-		|| true
+		"$ACME_BIN" --set-default-ca --server ${STAGING_SERVER} \
+			>/dev/null 2>&1 || true
 
 		# Register ACME account if needed
 		if [ -n "$ACME_EMAIL" ]; then
 			echo "Registering ACME account with email: ${ACME_EMAIL}..."
 			"$ACME_BIN" --register-account -m "$ACME_EMAIL" \
-				--server letsencrypt ${STAGING_ARG} || true
+				--server ${STAGING_SERVER} || true
 		else
 			echo "Registering ACME account without email..."
 			"$ACME_BIN" --register-account --register-unsafely-without-email \
-				--server letsencrypt ${STAGING_ARG} || true
+				--server ${STAGING_SERVER} || true
 		fi
 
 		# Issue certificate with DNS-01 Infomaniak hook
 		"$ACME_BIN" --issue \
 			--dns dns_infomaniak \
 			-d "$DOMAIN" \
-			--server letsencrypt \
-			${STAGING_ARG}
+			--server ${STAGING_SERVER}
 
 		# Install certificates into Nginx SSL directory
 		"$ACME_BIN" --install-cert \
