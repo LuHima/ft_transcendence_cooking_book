@@ -99,10 +99,10 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 		echo "challenge for domain: ${DOMAIN}..."
 
 		# Check if Let's Encrypt staging environment is requested
-		STAGING_SERVER="letsencrypt"
+		ACME_SERVER="letsencrypt"
 		case "$(echo "${ACME_STAGING:-false}" | tr '[:upper:]' '[:lower:]')" in
 			true|1|yes|on)
-				STAGING_SERVER="letsencrypt_test"
+				ACME_SERVER="letsencrypt_test" # staging (test) server
 				echo -n "[STAGING] ACME_STAGING is enabled: using "
 				echo "Let's Encrypt Staging environment."
 				;;
@@ -113,31 +113,33 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 		export INFOMANIAK_API_TOKEN
 
 		# Set default CA to Let's Encrypt
-		"$ACME_BIN" --set-default-ca --server ${STAGING_SERVER} \
+		"$ACME_BIN" --set-default-ca --server ${ACME_SERVER} \
 			>/dev/null 2>&1 || true
 
 		# Register ACME account if needed
 		if [ -n "$ACME_EMAIL" ]; then
 			echo "Registering ACME account with email: ${ACME_EMAIL}..."
 			"$ACME_BIN" --register-account -m "$ACME_EMAIL" \
-				--server ${STAGING_SERVER} || true
+				--server ${ACME_SERVER} || true
 		else
 			echo "Registering ACME account without email..."
 			"$ACME_BIN" --register-account --register-unsafely-without-email \
-				--server ${STAGING_SERVER} || true
+				--server ${ACME_SERVER} || true
 		fi
 
 		# Issue certificate with DNS-01 Infomaniak hook
 		"$ACME_BIN" --issue \
 			--dns dns_infomaniak \
 			-d "$DOMAIN" \
-			--server ${STAGING_SERVER}
+			--server ${ACME_SERVER}
 
-		# Install certificates into Nginx SSL directory
+		# Install certificates into Nginx SSL directory and
+		# register reload command
 		"$ACME_BIN" --install-cert \
 			-d "$DOMAIN" \
 			--key-file "$SSL_DIR/transcendence.key" \
-			--fullchain-file "$SSL_DIR/transcendence.crt"
+			--fullchain-file "$SSL_DIR/transcendence.crt" \
+			--reloadcmd "nginx -s reload || true"
 
 		chmod 600 "$SSL_DIR/transcendence.key"
 		chmod 644 "$SSL_DIR/transcendence.crt"
@@ -145,6 +147,17 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 	else
 		echo -n "SSL certificate already exists in ${SSL_DIR}, "
 		echo "skipping generation."
+	fi
+
+	# Configure automated daily renewal cron job for acme.sh in production
+	"$ACME_BIN" --install-cronjob >/dev/null 2>&1 || true
+	# Manually adding the cron job if previous command failed
+	if ! crontab -l 2>/dev/null | grep -q "acme.sh.*--cron"; then
+		mkdir -p /var/spool/cron/crontabs
+		echo -n "0 0 * * * \"$ACME_BIN\" --cron --home \"/root/.acme.sh\"" \
+			>> /var/spool/cron/crontabs/root
+		echo ">/dev/null 2>&1" >> /var/spool/cron/crontabs/root
+		chmod 600 /var/spool/cron/crontabs/root 2>/dev/null || true
 	fi
 
 else
@@ -158,8 +171,8 @@ else
 		NEED_SELF_SIGNED=1
 	elif ! openssl x509 -checkend 86400 -noout -in \
 	"$SSL_DIR/transcendence.crt" >/dev/null 2>&1; then
-		echo -n "Existing self-signed certificate is expired or expiring within "
-		echo "24 hours."
+		echo -n "Existing self-signed certificate is expired or "
+		echo "expiring within 24 hours."
 		NEED_SELF_SIGNED=1
 	elif ! openssl x509 -in "$SSL_DIR/transcendence.crt" \
 	-noout -text 2>/dev/null | \
@@ -174,15 +187,16 @@ else
 
 		# Generate the self-signed certificate with OpenSSL:
 		# req:				command for creating certificate requests.
-		# -x509:			generate a self-signed X.509 certificate instead of a 
-		#					request.
-		# -nodes:			don't encrypt the private key (otherwise nginx asks for
-		#					password at startup and blocks).
-		# -newkey rsa:2048:	generate both a new certificate and a new 2048-bit RSA
-		#					private key.
-		# -days 365:		set certificate validity period to 365 days (1 year).
+		# -x509:			generate a self-signed X.509 certificate instead of
+		#					a request.
+		# -nodes:			don't encrypt the private key (otherwise nginx asks
+		#					for password at startup and blocks).
+		# -newkey rsa:2048:	generate both a new certificate and a new 2048-bit
+		#					RSA private key.
+		# -days 365:		set certificate validity period to 365 days (1 yr).
 		# -keyout:			path where the private key will be saved.
-		# -out:				path where the certificate (public key) will be saved.
+		# -out:				path where the certificate (public key) will be
+		#					saved.
 		# -subj:			fill certificate subject fields automatically (non-
 		#					interactive).
 		# -addext:			add X.509 extensions directly from CLI (non-
@@ -193,27 +207,39 @@ else
 		# C=IT				→	Country (2-letter ISO code: Italy).
 		# ST=Tuscany		→	State/Province/Region (Tuscany / Toscana).
 		# L=Florence		→	Locality/City (Florence / Firenze).
-		# O=42 Firenze		→	Organization name.
-		# OU=transcendence	→	Organizational Unit (team/project).
-		# CN=$DOMAIN		→	Common Name (main host/domain name, e.g. localhost).
-		# UID=transcendence	→	User Identifier (optional extra identity attribute).
+		# O=WeCook			→	Organization name.
+		# OU=dev			→	Organizational Unit (team/project).
+		# CN=$DOMAIN		→	Common Name (main host/domain name,
+		#						e.g. localhost).
+		# UID=WeCook		→	User Identifier (optional extra identity
+		#						attribute).
 		openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
 		-keyout "$SSL_DIR/transcendence.key" \
 		-out "$SSL_DIR/transcendence.crt" \
-		-subj "/C=IT/ST=Tuscany/L=Florence/O=WeCook/OU=transcendence/CN=${DOMAIN}/UID=transcendence" \
+		-subj \
+		"/C=IT/ST=Tuscany/L=Florence/O=WeCook/OU=dev/CN=${DOMAIN}/UID=WeCook" \
 		-addext "subjectAltName=DNS:${DOMAIN},IP:127.0.0.1"
 		
 		chmod 600 "$SSL_DIR/transcendence.key"
 		chmod 644 "$SSL_DIR/transcendence.crt"
     	echo "SSL certificate generated successfully."
 	else
-		echo "SSL certificate already exists in ${SSL_DIR}, skipping generation."
+		echo -n "SSL certificate already exists in ${SSL_DIR}, "
+		echo "skipping generation."
 	fi
 fi
 
-# Generate a self-signed TLS certificate at runtime if not already generated.
-# Moving this from the Dockerfile ensures private keys are not baked into image
-# layers and allows dynamic domain names via DOMAIN_NAME environment variable.
+# Start background cron daemon (crond) for automated renewals in production
+if [ "$IS_PRODUCTION" -eq 1 ]; then
+	if command -v crond >/dev/null 2>&1; then
+		echo -n "Starting background cron daemon (crond) "
+		echo "for certificate auto-renewal..."
+		crond -b -L /var/log/cron.log
+	else
+		echo -n "WARNING: crond binary not found. Automated live "
+		echo "renewal is disabled."
+	fi
+fi
 
 echo ""
 echo "=== Starting Nginx Web Server ==="
