@@ -1,7 +1,7 @@
 import { useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { DoubleSide, Texture } from "three";
-import "./materials/PageCurlMaterial"; // side-effect: registra extend()
+import "../materials/PageCurlMaterial"; // side-effect: registra extend()
 
 interface PageProps {
   progressRef?: RefObject<number>;

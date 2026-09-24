@@ -1,4 +1,4 @@
-import KitchenScene from "./3d/KitchenScene";
+import KitchenScene from "./3d/components/KitchenScene";
 
 function App() {
   return (
