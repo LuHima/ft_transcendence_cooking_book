@@ -5,6 +5,7 @@ import {
   useGLTF,
   useTexture,
   Environment,
+  useProgress,
 } from "@react-three/drei";
 import {
   CanvasTexture,
@@ -19,6 +20,8 @@ import {
 import { Page } from "./Page";
 import { useBookPages } from "./hooks/useBookPages";
 import { wrapLongLines } from "./utils/wrapLongLines.ts";
+import "./styles.css";
+import type { BookProps, Recipe, SceneContentProps } from "./interfaces.ts";
 
 // Import delle risorse 3D e delle texture dalla cartella assets
 // Le texture vengono usate per il materiale del libro e per il logo sulla copertina
@@ -84,15 +87,6 @@ function useLeatherMaterial1() {
   });
 
   return { colorMap1, roughnessMap1, normalMap1, dispMap1 };
-}
-
-interface BookProps {
-  controlsRef: React.RefObject<any>;
-}
-
-interface Recipe {
-  id: number;
-  title: string;
 }
 
 async function fetchData(url: string) {
@@ -173,15 +167,7 @@ function createRecipeTexture(
   return texture;
 }
 
-function Book({ controlsRef }: BookProps) {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-
-  useEffect(() => {
-    fetchData("/api/recipes")
-      .then(setRecipes)
-      .catch((error) => console.error("Failed to load recipes:", error));
-  }, []);
-
+function Book({ controlsRef, recipes }: BookProps) {
   // limiti iniziali per la camera quando si ruota intorno alla scena
   const originalLimits = useRef({
     minPolarAngle: Math.PI * 0.35,
@@ -580,23 +566,131 @@ function KitchenModel({ scene }: { scene: Object3D }) {
   return <primitive object={scene} dispose={null} />;
 }
 
-function LoadingFallback() {
-  // mesh di fallback mostrata mentre il modello è in caricamento
+function ProgressReporter({
+  onProgress,
+}: {
+  onProgress: (progress: number, active: boolean) => void;
+}) {
+  const { progress, active } = useProgress();
+
+  useEffect(() => {
+    onProgress(progress, active);
+  }, [active, onProgress, progress]);
+
+  return null;
+}
+
+function LoadingOverlay({
+  recipesLoaded,
+  sceneReady,
+  progress,
+  active,
+}: {
+  recipesLoaded: boolean;
+  sceneReady: boolean;
+  progress: number;
+  active: boolean;
+}) {
+  const [displayProgress, setDisplayProgress] = useState(1);
+  const [hidden, setHidden] = useState(false);
+  const loadingComplete =
+    recipesLoaded && !active && progress >= 100 && sceneReady;
+
+  useEffect(() => {
+    let frame = 0;
+
+    const animate = () => {
+      setDisplayProgress((currentProgress) => {
+        if (loadingComplete) {
+          return Math.min(100, currentProgress + 2);
+        }
+        return Math.min(99, currentProgress + 0.35);
+      });
+
+      frame = window.requestAnimationFrame(animate);
+    };
+
+    frame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frame);
+  }, [loadingComplete]);
+
+  useEffect(() => {
+    if (!loadingComplete || displayProgress < 100) return;
+
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        setHidden(true);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+    };
+  }, [displayProgress, loadingComplete]);
+
+  if (hidden) {
+    return null;
+  }
+
   return (
-    <mesh>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshBasicMaterial color="white" wireframe />
-    </mesh>
+    <div className="loader">
+      <div className="loader-bar">
+        <div style={{ width: `${displayProgress}%` }} />
+      </div>
+      <p>Caricamento... {Math.round(displayProgress)}%</p>
+    </div>
+  );
+}
+
+function SceneReady({ onReady }: { onReady: () => void }) {
+  const notified = useRef(false);
+
+  useFrame(() => {
+    if (notified.current) return;
+    notified.current = true;
+    onReady();
+  });
+
+  return null;
+}
+
+function SceneContent({ controlsRef, recipes }: SceneContentProps) {
+  const { scene } = useGLTF(kitchenUrl);
+
+  return (
+    <>
+      <KitchenModel scene={scene} />
+      <Book controlsRef={controlsRef} recipes={recipes} />
+    </>
   );
 }
 
 export default function Scene() {
-  const { scene } = useGLTF(kitchenUrl);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipesLoaded, setRecipesLoaded] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
+  const [assetProgress, setAssetProgress] = useState(0);
+  const [assetsActive, setAssetsActive] = useState(true);
   const controlsRef = useRef<any>(null);
   const sideLightRef = useRef<SpotLight | null>(null);
   const sideTargetRef = useRef<Group | null>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
   const [webglSupported, setWebglSupported] = useState(true);
+
+  useEffect(() => {
+    fetchData("/api/recipes")
+      .then((loadedRecipes: Recipe[]) => {
+        setRecipes(loadedRecipes);
+      })
+      .catch((error) => {
+        console.error("Failed to load recipes:", error);
+      })
+      .finally(() => {
+        setRecipesLoaded(true);
+      });
+  }, []);
 
   useEffect(() => {
     const canvas = document.createElement("canvas");
@@ -649,9 +743,7 @@ export default function Scene() {
         dpr={[1, 2]}
         camera={{ position: [-10, 1.5, 0], fov: 45 }}
       >
-        <Environment preset="apartment" environmentIntensity={0.1} />
         <ambientLight intensity={0.2} color="#ffffff" />
-
         {/* luci soffuse in background */}
         <pointLight
           position={[-1.85, 1.8, -0.65]}
@@ -674,7 +766,6 @@ export default function Scene() {
           distance={4}
           decay={2}
         />
-
         {/* occhio di bue */}
         {isBullseyeOn && (
           <spotLight
@@ -689,15 +780,22 @@ export default function Scene() {
             castShadow
           />
         )}
-
         {/* bersaglio laterale del fascio luminoso */}
         <group ref={sideTargetRef} position={[-2.283, 1, -0.065]} />
 
-        <Suspense fallback={<LoadingFallback />}>
-          <KitchenModel scene={scene} />
-          <Book controlsRef={controlsRef} />
-        </Suspense>
-
+        <ProgressReporter
+          onProgress={(progress, active) => {
+            setAssetProgress(progress);
+            setAssetsActive(active);
+          }}
+        />
+        {recipesLoaded && (
+          <Suspense fallback={null}>
+            <Environment preset="apartment" environmentIntensity={0.1} />
+            <SceneContent controlsRef={controlsRef} recipes={recipes} />
+            <SceneReady onReady={() => setSceneReady(true)} />
+          </Suspense>
+        )}
         <OrbitControls
           ref={controlsRef}
           makeDefault
@@ -713,6 +811,12 @@ export default function Scene() {
           maxAzimuthAngle={-Math.PI * 0.2}
         />
       </Canvas>
+      <LoadingOverlay
+        recipesLoaded={recipesLoaded}
+        sceneReady={sceneReady}
+        progress={assetProgress}
+        active={assetsActive}
+      />
     </div>
   );
 }
