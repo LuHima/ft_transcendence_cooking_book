@@ -127,6 +127,7 @@ services:
     # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
     ports:
       - "8443:443"
+      - "8080:80"
     # Connect to custom bridge network
     networks:
       - front-net
