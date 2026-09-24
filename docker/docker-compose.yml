@@ -16,9 +16,8 @@ services:
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
-    # Expose PostgreSQL port to host (TODO: remove in final production release)
-    ports:
-      - "5432:5432"
+  #tolto ports, cuz 5432:5432 pubblica il databasesul mio host.
+  #il backend loo raggiunge gia tramite db-net, so none needs it
     # Load database credentials and config from .env
     env_file:
       - .env
@@ -27,7 +26,7 @@ services:
       - db_data:/var/lib/postgresql/data
     # Connect to custom bridge network
     networks:
-      - transcendence
+      - db-net
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
@@ -60,7 +59,8 @@ services:
       - /usr/src/app/node_modules
     # Connect to custom bridge network
     networks:
-      - transcendence
+      - back-net
+      - db-net
     # Start backend only after database is completely ready and healthy
     depends_on:
       database:
@@ -94,7 +94,7 @@ services:
       - /usr/src/app/node_modules
     # Connect to custom bridge network
     networks:
-      - transcendence
+      - front-net
     # Start frontend only after backend API is completely ready and healthy
     depends_on:
       backend:
@@ -129,7 +129,8 @@ services:
       - "8443:443"
     # Connect to custom bridge network
     networks:
-      - transcendence
+      - front-net
+      - back-net
     # Start Nginx only when both upstream services are ready and healthy
     depends_on:
       frontend:
@@ -144,9 +145,12 @@ services:
 #                                  NETWORKS                                    #
 #------------------------------------------------------------------------------#
 networks:
-  transcendence:
-    driver: bridge
-
+  front-net:
+  back-net:
+  db-net:
+    internal: true
+# una rete internal non ha accesso al mondo esterno.
+# Il database parla solo con chi è sulla sua rete, cioè il backend.
 #------------------------------------------------------------------------------#
 #                                  VOLUMES                                     #
 #------------------------------------------------------------------------------#
