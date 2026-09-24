@@ -5,10 +5,10 @@ import {
   useGLTF,
   useTexture,
   Environment,
-  useProgress,
 } from "@react-three/drei";
 import {
   CanvasTexture,
+  DefaultLoadingManager,
   Group,
   Object3D,
   PCFShadowMap,
@@ -566,40 +566,32 @@ function KitchenModel({ scene }: { scene: Object3D }) {
   return <primitive object={scene} dispose={null} />;
 }
 
-function ProgressReporter({
-  onProgress,
-}: {
-  onProgress: (progress: number, active: boolean) => void;
-}) {
-  const { progress, active } = useProgress();
-
-  useEffect(() => {
-    onProgress(progress, active);
-  }, [active, onProgress, progress]);
-
-  return null;
-}
-
 function LoadingOverlay({
   recipesLoaded,
   sceneReady,
-  progress,
-  active,
+  progressRef,
+  activeRef,
 }: {
   recipesLoaded: boolean;
   sceneReady: boolean;
-  progress: number;
-  active: boolean;
+  progressRef: React.RefObject<number>;
+  activeRef: React.RefObject<boolean>;
 }) {
   const [displayProgress, setDisplayProgress] = useState(1);
   const [hidden, setHidden] = useState(false);
-  const loadingComplete =
-    recipesLoaded && !active && progress >= 100 && sceneReady;
+  const [assetsReady, setAssetsReady] = useState(false);
+  const loadingComplete = recipesLoaded && assetsReady && sceneReady;
 
   useEffect(() => {
     let frame = 0;
 
     const animate = () => {
+      const currentAssetsReady =
+        !activeRef.current && progressRef.current >= 100;
+      if (recipesLoaded && sceneReady && currentAssetsReady) {
+        setAssetsReady(true);
+      }
+
       setDisplayProgress((currentProgress) => {
         if (loadingComplete) {
           return Math.min(100, currentProgress + 2);
@@ -612,7 +604,7 @@ function LoadingOverlay({
 
     frame = window.requestAnimationFrame(animate);
     return () => window.cancelAnimationFrame(frame);
-  }, [loadingComplete]);
+  }, [activeRef, loadingComplete, progressRef, recipesLoaded, sceneReady]);
 
   useEffect(() => {
     if (!loadingComplete || displayProgress < 100) return;
@@ -671,13 +663,42 @@ export default function Scene() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipesLoaded, setRecipesLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
-  const [assetProgress, setAssetProgress] = useState(0);
-  const [assetsActive, setAssetsActive] = useState(true);
+  const assetProgressRef = useRef(0);
+  const assetsActiveRef = useRef(true);
   const controlsRef = useRef<any>(null);
   const sideLightRef = useRef<SpotLight | null>(null);
   const sideTargetRef = useRef<Group | null>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
   const [webglSupported, setWebglSupported] = useState(true);
+
+  useEffect(() => {
+    const previousOnStart = DefaultLoadingManager.onStart;
+    const previousOnProgress = DefaultLoadingManager.onProgress;
+    const previousOnLoad = DefaultLoadingManager.onLoad;
+    const previousOnError = DefaultLoadingManager.onError;
+
+    DefaultLoadingManager.onStart = (_url, loaded, total) => {
+      assetsActiveRef.current = true;
+      assetProgressRef.current = total > 0 ? (loaded / total) * 100 : 0;
+    };
+    DefaultLoadingManager.onProgress = (_url, loaded, total) => {
+      assetProgressRef.current = total > 0 ? (loaded / total) * 100 : 0;
+    };
+    DefaultLoadingManager.onLoad = () => {
+      assetProgressRef.current = 100;
+      assetsActiveRef.current = false;
+    };
+    DefaultLoadingManager.onError = () => {
+      assetsActiveRef.current = false;
+    };
+
+    return () => {
+      DefaultLoadingManager.onStart = previousOnStart;
+      DefaultLoadingManager.onProgress = previousOnProgress;
+      DefaultLoadingManager.onLoad = previousOnLoad;
+      DefaultLoadingManager.onError = previousOnError;
+    };
+  }, []);
 
   useEffect(() => {
     fetchData("/api/recipes")
@@ -783,12 +804,6 @@ export default function Scene() {
         {/* bersaglio laterale del fascio luminoso */}
         <group ref={sideTargetRef} position={[-2.283, 1, -0.065]} />
 
-        <ProgressReporter
-          onProgress={(progress, active) => {
-            setAssetProgress(progress);
-            setAssetsActive(active);
-          }}
-        />
         {recipesLoaded && (
           <Suspense fallback={null}>
             <Environment preset="apartment" environmentIntensity={0.1} />
@@ -814,8 +829,8 @@ export default function Scene() {
       <LoadingOverlay
         recipesLoaded={recipesLoaded}
         sceneReady={sceneReady}
-        progress={assetProgress}
-        active={assetsActive}
+        progressRef={assetProgressRef}
+        activeRef={assetsActiveRef}
       />
     </div>
   );
