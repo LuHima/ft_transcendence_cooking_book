@@ -3,9 +3,17 @@ export interface BookProps {
   recipes: Recipe[];
 }
 
+export interface fetchedValues {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  returnPage: Recipe[];
+}
+
 export interface Recipe {
   id: number;
   title: string;
+  description: string;
+  username: string;
 }
 
 export interface SceneContentProps {

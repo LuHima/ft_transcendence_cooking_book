@@ -4,6 +4,8 @@ import { wrapLongLines } from "./utils/wrapLongLines.ts";
 
 export function createRecipeTexture(
   title: string,
+  description: string,
+  username: string,
   accent: string,
   background: string,
 ) {
@@ -39,7 +41,7 @@ export function createRecipeTexture(
     ctx.font = "24px serif";
     ctx.fillStyle = "#5a442b";
     const lines = wrapLongLines(
-      "ricetta: PALLE AL SUGO DEL DIOSBORRAAUSTRALOPITECOPATETICO",
+      description,
     );
 
     ctx.textAlign = "center";
@@ -52,7 +54,7 @@ export function createRecipeTexture(
     ctx.font = "italic 24px Georgia, serif";
     ctx.fillStyle = "#5a442b";
     ctx.textAlign = "left";
-    ctx.fillText("firma dell'autore sconosciuto dio cane", -200, 480);
+    ctx.fillText(username, -200, 480);
   }
 
   ctx.restore();
