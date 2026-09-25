@@ -117,8 +117,14 @@ export default function Book({ controlsRef, recipes }: BookProps) {
   const progress = useRef(0);
   const recipeTextures = useMemo(() => {
     return recipes.map((recipe) => {
-      const frontMap = createRecipeTexture(recipe.title, "#f0d9b0", "#fbefe0");
-      const backMap = createRecipeTexture("", "#dfc39b", "#f7ead2");
+      const frontMap = createRecipeTexture(
+        recipe.title,
+        recipe.description,
+        recipe.username,
+        "#f0d9b0",
+        "#fbefe0",
+      );
+      const backMap = createRecipeTexture("", "", "", "#dfc39b", "#f7ead2");
       return { frontMap, backMap };
     });
   }, [recipes]);
@@ -283,6 +289,15 @@ export default function Book({ controlsRef, recipes }: BookProps) {
         controlsRef.current.enabled = true;
       }}
     >
+      <mesh position={[0, 0.155, 0.03]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.4, 0.05]} />
+        <meshStandardMaterial
+          map={colorMap}
+          normalMap={normalMap}
+          roughnessMap={roughnessMap}
+          {...LEATHER_MATERIAL_PROPS}
+        />
+      </mesh>
       <mesh
         position={[0, 0, 0.03]}
         renderOrder={998}
