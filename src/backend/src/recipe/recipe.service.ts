@@ -30,7 +30,10 @@ export class RecipeService {
 			skip: (page - 1) * limit,          
 			take: limit + 1,
 			select: {
+				id: true,
 				title: true,
+				username: true,
+				description: true
 			},
 			orderBy: {
 			  id: 'asc',
