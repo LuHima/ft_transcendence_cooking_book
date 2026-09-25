@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import type { Prisma, Recipe } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 
-export type RecipeTitleOnly = Pick<Recipe, 'title'>;  
+// export type RecipeTitleOnly = Pick<Recipe, 'title'>;
 
 @Injectable()
 export class RecipeService {
@@ -26,13 +26,17 @@ export class RecipeService {
 		if (!page || page < 1) {
 			throw new BadRequestException('Page number must be greater than 0');
 		}
-		let return_page:  RecipeTitleOnly[]=  await this.prisma.recipe.findMany({
-			skip: (page - 1) * limit,          
+		let return_page =  await this.prisma.recipe.findMany({
+			skip: (page - 1) * limit,
 			take: limit + 1,
 			select: {
 				id: true,
 				title: true,
-				username: true,
+				user: {
+					select: {
+						username: true,
+					},
+				}, 
 				description: true
 			},
 			orderBy: {
