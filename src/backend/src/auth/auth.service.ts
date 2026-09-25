@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException, UseGuards } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { SignUpUserDto } from 'src/users/dto/signup-user';
+import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -76,7 +76,7 @@ export class AuthService
 
 	async signUp(user: SignUpUserDto)
 	{
-		const CheckUserEmail = await this.usersService.getUserByEmail(user.email)
+		const CheckUserEmail = await this.usersService.getUserByEmail(user.email.trim().toLocaleLowerCase())
 		if(CheckUserEmail){
 			throw new ConflictException('Email is already used');
 		}
@@ -87,19 +87,25 @@ export class AuthService
 		const saltRounds = 10;
 		const hashedPassword = await bcrypt.hash(user.password, saltRounds);
 		
-		return await this.prisma.user.create({
-		data: {
-			username: user.username,
-			email: user.email,
-			password_hash: hashedPassword,
-		},
-		select: {
-			id: true,
-			username: true,
-			email: true,
-			role: true,
-			created_at: true,
-		},})
+		try{
+			return await this.prisma.user.create({
+				data: {
+					username: user.username,
+					email: user.email.trim().toLocaleLowerCase(),
+					password_hash: hashedPassword,
+				},
+				select: {
+					id: true,
+					username: true,
+					email: true,
+					role: true,
+					created_at: true,
+				},
+			})
+		}catch(error){
+			throw new ConflictException('Email or username already in use'); 
+		}
+		
 	}
 
 	async signOut(id: number)

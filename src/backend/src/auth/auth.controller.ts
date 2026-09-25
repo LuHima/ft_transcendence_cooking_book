@@ -1,7 +1,7 @@
 import { Controller, Delete, Post, Body, Res, Get, Req, HttpCode, HttpStatus, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInUserDto } from 'src/users/dto/signin-user.dto';
-import { SignUpUserDto } from 'src/users/dto/signup-user';
+import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
 import { Throttle, days, minutes } from '@nestjs/throttler';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
