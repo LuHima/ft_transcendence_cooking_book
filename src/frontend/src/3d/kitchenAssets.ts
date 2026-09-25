@@ -1,0 +1,21 @@
+import kitchenModelUrlAsset from "../assets/kitchen3.1.glb?url";
+import leatherColorUrlAsset from "../assets/fabric_leather_02_diff_4k.jpg?url";
+import leatherRoughnessUrlAsset from "../assets/fabric_leather_02_rough_4k.jpg?url";
+import leatherDispUrlAsset from "../assets/fabric_leather_02_disp_4k.png?url";
+import leatherNormalUrlAsset from "../assets/fabric_leather_02_nor_gl_4k.jpg?url";
+import leatherColorUrl1Asset from "../assets/brown_leather_albedo_4k.jpg?url";
+import leatherRoughnessUrl1Asset from "../assets/brown_leather_rough_4k.jpg?url";
+import leatherDispUrl1Asset from "../assets/brown_leather_disp_4k.png?url";
+import leatherNormalUrl1Asset from "../assets/brown_leather_nor_gl_4k.jpg?url";
+import logoUrlAsset from "../assets/biggernobg.png?url";
+
+export const kitchenModelUrl = kitchenModelUrlAsset;
+export const leatherColorUrl = leatherColorUrlAsset;
+export const leatherRoughnessUrl = leatherRoughnessUrlAsset;
+export const leatherDispUrl = leatherDispUrlAsset;
+export const leatherNormalUrl = leatherNormalUrlAsset;
+export const leatherColorUrl1 = leatherColorUrl1Asset;
+export const leatherRoughnessUrl1 = leatherRoughnessUrl1Asset;
+export const leatherDispUrl1 = leatherDispUrl1Asset;
+export const leatherNormalUrl1 = leatherNormalUrl1Asset;
+export const logoUrl = logoUrlAsset;
