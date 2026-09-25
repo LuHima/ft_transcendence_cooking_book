@@ -10,7 +10,11 @@ import { SceneLights } from "./SceneLights.tsx";
 import Book from "./Book.tsx";
 import "../styles.css";
 
-import type { Recipe, SceneContentProps } from "../interfaces.ts";
+import type {
+  fetchedValues,
+  Recipe,
+  SceneContentProps,
+} from "../interfaces.ts";
 
 import kitchenUrl from "../../assets/kitchen3.1.glb?url";
 
@@ -44,7 +48,6 @@ export default function Scene() {
   const sideLightRef = useRef<SpotLight | null>(null);
   const sideTargetRef = useRef<Group | null>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
-  const [webglSupported, setWebglSupported] = useState(true);
 
   useEffect(() => {
     const previousOnStart = DefaultLoadingManager.onStart;
@@ -76,9 +79,9 @@ export default function Scene() {
   }, []);
 
   useEffect(() => {
-    fetchData("/api/recipes")
-      .then((loadedRecipes: Recipe[]) => {
-        setRecipes(loadedRecipes);
+    fetchData("/api/recipes/page?value=1")
+      .then((loadedRecipes: fetchedValues) => {
+        setRecipes(loadedRecipes.returnPage);
       })
       .catch((error) => {
         console.error("Failed to load recipes:", error);
@@ -89,40 +92,11 @@ export default function Scene() {
   }, []);
 
   useEffect(() => {
-    const canvas = document.createElement("canvas");
-    const context =
-      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-
-    if (!context) {
-      setWebglSupported(false);
-    }
-  }, []);
-
-  useEffect(() => {
     if (sideLightRef.current && sideTargetRef.current) {
       sideLightRef.current.target = sideTargetRef.current;
       sideLightRef.current.target.updateMatrixWorld();
     }
   }, []);
-
-  if (!webglSupported) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
-        <div className="max-w-lg space-y-3">
-          <p className="text-xs font-medium uppercase tracking-[0.3em] text-amber-200/80">
-            3D preview unavailable
-          </p>
-          <h2 className="text-2xl font-semibold text-amber-50">
-            WebGL is disabled in this browser
-          </h2>
-          <p className="text-sm text-amber-100/80">
-            The kitchen scene needs a working WebGL context to render the 3D
-            cookbook experience.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative h-full w-full">
@@ -135,6 +109,22 @@ export default function Scene() {
       </button>
 
       <Canvas
+        fallback={
+          <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
+            <div className="max-w-lg space-y-3">
+              <p className="text-xs font-medium uppercase tracking-[0.3em] text-amber-200/80">
+                3D preview unavailable
+              </p>
+              <h2 className="text-2xl font-semibold text-amber-50">
+                WebGL is disabled in this browser
+              </h2>
+              <p className="text-sm text-amber-100/80">
+                The kitchen scene needs a working WebGL context to render the 3D
+                cookbook experience.
+              </p>
+            </div>
+          </div>
+        }
         shadows={{ type: PCFShadowMap }}
         dpr={[1, 2]}
         camera={{ position: [-10, 1.5, 0], fov: 45 }}
@@ -158,13 +148,13 @@ export default function Scene() {
           target={[-3, 1.5, 0]}
           enableDamping
           dampingFactor={0.05}
-          enablePan={false}
-          minDistance={0.5}
-          maxDistance={2.5}
-          minPolarAngle={Math.PI * 0.35}
-          maxPolarAngle={Math.PI * 0.55}
-          minAzimuthAngle={-Math.PI * 0.8}
-          maxAzimuthAngle={-Math.PI * 0.2}
+          // enablePan={false}
+          // minDistance={0.5}
+          // maxDistance={2.5}
+          // minPolarAngle={Math.PI * 0.35}
+          // maxPolarAngle={Math.PI * 0.55}
+          // minAzimuthAngle={-Math.PI * 0.8}
+          // maxAzimuthAngle={-Math.PI * 0.2}
         />
       </Canvas>
       <LoadingOverlay
