@@ -18,26 +18,26 @@ import { Recipe, Comment, User, Role } from "@prisma/client";
 @Injectable()
 //@UseGuards(AuthGuard)
 export class CaslAbilityFactory {
-  
-  createForUser(user: ActiveUserData) {
-	const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
 
-	if (user.role ===  Role.admin) {
-	  can(Action.Manage, 'all');
-	} 
-	else {
-	  can(Action.Read, 'all');
-	  can(Action.Create, 'Recipe');
-	  can(Action.Update, 'Recipe', { user_id: user.id });
-	  can(Action.Delete, 'Recipe', { user_id: user.id });
-	  can(Action.Report, 'Recipe')
-	  can(Action.Report, 'Comment')
+	createForUser(user: ActiveUserData) {
+		const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
 
-	  cannot(Action.Manage, 'all')
-	  cannot(Action.Ban, 'Recipe')
-	  cannot(Action.Ban, 'Comment')
-	  cannot(Action.Ban, 'User')
-	}
-	return build();
-  }
+		if (user.role ===  Role.admin) {
+		can(Action.Manage, 'all');
+		} 
+		else {
+			can(Action.Read, 'all');
+			can(Action.Create, 'Recipe');
+			can(Action.Update, 'Recipe', { user_id: user.id });
+			can(Action.Delete, 'Recipe', { user_id: user.id });
+			can(Action.Report, 'Recipe')
+			can(Action.Report, 'Comment')
+
+			cannot(Action.Manage, 'all')
+			cannot(Action.Ban, 'Recipe')
+			cannot(Action.Ban, 'Comment')
+			cannot(Action.Ban, 'User')
+		}
+		return build();
+		}
 }

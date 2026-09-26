@@ -16,7 +16,6 @@ export class AuthController
 {
 	constructor(private authService: AuthService){} 
 
-	@Throttle({ default: { limit: 5, ttl: minutes(1)}})
 	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
 	@Post('signin')
 	async signIn(@Body() signInDto: SignInUserDto, @Res({ passthrough: true }) response: Response,)
@@ -42,7 +41,6 @@ export class AuthController
    		};
 	}
 
-	@Throttle({ default: { limit: 3, ttl: minutes(10)}}) 
 	@Post('signup')
 	async signUp(@Body() signUpDto: SignUpUserDto)
 	{
@@ -58,7 +56,7 @@ export class AuthController
   	risposta non parte. 
 	Con { passthrough: true }, imposti solo il cookie e poi lasci fare a NestJS:basta fare return { ... } e NestJS si occuperà di chiudere e inviare la risposta.
 */
-	@UseGuards(AuthGuard) 
+	@UseGuards(AuthGuard)
 	@Delete('signout')
 	async signOut(@CurrentUser('session') id: number, @Res({ passthrough: true }) res: Response)
 	{
@@ -68,7 +66,7 @@ export class AuthController
 		return { message: 'Signed out successfully' };
 	}
 
-	
+	@UseGuards(AuthGuard)
 	@HttpCode(HttpStatus.OK)
 	@Post('refresh')
 	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

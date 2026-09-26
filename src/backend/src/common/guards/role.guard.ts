@@ -7,6 +7,8 @@ export class RolesGuard implements CanActivate {
 	constructor(private casl: CaslAbilityFactory) {}
 
 	canActivate(context: ExecutionContext): boolean {
+		const request = context.switchToHttp().getRequest();
+		let role: string  = request.user?.role;
 		return true;
 	}
 }

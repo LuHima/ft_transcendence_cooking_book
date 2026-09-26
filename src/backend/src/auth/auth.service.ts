@@ -5,7 +5,6 @@ import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { time } from 'console';
 
 interface PayLoadInterface {
 		id: number;
