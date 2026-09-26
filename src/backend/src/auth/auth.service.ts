@@ -87,7 +87,6 @@ export class AuthService
 		const saltRounds = 10;
 		const hashedPassword = await bcrypt.hash(user.password, saltRounds);
 		
-		try{
 			return await this.prisma.user.create({
 				data: {
 					username: user.username,
@@ -102,9 +101,6 @@ export class AuthService
 					created_at: true,
 				},
 			})
-		}catch(error){
-			throw new ConflictException('Email or username already in use'); 
-		}
 		
 	}
 

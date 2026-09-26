@@ -1,9 +1,9 @@
 import { HttpStatus, HttpException } from '@nestjs/common';
 
 export interface AppErrorDefinition {
-  statusCode: HttpStatus;
-  message: string;
-  error?: string;
+  statusCode: HttpStatus; // numero dell'errore
+  message: string;	// messaggio dell'errore
+  error?: string; // tipo di chiamata dell'errore tipo 'Not Found', 'Unauthorized', 'Bad Request'
 }
 
 export const errors = {
@@ -273,27 +273,25 @@ export const errors = {
 		message: 'Database query execution error',
 		error: 'Internal Server Error',
 	},
+	generalPrismaError: {
+		statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+		message: 'Database query execution error',
+		error: 'Internal Server Error',
+	},
 	},
 	} as const;
+	
+//	 creo questa funzione per creare degli exeption che mi servono	
+	export function createHttpException(errorDef: AppErrorDefinition, customMessage?: string): HttpException {
 
-	// Alias per compatibilità con entrambi i nomi
-	export const error = errors;
-	export default errors;
-
-	export type ErrorsType = typeof errors;
-
-	/**
-	 * Helper per lanciare direttamente un'eccezione NestJS a partire da una definizione di errore
-	 * Esempio d'uso:
-	 *   throw createHttpException(errors.users.notFound);
-	 */
-	export function createHttpException(errorDef: AppErrorDefinition): HttpException {
-	return new HttpException(
-	{
-		statusCode: errorDef.statusCode,
-		message: errorDef.message,
-		error: errorDef.error,
-	},
-	errorDef.statusCode,
-	);
+		// HttpException è una classe che richiede 3 parametri HttpException(response, status, options?)
+		// io gli passo un oggetto e uno status, l'option lo ometto
+		return new HttpException(
+		{
+			statusCode: errorDef.statusCode,
+			message: customMessage || errorDef.message,
+			error: errorDef.error,
+		},
+		errorDef.statusCode,
+		);
 	}
