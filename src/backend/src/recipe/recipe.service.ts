@@ -50,16 +50,13 @@ export class RecipeService {
   
 		const hasPreviousPage = page > 1;
 
-		let items = hasNextPage ? recipes.slice(0, limit) : recipes;
+		const items = hasNextPage ? recipes.slice(0, limit) : recipes;
 
-		let returnPage = items.map(({ user, ...recipe }) => ({
+		let returnPage = items.map(({ user, ...recipe }) => ({ //map è un metodo degli array che ritorna un nuovo array modificato come richiesta (Non modifica l'oggetto attuale)
 			...recipe,
 			username: user?.username ?? null,
 		}));
-
-
 		return {returnPage, hasNextPage, hasPreviousPage};
-
 	}
 
 	async getRecipesByName(name :string)
