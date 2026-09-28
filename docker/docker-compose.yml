@@ -118,16 +118,19 @@ services:
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
-    # Load environment variables from .env
-    env_file:
-      - .env
+    # Load environment variables from .env.
+    #nginx non ha bisogno di nessun segreto
+    #env_file:
+    #  - .env
     # Non-sensitive environment variable default for TLS certificate SAN/CN
     environment:
-      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+    #il certificato lo genera l'immagine so useless
+      # DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      MODSEC_RULE_ENGINE: DetectionOnly
     # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
     ports:
-      - "8443:443"
-      - "8080:80"
+      - "8443:8443"
+      - "8080:8080"
     # Connect to custom bridge network
     networks:
       - front-net
