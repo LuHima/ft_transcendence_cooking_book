@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import KitchenScene from '../3d/KitchenScene'
+import KitchenScene from "../3d/components/KitchenScene";
+
 import { api } from '../api/client'
 import type { Recipe } from '../types/models'
 
