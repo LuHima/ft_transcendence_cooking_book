@@ -159,6 +159,8 @@ export class AuthService
 			},
 			select: {
 				username: true,
+				role: true,
+				email: true,
 				avatar_url: true
 			}
 		});

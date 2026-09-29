@@ -4,6 +4,9 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { authenticate } from 'passport';
+import { Auth } from 'src/common/decorators/policies.decorator';
+import { Action } from 'src/auth/casl/action.enum';
 
 @Controller('recipes')
 export class RecipeController 
@@ -41,7 +44,7 @@ export class RecipeController
 		return await this.recipeService.getRecipeById(Number(id));
 	}
 
-	@UseGuards(AuthGuard)
+	@Auth(Action.Create, 'Recipe')
 	@Post() //aggiunge
 	addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto, @CurrentUser('id') id: number)
 	{

@@ -1,26 +1,33 @@
 
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext} from '@nestjs/common';
 import { CaslAbilityFactory, AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 import { ActiveUserData } from '../decorators/current-user.decorator';
 import { HandlerRolePolicy } from '../decorators/policies.decorator';
+import { Action } from 'src/auth/casl/action.enum';
+import { Reflector } from '@nestjs/core';
+import { createHttpException, errors } from '../config/error.config';
+import { error } from 'console';
+
+interface action{
+	action: string;
+	subject: string;
+}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-	constructor(private casl: CaslAbilityFactory) {}
-
-	private execPolicyHandler(handler: HandlerRolePolicy, ability: AppAbility) {
-	if (typeof handler === 'function') {
-		return handler(ability);
-	}
-		return handler.handle(ability);
-  	}
+	constructor(private casl: CaslAbilityFactory, private reflector: Reflector) {}
 
 	canActivate(context: ExecutionContext): boolean {
 		const request = context.switchToHttp().getRequest();
 		let user: ActiveUserData  = request.user || null;
-		if (user === null)
-			return false;
+		if (!user)
+			throw createHttpException(errors.auth.accessDenied);
 		let userAbility = this.casl.createForUser(user) as AppAbility;
-		return true;
+		const data = this.reflector.get('action', context.getHandler());
+
+		if (!data) { // se non ci sono regole faccio passare tutto
+  			return true; 
+		}
+		return userAbility.can(data.action, data.subject);
 	}
 }

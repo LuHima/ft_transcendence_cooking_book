@@ -6,6 +6,7 @@ import { Throttle, days, minutes } from '@nestjs/throttler';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
+import { Auth } from 'src/common/decorators/policies.decorator';
 
 /* 
 Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il      
@@ -56,7 +57,7 @@ export class AuthController
   	risposta non parte. 
 	Con { passthrough: true }, imposti solo il cookie e poi lasci fare a NestJS:basta fare return { ... } e NestJS si occuperà di chiudere e inviare la risposta.
 */
-	@UseGuards(AuthGuard)
+	@Auth()
 	@Delete('signout')
 	async signOut(@CurrentUser('session') id: number, @Res({ passthrough: true }) res: Response)
 	{
@@ -66,7 +67,7 @@ export class AuthController
 		return { message: 'Signed out successfully' };
 	}
 
-	@UseGuards(AuthGuard)
+	@Auth()
 	@HttpCode(HttpStatus.OK)
 	@Post('refresh')
 	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -86,7 +87,7 @@ export class AuthController
 		return { message: 'Token refreshed successfully' }; 
 	}
 
-	@UseGuards(AuthGuard)
+	@Auth()
 	@Get('user')
 	async infoMe(@CurrentUser('id') id :number)
 	{
