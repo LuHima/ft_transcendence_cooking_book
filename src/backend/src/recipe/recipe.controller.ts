@@ -51,13 +51,13 @@ export class RecipeController
 		return this.recipeService.createRecipe(createRecipeDto, id); 
 	}
 
-	@UseGuards(AuthGuard)
+	@Auth(Action.Update, 'Recipe')
 	@Patch(':id') // modifica una ricetta 
 	async updateRecipe(@Param('id', ParseIntPipe) recipeId: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto, @CurrentUser('id')userId:number)
 	{
 		return this.recipeService.updateRecipe(userId, recipeId, updateRecipeDto)
 	}
-	@UseGuards(AuthGuard)
+	@Auth(Action.Delete, 'Recipe')
 	@Delete(':id') // cancella una ricetta 
 	async deleteRecipe(@Param('id', ParseIntPipe) recipeId: number, @CurrentUser('id') userId: number)
 	{
