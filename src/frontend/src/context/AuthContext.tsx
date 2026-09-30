@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// non viene aggiunta lato server.
 	const refreshUser = useCallback(async () => {
 		try {
-			const me = await api.get<User>('/users/me', { retryOnUnauthorized: false })
+			const me = await api.get<User>('/auth/user', { retryOnUnauthorized: false })
 			setUser(me)
 		} catch {
 			setUser(null)

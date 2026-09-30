@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { ApiError } from '../api/client'
 
 function Register() {
-	const { signUp } = useAuth()
+	const { signUp, signIn } = useAuth()
 	const navigate = useNavigate()
 
 	const [username, setUsername] = useState('')
@@ -19,7 +19,12 @@ function Register() {
 		setSubmitting(true)
 		try {
 			await signUp({ username, email, password })
-			navigate('/login', { state: { registered: true } })
+			try {
+				await signIn(email, password)
+				navigate('/', { replace: true })
+			} catch {
+				navigate('/login', { state: { registered: true } })
+			}
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : 'Registrazione non riuscita, riprova.')
 		} finally {
