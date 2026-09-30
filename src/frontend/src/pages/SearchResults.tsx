@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import SearchBar from '../components/SearchBar'
 import RecipeCard from '../components/RecipeCard'
 import { api, ApiError } from '../api/client'
 import type { Recipe } from '../types/models'
@@ -10,36 +9,47 @@ function SearchResults() {
 	const query = searchParams.get('q') ?? ''
 	const [results, setResults] = useState<Recipe[]>([])
 	const [error, setError] = useState<string | null>(null)
-	const [loading, setLoading] = useState(false)
+	const [loading, setLoading] = useState(true)
 
+	// senza query (es. da "Vedi tutte" in home) si elencano tutte le ricette
 	useEffect(() => {
-		if (!query) {
-			setResults([])
-			return
-		}
-		setLoading(true)
-		setError(null)
+		let cancelled = false
+		const path = query ? `/recipes/search?value=${encodeURIComponent(query)}` : '/recipes'
+
 		api
-			.get<Recipe[]>(`/recipes/search?value=${encodeURIComponent(query)}`)
-			.then(setResults)
-			.catch((err) => setError(err instanceof ApiError ? err.message : 'Ricerca non riuscita.'))
-			.finally(() => setLoading(false))
+			.get<Recipe[]>(path)
+			.then((data) => {
+				if (cancelled) return
+				setResults(data)
+				setError(null)
+			})
+			.catch((err) => {
+				if (cancelled) return
+				setResults([])
+				setError(err instanceof ApiError ? err.message : 'Ricerca non riuscita.')
+			})
+			.finally(() => {
+				if (!cancelled) setLoading(false)
+			})
+
+		return () => {
+			cancelled = true
+			setLoading(true)
+		}
 	}, [query])
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-12">
 			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">
-				{query ? `Risultati per "${query}"` : 'Cerca una ricetta'}
+				{query ? `Risultati per "${query}"` : 'Tutte le ricette'}
 			</h1>
 
-			<div className="mt-6 max-w-md">
-				<SearchBar />
-			</div>
-
-			{loading && <p className="mt-8 text-[var(--wc-text-muted)]">Ricerca in corso…</p>}
+			{loading && <p className="mt-8 text-[var(--wc-text-muted)]">{query ? 'Ricerca in corso…' : 'Caricamento…'}</p>}
 			{error && <p className="mt-8 text-[var(--wc-paprika)]">{error}</p>}
-			{!loading && !error && query && results.length === 0 && (
-				<p className="mt-8 text-[var(--wc-text-muted)]">Nessuna ricetta trovata per "{query}".</p>
+			{!loading && !error && results.length === 0 && (
+				<p className="mt-8 text-[var(--wc-text-muted)]">
+					{query ? `Nessuna ricetta trovata per "${query}".` : 'Nessuna ricetta pubblicata ancora.'}
+				</p>
 			)}
 
 			<div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

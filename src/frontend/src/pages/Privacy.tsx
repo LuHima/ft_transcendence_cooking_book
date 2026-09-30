@@ -1,7 +1,7 @@
 function Privacy() {
 	return (
 		<div className="mx-auto max-w-2xl px-4 py-16">
-			<h1 className="font-display text-4xl text-[var(--wc-saffron)]">Privacy</h1>
+			<h1 className="font-display text-4xl text-[var(--wc-saffron)]">Privacy e diritti</h1>
 			<div className="mt-6 space-y-6 text-[var(--wc-text-muted)]">
 				<section>
 					<h2 className="mb-1 text-lg font-semibold text-[var(--wc-text)]">Dati raccolti</h2>

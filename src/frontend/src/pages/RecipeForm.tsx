@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api, ApiError } from '../api/client'
@@ -37,6 +37,7 @@ function RecipeForm() {
 	const [submitError, setSubmitError] = useState<string | null>(null)
 	const [loading, setLoading] = useState(isEdit)
 	const [submitting, setSubmitting] = useState(false)
+	const fileInputRef = useRef<HTMLInputElement>(null)
 
 	useEffect(() => {
 		if (!id) return
@@ -278,12 +279,24 @@ function RecipeForm() {
 				<div>
 					<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Foto / Video</label>
 					<input
+						ref={fileInputRef}
 						type="file"
 						multiple
 						accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-						onChange={(e) => handleFilesSelected(e.target.files)}
-						className="block text-sm text-[var(--wc-text-muted)]"
+						onChange={(e) => {
+							handleFilesSelected(e.target.files)
+							// permette di riselezionare lo stesso file dopo averlo rimosso
+							e.target.value = ''
+						}}
+						className="hidden"
 					/>
+					<button
+						type="button"
+						onClick={() => fileInputRef.current?.click()}
+						className="rounded-full border border-[var(--wc-border)] bg-[var(--wc-surface)] px-4 py-2 text-sm font-medium text-[var(--wc-text)] transition-colors hover:border-[var(--wc-basil)] hover:text-[var(--wc-basil)]"
+					>
+						Scegli file
+					</button>
 					<p className="mt-1 text-xs text-[var(--wc-text-muted)]">
 						Immagini JPG/PNG/WEBP fino a {MAX_IMAGE_MB}MB, video MP4/WEBM/MOV fino a {MAX_VIDEO_MB}MB.
 					</p>

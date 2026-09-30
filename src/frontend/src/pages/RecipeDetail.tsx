@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api, ApiError } from '../api/client'
+import Comments from '../components/Comments'
 import type { Recipe, RecipeDifficulty } from '../types/models'
 
 const difficultyLabel: Record<RecipeDifficulty, string> = {
@@ -128,6 +129,8 @@ function RecipeDetail() {
 				<h2 className="font-display text-xl text-[var(--wc-saffron)]">Preparazione</h2>
 				<p className="mt-3 whitespace-pre-line text-[var(--wc-text)]">{recipe.instructions}</p>
 			</section>
+
+			<Comments key={recipe.id} recipeId={recipe.id} />
 		</div>
 	)
 }

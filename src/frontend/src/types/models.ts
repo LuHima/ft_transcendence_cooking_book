@@ -67,3 +67,23 @@ export interface MealPlan {
 	end_date: string
 	meal_plan_recipes: MealPlanEntry[]
 }
+
+export interface RecipeComment {
+	id: number
+	recipe_id: number
+	user_id: number
+	content: string
+	created_at: string
+	user: Pick<User, 'id' | 'username' | 'avatar_url'>
+}
+
+export type NotificationType = 'like' | 'comment'
+
+export interface AppNotification {
+	id: number
+	type: NotificationType
+	is_read: boolean
+	created_at: string
+	actor: Pick<User, 'id' | 'username'>
+	recipe: Pick<Recipe, 'id' | 'title'>
+}
