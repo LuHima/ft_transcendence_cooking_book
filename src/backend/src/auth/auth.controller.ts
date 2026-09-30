@@ -88,6 +88,13 @@ export class AuthController
 	}
 
 	@Auth()
+	@Get('twofactor')
+	async towFactor(@CurrentUser('id') id :number)
+	{
+		return (await this.authService.twoFactorAuth(id));
+	}
+
+	@Auth()
 	@Get('user')
 	async infoMe(@CurrentUser('id') id :number)
 	{

@@ -166,4 +166,19 @@ export class AuthService
 		});
 		return user;
 	}
+
+	async twoFactorAuth(id: number)
+	{
+		const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
+			where :{id: id}, select : {is_two_factor_enabled: true}
+		});
+		if (statusTwoFactorAuth?.is_two_factor_enabled){
+			await this.prisma.user.update({
+				where :{id: id}, data: {is_two_factor_enabled: false, two_factor: null}
+			});
+		}
+		else {
+			bcrypt
+		} 
+	}
 }
