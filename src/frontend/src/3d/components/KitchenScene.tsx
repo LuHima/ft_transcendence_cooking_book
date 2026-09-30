@@ -126,7 +126,7 @@ export default function Scene() {
           </div>
         }
         shadows={{ type: PCFShadowMap }}
-        dpr={[1, 2]}
+        dpr={[1, 1.25]}
         camera={{ position: [-10, 1.5, 0], fov: 45 }}
       >
         <SceneLights
