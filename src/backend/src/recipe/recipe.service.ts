@@ -3,8 +3,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import type { Prisma, Recipe } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 
-export type RecipeTitleOnly = Pick<Recipe, 'title'>;  
-
 @Injectable()
 export class RecipeService {
 
@@ -26,28 +24,39 @@ export class RecipeService {
 		if (!page || page < 1) {
 			throw new BadRequestException('Page number must be greater than 0');
 		}
-		let return_page:  RecipeTitleOnly[]=  await this.prisma.recipe.findMany({
-			skip: (page - 1) * limit,          
+		let recipes =  await this.prisma.recipe.findMany({
+			skip: (page - 1) * limit,
 			take: limit + 1,
 			select: {
+				id: true,
 				title: true,
+				description: true,
+				user: {
+					select: {
+						username: true,
+					},
+				}, 
+				
 			},
 			orderBy: {
 			  id: 'asc',
 			},
 
 		});
-		if (return_page.length === 0 )
+		if (recipes.length === 0 )
 			throw new NotFoundException('Recipes not found');
 
-		const hasNextPage = return_page.length > limit;
+		const hasNextPage = recipes.length > limit;
   
 		const hasPreviousPage = page > 1;
-  
-		return_page = hasNextPage ? return_page.slice(0, limit) : return_page;
 
-		return {return_page, hasNextPage, hasPreviousPage};
+		const items = hasNextPage ? recipes.slice(0, limit) : recipes;
 
+		let returnPage = items.map(({ user, ...recipe }) => ({ //map è un metodo degli array che ritorna un nuovo array modificato come richiesta (Non modifica l'oggetto attuale)
+			...recipe,
+			username: user?.username ?? null,
+		}));
+		return {returnPage, hasNextPage, hasPreviousPage};
 	}
 
 	async getRecipesByName(name :string)

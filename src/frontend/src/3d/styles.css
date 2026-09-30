@@ -1,0 +1,35 @@
+.loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #120d09;
+  color: white;
+  text-align: center;
+  z-index: 9999;
+}
+
+.loader-bar {
+  width: min(280px, 80vw);
+  height: 8px;
+  overflow: hidden;
+  background: #555;
+  border-radius: 4px;
+}
+
+.loader-bar > div {
+  width: 0;
+  height: 100%;
+  background: #f5c46b;
+}
+
+.loader p {
+  margin: 0;
+}

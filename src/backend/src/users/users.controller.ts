@@ -1,8 +1,10 @@
-import { Param, ParseIntPipe, Controller, Get, Patch, Post, Delete, Body, Query } from '@nestjs/common';
+import { Param, ParseIntPipe, Controller, Get, Patch, Post, Delete, Body, Query, UseFilters } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { HttpExceptionFilter } from 'src/common/filters/http.exeption.filter';
 
 
 @Controller('users')
+@UseFilters(HttpExceptionFilter)
 export class UsersController 
 {
 	constructor (private readonly userService: UsersService) {}

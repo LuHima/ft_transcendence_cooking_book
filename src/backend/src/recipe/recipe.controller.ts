@@ -4,6 +4,9 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { authenticate } from 'passport';
+import { Auth } from 'src/common/decorators/policies.decorator';
+import { Action } from 'src/auth/casl/action.enum';
 
 @Controller('recipes')
 export class RecipeController 
@@ -12,6 +15,7 @@ export class RecipeController
 	constructor(private readonly recipeService: RecipeService) {}
 	
 	// TODO @Roles(Role.admin)
+
 	@Get()
 	async getRecipes()
 	{
@@ -40,20 +44,20 @@ export class RecipeController
 		return await this.recipeService.getRecipeById(Number(id));
 	}
 
-	@UseGuards(AuthGuard)
+	@Auth(Action.Create, 'Recipe')
 	@Post() //aggiunge
 	addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto, @CurrentUser('id') id: number)
 	{
 		return this.recipeService.createRecipe(createRecipeDto, id); 
 	}
 
-	@UseGuards(AuthGuard)
+	@Auth(Action.Update, 'Recipe')
 	@Patch(':id') // modifica una ricetta 
 	async updateRecipe(@Param('id', ParseIntPipe) recipeId: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto, @CurrentUser('id')userId:number)
 	{
 		return this.recipeService.updateRecipe(userId, recipeId, updateRecipeDto)
 	}
-	@UseGuards(AuthGuard)
+	@Auth(Action.Delete, 'Recipe')
 	@Delete(':id') // cancella una ricetta 
 	async deleteRecipe(@Param('id', ParseIntPipe) recipeId: number, @CurrentUser('id') userId: number)
 	{

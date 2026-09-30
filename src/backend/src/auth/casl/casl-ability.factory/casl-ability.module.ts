@@ -1,7 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { CaslAbilityFactory } from './casl-ability.factory';
 
-@Global() 
+@Global()
 @Module({
     providers: [CaslAbilityFactory],
     exports: [CaslAbilityFactory],

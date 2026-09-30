@@ -1,11 +1,12 @@
 import { Controller, Delete, Post, Body, Res, Get, Req, HttpCode, HttpStatus, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInUserDto } from 'src/users/dto/signin-user.dto';
-import { SignUpUserDto } from 'src/users/dto/signup-user';
+import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
 import { Throttle, days, minutes } from '@nestjs/throttler';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
+import { Auth } from 'src/common/decorators/policies.decorator';
 
 /* 
 Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il      
@@ -16,7 +17,6 @@ export class AuthController
 {
 	constructor(private authService: AuthService){} 
 
-	@Throttle({ default: { limit: 5, ttl: minutes(1)}})
 	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
 	@Post('signin')
 	async signIn(@Body() signInDto: SignInUserDto, @Res({ passthrough: true }) response: Response,)
@@ -42,7 +42,6 @@ export class AuthController
    		};
 	}
 
-	@Throttle({ default: { limit: 3, ttl: minutes(10)}}) 
 	@Post('signup')
 	async signUp(@Body() signUpDto: SignUpUserDto)
 	{
@@ -58,7 +57,7 @@ export class AuthController
   	risposta non parte. 
 	Con { passthrough: true }, imposti solo il cookie e poi lasci fare a NestJS:basta fare return { ... } e NestJS si occuperà di chiudere e inviare la risposta.
 */
-	@UseGuards(AuthGuard) 
+	@Auth()
 	@Delete('signout')
 	async signOut(@CurrentUser('session') id: number, @Res({ passthrough: true }) res: Response)
 	{
@@ -68,7 +67,7 @@ export class AuthController
 		return { message: 'Signed out successfully' };
 	}
 
-	
+	@Auth()
 	@HttpCode(HttpStatus.OK)
 	@Post('refresh')
 	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -88,7 +87,7 @@ export class AuthController
 		return { message: 'Token refreshed successfully' }; 
 	}
 
-	@UseGuards(AuthGuard)
+	@Auth()
 	@Get('user')
 	async infoMe(@CurrentUser('id') id :number)
 	{
