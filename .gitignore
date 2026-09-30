@@ -112,4 +112,5 @@ ehthumbs.db
 # PROJECT SPECIFIC                                                             #
 # ---------------------------------------------------------------------------- #
 documentation/
+subject.*
 # Add here anything you want to exclude from git
