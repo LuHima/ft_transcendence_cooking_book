@@ -38,6 +38,11 @@ enum Role {
   user
 }
 
+enum NotificationType {
+  like
+  comment
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,6 +71,9 @@ model User {
   likes          Like[]
   meal_plans     MealPlan[]
 
+  notifications_received Notification[] @relation("NotificationRecipient")
+  notifications_sent     Notification[] @relation("NotificationActor")
+
   @@map("users")
 }
 
@@ -90,6 +98,7 @@ model Recipe {
   likes              Like[]
   meal_plan_recipes  MealPlanRecipe[]
   recipe_media       RecipeMedia[]
+  notifications 	 Notification[]
 
   @@map("recipes")
 }
@@ -155,6 +164,27 @@ model Like {
 
   @@id([user_id, recipe_id])
   @@map("likes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id         Int              @id @default(autoincrement())
+  user_id    Int              // destinatario (autore della ricetta)
+  actor_id   Int              // chi ha messo like / commentato
+  recipe_id  Int
+  type       NotificationType
+  is_read    Boolean          @default(false)
+  created_at DateTime         @default(now())
+
+  user   User   @relation("NotificationRecipient", fields: [user_id], references: [id], onDelete: Cascade)
+  actor  User   @relation("NotificationActor", fields: [actor_id], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, is_read, created_at])
+  @@map("notifications")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

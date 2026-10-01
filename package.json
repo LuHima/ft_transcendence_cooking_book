@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "react-router-dom": "^7.18.4"
+  },
+  
+  "prisma": {
+    "schema": "src/backend/prisma/schema.prisma"
   }
 }
