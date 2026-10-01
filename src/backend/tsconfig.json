@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
 	"preserveWatchOutput": true, // needed to preserve log when starting 'nest start --watch'
     "module": "nodenext",
@@ -20,6 +21,11 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+	"paths": {
+      "src/*": ["./src/*"]
+    },
+	"typeRoots": ["./node_modules/@types"],
+    "types": ["jest", "node"]
   }
 }
