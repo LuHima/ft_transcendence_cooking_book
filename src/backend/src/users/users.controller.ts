@@ -1,7 +1,8 @@
 import { Param, ParseIntPipe, Controller, Get, Patch, Post, Delete, Body, Query, UseFilters } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { HttpExceptionFilter } from 'src/common/filters/http.exeption.filter';
-
+import { Auth } from 'src/common/decorators/policies.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('users')
 @UseFilters(HttpExceptionFilter)
@@ -9,16 +10,23 @@ export class UsersController
 {
 	constructor (private readonly userService: UsersService) {}
 
-	@Get('search')
-	async searchUser(name:string, @Query('value') username: string)
+	@Auth()
+	@Get('me')
+	async getMe(@CurrentUser('id') id: number)
 	{
-		this.userService.findUser(username);
+		return await this.userService.getMe(id);
+	}
+
+	@Get('search')
+	async searchUser(@Query('value') username: string)
+	{
+		return await this.userService.findUser(username);
 	}
 
 	@Get(':id')
 	async getUser(@Param('id', ParseIntPipe) id: number)
 	{
-		this.userService.getUser(id);
+		return await this.userService.getUser(id);
 	}
 
 }

@@ -40,5 +40,5 @@ export class CaslAbilityFactory {
 			cannot(Action.Ban, 'User')
 		}
 		return build();
-		}
+	}
 }
