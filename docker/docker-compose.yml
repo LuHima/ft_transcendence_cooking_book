@@ -31,6 +31,32 @@ services:
     restart: unless-stopped
 
   #----------------------------------------------------------------------------#
+  #                                ACME SERVICE                                #
+  #----------------------------------------------------------------------------#
+  # Issues and renews the TLS certificate (self-signed in dev, Let's Encrypt
+  # in production). Runs as root (needed for cron); nginx only reads the
+  # resulting certificate from the shared volume, read-only.
+  acme:
+    build:
+      context: ./acme/
+    image: acme:${APP_VERSION:-1.0}
+    container_name: acme-container
+    pull_policy: never
+    stop_grace_period: 10s
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      PRODUCTION_FLAG: ${PRODUCTION_FLAG:-false}
+      INFOMANIAK_API_TOKEN: ${INFOMANIAK_API_TOKEN:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      ACME_STAGING: ${ACME_STAGING:-false}
+    volumes:
+      - nginx_ssl:/etc/nginx/ssl
+      - acme_data:/root/.acme.sh
+    networks:
+      - acme-net
+    restart: unless-stopped
+
+  #----------------------------------------------------------------------------#
   #                              BACKEND SERVICE                               #
   #----------------------------------------------------------------------------#
   # NestJS backend API application
@@ -132,15 +158,19 @@ services:
       - "8443:8443"
       - "8080:8080"
     # Connect to custom bridge network
-    networks:
-      - front-net
-      - back-net
-    # Start Nginx only when both upstream services are ready and healthy
+    volumes:
+      - nginx_ssl:/etc/nginx/conf:ro
     depends_on:
       frontend:
         condition: service_healthy
       backend:
         condition: service_healthy
+      acme:
+        condition: service_healthy
+    networks:
+      - front-net
+      - back-net
+      - acme-net
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
@@ -153,10 +183,15 @@ networks:
   back-net:
   db-net:
     internal: true
-# una rete internal non ha accesso al mondo esterno.
-# Il database parla solo con chi è sulla sua rete, cioè il backend.
+  # una rete internal non ha accesso al mondo esterno.
+  # Il database parla solo con chi è sulla sua rete, cioè il backend.
+  acme-net:
+  # Rete dedicata al container acme: deve uscire su internet per contattare
+  # Let's Encrypt e Infomaniak, e condivide il volume del certificato con nginx.
 #------------------------------------------------------------------------------#
 #                                  VOLUMES                                     #
 #------------------------------------------------------------------------------#
 volumes:
   db_data:
+  nginx_ssl:
+  acme_data:

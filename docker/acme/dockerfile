@@ -1,0 +1,17 @@
+# Base image: standard Alpine Linux (root available, needed for cron)
+FROM alpine:3.20
+
+# Install openssl (certificate handling), acme.sh (Let's Encrypt client),
+# socat (required by acme.sh for some challenge types), curl (healthcheck)
+# and ca-certificates (to trust Let's Encrypt's CA).
+RUN apk add --no-cache openssl curl acme.sh socat ca-certificates
+
+# Copy the entrypoint script and make it executable
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Healthcheck: the container is "healthy" once a certificate file exists
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=5 \
+  CMD [ -f /etc/nginx/ssl/transcendence.crt ] || exit 1
+
+ENTRYPOINT ["entrypoint.sh"]
