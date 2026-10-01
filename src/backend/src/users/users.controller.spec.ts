@@ -55,4 +55,20 @@ describe('UsersController', () => {
       expect(service.getMe).toHaveBeenCalledWith(1);
     });
   });
+
+  describe('updateMe', () => {
+    it('should update and return the updated user profile', async () => {
+      const updateDto = {
+        first_name: 'Luigi',
+        city: 'Milano',
+      };
+      const updatedUser = { ...mockUser, ...updateDto };
+      (service.updateMe as jest.Mock<any>) = jest.fn<() => Promise<any>>().mockResolvedValue(updatedUser);
+
+      const result = await controller.updateMe(1, updateDto as any);
+
+      expect(result).toEqual(updatedUser);
+      expect(service.updateMe).toHaveBeenCalledWith(1, updateDto);
+    });
+  });
 });

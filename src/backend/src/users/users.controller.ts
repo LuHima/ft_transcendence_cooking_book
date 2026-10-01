@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { HttpExceptionFilter } from 'src/common/filters/http.exeption.filter';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 @UseFilters(HttpExceptionFilter)
@@ -15,6 +16,13 @@ export class UsersController
 	async getMe(@CurrentUser('id') id: number)
 	{
 		return await this.userService.getMe(id);
+	}
+
+	@Auth()
+	@Patch('me')
+	async updateMe(@CurrentUser('id') id: number, @Body() updateUserDto: UpdateUserDto)
+	{
+		return await this.userService.updateMe(id, updateUserDto);
 	}
 
 	@Get('search')
