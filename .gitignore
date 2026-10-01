@@ -107,6 +107,9 @@ ehthumbs.db
 
 # AI agents data
 .agents/
+skills-lock.json
+AGENTS.md
+docs/agents/
 
 # ---------------------------------------------------------------------------- #
 # PROJECT SPECIFIC                                                             #
