@@ -166,15 +166,16 @@ clean-env: ## |Remove .env file for this project
 .PHONY: wipe
 wipe: fclean clean-env ## |fclean + remove .env file
 
-# Removes project resources and prunes global Docker builder cache
+# Removes project resources via fclean, then prunes global Docker resources:
+# builder cache, stopped containers, unused networks, images (not volumes)
 .PHONY: clean-cache
-clean-cache: wipe ## |Remove project resources and global builder cache
+clean-cache: fclean ## |fclean + prune global Docker resources (not volumes)
 	@echo "Pruning Docker builder cache (global, not project-scoped)..."
 	@$(SUDO) docker builder prune -af
 
 # Runs a full project cleanup first via fclean, then prunes unused Docker
-# resources globally on the host: stopped containers, unused networks,
-# images, and volumes
+# resources globally on the host: builder cache, stopped containers, unused
+# networks, images, and volumes
 .PHONY: prune
 prune: fclean ## |fclean + prune Docker resources globally on the host
 	@echo "Pruning everything o.o"
