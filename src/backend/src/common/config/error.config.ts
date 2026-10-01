@@ -57,6 +57,16 @@ export const errors = {
 		message: 'Invalid password or email',
 		error: 'Unauthorized',
 	},
+	twoFactorAlreadyEnable: {
+		statusCode: HttpStatus.UNAUTHORIZED,
+		message: 'Two factor authentication is already enable',
+		error: 'Unauthorized',
+	},
+	twoFactorAlreadyDisable: {
+		statusCode: HttpStatus.UNAUTHORIZED,
+		message: 'Two factor authentication is already disable',
+		error: 'Unauthorized',
+	},
 	emailAlreadyUsed: {
 		statusCode: HttpStatus.CONFLICT,
 		message: 'Email is already used',

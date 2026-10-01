@@ -5,6 +5,12 @@ import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import * as QRCode from 'qrcode';
+
+import { createHttpException, errors } from 'src/common/config/error.config';
+//import { authenticator}
+//import { Authenticator } from 'otplib';
+import { generateSecret, generateURI, verify } from 'otplib';
 
 interface PayLoadInterface {
 		id: number;
@@ -167,18 +173,43 @@ export class AuthService
 		return user;
 	}
 
-	async twoFactorAuth(id: number)
+	async twoFactorAuthEnable(id: number, password: string)
 	{
 		const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
-			where :{id: id}, select : {is_two_factor_enabled: true}
+			where :{id: id}, select : {is_two_factor_enabled: true, password_hash: true}
 		});
-		if (statusTwoFactorAuth?.is_two_factor_enabled){
-			await this.prisma.user.update({
-				where :{id: id}, data: {is_two_factor_enabled: false, two_factor: null}
-			});
+
+		if (!statusTwoFactorAuth || !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))) 
+		{
+			throw createHttpException(errors.auth.accessDenied, "invalid password");
 		}
-		else {
-			bcrypt
-		} 
+		if (statusTwoFactorAuth?.is_two_factor_enabled){
+			throw createHttpException(errors.auth.twoFactorAlreadyEnable);
+		}
+
+		await this.prisma.user.update({
+			where :{id: id}, data: {is_two_factor_enabled: true, two_factor: null}
+		});
+ 
+	}
+
+	async twoFactorAuthDisable(id: number, password: string)
+	{
+		const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
+			where :{id: id}, select : {is_two_factor_enabled: true, password_hash: true}
+		});
+
+		if (!statusTwoFactorAuth || !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))) 
+		{
+			throw createHttpException(errors.auth.accessDenied, "invalid password");
+		}
+
+		if (statusTwoFactorAuth?.is_two_factor_enabled === false){
+			throw createHttpException(errors.auth.twoFactorAlreadyDisable);
+		}
+
+		await this.prisma.user.update({
+			where :{id: id}, data: {is_two_factor_enabled: false, two_factor: null}
+		});
 	}
 }

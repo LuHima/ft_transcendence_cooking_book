@@ -7,9 +7,12 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
 import { Auth } from 'src/common/decorators/policies.decorator';
+import { PickType } from '@nestjs/mapped-types';
+
+export class ConfirmPasswordDto extends PickType(SignInUserDto, ['password'] as const) {}
 
 /* 
-Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il      
+Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il
   controllo dei tipi e di non tentare di emettere metadati a runtime
 */
 @Controller('auth')
@@ -88,10 +91,17 @@ export class AuthController
 	}
 
 	@Auth()
-	@Get('twofactor')
-	async towFactor(@CurrentUser('id') id :number)
+	@Post('twofactor/enable')
+	async towFactorEnable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
 	{
-		return (await this.authService.twoFactorAuth(id));
+		return (await this.authService.twoFactorAuthEnable(id, userPassword.password));
+	}
+
+	@Post()
+	@Get('twofactor/disable')
+	async towFactorDisable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
+	{
+		return (await this.authService.twoFactorAuthDisable(id, userPassword.password));
 	}
 
 	@Auth()
