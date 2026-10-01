@@ -177,6 +177,7 @@ services:
       # DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
       MODSEC_RULE_ENGINE: DetectionOnly
     # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
+      BLOCKING_PARANOIA: "3"
     ports:
       - "8443:8443"
       - "8080:8080"
