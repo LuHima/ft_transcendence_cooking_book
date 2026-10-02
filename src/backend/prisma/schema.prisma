@@ -33,6 +33,44 @@ enum RecipeDifficulty {
   hard
 }
 
+enum Course {
+  appetizer
+  first_course
+  main_course
+  dessert
+  side_dish
+  drink
+  snack
+}
+
+enum UnitOfMeasure {
+  g
+  kg
+  ml
+  cl
+  l
+  oz
+  lb
+  fl_oz
+  cup
+  tbsp
+  tsp
+  piece
+  pinch
+}
+
+enum IngredientCategory {
+  produce
+  dairy_eggs
+  meat_poultry
+  seafood
+  bakery_grains
+  pantry_spices
+  legumes_nuts
+  beverages_liquids
+  other
+}
+
 enum Role {
   admin
   user
@@ -108,12 +146,26 @@ model Recipe {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Ingredient {
-  id   Int    @id @default(autoincrement())
-  name String @unique @db.VarChar(100)
+  id       Int                @id @default(autoincrement())
+  slug     String             @unique @db.VarChar(100)
+  category IngredientCategory
+  name_it  String             @db.VarChar(100)
+  name_en  String             @db.VarChar(100)
+  name_fr  String             @db.VarChar(100)
 
-  recipe_ingredients  RecipeIngredient[]
+  recipe_ingredients RecipeIngredient[]
 
   @@map("ingredients")
+}
+
+model Tag {
+  id      Int    @id @default(autoincrement())
+  slug    String @unique @db.VarChar(50)
+  name_it String @db.VarChar(100)
+  name_en String @db.VarChar(100)
+  name_fr String @db.VarChar(100)
+
+  @@map("tags")
 }
 
 model RecipeIngredient {

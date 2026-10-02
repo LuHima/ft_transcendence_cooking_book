@@ -4,7 +4,7 @@ dotenv.config();
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
-import { Role, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType } from '@prisma/client';
+import { Role, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType, IngredientCategory } from '@prisma/client';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' });
 const prisma = new PrismaClient({ adapter });
@@ -19,6 +19,8 @@ async function main() {
   await prisma.comment.deleteMany();
   await prisma.recipeIngredient.deleteMany();
   await prisma.recipe.deleteMany();
+  await prisma.tag.deleteMany();
+  await prisma.ingredient.deleteMany();
 
   console.log('🌱 Avvio del seeding database...');
 
@@ -68,20 +70,83 @@ async function main() {
     },
   });
 
-  // 2. INGREDIENTI
-  console.log('🍅 Creazione Ingredienti...');
-  const ingredientNames = [
-    'Pasta', 'Pomodoro', 'Basilico', 'Uova', 'Guanciale', 'Pecorino Romano',
-    'Olio Extravergine', 'Aglio', 'Sale', 'Pepe', 'Farina', 'Burro', 'Latte',
-    'Cacao', 'Mascarpone', 'Caffè', 'Zucchero', 'Savoiardi'
+  // 2. INGREDIENTI & TAG
+  console.log('🍅 Creazione Ingredienti e Tag...');
+
+  const baselineIngredients = [
+    // Produce
+    { slug: 'tomato', category: IngredientCategory.produce, name_it: 'Pomodoro', name_en: 'Tomato', name_fr: 'Tomate' },
+    { slug: 'basil', category: IngredientCategory.produce, name_it: 'Basilico', name_en: 'Basil', name_fr: 'Basilic' },
+    { slug: 'garlic', category: IngredientCategory.produce, name_it: 'Aglio', name_en: 'Garlic', name_fr: 'Ail' },
+    { slug: 'onion', category: IngredientCategory.produce, name_it: 'Cipolla', name_en: 'Onion', name_fr: 'Oignon' },
+    { slug: 'lemon', category: IngredientCategory.produce, name_it: 'Limone', name_en: 'Lemon', name_fr: 'Citron' },
+    // Dairy & Eggs
+    { slug: 'eggs', category: IngredientCategory.dairy_eggs, name_it: 'Uova', name_en: 'Eggs', name_fr: 'Œufs' },
+    { slug: 'butter', category: IngredientCategory.dairy_eggs, name_it: 'Burro', name_en: 'Butter', name_fr: 'Beurre' },
+    { slug: 'milk', category: IngredientCategory.dairy_eggs, name_it: 'Latte', name_en: 'Milk', name_fr: 'Lait' },
+    { slug: 'parmesan', category: IngredientCategory.dairy_eggs, name_it: 'Parmigiano Reggiano', name_en: 'Parmesan', name_fr: 'Parmesan' },
+    { slug: 'pecorino', category: IngredientCategory.dairy_eggs, name_it: 'Pecorino Romano', name_en: 'Pecorino Romano', name_fr: 'Pecorino Romano' },
+    { slug: 'mascarpone', category: IngredientCategory.dairy_eggs, name_it: 'Mascarpone', name_en: 'Mascarpone', name_fr: 'Mascarpone' },
+    // Meat & Poultry
+    { slug: 'guanciale', category: IngredientCategory.meat_poultry, name_it: 'Guanciale', name_en: 'Cured Pork Cheek', name_fr: 'Guanciale' },
+    { slug: 'chicken_breast', category: IngredientCategory.meat_poultry, name_it: 'Petto di Pollo', name_en: 'Chicken Breast', name_fr: 'Blanc de Poulet' },
+    { slug: 'beef_mince', category: IngredientCategory.meat_poultry, name_it: 'Macinato di Manzo', name_en: 'Minced Beef', name_fr: 'Bœuf Haché' },
+    // Seafood
+    { slug: 'salmon', category: IngredientCategory.seafood, name_it: 'Salmone', name_en: 'Salmon', name_fr: 'Saumon' },
+    { slug: 'prawns', category: IngredientCategory.seafood, name_it: 'Gamberi', name_en: 'Prawns', name_fr: 'Crevettes' },
+    // Bakery & Grains
+    { slug: 'pasta', category: IngredientCategory.bakery_grains, name_it: 'Pasta', name_en: 'Pasta', name_fr: 'Pâtes' },
+    { slug: 'flour', category: IngredientCategory.bakery_grains, name_it: 'Farina', name_en: 'Flour', name_fr: 'Farine' },
+    { slug: 'rice', category: IngredientCategory.bakery_grains, name_it: 'Riso Carnaroli', name_en: 'Carnaroli Rice', name_fr: 'Riz Carnaroli' },
+    { slug: 'ladyfingers', category: IngredientCategory.bakery_grains, name_it: 'Savoiardi', name_en: 'Ladyfingers', name_fr: 'Biscuits Cuillère' },
+    // Pantry & Spices
+    { slug: 'olive_oil', category: IngredientCategory.pantry_spices, name_it: 'Olio Extravergine', name_en: 'Extra Virgin Olive Oil', name_fr: 'Huile d\'Olive Extra Vierge' },
+    { slug: 'salt', category: IngredientCategory.pantry_spices, name_it: 'Sale', name_en: 'Salt', name_fr: 'Sel' },
+    { slug: 'black_pepper', category: IngredientCategory.pantry_spices, name_it: 'Pepe', name_en: 'Black Pepper', name_fr: 'Poivre Noir' },
+    { slug: 'sugar', category: IngredientCategory.pantry_spices, name_it: 'Zucchero', name_en: 'Sugar', name_fr: 'Sucre' },
+    { slug: 'cocoa', category: IngredientCategory.pantry_spices, name_it: 'Cacao', name_en: 'Cocoa Powder', name_fr: 'Cacao en Poudre' },
+    // Legumes & Nuts
+    { slug: 'lentils', category: IngredientCategory.legumes_nuts, name_it: 'Lenticchie', name_en: 'Lentils', name_fr: 'Lentilles' },
+    { slug: 'walnuts', category: IngredientCategory.legumes_nuts, name_it: 'Noci', name_en: 'Walnuts', name_fr: 'Noix' },
+    // Beverages & Liquids
+    { slug: 'coffee', category: IngredientCategory.beverages_liquids, name_it: 'Caffè', name_en: 'Espresso Coffee', name_fr: 'Café Espresso' },
+    { slug: 'white_wine', category: IngredientCategory.beverages_liquids, name_it: 'Vino Bianco', name_en: 'White Wine', name_fr: 'Vin Blanc' },
+    // Other
+    { slug: 'vanilla', category: IngredientCategory.other, name_it: 'Estratto di Vaniglia', name_en: 'Vanilla Extract', name_fr: 'Extrait de Vanille' },
   ];
 
   const ingredients: Record<string, any> = {};
-  for (const name of ingredientNames) {
-    ingredients[name] = await prisma.ingredient.upsert({
-      where: { name },
-      update: {},
-      create: { name },
+  for (const item of baselineIngredients) {
+    const record = await prisma.ingredient.upsert({
+      where: { slug: item.slug },
+      update: item,
+      create: item,
+    });
+    ingredients[item.slug] = record;
+    ingredients[item.name_it] = record;
+  }
+
+  console.log('🏷️ Creazione Tag...');
+  const baselineTags = [
+    { slug: 'vegetarian', name_it: 'Vegetariano', name_en: 'Vegetarian', name_fr: 'Végétarien' },
+    { slug: 'vegan', name_it: 'Vegano', name_en: 'Vegan', name_fr: 'Végétalien' },
+    { slug: 'gluten_free', name_it: 'Senza Glutine', name_en: 'Gluten-Free', name_fr: 'Sans Gluten' },
+    { slug: 'dairy_free', name_it: 'Senza Lattosio', name_en: 'Dairy-Free', name_fr: 'Sans Produits Laitiers' },
+    { slug: 'nut_free', name_it: 'Senza Frutta a Guscio', name_en: 'Nut-Free', name_fr: 'Sans Fruits à Coque' },
+    { slug: 'low_carb', name_it: 'A Basso Contenuto di Carboidrati', name_en: 'Low-Carb', name_fr: 'Faible en Glucides' },
+    { slug: 'quick_easy', name_it: 'Veloce e Facile', name_en: 'Quick & Easy', name_fr: 'Rapide et Facile' },
+    { slug: 'traditional', name_it: 'Tradizionale', name_en: 'Traditional', name_fr: 'Traditionnel' },
+    { slug: 'comfort_food', name_it: 'Comfort Food', name_en: 'Comfort Food', name_fr: 'Plat Réconfortant' },
+    { slug: 'budget_friendly', name_it: 'Economico', name_en: 'Budget-Friendly', name_fr: 'Économique' },
+    { slug: 'summer', name_it: 'Estivo', name_en: 'Summer', name_fr: 'Estival' },
+    { slug: 'winter', name_it: 'Invernale', name_en: 'Winter', name_fr: 'Hivernal' },
+  ];
+
+  for (const tag of baselineTags) {
+    await prisma.tag.upsert({
+      where: { slug: tag.slug },
+      update: tag,
+      create: tag,
     });
   }
 
