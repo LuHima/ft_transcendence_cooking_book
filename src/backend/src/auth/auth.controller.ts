@@ -97,6 +97,14 @@ export class AuthController
 		return (await this.authService.twoFactorAuthEnable(id, userPassword.password));
 	}
 
+	@Auth()
+	@Post('twofactor/verify')
+	async verify(@CurrentUser('id') id :number, @Body('code') code: string)
+	{
+		if(code)
+		return (await this.authService.verify(id, code));
+	}
+
 	@Post()
 	@Get('twofactor/disable')
 	async towFactorDisable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)

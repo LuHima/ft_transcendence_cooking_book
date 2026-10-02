@@ -5,12 +5,13 @@ import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import * as QRCode from 'qrcode';
+import * as qrcode from 'qrcode';
+import { generateSecret, generateURI, verify, } from 'otplib';
 
 import { createHttpException, errors } from 'src/common/config/error.config';
-//import { authenticator}
-//import { Authenticator } from 'otplib';
-import { generateSecret, generateURI, verify } from 'otplib';
+import { ChildProcess } from 'child_process';
+import { EncryptionService } from './encryption.service';
+import { User } from '@prisma/client';
 
 interface PayLoadInterface {
 		id: number;
@@ -22,8 +23,13 @@ interface PayLoadInterface {
 @Injectable()
 export class AuthService 
 {
-	constructor(private usersService: UsersService, private jwtService: JwtService, private prisma: PrismaService){}
+	constructor(private usersService: UsersService, private jwtService: JwtService, private prisma: PrismaService, private encryptionService: EncryptionService){}
 
+	private twoFactorQrCode(user: User) 
+	{
+		// creo il codice qr
+		//const qrCodeImageUrl = await qrcode.toDataURL(otpAuthUrl);
+	}
 	async signIn(email:string, pass: string) : Promise<{ accessToken: string, refreshToken: string }>
 	{
 		let expiredDate: Date
@@ -35,6 +41,8 @@ export class AuthService
 		{
 			throw new UnauthorizedException('invalid password or email');
 		}
+		if(user.is_two_factor_enabled === true)
+			this.twoFactorQrCode(user);
 
 		// cancello la sessione piu vecchia se un utente ha piu di 5 sessioni
 		const userSessions = await this.prisma.jwtSession.findMany({
@@ -173,10 +181,31 @@ export class AuthService
 		return user;
 	}
 
+	async verify(id: number, code: string)
+	{
+
+		if (code.length !== 6)
+			throw createHttpException(errors.auth.accessDenied, 'invalid access code, must be 6 digit');
+		const user: any = await this.prisma.user.findUnique({
+			where :{id: id}, select : {is_two_factor_enabled: true, password_hash: true, email: true}
+		});
+
+		const rawSecret = this.encryptionService.decrypting(user.two_factor);
+
+ 		const isValid = await verify({ token: code, secret: rawSecret });
+		if (!isValid.valid) {
+			throw createHttpException(errors.auth.accessDenied, 'invalid access code');
+		}
+
+		await this.prisma.user.update({
+			where :{id: id}, data: {is_two_factor_enabled: true,}
+		});
+	}
+
 	async twoFactorAuthEnable(id: number, password: string)
 	{
 		const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
-			where :{id: id}, select : {is_two_factor_enabled: true, password_hash: true}
+			where :{id: id}, select : {is_two_factor_enabled: true, password_hash: true, email: true}
 		});
 
 		if (!statusTwoFactorAuth || !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))) 
@@ -187,10 +216,26 @@ export class AuthService
 			throw createHttpException(errors.auth.twoFactorAlreadyEnable);
 		}
 
+		//genero la chiave privata 
+		const key =  generateSecret();
+
+		// genera url per google authenticator
+		const otpAuthUrl = generateURI({
+			issuer: "weCook",
+			label: statusTwoFactorAuth.email,
+			secret: key,
+		})
+		// crypto la chiave
+		const encryptedKey = this.encryptionService.encrypting(key)
+
+		const qrCode = await qrcode.toDataURL(otpAuthUrl);
+		
+
 		await this.prisma.user.update({
-			where :{id: id}, data: {is_two_factor_enabled: true, two_factor: null}
+			where :{id: id}, data: {two_factor: encryptedKey}
 		});
- 
+		
+		return {qrCode, key}
 	}
 
 	async twoFactorAuthDisable(id: number, password: string)
@@ -199,7 +244,7 @@ export class AuthService
 			where :{id: id}, select : {is_two_factor_enabled: true, password_hash: true}
 		});
 
-		if (!statusTwoFactorAuth || !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))) 
+		if (!statusTwoFactorAuth || !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash)))
 		{
 			throw createHttpException(errors.auth.accessDenied, "invalid password");
 		}
