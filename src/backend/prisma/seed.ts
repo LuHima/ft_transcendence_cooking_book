@@ -3,8 +3,8 @@ dotenv.config();
 
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { Role, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType, IngredientCategory, UnitOfMeasure } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { Role, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType, IngredientCategory } from '@prisma/client';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' });
 const prisma = new PrismaClient({ adapter });
@@ -19,7 +19,9 @@ async function main() {
   await prisma.comment.deleteMany();
   await prisma.recipeIngredient.deleteMany();
   await prisma.recipe.deleteMany();
+  await prisma.tagTranslation.deleteMany();
   await prisma.tag.deleteMany();
+  await prisma.ingredientTranslation.deleteMany();
   await prisma.ingredient.deleteMany();
 
   console.log('🌱 Avvio del seeding database...');
@@ -119,9 +121,36 @@ async function main() {
   for (const item of baselineIngredients) {
     const record = await prisma.ingredient.upsert({
       where: { slug: item.slug },
-      update: item,
-      create: item,
+      update: { category: item.category },
+      create: {
+        slug: item.slug,
+        category: item.category,
+      },
     });
+
+    const locales = [
+      { locale: 'it', name: item.name_it },
+      { locale: 'en', name: item.name_en },
+      { locale: 'fr', name: item.name_fr },
+    ];
+
+    for (const t of locales) {
+      await prisma.ingredientTranslation.upsert({
+        where: {
+          ingredient_id_locale: {
+            ingredient_id: record.id,
+            locale: t.locale,
+          },
+        },
+        update: { name: t.name },
+        create: {
+          ingredient_id: record.id,
+          locale: t.locale,
+          name: t.name,
+        },
+      });
+    }
+
     ingredients[item.slug] = record;
     ingredients[item.name_it] = record;
   }
@@ -143,11 +172,34 @@ async function main() {
   ];
 
   for (const tag of baselineTags) {
-    await prisma.tag.upsert({
+    const tagRecord = await prisma.tag.upsert({
       where: { slug: tag.slug },
-      update: tag,
-      create: tag,
+      update: {},
+      create: { slug: tag.slug },
     });
+
+    const locales = [
+      { locale: 'it', name: tag.name_it },
+      { locale: 'en', name: tag.name_en },
+      { locale: 'fr', name: tag.name_fr },
+    ];
+
+    for (const t of locales) {
+      await prisma.tagTranslation.upsert({
+        where: {
+          tag_id_locale: {
+            tag_id: tagRecord.id,
+            locale: t.locale,
+          },
+        },
+        update: { name: t.name },
+        create: {
+          tag_id: tagRecord.id,
+          locale: t.locale,
+          name: t.name,
+        },
+      });
+    }
   }
 
   // 3. RICETTE
@@ -164,11 +216,11 @@ async function main() {
       difficulty: RecipeDifficulty.medium,
       recipe_ingredients: {
         create: [
-          { ingredient_id: ingredients['Pasta'].id, quantity: 320, unit: 'g' },
-          { ingredient_id: ingredients['Uova'].id, quantity: 4, unit: 'pz' },
-          { ingredient_id: ingredients['Guanciale'].id, quantity: 150, unit: 'g' },
-          { ingredient_id: ingredients['Pecorino Romano'].id, quantity: 80, unit: 'g' },
-          { ingredient_id: ingredients['Pepe'].id, quantity: 1, unit: 'q.b.' },
+          { ingredient_id: ingredients['Pasta'].id, quantity: 320, unit: UnitOfMeasure.g, notes: { it: 'al dente', en: 'al dente', fr: 'al dente' } },
+          { ingredient_id: ingredients['Uova'].id, quantity: 4, unit: UnitOfMeasure.piece, notes: { it: 'tuorli freschi', en: 'fresh egg yolks', fr: 'jaunes d\'œufs frais' } },
+          { ingredient_id: ingredients['Guanciale'].id, quantity: 150, unit: UnitOfMeasure.g, notes: { it: 'tagliato a listarelle', en: 'cut into strips', fr: 'coupé en lanières' } },
+          { ingredient_id: ingredients['Pecorino Romano'].id, quantity: 80, unit: UnitOfMeasure.g, notes: { it: 'grattugiato fresco', en: 'freshly grated', fr: 'fraîchement râpé' } },
+          { ingredient_id: ingredients['Pepe'].id, quantity: 1, unit: UnitOfMeasure.pinch, notes: { it: 'macinato fresco', en: 'freshly cracked', fr: 'fraîchement moulu' } },
         ],
       },
       recipe_media: {
@@ -190,12 +242,12 @@ async function main() {
       difficulty: RecipeDifficulty.easy,
       recipe_ingredients: {
         create: [
-          { ingredient_id: ingredients['Savoiardi'].id, quantity: 300, unit: 'g' },
-          { ingredient_id: ingredients['Mascarpone'].id, quantity: 500, unit: 'g' },
-          { ingredient_id: ingredients['Uova'].id, quantity: 4, unit: 'pz' },
-          { ingredient_id: ingredients['Caffè'].id, quantity: 300, unit: 'ml' },
-          { ingredient_id: ingredients['Cacao'].id, quantity: 30, unit: 'g' },
-          { ingredient_id: ingredients['Zucchero'].id, quantity: 100, unit: 'g' },
+          { ingredient_id: ingredients['Savoiardi'].id, quantity: 300, unit: UnitOfMeasure.g },
+          { ingredient_id: ingredients['Mascarpone'].id, quantity: 500, unit: UnitOfMeasure.g },
+          { ingredient_id: ingredients['Uova'].id, quantity: 4, unit: UnitOfMeasure.piece },
+          { ingredient_id: ingredients['Caffè'].id, quantity: 300, unit: UnitOfMeasure.ml, notes: { it: 'amaro e freddo', en: 'unsweetened and cold', fr: 'non sucré et froid' } },
+          { ingredient_id: ingredients['Cacao'].id, quantity: 30, unit: UnitOfMeasure.g },
+          { ingredient_id: ingredients['Zucchero'].id, quantity: 100, unit: UnitOfMeasure.g },
         ],
       },
       recipe_media: {
@@ -218,11 +270,11 @@ async function main() {
       difficulty: RecipeDifficulty.hard,
       recipe_ingredients: {
         create: [
-          { ingredient_id: ingredients['Farina'].id, quantity: 500, unit: 'g' },
-          { ingredient_id: ingredients['Pomodoro'].id, quantity: 200, unit: 'g' },
-          { ingredient_id: ingredients['Basilico'].id, quantity: 5, unit: 'foglie' },
-          { ingredient_id: ingredients['Olio Extravergine'].id, quantity: 20, unit: 'ml' },
-          { ingredient_id: ingredients['Sale'].id, quantity: 12, unit: 'g' },
+          { ingredient_id: ingredients['Farina'].id, quantity: 500, unit: UnitOfMeasure.g },
+          { ingredient_id: ingredients['Pomodoro'].id, quantity: 200, unit: UnitOfMeasure.g },
+          { ingredient_id: ingredients['Basilico'].id, quantity: 5, unit: UnitOfMeasure.piece, notes: { it: 'foglie fresche', en: 'fresh leaves', fr: 'feuilles fraîches' } },
+          { ingredient_id: ingredients['Olio Extravergine'].id, quantity: 20, unit: UnitOfMeasure.ml },
+          { ingredient_id: ingredients['Sale'].id, quantity: 12, unit: UnitOfMeasure.g },
         ],
       },
       recipe_media: {

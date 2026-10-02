@@ -146,33 +146,55 @@ model Recipe {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Ingredient {
-  id       Int                @id @default(autoincrement())
-  slug     String             @unique @db.VarChar(100)
-  category IngredientCategory
-  name_it  String             @db.VarChar(100)
-  name_en  String             @db.VarChar(100)
-  name_fr  String             @db.VarChar(100)
+  id                 Int                    @id @default(autoincrement())
+  slug               String                 @unique @db.VarChar(100)
+  category           IngredientCategory
 
+  translations       IngredientTranslation[]
   recipe_ingredients RecipeIngredient[]
 
   @@map("ingredients")
 }
 
+model IngredientTranslation {
+  ingredient_id Int
+  locale        String @db.VarChar(5)
+  name          String @db.VarChar(100)
+
+  ingredient    Ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+
+  @@id([ingredient_id, locale])
+  @@index([locale, name])
+  @@map("ingredient_translations")
+}
+
 model Tag {
-  id      Int    @id @default(autoincrement())
-  slug    String @unique @db.VarChar(50)
-  name_it String @db.VarChar(100)
-  name_en String @db.VarChar(100)
-  name_fr String @db.VarChar(100)
+  id           Int              @id @default(autoincrement())
+  slug         String           @unique @db.VarChar(50)
+
+  translations TagTranslation[]
 
   @@map("tags")
+}
+
+model TagTranslation {
+  tag_id Int
+  locale String @db.VarChar(5)
+  name   String @db.VarChar(100)
+
+  tag    Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([tag_id, locale])
+  @@index([locale, name])
+  @@map("tag_translations")
 }
 
 model RecipeIngredient {
   recipe_id     Int
   ingredient_id Int
-  quantity      Decimal @db.Decimal(10, 2)
-  unit          String  @db.VarChar(50)
+  quantity      Decimal       @db.Decimal(10, 2)
+  unit          UnitOfMeasure
+  notes         Json?
 
   recipe     Recipe     @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredient_id], references: [id])
