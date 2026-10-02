@@ -109,11 +109,13 @@ ehthumbs.db
 .agents/
 skills-lock.json
 AGENTS.md
-docs/agents/
+GLOSSARY.md
+docs/
 
 # ---------------------------------------------------------------------------- #
 # PROJECT SPECIFIC                                                             #
 # ---------------------------------------------------------------------------- #
 documentation/
+notes/
 subject.*
 # Add here anything you want to exclude from git
