@@ -21,12 +21,17 @@ services:
     # Load database credentials and config from .env
     env_file:
       - .env
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_ROLE_ID: ${DATABASE_VAULT_ROLE_ID}
+      VAULT_SECRET_ID: ${DATABASE_VAULT_SECRET_ID}
     # Persistent volume for PostgreSQL data
     volumes:
       - db_data:/var/lib/postgresql/data
     # Connect to custom bridge network
     networks:
       - db-net
+      - vault-net
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
