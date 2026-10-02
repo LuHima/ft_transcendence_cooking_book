@@ -95,11 +95,15 @@ services:
       INFOMANIAK_API_TOKEN: ${INFOMANIAK_API_TOKEN:-}
       ACME_EMAIL: ${ACME_EMAIL:-}
       ACME_STAGING: ${ACME_STAGING:-false}
+      VAULT_ADDR: http://vault:8200
+      VAULT_ROLE_ID: ${ACME_VAULT_ROLE_ID}
+      VAULT_SECRET_ID: ${ACME_VAULT_SECRET_ID}
     volumes:
       - nginx_ssl:/etc/nginx/ssl
       - acme_data:/root/.acme.sh
     networks:
       - acme-net
+      - vault-net
     restart: unless-stopped
 
   #----------------------------------------------------------------------------#

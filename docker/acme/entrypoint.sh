@@ -6,6 +6,40 @@ set -e
 SSL_DIR="${SSL_DIR:-/etc/nginx/ssl}"
 DOMAIN="${DOMAIN_NAME:-localhost}"
 
+# Fetch INFOMANIAK_API_TOKEN from Vault, if Vault credentials are provided.
+# Falls back to whatever INFOMANIAK_API_TOKEN is already in the environment
+# (useful for local dev without Vault, or if Vault is unreachable).
+VAULT_ADDR="${VAULT_ADDR:-http://vault:8200}"
+
+if [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_SECRET_ID" ]; then
+	echo "=== Authenticating to Vault (acme-role) ==="
+
+	LOGIN_RESPONSE=$(curl -s --fail -X POST \
+		-d "{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}" \
+		"${VAULT_ADDR}/v1/auth/approle/login" 2>/dev/null)
+
+	VAULT_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+
+	if [ -n "$VAULT_TOKEN" ]; then
+		SECRET_RESPONSE=$(curl -s --fail \
+			-H "X-Vault-Token: ${VAULT_TOKEN}" \
+			"${VAULT_ADDR}/v1/secret/data/acme" 2>/dev/null)
+
+		FETCHED_TOKEN=$(echo "$SECRET_RESPONSE" | grep -o '"INFOMANIAK_API_TOKEN":"[^"]*"' | cut -d'"' -f4)
+
+		if [ -n "$FETCHED_TOKEN" ]; then
+			INFOMANIAK_API_TOKEN="$FETCHED_TOKEN"
+			echo "=== INFOMANIAK_API_TOKEN retrieved from Vault ==="
+		else
+			echo "WARNING: Vault reachable but no INFOMANIAK_API_TOKEN found; using existing environment value (if any)."
+		fi
+	else
+		echo "WARNING: Could not authenticate to Vault; using existing environment value (if any)."
+	fi
+else
+	echo "INFO: VAULT_ROLE_ID/VAULT_SECRET_ID not set; skipping Vault fetch."
+fi
+
 mkdir -p "$SSL_DIR"
 
 # Determine environment mode: 'true', '1', 'yes', 'on' enable production mode
