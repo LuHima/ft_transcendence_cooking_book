@@ -18,17 +18,21 @@ export class CatalogService {
   async getTags(params: { lang?: string } = {}) {
     const locale = (params.lang === 'it' || params.lang === 'fr') ? params.lang : 'en';
     const tags = await this.prisma.tag.findMany({
+      include: {
+        translations: {
+          where: { locale: { in: [locale, 'en'] } },
+        },
+      },
       orderBy: { slug: 'asc' },
     });
 
     return tags.map((t) => {
-      let name = t.name_en;
-      if (locale === 'it' && t.name_it) name = t.name_it;
-      if (locale === 'fr' && t.name_fr) name = t.name_fr;
+      const trans = t.translations.find((tr) => tr.locale === locale)
+        ?? t.translations.find((tr) => tr.locale === 'en');
       return {
         id: t.id,
         slug: t.slug,
-        name,
+        name: trans?.name ?? t.slug,
       };
     });
   }
@@ -49,26 +53,34 @@ export class CatalogService {
       const term = params.search.trim();
       where.OR = [
         { slug: { contains: term, mode: 'insensitive' } },
-        { name_it: { contains: term, mode: 'insensitive' } },
-        { name_en: { contains: term, mode: 'insensitive' } },
-        { name_fr: { contains: term, mode: 'insensitive' } },
+        {
+          translations: {
+            some: {
+              name: { contains: term, mode: 'insensitive' },
+            },
+          },
+        },
       ];
     }
 
     const ingredients = await this.prisma.ingredient.findMany({
       where,
+      include: {
+        translations: {
+          where: { locale: { in: [locale, 'en'] } },
+        },
+      },
       orderBy: { slug: 'asc' },
     });
 
     return ingredients.map((i) => {
-      let name = i.name_en;
-      if (locale === 'it' && i.name_it) name = i.name_it;
-      if (locale === 'fr' && i.name_fr) name = i.name_fr;
+      const trans = i.translations.find((tr) => tr.locale === locale)
+        ?? i.translations.find((tr) => tr.locale === 'en');
       return {
         id: i.id,
         slug: i.slug,
         category: i.category,
-        name,
+        name: trans?.name ?? i.slug,
       };
     });
   }

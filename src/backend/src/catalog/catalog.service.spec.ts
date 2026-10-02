@@ -42,8 +42,24 @@ describe('CatalogService', () => {
 
   describe('getTags', () => {
     const mockDbTags = [
-      { id: 1, slug: 'vegetarian', name_it: 'Vegetariano', name_en: 'Vegetarian', name_fr: 'Végétarien' },
-      { id: 2, slug: 'quick_easy', name_it: 'Veloce e Facile', name_en: 'Quick & Easy', name_fr: 'Rapide et Facile' },
+      {
+        id: 1,
+        slug: 'vegetarian',
+        translations: [
+          { locale: 'it', name: 'Vegetariano' },
+          { locale: 'en', name: 'Vegetarian' },
+          { locale: 'fr', name: 'Végétarien' },
+        ],
+      },
+      {
+        id: 2,
+        slug: 'quick_easy',
+        translations: [
+          { locale: 'it', name: 'Veloce e Facile' },
+          { locale: 'en', name: 'Quick & Easy' },
+          { locale: 'fr', name: 'Rapide et Facile' },
+        ],
+      },
     ];
 
     it('should return tags localized in Italian when lang=it', async () => {
@@ -67,6 +83,23 @@ describe('CatalogService', () => {
         { id: 2, slug: 'quick_easy', name: 'Quick & Easy' },
       ]);
     });
+
+    it('should fall back to English if requested locale translation is missing', async () => {
+      const tagWithOnlyEnglish = [
+        {
+          id: 3,
+          slug: 'comfort_food',
+          translations: [{ locale: 'en', name: 'Comfort Food' }],
+        },
+      ];
+      (prisma.tag.findMany as jest.Mock).mockResolvedValue(tagWithOnlyEnglish);
+
+      const result = await service.getTags({ lang: 'it' });
+
+      expect(result).toEqual([
+        { id: 3, slug: 'comfort_food', name: 'Comfort Food' },
+      ]);
+    });
   });
 
   describe('getIngredients', () => {
@@ -75,17 +108,21 @@ describe('CatalogService', () => {
         id: 1,
         slug: 'tomato',
         category: IngredientCategory.produce,
-        name_it: 'Pomodoro',
-        name_en: 'Tomato',
-        name_fr: 'Tomate',
+        translations: [
+          { locale: 'it', name: 'Pomodoro' },
+          { locale: 'en', name: 'Tomato' },
+          { locale: 'fr', name: 'Tomate' },
+        ],
       },
       {
         id: 2,
         slug: 'parmesan',
         category: IngredientCategory.dairy_eggs,
-        name_it: 'Parmigiano Reggiano',
-        name_en: 'Parmesan',
-        name_fr: 'Parmesan',
+        translations: [
+          { locale: 'it', name: 'Parmigiano Reggiano' },
+          { locale: 'en', name: 'Parmesan' },
+          { locale: 'fr', name: 'Parmesan' },
+        ],
       },
     ];
 
@@ -100,7 +137,7 @@ describe('CatalogService', () => {
       ]);
     });
 
-    it('should filter by category and search term in prisma query', async () => {
+    it('should filter by category and search term in relational translations', async () => {
       (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([mockDbIngredients[0]]);
 
       const result = await service.getIngredients({
@@ -116,6 +153,16 @@ describe('CatalogService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             category: IngredientCategory.produce,
+            OR: expect.arrayContaining([
+              { slug: { contains: 'pomo', mode: 'insensitive' } },
+              {
+                translations: {
+                  some: {
+                    name: { contains: 'pomo', mode: 'insensitive' },
+                  },
+                },
+              },
+            ]),
           }),
         }),
       );
