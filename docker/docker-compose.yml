@@ -31,6 +31,26 @@ services:
     restart: unless-stopped
 
   #----------------------------------------------------------------------------#
+  #                                VAULT SERVICE                               #
+  #----------------------------------------------------------------------------#
+  # HashiCorp Vault: encrypted secret storage, sealed by default. Only
+  # services on vault-net can reach it; not exposed to the host.
+  vault:
+    build:
+      context: ./vault/
+    image: vault:${APP_VERSION:-1.0}
+    container_name: vault-container
+    pull_policy: never
+    stop_grace_period: 10s
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/data
+    networks:
+      - vault-net
+    restart: unless-stopped
+
+  #----------------------------------------------------------------------------#
   #                            LIBRETRANSLATE SERVICE                          #
   #----------------------------------------------------------------------------#
   # Offline machine translation engine (en, it, fr). Called by the backend;
@@ -112,9 +132,9 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    # Auto-restart on crash or reboot unless manually stopped
       libretranslate:
         condition: service_healthy
+    # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
   #----------------------------------------------------------------------------#
@@ -175,9 +195,9 @@ services:
     environment:
     #il certificato lo genera l'immagine so useless
       # DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
-      MODSEC_RULE_ENGINE: DetectionOnly
-    # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
+      MODSEC_RULE_ENGINE: "On"
       BLOCKING_PARANOIA: "3"
+    # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
     ports:
       - "8443:8443"
       - "8080:8080"
@@ -212,6 +232,7 @@ networks:
   acme-net:
   # Rete dedicata al container acme: deve uscire su internet per contattare
   # Let's Encrypt e Infomaniak, e condivide il volume del certificato con nginx.
+  vault-net:
 #------------------------------------------------------------------------------#
 #                                  VOLUMES                                     #
 #------------------------------------------------------------------------------#
@@ -219,3 +240,4 @@ volumes:
   db_data:
   nginx_ssl:
   acme_data:
+  vault_data:
