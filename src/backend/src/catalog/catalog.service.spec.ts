@@ -31,7 +31,7 @@ describe('CatalogService', () => {
 
   describe('getMeta', () => {
     it('should return all available static options and enums', () => {
-      const meta = service.getMeta();
+      const meta = service.getMetadata();
 
       expect(meta).toHaveProperty('courses', Object.values(Course));
       expect(meta).toHaveProperty('difficulties', Object.values(RecipeDifficulty));
