@@ -6,9 +6,9 @@ import { IngredientCategory } from '@prisma/client';
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
-  @Get('recipes/meta')
-  getMeta() {
-    return this.catalogService.getMeta();
+  @Get('recipes/metadata')
+  getMetadata() {
+    return this.catalogService.getMetadata();
   }
 
   @Get('tags')
