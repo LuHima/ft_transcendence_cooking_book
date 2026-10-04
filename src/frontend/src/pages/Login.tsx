@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from '../api/client'
@@ -13,6 +13,7 @@ function Login() {
 	const [password, setPassword] = useState('')
 	const [error, setError] = useState<string | null>(null)
 	const [submitting, setSubmitting] = useState(false)
+	const passwordRef = useRef<HTMLInputElement>(null)
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
@@ -23,6 +24,9 @@ function Login() {
 			navigate(from, { replace: true })
 		} catch (err) {
 			setError(err instanceof ApiError ? err.message : 'Accesso non riuscito, riprova.')
+			// accesso fallito: si svuota la password (l'email resta) e si rimette il cursore sul campo
+			setPassword('')
+			passwordRef.current?.focus()
 		} finally {
 			setSubmitting(false)
 		}
@@ -53,6 +57,7 @@ function Login() {
 					</label>
 					<input
 						id="password"
+						ref={passwordRef}
 						type="password"
 						required
 						value={password}

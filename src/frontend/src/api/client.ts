@@ -82,3 +82,9 @@ export const api = {
 		apiFetch<T>(path, { ...options, method: 'PATCH', body }),
 	delete: <T = unknown>(path: string, options?: RequestOptions) => apiFetch<T>(path, { ...options, method: 'DELETE' }),
 }
+
+// il backend può rispondere con body vuoto / non JSON (api restituisce allora null):
+// questo helper garantisce sempre un array, così le pagine non vanno in crash
+export function asArray<T>(value: unknown): T[] {
+	return Array.isArray(value) ? (value as T[]) : []
+}

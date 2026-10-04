@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
-import type { Recipe } from '../types/models'
+import { api, asArray } from '../api/client'
+import type { Recipe, UserSummary } from '../types/models'
 
 interface SearchBarProps {
 	className?: string
@@ -9,12 +9,17 @@ interface SearchBarProps {
 }
 
 const MIN_CHARS = 2
-const MAX_SUGGESTIONS = 5
+const MAX_RECIPES = 4
+const MAX_USERS = 3
 const DEBOUNCE_MS = 250
 
-type Suggestion = Pick<Recipe, 'id' | 'title'>
+interface Suggestion {
+	kind: 'recipe' | 'user'
+	id: number
+	label: string
+}
 
-function SearchBar({ className = '', placeholder = 'Cerca una ricetta…' }: SearchBarProps) {
+function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }: SearchBarProps) {
 	const navigate = useNavigate()
 	const [value, setValue] = useState('')
 	const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -32,18 +37,24 @@ function SearchBar({ className = '', placeholder = 'Cerca una ricetta…' }: Sea
 
 		const controller = new AbortController()
 		const timer = setTimeout(() => {
-			api
-				.get<Suggestion[]>(`/recipes/search?value=${encodeURIComponent(trimmed)}`, {
-					signal: controller.signal,
-					retryOnUnauthorized: false,
-				})
-				.then((data) => {
-					setSuggestions(data.slice(0, MAX_SUGGESTIONS))
-					setActiveIndex(-1)
-				})
-				.catch(() => {
-					// i suggerimenti sono un extra: se falliscono non si mostra nessun errore
-				})
+			const opts = { signal: controller.signal, retryOnUnauthorized: false }
+			// ricette e utenti in parallelo; se una delle due fallisce si mostra comunque l'altra
+			Promise.allSettled([
+				api.get<Pick<Recipe, 'id' | 'title'>[]>(`/recipes/search?value=${encodeURIComponent(trimmed)}`, opts),
+				api.get<UserSummary[]>(`/users/search?value=${encodeURIComponent(trimmed)}`, opts),
+			]).then(([recipes, users]) => {
+				if (controller.signal.aborted) return
+				const list: Suggestion[] = [
+					...asArray<Pick<Recipe, 'id' | 'title'>>(recipes.status === 'fulfilled' ? recipes.value : [])
+						.slice(0, MAX_RECIPES)
+						.map((r) => ({ kind: 'recipe' as const, id: r.id, label: r.title })),
+					...asArray<UserSummary>(users.status === 'fulfilled' ? users.value : [])
+						.slice(0, MAX_USERS)
+						.map((u) => ({ kind: 'user' as const, id: u.id, label: u.username })),
+				]
+				setSuggestions(list)
+				setActiveIndex(-1)
+			})
 		}, DEBOUNCE_MS)
 
 		return () => {
@@ -71,15 +82,15 @@ function SearchBar({ className = '', placeholder = 'Cerca una ricetta…' }: Sea
 		inputRef.current?.blur()
 	}
 
-	function goToRecipe(id: number) {
-		navigate(`/recipes/${id}`)
+	function goTo(s: Suggestion) {
+		navigate(s.kind === 'user' ? `/users/${s.id}` : `/recipes/${s.id}`)
 		reset()
 	}
 
 	function handleSubmit(e: FormEvent) {
 		e.preventDefault()
 		if (showList && activeIndex >= 0) {
-			goToRecipe(suggestions[activeIndex].id)
+			goTo(suggestions[activeIndex])
 			return
 		}
 		if (!trimmed) return
@@ -120,7 +131,7 @@ function SearchBar({ className = '', placeholder = 'Cerca una ricetta…' }: Sea
 				onFocus={() => setOpen(true)}
 				onKeyDown={handleKeyDown}
 				placeholder={placeholder}
-				aria-label="Cerca ricette"
+				aria-label="Cerca ricette o utenti"
 				aria-autocomplete="list"
 				aria-expanded={showList}
 				aria-controls="search-suggestions"
@@ -141,16 +152,19 @@ function SearchBar({ className = '', placeholder = 'Cerca una ricetta…' }: Sea
 					className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg"
 				>
 					{suggestions.map((s, index) => (
-						<li key={s.id} role="option" aria-selected={index === activeIndex}>
+						<li key={`${s.kind}-${s.id}`} role="option" aria-selected={index === activeIndex}>
 							<button
 								type="button"
 								onMouseEnter={() => setActiveIndex(index)}
-								onClick={() => goToRecipe(s.id)}
-								className={`block w-full truncate px-4 py-2 text-left text-sm text-[var(--wc-text)] ${
+								onClick={() => goTo(s)}
+								className={`flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm text-[var(--wc-text)] ${
 									index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
 								}`}
 							>
-								{s.title}
+								<span className="truncate">{s.kind === 'user' ? `@${s.label}` : s.label}</span>
+								<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
+									{s.kind === 'user' ? 'utente' : 'ricetta'}
+								</span>
 							</button>
 						</li>
 					))}

@@ -1,6 +1,9 @@
 export type RecipeDifficulty = 'easy' | 'medium' | 'hard'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
+export type UserRole = 'admin' | 'user'
+export type UserStatus = 'active' | 'disabled' | 'banned'
+
 export interface User {
 	id: number
 	username: string
@@ -13,8 +16,26 @@ export interface User {
 	address?: string | null
 	city?: string | null
 	postal_code?: string | null
-	role: 'admin' | 'user'
+	role: UserRole
+	// assente = attivo. Se 'disabled' o 'banned' il backend deve rifiutare il login.
+	status?: UserStatus
+	created_at?: string
 }
+
+// profilo visibile agli altri utenti: nessun dato sensibile (email, anagrafica…)
+export interface PublicUser {
+	id: number
+	username: string
+	avatar_url?: string | null
+	recipes_count?: number
+	followers_count?: number
+	following_count?: number
+	// io seguo lui / lui segue me. Se entrambi veri sono "amici".
+	is_following?: boolean
+	follows_me?: boolean
+}
+
+export type UserSummary = Pick<PublicUser, 'id' | 'username' | 'avatar_url'>
 
 export interface RecipeIngredient {
 	ingredient: { id: number; name: string }
@@ -41,7 +62,7 @@ export interface Recipe {
 	user_id?: number | null
 	owner_type?: 'user' | 'platform'
 	created_at?: string
-	user?: Pick<User, 'id' | 'username'>
+	user?: Pick<User, 'id' | 'username' | 'avatar_url'> | null
 	recipe_ingredients?: RecipeIngredient[]
 	recipe_media?: RecipeMedia[]
 	likes_count?: number
@@ -86,4 +107,9 @@ export interface AppNotification {
 	created_at: string
 	actor: Pick<User, 'id' | 'username'>
 	recipe: Pick<Recipe, 'id' | 'title'>
+}
+
+// commento con contesto, usato nella moderazione admin
+export interface AdminComment extends RecipeComment {
+	recipe?: Pick<Recipe, 'id' | 'title'>
 }

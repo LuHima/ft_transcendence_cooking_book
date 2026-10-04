@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from '../api/client'
+import RecipeAutocomplete from '../components/RecipeAutocomplete'
 import type { MealPlan as MealPlanType, MealPlanEntry, MealType, Recipe } from '../types/models'
 
 const MEAL_TYPES: { value: MealType; label: string }[] = [
@@ -60,19 +61,19 @@ function MealPlan() {
 		return entries.find((e) => e.planned_date.slice(0, 10) === date && e.meal_type === mealType)
 	}
 
-	async function handleChange(date: string, mealType: MealType, recipeId: string) {
+	async function handleChange(date: string, mealType: MealType, recipeId: number | null) {
 		const key = `${date}-${mealType}`
 		setSavingKey(key)
 		try {
-			if (!recipeId) {
+			if (recipeId === null) {
 				await api.delete(`/meal-plans/entries?date=${date}&meal_type=${mealType}`)
 				setEntries((prev) => prev.filter((e) => !(e.planned_date.slice(0, 10) === date && e.meal_type === mealType)))
 			} else {
-				const recipe = recipes.find((r) => r.id === Number(recipeId))
-				await api.post('/meal-plans/entries', { planned_date: date, meal_type: mealType, recipe_id: Number(recipeId) })
+				const recipe = recipes.find((r) => r.id === recipeId)
+				await api.post('/meal-plans/entries', { planned_date: date, meal_type: mealType, recipe_id: recipeId })
 				setEntries((prev) => [
 					...prev.filter((e) => !(e.planned_date.slice(0, 10) === date && e.meal_type === mealType)),
-					{ planned_date: date, meal_type: mealType, recipe_id: Number(recipeId), recipe_title: recipe?.title },
+					{ planned_date: date, meal_type: mealType, recipe_id: recipeId, recipe_title: recipe?.title },
 				])
 			}
 		} catch (err) {
@@ -129,19 +130,20 @@ function MealPlan() {
 									const key = `${date}-${meal.value}`
 									return (
 										<td key={key} className="p-2 align-top">
-											<select
-												value={entry?.recipe_id ?? ''}
+											<RecipeAutocomplete
+												recipes={recipes}
+												selected={
+													entry
+														? {
+																id: entry.recipe_id,
+																title:
+																	entry.recipe_title ?? recipes.find((r) => r.id === entry.recipe_id)?.title ?? '',
+															}
+														: null
+												}
 												disabled={savingKey === key}
-												onChange={(e) => handleChange(date, meal.value, e.target.value)}
-												className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-2 py-1.5 text-xs outline-none focus:border-[var(--wc-basil)] disabled:opacity-50"
-											>
-												<option value="">—</option>
-												{recipes.map((r) => (
-													<option key={r.id} value={r.id}>
-														{r.title}
-													</option>
-												))}
-											</select>
+												onSelect={(recipeId) => handleChange(date, meal.value, recipeId)}
+											/>
 										</td>
 									)
 								})}

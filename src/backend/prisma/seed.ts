@@ -4,13 +4,14 @@ dotenv.config();
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
-import { Role, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType } from '@prisma/client';
+import { Role, UserStatus, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType } from '@prisma/client';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🧹 Pulizia dei dati relazionali precedenti (per evitare duplicati)...');
+  await prisma.follow.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.recipeMedia.deleteMany();
   await prisma.mealPlanRecipe.deleteMany();
@@ -28,7 +29,7 @@ async function main() {
   console.log('👤 Creazione Utenti...');
   const adminMarghe = await prisma.user.upsert({
     where: { email: 'marghe@example.com' },
-    update: {},
+    update: { avatar_url: 'https://randomuser.me/api/portraits/women/44.jpg' },
     create: {
       username: 'marghe_admin',
       email: 'marghe@example.com',
@@ -36,13 +37,13 @@ async function main() {
       first_name: 'Margherita',
       last_name: 'Dallolio',
       role: Role.admin,
-      avatar_url: 'https://i.pravatar.cc/150?u=mario',
+      avatar_url: 'https://randomuser.me/api/portraits/women/44.jpg',
     },
   });
 
   const userMario = await prisma.user.upsert({
     where: { email: 'mario@example.com' },
-    update: {},
+    update: { avatar_url: 'https://randomuser.me/api/portraits/men/32.jpg' },
     create: {
       username: 'mario_bianchi',
       email: 'mario@example.com',
@@ -50,13 +51,13 @@ async function main() {
       first_name: 'Mario',
       last_name: 'Bianchi',
       role: Role.user,
-      avatar_url: 'https://i.pravatar.cc/150?u=marghe',
+      avatar_url: 'https://randomuser.me/api/portraits/men/32.jpg',
     },
   });
 
   const userGiulia = await prisma.user.upsert({
     where: { email: 'giulia@example.com' },
-    update: {},
+    update: { avatar_url: 'https://randomuser.me/api/portraits/women/68.jpg' },
     create: {
       username: 'giuly_cooks',
       email: 'giulia@example.com',
@@ -64,7 +65,46 @@ async function main() {
       first_name: 'Giulia',
       last_name: 'Verdi',
       role: Role.user,
-      avatar_url: 'https://i.pravatar.cc/150?u=giulia',
+      avatar_url: 'https://randomuser.me/api/portraits/women/68.jpg',
+    },
+  });
+
+  // Utenti di prova per il pannello admin: disattivato, bannato ed eliminato (soft delete).
+  // Servono per testare i filtri, il login rifiutato e la moderazione.
+  const userDisabled = await prisma.user.upsert({
+    where: { email: 'luca@example.com' },
+    update: {},
+    create: {
+      username: 'luca_disattivato',
+      email: 'luca@example.com',
+      password_hash: passwordHash,
+      role: Role.user,
+      status: UserStatus.disabled,
+    },
+  });
+
+  const userBanned = await prisma.user.upsert({
+    where: { email: 'spam@example.com' },
+    update: {},
+    create: {
+      username: 'spam_bot',
+      email: 'spam@example.com',
+      password_hash: passwordHash,
+      role: Role.user,
+      status: UserStatus.banned,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'ex@example.com' },
+    update: {},
+    create: {
+      username: 'ex_utente',
+      email: 'ex@example.com',
+      password_hash: passwordHash,
+      role: Role.user,
+      status: UserStatus.disabled,
+      deleted_at: new Date(),
     },
   });
 
@@ -168,7 +208,21 @@ async function main() {
     },
   });
 
-  // 4. INTERAZIONI (Like & Commenti)
+  // 4. AMICIZIE (follow)
+  console.log('🤝 Creazione relazioni di amicizia...');
+  await prisma.follow.createMany({
+    data: [
+      // Mario e Giulia si seguono a vicenda -> amici
+      { follower_id: userMario.id, following_id: userGiulia.id },
+      { follower_id: userGiulia.id, following_id: userMario.id },
+      // Marghe segue Mario e Giulia, ma non viceversa -> relazione a senso unico
+      { follower_id: adminMarghe.id, following_id: userMario.id },
+      { follower_id: adminMarghe.id, following_id: userGiulia.id },
+    ],
+    skipDuplicates: true,
+  });
+
+  // 5. INTERAZIONI (Like & Commenti)
   console.log('💬 Aggiunta Commenti, Like e Notifiche...');
   
   // Giulia commenta la carbonara di Mario
@@ -191,7 +245,7 @@ async function main() {
   });
 
   // Mario risponde al commento di Giulia
-  const reply1 = await prisma.comment.create({
+  await prisma.comment.create({
     data: {
       recipe_id: carbonara.id,
       user_id: userMario.id,
@@ -200,7 +254,16 @@ async function main() {
     },
   });
 
-  // Giulia e Marghe mettono like al Tiramisù
+  // Commento inappropriato di un utente bannato: serve per provare la moderazione admin
+  await prisma.comment.create({
+    data: {
+      recipe_id: tiramisu.id,
+      user_id: userBanned.id,
+      content: 'COMPRA SUBITO I MIEI FOLLOWER su esempio-spam.com!!!',
+    },
+  });
+
+  // Giulia e Marghe mettono like
   await prisma.like.createMany({
     data: [
       { user_id: userGiulia.id, recipe_id: carbonara.id },
@@ -216,7 +279,7 @@ async function main() {
     ]
   });
 
-  // 5. MEAL PLANS
+  // 6. MEAL PLANS
   console.log('📅 Generazione Meal Plan...');
   
   const today = new Date();
@@ -241,6 +304,8 @@ async function main() {
   });
 
   console.log('✅ Seed completato con successo!');
+  console.log(`   Utenti di prova (password: Password123): ${adminMarghe.username} (admin), ${userMario.username}, ${userGiulia.username}`);
+  console.log(`   Per test admin: ${userDisabled.username} (disattivato), ${userBanned.username} (bannato)`);
 }
 
 main()
