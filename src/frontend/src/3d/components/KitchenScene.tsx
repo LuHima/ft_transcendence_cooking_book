@@ -148,13 +148,13 @@ export default function Scene() {
           target={[-3, 1.5, 0]}
           enableDamping
           dampingFactor={0.05}
-          // enablePan={false}
-          // minDistance={0.5}
-          // maxDistance={2.5}
-          // minPolarAngle={Math.PI * 0.35}
-          // maxPolarAngle={Math.PI * 0.55}
-          // minAzimuthAngle={-Math.PI * 0.8}
-          // maxAzimuthAngle={-Math.PI * 0.2}
+          enablePan={false}
+          minDistance={0.5}
+          maxDistance={2.5}
+          minPolarAngle={Math.PI * 0.35}
+          maxPolarAngle={Math.PI * 0.55}
+          minAzimuthAngle={-Math.PI * 0.8}
+          maxAzimuthAngle={-Math.PI * 0.2}
         />
       </Canvas>
       <LoadingOverlay
