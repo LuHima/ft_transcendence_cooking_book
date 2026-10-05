@@ -5,7 +5,7 @@ import { RepeatWrapping, SRGBColorSpace, Vector3 } from "three";
 
 import { Page } from "./Page.tsx";
 import { useBookPages } from "../hooks/useBookPages.ts";
-import type { BookProps } from "../interfaces.ts";
+import type { BookProps, ApiPageButtonProps } from "../interfaces.ts";
 import {
   leatherColorUrl,
   leatherColorUrl1,
@@ -36,6 +36,73 @@ const HINGE_MATERIAL_PROPS = {
   metalness: 0,
   roughness: 1,
 } as const;
+
+// Component for the "Next" and "Previous" buttons on the book pages
+function ApiPageButton({
+  direction,
+  position,
+  faceAway = false,
+  visible,
+  disabled,
+  onClick,
+}: ApiPageButtonProps) {
+  if (!visible) return null;
+
+  const isPrevious = direction === "previous";
+  const iconColor = "#f4e4ce";
+  const iconParts = isPrevious
+    ? [
+        {
+          position: [0.004, 0, 0] as [number, number, number],
+          angle: Math.PI / 4,
+        },
+        {
+          position: [-0.004, 0, 0] as [number, number, number],
+          angle: -Math.PI / 4,
+        },
+      ]
+    : [
+        {
+          position: [0.004, 0, 0] as [number, number, number],
+          angle: Math.PI / 4,
+        },
+        {
+          position: [-0.004, 0, 0] as [number, number, number],
+          angle: -Math.PI / 4,
+        },
+      ];
+
+  return (
+    <group
+      position={position}
+      rotation={[0, faceAway ? Math.PI : 0, 0]}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (!disabled) onClick();
+      }}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
+    >
+      <mesh>
+        <circleGeometry args={[0.026, 32]} />
+        <meshStandardMaterial
+          color={disabled ? "#765d4d" : "#704522"}
+          roughness={0.8}
+        />
+      </mesh>
+      {iconParts.map((part, index) => (
+        <mesh
+          key={index}
+          position={part.position}
+          rotation={[0, 0, part.angle]}
+        >
+          <boxGeometry args={[0.013, 0.003, 0.002]} />
+          <meshBasicMaterial color={iconColor} toneMapped={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
 
 function useLogoTexture() {
   // carica la texture del logo usata sulla copertina del libro
@@ -82,7 +149,16 @@ function useLeatherMaterial1() {
   return { colorMap1, roughnessMap1, normalMap1, dispMap1 };
 }
 
-export default function Book({ controlsRef, recipes }: BookProps) {
+export default function Book({
+  controlsRef,
+  recipes,
+  hasPreviousPage,
+  hasNextPage,
+  isChangingApiPage,
+  onPreviousApiPage,
+  onNextApiPage,
+  currentApiPage,
+}: BookProps) {
   // limiti iniziali per la camera quando si ruota intorno alla scena
   const originalLimits = useRef({
     minPolarAngle: Math.PI * 0.35,
@@ -111,6 +187,7 @@ export default function Book({ controlsRef, recipes }: BookProps) {
   const pageProgressRefs = useRef<Array<{ current: number }>>([]);
   const { pageProgress, nextPage, prevPage, closePages } = useBookPages(
     recipes.length,
+    currentApiPage,
   );
 
   // stato dell'animazione di apertura del libro
@@ -359,6 +436,13 @@ export default function Book({ controlsRef, recipes }: BookProps) {
             toneMapped={false}
           />
         </mesh>
+        <ApiPageButton
+          direction="next"
+          position={[0, -0.11, 0.011]}
+          visible={hasNextPage}
+          disabled={isChangingApiPage}
+          onClick={onNextApiPage}
+        />
       </group>
 
       {/* copertina alta (ruota verso l'alto) */}
@@ -463,6 +547,14 @@ export default function Book({ controlsRef, recipes }: BookProps) {
             alphaTest={0.5}
           />
         </mesh>
+        <ApiPageButton
+          direction="previous"
+          position={[0, -0.265, -0.011]}
+          faceAway
+          visible={hasPreviousPage}
+          disabled={isChangingApiPage}
+          onClick={onPreviousApiPage}
+        />
       </group>
 
       {/* pagine all'interno del libro, ciascuna con texture frontale e retro */}

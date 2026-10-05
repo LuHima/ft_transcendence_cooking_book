@@ -1,6 +1,12 @@
 export interface BookProps {
   controlsRef: React.RefObject<any>;
   recipes: Recipe[];
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  isChangingApiPage: boolean;
+  onPreviousApiPage: () => void;
+  onNextApiPage: () => void;
+  currentApiPage: number;
 }
 
 export interface fetchedValues {
@@ -19,4 +25,19 @@ export interface Recipe {
 export interface SceneContentProps {
   controlsRef: React.RefObject<any>;
   recipes: Recipe[];
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  isChangingApiPage: boolean;
+  onPreviousApiPage: () => void;
+  onNextApiPage: () => void;
+  currentApiPage: number;
+}
+
+export interface ApiPageButtonProps {
+  direction: "previous" | "next";
+  position: [number, number, number];
+  faceAway?: boolean;
+  visible: boolean;
+  disabled: boolean;
+  onClick: () => void;
 }
