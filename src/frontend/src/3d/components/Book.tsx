@@ -289,10 +289,10 @@ export default function Book({ controlsRef, recipes }: BookProps) {
         controlsRef.current.enabled = true;
       }}
     >
-      <mesh position={[0, 0.155, 0.03]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.4, 0.05]} />
+      <mesh position={[0, 0.155, 0.016]} rotation={[Math.PI * 2, 0, 0]}>
+        <planeGeometry args={[0.37, 0.0025]} />
         <meshStandardMaterial
-          map={colorMap}
+          color="#3f2200"
           normalMap={normalMap}
           roughnessMap={roughnessMap}
           {...LEATHER_MATERIAL_PROPS}
@@ -368,23 +368,39 @@ export default function Book({ controlsRef, recipes }: BookProps) {
         rotation={[0, 0, 0]}
       >
         {/* cerniera - sparisce quando il libro è completamente aperto */}
-        <mesh
-          ref={hingeRef}
-          position={[0, 0, -0.025]}
-          rotation={[0, 0, -Math.PI * 1.5]}
-          castShadow
-          receiveShadow
-        >
-          <cylinderGeometry
-            args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]}
-          />
-          <meshStandardMaterial
-            map={colorMap1}
-            normalMap={normalMap1}
-            roughnessMap={roughnessMap1}
-            {...HINGE_MATERIAL_PROPS}
-          />
-        </mesh>
+        <group ref={hingeRef}>
+          <mesh
+            position={[0, 0, -0.025]}
+            rotation={[0, 0, -Math.PI * 1.5]}
+            castShadow
+            receiveShadow
+          >
+            <cylinderGeometry
+              args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]}
+            />
+            <meshStandardMaterial
+              map={colorMap1}
+              normalMap={normalMap1}
+              roughnessMap={roughnessMap1}
+              {...HINGE_MATERIAL_PROPS}
+            />
+          </mesh>
+
+          <mesh
+            position={[0, 0, -0.025]}
+            rotation={[Math.PI / 2, 0, 0]}
+            castShadow
+            receiveShadow
+          >
+            <planeGeometry args={[0.4, 0.04]} />
+            <meshStandardMaterial
+              map={colorMap1}
+              normalMap={normalMap1}
+              roughnessMap={roughnessMap1}
+              {...HINGE_MATERIAL_PROPS}
+            />
+          </mesh>
+        </group>
 
         <mesh
           visible={isCoverHighlighted}
