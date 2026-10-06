@@ -3,7 +3,7 @@ dotenv.config();
 
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Role, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType, IngredientCategory, UnitOfMeasure } from '@prisma/client';
+import { Role, OwnerType, RecipeDifficulty, MediaType, NotificationType, MealType, IngredientCategory, UnitOfMeasure, TranslationStatus, Course } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' });
@@ -17,7 +17,11 @@ async function main() {
   await prisma.mealPlan.deleteMany();
   await prisma.like.deleteMany();
   await prisma.comment.deleteMany();
+  await prisma.recipeTag.deleteMany();
   await prisma.recipeIngredient.deleteMany();
+  await prisma.recipeStepTranslation.deleteMany();
+  await prisma.recipeStep.deleteMany();
+  await prisma.recipeTranslation.deleteMany();
   await prisma.recipe.deleteMany();
   await prisma.tagTranslation.deleteMany();
   await prisma.tag.deleteMany();
@@ -156,6 +160,7 @@ async function main() {
   }
 
   console.log('🏷️ Creazione Tag...');
+  const tags: Record<string, any> = {};
   const baselineTags = [
     { slug: 'vegetarian', name_it: 'Vegetariano', name_en: 'Vegetarian', name_fr: 'Végétarien' },
     { slug: 'vegan', name_it: 'Vegano', name_en: 'Vegan', name_fr: 'Végétalien' },
@@ -177,6 +182,7 @@ async function main() {
       update: {},
       create: { slug: tag.slug },
     });
+    tags[tag.slug] = tagRecord;
 
     const locales = [
       { locale: 'it', name: tag.name_it },
@@ -209,11 +215,76 @@ async function main() {
     data: {
       user_id: userMario.id,
       owner_type: OwnerType.user,
-      title: 'Pasta alla Carbonara',
-      description: 'La vera carbonara romana, cremosa e saporita, senza panna!',
-      instructions: '1. Cuoci la pasta.\n2. Rosola il guanciale.\n3. Mescola uova e pecorino.\n4. Unisci tutto fuori dal fuoco mantecando con acqua di cottura.',
-      prep_time: 25,
+      course: Course.first_course,
+      prep_time: 15,
+      cook_time: 10,
+      total_time: 25,
+      servings: 4,
       difficulty: RecipeDifficulty.medium,
+      source_lang: 'it',
+      translation_status: TranslationStatus.completed,
+      translations: {
+        create: [
+          {
+            locale: 'it',
+            title: 'Pasta alla Carbonara',
+            description: 'La vera carbonara romana, cremosa e saporita, senza panna!',
+            tips: 'Non aggiungere mai la panna!',
+            preservation: 'Consumare calda al momento.',
+          },
+          {
+            locale: 'en',
+            title: 'Spaghetti Carbonara',
+            description: 'Authentic Roman carbonara, creamy and savory, no cream!',
+            tips: 'Never add cream!',
+            preservation: 'Serve immediately while hot.',
+          },
+          {
+            locale: 'fr',
+            title: 'Pâtes Carbonara',
+            description: 'La vraie carbonara romaine, crémeuse et savoureuse, sans crème !',
+            tips: 'Ne jamais ajouter de crème !',
+            preservation: 'Déguster bien chaud immédiatement.',
+          },
+        ],
+      },
+      steps: {
+        create: [
+          {
+            step_number: 1,
+            duration: 5,
+            translations: {
+              create: [
+                { locale: 'it', title: 'Rosolare il guanciale', description: 'Rosola il guanciale in padella finché non è croccante.' },
+                { locale: 'en', title: 'Brown the guanciale', description: 'Brown guanciale in a pan until crispy.' },
+                { locale: 'fr', title: 'Dorer le guanciale', description: 'Faites dorer le guanciale dans une poêle jusqu\'à ce qu\'il soit croustillant.' },
+              ],
+            },
+          },
+          {
+            step_number: 2,
+            duration: 10,
+            translations: {
+              create: [
+                { locale: 'it', title: 'Cuocere la pasta', description: 'Cuoci la pasta in abbondante acqua bollente poco salata.' },
+                { locale: 'en', title: 'Cook pasta', description: 'Cook pasta in salted boiling water until al dente.' },
+                { locale: 'fr', title: 'Cuire les pâtes', description: 'Faites cuire les pâtes dans une eau bouillante peu salée.' },
+              ],
+            },
+          },
+          {
+            step_number: 3,
+            duration: 5,
+            translations: {
+              create: [
+                { locale: 'it', title: 'Mantecare', description: 'Mescola uova e pecorino, unisci tutto a fuoco spento mantecando con acqua di cottura.' },
+                { locale: 'en', title: 'Combine', description: 'Whisk eggs with pecorino, mix off heat with cooking water.' },
+                { locale: 'fr', title: 'Mélanger', description: 'Mélangez les œufs et le pecorino, incorporez hors du feu avec de l\'eau de cuisson.' },
+              ],
+            },
+          },
+        ],
+      },
       recipe_ingredients: {
         create: [
           { ingredient_id: ingredients['Pasta'].id, quantity: 320, unit: UnitOfMeasure.g, notes: { it: 'al dente', en: 'al dente', fr: 'al dente' } },
@@ -223,11 +294,16 @@ async function main() {
           { ingredient_id: ingredients['Pepe'].id, quantity: 1, unit: UnitOfMeasure.pinch, notes: { it: 'macinato fresco', en: 'freshly cracked', fr: 'fraîchement moulu' } },
         ],
       },
+      recipe_tags: {
+        create: [
+          { tag_id: tags['quick_easy'].id },
+        ],
+      },
       recipe_media: {
         create: [
           { media_type: MediaType.image, url: 'https://images.unsplash.com/photo-1612874742237-6526221288c8?w=800', order: 0 },
-        ]
-      }
+        ],
+      },
     },
   });
 
@@ -235,11 +311,65 @@ async function main() {
     data: {
       user_id: userGiulia.id,
       owner_type: OwnerType.user,
-      title: 'Tiramisù Classico',
-      description: 'Il dolce italiano per eccellenza, con caffè espresso e crema al mascarpone.',
-      instructions: '1. Prepara il caffè e lascialo raffreddare.\n2. Monta i tuorli con lo zucchero, poi aggiungi il mascarpone.\n3. Monta gli albumi a neve e incorporali.\n4. Inzuppa i savoiardi e crea gli strati.\n5. Spolvera con cacao amaro.',
-      prep_time: 40,
+      course: Course.dessert,
+      prep_time: 25,
+      cook_time: 15,
+      total_time: 40,
+      servings: 6,
       difficulty: RecipeDifficulty.easy,
+      source_lang: 'it',
+      translation_status: TranslationStatus.completed,
+      translations: {
+        create: [
+          {
+            locale: 'it',
+            title: 'Tiramisù Classico',
+            description: 'Il dolce italiano per eccellenza, con caffè espresso e crema al mascarpone.',
+            tips: 'Usa uova a temperatura ambiente.',
+            preservation: 'Conservare in frigo fino a 2 giorni.',
+          },
+          {
+            locale: 'en',
+            title: 'Classic Tiramisu',
+            description: 'The quintessential Italian dessert, with espresso and mascarpone cream.',
+            tips: 'Use room temperature eggs.',
+            preservation: 'Refrigerate for up to 2 days.',
+          },
+          {
+            locale: 'fr',
+            title: 'Tiramisu Classique',
+            description: 'Le dessert italien par excellence, avec café expresso et crème au mascarpone.',
+            tips: 'Utilisez des œufs à température ambiante.',
+            preservation: 'Conserver au réfrigérateur jusqu\'à 2 jours.',
+          },
+        ],
+      },
+      steps: {
+        create: [
+          {
+            step_number: 1,
+            duration: 10,
+            translations: {
+              create: [
+                { locale: 'it', title: 'Preparare la crema', description: 'Monta i tuorli con lo zucchero, poi aggiungi il mascarpone e gli albumi montati.' },
+                { locale: 'en', title: 'Make cream', description: 'Beat egg yolks with sugar, add mascarpone and fold in whipped whites.' },
+                { locale: 'fr', title: 'Préparer la crème', description: 'Battez les jaunes d\'œufs avec le sucre, ajoutez le mascarpone et incorporez les blancs.' },
+              ],
+            },
+          },
+          {
+            step_number: 2,
+            duration: 15,
+            translations: {
+              create: [
+                { locale: 'it', title: 'Comporre gli strati', description: 'Inzuppa i savoiardi nel caffè e crea strati alternati con la crema. Spolvera di cacao.' },
+                { locale: 'en', title: 'Assemble layers', description: 'Dip ladyfingers into espresso, alternate layers with cream, dust with cocoa.' },
+                { locale: 'fr', title: 'Assembler', description: 'Trempez les boudoirs dans le café, alternez les couches de crème et saupoudrez de cacao.' },
+              ],
+            },
+          },
+        ],
+      },
       recipe_ingredients: {
         create: [
           { ingredient_id: ingredients['Savoiardi'].id, quantity: 300, unit: UnitOfMeasure.g },
@@ -250,24 +380,82 @@ async function main() {
           { ingredient_id: ingredients['Zucchero'].id, quantity: 100, unit: UnitOfMeasure.g },
         ],
       },
+      recipe_tags: {
+        create: [
+          { tag_id: tags['vegetarian'].id },
+        ],
+      },
       recipe_media: {
         create: [
           { media_type: MediaType.image, url: 'https://images.unsplash.com/photo-1571115177098-24ec42ed204d?w=800', order: 0 },
           { media_type: MediaType.video, url: 'https://www.youtube.com/watch?v=dummy', order: 1 },
-        ]
-      }
+        ],
+      },
     },
   });
 
   const pizzaPlatform = await prisma.recipe.create({
     data: {
-      // Nessun user_id, appartiene alla piattaforma
       owner_type: OwnerType.platform,
-      title: 'Pizza Margherita (Ricetta Ufficiale)',
-      description: 'La ricetta perfetta per l\'impasto della pizza a lunga lievitazione, testata dagli chef della nostra app.',
-      instructions: '1. Impasta acqua, farina e lievito.\n2. Aggiungi il sale e l\'olio.\n3. Lascia lievitare per 24 ore in frigo.\n4. Stendi, condisci con pomodoro e cuoci a 250° per 12 min.\n5. Aggiungi il basilico a crudo.',
+      course: Course.main_course,
       prep_time: 1440, // 24 ore
+      cook_time: 15,
+      total_time: 1455,
+      servings: 4,
       difficulty: RecipeDifficulty.hard,
+      source_lang: 'it',
+      translation_status: TranslationStatus.completed,
+      translations: {
+        create: [
+          {
+            locale: 'it',
+            title: 'Pizza Margherita (Ricetta Ufficiale)',
+            description: 'La ricetta perfetta per l\'impasto della pizza a lunga lievitazione, testata dagli chef della nostra app.',
+            tips: 'Usa una pietra refrattaria per cuocere.',
+            preservation: 'Consumare appena sfornata.',
+          },
+          {
+            locale: 'en',
+            title: 'Margherita Pizza (Official Recipe)',
+            description: 'The ultimate recipe for slow-fermented pizza dough, perfected by our chefs.',
+            tips: 'Use a pizza stone for baking.',
+            preservation: 'Best enjoyed fresh from the oven.',
+          },
+          {
+            locale: 'fr',
+            title: 'Pizza Margherita (Recette Officielle)',
+            description: 'La recette parfaite pour une pâte à pizza à fermentation lente, validée par nos chefs.',
+            tips: 'Utilisez une pierre réfractaire pour la cuisson.',
+            preservation: 'À déguster dès la sortie du four.',
+          },
+        ],
+      },
+      steps: {
+        create: [
+          {
+            step_number: 1,
+            duration: 1440,
+            translations: {
+              create: [
+                { locale: 'it', title: 'Impasto e lievitazione', description: 'Impasta farina, acqua e lievito. Fai lievitare 24 ore in frigorifero.' },
+                { locale: 'en', title: 'Dough & Fermentation', description: 'Knead flour, water, and yeast. Proof in the fridge for 24 hours.' },
+                { locale: 'fr', title: 'Pâte et fermentation', description: 'Pétrissez farine, eau et levure. Laissez fermenter au frais pendant 24h.' },
+              ],
+            },
+          },
+          {
+            step_number: 2,
+            duration: 15,
+            translations: {
+              create: [
+                { locale: 'it', title: 'Stesura e cottura', description: 'Stendi la pasta, condisci con pomodoro e cuoci a 250°C per 12 minuti. Aggiungi basilico.' },
+                { locale: 'en', title: 'Shape and bake', description: 'Stretch dough, top with tomato, bake at 250°C for 12 minutes. Finish with basil.' },
+                { locale: 'fr', title: 'Étaler et cuire', description: 'Étalez la pâte, garnissez de sauce tomate et enfournez à 250°C pour 12 minutes. Ajoutez le basilic.' },
+              ],
+            },
+          },
+        ],
+      },
       recipe_ingredients: {
         create: [
           { ingredient_id: ingredients['Farina'].id, quantity: 500, unit: UnitOfMeasure.g },
@@ -277,11 +465,16 @@ async function main() {
           { ingredient_id: ingredients['Sale'].id, quantity: 12, unit: UnitOfMeasure.g },
         ],
       },
+      recipe_tags: {
+        create: [
+          { tag_id: tags['vegetarian'].id },
+        ],
+      },
       recipe_media: {
         create: [
           { media_type: MediaType.image, url: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=800', order: 0 },
-        ]
-      }
+        ],
+      },
     },
   });
 
