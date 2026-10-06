@@ -66,6 +66,16 @@ export class RecipeController {
     return this.recipeService.createRecipe(createRecipeDto, id);
   }
 
+  // POST /api/recipes/:id/translate -> retry failed translations
+  @Auth(Action.Update, 'Recipe')
+  @Post(':id/translate')
+  async retryTranslation(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.retryTranslation(recipeId, userId);
+  }
+
   // PATCH /api/recipes/:id -> modify an existent recipe
   @Auth(Action.Update, 'Recipe')
   @Patch(':id')
@@ -73,8 +83,15 @@ export class RecipeController {
     @Param('id', ParseIntPipe) recipeId: number,
     @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto,
     @CurrentUser('id') userId: number,
+    @Query('retranslate') retranslate?: string,
   ) {
-    return this.recipeService.updateRecipe(userId, recipeId, updateRecipeDto);
+    const shouldRetranslate = retranslate === 'true' || retranslate === '1';
+    return this.recipeService.updateRecipe(
+      userId,
+      recipeId,
+      updateRecipeDto,
+      shouldRetranslate,
+    );
   }
 
   // DELETE /api/recipes/:id -> delete an existent recipe

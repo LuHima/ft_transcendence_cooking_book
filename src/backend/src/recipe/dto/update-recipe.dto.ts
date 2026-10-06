@@ -1,7 +1,13 @@
 import { CreateRecipeDto } from './create-recipe.dto';
-import { PartialType, OmitType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/mapped-types';
+import { IsIn, IsOptional, IsString } from 'class-validator';
 
-export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {}
+export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {
+  @IsOptional()
+  @IsString()
+  @IsIn(['it', 'en', 'fr'], { message: 'locale must be it, en, or fr' })
+  locale?: string;
+}
 
 /* 
 La funzione PartialType(CreateRecipeDto) fa due cose in automatico:

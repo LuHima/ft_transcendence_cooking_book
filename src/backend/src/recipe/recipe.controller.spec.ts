@@ -16,6 +16,7 @@ describe('RecipeController', () => {
     getRecipeStack: jest.fn(),
     getRecipesByName: jest.fn(),
     getRecipeById: jest.fn(),
+    retryTranslation: jest.fn(),
     updateRecipe: jest.fn(),
     deleteRecipe: jest.fn(),
   };
@@ -93,6 +94,36 @@ describe('RecipeController', () => {
       const result = await controller.getRecipeById(1, 'it');
 
       expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it');
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('retryTranslation', () => {
+    it('delegates to service.retryTranslation with id and user id', async () => {
+      const mockResult = { id: 1, translation_status: 'completed' };
+      mockRecipeService.retryTranslation.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.retryTranslation(1, 42);
+
+      expect(service.retryTranslation).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('updateRecipe', () => {
+    it('delegates to service.updateRecipe with user id, recipe id, dto, and retranslate flag', async () => {
+      const mockResult = { id: 1, title: 'Updated' };
+      mockRecipeService.updateRecipe.mockResolvedValueOnce(mockResult);
+
+      const updateDto = { title: 'Updated Title' };
+      const result = await controller.updateRecipe(1, updateDto, 42, 'true');
+
+      expect(service.updateRecipe).toHaveBeenCalledWith(
+        42,
+        1,
+        updateDto,
+        true,
+      );
       expect(result).toEqual(mockResult);
     });
   });

@@ -24,11 +24,16 @@ export class RecipeService {
     private readonly translationService: TranslationService,
   ) {}
 
+  // ---------------------------------------------------------------------------
+
   public async getAllRecipe(who?: 'user' | 'id') {
+    // Return the temporary test response when a filter is provided
     // ! who e' solo per testare
     if (who) {
       return 'hello';
     }
+
+    // Fetch all recipes together with their translations
     return await this.prisma.recipe.findMany({
       include: {
         translations: true,
@@ -36,12 +41,16 @@ export class RecipeService {
     });
   }
 
-  public async getRecipeStack(page: number) {
-    let limit: number = 30;
+  // ---------------------------------------------------------------------------
 
+  public async getRecipeStack(page: number) {
+    // Configure the page size and validate the requested page
+    let limit: number = 30;
     if (!page || page < 1) {
       throw new BadRequestException('Page number must be greater than 0');
     }
+
+    // Fetch one extra recipe to determine whether another page exists
     let recipes = await this.prisma.recipe.findMany({
       skip: (page - 1) * limit,
       take: limit + 1,
@@ -59,12 +68,10 @@ export class RecipeService {
     });
     if (recipes.length === 0) throw new NotFoundException('Recipes not found');
 
+    // Trim the look-ahead item and build pagination metadata
     const hasNextPage = recipes.length > limit;
-
     const hasPreviousPage = page > 1;
-
     const items = hasNextPage ? recipes.slice(0, limit) : recipes;
-
     let returnPage = items.map(({ user, ...recipe }) => ({
       ...recipe,
       username: user?.username ?? null,
@@ -72,7 +79,10 @@ export class RecipeService {
     return { returnPage, hasNextPage, hasPreviousPage };
   }
 
+  // ---------------------------------------------------------------------------
+
   async getRecipesByName(name: string) {
+    // Search translated recipe titles without regard to letter casing
     const recipe = await this.prisma.recipe.findMany({
       where: {
         translations: {
@@ -88,8 +98,12 @@ export class RecipeService {
         translations: true,
       },
     });
+
+    // Include every translation needed by the caller
     return recipe;
   }
+
+  // ---------------------------------------------------------------------------
 
   /* 
   GET /api/recipes/:id?lang=it|en|fr
@@ -273,9 +287,11 @@ export class RecipeService {
     };
   }
 
-  /* ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+
+  /* 
   POST /api/recipes
-  --------------------------------------------------------------------------- */
+  */
   async createRecipe(recipe: CreateRecipeDto, userId: number) {
     // Language verification
     const textToVerify = [
@@ -445,33 +461,278 @@ export class RecipeService {
     });
   }
 
+  // ---------------------------------------------------------------------------
+
   /* 
   PATCH /api/recipes/:id
   */
   async updateRecipe(
     userId: number,
     recipeId: number,
-    recipeUpdate: UpdateRecipeDto | any,
+    recipeUpdate: UpdateRecipeDto,
+    retranslate?: boolean,
   ) {
+    // Fetch recipe with translations and steps to verify existence and
+    // ownership
     const recipe = await this.prisma.recipe.findUnique({
       where: {
         id: recipeId,
       },
-    });
-    if (!recipe || recipe.user_id != userId)
-      throw new NotFoundException('Recipe not found');
-    return await this.prisma.recipe.update({
-      where: {
-        id: recipeId,
+      include: {
+        translations: true,
+        steps: {
+          include: { translations: true },
+          orderBy: { step_number: 'asc' },
+        },
       },
-      data: recipeUpdate,
+    });
+
+    // Guard: Verify ownership (only author can update recipe)
+    if (!recipe || recipe.user_id !== userId)
+      throw new NotFoundException('Recipe not found');
+
+    // Update locale-invariant data of the recipe
+    const updateData: any = {};
+    if (recipeUpdate.course !== undefined)
+      updateData.course = recipeUpdate.course;
+    if (recipeUpdate.difficulty !== undefined)
+      updateData.difficulty = recipeUpdate.difficulty;
+    if (recipeUpdate.servings !== undefined)
+      updateData.servings = recipeUpdate.servings;
+    if (recipeUpdate.prep_time !== undefined)
+      updateData.prep_time = recipeUpdate.prep_time;
+    if (recipeUpdate.cook_time !== undefined)
+      updateData.cook_time = recipeUpdate.cook_time;
+
+    // Recalculate total_time if prep_time or cook_time was modified
+    if (
+      recipeUpdate.prep_time !== undefined ||
+      recipeUpdate.cook_time !== undefined
+    ) {
+      const pTime =
+        recipeUpdate.prep_time !== undefined
+          ? recipeUpdate.prep_time
+          : recipe.prep_time;
+      const cTime =
+        recipeUpdate.cook_time !== undefined
+          ? recipeUpdate.cook_time
+          : recipe.cook_time;
+      updateData.total_time = pTime + cTime;
+    }
+
+    // Determine target locale for translation update (defaults to recipe
+    // source_lang)
+    const targetLocale = recipeUpdate.locale ?? recipe.source_lang;
+    const transUpdate: any = {};
+    if (recipeUpdate.title !== undefined)
+      transUpdate.title = recipeUpdate.title;
+    if (recipeUpdate.description !== undefined)
+      transUpdate.description = recipeUpdate.description;
+    if (recipeUpdate.preservation !== undefined)
+      transUpdate.preservation = recipeUpdate.preservation;
+    if (recipeUpdate.tips !== undefined) transUpdate.tips = recipeUpdate.tips;
+
+    const translatedDataByLocale: Record<
+      string,
+      {
+        title: string;
+        description: string;
+        preservation?: string | null;
+        tips?: string | null;
+        steps: Array<{
+          stepId: number;
+          title: string | null;
+          description: string;
+        }>;
+      }
+    > = {};
+
+    // Re-translate content across remaining locales if retranslate flag is
+    // enabled
+    if (retranslate) {
+      // Resolve canonical source text combining existing values with incoming
+      // updates
+      const sourceTrans = recipe.translations?.find(
+        (t) => t.locale === recipe.source_lang,
+      );
+      const sourceTitle =
+        (targetLocale === recipe.source_lang
+          ? recipeUpdate.title
+          : undefined) ??
+        sourceTrans?.title ??
+        recipeUpdate.title ??
+        '';
+      const sourceDesc =
+        (targetLocale === recipe.source_lang
+          ? recipeUpdate.description
+          : undefined) ??
+        sourceTrans?.description ??
+        recipeUpdate.description ??
+        '';
+      const sourcePres =
+        (targetLocale === recipe.source_lang
+          ? recipeUpdate.preservation
+          : undefined) ??
+        sourceTrans?.preservation ??
+        recipeUpdate.preservation ??
+        null;
+      const sourceTips =
+        (targetLocale === recipe.source_lang ? recipeUpdate.tips : undefined) ??
+        sourceTrans?.tips ??
+        recipeUpdate.tips ??
+        null;
+
+      // Prepare text payload for batch machine translation
+      const textsToTranslate: string[] = [
+        sourceTitle,
+        sourceDesc,
+        sourcePres ?? '',
+        sourceTips ?? '',
+      ];
+
+      for (const step of recipe.steps ?? []) {
+        const stepSourceTrans = step.translations?.find(
+          (t) => t.locale === recipe.source_lang,
+        );
+        textsToTranslate.push(stepSourceTrans?.title ?? '');
+        textsToTranslate.push(stepSourceTrans?.description ?? '');
+      }
+
+      // Execute machine translation across all other target locales
+      const allLocales = ['it', 'en', 'fr'];
+      const targetLocales = allLocales.filter((l) => l !== recipe.source_lang);
+      let overallSuccess = true;
+
+      for (const targetLang of targetLocales) {
+        const res = await this.translationService.translateBatch(
+          textsToTranslate,
+          recipe.source_lang,
+          targetLang,
+        );
+        if (!res.success) {
+          overallSuccess = false;
+          break;
+        }
+        const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
+          res.translations;
+        const stepTranslations: Array<{
+          stepId: number;
+          title: string | null;
+          description: string;
+        }> = [];
+        for (let i = 0; i < (recipe.steps ?? []).length; i++) {
+          const step = recipe.steps[i];
+          const sTitle = stepTexts[i * 2] || null;
+          const sDesc = stepTexts[i * 2 + 1] || '';
+          stepTranslations.push({
+            stepId: step.id,
+            title: sTitle,
+            description: sDesc,
+          });
+        }
+        translatedDataByLocale[targetLang] = {
+          title: transTitle || sourceTitle,
+          description: transDesc || sourceDesc,
+          preservation: transPres || null,
+          tips: transTips || null,
+          steps: stepTranslations,
+        };
+      }
+
+      // Update translation status based on batch translation result
+      updateData.translation_status = overallSuccess ? 'completed' : 'failed';
+    }
+
+    // Execute atomic database updates inside transaction
+    return await this.prisma.$transaction(async (tx) => {
+      // Upsert direct translation modifications for the targeted locale
+      if (Object.keys(transUpdate).length > 0) {
+        await tx.recipeTranslation.upsert({
+          where: {
+            recipe_id_locale: {
+              recipe_id: recipeId,
+              locale: targetLocale,
+            },
+          },
+          create: {
+            recipe_id: recipeId,
+            locale: targetLocale,
+            title: recipeUpdate.title ?? '',
+            description: recipeUpdate.description ?? '',
+            preservation: recipeUpdate.preservation ?? null,
+            tips: recipeUpdate.tips ?? null,
+          },
+          update: transUpdate,
+        });
+      }
+
+      // Upsert re-translated content for remaining locales when retranslate
+      // succeeded
+      if (retranslate && updateData.translation_status === 'completed') {
+        for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+          await tx.recipeTranslation.upsert({
+            where: {
+              recipe_id_locale: {
+                recipe_id: recipeId,
+                locale,
+              },
+            },
+            create: {
+              recipe_id: recipeId,
+              locale,
+              title: trans.title,
+              description: trans.description,
+              preservation: trans.preservation,
+              tips: trans.tips,
+            },
+            update: {
+              title: trans.title,
+              description: trans.description,
+              preservation: trans.preservation,
+              tips: trans.tips,
+            },
+          });
+
+          for (const stepTrans of trans.steps) {
+            await tx.recipeStepTranslation.upsert({
+              where: {
+                step_id_locale: {
+                  step_id: stepTrans.stepId,
+                  locale,
+                },
+              },
+              create: {
+                step_id: stepTrans.stepId,
+                locale,
+                title: stepTrans.title,
+                description: stepTrans.description,
+              },
+              update: {
+                title: stepTrans.title,
+                description: stepTrans.description,
+              },
+            });
+          }
+        }
+      }
+
+      // Update invariant recipe fields and translation status
+      return await tx.recipe.update({
+        where: {
+          id: recipeId,
+        },
+        data: updateData,
+      });
     });
   }
+
+  // ---------------------------------------------------------------------------
 
   /* 
   DELETE /api/recipes/:id
   */
   async deleteRecipe(recipeId: number, userId: number) {
+    // Verify that the recipe exists and belongs to the requesting user
     const recipe = await this.prisma.recipe.findUnique({
       where: {
         id: recipeId,
@@ -479,10 +740,188 @@ export class RecipeService {
     });
     if (!recipe || recipe.user_id != userId)
       throw new NotFoundException('Recipe not found');
+
+    // Delete the verified recipe
     return await this.prisma.recipe.delete({
       where: {
         id: recipeId,
       },
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  POST /api/recipes/:id/translate
+  */
+  async retryTranslation(recipeId: number, userId: number) {
+    // Fetch the recipe from database, joining it with its translations and
+    // ordered steps
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      include: {
+        translations: true,
+        steps: {
+          include: { translations: true },
+          orderBy: { step_number: 'asc' },
+        },
+      },
+    });
+
+    // Guard: Verify ownership (only author can retry translation)
+    if (!recipe || recipe.user_id !== userId) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    // Guard: Only allow retry when previous translation status failed
+    if (recipe.translation_status !== 'failed') {
+      throw new BadRequestException(
+        'Translation retry is only available for failed translations',
+      );
+    }
+
+    // Find original language canonical translation
+    const sourceTrans = recipe.translations.find(
+      (t) => t.locale === recipe.source_lang,
+    );
+    if (!sourceTrans) {
+      throw new NotFoundException('Source translation not found');
+    }
+
+    // Prepare text payload for batch translation
+    const allLocales = ['it', 'en', 'fr'];
+    const targetLocales = allLocales.filter((l) => l !== recipe.source_lang);
+    const textsToTranslate: string[] = [
+      sourceTrans.title,
+      sourceTrans.description,
+      sourceTrans.preservation ?? '',
+      sourceTrans.tips ?? '',
+    ];
+    for (const step of recipe.steps) {
+      const stepSourceTrans = step.translations.find(
+        (t) => t.locale === recipe.source_lang,
+      );
+      textsToTranslate.push(stepSourceTrans?.title ?? '');
+      textsToTranslate.push(stepSourceTrans?.description ?? '');
+    }
+
+    // Translate across target locales
+    let overallSuccess = true;
+    const translatedDataByLocale: Record<
+      string,
+      {
+        title: string;
+        description: string;
+        preservation?: string | null;
+        tips?: string | null;
+        steps: Array<{
+          stepId: number;
+          title: string | null;
+          description: string;
+        }>;
+      }
+    > = {};
+
+    for (const targetLang of targetLocales) {
+      const res = await this.translationService.translateBatch(
+        textsToTranslate,
+        recipe.source_lang,
+        targetLang,
+      );
+      if (!res.success) {
+        overallSuccess = false;
+        break;
+      }
+      const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
+        res.translations;
+      const stepTranslations: Array<{
+        stepId: number;
+        title: string | null;
+        description: string;
+      }> = [];
+      for (let i = 0; i < recipe.steps.length; i++) {
+        const step = recipe.steps[i];
+        const sTitle = stepTexts[i * 2] || null;
+        const sDesc = stepTexts[i * 2 + 1] || '';
+        stepTranslations.push({
+          stepId: step.id,
+          title: sTitle,
+          description: sDesc,
+        });
+      }
+      translatedDataByLocale[targetLang] = {
+        title: transTitle || sourceTrans.title,
+        description: transDesc || sourceTrans.description,
+        preservation: transPres || null,
+        tips: transTips || null,
+        steps: stepTranslations,
+      };
+    }
+
+    // If translation service failed, maintain failed status in database
+    if (!overallSuccess) {
+      return await this.prisma.recipe.update({
+        where: { id: recipe.id },
+        data: { translation_status: 'failed' },
+      });
+    }
+
+    // Execute database transaction to persist translated records and set
+    // status to completed
+    return await this.prisma.$transaction(async (tx) => {
+      // Upsert translations for each target locale
+      for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+        await tx.recipeTranslation.upsert({
+          where: {
+            recipe_id_locale: {
+              recipe_id: recipe.id,
+              locale,
+            },
+          },
+          create: {
+            recipe_id: recipe.id,
+            locale,
+            title: trans.title,
+            description: trans.description,
+            preservation: trans.preservation,
+            tips: trans.tips,
+          },
+          update: {
+            title: trans.title,
+            description: trans.description,
+            preservation: trans.preservation,
+            tips: trans.tips,
+          },
+        });
+
+        // Upsert step translations for each step in this locale
+        for (const stepTrans of trans.steps) {
+          await tx.recipeStepTranslation.upsert({
+            where: {
+              step_id_locale: {
+                step_id: stepTrans.stepId,
+                locale,
+              },
+            },
+            create: {
+              step_id: stepTrans.stepId,
+              locale,
+              title: stepTrans.title,
+              description: stepTrans.description,
+            },
+            update: {
+              title: stepTrans.title,
+              description: stepTrans.description,
+            },
+          });
+        }
+      }
+
+      // Update recipe translation status to completed
+      return await tx.recipe.update({
+        where: { id: recipe.id },
+        data: { translation_status: 'completed' },
+      });
     });
   }
 }

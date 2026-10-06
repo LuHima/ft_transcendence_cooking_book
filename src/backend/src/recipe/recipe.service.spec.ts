@@ -20,6 +20,14 @@ describe('RecipeService', () => {
       update: jest.fn(),
       delete: jest.fn(),
     },
+    recipeTranslation: {
+      upsert: jest.fn(),
+      update: jest.fn(),
+    },
+    recipeStepTranslation: {
+      upsert: jest.fn(),
+      update: jest.fn(),
+    },
   };
 
   const mockTranslationService = {
@@ -70,6 +78,12 @@ describe('RecipeService', () => {
     translationService = module.get<TranslationService>(TranslationService);
 
     jest.clearAllMocks();
+    mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+      if (typeof cb === 'function') {
+        return cb(mockPrisma);
+      }
+      return cb;
+    });
   });
 
   describe('createRecipe', () => {
@@ -443,6 +457,381 @@ describe('RecipeService', () => {
       expect(result.ingredients[0].notes).toBe('fresco e cremoso');
 
       expect(result.tags[0].name).toBe('Vegetariano');
+    });
+  });
+
+  describe('retryTranslation', () => {
+    it('throws NotFoundException when recipe does not exist or user is not author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.retryTranslation(999, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 2,
+        translation_status: 'failed',
+      });
+
+      await expect(service.retryTranslation(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws BadRequestException if translation_status is not failed', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+        translation_status: 'completed',
+      });
+
+      await expect(service.retryTranslation(1, 1)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('re-translates canonical source text across target locales, updates translations in db, and sets status to completed', async () => {
+      const mockFailedRecipe = {
+        id: 1,
+        user_id: 1,
+        source_lang: 'it',
+        translation_status: 'failed',
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto Fresco Genovese',
+            description: 'Un piatto tipico ligure.',
+            preservation: '2 giorni.',
+            tips: 'Non scaldare il pesto.',
+          },
+        ],
+        steps: [
+          {
+            id: 10,
+            recipe_id: 1,
+            step_number: 1,
+            translations: [
+              {
+                step_id: 10,
+                locale: 'it',
+                title: 'Pestare',
+                description: 'Pesta il basilico.',
+              },
+            ],
+          },
+        ],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockFailedRecipe);
+
+      mockTranslationService.translateBatch.mockImplementation(
+        async (texts: string[], source: string, target: string) => {
+          if (target === 'en') {
+            return {
+              translations: [
+                'Fresh Pesto Pasta',
+                'A typical Ligurian dish.',
+                '2 days.',
+                'Do not heat pesto.',
+                'Crush',
+                'Crush basil.',
+              ],
+              success: true,
+            };
+          }
+          if (target === 'fr') {
+            return {
+              translations: [
+                'Pâtes au Pesto',
+                'Un plat ligure typique.',
+                '2 jours.',
+                'Ne pas chauffer le pesto.',
+                'Écraser',
+                'Écrasez le basilic.',
+              ],
+              success: true,
+            };
+          }
+          return { translations: texts, success: true };
+        },
+      );
+
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        if (typeof cb === 'function') {
+          return cb(mockPrisma);
+        }
+        return cb;
+      });
+
+      const updatedRecipe = {
+        ...mockFailedRecipe,
+        translation_status: 'completed',
+      };
+      mockPrisma.recipe.update.mockResolvedValueOnce(updatedRecipe);
+
+      const result = await service.retryTranslation(1, 1);
+
+      expect(mockTranslationService.translateBatch).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.recipeTranslation.upsert).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.recipeStepTranslation.upsert).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({ translation_status: 'completed' }),
+        }),
+      );
+      expect(result.translation_status).toBe('completed');
+    });
+
+    it('keeps translation_status as failed if translationBatch fails during retry', async () => {
+      const mockFailedRecipe = {
+        id: 1,
+        user_id: 1,
+        source_lang: 'it',
+        translation_status: 'failed',
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto Fresco Genovese',
+            description: 'Un piatto tipico ligure.',
+            preservation: null,
+            tips: null,
+          },
+        ],
+        steps: [
+          {
+            id: 10,
+            recipe_id: 1,
+            step_number: 1,
+            translations: [
+              {
+                step_id: 10,
+                locale: 'it',
+                title: null,
+                description: 'Pesta il basilico.',
+              },
+            ],
+          },
+        ],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockFailedRecipe);
+      mockTranslationService.translateBatch.mockResolvedValueOnce({
+        translations: [],
+        success: false,
+      });
+
+      const failedRecipeResult = {
+        ...mockFailedRecipe,
+        translation_status: 'failed',
+      };
+      mockPrisma.recipe.update.mockResolvedValueOnce(failedRecipeResult);
+
+      const result = await service.retryTranslation(1, 1);
+
+      expect(mockTranslationService.translateBatch).toHaveBeenCalled();
+      expect(mockPrisma.recipeTranslation.upsert).not.toHaveBeenCalled();
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { translation_status: 'failed' },
+      });
+      expect(result.translation_status).toBe('failed');
+    });
+  });
+
+  describe('updateRecipe', () => {
+    it('throws NotFoundException when recipe does not exist or user is not author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateRecipe(1, 999, { servings: 4 }),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 2,
+      });
+
+      await expect(
+        service.updateRecipe(1, 1, { servings: 4 }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('updates invariant metrics and recalculates total_time accurately', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
+        difficulty: RecipeDifficulty.easy,
+        course: Course.first_course,
+        source_lang: 'it',
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      const updateData = {
+        prep_time: 25,
+        servings: 6,
+        difficulty: RecipeDifficulty.hard,
+      };
+
+      mockPrisma.recipe.update.mockImplementation(async ({ data }: any) => {
+        return {
+          ...existingRecipe,
+          ...data,
+        };
+      });
+
+      const result = await service.updateRecipe(1, 1, updateData);
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            prep_time: 25,
+            total_time: 35,
+            servings: 6,
+            difficulty: RecipeDifficulty.hard,
+          }),
+        }),
+      );
+      expect(result.total_time).toBe(35);
+    });
+
+    it('updates RecipeTranslation for a specific locale without touching other locales when retranslate is not specified', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
+        source_lang: 'it',
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto',
+            description: 'Descrizione italiana.',
+          },
+        ],
+        steps: [],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        if (typeof cb === 'function') {
+          return cb(mockPrisma);
+        }
+        return cb;
+      });
+
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        ...existingRecipe,
+      });
+
+      await service.updateRecipe(1, 1, {
+        title: 'Nuova Pasta al Pesto',
+        locale: 'it',
+      });
+
+      expect(mockTranslationService.translateBatch).not.toHaveBeenCalled();
+      expect(mockPrisma.recipeTranslation.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            recipe_id_locale: {
+              recipe_id: 1,
+              locale: 'it',
+            },
+          },
+          update: expect.objectContaining({
+            title: 'Nuova Pasta al Pesto',
+          }),
+        }),
+      );
+    });
+
+    it('re-translates source text across remaining locales when retranslate is true and updates translation_status', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        source_lang: 'it',
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto Fresco',
+            description: 'Descrizione vecchia.',
+            preservation: null,
+            tips: null,
+          },
+        ],
+        steps: [
+          {
+            id: 10,
+            recipe_id: 1,
+            step_number: 1,
+            translations: [
+              {
+                step_id: 10,
+                locale: 'it',
+                title: 'Pesta',
+                description: 'Pesta il basilico.',
+              },
+            ],
+          },
+        ],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      mockTranslationService.translateBatch.mockResolvedValue({
+        translations: [
+          'Fresh Pesto Pasta',
+          'New English Description',
+          '',
+          '',
+          'Crush',
+          'Crush basil.',
+        ],
+        success: true,
+      });
+
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        ...existingRecipe,
+        translation_status: 'completed',
+      });
+
+      await service.updateRecipe(
+        1,
+        1,
+        {
+          title: 'Pasta al Pesto Fresco',
+          description: 'Nuova descrizione ligure.',
+          locale: 'it',
+        },
+        true,
+      );
+
+      expect(mockTranslationService.translateBatch).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.recipeTranslation.upsert).toHaveBeenCalled();
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({ translation_status: 'completed' }),
+        }),
+      );
     });
   });
 });
