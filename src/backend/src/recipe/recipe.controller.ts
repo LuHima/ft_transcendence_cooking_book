@@ -1,4 +1,16 @@
-import { Controller, Get, Param, Post, Body, Patch, Delete, Query, ParseIntPipe, ValidationPipe, UseGuards} from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  Patch,
+  Delete,
+  Query,
+  ParseIntPipe,
+  ValidationPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -9,60 +21,68 @@ import { Auth } from 'src/common/decorators/policies.decorator';
 import { Action } from 'src/auth/casl/action.enum';
 
 @Controller('recipes')
-export class RecipeController 
-{
+export class RecipeController {
+  constructor(private readonly recipeService: RecipeService) {}
 
-	constructor(private readonly recipeService: RecipeService) {}
-	
-	// TODO @Roles(Role.admin)
+  // TODO @Roles(Role.admin)
 
-	@Get()
-	async getRecipes()
-	{
-		return await this.recipeService.getAllRecipe();
-	}
+  // GET /api/recipes -> get all recipes
+  @Get()
+  async getRecipes() {
+    return await this.recipeService.getAllRecipe();
+  }
 
-	@Get('page')
-	async getRecipeStack(@Query('value') id: number)
-	{
-		if (!id)
-			return [];
-		return await this.recipeService.getRecipeStack(id);
-	}
-	
-	@Get('search')
-	async getRecipe(@Query('value') name: string)
-	{
-		if (!name)
-			return [];
-		return await this.recipeService.getRecipesByName(name);
-	}
+  // GET /api/recipes/page?value=id -> get recipe identified by id ???
+  @Get('page')
+  async getRecipeStack(@Query('value') id: number) {
+    if (!id) return [];
+    return await this.recipeService.getRecipeStack(id);
+  }
 
-	@Get(':id')
-	async getRecipeById(@Param('id', ParseIntPipe) id: number)
-	{
-		return await this.recipeService.getRecipeById(Number(id));
-	}
+  // GET /api/recipe/search?value=name -> get recipe by name
+  // TODO Implement advanced search filters
+  @Get('search')
+  async getRecipe(@Query('value') name: string) {
+    if (!name) return [];
+    return await this.recipeService.getRecipesByName(name);
+  }
 
-	@Auth(Action.Create, 'Recipe')
-	@Post() //aggiunge
-	addRecipe(@Body(ValidationPipe)createRecipeDto: CreateRecipeDto, @CurrentUser('id') id: number)
-	{
-		return this.recipeService.createRecipe(createRecipeDto, id); 
-	}
+  // GET /api/recipes/:id -> get recipe identified by id
+  @Get(':id')
+  async getRecipeById(@Param('id', ParseIntPipe) id: number) {
+    return await this.recipeService.getRecipeById(Number(id));
+  }
 
-	@Auth(Action.Update, 'Recipe')
-	@Patch(':id') // modifica una ricetta 
-	async updateRecipe(@Param('id', ParseIntPipe) recipeId: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto, @CurrentUser('id')userId:number)
-	{
-		return this.recipeService.updateRecipe(userId, recipeId, updateRecipeDto)
-	}
-	@Auth(Action.Delete, 'Recipe')
-	@Delete(':id') // cancella una ricetta 
-	async deleteRecipe(@Param('id', ParseIntPipe) recipeId: number, @CurrentUser('id') userId: number)
-	{
-		return(this.recipeService.deleteRecipe(recipeId, userId))
-	}
+  // POST /api/recipes -> create a new recipe
+  @Auth(Action.Create, 'Recipe')
+  @Post()
+  addRecipe(
+    @Body(ValidationPipe) createRecipeDto: CreateRecipeDto,
+    @CurrentUser('id') id: number,
+  ) {
+    return this.recipeService.createRecipe(createRecipeDto, id);
+  }
+
+  // PATCH /api/recipes/:id -> modify an existent recipe
+  @Auth(Action.Update, 'Recipe')
+  @Patch(':id')
+  async updateRecipe(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.updateRecipe(userId, recipeId, updateRecipeDto);
+  }
+
+  // DELETE /api/recipes/:id -> delete an existent recipe
+  @Auth(Action.Delete, 'Recipe')
+  @Delete(':id')
+  async deleteRecipe(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.deleteRecipe(recipeId, userId);
+  }
 }
 
 /* 
