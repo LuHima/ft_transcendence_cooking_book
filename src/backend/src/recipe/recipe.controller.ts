@@ -47,10 +47,13 @@ export class RecipeController {
     return await this.recipeService.getRecipesByName(name);
   }
 
-  // GET /api/recipes/:id -> get recipe identified by id
+  // GET /api/recipes/:id?lang=it|en|fr -> get localized recipe identified by id
   @Get(':id')
-  async getRecipeById(@Param('id', ParseIntPipe) id: number) {
-    return await this.recipeService.getRecipeById(Number(id));
+  async getRecipeById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('lang') lang?: string,
+  ) {
+    return await this.recipeService.getRecipeById(Number(id), lang);
   }
 
   // POST /api/recipes -> create a new recipe

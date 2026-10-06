@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -207,6 +207,242 @@ describe('RecipeService', () => {
         }),
       );
       expect(result).toEqual(mockFailedRecipe);
+    });
+  });
+
+  describe('getRecipeById', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getRecipeById(999, 'it')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('returns flattened localized recipe projection with ordered steps when requested language matches', async () => {
+      const mockDbRecipe = {
+        id: 1,
+        course: Course.first_course,
+        difficulty: RecipeDifficulty.medium,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
+        source_lang: 'it',
+        translation_status: 'completed',
+        cover_image_url: 'https://example.com/cover.jpg',
+        video_url: null,
+        created_at: new Date('2026-01-01T00:00:00Z'),
+        updated_at: new Date('2026-01-01T00:00:00Z'),
+        user: {
+          id: 10,
+          username: 'chef_mario',
+          avatar_url: 'https://example.com/mario.jpg',
+        },
+        translations: [
+          {
+            locale: 'it',
+            title: 'Pasta alla Carbonara',
+            description: 'La vera carbonara romana.',
+            preservation: 'Consumare calda.',
+            tips: 'Niente panna!',
+          },
+          {
+            locale: 'en',
+            title: 'Spaghetti Carbonara',
+            description: 'Authentic Roman carbonara.',
+            preservation: 'Serve hot.',
+            tips: 'No cream!',
+          },
+        ],
+        steps: [
+          {
+            id: 102,
+            step_number: 2,
+            duration: 10,
+            image_url: null,
+            translations: [
+              { locale: 'it', title: 'Cuocere', description: 'Cuoci la pasta.' },
+              { locale: 'en', title: 'Cook', description: 'Cook pasta.' },
+            ],
+          },
+          {
+            id: 101,
+            step_number: 1,
+            duration: 5,
+            image_url: null,
+            translations: [
+              { locale: 'it', title: 'Rosolare', description: 'Rosola il guanciale.' },
+              { locale: 'en', title: 'Brown', description: 'Brown guanciale.' },
+            ],
+          },
+        ],
+        recipe_ingredients: [
+          {
+            ingredient_id: 5,
+            quantity: 150,
+            unit: UnitOfMeasure.g,
+            notes: { it: 'a listarelle', en: 'sliced strips', fr: 'en lanières' },
+            ingredient: {
+              id: 5,
+              slug: 'guanciale',
+              category: 'meat_poultry',
+              translations: [
+                { locale: 'it', name: 'Guanciale' },
+                { locale: 'en', name: 'Cured Pork Jowl' },
+              ],
+            },
+          },
+        ],
+        recipe_tags: [
+          {
+            tag: {
+              id: 1,
+              slug: 'traditional',
+              translations: [
+                { locale: 'it', name: 'Tradizionale' },
+                { locale: 'en', name: 'Traditional' },
+              ],
+            },
+          },
+        ],
+        recipe_media: [
+          {
+            id: 1,
+            url: 'https://example.com/cover.jpg',
+            media_type: 'image',
+            order: 0,
+          },
+        ],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockDbRecipe);
+
+      const result = await service.getRecipeById(1, 'en');
+
+      expect(mockPrisma.recipe.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        include: expect.any(Object),
+      });
+
+      expect(result.id).toBe(1);
+      expect(result.title).toBe('Spaghetti Carbonara');
+      expect(result.description).toBe('Authentic Roman carbonara.');
+      expect(result.preservation).toBe('Serve hot.');
+      expect(result.tips).toBe('No cream!');
+      expect(result.author).toEqual({
+        id: 10,
+        username: 'chef_mario',
+        avatar_url: 'https://example.com/mario.jpg',
+      });
+
+      // Steps must be ordered by step_number ascending (1 then 2)
+      expect(result.steps).toHaveLength(2);
+      expect(result.steps[0].step_number).toBe(1);
+      expect(result.steps[0].title).toBe('Brown');
+      expect(result.steps[0].description).toBe('Brown guanciale.');
+      expect(result.steps[1].step_number).toBe(2);
+      expect(result.steps[1].title).toBe('Cook');
+      expect(result.steps[1].description).toBe('Cook pasta.');
+
+      // Ingredients must be localized in English with English notes
+      expect(result.ingredients).toHaveLength(1);
+      expect(result.ingredients[0].id).toBe(5);
+      expect(result.ingredients[0].name).toBe('Cured Pork Jowl');
+      expect(result.ingredients[0].quantity).toBe(150);
+      expect(result.ingredients[0].unit).toBe(UnitOfMeasure.g);
+      expect(result.ingredients[0].notes).toBe('sliced strips');
+
+      // Tags must be localized in English
+      expect(result.tags).toHaveLength(1);
+      expect(result.tags[0].slug).toBe('traditional');
+      expect(result.tags[0].name).toBe('Traditional');
+    });
+
+    it('gracefully falls back to source_lang when requested translation locale is not available', async () => {
+      const mockItalianOnlyRecipe = {
+        id: 2,
+        course: Course.dessert,
+        difficulty: RecipeDifficulty.easy,
+        prep_time: 20,
+        cook_time: 0,
+        total_time: 20,
+        servings: 6,
+        source_lang: 'it',
+        translation_status: 'failed',
+        cover_image_url: null,
+        video_url: null,
+        created_at: new Date('2026-01-01T00:00:00Z'),
+        updated_at: null,
+        user: null,
+        translations: [
+          {
+            locale: 'it',
+            title: 'Tiramisù Tradizionale',
+            description: 'Il classico tiramisù veneto con savoiardi.',
+            preservation: '2 giorni in frigo.',
+            tips: 'Usa caffè freddo.',
+          },
+        ],
+        steps: [
+          {
+            id: 201,
+            step_number: 1,
+            duration: 10,
+            image_url: null,
+            translations: [
+              { locale: 'it', title: 'Preparare la crema', description: 'Montare uova e mascarpone.' },
+            ],
+          },
+        ],
+        recipe_ingredients: [
+          {
+            ingredient_id: 8,
+            quantity: 500,
+            unit: UnitOfMeasure.g,
+            notes: { it: 'fresco e cremoso' },
+            ingredient: {
+              id: 8,
+              slug: 'mascarpone',
+              category: 'dairy_eggs',
+              translations: [
+                { locale: 'it', name: 'Mascarpone' },
+              ],
+            },
+          },
+        ],
+        recipe_tags: [
+          {
+            tag: {
+              id: 2,
+              slug: 'vegetarian',
+              translations: [
+                { locale: 'it', name: 'Vegetariano' },
+              ],
+            },
+          },
+        ],
+        recipe_media: [],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockItalianOnlyRecipe);
+
+      const result = await service.getRecipeById(2, 'fr');
+
+      expect(result.id).toBe(2);
+      expect(result.title).toBe('Tiramisù Tradizionale');
+      expect(result.description).toBe('Il classico tiramisù veneto con savoiardi.');
+      expect(result.preservation).toBe('2 giorni in frigo.');
+      expect(result.tips).toBe('Usa caffè freddo.');
+
+      expect(result.steps).toHaveLength(1);
+      expect(result.steps[0].title).toBe('Preparare la crema');
+      expect(result.steps[0].description).toBe('Montare uova e mascarpone.');
+
+      expect(result.ingredients[0].name).toBe('Mascarpone');
+      expect(result.ingredients[0].notes).toBe('fresco e cremoso');
+
+      expect(result.tags[0].name).toBe('Vegetariano');
     });
   });
 });

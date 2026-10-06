@@ -9,6 +9,13 @@ import { OwnerType, TranslationStatus } from '@prisma/client';
 import type { Prisma, Recipe } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import {
+  LocalizedRecipeStepResponse,
+  LocalizedRecipeIngredientResponse,
+  LocalizedRecipeTagResponse,
+  RecipeMediaResponse,
+  LocalizedRecipeDetailResponse,
+} from './dto/localized-recipe.response';
 
 @Injectable()
 export class RecipeService {
@@ -84,21 +91,191 @@ export class RecipeService {
     return recipe;
   }
 
-  async getRecipeById(id: number) {
+  /* 
+  GET /api/recipes/:id?lang=it|en|fr
+  */
+  async getRecipeById(
+    id: number,
+    lang?: string,
+  ): Promise<LocalizedRecipeDetailResponse> {
+    // Fetch the recipe from database, joining it with its translations
     const recipe = await this.prisma.recipe.findUnique({
       where: {
         id: id,
       },
+      include: {
+        translations: true,
+        steps: {
+          include: {
+            translations: true,
+          },
+          orderBy: {
+            step_number: 'asc',
+          },
+        },
+        recipe_ingredients: {
+          include: {
+            ingredient: {
+              include: {
+                translations: true,
+              },
+            },
+          },
+        },
+        recipe_tags: {
+          include: {
+            tag: {
+              include: {
+                translations: true,
+              },
+            },
+          },
+        },
+        recipe_media: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar_url: true,
+          },
+        },
+      },
     });
 
+    // If recipe is not found -> throw 404 Not Found
     if (!recipe) throw new NotFoundException('Recipe not found');
 
-    return recipe;
+    // Define requested language from query.
+    // Falls back to source language if lang is not supported or not defined.
+    const targetLocale =
+      lang === 'it' || lang === 'en' || lang === 'fr'
+        ? lang
+        : recipe.source_lang;
+
+    // Define which translation to send as a response
+    const translation =
+      recipe.translations.find((t) => t.locale === targetLocale) ??
+      recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+      recipe.translations[0];
+
+    // Sort recipe steps by their number
+    const sortedSteps = [...recipe.steps].sort(
+      (a, b) => a.step_number - b.step_number,
+    );
+
+    // Organize sorted steps as an array of LocalizedRecipeStepResponse
+    const steps: LocalizedRecipeStepResponse[] = sortedSteps.map((s) => {
+      const stepTrans =
+        s.translations.find((t) => t.locale === targetLocale) ??
+        s.translations.find((t) => t.locale === recipe.source_lang) ??
+        s.translations[0];
+      return {
+        id: s.id,
+        step_number: s.step_number,
+        title: stepTrans?.title ?? null,
+        description: stepTrans?.description ?? '',
+        duration: s.duration,
+        image_url: s.image_url,
+      };
+    });
+
+    // Organize recipe ingredients as an array of
+    // LocalizedRecipeIngredientResponse
+    const ingredients: LocalizedRecipeIngredientResponse[] =
+      recipe.recipe_ingredients.map((ri) => {
+        const ing = ri.ingredient;
+        const ingTrans =
+          ing.translations.find((t) => t.locale === targetLocale) ??
+          ing.translations.find((t) => t.locale === recipe.source_lang) ??
+          ing.translations.find((t) => t.locale === 'en');
+        let note: string | null = null;
+        if (ri.notes) {
+          if (typeof ri.notes === 'object' && !Array.isArray(ri.notes)) {
+            const notesObj = ri.notes as Record<string, string>;
+            note =
+              notesObj[targetLocale] ??
+              notesObj[recipe.source_lang] ??
+              notesObj['en'] ??
+              null;
+          } else if (typeof ri.notes === 'string') {
+            note = ri.notes;
+          }
+        }
+        return {
+          id: ing.id,
+          slug: ing.slug,
+          category: ing.category,
+          name: ingTrans?.name ?? ing.slug,
+          quantity: Number(ri.quantity),
+          unit: ri.unit,
+          notes: note,
+        };
+      });
+
+    // Organize recipe tags as an array of LocalizedRecipeTagResponse
+    const tags: LocalizedRecipeTagResponse[] = recipe.recipe_tags.map((rt) => {
+      const t = rt.tag;
+      const tagTrans =
+        t.translations.find((tr) => tr.locale === targetLocale) ??
+        t.translations.find((tr) => tr.locale === recipe.source_lang) ??
+        t.translations.find((tr) => tr.locale === 'en');
+      return {
+        id: t.id,
+        slug: t.slug,
+        name: tagTrans?.name ?? t.slug,
+      };
+    });
+
+    // Organize recipe media as an array of RecipeMediaResponse
+    const media: RecipeMediaResponse[] = (recipe.recipe_media ?? []).map(
+      (m) => ({
+        id: m.id,
+        url: m.url,
+        media_type: m.media_type,
+        order: m.order,
+      }),
+    );
+
+    // Return the recipe as an object of type LocalizedRecipeDetailResponse
+    return {
+      id: recipe.id,
+      course: recipe.course,
+      difficulty: recipe.difficulty,
+      prep_time: recipe.prep_time,
+      cook_time: recipe.cook_time,
+      total_time: recipe.total_time,
+      servings: recipe.servings,
+      source_lang: recipe.source_lang,
+      translation_status: recipe.translation_status,
+      cover_image_url: recipe.cover_image_url,
+      video_url: recipe.video_url,
+      created_at: recipe.created_at,
+      updated_at: recipe.updated_at,
+      author: recipe.user
+        ? {
+            id: recipe.user.id,
+            username: recipe.user.username,
+            avatar_url: recipe.user.avatar_url,
+          }
+        : null,
+      title: translation?.title ?? '',
+      description: translation?.description ?? '',
+      preservation: translation?.preservation ?? null,
+      tips: translation?.tips ?? null,
+      steps,
+      ingredients,
+      tags,
+      media,
+    };
   }
 
-  /* 
+  /* ---------------------------------------------------------------------------
   POST /api/recipes
-  */
+  --------------------------------------------------------------------------- */
   async createRecipe(recipe: CreateRecipeDto, userId: number) {
     // Language verification
     const textToVerify = [

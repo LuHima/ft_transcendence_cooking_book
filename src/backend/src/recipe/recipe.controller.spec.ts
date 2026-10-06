@@ -84,4 +84,16 @@ describe('RecipeController', () => {
       expect(result).toEqual(mockResult);
     });
   });
+
+  describe('getRecipeById', () => {
+    it('delegates to service.getRecipeById with id and lang query parameter', async () => {
+      const mockResult = { id: 1, title: 'Carbonara' };
+      mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.getRecipeById(1, 'it');
+
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it');
+      expect(result).toEqual(mockResult);
+    });
+  });
 });
