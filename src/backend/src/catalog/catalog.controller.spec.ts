@@ -21,7 +21,7 @@ describe('CatalogController', () => {
         {
           provide: CatalogService,
           useValue: {
-            getMeta: jest.fn().mockReturnValue(mockMeta),
+            getMetadata: jest.fn().mockReturnValue(mockMeta),
             getTags: jest.fn().mockResolvedValue([{ id: 1, slug: 'vegetarian', name: 'Vegetariano' }]),
             getIngredients: jest.fn().mockResolvedValue([
               { id: 1, slug: 'tomato', category: IngredientCategory.produce, name: 'Pomodoro' },
@@ -35,12 +35,12 @@ describe('CatalogController', () => {
     service = module.get<CatalogService>(CatalogService);
   });
 
-  describe('getMeta', () => {
+  describe('getMetadata', () => {
     it('should return catalog metadata from service', () => {
-      const result = controller.getMeta();
+      const result = controller.getMetadata();
 
       expect(result).toEqual(mockMeta);
-      expect(service.getMeta).toHaveBeenCalled();
+      expect(service.getMetadata).toHaveBeenCalled();
     });
   });
 

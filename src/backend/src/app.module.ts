@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { TranslationModule } from './translation/translation.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -25,6 +26,7 @@ import { CleanExpiredToken } from './common/task/clean-expired-token.service';
     UsersModule,
     RecipeModule,
     CatalogModule,
+    TranslationModule,
     ScheduleModule.forRoot(), // ScheduleModule cerca in tutti i provider per un @Cron vede quanto manca al tempo stabilito e setta un timer per chiamare quella funzione non appena finisce il sistemma setta in automatico un'altro timer per la volta successiva
     ThrottlerModule.forRoot([{ ttl: 100, limit: 4 }]),
     CaslModule,

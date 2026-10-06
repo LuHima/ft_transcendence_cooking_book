@@ -79,8 +79,8 @@ describe('CatalogService', () => {
       const result = await service.getTags({});
 
       expect(result).toEqual([
-        { id: 1, slug: 'vegetarian', name: 'Vegetarian' },
         { id: 2, slug: 'quick_easy', name: 'Quick & Easy' },
+        { id: 1, slug: 'vegetarian', name: 'Vegetarian' },
       ]);
     });
 
@@ -132,8 +132,8 @@ describe('CatalogService', () => {
       const result = await service.getIngredients({ lang: 'it' });
 
       expect(result).toEqual([
-        { id: 1, slug: 'tomato', category: IngredientCategory.produce, name: 'Pomodoro' },
         { id: 2, slug: 'parmesan', category: IngredientCategory.dairy_eggs, name: 'Parmigiano Reggiano' },
+        { id: 1, slug: 'tomato', category: IngredientCategory.produce, name: 'Pomodoro' },
       ]);
     });
 
