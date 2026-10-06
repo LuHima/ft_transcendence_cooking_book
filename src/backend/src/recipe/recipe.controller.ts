@@ -10,7 +10,15 @@ import {
   ParseIntPipe,
   ValidationPipe,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import {
+  recipeImageMulterOptions,
+  recipeVideoMulterOptions,
+} from './recipe-media.multer';
 import { RecipeService } from './recipe.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -102,6 +110,61 @@ export class RecipeController {
     @CurrentUser('id') userId: number,
   ) {
     return this.recipeService.deleteRecipe(recipeId, userId);
+  }
+
+  // POST /api/recipes/:id/cover -> upload recipe cover image
+  @Auth(Action.Update, 'Recipe')
+  @Post(':id/cover')
+  @UseInterceptors(FileInterceptor('file', recipeImageMulterOptions))
+  async uploadCoverImage(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.recipeService.uploadCoverImage(recipeId, userId, file);
+  }
+
+  // POST /api/recipes/:id/steps/:stepNumber/image -> upload step
+  // illustration
+  @Auth(Action.Update, 'Recipe')
+  @Post(':id/steps/:stepNumber/image')
+  @UseInterceptors(FileInterceptor('file', recipeImageMulterOptions))
+  async uploadStepImage(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Param('stepNumber', ParseIntPipe) stepNumber: number,
+    @CurrentUser('id') userId: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.recipeService.uploadStepImage(
+      recipeId,
+      stepNumber,
+      userId,
+      file,
+    );
+  }
+
+  // POST /api/recipes/:id/gallery -> upload up to 3 gallery photos
+  @Auth(Action.Update, 'Recipe')
+  @Post(':id/gallery')
+  @UseInterceptors(FilesInterceptor('files', 3, recipeImageMulterOptions))
+  async uploadGalleryMedia(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.recipeService.uploadGalleryMedia(recipeId, userId, files);
+  }
+
+  // POST /api/recipes/:id/video -> upload single tutorial video
+  @Auth(Action.Update, 'Recipe')
+  @Post(':id/video')
+  @UseInterceptors(FileInterceptor('file', recipeVideoMulterOptions))
+  async uploadVideo(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.recipeService.uploadVideo(recipeId, userId, file);
   }
 }
 

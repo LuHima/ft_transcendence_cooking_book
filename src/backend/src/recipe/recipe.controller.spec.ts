@@ -19,6 +19,10 @@ describe('RecipeController', () => {
     retryTranslation: jest.fn(),
     updateRecipe: jest.fn(),
     deleteRecipe: jest.fn(),
+    uploadCoverImage: jest.fn(),
+    uploadStepImage: jest.fn(),
+    uploadGalleryMedia: jest.fn(),
+    uploadVideo: jest.fn(),
   };
 
   const sampleDto: CreateRecipeDto = {
@@ -124,6 +128,65 @@ describe('RecipeController', () => {
         updateDto,
         true,
       );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('uploadCoverImage', () => {
+    it('delegates to service.uploadCoverImage with id, user id, and file', async () => {
+      const mockResult = { cover_image_url: '/uploads/recipes/cover.jpg' };
+      mockRecipeService.uploadCoverImage.mockResolvedValueOnce(mockResult);
+
+      const mockFile = { filename: 'cover.jpg' } as any;
+      const result = await controller.uploadCoverImage(1, 42, mockFile);
+
+      expect(service.uploadCoverImage).toHaveBeenCalledWith(1, 42, mockFile);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('uploadStepImage', () => {
+    it('delegates to service.uploadStepImage with id, stepNumber, user id, and file', async () => {
+      const mockResult = {
+        step_number: 2,
+        image_url: '/uploads/recipes/step-2.jpg',
+      };
+      mockRecipeService.uploadStepImage.mockResolvedValueOnce(mockResult);
+
+      const mockFile = { filename: 'step-2.jpg' } as any;
+      const result = await controller.uploadStepImage(1, 2, 42, mockFile);
+
+      expect(service.uploadStepImage).toHaveBeenCalledWith(1, 2, 42, mockFile);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('uploadGalleryMedia', () => {
+    it('delegates to service.uploadGalleryMedia with id, user id, and files', async () => {
+      const mockResult = [{ id: 1, url: '/uploads/recipes/g1.jpg' }];
+      mockRecipeService.uploadGalleryMedia.mockResolvedValueOnce(mockResult);
+
+      const mockFiles = [{ filename: 'g1.jpg' }] as any[];
+      const result = await controller.uploadGalleryMedia(1, 42, mockFiles);
+
+      expect(service.uploadGalleryMedia).toHaveBeenCalledWith(
+        1,
+        42,
+        mockFiles,
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('uploadVideo', () => {
+    it('delegates to service.uploadVideo with id, user id, and file', async () => {
+      const mockResult = { video_url: '/uploads/recipes/video.mp4' };
+      mockRecipeService.uploadVideo.mockResolvedValueOnce(mockResult);
+
+      const mockFile = { filename: 'video.mp4' } as any;
+      const result = await controller.uploadVideo(1, 42, mockFile);
+
+      expect(service.uploadVideo).toHaveBeenCalledWith(1, 42, mockFile);
       expect(result).toEqual(mockResult);
     });
   });

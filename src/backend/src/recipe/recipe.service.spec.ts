@@ -28,6 +28,15 @@ describe('RecipeService', () => {
       upsert: jest.fn(),
       update: jest.fn(),
     },
+    recipeStep: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
+    },
+    recipeMedia: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
   };
 
   const mockTranslationService = {
@@ -832,6 +841,271 @@ describe('RecipeService', () => {
           data: expect.objectContaining({ translation_status: 'completed' }),
         }),
       );
+    });
+  });
+
+  describe('uploadCoverImage', () => {
+    const mockFile = {
+      fieldname: 'file',
+      originalname: 'cover.jpg',
+      encoding: '7bit',
+      mimetype: 'image/jpeg',
+      size: 1024,
+      destination: 'uploads/recipes',
+      filename: 'recipe-1-cover.jpg',
+      path: 'uploads/recipes/recipe-1-cover.jpg',
+      buffer: Buffer.from('test'),
+    } as any;
+
+    it('throws NotFoundException when recipe does not exist or user is not author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.uploadCoverImage(999, 1, mockFile),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 2,
+      });
+
+      await expect(
+        service.uploadCoverImage(1, 1, mockFile),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('updates cover_image_url on recipe and returns URL', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 1,
+        cover_image_url: '/uploads/recipes/recipe-1-cover.jpg',
+      });
+
+      const result = await service.uploadCoverImage(1, 1, mockFile);
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { cover_image_url: '/uploads/recipes/recipe-1-cover.jpg' },
+      });
+      expect(result).toEqual({
+        cover_image_url: '/uploads/recipes/recipe-1-cover.jpg',
+      });
+    });
+  });
+
+  describe('uploadStepImage', () => {
+    const mockFile = {
+      fieldname: 'file',
+      originalname: 'step-1.jpg',
+      filename: 'recipe-1-step-1.jpg',
+    } as any;
+
+    it('throws NotFoundException when recipe does not exist or user is not author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.uploadStepImage(999, 1, 1, mockFile),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 2,
+      });
+
+      await expect(
+        service.uploadStepImage(1, 1, 1, mockFile),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when step with stepNumber is not found', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+      mockPrisma.recipeStep.findFirst.mockResolvedValueOnce(null);
+
+      await expect(
+        service.uploadStepImage(1, 5, 1, mockFile),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('updates image_url on target RecipeStep and returns step number and image URL', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+      mockPrisma.recipeStep.findFirst.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        step_number: 1,
+      });
+      mockPrisma.recipeStep.update.mockResolvedValueOnce({
+        id: 10,
+        step_number: 1,
+        image_url: '/uploads/recipes/recipe-1-step-1.jpg',
+      });
+
+      const result = await service.uploadStepImage(1, 1, 1, mockFile);
+
+      expect(mockPrisma.recipeStep.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { image_url: '/uploads/recipes/recipe-1-step-1.jpg' },
+      });
+      expect(result).toEqual({
+        step_number: 1,
+        image_url: '/uploads/recipes/recipe-1-step-1.jpg',
+      });
+    });
+  });
+
+  describe('uploadGalleryMedia', () => {
+    const mockFiles = [
+      {
+        fieldname: 'files',
+        originalname: 'gallery-1.jpg',
+        filename: 'recipe-1-gallery-1.jpg',
+      },
+      {
+        fieldname: 'files',
+        originalname: 'gallery-2.jpg',
+        filename: 'recipe-1-gallery-2.jpg',
+      },
+    ] as any[];
+
+    it('throws NotFoundException when recipe does not exist or user is not author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.uploadGalleryMedia(999, 1, mockFiles),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 2,
+      });
+
+      await expect(
+        service.uploadGalleryMedia(1, 1, mockFiles),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when no files provided or total gallery items exceed 3', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValue({
+        id: 1,
+        user_id: 1,
+      });
+
+      await expect(service.uploadGalleryMedia(1, 1, [])).rejects.toThrow(
+        BadRequestException,
+      );
+
+      mockPrisma.recipeMedia.findMany.mockResolvedValueOnce([
+        { id: 1, order: 0 },
+        { id: 2, order: 1 },
+      ]);
+
+      await expect(
+        service.uploadGalleryMedia(1, 1, mockFiles),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('creates RecipeMedia records with sequential ordering and returns created media', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+
+      mockPrisma.recipeMedia.findMany.mockResolvedValueOnce([
+        { id: 1, order: 0 },
+      ]);
+
+      mockPrisma.recipeMedia.create
+        .mockResolvedValueOnce({
+          id: 2,
+          recipe_id: 1,
+          url: '/uploads/recipes/recipe-1-gallery-1.jpg',
+          media_type: 'image',
+          order: 1,
+        })
+        .mockResolvedValueOnce({
+          id: 3,
+          recipe_id: 1,
+          url: '/uploads/recipes/recipe-1-gallery-2.jpg',
+          media_type: 'image',
+          order: 2,
+        });
+
+      const result = await service.uploadGalleryMedia(1, 1, mockFiles);
+
+      expect(mockPrisma.recipeMedia.create).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.recipeMedia.create).toHaveBeenNthCalledWith(1, {
+        data: expect.objectContaining({
+          recipe_id: 1,
+          url: '/uploads/recipes/recipe-1-gallery-1.jpg',
+          media_type: 'image',
+          order: 1,
+        }),
+      });
+      expect(mockPrisma.recipeMedia.create).toHaveBeenNthCalledWith(2, {
+        data: expect.objectContaining({
+          recipe_id: 1,
+          url: '/uploads/recipes/recipe-1-gallery-2.jpg',
+          media_type: 'image',
+          order: 2,
+        }),
+      });
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  describe('uploadVideo', () => {
+    const mockFile = {
+      fieldname: 'file',
+      originalname: 'tutorial.mp4',
+      filename: 'recipe-1-video.mp4',
+    } as any;
+
+    it('throws NotFoundException when recipe does not exist or user is not author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.uploadVideo(999, 1, mockFile),
+      ).rejects.toThrow(NotFoundException);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 2,
+      });
+
+      await expect(
+        service.uploadVideo(1, 1, mockFile),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('updates video_url on recipe and returns video URL', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 1,
+        video_url: '/uploads/recipes/recipe-1-video.mp4',
+      });
+
+      const result = await service.uploadVideo(1, 1, mockFile);
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { video_url: '/uploads/recipes/recipe-1-video.mp4' },
+      });
+      expect(result).toEqual({
+        video_url: '/uploads/recipes/recipe-1-video.mp4',
+      });
     });
   });
 });
