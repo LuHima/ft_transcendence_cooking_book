@@ -1,20 +1,12 @@
-import { Injectable, UnauthorizedException, ConflictException, UseGuards } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
-import { JwtService } from '@nestjs/jwt';
-import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
-import { PrismaService } from '../../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import { Injectable} from '@nestjs/common';
 import * as crypto from 'crypto';
-import * as qrcode from 'qrcode';
-import { generateSecret, generateURI, verify, } from 'otplib';
-
+import { errorMonitor } from 'events';
 import { createHttpException, errors } from 'src/common/config/error.config';
-import { ChildProcess } from 'child_process';
 
 @Injectable()
 export class EncryptionService {
 
-	private readonly encryptionKey = Buffer.from(process.env.TWO_FACTOR_ENCRYPTION_KEY!, 'hex');
+	private readonly encryptionKey = Buffer.from(process.env.TWO_FACTOR_AUTH!, 'hex');
 	
 	// https://nodejs.org/api/crypto.html#cipherfinaloutputencoding per info
 	public encrypting(secret: string)
@@ -31,19 +23,21 @@ export class EncryptionService {
 		let encrypt = cipher.update(secret, 'utf8', 'hex')
 		encrypt += cipher.final('hex');
 
+		// creao l'auto tag per assicurarmi nel database che la stringa non sia mai stata modificata 
+		// o attaccata in alcun modo
 		const authTag = cipher.getAuthTag().toString('hex');
 
-		 // Unisce IV, AuthTag e testo cifrato
+		// Unisce IV, AuthTag e testo cifrato, separandolo con i 2 punti
 		return `${iv.toString('hex')}:${authTag}:${encrypt}`;
 	}
-//	l'obbietivo è creare un stringadi questo tipo
+//	l'obbietivo è creare un stringadi questo tipo per decryptare la chiave 
 /* 
 
-[ Il Secret ]			+  [ La Chiave Master (.env) ]	+  [ L'IV (Casuale) ]
+[ Il Secret ]		+			[ L'autoTag ]		+		[ L'IV (Casuale) ]
 
-  il codice generato		La chiave dell'env			Il punto di partenza per 
-	da proteggere			per decifrare il			garantire che nessuna chiave
-								codice					sia simile se  ci fossere 2 
+  il codice generato		Garantisce che il 			Il punto di partenza per 
+	da proteggere			sigillo non sia 			garantire che nessuna chiave
+								manomesso				sia simile se, ci fossere 2 
 														password uguali il codice verrebe
 														uguale altrimenti
 	
@@ -51,18 +45,47 @@ che garantisce la rileggibilita e l'impredivibilita del codice, anche per gli
 algoritmi di hashing visto che chiunque ha l'env puo revertire il codice
 */
 
-	public decrypting(twoFactorCode: string): string
+	public decrypting(twoFactorCode: string | null): string
 	{
-		// spezzo il codice
+		if (!twoFactorCode)
+			throw createHttpException(errors.auth.accessDenied);
+		try
+		{
+			// spezzo il codice
+			//ricavo l'IV e l'AuthTag da stringhe esadecimali
+			const [ivTemp, authTagTemp, keyTemp] = twoFactorCode.split(':');
+			const iv = Buffer.from(ivTemp, 'hex');
+			const authTag =  Buffer.from(authTagTemp, 'hex');
 
-		//ricavo l'IV e l'AuthTag da stringhe esadecimali a Buffer di byte
-		let splitedTwoFactorCode = twoFactorCode.split(':');
-		const iv = Buffer.from(splitedTwoFactorCode[0], 'hex');
-		const authTag =  Buffer.from(splitedTwoFactorCode[1], 'hex');
+			// Creo il decifratore usando lo stesso algoritmo
+			// la stessa chiave env e lo stesso IV cryptato per dare il punto di partenza
+			// Cosi da usare questo oggetto per decryptare ogni parte della chiave in parte per parte
+			const decipher = crypto.createDecipheriv('aes-256-gcm', this.encryptionKey, iv);
 
-		//
-		crypto.createDecipheriv(splitedTwoFactorCode[0],)
-		return 'hello';
+			// Imposto il sigillo di garanzia: se il testo nel DB è stato manomesso, darà errore qui!
+			// Si usa solo per verificare l'integrita non per descryptare il codice 
+			decipher.setAuthTag(authTag);
+
+			//Decifro la chiave da 'hex' a 'utf8' (testo leggibile)!
+			let decrypted = decipher.update(keyTemp, 'hex', 'utf8');
+
+	//		Qui final controlla che la stringa non sia manomessa e che tutto sia a norma altrimenti lancia una exeption
+			decrypted += decipher.final('utf8');
+
+			// 6. Restituisco la chiave non protetta 
+			return decrypted;
+		}catch(error)
+		{
+			throw createHttpException(errors.auth.accessDenied, 'Unable to decrypt the key, the data might be corrupted')
+		}
+
 	}
+	/* 
+												ATTENZIONE 
+	final puo essre usato solo una volta per motivi di sicureza, l'oggetto cipher o decipher viene disattivato
+	dopo l'utilizzo di final	
+	*/
+
+
 
 }

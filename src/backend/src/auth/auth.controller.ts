@@ -8,23 +8,33 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { PickType } from '@nestjs/mapped-types';
+import { createHttpException, errors } from 'src/common/config/error.config';
+import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
 
 export class ConfirmPasswordDto extends PickType(SignInUserDto, ['password'] as const) {}
+export class TwoFactorCode extends PickType(TwoFactorAuth, ['code'] as const){}
 
 /* 
 Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il
   controllo dei tipi e di non tentare di emettere metadati a runtime
 */
+interface jwts{
+	accessToken: string,
+	refreshToken: string,
+}
+
+interface twofactor {
+	tempToken: string,
+	twofAuth: true;
+}
+
 @Controller('auth')
 export class AuthController
 {
 	constructor(private authService: AuthService){} 
 
-	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
-	@Post('signin')
-	async signIn(@Body() signInDto: SignInUserDto, @Res({ passthrough: true }) response: Response,)
+	private setAuthCookie(response: Response, jwts: jwts)
 	{
-		const jwts = await this.authService.signIn(signInDto.email, signInDto.password);
 		response.cookie('accessToken', jwts.accessToken, {
 			httpOnly: true,
 			secure: true, // li invia solo su connessioni protetta (HTTPS)
@@ -39,11 +49,28 @@ export class AuthController
 			sameSite: 'strict',
 			maxAge: days(7),
 			path: '/api/auth/refresh',			// Il browser lo invia solo a questa API
-	});
+		});
+	}
+
+	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+	@Post('signin')
+	async signIn(@Body() signInDto: SignInUserDto, @Res({ passthrough: true }) response: Response,)
+	{
+
+		let result: jwts | twofactor = await this.authService.signIn(signInDto.email, signInDto.password);
+
+		// controllo se ce la proprietà 'tempToken' dentro result
+		if('tempToken' in result)
+			return result;
+		else
+			this.setAuthCookie(response, result);
+		
 	return {
 	 	 message: 'Authentication append with success',
    		};
 	}
+
+	
 
 	@Post('signup')
 	async signUp(@Body() signUpDto: SignUpUserDto)
@@ -89,7 +116,11 @@ export class AuthController
 		});
 		return { message: 'Token refreshed successfully' }; 
 	}
+// ---------------------------------------------------------------------------------------------------------------------
 
+//											TWO FACTOR AUTH
+
+// ---------------------------------------------------------------------------------------------------------------------
 	@Auth()
 	@Post('twofactor/enable')
 	async towFactorEnable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
@@ -97,16 +128,26 @@ export class AuthController
 		return (await this.authService.twoFactorAuthEnable(id, userPassword.password));
 	}
 
-	@Auth()
-	@Post('twofactor/verify')
-	async verify(@CurrentUser('id') id :number, @Body('code') code: string)
+	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+	@Post('twofactor/access')
+	async accessTwoFactor( @Res({ passthrough: true }) response: Response, @Body() twoFactor: TwoFactorAuth)
 	{
-		if(code)
-		return (await this.authService.verify(id, code));
+		let jwts: jwts;
+
+		jwts = await this.authService.twoFactorSignin(twoFactor)
+		this.setAuthCookie(response, jwts);
+		return { message: 'Authentication append with success' };
 	}
 
-	@Post()
-	@Get('twofactor/disable')
+	@Auth()
+	@Post('twofactor/verify')
+	async verify(@CurrentUser('id') id :number, @Body() code: TwoFactorCode)
+	{
+		return (await this.authService.verify(id, code.code));
+	}
+
+	@Auth()
+	@Post('twofactor/disable')
 	async towFactorDisable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
 	{
 		return (await this.authService.twoFactorAuthDisable(id, userPassword.password));
