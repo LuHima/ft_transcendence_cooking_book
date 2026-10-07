@@ -7,7 +7,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http.exeption.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma.exception.filter';
-import { join } from 'path';
+import { RECIPE_UPLOADS_DIR, UPLOADS_DIR } from './common/config/upload-paths';
 import * as fs from 'fs';
 
 async function bootstrap() {
@@ -15,8 +15,8 @@ async function bootstrap() {
   // Spegnimanto pulito in caso di SIGINT ecc..
   app.enableShutdownHooks();
   // Assicura che la directory uploads/recipes esista e serve i file statici
-  fs.mkdirSync(join(process.cwd(), 'uploads/recipes'), { recursive: true });
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+  fs.mkdirSync(RECIPE_UPLOADS_DIR, { recursive: true });
+  app.useStaticAssets(UPLOADS_DIR, {
     prefix: '/uploads/',
   });
   // Al posto di scrivere http://localhost:3000 si srive /api/

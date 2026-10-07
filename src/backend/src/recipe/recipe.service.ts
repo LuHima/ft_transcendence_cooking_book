@@ -18,6 +18,7 @@ import {
   LocalizedRecipeDetailResponse,
 } from './dto/localized-recipe.response';
 import { ProductionConfig } from '../common/config/production.config';
+import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import * as fs from 'fs';
 
 @Injectable()
@@ -786,9 +787,10 @@ export class RecipeService {
   // Helper to safely delete physical file from disk
   private async safeUnlink(fileUrl?: string | null): Promise<void> {
     if (!fileUrl) return;
-    const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
+    const absolutePath = resolveStoredUploadPath(fileUrl);
+    if (!absolutePath) return;
     try {
-      await fs.promises.unlink(relativePath);
+      await fs.promises.unlink(absolutePath);
     } catch (err: any) {
       if (err?.code !== 'ENOENT') {
         // Safe fallback ignoring non-existent files

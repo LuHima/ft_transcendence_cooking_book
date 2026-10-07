@@ -6,7 +6,9 @@ import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { RecipeService } from './recipe.service';
 import { ProductionConfig } from '../common/config/production.config';
+import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
 import * as fs from 'fs';
+import { join } from 'path';
 
 describe('RecipeService', () => {
   let service: RecipeService;
@@ -1032,10 +1034,18 @@ describe('RecipeService', () => {
       expect(mockPrisma.recipe.delete).toHaveBeenCalledWith({
         where: { id: 1 },
       });
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/cover-1.jpg');
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/video-1.mp4');
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/step-1.jpg');
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/gallery-1.jpg');
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'cover-1.jpg'),
+      );
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'video-1.mp4'),
+      );
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'step-1.jpg'),
+      );
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'gallery-1.jpg'),
+      );
       expect(result).toEqual({ id: 1 });
 
       unlinkSpy.mockRestore();
@@ -1324,7 +1334,9 @@ describe('RecipeService', () => {
 
       const res = await service.deleteCoverImage(1, 1);
 
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/cover-1.jpg');
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'cover-1.jpg'),
+      );
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { cover_image_url: null },
@@ -1351,7 +1363,9 @@ describe('RecipeService', () => {
 
       const res = await service.deleteVideo(1, 1);
 
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/video-1.mp4');
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'video-1.mp4'),
+      );
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { video_url: null },
@@ -1383,7 +1397,9 @@ describe('RecipeService', () => {
 
       const res = await service.deleteStepImage(1, 1, 1);
 
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/step-1.jpg');
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'step-1.jpg'),
+      );
       expect(mockPrisma.recipeStep.update).toHaveBeenCalledWith({
         where: { id: 10 },
         data: { image_url: null },
@@ -1411,7 +1427,9 @@ describe('RecipeService', () => {
 
       const res = await service.deleteGalleryMedia(1, 5, 1);
 
-      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/gallery-1.jpg');
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'gallery-1.jpg'),
+      );
       expect(mockPrisma.recipeMedia.delete).toHaveBeenCalledWith({
         where: { id: 5 },
       });

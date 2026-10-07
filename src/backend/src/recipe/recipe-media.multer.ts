@@ -3,8 +3,8 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
-
-export const RECIPE_UPLOADS_DIR = 'uploads/recipes';
+import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
+export { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
 
 export const recipeImageStorage = diskStorage({
   destination: (req, file, cb) => {
