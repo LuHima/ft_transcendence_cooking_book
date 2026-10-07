@@ -44,11 +44,17 @@ export class RecipeController {
     return await this.recipeService.getAllRecipe(lang);
   }
 
-  // GET /api/recipes/page?value=id -> get recipe identified by id ???
+  // GET /api/recipes/page?page=1 (or legacy ?value=1) -> get paginated recipe stack
   @Get('page')
-  async getRecipeStack(@Query('value') id: number) {
-    if (!id) return [];
-    return await this.recipeService.getRecipeStack(id);
+  async getRecipeStack(
+    @Query('page') page?: number,
+    @Query('value') legacyValue?: number,
+  ) {
+    const rawPage = page ?? legacyValue ?? 1;
+    const pageNumber = Number(rawPage);
+    return await this.recipeService.getRecipeStack(
+      isNaN(pageNumber) || pageNumber < 1 ? 1 : pageNumber,
+    );
   }
 
   // GET /api/recipes/metadata -> get static enum metadata dictionaries

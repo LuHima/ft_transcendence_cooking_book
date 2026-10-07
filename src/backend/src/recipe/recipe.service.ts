@@ -66,14 +66,12 @@ export class RecipeService {
   // ---------------------------------------------------------------------------
 
   public async getRecipeStack(page: number) {
-    // Configure the page size and validate the requested page
-    let limit: number = 30;
+    const limit = 30;
     if (!page || page < 1) {
       throw new BadRequestException('Page number must be greater than 0');
     }
 
-    // Fetch one extra recipe to determine whether another page exists
-    let recipes = await this.prisma.recipe.findMany({
+    const recipes = await this.prisma.recipe.findMany({
       skip: (page - 1) * limit,
       take: limit + 1,
       include: {
@@ -88,17 +86,20 @@ export class RecipeService {
         id: 'asc',
       },
     });
-    if (recipes.length === 0) throw new NotFoundException('Recipes not found');
 
-    // Trim the look-ahead item and build pagination metadata
     const hasNextPage = recipes.length > limit;
     const hasPreviousPage = page > 1;
     const items = hasNextPage ? recipes.slice(0, limit) : recipes;
-    let returnPage = items.map(({ user, ...recipe }) => ({
+    const returnPage = items.map(({ user, ...recipe }) => ({
       ...recipe,
       username: user?.username ?? null,
     }));
-    return { returnPage, hasNextPage, hasPreviousPage };
+
+    return {
+      returnPage,
+      hasNextPage,
+      hasPreviousPage,
+    };
   }
 
   // ---------------------------------------------------------------------------

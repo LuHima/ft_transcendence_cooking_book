@@ -1658,4 +1658,78 @@ describe('RecipeService', () => {
       });
     });
   });
+
+  describe('getRecipeStack', () => {
+    it('throws BadRequestException if page is less than 1 or not provided', async () => {
+      await expect(service.getRecipeStack(0)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.getRecipeStack(-1)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('returns empty returnPage array without throwing 404 when no recipes exist on page', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce([]);
+
+      const result = await service.getRecipeStack(5);
+
+      expect(result).toEqual({
+        returnPage: [],
+        hasNextPage: false,
+        hasPreviousPage: true,
+      });
+    });
+
+    it('returns empty returnPage array with hasPreviousPage false on page 1', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce([]);
+
+      const result = await service.getRecipeStack(1);
+
+      expect(result).toEqual({
+        returnPage: [],
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    });
+
+    it('returns paginated items and indicates hasNextPage when more items exist', async () => {
+      const mockRecipes = Array.from({ length: 31 }, (_, i) => ({
+        id: i + 1,
+        title: `Recipe ${i + 1}`,
+        user: { username: `chef${i + 1}` },
+        translations: [],
+      }));
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+
+      const result = await service.getRecipeStack(1);
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 31,
+        include: {
+          translations: true,
+          user: {
+            select: {
+              username: true,
+            },
+          },
+        },
+        orderBy: {
+          id: 'asc',
+        },
+      });
+      expect(result.hasNextPage).toBe(true);
+      expect(result.hasPreviousPage).toBe(false);
+      expect(result.returnPage).toHaveLength(30);
+      expect(result.returnPage[0]).toEqual(
+        expect.objectContaining({
+          id: 1,
+          username: 'chef1',
+        }),
+      );
+      expect((result.returnPage[0] as any).user).toBeUndefined();
+    });
+  });
 });
+

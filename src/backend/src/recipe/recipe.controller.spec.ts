@@ -107,6 +107,48 @@ describe('RecipeController', () => {
     });
   });
 
+  describe('getRecipeStack', () => {
+    it('defaults to page 1 and returns paginated response object', async () => {
+      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: false };
+      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
+
+      const result = await controller.getRecipeStack(undefined, undefined);
+
+      expect(service.getRecipeStack).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockPage);
+    });
+
+    it('accepts page query parameter over legacy value parameter', async () => {
+      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: true };
+      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
+
+      const result = await controller.getRecipeStack(2, undefined);
+
+      expect(service.getRecipeStack).toHaveBeenCalledWith(2);
+      expect(result).toEqual(mockPage);
+    });
+
+    it('falls back to legacy value query parameter if page is not provided', async () => {
+      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: true };
+      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
+
+      const result = await controller.getRecipeStack(undefined, 3);
+
+      expect(service.getRecipeStack).toHaveBeenCalledWith(3);
+      expect(result).toEqual(mockPage);
+    });
+
+    it('sanitizes invalid or negative page numbers to 1', async () => {
+      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: false };
+      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
+
+      const result = await controller.getRecipeStack(-5, undefined);
+
+      expect(service.getRecipeStack).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockPage);
+    });
+  });
+
   describe('getMetadata', () => {
     it('delegates to catalogService.getMetadata', () => {
       const mockMeta = {
