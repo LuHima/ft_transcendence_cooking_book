@@ -69,7 +69,7 @@ export class AuthService
 			},
 		});
 
-		const payload = { sub: user.id, username: user.username, role: user.role, session:  jwtSes.id_session};
+		const payload = { sub: user.id, username: user.username, type: 'access', role: user.role, session:  jwtSes.id_session};
 		return {
 			accessToken: await this.jwtService.signAsync(payload, {expiresIn: '10m'}),
 			refreshToken: refreshToken,
@@ -79,12 +79,17 @@ export class AuthService
 	{
 		const code = authTwoFactor.code;
 		const tempToken = authTwoFactor.tempToken;
-
-		const payloads = await this.jwtService.verifyAsync(tempToken);
+		let payloads;
+		try
+		{
+			payloads = await this.jwtService.verifyAsync(tempToken);
+		}catch{
+			throw createHttpException(errors.auth.accessDenied, 'expired temp token')
+		}
 		if (!payloads.is2FaPending)
 			throw createHttpException(errors.auth.accessDenied);
 		const user = await this.prisma.user.findUnique({where: { id: payloads.userId }})
-		if (!user)
+		if (!user || !user.is_active || user.deleted_at)
 			throw createHttpException(errors.auth.accessDenied)
 		// decrypto la password nel database
 		const twoFactorCodeDecrypted = this.encryptionService.decrypting(user.two_factor);
@@ -99,16 +104,25 @@ export class AuthService
 
 	async signIn(email:string, pass: string) : Promise<{ accessToken: string, refreshToken: string} | {tempToken: string, twofAuth: true}>
 	{
-		const user = await this.usersService.getUserByEmail(email)
-		if (!user || !(await bcrypt.compare(pass, user.password_hash))) 
+		const user = await this.usersService.getUserByEmail(email.trim().toLowerCase());
+		if (!user)
 		{
 			throw new UnauthorizedException('invalid password or email');
 		}
+		if (!user.is_active || user.deleted_at)
+		{
+			throw createHttpException(errors.users.inactive);
+		}
+		if (!(await bcrypt.compare(pass, user.password_hash))) 
+		{
+			throw new UnauthorizedException('invalid password or email');
+		}
+
 		if(user.is_two_factor_enabled === true)
 		{
 			// Genero un codice temporaneo per permettere all'utente di fare l'autenticazione a 2 fattori 
 			// attraverso un'altra API
-			const tempToken = await this.jwtService.signAsync({ userId: user.id, is2FaPending: true}, {expiresIn: '5m'});
+			const tempToken = await this.jwtService.signAsync({ userId: user.id, is2FaPending: true, type: 'twofactAuth'}, {expiresIn: '5m'});
 			return {
 				tempToken: tempToken,
 				twofAuth: true,
@@ -150,7 +164,9 @@ export class AuthService
 
 	async signOut(id: number)
 	{
-		await this.prisma.jwtSession.delete({
+		if(!id)
+			return; // per non passarli in alcun caso undefined cancella un po tutto 
+		await this.prisma.jwtSession.deleteMany({
 			where: {
 				id_session: id,
 			},
@@ -166,12 +182,12 @@ export class AuthService
 			secret: process.env.JWT_REFRESH_SECRET, // lo faccio perche altrimenti usa la chiave di default per il jwt messa nel auth.module.ts
 			});
 		}catch { 
-			throw new UnauthorizedException('Refresh token scaduto o non valido'); 
+			throw createHttpException(errors.auth.accessDenied, 'expired access token or invalid'); 
 		}
 		
 		const user = await this.usersService.getUserById(payload.id);
-		if (!user) {
-			throw new UnauthorizedException('Access denied');
+		if (!user || !user.is_active || user.deleted_at) {
+			throw createHttpException(errors.auth.accessDenied);
 		}
 		const refreshTokenSession = await this.prisma.jwtSession.findUnique({
 			where: {
@@ -179,37 +195,20 @@ export class AuthService
 			}
 		});
 		if (!refreshTokenSession) {
-			throw new UnauthorizedException('Access denied');
+			throw createHttpException(errors.auth.refreshTokenExpired);
 		}
 		if(refreshTokenSession.expire_time_jwt.getTime() < Date.now())
 		{
-			throw new UnauthorizedException('expired access token');
+			throw createHttpException(errors.auth.refreshTokenExpired);
 		}
 		
 		const hashTokenFromUser = crypto.createHash('sha256').update(refreshToken).digest('hex');
 		if (hashTokenFromUser !== refreshTokenSession.hashed_jwt_token) {
-			throw new UnauthorizedException('invalid access token');
+			throw createHttpException(errors.auth.refreshTokenInvalid);
 		}
 
-		const newPayload = { sub: user.id, username: user.username, role: user.role, session: refreshTokenSession.id_session };
+		const newPayload = { sub: user.id, username: user.username, role: user.role, type: 'access', session: refreshTokenSession.id_session };
 		return await this.jwtService.signAsync(newPayload, { expiresIn: '10m' });
-	}
-
-	async infoUser(id: number)
-	{
-		const user = await this.prisma.user.findUnique({
-			where:
-			{
-				id: id
-			},
-			select: {
-				username: true,
-				role: true,
-				email: true,
-				avatar_url: true
-			}
-		});
-		return user;
 	}
 
 	async verify(id: number, code: string)
@@ -277,7 +276,7 @@ export class AuthService
 		//genero la chiave privata 
 		const key =  generateSecret();
 
-		// genera url per google authenticator
+		// genera url per authenticator
 		const otpAuthUrl = generateURI({
 			issuer: "weCook",
 			label: statusTwoFactorAuth.email,
