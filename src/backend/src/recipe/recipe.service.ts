@@ -1065,6 +1065,10 @@ export class RecipeService {
     userId: number,
     file: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
     // Fetch recipe from database
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
@@ -1103,6 +1107,10 @@ export class RecipeService {
     userId: number,
     file: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
     // Fetch recipe from database
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
@@ -1217,6 +1225,10 @@ export class RecipeService {
     userId: number,
     file: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
     // Fetch recipe from database
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },

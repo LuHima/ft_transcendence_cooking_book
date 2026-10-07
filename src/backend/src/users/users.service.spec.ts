@@ -211,6 +211,12 @@ describe('UsersService', () => {
         NotFoundException,
       );
     });
+
+    it('should throw BadRequestException without unlinking if file is undefined', async () => {
+      await expect(
+        service.updateAvatar(1, undefined as unknown as Express.Multer.File),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('deleteAvatar', () => {

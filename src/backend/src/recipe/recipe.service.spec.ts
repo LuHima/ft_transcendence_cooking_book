@@ -1148,6 +1148,12 @@ describe('RecipeService', () => {
         cover_image_url: '/uploads/recipes/recipe-1-cover.jpg',
       });
     });
+
+    it('should throw BadRequestException if cover image file is missing', async () => {
+      await expect(
+        service.uploadCoverImage(1, 1, undefined as unknown as Express.Multer.File),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 
   describe('uploadStepImage', () => {
@@ -1212,6 +1218,12 @@ describe('RecipeService', () => {
         step_number: 1,
         image_url: '/uploads/recipes/recipe-1-step-1.jpg',
       });
+    });
+
+    it('should throw BadRequestException if step illustration file is missing', async () => {
+      await expect(
+        service.uploadStepImage(1, 1, 1, undefined as unknown as Express.Multer.File),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -1359,6 +1371,12 @@ describe('RecipeService', () => {
       expect(result).toEqual({
         video_url: '/uploads/recipes/recipe-1-video.mp4',
       });
+    });
+
+    it('should throw BadRequestException if video file is missing', async () => {
+      await expect(
+        service.uploadVideo(1, 1, undefined as unknown as Express.Multer.File),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

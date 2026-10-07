@@ -166,6 +166,10 @@ export class UsersService {
     userId: number,
     file: Express.Multer.File,
   ): Promise<{ avatar_url: string }> {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
     // Verify that the target user exists
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
