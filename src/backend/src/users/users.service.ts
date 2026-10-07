@@ -62,6 +62,12 @@ export class UsersService {
       where: {
         id: id,
       },
+      select: {
+        id: true,
+        username: true,
+        avatar_url: true,
+        created_at: true,
+      },
     });
     if (!user) throw new NotFoundException('User not found');
     return user;

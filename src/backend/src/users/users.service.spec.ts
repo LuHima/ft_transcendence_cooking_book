@@ -285,4 +285,39 @@ describe('UsersService', () => {
       expect((result[0] as any).description).toBe('Classic');
     });
   });
+
+  describe('getUser', () => {
+    it('should return only public user profile fields and exclude password_hash and PII', async () => {
+      const publicUser = {
+        id: 1,
+        username: 'mario',
+        avatar_url: 'https://example.com/avatar.jpg',
+        created_at: new Date('2026-09-01T10:00:00Z'),
+      };
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+
+      const result = await service.getUser(1);
+
+      expect(result).toEqual(publicUser);
+      expect(result).not.toHaveProperty('password_hash');
+      expect(result).not.toHaveProperty('email');
+      expect(result).not.toHaveProperty('phone');
+      expect(result).not.toHaveProperty('address');
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: {
+          id: true,
+          username: true,
+          avatar_url: true,
+          created_at: true,
+        },
+      });
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getUser(999)).rejects.toThrow(NotFoundException);
+    });
+  });
 });

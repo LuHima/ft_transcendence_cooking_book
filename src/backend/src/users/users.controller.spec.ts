@@ -116,4 +116,23 @@ describe('UsersController', () => {
       expect(service.getLikedRecipes).toHaveBeenCalledWith(1, 'it');
     });
   });
+
+  describe('getUser', () => {
+    it('should delegate to service.getUser with user id', async () => {
+      const publicUser = {
+        id: 1,
+        username: 'mario',
+        avatar_url: 'https://example.com/avatar.jpg',
+        created_at: new Date('2026-09-01T10:00:00Z'),
+      };
+      (service.getUser as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(publicUser);
+
+      const result = await controller.getUser(1);
+
+      expect(result).toEqual(publicUser);
+      expect(service.getUser).toHaveBeenCalledWith(1);
+    });
+  });
 });

@@ -77,8 +77,7 @@ export class UsersController {
     return await this.userService.findUser(username);
   }
 
-  // GET /api/users/:id -> returns the id of the user identified by id
-  // WHAT'S THE PURPOSE OF THIS API ???
+  // GET /api/users/:id -> returns safe public profile of the user identified by id
   @Get(':id')
   async getUser(@Param('id', ParseIntPipe) id: number) {
     return await this.userService.getUser(id);
