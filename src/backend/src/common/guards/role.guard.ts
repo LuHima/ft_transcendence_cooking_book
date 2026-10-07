@@ -2,16 +2,14 @@
 import { Injectable, CanActivate, ExecutionContext} from '@nestjs/common';
 import { CaslAbilityFactory, AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 import { ActiveUserData } from '../decorators/current-user.decorator';
-import { HandlerRolePolicy } from '../decorators/policies.decorator';
-import { Action } from 'src/auth/casl/action.enum';
+
 import { Reflector } from '@nestjs/core';
 import { createHttpException, errors } from '../config/error.config';
-import { error } from 'console';
-
+/* 
 interface action{
 	action: string;
 	subject: string;
-}
+} */
 
 @Injectable()
 export class RolesGuard implements CanActivate {
