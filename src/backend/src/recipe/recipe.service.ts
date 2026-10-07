@@ -1085,6 +1085,10 @@ export class RecipeService {
       // Development only
       throw new NotFoundException('UserId not the author of the recipe');
 
+    if (recipe.cover_image_url) {
+      await this.safeUnlink(recipe.cover_image_url);
+    }
+
     const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
 
     // Update cover_image_url on recipe
@@ -1136,6 +1140,10 @@ export class RecipeService {
     });
     if (!step) {
       throw new NotFoundException('Recipe step not found');
+    }
+
+    if (step.image_url) {
+      await this.safeUnlink(step.image_url);
     }
 
     const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
@@ -1244,6 +1252,10 @@ export class RecipeService {
     else if (recipe.user_id !== userId)
       // Development only
       throw new NotFoundException('UserId not the author of the recipe');
+
+    if (recipe.video_url) {
+      await this.safeUnlink(recipe.video_url);
+    }
 
     const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
 

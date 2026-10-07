@@ -1154,6 +1154,27 @@ describe('RecipeService', () => {
         service.uploadCoverImage(1, 1, undefined as unknown as Express.Multer.File),
       ).rejects.toThrow(BadRequestException);
     });
+
+    it('should unlink old cover image when uploading a replacement cover image', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        cover_image_url: '/uploads/recipes/old-cover.png',
+      };
+      (prisma.recipe.findUnique as jest.Mock).mockResolvedValue(existingRecipe);
+      (prisma.recipe.update as jest.Mock).mockResolvedValue({
+        ...existingRecipe,
+        cover_image_url: '/uploads/recipes/new-cover.png',
+      });
+      const safeUnlinkSpy = jest
+        .spyOn(service as any, 'safeUnlink')
+        .mockResolvedValue(undefined);
+
+      const mockFile = { filename: 'new-cover.png' } as Express.Multer.File;
+      await service.uploadCoverImage(1, 1, mockFile);
+
+      expect(safeUnlinkSpy).toHaveBeenCalledWith('/uploads/recipes/old-cover.png');
+    });
   });
 
   describe('uploadStepImage', () => {
@@ -1224,6 +1245,30 @@ describe('RecipeService', () => {
       await expect(
         service.uploadStepImage(1, 1, 1, undefined as unknown as Express.Multer.File),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should unlink old step illustration when uploading a replacement step image', async () => {
+      const existingRecipe = { id: 1, user_id: 1 };
+      const existingStep = {
+        id: 10,
+        recipe_id: 1,
+        step_number: 1,
+        image_url: '/uploads/recipes/old-step.png',
+      };
+      (prisma.recipe.findUnique as jest.Mock).mockResolvedValue(existingRecipe);
+      (prisma.recipeStep.findFirst as jest.Mock).mockResolvedValue(existingStep);
+      (prisma.recipeStep.update as jest.Mock).mockResolvedValue({
+        ...existingStep,
+        image_url: '/uploads/recipes/new-step.png',
+      });
+      const safeUnlinkSpy = jest
+        .spyOn(service as any, 'safeUnlink')
+        .mockResolvedValue(undefined);
+
+      const mockFile = { filename: 'new-step.png' } as Express.Multer.File;
+      await service.uploadStepImage(1, 1, 1, mockFile);
+
+      expect(safeUnlinkSpy).toHaveBeenCalledWith('/uploads/recipes/old-step.png');
     });
   });
 
@@ -1377,6 +1422,27 @@ describe('RecipeService', () => {
       await expect(
         service.uploadVideo(1, 1, undefined as unknown as Express.Multer.File),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should unlink old video when uploading a replacement tutorial video', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        video_url: '/uploads/recipes/old-video.mp4',
+      };
+      (prisma.recipe.findUnique as jest.Mock).mockResolvedValue(existingRecipe);
+      (prisma.recipe.update as jest.Mock).mockResolvedValue({
+        ...existingRecipe,
+        video_url: '/uploads/recipes/new-video.mp4',
+      });
+      const safeUnlinkSpy = jest
+        .spyOn(service as any, 'safeUnlink')
+        .mockResolvedValue(undefined);
+
+      const mockFile = { filename: 'new-video.mp4' } as Express.Multer.File;
+      await service.uploadVideo(1, 1, mockFile);
+
+      expect(safeUnlinkSpy).toHaveBeenCalledWith('/uploads/recipes/old-video.mp4');
     });
   });
 
