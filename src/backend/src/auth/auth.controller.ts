@@ -84,11 +84,9 @@ export class AuthController {
     return { message: 'Signed out successfully' };
   }
 
-  /*
-  POST /api/refresh
-  No @Auth() guard here as user needs this API to get a new accessToken, while
-  @Auth() requires him to already have a valid accessToken.
-  */
+  // POST /api/refresh -> get a new accessToken
+  // No @Auth() guard here as user needs this API to get a new accessToken,
+  // while @Auth() requires him to already have a valid accessToken.
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
   async refresh(
@@ -109,11 +107,5 @@ export class AuthController {
       path: '/',
     });
     return { message: 'Token refreshed successfully' };
-  }
-
-  @Auth()
-  @Get('user')
-  async infoMe(@CurrentUser('id') id: number) {
-    return await this.authService.infoUser(id);
   }
 }
