@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
@@ -16,12 +17,14 @@ import {
   RecipeMediaResponse,
   LocalizedRecipeDetailResponse,
 } from './dto/localized-recipe.response';
+import { ProductionConfig } from '../common/config/production.config';
 
 @Injectable()
 export class RecipeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly translationService: TranslationService,
+    private readonly productionConfig: ProductionConfig,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -487,9 +490,16 @@ export class RecipeService {
       },
     });
 
-    // Guard: Verify ownership (only author can update recipe)
-    if (!recipe || recipe.user_id !== userId)
+    // Guard: Verify existence and ownership (only author can update recipe)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
       throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException(`You're not the author of the recipe`);
 
     // Update locale-invariant data of the recipe
     const updateData: any = {};
@@ -738,8 +748,17 @@ export class RecipeService {
         id: recipeId,
       },
     });
-    if (!recipe || recipe.user_id != userId)
+    
+    // Guard: Verify existence and ownership (only author can update recipe)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
       throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException(`You're not the author of the recipe`);
 
     // Delete the verified recipe
     return await this.prisma.recipe.delete({
@@ -768,10 +787,16 @@ export class RecipeService {
       },
     });
 
-    // Guard: Verify ownership (only author can retry translation)
-    if (!recipe || recipe.user_id !== userId) {
+    // Guard: Verify existence and ownership (only author can update recipe)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
       throw new NotFoundException('Recipe not found');
-    }
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException(`You're not the author of the recipe`);
 
     // Guard: Only allow retry when previous translation status failed
     if (recipe.translation_status !== 'failed') {

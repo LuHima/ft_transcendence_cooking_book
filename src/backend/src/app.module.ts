@@ -17,6 +17,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CaslModule } from './auth/casl/casl-ability.factory/casl-ability.module';
 import { CleanExpiredToken } from './common/task/clean-expired-token.service';
+import { ProductionConfigModule } from './common/config/production-config.module';
 
 @Module({
   // NELL'ARRAY SI METTE SOLO IL NOME DELLA CLASSE, NON LA STRINGA DEL PERCORSO!
@@ -30,6 +31,7 @@ import { CleanExpiredToken } from './common/task/clean-expired-token.service';
     ScheduleModule.forRoot(), // ScheduleModule cerca in tutti i provider per un @Cron vede quanto manca al tempo stabilito e setta un timer per chiamare quella funzione non appena finisce il sistemma setta in automatico un'altro timer per la volta successiva
     ThrottlerModule.forRoot([{ ttl: 100, limit: 4 }]),
     CaslModule,
+    ProductionConfigModule,
   ],
   // gli import degli altri module creati
   controllers: [AppController], //qui ci vanno i file controller
