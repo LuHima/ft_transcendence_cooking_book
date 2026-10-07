@@ -171,9 +171,33 @@ export default function Scene() {
       <button
         type="button"
         onClick={() => setIsBullseyeOn((prev) => !prev)}
-        className="absolute left-4 top-4 z-10 rounded-full border border-amber-200/60 bg-[#2b1a0d]/80 px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 shadow-lg backdrop-blur-sm transition hover:bg-[#3b260f]"
+        role="switch"
+        className={`absolute left-4 top-4 z-10 flex h-10 w-[4.5rem] items-center rounded-full border p-1 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 motion-reduce:transition-none ${isBullseyeOn ? "border-amber-200/70 bg-amber-100/15 shadow-amber-300/20" : "border-white/20 bg-black/40 shadow-black/30"}`}
       >
-        {isBullseyeOn ? "Occhio di bue: on" : "Occhio di bue: off"}
+        <span
+          aria-hidden="true"
+          className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-lg transition-all duration-500 ease-out motion-reduce:transition-none ${isBullseyeOn ? "translate-x-0 bg-amber-200 text-[#38220b] shadow-amber-300/40" : "translate-x-8 bg-stone-200 text-[#26303b] shadow-black/40"}`}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className={`absolute h-5 w-5 transition-all duration-300 ease-out motion-reduce:transition-none ${isBullseyeOn ? "rotate-0 scale-100 opacity-100" : "-rotate-45 scale-50 opacity-0"}`}
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <circle cx="12" cy="12" r="3.5" />
+            <path strokeLinecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+          </svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className={`absolute h-5 w-5 transition-all duration-300 ease-out motion-reduce:transition-none ${isBullseyeOn ? "rotate-45 scale-50 opacity-0" : "rotate-0 scale-100 opacity-100"}`}
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z" />
+          </svg>
+        </span>
       </button>
       <Canvas
         fallback={
