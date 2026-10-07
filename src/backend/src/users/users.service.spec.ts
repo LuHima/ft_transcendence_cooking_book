@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -33,6 +37,9 @@ describe('UsersService', () => {
             user: {
               findUnique: jest.fn(),
               update: jest.fn(),
+            },
+            like: {
+              findMany: jest.fn(),
             },
           },
         },
@@ -114,9 +121,13 @@ describe('UsersService', () => {
     });
 
     it('should throw NotFoundException if user is not found during update', async () => {
-      (prisma.user.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
+      (prisma.user.update as jest.Mock).mockRejectedValue(
+        new Error('Record not found'),
+      );
 
-      await expect(service.updateMe(999, { first_name: 'Luigi' })).rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateMe(999, { first_name: 'Luigi' }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should convert birth_date string to Date object and empty string to null', async () => {
@@ -137,15 +148,141 @@ describe('UsersService', () => {
       );
     });
 
+    it('should normalize email by trimming and lowercasing', async () => {
+      (prisma.user.update as jest.Mock).mockResolvedValue(mockDbUser);
+
+      await service.updateMe(1, { email: '  Mario.Rossi@Example.COM  ' });
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ email: 'mario.rossi@example.com' }),
+        }),
+      );
+    });
+
+    it('should throw BadRequestException if birth_date has an invalid format', async () => {
+      await expect(
+        service.updateMe(1, { birth_date: 'not-a-valid-date' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('should throw ConflictException if username or email already exists', async () => {
       const p2002Error = new Error('Unique constraint failed');
       (p2002Error as any).code = 'P2002';
       (prisma.user.update as jest.Mock).mockRejectedValue(p2002Error);
 
-      await expect(service.updateMe(1, { email: 'already_taken@example.com' })).rejects.toThrow(
-        ConflictException,
+      await expect(
+        service.updateMe(1, { email: 'already_taken@example.com' }),
+      ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('updateAvatar', () => {
+    const mockFile = {
+      filename: 'avatar-12345.png',
+      originalname: 'test.png',
+      path: '/uploads/avatars/avatar-12345.png',
+    } as Express.Multer.File;
+
+    it('should update avatar and return avatar_url', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        avatar_url: null,
+      });
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        id: 1,
+        avatar_url: '/uploads/avatars/avatar-12345.png',
+      });
+
+      const result = await service.updateAvatar(1, mockFile);
+
+      expect(result).toEqual({
+        avatar_url: '/uploads/avatars/avatar-12345.png',
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { avatar_url: '/uploads/avatars/avatar-12345.png' },
+      });
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.updateAvatar(999, mockFile)).rejects.toThrow(
+        NotFoundException,
       );
     });
   });
-});
 
+  describe('deleteAvatar', () => {
+    it('should set avatar_url to null and return success message', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        avatar_url: '/uploads/avatars/old-avatar.png',
+      });
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        id: 1,
+        avatar_url: null,
+      });
+
+      const result = await service.deleteAvatar(1);
+
+      expect(result).toEqual({ message: 'Avatar deleted successfully' });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { avatar_url: null },
+      });
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.deleteAvatar(999)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('getLikedRecipes', () => {
+    const mockLikes = [
+      {
+        user_id: 1,
+        recipe_id: 10,
+        created_at: new Date('2026-09-10'),
+        recipe: {
+          id: 10,
+          source_lang: 'it',
+          translations: [
+            { locale: 'it', title: 'Carbonara', description: 'Classica' },
+            {
+              locale: 'en',
+              title: 'Carbonara English',
+              description: 'Classic',
+            },
+          ],
+          user: { id: 2, username: 'chef_mario', avatar_url: null },
+        },
+      },
+    ];
+
+    it('should return liked recipes with translations by default', async () => {
+      (prisma.like.findMany as jest.Mock).mockResolvedValue(mockLikes);
+
+      const result = await service.getLikedRecipes(1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(10);
+      expect(result[0].translations).toBeDefined();
+    });
+
+    it('should return liked recipes with localized title and description when lang is provided', async () => {
+      (prisma.like.findMany as jest.Mock).mockResolvedValue(mockLikes);
+
+      const result = await service.getLikedRecipes(1, 'en');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(10);
+      expect((result[0] as any).title).toBe('Carbonara English');
+      expect((result[0] as any).description).toBe('Classic');
+    });
+  });
+});

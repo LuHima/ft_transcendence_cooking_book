@@ -33,6 +33,8 @@ describe('RecipeController', () => {
     deleteVideo: jest.fn(),
     deleteStepImage: jest.fn(),
     deleteGalleryMedia: jest.fn(),
+    likeRecipe: jest.fn(),
+    unlikeRecipe: jest.fn(),
   };
 
   const sampleDto: CreateRecipeDto = {
@@ -91,6 +93,18 @@ describe('RecipeController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('getRecipes', () => {
+    it('delegates to service.getAllRecipe with optional lang query parameter', async () => {
+      const mockResult = [{ id: 1, title: 'Carbonara' }];
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.getRecipes('it');
+
+      expect(service.getAllRecipe).toHaveBeenCalledWith('it');
+      expect(result).toEqual(mockResult);
+    });
   });
 
   describe('getMetadata', () => {
@@ -258,6 +272,33 @@ describe('RecipeController', () => {
       const result = await controller.deleteGalleryMedia(1, 10, 42);
 
       expect(service.deleteGalleryMedia).toHaveBeenCalledWith(1, 10, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('likeRecipe', () => {
+    it('delegates to service.likeRecipe with recipeId and userId', async () => {
+      const mockResult = { message: 'Recipe liked successfully', liked: true };
+      mockRecipeService.likeRecipe.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.likeRecipe(1, 42);
+
+      expect(service.likeRecipe).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('unlikeRecipe', () => {
+    it('delegates to service.unlikeRecipe with recipeId and userId', async () => {
+      const mockResult = {
+        message: 'Recipe unliked successfully',
+        liked: false,
+      };
+      mockRecipeService.unlikeRecipe.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.unlikeRecipe(1, 42);
+
+      expect(service.unlikeRecipe).toHaveBeenCalledWith(1, 42);
       expect(result).toEqual(mockResult);
     });
   });

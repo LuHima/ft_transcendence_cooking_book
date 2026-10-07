@@ -53,6 +53,11 @@ describe('RecipeService', () => {
     tag: {
       findMany: jest.fn(),
     },
+    like: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn(),
+    },
   };
 
   const mockTranslationService = {
@@ -111,6 +116,46 @@ describe('RecipeService', () => {
         return cb(mockPrisma);
       }
       return cb;
+    });
+  });
+
+  describe('getAllRecipe', () => {
+    const mockRecipes = [
+      {
+        id: 1,
+        source_lang: 'it',
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Classica' },
+          { locale: 'en', title: 'Carbonara English', description: 'Classic' },
+        ],
+      },
+    ];
+
+    it('returns all recipes with translations when lang is omitted', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+
+      const result = await service.getAllRecipe();
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
+        include: { translations: true },
+      });
+      expect(result).toEqual(mockRecipes);
+    });
+
+    it('projects localized title and description when lang is provided', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+
+      const result = await service.getAllRecipe('en');
+
+      expect(result).toEqual([
+        {
+          id: 1,
+          source_lang: 'it',
+          title: 'Carbonara English',
+          description: 'Classic',
+          translations: mockRecipes[0].translations,
+        },
+      ]);
     });
   });
 
@@ -1435,6 +1480,98 @@ describe('RecipeService', () => {
       });
       expect(res).toEqual({ message: 'Gallery media deleted successfully' });
       unlinkSpy.mockRestore();
+    });
+  });
+
+  describe('likeRecipe', () => {
+    it('throws NotFoundException if recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.likeRecipe(999, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('creates like when recipe is not yet liked', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10 });
+      mockPrisma.like.findUnique.mockResolvedValueOnce(null);
+      mockPrisma.like.create.mockResolvedValueOnce({
+        user_id: 1,
+        recipe_id: 10,
+      });
+
+      const res = await service.likeRecipe(10, 1);
+
+      expect(mockPrisma.like.create).toHaveBeenCalledWith({
+        data: { user_id: 1, recipe_id: 10 },
+      });
+      expect(res).toEqual({
+        message: 'Recipe liked successfully',
+        liked: true,
+      });
+    });
+
+    it('returns success idempotently if recipe is already liked', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10 });
+      mockPrisma.like.findUnique.mockResolvedValueOnce({
+        user_id: 1,
+        recipe_id: 10,
+      });
+
+      const res = await service.likeRecipe(10, 1);
+
+      expect(mockPrisma.like.create).not.toHaveBeenCalled();
+      expect(res).toEqual({
+        message: 'Recipe liked successfully',
+        liked: true,
+      });
+    });
+  });
+
+  describe('unlikeRecipe', () => {
+    it('throws NotFoundException if recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.unlikeRecipe(999, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('deletes like when recipe is liked', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10 });
+      mockPrisma.like.findUnique.mockResolvedValueOnce({
+        user_id: 1,
+        recipe_id: 10,
+      });
+      mockPrisma.like.delete.mockResolvedValueOnce({
+        user_id: 1,
+        recipe_id: 10,
+      });
+
+      const res = await service.unlikeRecipe(10, 1);
+
+      expect(mockPrisma.like.delete).toHaveBeenCalledWith({
+        where: {
+          user_id_recipe_id: { user_id: 1, recipe_id: 10 },
+        },
+      });
+      expect(res).toEqual({
+        message: 'Recipe unliked successfully',
+        liked: false,
+      });
+    });
+
+    it('returns success idempotently if recipe was not liked', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10 });
+      mockPrisma.like.findUnique.mockResolvedValueOnce(null);
+
+      const res = await service.unlikeRecipe(10, 1);
+
+      expect(mockPrisma.like.delete).not.toHaveBeenCalled();
+      expect(res).toEqual({
+        message: 'Recipe unliked successfully',
+        liked: false,
+      });
     });
   });
 });

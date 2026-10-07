@@ -7,6 +7,7 @@ export const UPLOADS_DIR = configuredUploadsDir
   : resolve(process.cwd(), 'uploads');
 
 export const RECIPE_UPLOADS_DIR = join(UPLOADS_DIR, 'recipes');
+export const AVATAR_UPLOADS_DIR = join(UPLOADS_DIR, 'avatars');
 
 export function resolveStoredUploadPath(fileUrl: string): string | null {
   const normalizedUrl = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
@@ -20,10 +21,7 @@ export function resolveStoredUploadPath(fileUrl: string): string | null {
   );
   const pathFromUploadsRoot = relative(UPLOADS_DIR, absolutePath);
 
-  if (
-    pathFromUploadsRoot.startsWith('..') ||
-    isAbsolute(pathFromUploadsRoot)
-  ) {
+  if (pathFromUploadsRoot.startsWith('..') || isAbsolute(pathFromUploadsRoot)) {
     return null;
   }
 

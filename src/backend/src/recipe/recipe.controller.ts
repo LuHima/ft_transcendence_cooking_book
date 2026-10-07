@@ -40,8 +40,8 @@ export class RecipeController {
 
   // GET /api/recipes -> get all recipes
   @Get()
-  async getRecipes() {
-    return await this.recipeService.getAllRecipe();
+  async getRecipes(@Query('lang') lang?: string) {
+    return await this.recipeService.getAllRecipe(lang);
   }
 
   // GET /api/recipes/page?value=id -> get recipe identified by id ???
@@ -217,6 +217,26 @@ export class RecipeController {
     @CurrentUser('id') userId: number,
   ) {
     return this.recipeService.deleteGalleryMedia(recipeId, mediaId, userId);
+  }
+
+  // POST /api/recipes/:id/like -> like a recipe
+  @Auth()
+  @Post(':id/like')
+  async likeRecipe(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.likeRecipe(id, userId);
+  }
+
+  // DELETE /api/recipes/:id/like -> unlike a recipe
+  @Auth()
+  @Delete(':id/like')
+  async unlikeRecipe(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.unlikeRecipe(id, userId);
   }
 }
 

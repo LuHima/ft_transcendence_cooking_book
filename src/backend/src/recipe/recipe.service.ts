@@ -31,18 +31,35 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
-  public async getAllRecipe(who?: 'user' | 'id') {
-    // Return the temporary test response when a filter is provided
-    // ! who e' solo per testare
-    if (who) {
-      return 'hello';
-    }
-
+  public async getAllRecipe(lang?: string) {
     // Fetch all recipes together with their translations
-    return await this.prisma.recipe.findMany({
+    const recipes = await this.prisma.recipe.findMany({
       include: {
         translations: true,
       },
+    });
+
+    if (!lang) {
+      return recipes;
+    }
+
+    // Attach localized title and description when a language is requested
+    return recipes.map((recipe) => {
+      const targetLocale =
+        lang === 'it' || lang === 'en' || lang === 'fr'
+          ? lang
+          : recipe.source_lang;
+
+      const translation =
+        recipe.translations.find((t) => t.locale === targetLocale) ??
+        recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+        recipe.translations[0];
+
+      return {
+        ...recipe,
+        title: translation?.title ?? null,
+        description: translation?.description ?? null,
+      };
     });
   }
 
@@ -1390,5 +1407,83 @@ export class RecipeService {
     });
 
     return { message: 'Gallery media deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  async likeRecipe(
+    recipeId: number,
+    userId: number,
+  ): Promise<{ message: string; liked: boolean }> {
+    // Verify that the recipe exists
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    // Check if the like already exists
+    const existingLike = await this.prisma.like.findUnique({
+      where: {
+        user_id_recipe_id: {
+          user_id: userId,
+          recipe_id: recipeId,
+        },
+      },
+    });
+
+    // Create like record if it does not exist yet (idempotent)
+    if (!existingLike) {
+      await this.prisma.like.create({
+        data: {
+          user_id: userId,
+          recipe_id: recipeId,
+        },
+      });
+    }
+
+    return { message: 'Recipe liked successfully', liked: true };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  async unlikeRecipe(
+    recipeId: number,
+    userId: number,
+  ): Promise<{ message: string; liked: boolean }> {
+    // Verify that the recipe exists
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    // Check if the like exists
+    const existingLike = await this.prisma.like.findUnique({
+      where: {
+        user_id_recipe_id: {
+          user_id: userId,
+          recipe_id: recipeId,
+        },
+      },
+    });
+
+    // Remove like record if present (idempotent)
+    if (existingLike) {
+      await this.prisma.like.delete({
+        where: {
+          user_id_recipe_id: {
+            user_id: userId,
+            recipe_id: recipeId,
+          },
+        },
+      });
+    }
+
+    return { message: 'Recipe unliked successfully', liked: false };
   }
 }

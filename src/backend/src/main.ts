@@ -7,15 +7,20 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http.exeption.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma.exception.filter';
-import { RECIPE_UPLOADS_DIR, UPLOADS_DIR } from './common/config/upload-paths';
+import {
+  RECIPE_UPLOADS_DIR,
+  AVATAR_UPLOADS_DIR,
+  UPLOADS_DIR,
+} from './common/config/upload-paths';
 import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // Spegnimanto pulito in caso di SIGINT ecc..
   app.enableShutdownHooks();
-  // Assicura che la directory uploads/recipes esista e serve i file statici
+  // Assicura che le directory uploads esistano e serve i file statici
   fs.mkdirSync(RECIPE_UPLOADS_DIR, { recursive: true });
+  fs.mkdirSync(AVATAR_UPLOADS_DIR, { recursive: true });
   app.useStaticAssets(UPLOADS_DIR, {
     prefix: '/uploads/',
   });

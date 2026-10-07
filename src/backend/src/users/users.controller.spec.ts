@@ -63,12 +63,57 @@ describe('UsersController', () => {
         city: 'Milano',
       };
       const updatedUser = { ...mockUser, ...updateDto };
-      (service.updateMe as jest.Mock<any>) = jest.fn<() => Promise<any>>().mockResolvedValue(updatedUser);
+      (service.updateMe as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(updatedUser);
 
       const result = await controller.updateMe(1, updateDto as any);
 
       expect(result).toEqual(updatedUser);
       expect(service.updateMe).toHaveBeenCalledWith(1, updateDto);
+    });
+  });
+
+  describe('updateAvatar', () => {
+    it('should upload avatar and return avatar_url', async () => {
+      const mockFile = { filename: 'avatar-123.jpg' } as Express.Multer.File;
+      const mockResponse = { avatar_url: '/uploads/avatars/avatar-123.jpg' };
+      (service.updateAvatar as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockResponse);
+
+      const result = await controller.updateAvatar(1, mockFile);
+
+      expect(result).toEqual(mockResponse);
+      expect(service.updateAvatar).toHaveBeenCalledWith(1, mockFile);
+    });
+  });
+
+  describe('deleteAvatar', () => {
+    it('should delete avatar and return success message', async () => {
+      const mockResponse = { message: 'Avatar deleted successfully' };
+      (service.deleteAvatar as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockResponse);
+
+      const result = await controller.deleteAvatar(1);
+
+      expect(result).toEqual(mockResponse);
+      expect(service.deleteAvatar).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('getLikedRecipes', () => {
+    it('should return liked recipes for the authenticated user', async () => {
+      const mockRecipes = [{ id: 10, title: 'Carbonara' }];
+      (service.getLikedRecipes as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockRecipes);
+
+      const result = await controller.getLikedRecipes(1, 'it');
+
+      expect(result).toEqual(mockRecipes);
+      expect(service.getLikedRecipes).toHaveBeenCalledWith(1, 'it');
     });
   });
 });
