@@ -18,6 +18,7 @@ import {
   LocalizedRecipeDetailResponse,
 } from './dto/localized-recipe.response';
 import { ProductionConfig } from '../common/config/production.config';
+import * as fs from 'fs';
 
 @Injectable()
 export class RecipeService {
@@ -307,6 +308,38 @@ export class RecipeService {
       recipe.source_lang,
     );
 
+    // Validate catalog references (verify ingredients and tags exist)
+    const requestedIngredientIds = Array.from(
+      new Set(recipe.ingredients.map((i) => i.ingredient_id)),
+    );
+    const existingIngredients = await this.prisma.ingredient.findMany({
+      where: { id: { in: requestedIngredientIds } },
+      select: { id: true },
+    });
+    const existingIngredientIds = new Set(existingIngredients.map((i) => i.id));
+    for (const id of requestedIngredientIds) {
+      if (!existingIngredientIds.has(id)) {
+        throw new BadRequestException(
+          `Ingredient with ID ${id} does not exist in catalog`,
+        );
+      }
+    }
+    if (recipe.tag_ids && recipe.tag_ids.length > 0) {
+      const requestedTagIds = Array.from(new Set(recipe.tag_ids));
+      const existingTags = await this.prisma.tag.findMany({
+        where: { id: { in: requestedTagIds } },
+        select: { id: true },
+      });
+      const existingTagIds = new Set(existingTags.map((t) => t.id));
+      for (const id of requestedTagIds) {
+        if (!existingTagIds.has(id)) {
+          throw new BadRequestException(
+            `Tag with ID ${id} does not exist in catalog`,
+          );
+        }
+      }
+    }
+
     // Prepare text payload for batch translation
     const allLocales = ['it', 'en', 'fr'];
     const targetLocales = allLocales.filter((l) => l !== recipe.source_lang);
@@ -499,7 +532,7 @@ export class RecipeService {
       throw new NotFoundException('Recipe not found');
     else if (recipe.user_id !== userId)
       // Development only
-      throw new NotFoundException(`You're not the author of the recipe`);
+      throw new NotFoundException('UserId not the author of the recipe');
 
     // Update locale-invariant data of the recipe
     const updateData: any = {};
@@ -533,6 +566,18 @@ export class RecipeService {
     // Determine target locale for translation update (defaults to recipe
     // source_lang)
     const targetLocale = recipeUpdate.locale ?? recipe.source_lang;
+
+    // Validate retranslation invariant: retranslation is only allowed when modifying source_lang
+    if (
+      retranslate &&
+      recipeUpdate.locale &&
+      recipeUpdate.locale !== recipe.source_lang
+    ) {
+      throw new BadRequestException(
+        `Automatic retranslation is only permitted when modifying the recipe in its source language ('${recipe.source_lang}')`,
+      );
+    }
+
     const transUpdate: any = {};
     if (recipeUpdate.title !== undefined)
       transUpdate.title = recipeUpdate.title;
@@ -738,6 +783,21 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
+  // Helper to safely delete physical file from disk
+  private async safeUnlink(fileUrl?: string | null): Promise<void> {
+    if (!fileUrl) return;
+    const relativePath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
+    try {
+      await fs.promises.unlink(relativePath);
+    } catch (err: any) {
+      if (err?.code !== 'ENOENT') {
+        // Safe fallback ignoring non-existent files
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+
   /* 
   DELETE /api/recipes/:id
   */
@@ -747,9 +807,17 @@ export class RecipeService {
       where: {
         id: recipeId,
       },
+      include: {
+        steps: {
+          select: { image_url: true },
+        },
+        recipe_media: {
+          select: { url: true },
+        },
+      },
     });
-    
-    // Guard: Verify existence and ownership (only author can update recipe)
+
+    // Guard: Verify existence and ownership (only author can delete recipe)
     // In production, both return 404 (security through obscurity)
     if (
       !recipe ||
@@ -758,14 +826,32 @@ export class RecipeService {
       throw new NotFoundException('Recipe not found');
     else if (recipe.user_id !== userId)
       // Development only
-      throw new NotFoundException(`You're not the author of the recipe`);
+      throw new NotFoundException('UserId not the author of the recipe');
 
-    // Delete the verified recipe
-    return await this.prisma.recipe.delete({
+    // Collect all media URLs to clean up from disk
+    const mediaUrls: string[] = [];
+    if (recipe.cover_image_url) mediaUrls.push(recipe.cover_image_url);
+    if (recipe.video_url) mediaUrls.push(recipe.video_url);
+    for (const step of recipe.steps ?? []) {
+      if (step.image_url) mediaUrls.push(step.image_url);
+    }
+    for (const media of recipe.recipe_media ?? []) {
+      if (media.url) mediaUrls.push(media.url);
+    }
+
+    // Delete the verified recipe from database (cascades relational rows)
+    const deleted = await this.prisma.recipe.delete({
       where: {
         id: recipeId,
       },
     });
+
+    // Safely remove physical files from filesystem
+    for (const url of mediaUrls) {
+      await this.safeUnlink(url);
+    }
+
+    return deleted;
   }
 
   // ---------------------------------------------------------------------------
@@ -796,7 +882,7 @@ export class RecipeService {
       throw new NotFoundException('Recipe not found');
     else if (recipe.user_id !== userId)
       // Development only
-      throw new NotFoundException(`You're not the author of the recipe`);
+      throw new NotFoundException('UserId not the author of the recipe');
 
     // Guard: Only allow retry when previous translation status failed
     if (recipe.translation_status !== 'failed') {
@@ -960,13 +1046,21 @@ export class RecipeService {
     userId: number,
     file: Express.Multer.File,
   ) {
-    // Guard: Verify recipe existence and caller ownership
+    // Fetch recipe from database
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
     });
-    if (!recipe || recipe.user_id !== userId) {
+
+    // Guard: Verify existence and ownership (only author can post images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
       throw new NotFoundException('Recipe not found');
-    }
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
 
     const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
 
@@ -990,13 +1084,21 @@ export class RecipeService {
     userId: number,
     file: Express.Multer.File,
   ) {
-    // Guard: Verify recipe existence and caller ownership
+    // Fetch recipe from database
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
     });
-    if (!recipe || recipe.user_id !== userId) {
+
+    // Guard: Verify existence and ownership (only author can post images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
       throw new NotFoundException('Recipe not found');
-    }
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
 
     // Guard: Verify recipe step exists
     const step = await this.prisma.recipeStep.findFirst({
@@ -1030,13 +1132,21 @@ export class RecipeService {
     userId: number,
     files: Express.Multer.File[],
   ) {
-    // Guard: Verify recipe existence and caller ownership
+    // Fetch recipe from database
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
     });
-    if (!recipe || recipe.user_id !== userId) {
+
+    // Guard: Verify existence and ownership (only author can post images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
       throw new NotFoundException('Recipe not found');
-    }
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
 
     // Guard: Validate that at least one file is provided
     if (!files || files.length === 0) {
@@ -1088,13 +1198,21 @@ export class RecipeService {
     userId: number,
     file: Express.Multer.File,
   ) {
-    // Guard: Verify recipe existence and caller ownership
+    // Fetch recipe from database
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
     });
-    if (!recipe || recipe.user_id !== userId) {
+
+    // Guard: Verify existence and ownership (only author can post the video)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
       throw new NotFoundException('Recipe not found');
-    }
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
 
     const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
 
@@ -1105,5 +1223,170 @@ export class RecipeService {
     });
 
     return { video_url: fileUrl };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/cover
+  */
+  async deleteCoverImage(recipeId: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Safely remove cover image file from disk
+    if (recipe.cover_image_url) {
+      await this.safeUnlink(recipe.cover_image_url);
+    }
+
+    // Nullify cover_image_url on recipe
+    await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { cover_image_url: null },
+    });
+
+    return { message: 'Cover image deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/video
+  */
+  async deleteVideo(recipeId: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete the video)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Safely remove video file from disk
+    if (recipe.video_url) {
+      await this.safeUnlink(recipe.video_url);
+    }
+
+    // Nullify video_url on recipe
+    await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { video_url: null },
+    });
+
+    return { message: 'Recipe video deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/steps/:stepNumber/image
+  */
+  async deleteStepImage(recipeId: number, stepNumber: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Locate requested step
+    const step = await this.prisma.recipeStep.findFirst({
+      where: {
+        recipe_id: recipeId,
+        step_number: stepNumber,
+      },
+    });
+    if (!step) {
+      throw new NotFoundException('Step not found');
+    }
+
+    // Safely remove step image file from disk
+    if (step.image_url) {
+      await this.safeUnlink(step.image_url);
+    }
+
+    // Nullify image_url on step
+    await this.prisma.recipeStep.update({
+      where: { id: step.id },
+      data: { image_url: null },
+    });
+
+    return { message: 'Step image deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/gallery/:mediaId
+  */
+  async deleteGalleryMedia(recipeId: number, mediaId: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Locate requested gallery media
+    const media = await this.prisma.recipeMedia.findFirst({
+      where: {
+        id: mediaId,
+        recipe_id: recipeId,
+      },
+    });
+    if (!media) {
+      throw new NotFoundException('Gallery media not found');
+    }
+
+    // Safely remove gallery image file from disk
+    if (media.url) {
+      await this.safeUnlink(media.url);
+    }
+
+    // Delete gallery media record
+    await this.prisma.recipeMedia.delete({
+      where: { id: media.id },
+    });
+
+    return { message: 'Gallery media deleted successfully' };
   }
 }

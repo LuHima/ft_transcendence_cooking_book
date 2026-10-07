@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RecipeController } from './recipe.controller';
 import { RecipeService } from './recipe.service';
+import { CatalogService } from '../catalog/catalog.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/role.guard';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
@@ -9,6 +10,11 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 describe('RecipeController', () => {
   let controller: RecipeController;
   let service: RecipeService;
+  let catalogService: CatalogService;
+
+  const mockCatalogService = {
+    getMetadata: jest.fn(),
+  };
 
   const mockRecipeService = {
     createRecipe: jest.fn(),
@@ -23,6 +29,10 @@ describe('RecipeController', () => {
     uploadStepImage: jest.fn(),
     uploadGalleryMedia: jest.fn(),
     uploadVideo: jest.fn(),
+    deleteCoverImage: jest.fn(),
+    deleteVideo: jest.fn(),
+    deleteStepImage: jest.fn(),
+    deleteGalleryMedia: jest.fn(),
   };
 
   const sampleDto: CreateRecipeDto = {
@@ -62,6 +72,10 @@ describe('RecipeController', () => {
           provide: RecipeService,
           useValue: mockRecipeService,
         },
+        {
+          provide: CatalogService,
+          useValue: mockCatalogService,
+        },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -72,10 +86,28 @@ describe('RecipeController', () => {
 
     controller = module.get<RecipeController>(RecipeController);
     service = module.get<RecipeService>(RecipeService);
+    catalogService = module.get<CatalogService>(CatalogService);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('getMetadata', () => {
+    it('delegates to catalogService.getMetadata', () => {
+      const mockMeta = {
+        courses: ['first_course'],
+        difficulties: ['easy'],
+        units: ['g'],
+        categories: ['produce'],
+      };
+      mockCatalogService.getMetadata.mockReturnValueOnce(mockMeta);
+
+      const result = controller.getMetadata();
+
+      expect(catalogService.getMetadata).toHaveBeenCalled();
+      expect(result).toEqual(mockMeta);
+    });
   });
 
   describe('addRecipe', () => {
@@ -122,12 +154,7 @@ describe('RecipeController', () => {
       const updateDto = { title: 'Updated Title' };
       const result = await controller.updateRecipe(1, updateDto, 42, 'true');
 
-      expect(service.updateRecipe).toHaveBeenCalledWith(
-        42,
-        1,
-        updateDto,
-        true,
-      );
+      expect(service.updateRecipe).toHaveBeenCalledWith(42, 1, updateDto, true);
       expect(result).toEqual(mockResult);
     });
   });
@@ -169,11 +196,7 @@ describe('RecipeController', () => {
       const mockFiles = [{ filename: 'g1.jpg' }] as any[];
       const result = await controller.uploadGalleryMedia(1, 42, mockFiles);
 
-      expect(service.uploadGalleryMedia).toHaveBeenCalledWith(
-        1,
-        42,
-        mockFiles,
-      );
+      expect(service.uploadGalleryMedia).toHaveBeenCalledWith(1, 42, mockFiles);
       expect(result).toEqual(mockResult);
     });
   });
@@ -187,6 +210,54 @@ describe('RecipeController', () => {
       const result = await controller.uploadVideo(1, 42, mockFile);
 
       expect(service.uploadVideo).toHaveBeenCalledWith(1, 42, mockFile);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteCoverImage', () => {
+    it('delegates to service.deleteCoverImage with recipeId and userId', async () => {
+      const mockResult = { message: 'Cover image deleted successfully' };
+      mockRecipeService.deleteCoverImage.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.deleteCoverImage(1, 42);
+
+      expect(service.deleteCoverImage).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteVideo', () => {
+    it('delegates to service.deleteVideo with recipeId and userId', async () => {
+      const mockResult = { message: 'Recipe video deleted successfully' };
+      mockRecipeService.deleteVideo.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.deleteVideo(1, 42);
+
+      expect(service.deleteVideo).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteStepImage', () => {
+    it('delegates to service.deleteStepImage with recipeId, stepNumber, and userId', async () => {
+      const mockResult = { message: 'Step image deleted successfully' };
+      mockRecipeService.deleteStepImage.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.deleteStepImage(1, 2, 42);
+
+      expect(service.deleteStepImage).toHaveBeenCalledWith(1, 2, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteGalleryMedia', () => {
+    it('delegates to service.deleteGalleryMedia with recipeId, mediaId, and userId', async () => {
+      const mockResult = { message: 'Gallery media deleted successfully' };
+      mockRecipeService.deleteGalleryMedia.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.deleteGalleryMedia(1, 10, 42);
+
+      expect(service.deleteGalleryMedia).toHaveBeenCalledWith(1, 10, 42);
       expect(result).toEqual(mockResult);
     });
   });

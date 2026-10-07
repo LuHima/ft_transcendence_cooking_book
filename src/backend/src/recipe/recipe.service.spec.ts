@@ -5,11 +5,17 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { RecipeService } from './recipe.service';
+import { ProductionConfig } from '../common/config/production.config';
+import * as fs from 'fs';
 
 describe('RecipeService', () => {
   let service: RecipeService;
   let prisma: PrismaService;
   let translationService: TranslationService;
+
+  const mockProductionConfig = {
+    isProduction: jest.fn().mockReturnValue(false),
+  };
 
   const mockPrisma = {
     $transaction: jest.fn(),
@@ -35,6 +41,14 @@ describe('RecipeService', () => {
     },
     recipeMedia: {
       create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      delete: jest.fn(),
+    },
+    ingredient: {
+      findMany: jest.fn(),
+    },
+    tag: {
       findMany: jest.fn(),
     },
   };
@@ -79,6 +93,7 @@ describe('RecipeService', () => {
         RecipeService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: ProductionConfig, useValue: mockProductionConfig },
       ],
     }).compile();
 
@@ -87,6 +102,8 @@ describe('RecipeService', () => {
     translationService = module.get<TranslationService>(TranslationService);
 
     jest.clearAllMocks();
+    mockPrisma.ingredient.findMany.mockResolvedValue([{ id: 1 }]);
+    mockPrisma.tag.findMany.mockResolvedValue([{ id: 1 }]);
     mockPrisma.$transaction.mockImplementation(async (cb: any) => {
       if (typeof cb === 'function') {
         return cb(mockPrisma);
@@ -108,6 +125,33 @@ describe('RecipeService', () => {
       );
 
       expect(mockTranslationService.verifySourceLanguage).toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException if any ingredient_id does not exist in catalog', async () => {
+      mockTranslationService.verifySourceLanguage.mockResolvedValueOnce(
+        undefined,
+      );
+      mockPrisma.ingredient.findMany.mockResolvedValueOnce([]); // no existing ingredient
+
+      await expect(service.createRecipe(sampleDto, 1)).rejects.toThrow(
+        new BadRequestException(
+          'Ingredient with ID 1 does not exist in catalog',
+        ),
+      );
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException if any tag_id does not exist in catalog', async () => {
+      mockTranslationService.verifySourceLanguage.mockResolvedValueOnce(
+        undefined,
+      );
+      mockPrisma.ingredient.findMany.mockResolvedValueOnce([{ id: 1 }]);
+      mockPrisma.tag.findMany.mockResolvedValueOnce([]); // tag 1 does not exist
+
+      await expect(service.createRecipe(sampleDto, 1)).rejects.toThrow(
+        new BadRequestException('Tag with ID 1 does not exist in catalog'),
+      );
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
     });
 
@@ -285,7 +329,11 @@ describe('RecipeService', () => {
             duration: 10,
             image_url: null,
             translations: [
-              { locale: 'it', title: 'Cuocere', description: 'Cuoci la pasta.' },
+              {
+                locale: 'it',
+                title: 'Cuocere',
+                description: 'Cuoci la pasta.',
+              },
               { locale: 'en', title: 'Cook', description: 'Cook pasta.' },
             ],
           },
@@ -295,7 +343,11 @@ describe('RecipeService', () => {
             duration: 5,
             image_url: null,
             translations: [
-              { locale: 'it', title: 'Rosolare', description: 'Rosola il guanciale.' },
+              {
+                locale: 'it',
+                title: 'Rosolare',
+                description: 'Rosola il guanciale.',
+              },
               { locale: 'en', title: 'Brown', description: 'Brown guanciale.' },
             ],
           },
@@ -305,7 +357,11 @@ describe('RecipeService', () => {
             ingredient_id: 5,
             quantity: 150,
             unit: UnitOfMeasure.g,
-            notes: { it: 'a listarelle', en: 'sliced strips', fr: 'en lanières' },
+            notes: {
+              it: 'a listarelle',
+              en: 'sliced strips',
+              fr: 'en lanières',
+            },
             ingredient: {
               id: 5,
               slug: 'guanciale',
@@ -414,7 +470,11 @@ describe('RecipeService', () => {
             duration: 10,
             image_url: null,
             translations: [
-              { locale: 'it', title: 'Preparare la crema', description: 'Montare uova e mascarpone.' },
+              {
+                locale: 'it',
+                title: 'Preparare la crema',
+                description: 'Montare uova e mascarpone.',
+              },
             ],
           },
         ],
@@ -428,9 +488,7 @@ describe('RecipeService', () => {
               id: 8,
               slug: 'mascarpone',
               category: 'dairy_eggs',
-              translations: [
-                { locale: 'it', name: 'Mascarpone' },
-              ],
+              translations: [{ locale: 'it', name: 'Mascarpone' }],
             },
           },
         ],
@@ -439,9 +497,7 @@ describe('RecipeService', () => {
             tag: {
               id: 2,
               slug: 'vegetarian',
-              translations: [
-                { locale: 'it', name: 'Vegetariano' },
-              ],
+              translations: [{ locale: 'it', name: 'Vegetariano' }],
             },
           },
         ],
@@ -454,7 +510,9 @@ describe('RecipeService', () => {
 
       expect(result.id).toBe(2);
       expect(result.title).toBe('Tiramisù Tradizionale');
-      expect(result.description).toBe('Il classico tiramisù veneto con savoiardi.');
+      expect(result.description).toBe(
+        'Il classico tiramisù veneto con savoiardi.',
+      );
       expect(result.preservation).toBe('2 giorni in frigo.');
       expect(result.tips).toBe('Usa caffè freddo.');
 
@@ -664,9 +722,9 @@ describe('RecipeService', () => {
         user_id: 2,
       });
 
-      await expect(
-        service.updateRecipe(1, 1, { servings: 4 }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateRecipe(1, 1, { servings: 4 })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('updates invariant metrics and recalculates total_time accurately', async () => {
@@ -767,6 +825,91 @@ describe('RecipeService', () => {
       );
     });
 
+    it('throws BadRequestException when retranslate is true but locale differs from source_lang', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        source_lang: 'it',
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto',
+            description: 'Descrizione italiana.',
+          },
+        ],
+        steps: [],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      await expect(
+        service.updateRecipe(
+          1,
+          1,
+          {
+            title: 'New Pesto Pasta',
+            locale: 'en',
+          },
+          true,
+        ),
+      ).rejects.toThrow(
+        new BadRequestException(
+          "Automatic retranslation is only permitted when modifying the recipe in its source language ('it')",
+        ),
+      );
+
+      expect(mockTranslationService.translateBatch).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('allows updating non-source locale when retranslate is false or omitted', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        source_lang: 'it',
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto',
+            description: 'Descrizione italiana.',
+          },
+        ],
+        steps: [],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
+
+      await expect(
+        service.updateRecipe(
+          1,
+          1,
+          {
+            title: 'New Pesto Pasta',
+            locale: 'en',
+          },
+          false,
+        ),
+      ).resolves.toBeDefined();
+
+      expect(mockTranslationService.translateBatch).not.toHaveBeenCalled();
+      expect(mockPrisma.recipeTranslation.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            recipe_id_locale: {
+              recipe_id: 1,
+              locale: 'en',
+            },
+          },
+          update: expect.objectContaining({
+            title: 'New Pesto Pasta',
+          }),
+        }),
+      );
+    });
+
     it('re-translates source text across remaining locales when retranslate is true and updates translation_status', async () => {
       const existingRecipe = {
         id: 1,
@@ -844,6 +987,61 @@ describe('RecipeService', () => {
     });
   });
 
+  describe('deleteRecipe', () => {
+    it('throws NotFoundException when recipe does not exist or user is not author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.deleteRecipe(999, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 2,
+        steps: [],
+        recipe_media: [],
+      });
+
+      await expect(service.deleteRecipe(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('deletes recipe and unlinks all associated media files from disk', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+
+      const mockRecipe = {
+        id: 1,
+        user_id: 1,
+        cover_image_url: '/uploads/recipes/cover-1.jpg',
+        video_url: '/uploads/recipes/video-1.mp4',
+        steps: [
+          { image_url: '/uploads/recipes/step-1.jpg' },
+          { image_url: null },
+        ],
+        recipe_media: [{ url: '/uploads/recipes/gallery-1.jpg' }],
+      };
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipe);
+      mockPrisma.recipe.delete.mockResolvedValueOnce({ id: 1 });
+
+      const result = await service.deleteRecipe(1, 1);
+
+      expect(mockPrisma.recipe.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/cover-1.jpg');
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/video-1.mp4');
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/step-1.jpg');
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/gallery-1.jpg');
+      expect(result).toEqual({ id: 1 });
+
+      unlinkSpy.mockRestore();
+    });
+  });
+
   describe('uploadCoverImage', () => {
     const mockFile = {
       fieldname: 'file',
@@ -860,18 +1058,18 @@ describe('RecipeService', () => {
     it('throws NotFoundException when recipe does not exist or user is not author', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
 
-      await expect(
-        service.uploadCoverImage(999, 1, mockFile),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.uploadCoverImage(999, 1, mockFile)).rejects.toThrow(
+        NotFoundException,
+      );
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         id: 1,
         user_id: 2,
       });
 
-      await expect(
-        service.uploadCoverImage(1, 1, mockFile),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.uploadCoverImage(1, 1, mockFile)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('updates cover_image_url on recipe and returns URL', async () => {
@@ -916,9 +1114,9 @@ describe('RecipeService', () => {
         user_id: 2,
       });
 
-      await expect(
-        service.uploadStepImage(1, 1, 1, mockFile),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.uploadStepImage(1, 1, 1, mockFile)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when step with stepNumber is not found', async () => {
@@ -928,9 +1126,9 @@ describe('RecipeService', () => {
       });
       mockPrisma.recipeStep.findFirst.mockResolvedValueOnce(null);
 
-      await expect(
-        service.uploadStepImage(1, 5, 1, mockFile),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.uploadStepImage(1, 5, 1, mockFile)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('updates image_url on target RecipeStep and returns step number and image URL', async () => {
@@ -988,9 +1186,9 @@ describe('RecipeService', () => {
         user_id: 2,
       });
 
-      await expect(
-        service.uploadGalleryMedia(1, 1, mockFiles),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.uploadGalleryMedia(1, 1, mockFiles)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws BadRequestException when no files provided or total gallery items exceed 3', async () => {
@@ -1008,9 +1206,9 @@ describe('RecipeService', () => {
         { id: 2, order: 1 },
       ]);
 
-      await expect(
-        service.uploadGalleryMedia(1, 1, mockFiles),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.uploadGalleryMedia(1, 1, mockFiles)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('creates RecipeMedia records with sequential ordering and returns created media', async () => {
@@ -1072,18 +1270,18 @@ describe('RecipeService', () => {
     it('throws NotFoundException when recipe does not exist or user is not author', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
 
-      await expect(
-        service.uploadVideo(999, 1, mockFile),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.uploadVideo(999, 1, mockFile)).rejects.toThrow(
+        NotFoundException,
+      );
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         id: 1,
         user_id: 2,
       });
 
-      await expect(
-        service.uploadVideo(1, 1, mockFile),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.uploadVideo(1, 1, mockFile)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('updates video_url on recipe and returns video URL', async () => {
@@ -1106,6 +1304,119 @@ describe('RecipeService', () => {
       expect(result).toEqual({
         video_url: '/uploads/recipes/recipe-1-video.mp4',
       });
+    });
+  });
+
+  describe('deleteCoverImage', () => {
+    it('deletes cover image file and nullifies cover_image_url', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+        cover_image_url: '/uploads/recipes/cover-1.jpg',
+      });
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 1,
+        cover_image_url: null,
+      });
+
+      const res = await service.deleteCoverImage(1, 1);
+
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/cover-1.jpg');
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { cover_image_url: null },
+      });
+      expect(res).toEqual({ message: 'Cover image deleted successfully' });
+      unlinkSpy.mockRestore();
+    });
+  });
+
+  describe('deleteVideo', () => {
+    it('deletes video file and nullifies video_url', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+        video_url: '/uploads/recipes/video-1.mp4',
+      });
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 1,
+        video_url: null,
+      });
+
+      const res = await service.deleteVideo(1, 1);
+
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/video-1.mp4');
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { video_url: null },
+      });
+      expect(res).toEqual({ message: 'Recipe video deleted successfully' });
+      unlinkSpy.mockRestore();
+    });
+  });
+
+  describe('deleteStepImage', () => {
+    it('deletes step image file and nullifies step image_url', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+      mockPrisma.recipeStep.findFirst.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        step_number: 1,
+        image_url: '/uploads/recipes/step-1.jpg',
+      });
+      mockPrisma.recipeStep.update.mockResolvedValueOnce({
+        id: 10,
+        image_url: null,
+      });
+
+      const res = await service.deleteStepImage(1, 1, 1);
+
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/step-1.jpg');
+      expect(mockPrisma.recipeStep.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { image_url: null },
+      });
+      expect(res).toEqual({ message: 'Step image deleted successfully' });
+      unlinkSpy.mockRestore();
+    });
+  });
+
+  describe('deleteGalleryMedia', () => {
+    it('deletes gallery image file and deletes RecipeMedia record', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+      mockPrisma.recipeMedia.findFirst.mockResolvedValueOnce({
+        id: 5,
+        recipe_id: 1,
+        url: '/uploads/recipes/gallery-1.jpg',
+      });
+      mockPrisma.recipeMedia.delete.mockResolvedValueOnce({ id: 5 });
+
+      const res = await service.deleteGalleryMedia(1, 5, 1);
+
+      expect(unlinkSpy).toHaveBeenCalledWith('uploads/recipes/gallery-1.jpg');
+      expect(mockPrisma.recipeMedia.delete).toHaveBeenCalledWith({
+        where: { id: 5 },
+      });
+      expect(res).toEqual({ message: 'Gallery media deleted successfully' });
+      unlinkSpy.mockRestore();
     });
   });
 });

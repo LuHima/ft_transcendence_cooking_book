@@ -20,6 +20,7 @@ import {
   recipeVideoMulterOptions,
 } from './recipe-media.multer';
 import { RecipeService } from './recipe.service';
+import { CatalogService } from '../catalog/catalog.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -30,7 +31,10 @@ import { Action } from 'src/auth/casl/action.enum';
 
 @Controller('recipes')
 export class RecipeController {
-  constructor(private readonly recipeService: RecipeService) {}
+  constructor(
+    private readonly recipeService: RecipeService,
+    private readonly catalogService: CatalogService,
+  ) {}
 
   // TODO @Roles(Role.admin)
 
@@ -45,6 +49,12 @@ export class RecipeController {
   async getRecipeStack(@Query('value') id: number) {
     if (!id) return [];
     return await this.recipeService.getRecipeStack(id);
+  }
+
+  // GET /api/recipes/metadata -> get static enum metadata dictionaries
+  @Get('metadata')
+  getMetadata() {
+    return this.catalogService.getMetadata();
   }
 
   // GET /api/recipe/search?value=name -> get recipe by name
@@ -165,6 +175,48 @@ export class RecipeController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.recipeService.uploadVideo(recipeId, userId, file);
+  }
+
+  // DELETE /api/recipes/:id/cover -> delete recipe cover image
+  @Auth(Action.Update, 'Recipe')
+  @Delete(':id/cover')
+  async deleteCoverImage(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.deleteCoverImage(recipeId, userId);
+  }
+
+  // DELETE /api/recipes/:id/video -> delete recipe tutorial video
+  @Auth(Action.Update, 'Recipe')
+  @Delete(':id/video')
+  async deleteVideo(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.deleteVideo(recipeId, userId);
+  }
+
+  // DELETE /api/recipes/:id/steps/:stepNumber/image -> delete step illustration
+  @Auth(Action.Update, 'Recipe')
+  @Delete(':id/steps/:stepNumber/image')
+  async deleteStepImage(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Param('stepNumber', ParseIntPipe) stepNumber: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.deleteStepImage(recipeId, stepNumber, userId);
+  }
+
+  // DELETE /api/recipes/:id/gallery/:mediaId -> delete individual gallery photo
+  @Auth(Action.Update, 'Recipe')
+  @Delete(':id/gallery/:mediaId')
+  async deleteGalleryMedia(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Param('mediaId', ParseIntPipe) mediaId: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return this.recipeService.deleteGalleryMedia(recipeId, mediaId, userId);
   }
 }
 
