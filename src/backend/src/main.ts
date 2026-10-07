@@ -38,6 +38,8 @@ async function bootstrap() {
       whitelist: true,
       // Dà errore se riceve campi non esistenti per i DTO
       forbidNonWhitelisted: true,
+      // Abilita la trasformazione dei tipi e l'esecuzione di @Transform()
+      transform: true,
     }),
   );
   app.enableCors({
