@@ -7,12 +7,14 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { authenticate } from 'passport';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { Action } from 'src/auth/casl/action.enum';
+import { CaslCheckAbility } from 'src/auth/casl/casl-checkAbility';
+import { createHttpException, errors } from 'src/common/config/error.config';
 
 @Controller('recipes')
 export class RecipeController 
 {
 
-	constructor(private readonly recipeService: RecipeService) {}
+	constructor(private readonly recipeService: RecipeService, private checkPolicy: CaslCheckAbility) {}
 	
 	// TODO @Roles(Role.admin)
 
@@ -55,6 +57,9 @@ export class RecipeController
 	@Patch(':id') // modifica una ricetta 
 	async updateRecipe(@Param('id', ParseIntPipe) recipeId: number, @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto, @CurrentUser('id')userId:number)
 	{
+		if (!(await this.checkPolicy.canAbility(recipeId)))
+			throw createHttpException(errors.common.forbidden);
+
 		return this.recipeService.updateRecipe(userId, recipeId, updateRecipeDto)
 	}
 	@Auth(Action.Delete, 'Recipe')

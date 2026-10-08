@@ -8,9 +8,11 @@ import { REQUEST } from '@nestjs/core';
 import { ActiveUserData } from "src/common/decorators/current-user.decorator";
 import { createHttpException, errors } from "src/common/config/error.config";
 import type { Request } from 'express';
+
+
 export interface CaslActionData {
 	action: Action;
-	subject: Subjects;
+	subject: string;
 }
 
 
@@ -21,14 +23,14 @@ export class CaslCheckAbility		// la stessa richiesta http Che non esiste all'av
 									
 	constructor(private readonly prisma: PrismaService,private readonly caslFactory: CaslAbilityFactory, @Inject(REQUEST) private req: Request) {}
 	// nel costruttore poi inietto la richiesta http in maniera da leggere il payload
-	async canAbility(idTarget: number)
+	async canAbility(idTarget: number): Promise<boolean>
 	{
-		const casl: CaslActionData = this.req['casl'];
-		const user: ActiveUserData = this.req['user'];
+		const casl = this.req['casl'] as CaslActionData | undefined;
+		const user = this.req['user'] as ActiveUserData | undefined;
 
 		if (!casl || !user)
 			throw createHttpException(errors.common.unauthorized);
-		let target = null;
+		let target:any = null;
 		if(casl.subject === 'User')
 			target = await this.prisma.user.findUnique({ where: { id: idTarget } });
 		else if(casl.subject === 'Recipe')

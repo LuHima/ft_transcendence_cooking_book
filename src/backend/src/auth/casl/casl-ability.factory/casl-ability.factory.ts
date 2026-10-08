@@ -10,7 +10,7 @@ import { Recipe, Comment, User, Role } from "@prisma/client";
 	export type Subjects = InferSubjects<Recipe & ForcedSubject<'Recipe'>> | InferSubjects<Comment & ForcedSubject<'Comment'>> | InferSubjects<User & ForcedSubject<'User'>> | 'all';      
 
 	// Definisce il tipo AppAbility con MongoAbility
-	export type AppAbility = MongoAbility<[Action, Subjects]>;
+	export type AppAbility = MongoAbility<[Action, Subjects], any>;
 /* 
 	1. Action: Cosa puoi fare (es. Read, Update, Delete).
 	2. Subject: Su cosa puoi farlo (es. una ricetta, un commento, un utente).
