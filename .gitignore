@@ -107,10 +107,13 @@ ehthumbs.db
 
 # AI agents data
 .agents/
+.superpowers/
 skills-lock.json
 AGENTS.md
 GLOSSARY.md
-docs/
+docs/adr
+docs/agents
+docs/superpowers
 
 # ---------------------------------------------------------------------------- #
 # PROJECT SPECIFIC                                                             #
