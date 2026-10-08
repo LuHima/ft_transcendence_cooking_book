@@ -1,9 +1,6 @@
 {
-  "dependencies": {
-    "react-router-dom": "^7.18.4"
-  },
-  
-  "prisma": {
-    "schema": "src/backend/prisma/schema.prisma"
+  "scripts": {
+    "install:all": "npm --prefix src/backend install && npm --prefix src/frontend install",
+    "update:all": "npm --prefix src/backend update && npm --prefix src/frontend update"
   }
 }
