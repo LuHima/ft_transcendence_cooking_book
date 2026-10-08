@@ -2,14 +2,8 @@
 import { Injectable, CanActivate, ExecutionContext} from '@nestjs/common';
 import { CaslAbilityFactory, AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 import { ActiveUserData } from '../decorators/current-user.decorator';
-
 import { Reflector } from '@nestjs/core';
 import { createHttpException, errors } from '../config/error.config';
-/* 
-interface action{
-	action: string;
-	subject: string;
-} */
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -25,6 +19,10 @@ export class RolesGuard implements CanActivate {
 
 		if (!data) { // se non ci sono regole faccio passare tutto
   			return true; 
+		}
+		request['casl'] = {
+			action: data.action,
+			subject: data.subject,
 		}
 		return userAbility.can(data.action, data.subject);
 	}

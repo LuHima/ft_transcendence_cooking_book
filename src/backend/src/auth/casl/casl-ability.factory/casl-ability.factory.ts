@@ -15,6 +15,8 @@ import { Recipe, Comment, User, Role } from "@prisma/client";
 	1. Action: Cosa puoi fare (es. Read, Update, Delete).
 	2. Subject: Su cosa puoi farlo (es. una ricetta, un commento, un utente).
 */
+
+
 @Injectable()
 export class CaslAbilityFactory {
 
@@ -23,7 +25,7 @@ export class CaslAbilityFactory {
 
 		if (user.role ===  Role.admin) {
 			can(Action.Manage, 'all');
-			cannot(Action.Ban, 'User', {user_id: user.id});
+			cannot(Action.Ban, 'User', {id: user.id});
 		}
 		else if (user.role === Role.moderator)
 		{
@@ -35,9 +37,33 @@ export class CaslAbilityFactory {
 			can(Action.Report, 'Comment');
 			can(Action.Ban, 'Recipe');
 			can(Action.Ban, 'Comment');
-			cannot(Action.Ban, 'User', {user_id: user.id});
+			can(Action.Ban, 'User');
+			
+			
+			cannot(Action.Ban, 'User', {id: user.id});
 			cannot(Action.Ban, 'User', { role: Role.admin });
 			cannot(Action.Ban, 'User', { role: Role.moderator });
+
+			cannot(Action.Ban, 'Recipe', { user_id: user.id });
+			cannot(Action.Ban, 'Recipe', {'user.role': Role.admin});
+			cannot(Action.Ban, 'Recipe', { 'user.role': Role.moderator });
+			// user.role mi fa vedere dentro la tabella user il ruolo perche piglia il target che li passo da fuori con la funzione ability.can()
+			// e ci fa target.user.role
+			// e essendo collegate le tabelle sul database, dalla ricetta arrivo all'utente
+
+			// stessa cosa percui mi trova id quando cerco User e non scrivo user_id come sulle ricette
+
+			// can(Action.Report, 'Comment'); se è cosi faccio solo un controllo sull'abilita di fare quella azione non gli passo nessun oggetto nel ability.can()
+			 
+			cannot(Action.Update, 'Recipe', { 'user.role': Role.admin});
+			cannot(Action.Update, 'Recipe', { 'user.role': Role.moderator });
+
+			cannot(Action.Delete, 'Recipe', {'user.role': Role.admin});
+			cannot(Action.Delete, 'Recipe', { 'user.role': Role.moderator });
+
+			cannot(Action.Ban, 'Comment', { 'user.role': Role.admin });
+			cannot(Action.Ban, 'Comment', { 'user.role': Role.moderator });
+			cannot(Action.Ban, 'Comment', { user_id: user.id });
 		}
 		else {
 			can(Action.Read, 'all');
