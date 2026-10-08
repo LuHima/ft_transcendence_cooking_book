@@ -6,22 +6,35 @@ import { Throttle, days, minutes } from '@nestjs/throttler';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
+import { Auth } from 'src/common/decorators/policies.decorator';
+import { PickType } from '@nestjs/mapped-types';
+import { createHttpException, errors } from 'src/common/config/error.config';
+import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
+
+export class ConfirmPasswordDto extends PickType(SignInUserDto, ['password'] as const) {}
+export class TwoFactorCode extends PickType(TwoFactorAuth, ['code'] as const){}
 
 /* 
-Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il      
+Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il
   controllo dei tipi e di non tentare di emettere metadati a runtime
 */
+interface jwts{
+	accessToken: string,
+	refreshToken: string,
+}
+
+interface twofactor {
+	tempToken: string,
+	twofAuth: true;
+}
+
 @Controller('auth')
 export class AuthController
 {
 	constructor(private authService: AuthService){} 
 
-	@Throttle({ default: { limit: 5, ttl: minutes(1)}})
-	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
-	@Post('signin')
-	async signIn(@Body() signInDto: SignInUserDto, @Res({ passthrough: true }) response: Response,)
+	private setAuthCookie(response: Response, jwts: jwts)
 	{
-		const jwts = await this.authService.signIn(signInDto.email, signInDto.password);
 		response.cookie('accessToken', jwts.accessToken, {
 			httpOnly: true,
 			secure: true, // li invia solo su connessioni protetta (HTTPS)
@@ -36,13 +49,29 @@ export class AuthController
 			sameSite: 'strict',
 			maxAge: days(7),
 			path: '/api/auth/refresh',			// Il browser lo invia solo a questa API
-	});
+		});
+	}
+
+	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+	@Post('signin')
+	async signIn(@Body() signInDto: SignInUserDto, @Res({ passthrough: true }) response: Response,)
+	{
+
+		let result: jwts | twofactor = await this.authService.signIn(signInDto.email, signInDto.password);
+
+		// controllo se ce la proprietà 'tempToken' dentro result
+		if('tempToken' in result)
+			return result;
+		else
+			this.setAuthCookie(response, result);
+		
 	return {
 	 	 message: 'Authentication append with success',
    		};
 	}
 
-	@Throttle({ default: { limit: 3, ttl: minutes(10)}}) 
+	
+
 	@Post('signup')
 	async signUp(@Body() signUpDto: SignUpUserDto)
 	{
@@ -58,7 +87,7 @@ export class AuthController
   	risposta non parte. 
 	Con { passthrough: true }, imposti solo il cookie e poi lasci fare a NestJS:basta fare return { ... } e NestJS si occuperà di chiudere e inviare la risposta.
 */
-	@UseGuards(AuthGuard) 
+	@Auth()
 	@Delete('signout')
 	async signOut(@CurrentUser('session') id: number, @Res({ passthrough: true }) res: Response)
 	{
@@ -68,7 +97,7 @@ export class AuthController
 		return { message: 'Signed out successfully' };
 	}
 
-	
+	//@Auth()
 	@HttpCode(HttpStatus.OK)
 	@Post('refresh')
 	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -87,12 +116,41 @@ export class AuthController
 		});
 		return { message: 'Token refreshed successfully' }; 
 	}
+// ---------------------------------------------------------------------------------------------------------------------
 
-	@UseGuards(AuthGuard)
-	@Get('user')
-	async infoMe(@CurrentUser('id') id :number)
+//											TWO FACTOR AUTH
+
+// ---------------------------------------------------------------------------------------------------------------------
+	@Auth()
+	@Post('twofactor/enable')
+	async twoFactorEnable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
 	{
-		return (await this.authService.infoUser(id));
+		return (await this.authService.twoFactorAuthEnable(id, userPassword.password));
+	}
+
+	@HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+	@Post('twofactor/access')
+	async accessTwoFactor( @Res({ passthrough: true }) response: Response, @Body() twoFactor: TwoFactorAuth)
+	{
+		let jwts: jwts;
+
+		jwts = await this.authService.twoFactorSignin(twoFactor)
+		this.setAuthCookie(response, jwts);
+		return { message: 'Authentication append with success' };
+	}
+
+	@Auth()
+	@Post('twofactor/verify')
+	async verify(@CurrentUser('id') id :number, @Body() code: TwoFactorCode)
+	{
+		return (await this.authService.verify(id, code.code));
+	}
+
+	@Auth()
+	@Post('twofactor/disable')
+	async twoFactorDisable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
+	{
+		return (await this.authService.twoFactorAuthDisable(id, userPassword.password));
 	}
 
 }

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength, MinLength} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, Length, MaxLength, MinLength} from 'class-validator';
 
 export class SignInUserDto
 {
@@ -10,4 +10,9 @@ export class SignInUserDto
 	@IsNotEmpty(({ message: 'The password cannot be empty' }))
 	@IsString()
 	password: string
+
+/* 	@IsOptional()
+	@IsString()
+	@Length(6,6)
+	twoFactorCode?: string; */
 }

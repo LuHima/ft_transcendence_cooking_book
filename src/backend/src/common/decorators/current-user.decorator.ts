@@ -54,10 +54,12 @@ export const CurrentUser = createParamDecorator(
 		request.user = { id: payload.sub, username: payload.username, role: payload.role 
 		};*/
 		const user = request.user;
+
 		// controllo se ritornare username, id, role oppure tutto user
-		if (data) {
-		  return user ? user[data] : undefined;
-		}
+		if(!user)
+			return undefined;
+		if (data)
+		  return user[data];
 		return user;
 	}
 
