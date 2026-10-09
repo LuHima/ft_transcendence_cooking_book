@@ -12,6 +12,7 @@ import {
   AVATAR_UPLOADS_DIR,
   UPLOADS_DIR,
 } from './common/config/upload-paths';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 
 async function bootstrap() {
@@ -46,6 +47,22 @@ async function bootstrap() {
     origin: ['http://localhost:5173', 'https://localhost:8443'],
     credentials: true,
   });
+
+  /* OpenAPI documentation */
+  // Build OpenAPI document configuration
+  const config = new DocumentBuilder()
+    .setTitle('WeCook API')
+    .setDescription('Private API documentation for frontend')
+    .setVersion('1.0')
+    .addCookieAuth('session') // or .addBearerAuth() if using JWT headers
+    .build();
+  // Generate OpenAPI Document
+  const document = SwaggerModule.createDocument(app, config);
+  // Mount Swagger UI at http://localhost:3000/api/docs
+  SwaggerModule.setup('api/docs', app, document);
+  // Export openapi.json for Fern and Postman
+  fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2));
+
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();
