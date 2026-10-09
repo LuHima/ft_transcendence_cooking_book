@@ -3,27 +3,31 @@
   "paths": {
     "/api/test": {
       "get": {
+        "description": "Returns a simple greeting confirmation indicating that the backend application is alive and responding.",
         "operationId": "AppController_getHello",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Service greeting message",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "example": "Hello World!"
                 }
               }
             }
           }
         },
+        "summary": "System health check probe",
         "tags": [
-          "App"
+          "System"
         ]
       }
     },
     "/api/auth/signin": {
       "post": {
+        "description": "Validates user credentials. On success, sets HttpOnly `accessToken` (10 min) and `refresh_token` (7 days) cookies. If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.",
         "operationId": "AuthController_signIn",
         "parameters": [],
         "requestBody": {
@@ -38,16 +42,44 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Authentication successful or 2FA challenge triggered",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AuthMessageResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TwoFactorChallengeResponseDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input format (empty email, invalid email syntax, or short password)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or inactive account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
                 }
               }
             }
           }
         },
+        "summary": "Sign in with email and password",
         "tags": [
           "Auth"
         ]
@@ -55,6 +87,7 @@
     },
     "/api/auth/signup": {
       "post": {
+        "description": "Creates a new user profile with unique username, lowercase email, and password. Enforces strong password rules (uppercase, lowercase, number/symbol, min 9 chars).",
         "operationId": "AuthController_signUp",
         "parameters": [],
         "requestBody": {
@@ -69,9 +102,37 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "User successfully registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignUpResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed on registration fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Username or email is already taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "summary": "Register a new user account",
         "tags": [
           "Auth"
         ]
@@ -79,13 +140,37 @@
     },
     "/api/auth/signout": {
       "delete": {
+        "description": "Revokes the current JWT session from the database and clears `accessToken` and `refresh_token` cookies.",
         "operationId": "AuthController_signOut",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Successfully signed out; session revoked and cookies cleared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Sign out and revoke session",
         "tags": [
           "Auth"
         ]
@@ -93,13 +178,37 @@
     },
     "/api/auth/refresh": {
       "post": {
+        "description": "Exchanges a valid HttpOnly `refresh_token` cookie for a new 10-minute `accessToken` cookie.",
         "operationId": "AuthController_refresh",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Token successfully refreshed; new accessToken cookie set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token missing, invalid, or expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "refresh_token": []
+          }
+        ],
+        "summary": "Refresh access token",
         "tags": [
           "Auth"
         ]
@@ -107,6 +216,7 @@
     },
     "/api/auth/twofactor/enable": {
       "post": {
+        "description": "Verifies the user account password and generates a new TOTP secret key and QR code data URI.",
         "operationId": "AuthController_twoFactorEnable",
         "parameters": [],
         "requestBody": {
@@ -120,10 +230,53 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "TOTP secret generated; returns QR code URI and base32 key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorEnableResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Password confirmation failed or is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nInvalid password provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Two-factor authentication is already enabled for this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Enable two-factor authentication (initiate setup)",
         "tags": [
           "Auth"
         ]
@@ -131,6 +284,7 @@
     },
     "/api/auth/twofactor/access": {
       "post": {
+        "description": "Validates the 6-digit TOTP code against the temporary token received from `/auth/signin`. On success, issues authentication cookies.",
         "operationId": "AuthController_accessTwoFactor",
         "parameters": [],
         "requestBody": {
@@ -145,9 +299,37 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Two-factor sign-in successful; session cookies issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Code must be exactly 6 digits; tempToken must be a valid JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired 2FA code or temporary token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "summary": "Complete two-factor sign-in",
         "tags": [
           "Auth"
         ]
@@ -155,6 +337,7 @@
     },
     "/api/auth/twofactor/verify": {
       "post": {
+        "description": "Submits the initial 6-digit TOTP code generated by the user authenticator app to activate 2FA protection on the account.",
         "operationId": "AuthController_verify",
         "parameters": [],
         "requestBody": {
@@ -168,10 +351,43 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Two-factor authentication successfully activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Code must be exactly 6 numeric digits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nInvalid verification code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Verify and activate 2FA setup",
         "tags": [
           "Auth"
         ]
@@ -179,6 +395,7 @@
     },
     "/api/auth/twofactor/disable": {
       "post": {
+        "description": "Verifies account password and disables 2FA protection, clearing the stored secret.",
         "operationId": "AuthController_twoFactorDisable",
         "parameters": [],
         "requestBody": {
@@ -192,10 +409,53 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Two-factor authentication successfully disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Password confirmation failed or is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nInvalid password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Two-factor authentication is already disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Disable two-factor authentication",
         "tags": [
           "Auth"
         ]
@@ -203,18 +463,53 @@
     },
     "/api/users/me": {
       "get": {
+        "description": "Returns private personal and account details for the authenticated user.",
         "operationId": "UsersController_getMe",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Current user profile information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User record not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get current user profile",
         "tags": [
           "Users"
         ]
       },
       "patch": {
+        "description": "Modifies account profile fields (name, email, birthday, phone, address).",
         "operationId": "UsersController_updateMe",
         "parameters": [],
         "requestBody": {
@@ -229,9 +524,52 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Updated user profile information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or invalid date format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Username or email is already taken by another account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Update current user profile",
         "tags": [
           "Users"
         ]
@@ -239,25 +577,103 @@
     },
     "/api/users/me/avatar": {
       "post": {
+        "description": "Uploads and updates the user profile photo. Replaces any existing avatar file on disk.",
         "operationId": "UsersController_updateAvatar",
         "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Avatar image file (JPEG, PNG, or WebP; maximum 5MB)"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
           }
         },
+        "responses": {
+          "201": {
+            "description": "Avatar successfully uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvatarUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File missing or invalid file format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Upload user avatar",
         "tags": [
           "Users"
         ]
       },
       "delete": {
+        "description": "Removes the avatar file from disk and nullifies the database reference.",
         "operationId": "UsersController_deleteAvatar",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Avatar successfully deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete user avatar",
         "tags": [
           "Users"
         ]
@@ -265,32 +681,45 @@
     },
     "/api/users/me/likes": {
       "get": {
+        "description": "Returns recipes previously liked by the current user, ordered by most recently liked.",
         "operationId": "UsersController_getLikedRecipes",
         "parameters": [
           {
             "name": "lang",
             "required": false,
             "in": "query",
+            "description": "Target language for projected recipe titles and descriptions",
             "schema": {
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ],
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "List of recipes liked by the user"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object"
-                  }
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
                 }
               }
             }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get liked recipes",
         "tags": [
           "Users"
         ]
@@ -298,22 +727,36 @@
     },
     "/api/users/search": {
       "get": {
+        "description": "Searches users by username substring matching (case-insensitive).",
         "operationId": "UsersController_searchUser",
         "parameters": [
           {
             "name": "value",
             "required": true,
             "in": "query",
+            "description": "Username substring search query",
             "schema": {
+              "example": "mario",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "List of matching usernames",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSearchResultDto"
+                  }
+                }
+              }
+            }
           }
         },
+        "summary": "Search users by username",
         "tags": [
           "Users"
         ]
@@ -321,22 +764,43 @@
     },
     "/api/users/{id}": {
       "get": {
+        "description": "Returns public profile information (username, avatar, join date) for the specified user.",
         "operationId": "UsersController_getUser",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Numeric user ID",
             "schema": {
+              "example": 1,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Public user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicUserResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "summary": "Get public user profile by ID",
         "tags": [
           "Users"
         ]
@@ -344,36 +808,63 @@
     },
     "/api/recipes/metadata": {
       "get": {
+        "description": "Convenience route returning enum dictionaries (courses, difficulties, units, categories) identical to `/api/recipes/metadata`.",
         "operationId": "RecipeController_getMetadata",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "System metadata enumerations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogMetadataResponseDto"
+                }
+              }
+            }
           }
         },
+        "summary": "Get recipe metadata dictionaries",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/tags": {
       "get": {
+        "description": "Returns all curated tags (e.g. vegetarian, gluten-free), ordered alphabetically by localized name. Falls back to English if requested locale is missing.",
         "operationId": "CatalogController_getTags",
         "parameters": [
           {
             "name": "lang",
             "required": false,
             "in": "query",
+            "description": "Target locale for tag translations (default: en)",
             "schema": {
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ],
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Alphabetically ordered list of localized tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
+        "summary": "List curated tags",
         "tags": [
           "Catalog"
         ]
@@ -381,13 +872,20 @@
     },
     "/api/ingredients": {
       "get": {
+        "description": "Returns curated catalog ingredients matching the given category or text query, ordered alphabetically by localized name.",
         "operationId": "CatalogController_getIngredients",
         "parameters": [
           {
             "name": "lang",
             "required": false,
             "in": "query",
+            "description": "Target locale for ingredient names (default: en)",
             "schema": {
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ],
               "type": "string"
             }
           },
@@ -395,7 +893,19 @@
             "name": "category",
             "required": false,
             "in": "query",
+            "description": "Filter ingredients by culinary category",
             "schema": {
+              "enum": [
+                "produce",
+                "dairy_eggs",
+                "meat_poultry",
+                "seafood",
+                "bakery_grains",
+                "pantry_spices",
+                "legumes_nuts",
+                "beverages_liquids",
+                "other"
+              ],
               "type": "string"
             }
           },
@@ -403,16 +913,29 @@
             "name": "search",
             "required": false,
             "in": "query",
+            "description": "Case-insensitive substring search across ingredient slugs and translations",
             "schema": {
+              "example": "pomodoro",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Alphabetically ordered list of matching curated ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IngredientResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
+        "summary": "List and search curated ingredients",
         "tags": [
           "Catalog"
         ]
@@ -420,37 +943,36 @@
     },
     "/api/recipes": {
       "get": {
+        "description": "Fetches all recipes in the system. When `lang` is specified, projects localized title and description according to preference hierarchy.",
         "operationId": "RecipeController_getRecipes",
         "parameters": [
           {
             "name": "lang",
             "required": false,
             "in": "query",
+            "description": "Target locale code for projected titles and descriptions (it, en, fr)",
             "schema": {
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ],
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
+            "description": "Array of recipes with translations"
           }
         },
+        "summary": "List all recipes",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       },
       "post": {
+        "description": "Creates a recipe in the declared `source_lang`, verifies language via LibreTranslate, validates catalog references, generates automated multilingual translations for all supported locales, and stores relational records.",
         "operationId": "RecipeController_addRecipe",
         "parameters": [],
         "requestBody": {
@@ -465,23 +987,69 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Recipe successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed on inputs or referenced catalog items do not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Create a new recipe",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/page": {
       "get": {
+        "description": "Fetches a 30-item page window of recipes optimized for infinite scrolling or stacked presentation. Includes author username and pagination indicators.",
         "operationId": "RecipeController_getRecipeStack",
         "parameters": [
           {
             "name": "page",
             "required": false,
             "in": "query",
+            "description": "Page index number (1-based, default: 1)",
             "schema": {
+              "example": 1,
               "type": "number"
             }
           },
@@ -489,63 +1057,70 @@
             "name": "value",
             "required": false,
             "in": "query",
+            "description": "Legacy page parameter alias",
             "schema": {
+              "example": 1,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Paginated recipe window with hasNextPage and hasPreviousPage booleans",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipePaginationResponseDto"
+                }
+              }
+            }
           }
         },
+        "summary": "Get paginated recipe stack",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/search": {
       "get": {
+        "description": "Performs a case-insensitive search across recipe translation titles and returns matching recipes.",
         "operationId": "RecipeController_getRecipe",
         "parameters": [
           {
             "name": "value",
             "required": true,
             "in": "query",
+            "description": "Text query to match in recipe titles",
             "schema": {
+              "example": "carbonara",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
+            "description": "List of recipes matching the title search query"
           }
         },
+        "summary": "Search recipes by title",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}": {
       "get": {
+        "description": "Fetches full recipe details including localized title, description, storage tips, ordered steps with illustrations, categorized ingredients, tags, and media gallery.",
         "operationId": "RecipeController_getRecipeById",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Unique numeric recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           },
@@ -553,35 +1128,55 @@
             "name": "lang",
             "required": false,
             "in": "query",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated.",
             "schema": {
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ],
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Complete localized recipe specification",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
                 }
               }
             }
           }
         },
+        "summary": "Get recipe by ID",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       },
       "patch": {
+        "description": "Modifies recipe attributes, steps, ingredients, or localized text. Optionally triggers full re-translation via `retranslate=true`.",
         "operationId": "RecipeController_updateRecipe",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           },
@@ -589,7 +1184,9 @@
             "name": "retranslate",
             "required": false,
             "in": "query",
+            "description": "Set to \"true\" to re-generate automated translations for updated text",
             "schema": {
+              "example": "true",
               "type": "string"
             }
           }
@@ -606,111 +1203,367 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Recipe updated successfully"
+          },
+          "400": {
+            "description": "Invalid update payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Update recipe details",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       },
       "delete": {
+        "description": "Permanently deletes the recipe and all its steps, media, translations, and associated likes.",
         "operationId": "RecipeController_deleteRecipe",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Recipe deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete recipe",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}/translate": {
       "post": {
+        "description": "Re-triggers LibreTranslate for a recipe whose translation status is marked as failed.",
         "operationId": "RecipeController_retryTranslation",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Translation retry processed"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Retry automated translations",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}/cover": {
       "post": {
+        "description": "Uploads and sets the primary hero cover photo for the recipe. Replaces any existing cover image.",
         "operationId": "RecipeController_uploadCoverImage",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file (JPEG, PNG, or WebP; maximum 5MB)"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
           }
         },
+        "responses": {
+          "201": {
+            "description": "Cover image uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverImageUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File missing or invalid file format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Upload recipe cover image",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       },
       "delete": {
+        "description": "Removes the cover photo file from disk and nullifies the database reference.",
         "operationId": "RecipeController_deleteCoverImage",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Cover image deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete recipe cover image",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}/steps/{stepNumber}/image": {
       "post": {
+        "description": "Uploads an illustration photo for a specific recipe preparation step (identified by step number).",
         "operationId": "RecipeController_uploadStepImage",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           },
@@ -718,28 +1571,106 @@
             "name": "stepNumber",
             "required": true,
             "in": "path",
+            "description": "1-based step sequence number",
             "schema": {
+              "example": 1,
               "type": "number"
             }
           }
         ],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Step illustration photo (JPEG, PNG, or WebP; max 5MB)"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
           }
         },
+        "responses": {
+          "201": {
+            "description": "Step illustration photo uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepImageUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File missing or invalid image",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe or step not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Upload step illustration photo",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       },
       "delete": {
+        "description": "Removes the step illustration file from disk and nullifies step image_url.",
         "operationId": "RecipeController_deleteStepImage",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           },
@@ -747,107 +1678,349 @@
             "name": "stepNumber",
             "required": true,
             "in": "path",
+            "description": "1-based step sequence number",
             "schema": {
+              "example": 1,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Step image deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe or step not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete step illustration photo",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}/gallery": {
       "post": {
+        "description": "Uploads supplementary plating photos to the recipe gallery. Enforces a maximum limit of 3 gallery photos per recipe.",
         "operationId": "RecipeController_uploadGalleryMedia",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "Gallery photos (up to 3 files total, max 5MB each)"
+                  }
+                },
+                "required": [
+                  "files"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Gallery photos uploaded successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "$ref": "#/components/schemas/RecipeMediaResponse"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maximum 3 gallery images exceeded or invalid format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
                 }
               }
             }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Upload recipe gallery photos",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}/video": {
       "post": {
+        "description": "Uploads a single demonstration video for the recipe. Replaces any existing tutorial video.",
         "operationId": "RecipeController_uploadVideo",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Video file (MP4 or WebM format, max 100MB)"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
           }
         },
+        "responses": {
+          "201": {
+            "description": "Tutorial video uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File missing or invalid video format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Upload recipe tutorial video",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       },
       "delete": {
+        "description": "Removes the video file from storage and nullifies the database reference.",
         "operationId": "RecipeController_deleteVideo",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Tutorial video deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete recipe tutorial video",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}/gallery/{mediaId}": {
       "delete": {
+        "description": "Deletes a specific gallery media photo from disk and database by its media ID.",
         "operationId": "RecipeController_deleteGalleryMedia",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
+              "example": 42,
               "type": "number"
             }
           },
@@ -855,93 +2028,277 @@
             "name": "mediaId",
             "required": true,
             "in": "path",
+            "description": "Gallery media ID",
             "schema": {
+              "example": 3,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Gallery media photo deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: insufficient permissions for this action on the target resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe or media item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete gallery photo",
         "tags": [
-          "Recipe"
+          "Recipes"
         ]
       }
     },
     "/api/recipes/{id}/like": {
       "post": {
+        "description": "Registers a like association for the current authenticated user on the recipe (idempotent).",
         "operationId": "RecipeController_likeRecipe",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Recipe ID",
             "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Recipe"
-        ]
-      },
-      "delete": {
-        "operationId": "RecipeController_unlikeRecipe",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
+              "example": 42,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Recipe liked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeLikeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Like recipe",
         "tags": [
-          "Recipe"
+          "Recipes"
+        ]
+      },
+      "delete": {
+        "description": "Removes the like association for the current user from the recipe (idempotent).",
+        "operationId": "RecipeController_unlikeRecipe",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Recipe ID",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recipe unliked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeLikeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Unlike recipe",
+        "tags": [
+          "Recipes"
         ]
       }
     }
   },
   "info": {
     "title": "WeCook API",
-    "description": "Private API documentation for frontend",
-    "version": "1.0",
+    "description": "RESTful backend API specification for the WeCook recipe sharing social platform.\n\n### Authentication\nAuthentication is based on secure, HttpOnly JWT cookies:\n- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n- **`refresh_token`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n### Media Storage & Static Assets\nUploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n### Localization & Multilingual Engine\nRecipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.",
+    "version": "1.0.0",
     "contact": {}
   },
-  "tags": [],
-  "servers": [],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "User authentication, registration, session management, and two-factor authentication (2FA)"
+    },
+    {
+      "name": "Users",
+      "description": "User accounts, public profiles, avatars, and liked recipes"
+    },
+    {
+      "name": "Recipes",
+      "description": "Recipe creation, localized details, pagination, step illustrations, media uploads, and likes"
+    },
+    {
+      "name": "Catalog",
+      "description": "Curated ingredient catalogs, dietary tags, units of measure, and system metadata"
+    },
+    {
+      "name": "System",
+      "description": "Health check, status probes, and system connectivity testing"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://app.we-cook.it:8443",
+      "description": "Staging / Production Server"
+    }
+  ],
   "components": {
     "securitySchemes": {
       "cookie": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "session"
+        "name": "refresh_token",
+        "description": "JWT Refresh Token stored in HttpOnly cookie (`refresh_token`) for the refresh endpoint"
       }
     },
     "schemas": {
+      "AuthMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Informative message describing the outcome of the operation",
+            "example": "Authentication append with success"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "TwoFactorChallengeResponseDto": {
+        "type": "object",
+        "properties": {
+          "tempToken": {
+            "type": "string",
+            "description": "Temporary JWT token to exchange in /auth/twofactor/access",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "twofAuth": {
+            "type": "boolean",
+            "description": "Flag indicating two-factor verification is required",
+            "example": true
+          }
+        },
+        "required": [
+          "tempToken",
+          "twofAuth"
+        ]
+      },
       "SignInUserDto": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
+            "description": "Registered user email address",
+            "example": "mario.rossi@example.com",
             "maxLength": 255,
             "format": "email"
           },
           "password": {
             "type": "string",
+            "description": "User account password (minimum 9 characters)",
+            "example": "SuperSecret123!",
             "minLength": 9
           }
         },
@@ -950,22 +2307,73 @@
           "password"
         ]
       },
+      "ApiErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing the error category",
+            "example": 400
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-09T17:30:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42"
+          },
+          "message": {
+            "description": "Error description or list of validation error messages",
+            "example": "Recipe not found",
+            "oneOf": [
+              {
+                "type": "string",
+                "example": "Recipe not found"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "Title must be at least 3 characters long"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
+      },
       "SignUpUserDto": {
         "type": "object",
         "properties": {
           "username": {
             "type": "string",
+            "description": "Unique username consisting of letters, numbers, underscores, and hyphens (3-30 characters)",
+            "example": "mario_rossi",
             "minLength": 3,
             "maxLength": 30,
             "pattern": "^[a-zA-Z0-9_-]+$"
           },
           "email": {
             "type": "string",
+            "description": "Valid email address",
+            "example": "mario.rossi@example.com",
             "maxLength": 255,
             "format": "email"
           },
           "password": {
             "type": "string",
+            "description": "Strong password (9-72 chars, must contain uppercase, lowercase, and a number or symbol)",
+            "example": "SecretPassw0rd!",
             "minLength": 9,
             "maxLength": 72,
             "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*[\\d\\W_]).+$"
@@ -977,20 +2385,96 @@
           "password"
         ]
       },
+      "SignUpResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique user identifier",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique username of the registered user",
+            "example": "mario_rossi"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address of the user",
+            "example": "mario.rossi@example.com"
+          },
+          "role": {
+            "description": "System role assigned to the user",
+            "example": "user",
+            "enum": [
+              "admin",
+              "moderator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Account creation timestamp",
+            "example": "2026-10-09T18:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "role",
+          "created_at"
+        ]
+      },
       "ConfirmPasswordDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "User account password (minimum 9 characters)",
+            "example": "SuperSecret123!",
+            "minLength": 9
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "TwoFactorEnableResponseDto": {
+        "type": "object",
+        "properties": {
+          "qrCode": {
+            "type": "string",
+            "description": "Data URI representation of the QR code containing OTP auth URI",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+          },
+          "key": {
+            "type": "string",
+            "description": "Base32 secret key for manual entry in authenticator application",
+            "example": "JBSWY3DPEHPK3PXP"
+          }
+        },
+        "required": [
+          "qrCode",
+          "key"
+        ]
       },
       "TwoFactorAuth": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
+            "description": "6-digit numeric TOTP authentication code",
+            "example": "123456",
             "minLength": 6,
             "maxLength": 6
           },
           "tempToken": {
-            "type": "string"
+            "type": "string",
+            "description": "Temporary JWT token received from /api/auth/signin challenge",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           }
         },
         "required": [
@@ -1000,82 +2484,680 @@
       },
       "TwoFactorCode": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "6-digit numeric TOTP authentication code",
+            "example": "123456",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "UserProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "User identifier",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique username",
+            "example": "mario_rossi"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "example": "mario.rossi@example.com"
+          },
+          "role": {
+            "description": "User role",
+            "example": "user",
+            "enum": [
+              "admin",
+              "moderator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar image URL",
+            "example": "/uploads/avatars/avatar_1.webp"
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name",
+            "example": "Mario"
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name",
+            "example": "Rossi"
+          },
+          "birth_date": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Date of birth",
+            "example": "1995-05-20T00:00:00.000Z"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number",
+            "example": "+39 06 1234567"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Residential street address",
+            "example": "Via Roma 123"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "description": "City of residence",
+            "example": "Roma"
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Postal code / ZIP",
+            "example": "00100"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Account creation timestamp",
+            "example": "2026-10-09T18:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "role",
+          "avatar_url",
+          "first_name",
+          "last_name",
+          "birth_date",
+          "phone",
+          "address",
+          "city",
+          "postal_code",
+          "created_at"
+        ]
       },
       "UpdateUserDto": {
         "type": "object",
         "properties": {
           "username": {
             "type": "string",
+            "description": "Updated username (3-30 characters)",
+            "example": "mario_rossi_updated",
             "minLength": 3,
             "maxLength": 30
           },
           "email": {
             "type": "string",
+            "description": "Updated email address",
+            "example": "mario.updated@example.com",
             "format": "email"
           },
           "first_name": {
             "type": "string",
+            "description": "First name",
+            "example": "Mario",
             "maxLength": 100
           },
           "last_name": {
             "type": "string",
+            "description": "Last name",
+            "example": "Rossi",
             "maxLength": 100
           },
           "birth_date": {
-            "type": "object"
+            "type": "object",
+            "description": "Date of birth (ISO 8601 date string or timestamp)",
+            "example": "1995-05-20"
           },
           "phone": {
             "type": "string",
+            "description": "Contact phone number",
+            "example": "+39 06 1234567",
             "maxLength": 30
           },
           "address": {
             "type": "string",
+            "description": "Residential street address",
+            "example": "Via Roma 123",
             "maxLength": 255
           },
           "city": {
             "type": "string",
+            "description": "City of residence",
+            "example": "Roma",
             "maxLength": 100
           },
           "postal_code": {
             "type": "string",
+            "description": "Postal code / ZIP",
+            "example": "00100",
             "maxLength": 10
           }
         }
       },
-      "CreateRecipeStepDto": {
+      "AvatarUploadResponseDto": {
         "type": "object",
         "properties": {
-          "step_number": {
-            "type": "number",
-            "minimum": 1
-          },
-          "title": {
+          "avatar_url": {
             "type": "string",
-            "maxLength": 255
-          },
-          "description": {
-            "type": "string"
-          },
-          "duration": {
-            "type": "number",
-            "minimum": 0
+            "description": "Static URL path to newly saved avatar photo",
+            "example": "/uploads/avatars/avatar_1.webp"
           }
         },
         "required": [
-          "step_number",
-          "description"
+          "avatar_url"
         ]
       },
-      "CreateRecipeIngredientDto": {
+      "UserMessageResponseDto": {
         "type": "object",
         "properties": {
-          "ingredient_id": {
-            "type": "number"
+          "message": {
+            "type": "string",
+            "description": "Status message",
+            "example": "Avatar deleted successfully"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "UserSearchResultDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Matching username",
+            "example": "mario_rossi"
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "PublicUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "User identifier",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Username",
+            "example": "mario_rossi"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Public avatar photo URL",
+            "example": "/uploads/avatars/avatar_1.webp"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Member since date",
+            "example": "2026-10-09T18:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url",
+          "created_at"
+        ]
+      },
+      "CatalogMetadataResponseDto": {
+        "type": "object",
+        "properties": {
+          "courses": {
+            "type": "array",
+            "description": "List of meal courses (e.g. appetizer, first_course, dessert)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "appetizer",
+                "first_course",
+                "main_course",
+                "dessert",
+                "side_dish",
+                "drink",
+                "snack"
+              ]
+            },
+            "example": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ]
+          },
+          "difficulties": {
+            "type": "array",
+            "description": "List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            },
+            "example": [
+              "easy",
+              "medium",
+              "hard"
+            ]
+          },
+          "units": {
+            "type": "array",
+            "description": "Supported measurement units (grams, milliliters, spoons, pieces, etc.)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "g",
+                "kg",
+                "ml",
+                "cl",
+                "l",
+                "oz",
+                "lb",
+                "fl_oz",
+                "cup",
+                "tbsp",
+                "tsp",
+                "piece",
+                "pinch"
+              ]
+            },
+            "example": [
+              "g",
+              "kg",
+              "ml",
+              "cl",
+              "l",
+              "oz",
+              "lb",
+              "fl_oz",
+              "cup",
+              "tbsp",
+              "tsp",
+              "piece",
+              "pinch"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "description": "Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "produce",
+                "dairy_eggs",
+                "meat_poultry",
+                "seafood",
+                "bakery_grains",
+                "pantry_spices",
+                "legumes_nuts",
+                "beverages_liquids",
+                "other"
+              ]
+            },
+            "example": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "courses",
+          "difficulties",
+          "units",
+          "categories"
+        ]
+      },
+      "TagResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "vegetarian"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized tag display name",
+            "example": "Vegetariano"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ]
+      },
+      "IngredientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique ingredient catalog identifier",
+            "example": 12
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical ingredient slug",
+            "example": "parmigiano-reggiano"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "dairy_eggs",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized ingredient display name",
+            "example": "Parmigiano Reggiano DOP"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "category",
+          "name"
+        ]
+      },
+      "RecipeStackItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Recipe identifier",
+            "example": 1
+          },
+          "course": {
+            "enum": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ],
+            "type": "string",
+            "description": "Course classification",
+            "example": "first_course"
+          },
+          "difficulty": {
+            "enum": [
+              "easy",
+              "medium",
+              "hard"
+            ],
+            "type": "string",
+            "description": "Difficulty level",
+            "example": "easy"
+          },
+          "prep_time": {
+            "type": "number",
+            "description": "Preparation time in minutes",
+            "example": 15
+          },
+          "cook_time": {
+            "type": "number",
+            "description": "Cooking time in minutes",
+            "example": 20
+          },
+          "total_time": {
+            "type": "number",
+            "description": "Total time in minutes",
+            "example": 35
+          },
+          "servings": {
+            "type": "number",
+            "description": "Servings yielded",
+            "example": 4
+          },
+          "source_lang": {
+            "type": "string",
+            "description": "Author source language code",
+            "example": "it"
+          },
+          "translation_status": {
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "type": "string",
+            "description": "Translation state",
+            "example": "completed"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cover image URL path",
+            "example": "/uploads/recipes/cover.webp"
+          },
+          "video_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tutorial video URL path",
+            "example": "/uploads/recipes/video.mp4"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true,
+            "description": "Author username",
+            "example": "mario_rossi"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation date",
+            "example": "2026-10-09T18:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "course",
+          "difficulty",
+          "prep_time",
+          "cook_time",
+          "total_time",
+          "servings",
+          "source_lang",
+          "translation_status",
+          "cover_image_url",
+          "video_url",
+          "username",
+          "created_at"
+        ]
+      },
+      "RecipePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "returnPage": {
+            "description": "Recipes in the requested page window",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeStackItemDto"
+            }
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Indicates if a next page exists",
+            "example": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Indicates if a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "returnPage",
+          "hasNextPage",
+          "hasPreviousPage"
+        ]
+      },
+      "RecipeAuthorSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Author user identifier",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Author username",
+            "example": "chef_mario"
+          },
+          "avatar_url": {
+            "type": "object",
+            "description": "Author avatar photo URL",
+            "example": "/uploads/avatars/chef_mario.webp",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url"
+        ]
+      },
+      "LocalizedRecipeStepResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Recipe step identifier",
+            "example": 1
+          },
+          "step_number": {
+            "type": "number",
+            "description": "1-based sequential step order",
+            "example": 1
+          },
+          "title": {
+            "type": "object",
+            "description": "Localized title of the step",
+            "example": "Preparare il guanciale",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Localized step description instructions",
+            "example": "Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore."
+          },
+          "duration": {
+            "type": "object",
+            "description": "Duration in minutes to complete this step",
+            "example": 10,
+            "nullable": true
+          },
+          "image_url": {
+            "type": "object",
+            "description": "Static URL path to step illustration photo",
+            "example": "/uploads/recipes/step_1_carbonara.webp",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "step_number",
+          "title",
+          "description",
+          "duration",
+          "image_url"
+        ]
+      },
+      "LocalizedRecipeIngredientResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Catalog ingredient ID",
+            "example": 5
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical ingredient slug",
+            "example": "guanciale"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "description": "Ingredient culinary category",
+            "example": "meat_poultry"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized name of the ingredient",
+            "example": "Guanciale di Amatrice"
           },
           "quantity": {
             "type": "number",
-            "minimum": 0
+            "description": "Ingredient quantity",
+            "example": 200
           },
           "unit": {
             "type": "string",
@@ -1093,10 +3175,333 @@
               "tsp",
               "piece",
               "pinch"
-            ]
+            ],
+            "description": "Standardized measurement unit",
+            "example": "g"
           },
           "notes": {
-            "type": "object"
+            "type": "object",
+            "description": "Localized preparation notes or cut advice",
+            "example": "tagliato a listarelle spesse",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "category",
+          "name",
+          "quantity",
+          "unit",
+          "notes"
+        ]
+      },
+      "LocalizedRecipeTagResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "traditional"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized tag label",
+            "example": "Tradizionale"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ]
+      },
+      "RecipeMediaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Media item identifier",
+            "example": 1
+          },
+          "url": {
+            "type": "string",
+            "description": "Static URL path to media file",
+            "example": "/uploads/recipes/gallery_1_carbonara.webp"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video"
+            ],
+            "description": "Media format type",
+            "example": "image"
+          },
+          "order": {
+            "type": "number",
+            "description": "Display order index",
+            "example": 0
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "media_type",
+          "order"
+        ]
+      },
+      "LocalizedRecipeDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique recipe identifier",
+            "example": 42
+          },
+          "course": {
+            "type": "string",
+            "enum": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ],
+            "description": "Course classification",
+            "example": "first_course"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "easy",
+              "medium",
+              "hard"
+            ],
+            "description": "Difficulty level",
+            "example": "medium"
+          },
+          "prep_time": {
+            "type": "number",
+            "description": "Preparation time in minutes",
+            "example": 15
+          },
+          "cook_time": {
+            "type": "number",
+            "description": "Cooking time in minutes",
+            "example": 10
+          },
+          "total_time": {
+            "type": "number",
+            "description": "Total time in minutes (prep_time + cook_time)",
+            "example": 25
+          },
+          "servings": {
+            "type": "number",
+            "description": "Portions / servings yielded",
+            "example": 4
+          },
+          "source_lang": {
+            "type": "string",
+            "description": "Original author language",
+            "example": "it"
+          },
+          "translation_status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "description": "Automated machine translation state",
+            "example": "completed"
+          },
+          "cover_image_url": {
+            "type": "object",
+            "description": "Primary hero recipe cover image URL",
+            "example": "/uploads/recipes/carbonara_cover.webp",
+            "nullable": true
+          },
+          "video_url": {
+            "type": "object",
+            "description": "Tutorial demonstration video URL",
+            "example": "/uploads/recipes/carbonara_tutorial.mp4",
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2026-10-09T18:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "object",
+            "description": "Last update timestamp",
+            "example": "2026-10-09T18:30:00.000Z",
+            "nullable": true
+          },
+          "author": {
+            "description": "Author profile summary",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Localized recipe title",
+            "example": "Spaghetti alla Carbonara"
+          },
+          "description": {
+            "type": "string",
+            "description": "Localized introduction and dish description",
+            "example": "Il grande classico della cucina romana con guanciale, pecorino e tuorli."
+          },
+          "preservation": {
+            "type": "object",
+            "description": "Localized storage and preservation notes",
+            "example": "Si consiglia di consumare al momento. Non congelare.",
+            "nullable": true
+          },
+          "tips": {
+            "type": "object",
+            "description": "Author cooking tricks and culinary tips",
+            "example": "Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.",
+            "nullable": true
+          },
+          "steps": {
+            "description": "Ordered sequence of recipe preparation steps",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeStepResponse"
+            }
+          },
+          "ingredients": {
+            "description": "List of ingredients with quantities and localized notes",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeIngredientResponse"
+            }
+          },
+          "tags": {
+            "description": "Classification tags attached to the recipe",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeTagResponse"
+            }
+          },
+          "media": {
+            "description": "Supplementary gallery plating photos",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeMediaResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "course",
+          "difficulty",
+          "prep_time",
+          "cook_time",
+          "total_time",
+          "servings",
+          "source_lang",
+          "translation_status",
+          "cover_image_url",
+          "video_url",
+          "created_at",
+          "updated_at",
+          "author",
+          "title",
+          "description",
+          "preservation",
+          "tips",
+          "steps",
+          "ingredients",
+          "tags",
+          "media"
+        ]
+      },
+      "CreateRecipeStepDto": {
+        "type": "object",
+        "properties": {
+          "step_number": {
+            "type": "number",
+            "description": "1-based sequential step order number",
+            "example": 1,
+            "minimum": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "Optional summary title for this step",
+            "example": "Preparare il guanciale",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed instructions for this step in source_lang",
+            "example": "Tagliare il guanciale a striscioline spesse mezzo centimetro."
+          },
+          "duration": {
+            "type": "number",
+            "description": "Step duration in minutes",
+            "example": 10,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "step_number",
+          "description"
+        ]
+      },
+      "CreateRecipeIngredientDto": {
+        "type": "object",
+        "properties": {
+          "ingredient_id": {
+            "type": "number",
+            "description": "Catalog ingredient ID referenced from /api/ingredients",
+            "example": 5
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Ingredient quantity (greater than or equal to 0)",
+            "example": 200,
+            "minimum": 0
+          },
+          "unit": {
+            "description": "Unit of measure (e.g. g, ml, piece)",
+            "example": "g",
+            "enum": [
+              "g",
+              "kg",
+              "ml",
+              "cl",
+              "l",
+              "oz",
+              "lb",
+              "fl_oz",
+              "cup",
+              "tbsp",
+              "tsp",
+              "piece",
+              "pinch"
+            ],
+            "type": "string"
+          },
+          "notes": {
+            "type": "object",
+            "description": "Optional preparation notes as a string or key-value locale dictionary",
+            "example": "tagliato a listarelle"
           }
         },
         "required": [
@@ -1110,21 +3515,30 @@
         "properties": {
           "title": {
             "type": "string",
+            "description": "Recipe title in source_lang (3-255 characters)",
+            "example": "Spaghetti alla Carbonara",
             "minLength": 3,
             "maxLength": 255
           },
           "description": {
             "type": "string",
+            "description": "Introductory recipe description in source_lang (min 10 characters)",
+            "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.",
             "minLength": 10
           },
           "preservation": {
-            "type": "string"
+            "type": "string",
+            "description": "Storage and shelf life advice",
+            "example": "Consumare immediatamente; non congelare."
           },
           "tips": {
-            "type": "string"
+            "type": "string",
+            "description": "Author tips, tricks, and culinary secrets",
+            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
           },
           "course": {
-            "type": "string",
+            "description": "Course classification within a meal",
+            "example": "first_course",
             "enum": [
               "appetizer",
               "first_course",
@@ -1133,30 +3547,41 @@
               "side_dish",
               "drink",
               "snack"
-            ]
+            ],
+            "type": "string"
           },
           "difficulty": {
-            "type": "string",
+            "description": "Difficulty rating",
+            "example": "medium",
             "enum": [
               "easy",
               "medium",
               "hard"
-            ]
+            ],
+            "type": "string"
           },
           "prep_time": {
             "type": "number",
+            "description": "Preparation time in minutes",
+            "example": 15,
             "minimum": 0
           },
           "cook_time": {
             "type": "number",
+            "description": "Cooking time in minutes",
+            "example": 10,
             "minimum": 0
           },
           "servings": {
             "type": "number",
+            "description": "Yield in servings/portions (minimum 1)",
+            "example": 4,
             "minimum": 1
           },
           "source_lang": {
             "type": "string",
+            "description": "Author canonical writing language code (it, en, fr)",
+            "example": "it",
             "enum": [
               "it",
               "en",
@@ -1164,6 +3589,7 @@
             ]
           },
           "steps": {
+            "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
             "minItems": 1,
             "type": "array",
             "items": {
@@ -1171,6 +3597,7 @@
             }
           },
           "ingredients": {
+            "description": "List of ingredients with quantities and units (minimum 1 ingredient)",
             "minItems": 1,
             "type": "array",
             "items": {
@@ -1178,6 +3605,11 @@
             }
           },
           "tag_ids": {
+            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags)",
+            "example": [
+              1,
+              3
+            ],
             "type": "array",
             "items": {
               "type": "number"
@@ -1200,8 +3632,112 @@
       "UpdateRecipeDto": {
         "type": "object",
         "properties": {
+          "title": {
+            "type": "string",
+            "description": "Recipe title in source_lang (3-255 characters)",
+            "example": "Spaghetti alla Carbonara",
+            "minLength": 3,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "description": "Introductory recipe description in source_lang (min 10 characters)",
+            "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.",
+            "minLength": 10
+          },
+          "preservation": {
+            "type": "string",
+            "description": "Storage and shelf life advice",
+            "example": "Consumare immediatamente; non congelare."
+          },
+          "tips": {
+            "type": "string",
+            "description": "Author tips, tricks, and culinary secrets",
+            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
+          },
+          "course": {
+            "description": "Course classification within a meal",
+            "example": "first_course",
+            "enum": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ],
+            "type": "string"
+          },
+          "difficulty": {
+            "description": "Difficulty rating",
+            "example": "medium",
+            "enum": [
+              "easy",
+              "medium",
+              "hard"
+            ],
+            "type": "string"
+          },
+          "prep_time": {
+            "type": "number",
+            "description": "Preparation time in minutes",
+            "example": 15,
+            "minimum": 0
+          },
+          "cook_time": {
+            "type": "number",
+            "description": "Cooking time in minutes",
+            "example": 10,
+            "minimum": 0
+          },
+          "servings": {
+            "type": "number",
+            "description": "Yield in servings/portions (minimum 1)",
+            "example": 4,
+            "minimum": 1
+          },
+          "source_lang": {
+            "type": "string",
+            "description": "Author canonical writing language code (it, en, fr)",
+            "example": "it",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ]
+          },
+          "steps": {
+            "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateRecipeStepDto"
+            }
+          },
+          "ingredients": {
+            "description": "List of ingredients with quantities and units (minimum 1 ingredient)",
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateRecipeIngredientDto"
+            }
+          },
+          "tag_ids": {
+            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags)",
+            "example": [
+              1,
+              3
+            ],
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
           "locale": {
             "type": "string",
+            "description": "Target locale of modified localized fields (it, en, fr)",
+            "example": "it",
             "enum": [
               "it",
               "en",
@@ -1209,6 +3745,83 @@
             ]
           }
         }
+      },
+      "RecipeMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Status message",
+            "example": "Recipe deleted successfully"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "CoverImageUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "cover_image_url": {
+            "type": "string",
+            "description": "Static URL path to uploaded recipe cover image",
+            "example": "/uploads/recipes/recipe_42_cover.webp"
+          }
+        },
+        "required": [
+          "cover_image_url"
+        ]
+      },
+      "StepImageUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "step_number": {
+            "type": "number",
+            "description": "Target 1-based step sequence number",
+            "example": 2
+          },
+          "image_url": {
+            "type": "string",
+            "description": "Static URL path to uploaded step illustration photo",
+            "example": "/uploads/recipes/step_2_recipe_42.webp"
+          }
+        },
+        "required": [
+          "step_number",
+          "image_url"
+        ]
+      },
+      "VideoUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "video_url": {
+            "type": "string",
+            "description": "Static URL path to uploaded tutorial demonstration video",
+            "example": "/uploads/recipes/recipe_42_video.mp4"
+          }
+        },
+        "required": [
+          "video_url"
+        ]
+      },
+      "RecipeLikeResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Status message",
+            "example": "Recipe liked successfully"
+          },
+          "liked": {
+            "type": "boolean",
+            "description": "Current like state",
+            "example": true
+          }
+        },
+        "required": [
+          "message",
+          "liked"
+        ]
       }
     }
   }

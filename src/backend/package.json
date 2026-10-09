@@ -111,7 +111,7 @@
       "^src/(.*)$": "<rootDir>/$1"
     },
     "transformIgnorePatterns": [
-      "/node_modules/(?!@nestjs/jwt)"
+      "/node_modules/(?!(@nestjs/jwt|otplib|@otplib|@scure))"
     ]
   },
   "allowScripts": {

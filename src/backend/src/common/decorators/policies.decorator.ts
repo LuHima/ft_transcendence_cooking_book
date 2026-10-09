@@ -1,21 +1,24 @@
 import { applyDecorators, SetMetadata, UseGuards, ExecutionContext } from '@nestjs/common';
+import {
+  ApiCookieAuth,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 import { Action } from 'src/auth/casl/action.enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from '../guards/role.guard';
 import { Subjects } from '../../auth/casl/casl-ability.factory/casl-ability.factory';
-// import {e}
+import { ApiErrorResponseDto } from '../dto/api-error-response.dto';
+
 export type HandlerRolePolicy = (ability: AppAbility) =>  boolean;
 
-
-//applyDecorators serve per chiamare piu decoratori tutti insieme piutosto che scriverli tutti sopra
-// si usa anche perche i decoratori non possono essere chiamati nell funzioni normali ma solo nelle:
-// classi, motodi (get, post, delete, ecc..) dei controller, Parametri dei metodi, proprieta di una classe
-
-//attenzione i decoratori vengono chiamati dal basso verso l'alto da nestJs
+/**
+ * Composite authentication and authorization decorator.
+ * Enforces JWT accessToken cookie authentication and optional CASL action/subject policy checks.
+ * Also attaches OpenAPI security scheme metadata and error response specifications.
+ */
 export function Auth(...args: [action: Action, subject: Subjects] | []){
-					// args è un semplice array
-					// sto dicendo args o è entrambi i volori oppure vuoto non ci sono vie di mezzo
 	const action = args[0];
 	const subject = args[1];
 
@@ -23,12 +26,26 @@ export function Auth(...args: [action: Action, subject: Subjects] | []){
 		return applyDecorators(
 			SetMetadata('action',{ action, subject }),
 			UseGuards(AuthGuard, RolesGuard),
-		)
+			ApiCookieAuth('accessToken'),
+			ApiUnauthorizedResponse({
+				description: 'Authentication required: missing or invalid accessToken cookie',
+				type: ApiErrorResponseDto,
+			}),
+			ApiForbiddenResponse({
+				description: 'Forbidden: insufficient permissions for this action on the target resource',
+				type: ApiErrorResponseDto,
+			}),
+		);
 	}
-	// se non passo se non passo niente non controllo RolesGuard
+
 	return applyDecorators(
 		UseGuards(AuthGuard),
-  );
+		ApiCookieAuth('accessToken'),
+		ApiUnauthorizedResponse({
+			description: 'Authentication required: missing or invalid accessToken cookie',
+			type: ApiErrorResponseDto,
+		}),
+	);
 };
 
 /*
