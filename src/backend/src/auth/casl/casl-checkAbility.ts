@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 import { PrismaService } from "prisma/prisma.service";
+=======
+import { PrismaService } from '../../../prisma/prisma.service';
+>>>>>>> Stashed changes
 import { CaslAbilityFactory } from './casl-ability.factory/casl-ability.factory';
 import { Injectable, Inject, Scope} from '@nestjs/common';
 import { Action } from './action.enum';
