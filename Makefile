@@ -143,7 +143,7 @@ stop: ## |Stop containers without removing them (keep volumes/data)
 
 # Rebuild stack from scratch (fclean + all)
 .PHONY: re
-re: fclean all ## |Rebuild stack from scratch
+re: fclean up-rebuild ## |Rebuild stack from scratch (without cache)
 
 # Stops and removes containers, networks, and removes project images
 .PHONY: clean

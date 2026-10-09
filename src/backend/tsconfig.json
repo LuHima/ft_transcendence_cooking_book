@@ -23,7 +23,8 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
 	"paths": {
-      "src/*": ["./src/*"]
+      "src/*": ["./src/*"],
+	  "prisma/*": ["./prisma/*"]
     },
 	"typeRoots": ["./node_modules/@types"],
     "types": ["jest", "node"]
