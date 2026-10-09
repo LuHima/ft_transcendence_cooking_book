@@ -78,6 +78,7 @@ enum IngredientCategory {
 
 enum Role {
   admin
+  moderator
   user
 }
 
@@ -107,6 +108,8 @@ model User {
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
   role          Role    @default(user)
+  two_factor 	String? @db.VarChar(255)
+  is_two_factor_enabled Boolean  @default(false)
   jwt_sessions  JwtSession[]
   
   recipes        Recipe[]

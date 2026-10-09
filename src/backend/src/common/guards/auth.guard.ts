@@ -1,18 +1,23 @@
-import {CanActivate, ExecutionContext, Injectable, UnauthorizedException,} from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  // CanActivate e' una interfaccia che ti obbliga a dichiarare un metodo canActivate 
+  // CanActivate e' una interfaccia che ti obbliga a dichiarare un metodo canActivate
   // al fine di vedere se il token JWT e' valido
   constructor(private readonly jwtService: JwtService) {}
   //jwtService e' l'oggetto attraverso cui usiamo i metodi di JWT per verificare il token
   //visto che contiene la chiave segreta
 
-  //e un metodo che chiamiamo dopo aver creato la Variabile request 
+  //e un metodo che chiamiamo dopo aver creato la Variabile request
   // dalla richiesta HTTP
-/*   Non fa un confronto tra due token memorizzati (perché il token non 
+  /*   Non fa un confronto tra due token memorizzati (perché il token non 
   è salvato da nessuna parte).
   
   Un JWT è composto da 3 parti separate da punti: HEADER . PAYLOAD . 
@@ -26,41 +31,46 @@ export class AuthGuard implements CanActivate {
   1. Separa i pezzi: Prende l'Header e il Payload ricevuti dal client.
   2. Ricalcola la firma crittografica: Prende il tuo secret (la      
   chiave segreta del backend) e ricalcola la formula: */
-	private extractTokenFromHeader(request: Request): string | undefined 
-	{
-		if(request.cookies?.accessToken) //cookie?  il ? è solo nel caso non vengano passati i cookie non da errore ma non fa l'if e ritorna undefined
-		{
-			return request.cookies.accessToken;
-		}
-		return undefined;
-	}
+  private extractTokenFromHeader(request: Request): string | undefined {
+    if (
+      request.cookies?.accessToken
+    ) //cookie?  il ? è solo nel caso non vengano passati i cookie non da errore ma non fa l'if e ritorna undefined
+    {
+      return request.cookies.accessToken;
+    }
+    return undefined;
+  }
 
-	async canActivate(context: ExecutionContext): Promise<boolean> 
-	{
-		const request = context.switchToHttp().getRequest(); // sto pigliando la richiesta http è basta qui.
-		const token = this.extractTokenFromHeader(request);
-		if (!token) {
-		  throw new UnauthorizedException();
-		}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest(); // sto pigliando la richiesta http è basta qui.
+    const token = this.extractTokenFromHeader(request);
+    if (!token) {
+      throw new UnauthorizedException();
+    }
 
-		try {
-			const payload = await this.jwtService.verifyAsync(token);
-			
-			request['user'] = {
-				id: payload.sub,
-				username: payload.username,
-				role: payload.role,
-				session: payload.session,
-		};
-		/*
-		request è una variabile/oggetto JavaScript che vive nella RAM del  
-		server solo per i pochi millisecondi necessari a gestire quella    
-		specifica chiamata. AuthGuard ci "appiccica" sopra i dati          
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+
+      if (!payload.sub || payload.type !== 'access')
+        // questo controllo serve per il tempToken visto che verify non sa che tipo di token è sa solo se è valido
+        throw new UnauthorizedException(); // quindi io gli dico che non deve essere un token 2Factorr
+      // !payload.sub lo controllo perche altrimeti non funziona la creazione sotto non centra con il 2factor
+
+      request['user'] = {
+        id: payload.sub,
+        username: payload.username,
+        role: payload.role,
+        session: payload.session,
+      };
+      /*
+		request è una variabile/oggetto JavaScript che vive nella RAM del
+		server solo per i pochi millisecondi necessari a gestire quella
+		specifica chiamata. AuthGuard ci "appiccica" sopra i dati
 		dell'utente per passarli comodamente alle funzioni successive.
 		*/
-		}catch {
-			throw new UnauthorizedException();
-		}
-		return true;
-	}
+    } catch {
+      throw new UnauthorizedException();
+    }
+    return true;
+  }
 }

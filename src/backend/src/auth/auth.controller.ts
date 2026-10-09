@@ -19,25 +19,34 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
 import { Auth } from 'src/common/decorators/policies.decorator';
+import { PickType } from '@nestjs/mapped-types';
+import { createHttpException, errors } from 'src/common/config/error.config';
+import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
+
+export class ConfirmPasswordDto extends PickType(SignInUserDto, [
+  'password',
+] as const) {}
+export class TwoFactorCode extends PickType(TwoFactorAuth, ['code'] as const) {}
 
 /* 
-Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il      
+Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il
   controllo dei tipi e di non tentare di emettere metadati a runtime
 */
+interface jwts {
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface twofactor {
+  tempToken: string;
+  twofAuth: true;
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
-  @Post('signin')
-  async signIn(
-    @Body() signInDto: SignInUserDto,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const jwts = await this.authService.signIn(
-      signInDto.email,
-      signInDto.password,
-    );
+  private setAuthCookie(response: Response, jwts: jwts) {
     response.cookie('accessToken', jwts.accessToken, {
       httpOnly: true,
       secure: true, // li invia solo su connessioni protetta (HTTPS)
@@ -53,6 +62,23 @@ export class AuthController {
       maxAge: days(7),
       path: '/api/auth/refresh', // Il browser lo invia solo a questa API
     });
+  }
+
+  @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+  @Post('signin')
+  async signIn(
+    @Body() signInDto: SignInUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    let result: jwts | twofactor = await this.authService.signIn(
+      signInDto.email,
+      signInDto.password,
+    );
+
+    // controllo se ce la proprietà 'tempToken' dentro result
+    if ('tempToken' in result) return result;
+    else this.setAuthCookie(response, result);
+
     return {
       message: 'Authentication append with success',
     };
@@ -62,6 +88,7 @@ export class AuthController {
   async signUp(@Body() signUpDto: SignUpUserDto) {
     return this.authService.signUp(signUpDto);
   }
+
   /* 
 	• @Req() (Request): serve a leggere la richiesta in arrivo inviata dal client (es. i   
 	dati che ricevi, l'IP, gli header in entrata). (richiesta http in arrivo)
@@ -98,7 +125,6 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token missing');
     }
     const newAccessToken = await this.authService.refreshToken(refreshToken);
-
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,
       secure: true,
@@ -107,5 +133,51 @@ export class AuthController {
       path: '/',
     });
     return { message: 'Token refreshed successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+  //      TWO FACTOR AUTH
+  // ---------------------------------------------------------------------------
+  @Auth()
+  @Post('twofactor/enable')
+  async twoFactorEnable(
+    @CurrentUser('id') id: number,
+    @Body() userPassword: ConfirmPasswordDto,
+  ) {
+    return await this.authService.twoFactorAuthEnable(
+      id,
+      userPassword.password,
+    );
+  }
+
+  @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+  @Post('twofactor/access')
+  async accessTwoFactor(
+    @Res({ passthrough: true }) response: Response,
+    @Body() twoFactor: TwoFactorAuth,
+  ) {
+    let jwts: jwts;
+
+    jwts = await this.authService.twoFactorSignin(twoFactor);
+    this.setAuthCookie(response, jwts);
+    return { message: 'Authentication append with success' };
+  }
+
+  @Auth()
+  @Post('twofactor/verify')
+  async verify(@CurrentUser('id') id: number, @Body() code: TwoFactorCode) {
+    return await this.authService.verify(id, code.code);
+  }
+
+  @Auth()
+  @Post('twofactor/disable')
+  async twoFactorDisable(
+    @CurrentUser('id') id: number,
+    @Body() userPassword: ConfirmPasswordDto,
+  ) {
+    return await this.authService.twoFactorAuthDisable(
+      id,
+      userPassword.password,
+    );
   }
 }

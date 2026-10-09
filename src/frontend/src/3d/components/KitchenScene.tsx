@@ -18,7 +18,7 @@ import type {
 
 import kitchenUrl from "../../assets/kitchen3.1.glb?url";
 
-async function fetchData(url: string) {
+async function fetchData(url: string): Promise<fetchedValues> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Failed to fetch data");
@@ -27,19 +27,44 @@ async function fetchData(url: string) {
   return response.json();
 }
 
-function SceneContent({ controlsRef, recipes }: SceneContentProps) {
+function SceneContent({
+  controlsRef,
+  recipes,
+  hasPreviousPage,
+  hasNextPage,
+  isChangingApiPage,
+  onPreviousApiPage,
+  onNextApiPage,
+  currentApiPage,
+}: SceneContentProps) {
   const { scene } = useGLTF(kitchenUrl);
 
   return (
     <>
       <KitchenModel scene={scene} />
-      <Book controlsRef={controlsRef} recipes={recipes} />
+      <Book
+        controlsRef={controlsRef}
+        recipes={recipes}
+        hasPreviousPage={hasPreviousPage}
+        hasNextPage={hasNextPage}
+        isChangingApiPage={isChangingApiPage}
+        onPreviousApiPage={onPreviousApiPage}
+        onNextApiPage={onNextApiPage}
+        currentApiPage={currentApiPage}
+      />
     </>
   );
 }
 
 export default function Scene() {
+  const initialApiPage = 1;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [hasPreviousPage, setHasPreviousPage] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [currentApiPage, setCurrentApiPage] = useState(initialApiPage);
+  const [isChangingApiPage, setIsChangingApiPage] = useState(false);
+  const [paginationError, setPaginationError] = useState<string | null>(null);
+  const pageRequestInProgress = useRef(false);
   const [recipesLoaded, setRecipesLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const assetProgressRef = useRef(0);
@@ -79,17 +104,60 @@ export default function Scene() {
   }, []);
 
   useEffect(() => {
-    fetchData("/api/recipes/page?value=1")
+    fetchData(`/api/recipes/page?value=${initialApiPage}`)
       .then((loadedRecipes: fetchedValues) => {
         setRecipes(loadedRecipes.returnPage);
+        setHasPreviousPage(loadedRecipes.hasPreviousPage);
+        setHasNextPage(loadedRecipes.hasNextPage);
       })
       .catch((error) => {
         console.error("Failed to load recipes:", error);
+        setPaginationError("Impossibile caricare le ricette.");
       })
       .finally(() => {
         setRecipesLoaded(true);
       });
   }, []);
+
+  // Functions to handle API page changes
+  // This function fetches the recipes for a given page and updates the state accordingly
+  async function loadApiPage(page: number) {
+    // Prevent multiple simultaneous requests
+    if (pageRequestInProgress.current) return;
+    // Set the request in progress flag and indicate that the API page is changing
+    pageRequestInProgress.current = true;
+    setIsChangingApiPage(true);
+
+    // Fetch the recipes for the specified page
+    try {
+      const loadedRecipes = await fetchData(`/api/recipes/page?value=${page}`);
+      setRecipes(loadedRecipes.returnPage);
+      setHasPreviousPage(loadedRecipes.hasPreviousPage);
+      setHasNextPage(loadedRecipes.hasNextPage);
+      setCurrentApiPage(page);
+      setPaginationError(null);
+    } catch (error) {
+      console.error("Failed to change recipe page:", error);
+      setPaginationError("Impossibile caricare le ricette richieste.");
+    } finally {
+      pageRequestInProgress.current = false;
+      setIsChangingApiPage(false);
+    }
+  }
+
+  // Functions to navigate to the previous API page
+  function goToPreviousApiPage() {
+    if (hasPreviousPage && !isChangingApiPage) {
+      void loadApiPage(currentApiPage - 1);
+    }
+  }
+
+  // Functions to navigate to the next API page
+  function goToNextApiPage() {
+    if (hasNextPage && !isChangingApiPage) {
+      void loadApiPage(currentApiPage + 1);
+    }
+  }
 
   useEffect(() => {
     if (sideLightRef.current && sideTargetRef.current) {
@@ -107,7 +175,6 @@ export default function Scene() {
       >
         {isBullseyeOn ? "Occhio di bue: on" : "Occhio di bue: off"}
       </button>
-
       <Canvas
         fallback={
           <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
@@ -126,7 +193,7 @@ export default function Scene() {
           </div>
         }
         shadows={{ type: PCFShadowMap }}
-        dpr={[1, 2]}
+        dpr={[1, 1.25]}
         camera={{ position: [-10, 1.5, 0], fov: 45 }}
       >
         <SceneLights
@@ -134,11 +201,19 @@ export default function Scene() {
           sideLightRef={sideLightRef}
           sideTargetRef={sideTargetRef}
         />
-
         {recipesLoaded && (
           <Suspense fallback={null}>
             <Environment preset="apartment" environmentIntensity={0.1} />
-            <SceneContent controlsRef={controlsRef} recipes={recipes} />
+            <SceneContent
+              controlsRef={controlsRef}
+              recipes={recipes}
+              hasPreviousPage={hasPreviousPage}
+              hasNextPage={hasNextPage}
+              isChangingApiPage={isChangingApiPage}
+              onPreviousApiPage={goToPreviousApiPage}
+              onNextApiPage={goToNextApiPage}
+              currentApiPage={currentApiPage}
+            />
             <SceneReady onReady={() => setSceneReady(true)} />
           </Suspense>
         )}
@@ -157,6 +232,14 @@ export default function Scene() {
           maxAzimuthAngle={-Math.PI * 0.2}
         />
       </Canvas>
+      {paginationError && (
+        <div
+          role="alert"
+          className="pointer-events-none absolute right-4 top-16 z-10 rounded-md bg-red-950/90 px-4 py-2 text-sm text-red-100 shadow-lg"
+        >
+          {paginationError}
+        </div>
+      )}
       <LoadingOverlay
         recipesLoaded={recipesLoaded}
         sceneReady={sceneReady}

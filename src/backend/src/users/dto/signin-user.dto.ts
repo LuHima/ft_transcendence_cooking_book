@@ -1,14 +1,27 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength, MinLength} from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Length,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
-export class SignInUserDto
-{
-	@IsEmail()
-	@IsNotEmpty(({ message: 'The email can not be empty' }))
-	@MaxLength(255)
-	email: string;
+export class SignInUserDto {
+  @IsEmail()
+  @IsNotEmpty({ message: 'The email can not be empty' })
+  @MaxLength(255)
+  email: string;
 
-	@IsNotEmpty(({ message: 'The password cannot be empty' }))
+  @IsNotEmpty({ message: 'The password cannot be empty' })
+  @IsString()
+  @MinLength(9, { message: 'The password must have at least 9 character' })
+  password: string;
+
+  /* 	@IsOptional()
 	@IsString()
-	@MinLength(9, { message: 'The password must have at least 9 character' })
-	password: string
+	@Length(6,6)
+	twoFactorCode?: string; */
 }

@@ -20,6 +20,8 @@ import {
 import { ProductionConfig } from '../common/config/production.config';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import * as fs from 'fs';
+import { createHttpException, errors } from 'src/common/config/error.config';
+import { CaslCheckAbility } from 'src/auth/casl/casl-checkAbility';
 
 @Injectable()
 export class RecipeService {
@@ -27,6 +29,7 @@ export class RecipeService {
     private readonly prisma: PrismaService,
     private readonly translationService: TranslationService,
     private readonly productionConfig: ProductionConfig,
+    private readonly caslCheckAbility: CaslCheckAbility,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -548,10 +551,16 @@ export class RecipeService {
       !recipe ||
       (recipe.user_id !== userId && this.productionConfig.isProduction())
     )
-      throw new NotFoundException('Recipe not found');
+      throw createHttpException(errors.recipes.notFound, 'Recipe not found');
+    //new NotFoundException('Recipe not found');
     else if (recipe.user_id !== userId)
       // Development only
       throw new NotFoundException('UserId not the author of the recipe');
+
+    // TODO implementa questi check quando abbiamo risolto caslCheckAbility !!!!!!
+    // Check if current user has permission to update the recipe
+    /* if (!(await this.caslCheckAbility.canAbility(recipeId)))
+      throw createHttpException(errors.common.forbidden); */
 
     // Update locale-invariant data of the recipe
     const updateData: any = {};
