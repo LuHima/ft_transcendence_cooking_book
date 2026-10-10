@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://schema.buildwithfern.dev/docs-yml.json
+
+instances:
+  - url: we-cook.docs.buildwithfern.com
+
+title: WeCook API Documentation
+default-language: typescript
+
+logo:
+  light: ./assets/logo.svg
+  dark: ./assets/logo.svg
+  href: https://github.com/LuHima/ft_transcendence_cooking_book
+
+colors:
+  accent-primary:
+    light: "#9a331c"
+    dark: "#e2a33d"
+
+navbar-links:
+  - type: secondary
+    text: "GitHub"
+    href: "https://github.com/LuHima/ft_transcendence_cooking_book"
+
+navigation:
+  - page: Welcome
+    path: ./pages/welcome.mdx
+  - api: API Reference

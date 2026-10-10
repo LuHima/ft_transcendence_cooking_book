@@ -95,11 +95,16 @@ async function bootstrap() {
   });
   // Export openapi.json for Fern, Postman, and AI agent consumers
   fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2));
-  try {
+  /* try {
     fs.writeFileSync('../openapi.json', JSON.stringify(document, null, 2));
   } catch {
     // Silently continue if root write is not accessible
   }
+  try {
+    fs.writeFileSync('../fern/openapi/openapi.json', JSON.stringify(document, null, 2));
+  } catch {
+    // Silently continue if fern directory is not accessible
+  } */
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }

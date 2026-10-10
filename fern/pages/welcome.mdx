@@ -1,0 +1,63 @@
+---
+title: Welcome to WeCook API
+subtitle: Technical documentation and API reference for the WeCook recipe-sharing platform
+slug: welcome
+---
+
+## Overview
+
+The WeCook API provides backend services for the WeCook recipe-sharing social platform. Built with NestJS, Prisma, and PostgreSQL, the platform provides user authentication, multilingual recipe authoring, step-by-step cooking workflows, media asset management, and curated culinary catalogs.
+
+## Environments
+
+| Environment | Base URL | Description |
+|---|---|---|
+| **Local Development** | `http://localhost:3000/api` | Default local backend instance |
+| **Production / Staging** | `https://app.we-cook.it:8443/api` | HTTPS server deployed behind Nginx reverse proxy |
+
+All API routes are prefixed with `/api`. Static media files (recipe covers, steps, avatars) are served directly under `/uploads/`.
+
+## Authentication
+
+WeCook uses HttpOnly cookie-based JWT authentication:
+
+- **`accessToken`**: Short-lived (10 minutes) JWT stored in an HttpOnly cookie. Sent automatically by browsers and client agents on protected routes.
+- **`refresh_token`**: Long-lived (7 days) JWT stored in an HttpOnly cookie scoped strictly to `/api/auth/refresh`. Used to issue fresh access tokens without re-entering credentials.
+- **Two-Factor Authentication (2FA)**: Time-based One-Time Password (TOTP) supported via standard authenticator apps (Google Authenticator, Authy, etc.).
+
+When testing API endpoints directly with tools like cURL or Postman, include the cookies in the `Cookie` header:
+
+```bash
+curl -X GET https://app.we-cook.it:8443/api/users/profile/me \
+  -H "Cookie: accessToken=YOUR_JWT_ACCESS_TOKEN"
+```
+
+## API Modules
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api-reference/auth">
+    Register, log in, manage sessions, refresh tokens, and configure two-factor authentication.
+  </Card>
+  <Card title="Users & Profiles" icon="user" href="/api-reference/users">
+    Manage user profiles, upload avatars, and view user statistics and activity.
+  </Card>
+  <Card title="Recipes & Media" icon="book-open" href="/api-reference/recipes">
+    Create recipes, manage multilingual content (IT, EN, FR), upload photos/videos, and like recipes.
+  </Card>
+  <Card title="Catalog & Metadata" icon="list" href="/api-reference/catalog">
+    Query standardized ingredients, dietary tags, units of measure, and system categories.
+  </Card>
+</CardGroup>
+
+## Multilingual Support
+
+Recipes and catalog terms support automatic relational translation across three languages:
+- `it` (Italian - default)
+- `en` (English)
+- `fr` (French)
+
+Localization is projected dynamically through relational database fields and the integrated translation engine.
+
+## Media Uploads
+
+Endpoints accepting image and video uploads (such as recipe covers, step photos, and avatars) require `multipart/form-data` encoding. Uploaded assets are processed, validated against strict MIME and size limits, and stored in the dedicated `/uploads` directory.

@@ -1,6 +1,9 @@
 {
   "scripts": {
     "install:all": "npm --prefix src/backend install && npm --prefix src/frontend install",
-    "update:all": "npm --prefix src/backend update && npm --prefix src/frontend update"
+    "update:all": "npm --prefix src/backend update && npm --prefix src/frontend update",
+    "docs:check": "npx fern-api check",
+    "docs:dev": "npx fern-api docs dev",
+    "docs:generate": "npx fern-api generate --docs"
   }
 }

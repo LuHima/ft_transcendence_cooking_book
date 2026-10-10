@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Single global gradient across the entire hat (userSpaceOnUse ensures a seamless flow across both pieces) -->
+    <linearGradient id="hatGradient" gradientUnits="userSpaceOnUse" x1="100" y1="492" x2="400" y2="8">
+      <stop offset="0%" stop-color="#0a4664" />
+      <stop offset="18%" stop-color="#105e74" />
+      <stop offset="38%" stop-color="#18787c" />
+      <stop offset="65%" stop-color="#359877" />
+      <stop offset="85%" stop-color="#5eb66e" />
+      <stop offset="100%" stop-color="#77c576" />
+    </linearGradient>
+  </defs>
+
+  <g fill="url(#hatGradient)">
+    <!-- Crown / Upper Hat -->
+    <path d="
+      M 108 410
+      C 190 380, 310 380, 392 410
+      L 392 316
+      C 455 316, 490 260, 490 200
+      C 490 134, 436 90, 368 96
+      C 360 40, 312 8, 250 8
+      C 188 8, 140 40, 132 96
+      C 64 90, 10 134, 10 200
+      C 10 260, 45 316, 108 316
+      Z
+    " />
+
+    <!-- Lower Brim Band -->
+    <path d="
+      M 108 446
+      C 190 416, 310 416, 392 446
+      L 392 492
+      C 310 464, 190 464, 108 492
+      Z
+    " />
+  </g>
+</svg>
