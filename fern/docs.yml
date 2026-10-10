@@ -2,6 +2,7 @@
 
 instances:
   - url: we-cook.docs.buildwithfern.com
+    custom-domain: docs.we-cook.it
 
 title: WeCook API Documentation
 default-language: typescript
