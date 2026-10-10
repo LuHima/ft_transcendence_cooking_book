@@ -109,7 +109,11 @@ describe('RecipeController', () => {
 
   describe('getRecipeStack', () => {
     it('defaults to page 1 and returns paginated response object', async () => {
-      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: false };
+      const mockPage = {
+        returnPage: [],
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
       mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
 
       const result = await controller.getRecipeStack(undefined, undefined);
@@ -119,7 +123,11 @@ describe('RecipeController', () => {
     });
 
     it('accepts page query parameter over legacy value parameter', async () => {
-      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: true };
+      const mockPage = {
+        returnPage: [],
+        hasNextPage: false,
+        hasPreviousPage: true,
+      };
       mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
 
       const result = await controller.getRecipeStack(2, undefined);
@@ -129,7 +137,11 @@ describe('RecipeController', () => {
     });
 
     it('falls back to legacy value query parameter if page is not provided', async () => {
-      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: true };
+      const mockPage = {
+        returnPage: [],
+        hasNextPage: false,
+        hasPreviousPage: true,
+      };
       mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
 
       const result = await controller.getRecipeStack(undefined, 3);
@@ -139,7 +151,11 @@ describe('RecipeController', () => {
     });
 
     it('sanitizes invalid or negative page numbers to 1', async () => {
-      const mockPage = { returnPage: [], hasNextPage: false, hasPreviousPage: false };
+      const mockPage = {
+        returnPage: [],
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
       mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
 
       const result = await controller.getRecipeStack(-5, undefined);

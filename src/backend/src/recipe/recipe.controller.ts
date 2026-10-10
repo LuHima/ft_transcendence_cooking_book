@@ -79,7 +79,8 @@ export class RecipeController {
   @ApiQuery({
     name: 'lang',
     required: false,
-    description: 'Target locale code for projected titles and descriptions (it, en, fr)',
+    description:
+      'Target locale code for projected titles and descriptions (it, en, fr)',
     enum: ['it', 'en', 'fr'],
     example: 'it',
   })
@@ -112,7 +113,8 @@ export class RecipeController {
     example: 1,
   })
   @ApiOkResponse({
-    description: 'Paginated recipe window with hasNextPage and hasPreviousPage booleans',
+    description:
+      'Paginated recipe window with hasNextPage and hasPreviousPage booleans',
     type: RecipePaginationResponseDto,
   })
   @Get('page')
@@ -183,7 +185,8 @@ export class RecipeController {
   @ApiQuery({
     name: 'lang',
     required: false,
-    description: 'Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated.',
+    description:
+      'Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated.',
     enum: ['it', 'en', 'fr'],
     example: 'it',
   })
@@ -216,7 +219,8 @@ export class RecipeController {
     type: LocalizedRecipeDetailResponse,
   })
   @ApiBadRequestResponse({
-    description: 'Validation failed on inputs or referenced catalog items do not exist',
+    description:
+      'Validation failed on inputs or referenced catalog items do not exist',
     type: ApiErrorResponseDto,
   })
   @Auth(Action.Create, 'Recipe')
@@ -238,7 +242,10 @@ export class RecipeController {
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({ description: 'Translation retry processed' })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/translate')
   async retryTranslation(
@@ -260,7 +267,8 @@ export class RecipeController {
   @ApiQuery({
     name: 'retranslate',
     required: false,
-    description: 'Set to "true" to re-generate automated translations for updated text',
+    description:
+      'Set to "true" to re-generate automated translations for updated text',
     example: 'true',
   })
   @ApiOkResponse({
@@ -344,8 +352,14 @@ export class RecipeController {
     description: 'Cover image uploaded successfully',
     type: CoverImageUploadResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'File missing or invalid file format', type: ApiErrorResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiBadRequestResponse({
+    description: 'File missing or invalid file format',
+    type: ApiErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/cover')
   @UseInterceptors(FileInterceptor('file', recipeImageMulterOptions))
@@ -366,7 +380,11 @@ export class RecipeController {
       'Uploads an illustration photo for a specific recipe preparation step (identified by step number).',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
-  @ApiParam({ name: 'stepNumber', description: '1-based step sequence number', example: 1 })
+  @ApiParam({
+    name: 'stepNumber',
+    description: '1-based step sequence number',
+    example: 1,
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -385,8 +403,14 @@ export class RecipeController {
     description: 'Step illustration photo uploaded successfully',
     type: StepImageUploadResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'File missing or invalid image', type: ApiErrorResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe or step not found', type: ApiErrorResponseDto })
+  @ApiBadRequestResponse({
+    description: 'File missing or invalid image',
+    type: ApiErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe or step not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/steps/:stepNumber/image')
   @UseInterceptors(FileInterceptor('file', recipeImageMulterOptions))
@@ -438,7 +462,10 @@ export class RecipeController {
     description: 'Maximum 3 gallery images exceeded or invalid format',
     type: ApiErrorResponseDto,
   })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/gallery')
   @UseInterceptors(FilesInterceptor('files', 3, recipeImageMulterOptions))
@@ -477,8 +504,14 @@ export class RecipeController {
     description: 'Tutorial video uploaded successfully',
     type: VideoUploadResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'File missing or invalid video format', type: ApiErrorResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiBadRequestResponse({
+    description: 'File missing or invalid video format',
+    type: ApiErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/video')
   @UseInterceptors(FileInterceptor('file', recipeVideoMulterOptions))
@@ -495,11 +528,18 @@ export class RecipeController {
    */
   @ApiOperation({
     summary: 'Delete recipe cover image',
-    description: 'Removes the cover photo file from disk and nullifies the database reference.',
+    description:
+      'Removes the cover photo file from disk and nullifies the database reference.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
-  @ApiOkResponse({ description: 'Cover image deleted', type: RecipeMessageResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiOkResponse({
+    description: 'Cover image deleted',
+    type: RecipeMessageResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/cover')
   async deleteCoverImage(
@@ -514,11 +554,18 @@ export class RecipeController {
    */
   @ApiOperation({
     summary: 'Delete recipe tutorial video',
-    description: 'Removes the video file from storage and nullifies the database reference.',
+    description:
+      'Removes the video file from storage and nullifies the database reference.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
-  @ApiOkResponse({ description: 'Tutorial video deleted', type: RecipeMessageResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiOkResponse({
+    description: 'Tutorial video deleted',
+    type: RecipeMessageResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/video')
   async deleteVideo(
@@ -533,12 +580,23 @@ export class RecipeController {
    */
   @ApiOperation({
     summary: 'Delete step illustration photo',
-    description: 'Removes the step illustration file from disk and nullifies step image_url.',
+    description:
+      'Removes the step illustration file from disk and nullifies step image_url.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
-  @ApiParam({ name: 'stepNumber', description: '1-based step sequence number', example: 1 })
-  @ApiOkResponse({ description: 'Step image deleted', type: RecipeMessageResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe or step not found', type: ApiErrorResponseDto })
+  @ApiParam({
+    name: 'stepNumber',
+    description: '1-based step sequence number',
+    example: 1,
+  })
+  @ApiOkResponse({
+    description: 'Step image deleted',
+    type: RecipeMessageResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe or step not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/steps/:stepNumber/image')
   async deleteStepImage(
@@ -554,12 +612,19 @@ export class RecipeController {
    */
   @ApiOperation({
     summary: 'Delete gallery photo',
-    description: 'Deletes a specific gallery media photo from disk and database by its media ID.',
+    description:
+      'Deletes a specific gallery media photo from disk and database by its media ID.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiParam({ name: 'mediaId', description: 'Gallery media ID', example: 3 })
-  @ApiOkResponse({ description: 'Gallery media photo deleted', type: RecipeMessageResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe or media item not found', type: ApiErrorResponseDto })
+  @ApiOkResponse({
+    description: 'Gallery media photo deleted',
+    type: RecipeMessageResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe or media item not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/gallery/:mediaId')
   async deleteGalleryMedia(
@@ -575,11 +640,15 @@ export class RecipeController {
    */
   @ApiOperation({
     summary: 'Like recipe',
-    description: 'Registers a like association for the current authenticated user on the recipe (idempotent).',
+    description:
+      'Registers a like association for the current authenticated user on the recipe (idempotent).',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({ description: 'Recipe liked', type: RecipeLikeResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth()
   @Post(':id/like')
   async likeRecipe(
@@ -594,11 +663,15 @@ export class RecipeController {
    */
   @ApiOperation({
     summary: 'Unlike recipe',
-    description: 'Removes the like association for the current user from the recipe (idempotent).',
+    description:
+      'Removes the like association for the current user from the recipe (idempotent).',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({ description: 'Recipe unliked', type: RecipeLikeResponseDto })
-  @ApiNotFoundResponse({ description: 'Recipe not found', type: ApiErrorResponseDto })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
   @Auth()
   @Delete(':id/like')
   async unlikeRecipe(

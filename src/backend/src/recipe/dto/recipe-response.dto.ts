@@ -1,9 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  Course,
-  RecipeDifficulty,
-  TranslationStatus,
-} from '@prisma/client';
+import { Course, RecipeDifficulty, TranslationStatus } from '@prisma/client';
 
 /**
  * Summary recipe item inside paginated recipe stack.
@@ -12,10 +8,18 @@ export class RecipeStackItemDto {
   @ApiProperty({ description: 'Recipe identifier', example: 1 })
   id: number;
 
-  @ApiProperty({ enum: Course, description: 'Course classification', example: Course.first_course })
+  @ApiProperty({
+    enum: Course,
+    description: 'Course classification',
+    example: Course.first_course,
+  })
   course: Course;
 
-  @ApiProperty({ enum: RecipeDifficulty, description: 'Difficulty level', example: RecipeDifficulty.easy })
+  @ApiProperty({
+    enum: RecipeDifficulty,
+    description: 'Difficulty level',
+    example: RecipeDifficulty.easy,
+  })
   difficulty: RecipeDifficulty;
 
   @ApiProperty({ description: 'Preparation time in minutes', example: 15 })
@@ -33,19 +37,38 @@ export class RecipeStackItemDto {
   @ApiProperty({ description: 'Author source language code', example: 'it' })
   source_lang: string;
 
-  @ApiProperty({ enum: TranslationStatus, description: 'Translation state', example: TranslationStatus.completed })
+  @ApiProperty({
+    enum: TranslationStatus,
+    description: 'Translation state',
+    example: TranslationStatus.completed,
+  })
   translation_status: TranslationStatus;
 
-  @ApiProperty({ description: 'Cover image URL path', example: '/uploads/recipes/cover.webp', nullable: true })
+  @ApiProperty({
+    description: 'Cover image URL path',
+    example: '/uploads/recipes/cover.webp',
+    nullable: true,
+  })
   cover_image_url: string | null;
 
-  @ApiProperty({ description: 'Tutorial video URL path', example: '/uploads/recipes/video.mp4', nullable: true })
+  @ApiProperty({
+    description: 'Tutorial video URL path',
+    example: '/uploads/recipes/video.mp4',
+    nullable: true,
+  })
   video_url: string | null;
 
-  @ApiProperty({ description: 'Author username', example: 'mario_rossi', nullable: true })
+  @ApiProperty({
+    description: 'Author username',
+    example: 'mario_rossi',
+    nullable: true,
+  })
   username: string | null;
 
-  @ApiProperty({ description: 'Creation date', example: '2026-10-09T18:00:00.000Z' })
+  @ApiProperty({
+    description: 'Creation date',
+    example: '2026-10-09T18:00:00.000Z',
+  })
   created_at: Date;
 }
 
@@ -66,14 +89,20 @@ export class RecipePaginationResponseDto {
    * Indicates if another page follows.
    * @example true
    */
-  @ApiProperty({ description: 'Indicates if a next page exists', example: true })
+  @ApiProperty({
+    description: 'Indicates if a next page exists',
+    example: true,
+  })
   hasNextPage: boolean;
 
   /**
    * Indicates if a previous page precedes.
    * @example false
    */
-  @ApiProperty({ description: 'Indicates if a previous page exists', example: false })
+  @ApiProperty({
+    description: 'Indicates if a previous page exists',
+    example: false,
+  })
   hasPreviousPage: boolean;
 }
 
@@ -100,7 +129,10 @@ export class StepImageUploadResponseDto {
    * Target step number (1-based).
    * @example 2
    */
-  @ApiProperty({ description: 'Target 1-based step sequence number', example: 2 })
+  @ApiProperty({
+    description: 'Target 1-based step sequence number',
+    example: 2,
+  })
   step_number: number;
 
   /**
@@ -137,7 +169,10 @@ export class RecipeLikeResponseDto {
    * Operation outcome message.
    * @example 'Recipe liked successfully'
    */
-  @ApiProperty({ description: 'Status message', example: 'Recipe liked successfully' })
+  @ApiProperty({
+    description: 'Status message',
+    example: 'Recipe liked successfully',
+  })
   message: string;
 
   /**
@@ -156,6 +191,9 @@ export class RecipeMessageResponseDto {
    * Operation outcome message.
    * @example 'Recipe deleted successfully'
    */
-  @ApiProperty({ description: 'Status message', example: 'Recipe deleted successfully' })
+  @ApiProperty({
+    description: 'Status message',
+    example: 'Recipe deleted successfully',
+  })
   message: string;
 }

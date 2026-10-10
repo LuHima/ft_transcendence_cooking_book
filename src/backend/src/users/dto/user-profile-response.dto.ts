@@ -23,7 +23,10 @@ export class UserProfileResponseDto {
    * Account email address.
    * @example 'mario.rossi@example.com'
    */
-  @ApiProperty({ description: 'Email address', example: 'mario.rossi@example.com' })
+  @ApiProperty({
+    description: 'Email address',
+    example: 'mario.rossi@example.com',
+  })
   email: string;
 
   /**
@@ -73,35 +76,54 @@ export class UserProfileResponseDto {
    * Contact phone number.
    * @example '+39 06 1234567'
    */
-  @ApiProperty({ description: 'Phone number', example: '+39 06 1234567', nullable: true })
+  @ApiProperty({
+    description: 'Phone number',
+    example: '+39 06 1234567',
+    nullable: true,
+  })
   phone: string | null;
 
   /**
    * Residential street address.
    * @example 'Via Roma 123'
    */
-  @ApiProperty({ description: 'Residential street address', example: 'Via Roma 123', nullable: true })
+  @ApiProperty({
+    description: 'Residential street address',
+    example: 'Via Roma 123',
+    nullable: true,
+  })
   address: string | null;
 
   /**
    * City of residence.
    * @example 'Roma'
    */
-  @ApiProperty({ description: 'City of residence', example: 'Roma', nullable: true })
+  @ApiProperty({
+    description: 'City of residence',
+    example: 'Roma',
+    nullable: true,
+  })
   city: string | null;
 
   /**
    * Postal code.
    * @example '00100'
    */
-  @ApiProperty({ description: 'Postal code / ZIP', example: '00100', nullable: true })
+  @ApiProperty({
+    description: 'Postal code / ZIP',
+    example: '00100',
+    nullable: true,
+  })
   postal_code: string | null;
 
   /**
    * Account registration date.
    * @example '2026-10-09T18:00:00.000Z'
    */
-  @ApiProperty({ description: 'Account creation timestamp', example: '2026-10-09T18:00:00.000Z' })
+  @ApiProperty({
+    description: 'Account creation timestamp',
+    example: '2026-10-09T18:00:00.000Z',
+  })
   created_at: Date;
 }
 
@@ -138,7 +160,10 @@ export class PublicUserResponseDto {
    * Member registration date.
    * @example '2026-10-09T18:00:00.000Z'
    */
-  @ApiProperty({ description: 'Member since date', example: '2026-10-09T18:00:00.000Z' })
+  @ApiProperty({
+    description: 'Member since date',
+    example: '2026-10-09T18:00:00.000Z',
+  })
   created_at: Date;
 }
 
@@ -177,6 +202,9 @@ export class UserMessageResponseDto {
    * Status message describing outcome.
    * @example 'Avatar deleted successfully'
    */
-  @ApiProperty({ description: 'Status message', example: 'Avatar deleted successfully' })
+  @ApiProperty({
+    description: 'Status message',
+    example: 'Avatar deleted successfully',
+  })
   message: string;
 }

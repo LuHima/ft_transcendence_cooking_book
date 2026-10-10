@@ -17,7 +17,8 @@ export class SignUpUserDto {
    * @example 'mario_rossi'
    */
   @ApiProperty({
-    description: 'Unique username consisting of letters, numbers, underscores, and hyphens (3-30 characters)',
+    description:
+      'Unique username consisting of letters, numbers, underscores, and hyphens (3-30 characters)',
     example: 'mario_rossi',
     minLength: 3,
     maxLength: 30,
@@ -28,7 +29,8 @@ export class SignUpUserDto {
   @MinLength(3, { message: 'Username must be at least 3 characters long' })
   @MaxLength(30, { message: 'Username cannot exceed 30 characters' })
   @Matches(/^[a-zA-Z0-9_-]+$/, {
-    message: 'Username can only contain letters, numbers, underscores and hyphens',
+    message:
+      'Username can only contain letters, numbers, underscores and hyphens',
   })
   username: string;
 

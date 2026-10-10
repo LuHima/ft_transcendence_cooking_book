@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogService } from './catalog.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Course, RecipeDifficulty, UnitOfMeasure, IngredientCategory } from '@prisma/client';
+import {
+  Course,
+  RecipeDifficulty,
+  UnitOfMeasure,
+  IngredientCategory,
+} from '@prisma/client';
 
 describe('CatalogService', () => {
   let service: CatalogService;
@@ -34,9 +39,15 @@ describe('CatalogService', () => {
       const meta = service.getMetadata();
 
       expect(meta).toHaveProperty('courses', Object.values(Course));
-      expect(meta).toHaveProperty('difficulties', Object.values(RecipeDifficulty));
+      expect(meta).toHaveProperty(
+        'difficulties',
+        Object.values(RecipeDifficulty),
+      );
       expect(meta).toHaveProperty('units', Object.values(UnitOfMeasure));
-      expect(meta).toHaveProperty('categories', Object.values(IngredientCategory));
+      expect(meta).toHaveProperty(
+        'categories',
+        Object.values(IngredientCategory),
+      );
     });
   });
 
@@ -127,18 +138,32 @@ describe('CatalogService', () => {
     ];
 
     it('should return ingredients localized in the requested language', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue(mockDbIngredients);
+      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue(
+        mockDbIngredients,
+      );
 
       const result = await service.getIngredients({ lang: 'it' });
 
       expect(result).toEqual([
-        { id: 2, slug: 'parmesan', category: IngredientCategory.dairy_eggs, name: 'Parmigiano Reggiano' },
-        { id: 1, slug: 'tomato', category: IngredientCategory.produce, name: 'Pomodoro' },
+        {
+          id: 2,
+          slug: 'parmesan',
+          category: IngredientCategory.dairy_eggs,
+          name: 'Parmigiano Reggiano',
+        },
+        {
+          id: 1,
+          slug: 'tomato',
+          category: IngredientCategory.produce,
+          name: 'Pomodoro',
+        },
       ]);
     });
 
     it('should filter by category and search term in relational translations', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([mockDbIngredients[0]]);
+      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([
+        mockDbIngredients[0],
+      ]);
 
       const result = await service.getIngredients({
         lang: 'it',
@@ -147,7 +172,12 @@ describe('CatalogService', () => {
       });
 
       expect(result).toEqual([
-        { id: 1, slug: 'tomato', category: IngredientCategory.produce, name: 'Pomodoro' },
+        {
+          id: 1,
+          slug: 'tomato',
+          category: IngredientCategory.produce,
+          name: 'Pomodoro',
+        },
       ]);
       expect(prisma.ingredient.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

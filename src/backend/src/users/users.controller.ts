@@ -55,7 +55,8 @@ export class UsersController {
    */
   @ApiOperation({
     summary: 'Get current user profile',
-    description: 'Returns private personal and account details for the authenticated user.',
+    description:
+      'Returns private personal and account details for the authenticated user.',
   })
   @ApiOkResponse({
     description: 'Current user profile information',
@@ -76,7 +77,8 @@ export class UsersController {
    */
   @ApiOperation({
     summary: 'Update current user profile',
-    description: 'Modifies account profile fields (name, email, birthday, phone, address).',
+    description:
+      'Modifies account profile fields (name, email, birthday, phone, address).',
   })
   @ApiOkResponse({
     description: 'Updated user profile information',
@@ -104,7 +106,8 @@ export class UsersController {
    */
   @ApiOperation({
     summary: 'Upload user avatar',
-    description: 'Uploads and updates the user profile photo. Replaces any existing avatar file on disk.',
+    description:
+      'Uploads and updates the user profile photo. Replaces any existing avatar file on disk.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -143,7 +146,8 @@ export class UsersController {
    */
   @ApiOperation({
     summary: 'Delete user avatar',
-    description: 'Removes the avatar file from disk and nullifies the database reference.',
+    description:
+      'Removes the avatar file from disk and nullifies the database reference.',
   })
   @ApiOkResponse({
     description: 'Avatar successfully deleted',
@@ -160,7 +164,8 @@ export class UsersController {
    */
   @ApiOperation({
     summary: 'Get liked recipes',
-    description: 'Returns recipes previously liked by the current user, ordered by most recently liked.',
+    description:
+      'Returns recipes previously liked by the current user, ordered by most recently liked.',
   })
   @ApiQuery({
     name: 'lang',
@@ -186,7 +191,8 @@ export class UsersController {
    */
   @ApiOperation({
     summary: 'Search users by username',
-    description: 'Searches users by username substring matching (case-insensitive).',
+    description:
+      'Searches users by username substring matching (case-insensitive).',
   })
   @ApiQuery({
     name: 'value',
@@ -208,7 +214,8 @@ export class UsersController {
    */
   @ApiOperation({
     summary: 'Get public user profile by ID',
-    description: 'Returns public profile information (username, avatar, join date) for the specified user.',
+    description:
+      'Returns public profile information (username, avatar, join date) for the specified user.',
   })
   @ApiParam({
     name: 'id',

@@ -86,7 +86,8 @@ export class CatalogController {
   @ApiQuery({
     name: 'search',
     required: false,
-    description: 'Case-insensitive substring search across ingredient slugs and translations',
+    description:
+      'Case-insensitive substring search across ingredient slugs and translations',
     example: 'pomodoro',
   })
   @ApiOkResponse({

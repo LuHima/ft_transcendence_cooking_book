@@ -15,7 +15,8 @@ export class AppController {
    */
   @ApiOperation({
     summary: 'System health check probe',
-    description: 'Returns a simple greeting confirmation indicating that the backend application is alive and responding.',
+    description:
+      'Returns a simple greeting confirmation indicating that the backend application is alive and responding.',
   })
   @ApiOkResponse({
     description: 'Service greeting message',
@@ -29,5 +30,3 @@ export class AppController {
     return this.appService.getHello();
   }
 }
-
-

@@ -1151,7 +1151,11 @@ describe('RecipeService', () => {
 
     it('should throw BadRequestException if cover image file is missing', async () => {
       await expect(
-        service.uploadCoverImage(1, 1, undefined as unknown as Express.Multer.File),
+        service.uploadCoverImage(
+          1,
+          1,
+          undefined as unknown as Express.Multer.File,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1173,7 +1177,9 @@ describe('RecipeService', () => {
       const mockFile = { filename: 'new-cover.png' } as Express.Multer.File;
       await service.uploadCoverImage(1, 1, mockFile);
 
-      expect(safeUnlinkSpy).toHaveBeenCalledWith('/uploads/recipes/old-cover.png');
+      expect(safeUnlinkSpy).toHaveBeenCalledWith(
+        '/uploads/recipes/old-cover.png',
+      );
     });
   });
 
@@ -1243,7 +1249,12 @@ describe('RecipeService', () => {
 
     it('should throw BadRequestException if step illustration file is missing', async () => {
       await expect(
-        service.uploadStepImage(1, 1, 1, undefined as unknown as Express.Multer.File),
+        service.uploadStepImage(
+          1,
+          1,
+          1,
+          undefined as unknown as Express.Multer.File,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1256,7 +1267,9 @@ describe('RecipeService', () => {
         image_url: '/uploads/recipes/old-step.png',
       };
       (prisma.recipe.findUnique as jest.Mock).mockResolvedValue(existingRecipe);
-      (prisma.recipeStep.findFirst as jest.Mock).mockResolvedValue(existingStep);
+      (prisma.recipeStep.findFirst as jest.Mock).mockResolvedValue(
+        existingStep,
+      );
       (prisma.recipeStep.update as jest.Mock).mockResolvedValue({
         ...existingStep,
         image_url: '/uploads/recipes/new-step.png',
@@ -1268,7 +1281,9 @@ describe('RecipeService', () => {
       const mockFile = { filename: 'new-step.png' } as Express.Multer.File;
       await service.uploadStepImage(1, 1, 1, mockFile);
 
-      expect(safeUnlinkSpy).toHaveBeenCalledWith('/uploads/recipes/old-step.png');
+      expect(safeUnlinkSpy).toHaveBeenCalledWith(
+        '/uploads/recipes/old-step.png',
+      );
     });
   });
 
@@ -1442,7 +1457,9 @@ describe('RecipeService', () => {
       const mockFile = { filename: 'new-video.mp4' } as Express.Multer.File;
       await service.uploadVideo(1, 1, mockFile);
 
-      expect(safeUnlinkSpy).toHaveBeenCalledWith('/uploads/recipes/old-video.mp4');
+      expect(safeUnlinkSpy).toHaveBeenCalledWith(
+        '/uploads/recipes/old-video.mp4',
+      );
     });
   });
 
@@ -1732,4 +1749,3 @@ describe('RecipeService', () => {
     });
   });
 });
-

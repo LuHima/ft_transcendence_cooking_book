@@ -53,7 +53,10 @@ export class TranslationService {
     }
   }
 
-  async verifySourceLanguage(text: string, declaredLang: string): Promise<void> {
+  async verifySourceLanguage(
+    text: string,
+    declaredLang: string,
+  ): Promise<void> {
     const detection = await this.detectLanguage(text);
     if (!detection) {
       return;

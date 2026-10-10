@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
-import { Course, RecipeDifficulty, UnitOfMeasure, IngredientCategory } from '@prisma/client';
+import {
+  Course,
+  RecipeDifficulty,
+  UnitOfMeasure,
+  IngredientCategory,
+} from '@prisma/client';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
@@ -22,10 +27,21 @@ describe('CatalogController', () => {
           provide: CatalogService,
           useValue: {
             getMetadata: jest.fn().mockReturnValue(mockMeta),
-            getTags: jest.fn().mockResolvedValue([{ id: 1, slug: 'vegetarian', name: 'Vegetariano' }]),
-            getIngredients: jest.fn().mockResolvedValue([
-              { id: 1, slug: 'tomato', category: IngredientCategory.produce, name: 'Pomodoro' },
-            ]),
+            getTags: jest
+              .fn()
+              .mockResolvedValue([
+                { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
+              ]),
+            getIngredients: jest
+              .fn()
+              .mockResolvedValue([
+                {
+                  id: 1,
+                  slug: 'tomato',
+                  category: IngredientCategory.produce,
+                  name: 'Pomodoro',
+                },
+              ]),
           },
         },
       ],
@@ -48,17 +64,28 @@ describe('CatalogController', () => {
     it('should delegate to service.getTags with lang parameter', async () => {
       const result = await controller.getTags('it');
 
-      expect(result).toEqual([{ id: 1, slug: 'vegetarian', name: 'Vegetariano' }]);
+      expect(result).toEqual([
+        { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
+      ]);
       expect(service.getTags).toHaveBeenCalledWith({ lang: 'it' });
     });
   });
 
   describe('getIngredients', () => {
     it('should delegate to service.getIngredients with query parameters', async () => {
-      const result = await controller.getIngredients('it', IngredientCategory.produce, 'pomo');
+      const result = await controller.getIngredients(
+        'it',
+        IngredientCategory.produce,
+        'pomo',
+      );
 
       expect(result).toEqual([
-        { id: 1, slug: 'tomato', category: IngredientCategory.produce, name: 'Pomodoro' },
+        {
+          id: 1,
+          slug: 'tomato',
+          category: IngredientCategory.produce,
+          name: 'Pomodoro',
+        },
       ]);
       expect(service.getIngredients).toHaveBeenCalledWith({
         lang: 'it',

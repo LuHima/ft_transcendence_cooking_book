@@ -106,7 +106,8 @@ export class TwoFactorEnableResponseDto {
    * @example 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...'
    */
   @ApiProperty({
-    description: 'Data URI representation of the QR code containing OTP auth URI',
+    description:
+      'Data URI representation of the QR code containing OTP auth URI',
     example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
   })
   qrCode: string;
@@ -116,7 +117,8 @@ export class TwoFactorEnableResponseDto {
    * @example 'JBSWY3DPEHPK3PXP'
    */
   @ApiProperty({
-    description: 'Base32 secret key for manual entry in authenticator application',
+    description:
+      'Base32 secret key for manual entry in authenticator application',
     example: 'JBSWY3DPEHPK3PXP',
   })
   key: string;

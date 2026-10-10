@@ -36,7 +36,10 @@ describe('TranslationService', () => {
       } as any);
 
       await expect(
-        service.verifySourceLanguage('This is a delicious recipe written in English', 'it'),
+        service.verifySourceLanguage(
+          'This is a delicious recipe written in English',
+          'it',
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -47,12 +50,17 @@ describe('TranslationService', () => {
       } as any);
 
       await expect(
-        service.verifySourceLanguage('Risotto ai funghi porcini e parmigiano', 'it'),
+        service.verifySourceLanguage(
+          'Risotto ai funghi porcini e parmigiano',
+          'it',
+        ),
       ).resolves.toBeUndefined();
     });
 
     it('resolves without throwing when LibreTranslate is offline or returns error', async () => {
-      jest.spyOn(global, 'fetch').mockRejectedValueOnce(new Error('Network error: connection refused'));
+      jest
+        .spyOn(global, 'fetch')
+        .mockRejectedValueOnce(new Error('Network error: connection refused'));
 
       await expect(
         service.verifySourceLanguage('Qualsiasi testo', 'it'),
@@ -110,9 +118,9 @@ describe('TranslationService', () => {
     });
 
     it('returns original texts with success: false when network error or timeout occurs', async () => {
-      jest.spyOn(global, 'fetch').mockRejectedValueOnce(
-        new Error('Fetch timed out'),
-      );
+      jest
+        .spyOn(global, 'fetch')
+        .mockRejectedValueOnce(new Error('Fetch timed out'));
 
       const input = ['Polenta concia', 'Tipica ricetta valdostana'];
       const result = await service.translateBatch(input, 'it', 'en');

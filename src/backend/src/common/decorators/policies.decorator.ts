@@ -1,4 +1,9 @@
-import { applyDecorators, SetMetadata, UseGuards, ExecutionContext } from '@nestjs/common';
+import {
+  applyDecorators,
+  SetMetadata,
+  UseGuards,
+  ExecutionContext,
+} from '@nestjs/common';
 import {
   ApiCookieAuth,
   ApiForbiddenResponse,
@@ -11,42 +16,45 @@ import { RolesGuard } from '../guards/role.guard';
 import { Subjects } from '../../auth/casl/casl-ability.factory/casl-ability.factory';
 import { ApiErrorResponseDto } from '../dto/api-error-response.dto';
 
-export type HandlerRolePolicy = (ability: AppAbility) =>  boolean;
+export type HandlerRolePolicy = (ability: AppAbility) => boolean;
 
 /**
  * Composite authentication and authorization decorator.
  * Enforces JWT accessToken cookie authentication and optional CASL action/subject policy checks.
  * Also attaches OpenAPI security scheme metadata and error response specifications.
  */
-export function Auth(...args: [action: Action, subject: Subjects] | []){
-	const action = args[0];
-	const subject = args[1];
+export function Auth(...args: [action: Action, subject: Subjects] | []) {
+  const action = args[0];
+  const subject = args[1];
 
-	if (action && subject) {
-		return applyDecorators(
-			SetMetadata('action',{ action, subject }),
-			UseGuards(AuthGuard, RolesGuard),
-			ApiCookieAuth('accessToken'),
-			ApiUnauthorizedResponse({
-				description: 'Authentication required: missing or invalid accessToken cookie',
-				type: ApiErrorResponseDto,
-			}),
-			ApiForbiddenResponse({
-				description: 'Forbidden: insufficient permissions for this action on the target resource',
-				type: ApiErrorResponseDto,
-			}),
-		);
-	}
+  if (action && subject) {
+    return applyDecorators(
+      SetMetadata('action', { action, subject }),
+      UseGuards(AuthGuard, RolesGuard),
+      ApiCookieAuth('accessToken'),
+      ApiUnauthorizedResponse({
+        description:
+          'Authentication required: missing or invalid accessToken cookie',
+        type: ApiErrorResponseDto,
+      }),
+      ApiForbiddenResponse({
+        description:
+          'Forbidden: insufficient permissions for this action on the target resource',
+        type: ApiErrorResponseDto,
+      }),
+    );
+  }
 
-	return applyDecorators(
-		UseGuards(AuthGuard),
-		ApiCookieAuth('accessToken'),
-		ApiUnauthorizedResponse({
-			description: 'Authentication required: missing or invalid accessToken cookie',
-			type: ApiErrorResponseDto,
-		}),
-	);
-};
+  return applyDecorators(
+    UseGuards(AuthGuard),
+    ApiCookieAuth('accessToken'),
+    ApiUnauthorizedResponse({
+      description:
+        'Authentication required: missing or invalid accessToken cookie',
+      type: ApiErrorResponseDto,
+    }),
+  );
+}
 
 /*
 setMetadata
@@ -82,8 +90,3 @@ negli Interceptor o nei Middleware.
 
 const data = this.reflector.get('action', targetFunction);
 */
-
-
-
-
-

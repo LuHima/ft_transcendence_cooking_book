@@ -66,11 +66,26 @@ async function bootstrap() {
     .setVersion('1.0.0')
     .addServer('http://localhost:3000', 'Local Development Server')
     .addServer('https://app.we-cook.it:8443', 'Staging / Production Server')
-    .addTag('Auth', 'User authentication, registration, session management, and two-factor authentication (2FA)')
-    .addTag('Users', 'User accounts, public profiles, avatars, and liked recipes')
-    .addTag('Recipes', 'Recipe creation, localized details, pagination, step illustrations, media uploads, and likes')
-    .addTag('Catalog', 'Curated ingredient catalogs, dietary tags, units of measure, and system metadata')
-    .addTag('System', 'Health check, status probes, and system connectivity testing')
+    .addTag(
+      'Auth',
+      'User authentication, registration, session management, and two-factor authentication (2FA)',
+    )
+    .addTag(
+      'Users',
+      'User accounts, public profiles, avatars, and liked recipes',
+    )
+    .addTag(
+      'Recipes',
+      'Recipe creation, localized details, pagination, step illustrations, media uploads, and likes',
+    )
+    .addTag(
+      'Catalog',
+      'Curated ingredient catalogs, dietary tags, units of measure, and system metadata',
+    )
+    .addTag(
+      'System',
+      'Health check, status probes, and system connectivity testing',
+    )
     .addCookieAuth('accessToken', {
       type: 'apiKey',
       in: 'cookie',
@@ -81,7 +96,8 @@ async function bootstrap() {
       type: 'apiKey',
       in: 'cookie',
       name: 'refresh_token',
-      description: 'JWT Refresh Token stored in HttpOnly cookie (`refresh_token`) for the refresh endpoint',
+      description:
+        'JWT Refresh Token stored in HttpOnly cookie (`refresh_token`) for the refresh endpoint',
     })
     .build();
 

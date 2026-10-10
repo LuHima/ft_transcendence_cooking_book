@@ -27,7 +27,8 @@ export class CatalogMetadataResponseDto {
   @ApiProperty({
     enum: RecipeDifficulty,
     isArray: true,
-    description: 'List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)',
+    description:
+      'List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)',
     example: Object.values(RecipeDifficulty),
   })
   difficulties: RecipeDifficulty[];
@@ -38,7 +39,8 @@ export class CatalogMetadataResponseDto {
   @ApiProperty({
     enum: UnitOfMeasure,
     isArray: true,
-    description: 'Supported measurement units (grams, milliliters, spoons, pieces, etc.)',
+    description:
+      'Supported measurement units (grams, milliliters, spoons, pieces, etc.)',
     example: Object.values(UnitOfMeasure),
   })
   units: UnitOfMeasure[];
@@ -49,7 +51,8 @@ export class CatalogMetadataResponseDto {
   @ApiProperty({
     enum: IngredientCategory,
     isArray: true,
-    description: 'Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)',
+    description:
+      'Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)',
     example: Object.values(IngredientCategory),
   })
   categories: IngredientCategory[];
@@ -77,7 +80,10 @@ export class TagResponseDto {
    * Localized tag display name.
    * @example 'Vegetariano'
    */
-  @ApiProperty({ description: 'Localized tag display name', example: 'Vegetariano' })
+  @ApiProperty({
+    description: 'Localized tag display name',
+    example: 'Vegetariano',
+  })
   name: string;
 }
 
@@ -89,14 +95,20 @@ export class IngredientResponseDto {
    * Unique ingredient catalog identifier.
    * @example 12
    */
-  @ApiProperty({ description: 'Unique ingredient catalog identifier', example: 12 })
+  @ApiProperty({
+    description: 'Unique ingredient catalog identifier',
+    example: 12,
+  })
   id: number;
 
   /**
    * Canonical slug identifier.
    * @example 'parmigiano-reggiano'
    */
-  @ApiProperty({ description: 'Canonical ingredient slug', example: 'parmigiano-reggiano' })
+  @ApiProperty({
+    description: 'Canonical ingredient slug',
+    example: 'parmigiano-reggiano',
+  })
   slug: string;
 
   /**
@@ -114,6 +126,9 @@ export class IngredientResponseDto {
    * Localized ingredient display name.
    * @example 'Parmigiano Reggiano DOP'
    */
-  @ApiProperty({ description: 'Localized ingredient display name', example: 'Parmigiano Reggiano DOP' })
+  @ApiProperty({
+    description: 'Localized ingredient display name',
+    example: 'Parmigiano Reggiano DOP',
+  })
   name: string;
 }

@@ -43,7 +43,8 @@ export class LocalizedRecipeStepResponse {
    */
   @ApiProperty({
     description: 'Localized step description instructions',
-    example: 'Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.',
+    example:
+      'Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.',
   })
   description: string;
 
@@ -85,7 +86,10 @@ export class LocalizedRecipeIngredientResponse {
    * Canonical ingredient slug.
    * @example 'guanciale'
    */
-  @ApiProperty({ description: 'Canonical ingredient slug', example: 'guanciale' })
+  @ApiProperty({
+    description: 'Canonical ingredient slug',
+    example: 'guanciale',
+  })
   slug: string;
 
   /**
@@ -286,7 +290,10 @@ export class LocalizedRecipeDetailResponse {
    * Total required time in minutes (prep_time + cook_time).
    * @example 25
    */
-  @ApiProperty({ description: 'Total time in minutes (prep_time + cook_time)', example: 25 })
+  @ApiProperty({
+    description: 'Total time in minutes (prep_time + cook_time)',
+    example: 25,
+  })
   total_time: number;
 
   /**
@@ -340,7 +347,10 @@ export class LocalizedRecipeDetailResponse {
    * Recipe creation timestamp.
    * @example '2026-10-09T18:00:00.000Z'
    */
-  @ApiProperty({ description: 'Creation timestamp', example: '2026-10-09T18:00:00.000Z' })
+  @ApiProperty({
+    description: 'Creation timestamp',
+    example: '2026-10-09T18:00:00.000Z',
+  })
   created_at: Date;
 
   /**
@@ -368,7 +378,10 @@ export class LocalizedRecipeDetailResponse {
    * Localized recipe title.
    * @example 'Spaghetti alla Carbonara'
    */
-  @ApiProperty({ description: 'Localized recipe title', example: 'Spaghetti alla Carbonara' })
+  @ApiProperty({
+    description: 'Localized recipe title',
+    example: 'Spaghetti alla Carbonara',
+  })
   title: string;
 
   /**
@@ -377,7 +390,8 @@ export class LocalizedRecipeDetailResponse {
    */
   @ApiProperty({
     description: 'Localized introduction and dish description',
-    example: 'Il grande classico della cucina romana con guanciale, pecorino e tuorli.',
+    example:
+      'Il grande classico della cucina romana con guanciale, pecorino e tuorli.',
   })
   description: string;
 
@@ -398,7 +412,8 @@ export class LocalizedRecipeDetailResponse {
    */
   @ApiProperty({
     description: 'Author cooking tricks and culinary tips',
-    example: 'Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.',
+    example:
+      'Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.',
     nullable: true,
   })
   tips: string | null;

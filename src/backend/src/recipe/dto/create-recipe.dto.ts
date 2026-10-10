@@ -120,7 +120,8 @@ export class CreateRecipeIngredientDto {
    * @example 'tagliato a listarelle'
    */
   @ApiPropertyOptional({
-    description: 'Optional preparation notes as a string or key-value locale dictionary',
+    description:
+      'Optional preparation notes as a string or key-value locale dictionary',
     example: 'tagliato a listarelle',
   })
   @IsOptional()
@@ -152,9 +153,11 @@ export class CreateRecipeDto {
    * @example 'Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.'
    */
   @ApiProperty({
-    description: 'Introductory recipe description in source_lang (min 10 characters)',
+    description:
+      'Introductory recipe description in source_lang (min 10 characters)',
     minLength: 10,
-    example: 'Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.',
+    example:
+      'Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.',
   })
   @IsNotEmpty()
   @IsString()
@@ -179,7 +182,8 @@ export class CreateRecipeDto {
    */
   @ApiPropertyOptional({
     description: 'Author tips, tricks, and culinary secrets',
-    example: 'Mantecare a bagnomaria per evitare che le uova coagulino a frittata.',
+    example:
+      'Mantecare a bagnomaria per evitare che le uova coagulino a frittata.',
   })
   @IsOptional()
   @IsString()
@@ -266,7 +270,8 @@ export class CreateRecipeDto {
    */
   @ApiProperty({
     type: [CreateRecipeStepDto],
-    description: 'Ordered sequence of recipe preparation steps (minimum 1 step)',
+    description:
+      'Ordered sequence of recipe preparation steps (minimum 1 step)',
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'Recipe must have at least one step' })
@@ -279,7 +284,8 @@ export class CreateRecipeDto {
    */
   @ApiProperty({
     type: [CreateRecipeIngredientDto],
-    description: 'List of ingredients with quantities and units (minimum 1 ingredient)',
+    description:
+      'List of ingredients with quantities and units (minimum 1 ingredient)',
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'Recipe must have at least one ingredient' })
@@ -293,7 +299,8 @@ export class CreateRecipeDto {
    */
   @ApiPropertyOptional({
     type: [Number],
-    description: 'Optional catalog tag IDs to attach (e.g. dietary or style tags)',
+    description:
+      'Optional catalog tag IDs to attach (e.g. dietary or style tags)',
     example: [1, 3],
   })
   @IsOptional()
