@@ -97,7 +97,7 @@ export class AuthController
 		return { message: 'Signed out successfully' };
 	}
 
-	@Auth()
+	//@Auth()
 	@HttpCode(HttpStatus.OK)
 	@Post('refresh')
 	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -123,7 +123,7 @@ export class AuthController
 // ---------------------------------------------------------------------------------------------------------------------
 	@Auth()
 	@Post('twofactor/enable')
-	async towFactorEnable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
+	async twoFactorEnable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
 	{
 		return (await this.authService.twoFactorAuthEnable(id, userPassword.password));
 	}
@@ -148,16 +148,9 @@ export class AuthController
 
 	@Auth()
 	@Post('twofactor/disable')
-	async towFactorDisable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
+	async twoFactorDisable(@CurrentUser('id') id :number, @Body() userPassword: ConfirmPasswordDto)
 	{
 		return (await this.authService.twoFactorAuthDisable(id, userPassword.password));
-	}
-
-	@Auth()
-	@Get('user')
-	async infoMe(@CurrentUser('id') id :number)
-	{
-		return (await this.authService.infoUser(id));
 	}
 
 }

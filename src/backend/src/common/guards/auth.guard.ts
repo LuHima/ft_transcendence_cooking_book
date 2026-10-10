@@ -45,6 +45,10 @@ export class AuthGuard implements CanActivate {
 
 		try {
 			const payload = await this.jwtService.verifyAsync(token);
+
+			if (!payload.sub || payload.type !== 'access')	// questo controllo serve per il tempToken visto che verify non sa che tipo di token è sa solo se è valido
+ 				throw new UnauthorizedException();			// quindi io gli dico che non deve essere un token 2Factorr
+															// !payload.sub lo controllo perche altrimeti non funziona la creazione sotto non centra con il 2factor
 			
 			request['user'] = {
 				id: payload.sub,
@@ -53,9 +57,9 @@ export class AuthGuard implements CanActivate {
 				session: payload.session,
 		};
 		/*
-		request è una variabile/oggetto JavaScript che vive nella RAM del  
-		server solo per i pochi millisecondi necessari a gestire quella    
-		specifica chiamata. AuthGuard ci "appiccica" sopra i dati          
+		request è una variabile/oggetto JavaScript che vive nella RAM del
+		server solo per i pochi millisecondi necessari a gestire quella
+		specifica chiamata. AuthGuard ci "appiccica" sopra i dati
 		dell'utente per passarli comodamente alle funzioni successive.
 		*/
 		}catch {

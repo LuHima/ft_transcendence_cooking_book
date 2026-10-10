@@ -28,7 +28,9 @@ export class EncryptionService {
 		const authTag = cipher.getAuthTag().toString('hex');
 
 		// Unisce IV, AuthTag e testo cifrato, separandolo con i 2 punti
-		return `${iv.toString('hex')}:${authTag}:${encrypt}`;
+		const ret_str = iv.toString('hex') + ':' + authTag + ':' + encrypt
+
+		return ret_str;
 	}
 //	l'obbietivo è creare un stringadi questo tipo per decryptare la chiave 
 /* 
@@ -53,7 +55,14 @@ algoritmi di hashing visto che chiunque ha l'env puo revertire il codice
 		{
 			// spezzo il codice
 			//ricavo l'IV e l'AuthTag da stringhe esadecimali
-			const [ivTemp, authTagTemp, keyTemp] = twoFactorCode.split(':');
+			const array = twoFactorCode.split(':');
+			const ivTemp = array[0];
+			const authTagTemp = array[1];
+			const keyTemp = array[2];
+		
+			//  ivTemp è una stringa esadecimale letta dal DB
+			// La riconverto in un Buffer perché crypto.createDecipheriv richiede byte, non del semplice testo
+			// stessa cosa per authTag
 			const iv = Buffer.from(ivTemp, 'hex');
 			const authTag =  Buffer.from(authTagTemp, 'hex');
 
