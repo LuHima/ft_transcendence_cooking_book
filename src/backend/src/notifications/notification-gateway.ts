@@ -1,3 +1,4 @@
+import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
   MessageBody,
@@ -23,7 +24,15 @@ import { Socket, Server } from 'socket.io';
 export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
+  constructor(private readonly jwtService: JwtService) {}
+
   handleConnection(client: Socket, ...args: any[]) {
+    const cookie = client.handshake.headers.cookie;
+    if (!cookie) {
+      client.disconnect();
+      console.log('no cookie found');
+      return;
+    }
     console.log('User Connected', client.id);
   }
   handleDisconnect(client: Socket) {
