@@ -26,14 +26,33 @@ export class NotificationGateway
 {
   constructor(private readonly jwtService: JwtService) {}
 
+  findToken(cookie: string | undefined) {
+    if (!cookie) return '';
+    const accessToken = cookie
+      .split(';')
+      .find((str) => str.trim().startsWith('accessToken='));
+    if (!accessToken) return '';
+    const jwt = accessToken.split('=');
+    return accessToken;
+  }
   handleConnection(client: Socket, ...args: any[]) {
     const cookie = client.handshake.headers.cookie;
     if (!cookie) {
       client.disconnect();
-      console.log('no cookie found');
+      console.log('no cookie found', cookie);
+    }
+    const jwt: string = this.findToken(cookie);
+    if (jwt.length === 0) {
+      console.log('access token not found');
+      return;
+    }
+    if (this.jwtService.verify(jwt)) {
+      console.log('access Denied, invalid token');
       return;
     }
     console.log('User Connected', client.id);
+
+    client.disconnect(); // !TODO : pusho per lavorare sul fisso
   }
   handleDisconnect(client: Socket) {
     console.log('User Disconnected', client.id);
