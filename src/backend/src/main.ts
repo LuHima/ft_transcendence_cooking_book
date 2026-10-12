@@ -1,13 +1,16 @@
 import { NestFactory, APP_GUARD } from '@nestjs/core';
-import { AppModule } from './app.module';
+//import { AppModule } from './app.module';//da statico a dinamico in bootstrap()
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pipe';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http.exeption.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma.exception.filter';
+import { fetchFromVault } from './vault-bootstrap';//
 
 async function bootstrap() {
+	const { AppModule } = await import('./app.module.js');
+	//sara.must recuperare dati prima di passarli con env
 	const app = await NestFactory.create(AppModule);
 	app.enableShutdownHooks(); // serve per avere uno spegnimanto pulito in caso di SIGINT ecc..
 	app.setGlobalPrefix('api');  //al posto di scrivere http://localhost:3000 si srive /api/
