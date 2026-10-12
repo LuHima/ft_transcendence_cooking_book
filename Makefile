@@ -55,7 +55,8 @@ RESETCOLOR =	"\e[0m"
 # **************************************************************************** #
 
 # Allow passing CLI args like: make exec backend-container
-ARG_TARGETS = build rebuild exec inspect logs logsf restart stats
+ARG_TARGETS = build rebuild exec inspect logs logsf restart stats db-migrate \
+db-reset
 ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@:)
@@ -283,6 +284,109 @@ stats: ## [name]|Show one-shot container resource usage
 .PHONY: df
 df: ## |Show Docker disk usage summary
 	@$(SUDO) docker system df
+
+
+# **************************************************************************** #
+#    DATABASE COMMANDS                                                         #
+# **************************************************************************** #
+
+# Macro to execute Prisma commands inside backend container.
+# If backend container is running, use 'docker compose exec'.
+# If stopped, use 'docker compose run --rm --entrypoint ""'.
+define run_prisma
+	TTY_OPT=""; \
+	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
+	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
+	-q backend 2>/dev/null)" ]; then \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend \
+		npx prisma $(1); \
+	else \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
+		--entrypoint "" backend npx prisma $(1); \
+	fi
+endef
+
+# Creates or applies database migrations (optionally with migration name)
+.PHONY: db-migrate
+db-migrate: env-check ## [name]|Create or apply database migrations
+	@CMD="migrate dev"; \
+	if [ -n "$(ARGS)" ]; then \
+		CMD="migrate dev --name $(ARGS)"; \
+	fi; \
+	$(call run_prisma,$$CMD)
+
+# Resets database schema, drops data, reapplies migrations, and seeds
+.PHONY: db-reset
+db-reset: env-check ## [force]|Reset database and re-seed
+	@CMD="migrate reset"; \
+	if [ "$(ARGS)" = "force" ]; then \
+		CMD="migrate reset --force"; \
+	fi; \
+	$(call run_prisma,$$CMD)
+
+# Runs idempotent seed script (src/backend/prisma/seed.ts)
+.PHONY: db-seed
+db-seed: env-check ## |Seed database with initial data
+	@$(call run_prisma,db seed)
+
+# Regenerates Prisma Client based on schema.prisma
+.PHONY: db-generate
+db-generate: env-check ## |Regenerate Prisma Client
+	@$(call run_prisma,generate)
+
+# Checks migration status and detects schema drift
+.PHONY: db-status
+db-status: env-check ## |Check database migration status
+	@$(call run_prisma,migrate status)
+
+# Launches Prisma Studio GUI on port 5555
+.PHONY: db-studio
+db-studio: env-check ## |Launch Prisma Studio GUI on port 5555
+	@echo "Opening Prisma Studio at: http://localhost:5555"
+	@echo "Press Ctrl+C to stop."
+	@TTY_OPT=""; \
+	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
+	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
+	-q backend 2>/dev/null)" ]; then \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend node \
+		prisma/studio.js; \
+	else \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
+		-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
+	fi
+
+# Squashes all migrations into a single consolidated 'init' migration
+.PHONY: db-squash
+db-squash: env-check ## |Squash migrations into a single baseline init
+	@echo -n $(YELLOW)"WARNING: This will wipe current migrations, reset ";
+	@echo "the database, and generate a single 'init' migration."$(RESETCOLOR);
+	@printf "Are you sure you want to proceed? [y/N]: "; \
+	read confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "Aborted."; \
+		exit 1; \
+	fi; \
+	TIMESTAMP=$$(date +%Y%m%d%H%M%S); \
+	ARC_DIR="src/backend/prisma/.migrations_archive/migrations_$${TIMESTAMP}"; \
+	if [ -d "src/backend/prisma/migrations" ] && \
+	[ -n "$$(ls -A src/backend/prisma/migrations 2>/dev/null)" ]; then \
+		mkdir -p "$$ARC_DIR" && \
+		cp -r src/backend/prisma/migrations/* "$$ARC_DIR/" && \
+		echo "Backed up existing migrations to $$ARC_DIR"; \
+	fi; \
+	rm -rf src/backend/prisma/migrations 2>/dev/null || \
+	$(SUDO) rm -rf src/backend/prisma/migrations; \
+	mkdir -p "src/backend/prisma/migrations/$${TIMESTAMP}_init"; \
+	echo "Generating consolidated initial migration..."; \
+	$(call run_prisma,migrate diff --from-empty \
+	--to-schema prisma/schema.prisma --script \
+	--output prisma/migrations/$${TIMESTAMP}_init/migration.sql); \
+	echo "Resetting database schema and applying migration..."; \
+	$(call run_prisma,migrate reset --force); \
+	$(call run_prisma,db seed); \
+	$(call run_prisma,generate); \
+	echo -n $(GREEN)"Database successfully squashed into a single 'init' "; \
+	echo "migration!"$(RESETCOLOR)
 
 
 # **************************************************************************** #

@@ -28,6 +28,7 @@ docker/nginx/ssl/
 db_data/
 **/db_data/
 postgres_data/
+src/backend/prisma/.migrations_archive/
 
 # ---------------------------------------------------------------------------- #
 # DEPENDENCIES                                                                 #

@@ -53,6 +53,9 @@ services:
     # Load environment variables from .env
     env_file:
       - .env
+    # Expose Prisma Studio port to host (TODO: remove in production release)
+    ports:
+      - "5555:5555"
     # Mount backend source code for live development and protect container
     # node_modules
     volumes:
@@ -61,7 +64,8 @@ services:
     # Connect to custom bridge network
     networks:
       - transcendence
-    # Start backend only after database and translation service are ready and healthy
+    # Start backend only after database and translation service are ready and
+    # healthy
     depends_on:
       database:
         condition: service_healthy
