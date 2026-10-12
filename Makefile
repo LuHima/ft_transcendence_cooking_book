@@ -55,7 +55,7 @@ RESETCOLOR =	"\e[0m"
 # **************************************************************************** #
 
 # Allow passing CLI args like: make exec backend-container
-ARG_TARGETS = exec inspect logs logsf restart stats
+ARG_TARGETS = build rebuild exec inspect logs logsf restart stats
 ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@:)
@@ -104,9 +104,9 @@ up: all ## |Alias for 'make all'
 
 # Build docker-compose images without starting containers
 .PHONY: build
-build: env-check ## |Build images with cache and log to file
+build: env-check ## [name]|Build images with cache and log to file
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
-		| tee $(BUILD_LOG)
+		$(ARGS) 2>&1 | tee $(BUILD_LOG)
 
 # Rebuild docker-compose images (cached) and start containers
 .PHONY: up-build
@@ -118,9 +118,9 @@ up-build: env-check ## |Rebuild images (cached) and start containers
 
 # Rebuild images without cache and log output to build.log
 .PHONY: rebuild
-rebuild: env-check ## |Rebuild images with no-cache and log to file
+rebuild: env-check ## [name]|Rebuild images with no-cache and log to file
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
-		--no-cache 2>&1 | tee $(BUILD_LOG)
+		$(ARGS) --no-cache 2>&1 | tee $(BUILD_LOG)
 
 # Rebuild docker-compose images (no-cache) and start containers
 .PHONY: up-rebuild
@@ -299,8 +299,9 @@ env-check: ## |Verify .env exists and required vars are present
 		exit 1; \
 	fi; \
 	missing=0; \
-	for var in DOMAIN_NAME POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
-	DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET; do \
+	for var in PRODUCTION_FLAG INFOMANIAK_API_TOKEN ACME_EMAIL ACME_STAGING \
+	DOMAIN_NAME TWO_FACTOR_AUTH POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
+	DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET  UPLOADS_DIR; do \
 		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
 			echo "Missing variable in $(ENV_FILE): $$var"; \
 			missing=1; \
