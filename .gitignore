@@ -121,4 +121,5 @@ docs/superpowers
 documentation/
 notes/
 subject.*
+src/backend/uploads
 # Add here anything you want to exclude from git
