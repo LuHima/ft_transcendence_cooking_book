@@ -51,7 +51,11 @@ function Comments({ recipeId }: { recipeId: number }) {
 		}
 	}
 
-	async function handleDelete(commentId: number) {
+	async function handleDelete(commentId: number, moderation: boolean) {
+		const message = moderation
+			? 'Rimuovere questo commento come amministratore?'
+			: 'Eliminare questo commento?'
+		if (!confirm(message)) return
 		try {
 			await api.delete(`/comments/${commentId}`)
 			setComments((prev) => prev?.filter((c) => c.id !== commentId) ?? null)
@@ -111,16 +115,19 @@ function Comments({ recipeId }: { recipeId: number }) {
 					<li key={c.id} className="rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-4">
 						<div className="flex items-center justify-between gap-3 text-xs text-[var(--wc-text-muted)]">
 							<span>
-								<span className="font-semibold text-[var(--wc-text)]">{c.user.username}</span> ·{' '}
+								<Link to={`/users/${c.user.id}`} className="font-semibold text-[var(--wc-text)] hover:text-[var(--wc-saffron)]">
+										{c.user.username}
+									</Link>{' '}
+									·{' '}
 								{formatDate(c.created_at)}
 							</span>
 							{user && (user.id === c.user_id || user.role === 'admin') && (
 								<button
 									type="button"
-									onClick={() => handleDelete(c.id)}
+									onClick={() => handleDelete(c.id, user.id !== c.user_id)}
 									className="text-[var(--wc-paprika)] hover:underline"
 								>
-									Elimina
+									{user.id === c.user_id ? 'Elimina' : 'Rimuovi (admin)'}
 								</button>
 							)}
 						</div>

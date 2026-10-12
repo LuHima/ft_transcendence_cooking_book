@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api, ApiError } from '../api/client'
-import type { IngredientInput, Recipe, RecipeDifficulty } from '../types/models'
+import type { Recipe, RecipeDifficulty } from '../types/models'
 
 const UNITS = ['g', 'kg', 'ml', 'l', 'tsp', 'tbsp', 'cup', 'fl_oz', 'oz', 'lb', 'pinch', 'pz']
 const DIFFICULTIES: { value: RecipeDifficulty; label: string }[] = [
@@ -16,8 +16,24 @@ const MAX_VIDEO_MB = 100
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
 
-function emptyIngredient(): IngredientInput {
-	return { name: '', quantity: 1, unit: 'g' }
+// nello stato del form i numeri sono stringhe: così il campo si può svuotare
+// temporaneamente (es. 0 → 10) senza che venga rimesso uno zero. Il minimo viene
+// applicato dalla validazione del browser all'invio e dalla conversione in handleSubmit.
+interface IngredientField {
+	name: string
+	quantity: string
+	unit: string
+}
+
+const MIN_PREP_TIME = 1
+const MIN_QUANTITY = 0.1
+
+// stessa altezza per select difficoltà e input tempo di preparazione
+const FIELD_CLASS =
+	'h-11 w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 outline-none focus:border-[var(--wc-basil)]'
+
+function emptyIngredient(): IngredientField {
+	return { name: '', quantity: '1', unit: 'g' }
 }
 
 function RecipeForm() {
@@ -28,14 +44,16 @@ function RecipeForm() {
 
 	const [title, setTitle] = useState('')
 	const [difficulty, setDifficulty] = useState<RecipeDifficulty>('easy')
-	const [prepTime, setPrepTime] = useState(30)
+	const [prepTime, setPrepTime] = useState('30')
 	const [description, setDescription] = useState('')
 	const [instructions, setInstructions] = useState('')
-	const [ingredients, setIngredients] = useState<IngredientInput[]>([emptyIngredient()])
+	const [ingredients, setIngredients] = useState<IngredientField[]>([emptyIngredient()])
 	const [mediaFiles, setMediaFiles] = useState<File[]>([])
 	const [mediaError, setMediaError] = useState<string | null>(null)
 	const [submitError, setSubmitError] = useState<string | null>(null)
 	const [loading, setLoading] = useState(isEdit)
+	const [authorName, setAuthorName] = useState<string | null>(null)
+	const [forbidden, setForbidden] = useState(false)
 	const [submitting, setSubmitting] = useState(false)
 	const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -44,16 +62,22 @@ function RecipeForm() {
 		api
 			.get<Recipe>(`/recipes/${id}`)
 			.then((recipe) => {
+				// solo il proprietario o un admin possono modificare (il backend deve comunque verificarlo)
+				if (user && recipe.user_id !== user.id && user.role !== 'admin') {
+					setForbidden(true)
+					return
+				}
+				setAuthorName(recipe.user?.username ?? 'WeCook')
 				setTitle(recipe.title)
 				setDifficulty(recipe.difficulty ?? 'easy')
-				setPrepTime(recipe.prep_time ?? 30)
+				setPrepTime(String(recipe.prep_time ?? 30))
 				setDescription(recipe.description ?? '')
 				setInstructions(recipe.instructions ?? '')
 				if (recipe.recipe_ingredients?.length) {
 					setIngredients(
 						recipe.recipe_ingredients.map((ri) => ({
 							name: ri.ingredient.name,
-							quantity: ri.quantity,
+							quantity: String(ri.quantity),
 							unit: ri.unit,
 						})),
 					)
@@ -61,9 +85,9 @@ function RecipeForm() {
 			})
 			.catch((err) => setSubmitError(err instanceof ApiError ? err.message : 'Ricetta non trovata.'))
 			.finally(() => setLoading(false))
-	}, [id])
+	}, [id, user])
 
-	function updateIngredient(index: number, patch: Partial<IngredientInput>) {
+	function updateIngredient(index: number, patch: Partial<IngredientField>) {
 		setIngredients((prev) => prev.map((ing, i) => (i === index ? { ...ing, ...patch } : ing)))
 	}
 
@@ -111,11 +135,18 @@ function RecipeForm() {
 			const payload = {
 				title,
 				difficulty,
-				prep_time: prepTime,
+				prep_time: Math.max(MIN_PREP_TIME, Number(prepTime) || MIN_PREP_TIME),
 				description,
 				instructions,
-				owner_type: 'user' as const,
-				ingredients: ingredients.filter((i) => i.name.trim()),
+				// in modifica non si tocca il proprietario (un admin può editare ricette altrui)
+				...(isEdit ? {} : { owner_type: 'user' as const }),
+				ingredients: ingredients
+					.filter((i) => i.name.trim())
+					.map((i) => ({
+						name: i.name.trim(),
+						quantity: Math.max(MIN_QUANTITY, Number(i.quantity) || MIN_QUANTITY),
+						unit: i.unit,
+					})),
 			}
 
 			const recipe = isEdit
@@ -140,6 +171,15 @@ function RecipeForm() {
 
 	if (loading) {
 		return <div className="mx-auto max-w-2xl px-4 py-16 text-[var(--wc-text-muted)]">Caricamento…</div>
+	}
+
+	if (forbidden) {
+		return (
+			<div className="mx-auto max-w-xl px-4 py-24 text-center">
+				<h1 className="font-display text-3xl text-[var(--wc-paprika)]">Non puoi modificare questa ricetta</h1>
+				<p className="mt-3 text-[var(--wc-text-muted)]">Solo l'autore o un amministratore possono farlo.</p>
+			</div>
+		)
 	}
 
 	return (
@@ -167,7 +207,7 @@ function RecipeForm() {
 						<select
 							value={difficulty}
 							onChange={(e) => setDifficulty(e.target.value as RecipeDifficulty)}
-							className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
+							className={FIELD_CLASS}
 						>
 							{DIFFICULTIES.map((d) => (
 								<option key={d.value} value={d.value}>
@@ -180,11 +220,12 @@ function RecipeForm() {
 						<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Tempo di preparazione (min)</label>
 						<input
 							type="number"
-							min={1}
+							min={MIN_PREP_TIME}
+							step={1}
 							required
 							value={prepTime}
-							onChange={(e) => setPrepTime(Number(e.target.value))}
-							className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
+							onChange={(e) => setPrepTime(e.target.value)}
+							className={FIELD_CLASS}
 						/>
 					</div>
 				</div>
@@ -193,7 +234,7 @@ function RecipeForm() {
 					<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Autore</label>
 					<input
 						disabled
-						value={user?.username ?? ''}
+						value={isEdit ? (authorName ?? '') : (user?.username ?? '')}
 						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface-raised)] px-3 py-2 text-[var(--wc-text-muted)]"
 					/>
 				</div>
@@ -246,10 +287,12 @@ function RecipeForm() {
 								/>
 								<input
 									type="number"
-									min={0}
-									step={0.1}
+									min={MIN_QUANTITY}
+									step="any"
+									required={Boolean(ing.name.trim())}
+									aria-label="Quantità"
 									value={ing.quantity}
-									onChange={(e) => updateIngredient(index, { quantity: Number(e.target.value) })}
+									onChange={(e) => updateIngredient(index, { quantity: e.target.value })}
 									className="w-24 rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
 								/>
 								<select

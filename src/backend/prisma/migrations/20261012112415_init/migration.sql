@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "OwnerType" AS ENUM ('user', 'platform');
 
@@ -11,6 +14,9 @@ CREATE TYPE "MediaType" AS ENUM ('image', 'video');
 CREATE TYPE "RecipeDifficulty" AS ENUM ('easy', 'medium', 'hard');
 
 -- CreateEnum
+CREATE TYPE "TranslationStatus" AS ENUM ('completed', 'failed');
+
+-- CreateEnum
 CREATE TYPE "Course" AS ENUM ('appetizer', 'first_course', 'main_course', 'dessert', 'side_dish', 'drink', 'snack');
 
 -- CreateEnum
@@ -20,10 +26,13 @@ CREATE TYPE "UnitOfMeasure" AS ENUM ('g', 'kg', 'ml', 'cl', 'l', 'oz', 'lb', 'fl
 CREATE TYPE "IngredientCategory" AS ENUM ('produce', 'dairy_eggs', 'meat_poultry', 'seafood', 'bakery_grains', 'pantry_spices', 'legumes_nuts', 'beverages_liquids', 'other');
 
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('admin', 'user');
+CREATE TYPE "Role" AS ENUM ('admin', 'moderator', 'user');
 
 -- CreateEnum
 CREATE TYPE "NotificationType" AS ENUM ('like', 'comment');
+
+-- CreateEnum
+CREATE TYPE "UserStatus" AS ENUM ('active', 'disabled', 'banned');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -39,10 +48,12 @@ CREATE TABLE "users" (
     "address" VARCHAR(255),
     "city" VARCHAR(100),
     "postal_code" VARCHAR(10),
-    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "status" "UserStatus" NOT NULL DEFAULT 'active',
     "deleted_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "role" "Role" NOT NULL DEFAULT 'user',
+    "two_factor" VARCHAR(255),
+    "is_two_factor_enabled" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -52,14 +63,61 @@ CREATE TABLE "recipes" (
     "id" SERIAL NOT NULL,
     "user_id" INTEGER,
     "owner_type" "OwnerType" NOT NULL DEFAULT 'user',
-    "title" VARCHAR(255) NOT NULL,
-    "description" TEXT,
-    "instructions" TEXT,
-    "prep_time" INTEGER,
+    "course" "Course" NOT NULL DEFAULT 'main_course',
     "difficulty" "RecipeDifficulty" NOT NULL DEFAULT 'easy',
+    "prep_time" INTEGER NOT NULL DEFAULT 0,
+    "cook_time" INTEGER NOT NULL DEFAULT 0,
+    "total_time" INTEGER NOT NULL DEFAULT 0,
+    "servings" INTEGER NOT NULL DEFAULT 1,
+    "source_lang" VARCHAR(5) NOT NULL DEFAULT 'it',
+    "translation_status" "TranslationStatus" NOT NULL DEFAULT 'completed',
+    "cover_image_url" VARCHAR(500),
+    "video_url" VARCHAR(500),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
 
     CONSTRAINT "recipes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "recipe_translations" (
+    "recipe_id" INTEGER NOT NULL,
+    "locale" VARCHAR(5) NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "description" TEXT NOT NULL,
+    "preservation" TEXT,
+    "tips" TEXT,
+
+    CONSTRAINT "recipe_translations_pkey" PRIMARY KEY ("recipe_id","locale")
+);
+
+-- CreateTable
+CREATE TABLE "recipe_steps" (
+    "id" SERIAL NOT NULL,
+    "recipe_id" INTEGER NOT NULL,
+    "step_number" INTEGER NOT NULL,
+    "duration" INTEGER,
+    "image_url" VARCHAR(500),
+
+    CONSTRAINT "recipe_steps_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "recipe_step_translations" (
+    "step_id" INTEGER NOT NULL,
+    "locale" VARCHAR(5) NOT NULL,
+    "title" VARCHAR(255),
+    "description" TEXT NOT NULL,
+
+    CONSTRAINT "recipe_step_translations_pkey" PRIMARY KEY ("step_id","locale")
+);
+
+-- CreateTable
+CREATE TABLE "recipe_tags" (
+    "recipe_id" INTEGER NOT NULL,
+    "tag_id" INTEGER NOT NULL,
+
+    CONSTRAINT "recipe_tags_pkey" PRIMARY KEY ("recipe_id","tag_id")
 );
 
 -- CreateTable
@@ -106,6 +164,15 @@ CREATE TABLE "recipe_ingredients" (
     "notes" JSONB,
 
     CONSTRAINT "recipe_ingredients_pkey" PRIMARY KEY ("recipe_id","ingredient_id")
+);
+
+-- CreateTable
+CREATE TABLE "follows" (
+    "follower_id" INTEGER NOT NULL,
+    "following_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "follows_pkey" PRIMARY KEY ("follower_id","following_id")
 );
 
 -- CreateTable
@@ -193,6 +260,12 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE INDEX "recipe_translations_locale_title_idx" ON "recipe_translations"("locale", "title");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "recipe_steps_recipe_id_step_number_key" ON "recipe_steps"("recipe_id", "step_number");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ingredients_slug_key" ON "ingredients"("slug");
 
 -- CreateIndex
@@ -205,10 +278,28 @@ CREATE UNIQUE INDEX "tags_slug_key" ON "tags"("slug");
 CREATE INDEX "tag_translations_locale_name_idx" ON "tag_translations"("locale", "name");
 
 -- CreateIndex
+CREATE INDEX "follows_following_id_idx" ON "follows"("following_id");
+
+-- CreateIndex
 CREATE INDEX "notifications_user_id_is_read_created_at_idx" ON "notifications"("user_id", "is_read", "created_at");
 
 -- AddForeignKey
 ALTER TABLE "recipes" ADD CONSTRAINT "recipes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipe_translations" ADD CONSTRAINT "recipe_translations_recipe_id_fkey" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipe_steps" ADD CONSTRAINT "recipe_steps_recipe_id_fkey" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipe_step_translations" ADD CONSTRAINT "recipe_step_translations_step_id_fkey" FOREIGN KEY ("step_id") REFERENCES "recipe_steps"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipe_tags" ADD CONSTRAINT "recipe_tags_recipe_id_fkey" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipe_tags" ADD CONSTRAINT "recipe_tags_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "tags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ingredient_translations" ADD CONSTRAINT "ingredient_translations_ingredient_id_fkey" FOREIGN KEY ("ingredient_id") REFERENCES "ingredients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -221,6 +312,12 @@ ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_recipe_id_fk
 
 -- AddForeignKey
 ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_ingredient_id_fkey" FOREIGN KEY ("ingredient_id") REFERENCES "ingredients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "follows" ADD CONSTRAINT "follows_follower_id_fkey" FOREIGN KEY ("follower_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "follows" ADD CONSTRAINT "follows_following_id_fkey" FOREIGN KEY ("following_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "comments" ADD CONSTRAINT "comments_recipe_id_fkey" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -260,3 +357,4 @@ ALTER TABLE "recipe_media" ADD CONSTRAINT "recipe_media_recipe_id_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "jwt_sessions" ADD CONSTRAINT "jwt_sessions_id_user_fkey" FOREIGN KEY ("id_user") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

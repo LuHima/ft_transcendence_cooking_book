@@ -17,6 +17,9 @@ import SearchResults from './pages/SearchResults'
 import Contacts from './pages/Contacts'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
+import UserProfile from './pages/UserProfile'
+import Friends from './pages/Friends'
+import Admin from './pages/admin/Admin'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -29,6 +32,7 @@ function App() {
 					<Route path="register" element={<Register />} />
 					<Route path="search" element={<SearchResults />} />
 					<Route path="recipes/:id" element={<RecipeDetail />} />
+					<Route path="users/:id" element={<UserProfile />} />
 					<Route path="contacts" element={<Contacts />} />
 					<Route path="about" element={<About />} />
 					<Route path="privacy" element={<Privacy />} />
@@ -41,6 +45,11 @@ function App() {
 						<Route path="my-recipes" element={<MyRecipes />} />
 						<Route path="my-recipes/new" element={<RecipeForm />} />
 						<Route path="my-recipes/:id/edit" element={<RecipeForm />} />
+						<Route path="friends" element={<Friends />} />
+					</Route>
+
+					<Route element={<ProtectedRoute roles={['admin']} />}>
+						<Route path="admin" element={<Admin />} />
 					</Route>
 
 					<Route path="*" element={<NotFound />} />
