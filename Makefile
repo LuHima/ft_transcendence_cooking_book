@@ -295,7 +295,7 @@ env-check: ## |Verify .env exists and required vars are present
 	fi; \
 	missing=0; \
 	for var in DOMAIN_NAME POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
-	DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET; do \
+	DATABASE_URL ACME_VAULT_ROLE_ID ACME_VAULT_SECRET_ID DATABASE_VAULT_ROLE_ID DATABASE_VAULT_SECRET_ID BACKEND_VAULT_ROLE_ID BACKEND_VAULT_SECRET_ID; do \
 		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
 			echo "Missing variable in $(ENV_FILE): $$var"; \
 			missing=1; \

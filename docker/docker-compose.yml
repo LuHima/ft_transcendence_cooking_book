@@ -125,9 +125,16 @@ services:
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
+    environment:
+      VAULT_ADDR: http://vault:8200
+      BACKEND_VAULT_ROLE_ID: ${BACKEND_VAULT_ROLE_ID}
+      BACKEND_VAULT_SECRET_ID: ${BACKEND_VAULT_SECRET_ID}
+      DATABASE_URL: ${DATABASE_URL}
+      LIBRETRANSLATE_URL: ${LIBRETRANSLATE_URL}
+      PORT: ${PORT:-3000}
     # Load environment variables from .env
-    env_file:
-      - .env
+    #env_file:
+    #  - .env
     # Mount backend source code for live development and protect container
     # node_modules
     volumes:
@@ -137,12 +144,15 @@ services:
     networks:
       - back-net
       - db-net
+      - vault-net #reaches vault
     # Start backend only after database is completely ready and healthy
     depends_on:
       database:
         condition: service_healthy
       libretranslate:
         condition: service_healthy
+      vault:
+        condition: service_started 
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
