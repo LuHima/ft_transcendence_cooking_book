@@ -55,7 +55,8 @@ RESETCOLOR =	"\e[0m"
 # **************************************************************************** #
 
 # Allow passing CLI args like: make exec backend-container
-ARG_TARGETS = exec inspect logs logsf restart stats
+ARG_TARGETS = build rebuild exec inspect logs logsf restart stats db-migrate \
+db-reset
 ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@:)
@@ -98,11 +99,15 @@ all: env-check ## |Start containers (detached mode)
 	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
 	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
 
+# Start docker-compose without rebuilding images every time (alias for all)
+.PHONY: up
+up: all ## |Alias for 'make all'
+
 # Build docker-compose images without starting containers
 .PHONY: build
-build: env-check ## |Build images with cache and log to file
+build: env-check ## [name]|Build images with cache and log to file
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
-		| tee $(BUILD_LOG)
+		$(ARGS) 2>&1 | tee $(BUILD_LOG)
 
 # Rebuild docker-compose images (cached) and start containers
 .PHONY: up-build
@@ -114,9 +119,9 @@ up-build: env-check ## |Rebuild images (cached) and start containers
 
 # Rebuild images without cache and log output to build.log
 .PHONY: rebuild
-rebuild: env-check ## |Rebuild images with no-cache and log to file
+rebuild: env-check ## [name]|Rebuild images with no-cache and log to file
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
-		--no-cache 2>&1 | tee $(BUILD_LOG)
+		$(ARGS) --no-cache 2>&1 | tee $(BUILD_LOG)
 
 # Rebuild docker-compose images (no-cache) and start containers
 .PHONY: up-rebuild
@@ -139,7 +144,7 @@ stop: ## |Stop containers without removing them (keep volumes/data)
 
 # Rebuild stack from scratch (fclean + all)
 .PHONY: re
-re: fclean all ## |Rebuild stack from scratch
+re: fclean up-rebuild ## |Rebuild stack from scratch (without cache)
 
 # Stops and removes containers, networks, and removes project images
 .PHONY: clean
@@ -162,15 +167,16 @@ clean-env: ## |Remove .env file for this project
 .PHONY: wipe
 wipe: fclean clean-env ## |fclean + remove .env file
 
-# Removes project resources and prunes global Docker builder cache
+# Removes project resources via fclean, then prunes global Docker resources:
+# builder cache, stopped containers, unused networks, images (not volumes)
 .PHONY: clean-cache
-clean-cache: wipe ## |Remove project resources and global builder cache
+clean-cache: fclean ## |fclean + prune global Docker resources (not volumes)
 	@echo "Pruning Docker builder cache (global, not project-scoped)..."
 	@$(SUDO) docker builder prune -af
 
 # Runs a full project cleanup first via fclean, then prunes unused Docker
-# resources globally on the host: stopped containers, unused networks,
-# images, and volumes
+# resources globally on the host: builder cache, stopped containers, unused
+# networks, images, and volumes
 .PHONY: prune
 prune: fclean ## |fclean + prune Docker resources globally on the host
 	@echo "Pruning everything o.o"
@@ -281,6 +287,109 @@ df: ## |Show Docker disk usage summary
 
 
 # **************************************************************************** #
+#    DATABASE COMMANDS                                                         #
+# **************************************************************************** #
+
+# Macro to execute Prisma commands inside backend container.
+# If backend container is running, use 'docker compose exec'.
+# If stopped, use 'docker compose run --rm --entrypoint ""'.
+define run_prisma
+	TTY_OPT=""; \
+	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
+	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
+	-q backend 2>/dev/null)" ]; then \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend \
+		npx prisma $(1); \
+	else \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
+		--entrypoint "" backend npx prisma $(1); \
+	fi
+endef
+
+# Creates or applies database migrations (optionally with migration name)
+.PHONY: db-migrate
+db-migrate: env-check ## [name]|Create or apply database migrations
+	@CMD="migrate dev"; \
+	if [ -n "$(ARGS)" ]; then \
+		CMD="migrate dev --name $(ARGS)"; \
+	fi; \
+	$(call run_prisma,$$CMD)
+
+# Resets database schema, drops data, reapplies migrations, and seeds
+.PHONY: db-reset
+db-reset: env-check ## [force]|Reset database and re-seed
+	@CMD="migrate reset"; \
+	if [ "$(ARGS)" = "force" ]; then \
+		CMD="migrate reset --force"; \
+	fi; \
+	$(call run_prisma,$$CMD)
+
+# Runs idempotent seed script (src/backend/prisma/seed.ts)
+.PHONY: db-seed
+db-seed: env-check ## |Seed database with initial data
+	@$(call run_prisma,db seed)
+
+# Regenerates Prisma Client based on schema.prisma
+.PHONY: db-generate
+db-generate: env-check ## |Regenerate Prisma Client
+	@$(call run_prisma,generate)
+
+# Checks migration status and detects schema drift
+.PHONY: db-status
+db-status: env-check ## |Check database migration status
+	@$(call run_prisma,migrate status)
+
+# Launches Prisma Studio GUI on port 5555
+.PHONY: db-studio
+db-studio: env-check ## |Launch Prisma Studio GUI on port 5555
+	@echo "Opening Prisma Studio at: http://localhost:5555"
+	@echo "Press Ctrl+C to stop."
+	@TTY_OPT=""; \
+	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
+	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
+	-q backend 2>/dev/null)" ]; then \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend node \
+		prisma/studio.js; \
+	else \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
+		-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
+	fi
+
+# Squashes all migrations into a single consolidated 'init' migration
+.PHONY: db-squash
+db-squash: env-check ## |Squash migrations into a single baseline init
+	@echo -n $(YELLOW)"WARNING: This will wipe current migrations, reset ";
+	@echo "the database, and generate a single 'init' migration."$(RESETCOLOR);
+	@printf "Are you sure you want to proceed? [y/N]: "; \
+	read confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "Aborted."; \
+		exit 1; \
+	fi; \
+	TIMESTAMP=$$(date +%Y%m%d%H%M%S); \
+	ARC_DIR="src/backend/prisma/.migrations_archive/migrations_$${TIMESTAMP}"; \
+	if [ -d "src/backend/prisma/migrations" ] && \
+	[ -n "$$(ls -A src/backend/prisma/migrations 2>/dev/null)" ]; then \
+		mkdir -p "$$ARC_DIR" && \
+		cp -r src/backend/prisma/migrations/* "$$ARC_DIR/" && \
+		echo "Backed up existing migrations to $$ARC_DIR"; \
+	fi; \
+	rm -rf src/backend/prisma/migrations 2>/dev/null || \
+	$(SUDO) rm -rf src/backend/prisma/migrations; \
+	mkdir -p "src/backend/prisma/migrations/$${TIMESTAMP}_init"; \
+	echo "Generating consolidated initial migration..."; \
+	$(call run_prisma,migrate diff --from-empty \
+	--to-schema prisma/schema.prisma --script \
+	--output prisma/migrations/$${TIMESTAMP}_init/migration.sql); \
+	echo "Resetting database schema and applying migration..."; \
+	$(call run_prisma,migrate reset --force); \
+	$(call run_prisma,db seed); \
+	$(call run_prisma,generate); \
+	echo -n $(GREEN)"Database successfully squashed into a single 'init' "; \
+	echo "migration!"$(RESETCOLOR)
+
+
+# **************************************************************************** #
 #    SETUP AND CHECK COMMANDS                                                  #
 # **************************************************************************** #
 
@@ -294,8 +403,11 @@ env-check: ## |Verify .env exists and required vars are present
 		exit 1; \
 	fi; \
 	missing=0; \
-	for var in DOMAIN_NAME POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
-	DATABASE_URL ACME_VAULT_ROLE_ID ACME_VAULT_SECRET_ID DATABASE_VAULT_ROLE_ID DATABASE_VAULT_SECRET_ID BACKEND_VAULT_ROLE_ID BACKEND_VAULT_SECRET_ID; do \
+	for var in PRODUCTION_FLAG ACME_EMAIL ACME_STAGING DOMAIN_NAME \
+	POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB DATABASE_URL UPLOADS_DIR \
+	ACME_VAULT_ROLE_ID ACME_VAULT_SECRET_ID \
+	DATABASE_VAULT_ROLE_ID DATABASE_VAULT_SECRET_ID \
+	BACKEND_VAULT_ROLE_ID BACKEND_VAULT_SECRET_ID; do \
 		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
 			echo "Missing variable in $(ENV_FILE): $$var"; \
 			missing=1; \

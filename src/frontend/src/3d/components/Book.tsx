@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
-import { RepeatWrapping, SRGBColorSpace, Vector3 } from "three";
+import {
+  Color,
+  DoubleSide,
+  MathUtils,
+  RepeatWrapping,
+  SRGBColorSpace,
+  Vector3,
+} from "three";
+import type { Group, MeshBasicMaterial } from "three";
 
 import { Page } from "./Page.tsx";
 import { useBookPages } from "../hooks/useBookPages.ts";
-import type { BookProps } from "../interfaces.ts";
+import type { BookProps, ApiPageButtonProps } from "../interfaces.ts";
 import {
   leatherColorUrl,
   leatherColorUrl1,
@@ -36,6 +44,135 @@ const HINGE_MATERIAL_PROPS = {
   metalness: 0,
   roughness: 1,
 } as const;
+
+const BUTTON_BASE_COLOR = new Color("#b6733d");
+const BUTTON_HOVER_COLOR = new Color("#ffd8a2");
+const BUTTON_DISABLED_COLOR = new Color("#765d4d");
+const ICON_BASE_COLOR = new Color("#f4e4ce");
+const ICON_HOVER_COLOR = new Color("#fff6df");
+const ICON_DISABLED_COLOR = new Color("#d2b799");
+
+// Component for the "Next" and "Previous" buttons on the book pages
+function ApiPageButton({
+  direction,
+  position,
+  faceAway = false,
+  visible,
+  disabled,
+  onClick,
+}: ApiPageButtonProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverProgress = useRef(0);
+  const visualRef = useRef<Group>(null);
+  const buttonMaterialRef = useRef<MeshBasicMaterial>(null);
+  const iconMaterialsRef = useRef<Array<MeshBasicMaterial | null>>([]);
+
+  useFrame((_, delta) => {
+    hoverProgress.current = MathUtils.damp(
+      hoverProgress.current,
+      isHovered && !disabled ? 1 : 0,
+      12,
+      delta,
+    );
+    const progress = hoverProgress.current;
+
+    visualRef.current?.scale.setScalar(1 + progress * 0.12);
+    buttonMaterialRef.current?.color.lerpColors(
+      disabled ? BUTTON_DISABLED_COLOR : BUTTON_BASE_COLOR,
+      BUTTON_HOVER_COLOR,
+      progress,
+    );
+    iconMaterialsRef.current.forEach((material) => {
+      material?.color.lerpColors(
+        disabled ? ICON_DISABLED_COLOR : ICON_BASE_COLOR,
+        ICON_HOVER_COLOR,
+        progress,
+      );
+    });
+  });
+
+  if (!visible) return null;
+
+  const isPrevious = direction === "previous";
+  const iconParts = isPrevious
+    ? [
+        {
+          position: [0.004, -0.001, 0] as [number, number, number],
+          angle: Math.PI / 4,
+        },
+        {
+          position: [-0.004, -0.001, 0] as [number, number, number],
+          angle: -Math.PI / 4,
+        },
+      ]
+    : [
+        {
+          position: [0.004, -0.001, 0] as [number, number, number],
+          angle: Math.PI / 4,
+        },
+        {
+          position: [-0.004, -0.001, 0] as [number, number, number],
+          angle: -Math.PI / 4,
+        },
+      ];
+  return (
+    <group position={position} rotation={[0, faceAway ? Math.PI : 0, 0]}>
+      <mesh
+        position={direction === "previous" ? [0, 0.017, 0.05] : [0, 0.01, 0.05]}
+        onPointerOver={(event) => {
+          event.stopPropagation();
+          if (!disabled) setIsHovered(true);
+        }}
+        onPointerOut={(event) => {
+          event.stopPropagation();
+          setIsHovered(false);
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (!disabled) onClick();
+        }}
+        onPointerDown={(event) => event.stopPropagation()}
+        onPointerUp={(event) => event.stopPropagation()}
+      >
+        <circleGeometry args={[0.026, 32]} />
+        <meshBasicMaterial
+          transparent
+          opacity={0}
+          colorWrite={false}
+          depthWrite={false}
+          side={DoubleSide}
+        />
+      </mesh>
+      <group ref={visualRef}>
+        <mesh raycast={() => null}>
+          <circleGeometry args={[0.026, 32]} />
+          <meshBasicMaterial
+            ref={buttonMaterialRef}
+            color={BUTTON_BASE_COLOR}
+            toneMapped={false}
+          />
+        </mesh>
+        {iconParts.map((part, index) => (
+          <mesh
+            key={index}
+            position={part.position}
+            rotation={[0, 0, part.angle]}
+            raycast={() => null}
+          >
+            <boxGeometry args={[0.013, 0.003, 0.003]} />
+            <meshBasicMaterial
+              ref={(material) => {
+                iconMaterialsRef.current[index] = material;
+              }}
+              color={ICON_BASE_COLOR}
+              toneMapped={false}
+            />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+}
 
 function useLogoTexture() {
   // carica la texture del logo usata sulla copertina del libro
@@ -82,7 +219,16 @@ function useLeatherMaterial1() {
   return { colorMap1, roughnessMap1, normalMap1, dispMap1 };
 }
 
-export default function Book({ controlsRef, recipes }: BookProps) {
+export default function Book({
+  controlsRef,
+  recipes,
+  hasPreviousPage,
+  hasNextPage,
+  isChangingApiPage,
+  onPreviousApiPage,
+  onNextApiPage,
+  currentApiPage,
+}: BookProps) {
   // limiti iniziali per la camera quando si ruota intorno alla scena
   const originalLimits = useRef({
     minPolarAngle: Math.PI * 0.35,
@@ -108,10 +254,16 @@ export default function Book({ controlsRef, recipes }: BookProps) {
   const coverTopRef = useRef<any>(null);
   const hingeRef = useRef<any>(null);
   const [hovered, setHovered] = useState(false);
+  const [turnedPageCount, setTurnedPageCount] = useState(0);
+  const trackedTurnedPageCount = useRef(0);
   const pageProgressRefs = useRef<Array<{ current: number }>>([]);
-  const { pageProgress, nextPage, prevPage, closePages } = useBookPages(
-    recipes.length,
-  );
+  const { pageProgress, currentPage, nextPage, prevPage, closePages } =
+    useBookPages(recipes.length, currentApiPage);
+
+  useEffect(() => {
+    trackedTurnedPageCount.current = 0;
+    setTurnedPageCount(0);
+  }, [currentApiPage, recipes.length]);
 
   // stato dell'animazione di apertura del libro
   const progress = useRef(0);
@@ -171,6 +323,11 @@ export default function Book({ controlsRef, recipes }: BookProps) {
   const pageGroupRefs = useRef<Array<any>>([]);
 
   useFrame((_, delta) => {
+    if (trackedTurnedPageCount.current !== currentPage.current) {
+      trackedTurnedPageCount.current = currentPage.current;
+      setTurnedPageCount(currentPage.current);
+    }
+
     pageProgressRefs.current.forEach((ref, index) => {
       const p = pageProgress.current[index] ?? 0;
       ref.current = p;
@@ -288,38 +445,24 @@ export default function Book({ controlsRef, recipes }: BookProps) {
         if (!canInteractWithBook) return;
         controlsRef.current.enabled = true;
       }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHovered(true);
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation();
+        setHovered(false);
+      }}
     >
-      <mesh position={[0, 0.155, 0.03]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.4, 0.05]} />
+      <mesh position={[0, 0.155, 0.016]} rotation={[Math.PI * 2, 0, 0]}>
+        <planeGeometry args={[0.37, 0.0025]} />
         <meshStandardMaterial
-          map={colorMap}
+          color="#3f2200"
           normalMap={normalMap}
           roughnessMap={roughnessMap}
           {...LEATHER_MATERIAL_PROPS}
         />
       </mesh>
-      <mesh
-        position={[0, 0, 0.03]}
-        renderOrder={998}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          setHovered(true);
-        }}
-        onPointerOut={(e) => {
-          e.stopPropagation();
-          setHovered(false);
-        }}
-      >
-        {/* area invisibile sopra il libro per catturare hover e click */}
-        <boxGeometry args={[0.48, 0.42, 0.08]} />
-        <meshBasicMaterial
-          transparent
-          opacity={0}
-          depthWrite={false}
-          colorWrite={false}
-        />
-      </mesh>
-
       {/* copertina bassa (fissa) */}
       <group position={[0, 0.005, 0.005]}>
         <mesh position={[0, 0, 0]} castShadow receiveShadow>
@@ -359,6 +502,13 @@ export default function Book({ controlsRef, recipes }: BookProps) {
             toneMapped={false}
           />
         </mesh>
+        <ApiPageButton
+          direction="next"
+          position={[0, -0.1, 0.011]}
+          visible={hasNextPage}
+          disabled={isChangingApiPage || turnedPageCount < recipes.length}
+          onClick={onNextApiPage}
+        />
       </group>
 
       {/* copertina alta (ruota verso l'alto) */}
@@ -368,23 +518,39 @@ export default function Book({ controlsRef, recipes }: BookProps) {
         rotation={[0, 0, 0]}
       >
         {/* cerniera - sparisce quando il libro è completamente aperto */}
-        <mesh
-          ref={hingeRef}
-          position={[0, 0, -0.025]}
-          rotation={[0, 0, -Math.PI * 1.5]}
-          castShadow
-          receiveShadow
-        >
-          <cylinderGeometry
-            args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]}
-          />
-          <meshStandardMaterial
-            map={colorMap1}
-            normalMap={normalMap1}
-            roughnessMap={roughnessMap1}
-            {...HINGE_MATERIAL_PROPS}
-          />
-        </mesh>
+        <group ref={hingeRef}>
+          <mesh
+            position={[0, 0, -0.025]}
+            rotation={[0, 0, -Math.PI * 1.5]}
+            castShadow
+            receiveShadow
+          >
+            <cylinderGeometry
+              args={[0.035, 0.035, 0.4, 16, 1, false, 0, Math.PI]}
+            />
+            <meshStandardMaterial
+              map={colorMap1}
+              normalMap={normalMap1}
+              roughnessMap={roughnessMap1}
+              {...HINGE_MATERIAL_PROPS}
+            />
+          </mesh>
+
+          <mesh
+            position={[0, 0, -0.025]}
+            rotation={[Math.PI / 2, 0, 0]}
+            castShadow
+            receiveShadow
+          >
+            <planeGeometry args={[0.4, 0.04]} />
+            <meshStandardMaterial
+              map={colorMap1}
+              normalMap={normalMap1}
+              roughnessMap={roughnessMap1}
+              {...HINGE_MATERIAL_PROPS}
+            />
+          </mesh>
+        </group>
 
         <mesh
           visible={isCoverHighlighted}
@@ -447,6 +613,14 @@ export default function Book({ controlsRef, recipes }: BookProps) {
             alphaTest={0.5}
           />
         </mesh>
+        <ApiPageButton
+          direction="previous"
+          position={[0, -0.25, -0.011]}
+          faceAway
+          visible={hasPreviousPage}
+          disabled={isChangingApiPage}
+          onClick={onPreviousApiPage}
+        />
       </group>
 
       {/* pagine all'interno del libro, ciascuna con texture frontale e retro */}

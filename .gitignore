@@ -28,6 +28,7 @@ docker/nginx/ssl/
 db_data/
 **/db_data/
 postgres_data/
+src/backend/prisma/.migrations_archive/
 
 # ---------------------------------------------------------------------------- #
 # DEPENDENCIES                                                                 #
@@ -107,9 +108,19 @@ ehthumbs.db
 
 # AI agents data
 .agents/
+.superpowers/
+skills-lock.json
+AGENTS.md
+GLOSSARY.md
+docs/adr
+docs/agents
+docs/superpowers
 
 # ---------------------------------------------------------------------------- #
 # PROJECT SPECIFIC                                                             #
 # ---------------------------------------------------------------------------- #
 documentation/
+notes/
+subject.*
+src/backend/uploads
 # Add here anything you want to exclude from git

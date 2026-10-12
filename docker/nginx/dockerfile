@@ -1,8 +1,24 @@
 FROM owasp/modsecurity-crs:nginx-alpine
 
+# Copy the nginx configuration file
 COPY nginx.conf /etc/nginx/templates/conf.d/default.conf.template
 
+# Health check: verifies that Nginx can serve HTTPS requests on the dedicated
+# health endpoint.
+# Flags:
+#   -f: fail on HTTP errors (4xx, 5xx)
+#   -k: skip SSL verification for self-signed certificate
+# Options:
+#   --interval=10s:		check every 10 seconds
+#   --timeout=5s:		fail check if response exceeds 5 seconds
+#   --start-period=5s:	grace period after container start
+#   --retries=3:		mark unhealthy after 3 consecutive failures
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -fk https://localhost:8443/healthz || exit 1
 
 EXPOSE 8443 8080
+
+# Define the default command: starts Nginx in foreground.
+# The flag -g passes global directives to Nginx: 'daemon off;' is crucial in
+# Docker so the main process stays in foreground (PID 1).
+CMD ["nginx", "-g", "daemon off;"]
