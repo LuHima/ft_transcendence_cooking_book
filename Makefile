@@ -56,7 +56,7 @@ RESETCOLOR =	"\e[0m"
 
 # Allow passing CLI args like: make exec backend-container
 ARG_TARGETS = build rebuild exec inspect logs logsf restart stats db-migrate \
-db-reset
+db-reset db-studio
 ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@:)
@@ -341,19 +341,52 @@ db-status: env-check ## |Check database migration status
 
 # Launches Prisma Studio GUI on port 5555
 .PHONY: db-studio
-db-studio: env-check ## |Launch Prisma Studio GUI on port 5555
-	@echo "Opening Prisma Studio at: http://localhost:5555"
-	@echo "Press Ctrl+C to stop."
-	@TTY_OPT=""; \
-	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
-	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
-	-q backend 2>/dev/null)" ]; then \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend node \
-		prisma/studio.js; \
-	else \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
-		-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
+db-studio: env-check ## <start/kill>|Launch/Stop Prisma Studio GUI on port 5555
+	@if [ -z "$(ARGS)" ]; then \
+		echo "Usage: make db-studio <start/kill>"; \
+		echo "Example: make db-studio start -> Start Prisma Studio"; \
+		echo "Example: make db-studio kill  -> Stop Prisma Studio"; \
+		exit 1; \
 	fi
+	@case "$$(printf '%s' "$(ARGS)" | tr '[:upper:]' '[:lower:]')" in \
+		start) \
+			echo "Opening Prisma Studio at: http://localhost:5555"; \
+			echo "Press Ctrl+C to kill."; \
+			TTY_OPT=""; \
+			if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
+			if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status \
+			running -q backend 2>/dev/null)" ]; then \
+				$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT \
+				backend node prisma/studio.js; \
+			else \
+				$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
+				-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
+			fi \
+			;; \
+		kill) \
+			echo "Stopping Prisma Studio"; \
+			$(SUDO) docker compose -f docker/docker-compose.yml exec backend \
+			node -e "const fs = require('fs'); \
+			fs.readdirSync('/proc') \
+			.filter(pid => /^[0-9]+/.test(pid)) \
+			.forEach(pid => { \
+				try { \
+					const path = '/proc/' + pid + '/cmdline'; \
+					const cmd = fs.readFileSync(path, 'utf8'); \
+					if (cmd.includes('studio') && \
+						pid !== String(process.pid)) { \
+						process.kill(Number(pid), 'SIGKILL'); \
+					} \
+				} catch (error) {} \
+			});" \
+			;; \
+		*) \
+			echo "Usage: make db-studio <start/kill>"; \
+			echo "Example: make db-studio start -> Start Prisma Studio"; \
+			echo "Example: make db-studio kill  -> Stop Prisma Studio"; \
+			exit 1 \
+			;; \
+	esac
 
 # Squashes all migrations into a single consolidated 'init' migration
 .PHONY: db-squash
