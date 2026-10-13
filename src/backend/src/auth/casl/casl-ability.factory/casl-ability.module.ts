@@ -4,10 +4,7 @@ import { CaslCheckAbility } from '../casl-checkAbility';
 
 @Global()
 @Module({
-	providers: [CaslAbilityFactory, CaslCheckAbility],
-	exports: [CaslAbilityFactory, CaslCheckAbility],
+  providers: [CaslAbilityFactory, CaslCheckAbility],
+  exports: [CaslAbilityFactory, CaslCheckAbility],
 })
-export class CaslModule {
-
-  
-}
+export class CaslModule {}

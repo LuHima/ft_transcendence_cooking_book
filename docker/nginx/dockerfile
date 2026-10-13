@@ -7,10 +7,11 @@ RUN rm -rf /etc/nginx/conf.d
 # Copy the configuration file overwriting the default one
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Install OpenSSL (for runtime self-signed certificate generation) and curl
-# (for healthcheck).The --no-cache flag keeps the image minimal by not saving
-# package manager cache; it also makes 'apk update' redundant and not needed.
-RUN apk add --no-cache openssl curl
+# Install OpenSSL (for certificate handling), curl (for healthcheck and acme.sh),
+# acme.sh (for Let's Encrypt TLS certificate automation via DNS-01 challenge),
+# socat (network helper utility for acme.sh), and ca-certificates.
+# The --no-cache flag keeps the image minimal by not saving package manager cache.
+RUN apk add --no-cache openssl curl acme.sh socat ca-certificates
 
 # Copy the entrypoint script and make it executable
 COPY nginx_entrypoint.sh /usr/local/bin/

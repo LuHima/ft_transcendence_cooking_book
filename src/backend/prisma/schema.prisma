@@ -33,6 +33,49 @@ enum RecipeDifficulty {
   hard
 }
 
+enum TranslationStatus {
+  completed
+  failed
+}
+
+enum Course {
+  appetizer
+  first_course
+  main_course
+  dessert
+  side_dish
+  drink
+  snack
+}
+
+enum UnitOfMeasure {
+  g
+  kg
+  ml
+  cl
+  l
+  oz
+  lb
+  fl_oz
+  cup
+  tbsp
+  tsp
+  piece
+  pinch
+}
+
+enum IngredientCategory {
+  produce
+  dairy_eggs
+  meat_poultry
+  seafood
+  bakery_grains
+  pantry_spices
+  legumes_nuts
+  beverages_liquids
+  other
+}
+
 enum Role {
   admin
   moderator
@@ -94,25 +137,86 @@ model User {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Recipe {
-  id           Int       @id @default(autoincrement())
-  user_id      Int?
-  owner_type   OwnerType @default(user)
-  title        String    @db.VarChar(255)
-  description  String?
-  instructions String?
-  prep_time    Int?
-  difficulty   RecipeDifficulty @default(easy)
-  created_at   DateTime  @default(now())
+  id                 Int                @id @default(autoincrement())
+  user_id            Int?
+  owner_type         OwnerType          @default(user)
+  course             Course             @default(main_course)
+  difficulty         RecipeDifficulty   @default(easy)
+  prep_time          Int                @default(0)
+  cook_time          Int                @default(0)
+  total_time         Int                @default(0)
+  servings           Int                @default(1)
+  source_lang        String             @default("it") @db.VarChar(5)
+  translation_status TranslationStatus  @default(completed)
+  cover_image_url    String?            @db.VarChar(500)
+  video_url          String?            @db.VarChar(500)
+  created_at         DateTime           @default(now())
+  updated_at         DateTime?          @updatedAt
 
   user               User?              @relation(fields: [user_id], references: [id])
+  translations       RecipeTranslation[]
+  steps              RecipeStep[]
   recipe_ingredients RecipeIngredient[]
+  recipe_tags        RecipeTag[]
   comments           Comment[]
   likes              Like[]
   meal_plan_recipes  MealPlanRecipe[]
   recipe_media       RecipeMedia[]
-  notifications 	 Notification[]
+  notifications      Notification[]
 
   @@map("recipes")
+}
+
+model RecipeTranslation {
+  recipe_id    Int
+  locale       String  @db.VarChar(5)
+  title        String  @db.VarChar(255)
+  description  String
+  preservation String?
+  tips         String?
+
+  recipe       Recipe  @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+
+  @@id([recipe_id, locale])
+  @@index([locale, title])
+  @@map("recipe_translations")
+}
+
+model RecipeStep {
+  id           Int                     @id @default(autoincrement())
+  recipe_id    Int
+  step_number  Int
+  duration     Int?
+  image_url    String?                 @db.VarChar(500)
+
+  recipe       Recipe                  @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+  translations RecipeStepTranslation[]
+
+  @@unique([recipe_id, step_number])
+  @@map("recipe_steps")
+}
+
+model RecipeStepTranslation {
+  step_id      Int
+  locale       String  @db.VarChar(5)
+  title        String? @db.VarChar(255)
+  description  String
+
+  step         RecipeStep @relation(fields: [step_id], references: [id], onDelete: Cascade)
+
+  @@id([step_id, locale])
+  @@map("recipe_step_translations")
+}
+
+model RecipeTag {
+  recipe_id    Int
+  tag_id       Int
+
+  recipe       Recipe @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+  tag          Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([recipe_id, tag_id])
+  @@map("recipe_tags")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -120,19 +224,56 @@ model Recipe {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Ingredient {
-  id   Int    @id @default(autoincrement())
-  name String @unique @db.VarChar(100)
+  id                 Int                    @id @default(autoincrement())
+  slug               String                 @unique @db.VarChar(100)
+  category           IngredientCategory
 
-  recipe_ingredients  RecipeIngredient[]
+  translations       IngredientTranslation[]
+  recipe_ingredients RecipeIngredient[]
 
   @@map("ingredients")
+}
+
+model IngredientTranslation {
+  ingredient_id Int
+  locale        String @db.VarChar(5)
+  name          String @db.VarChar(100)
+
+  ingredient    Ingredient @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+
+  @@id([ingredient_id, locale])
+  @@index([locale, name])
+  @@map("ingredient_translations")
+}
+
+model Tag {
+  id           Int              @id @default(autoincrement())
+  slug         String           @unique @db.VarChar(50)
+
+  translations TagTranslation[]
+  recipe_tags  RecipeTag[]
+
+  @@map("tags")
+}
+
+model TagTranslation {
+  tag_id Int
+  locale String @db.VarChar(5)
+  name   String @db.VarChar(100)
+
+  tag    Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([tag_id, locale])
+  @@index([locale, name])
+  @@map("tag_translations")
 }
 
 model RecipeIngredient {
   recipe_id     Int
   ingredient_id Int
-  quantity      Decimal @db.Decimal(10, 2)
-  unit          String  @db.VarChar(50)
+  quantity      Decimal       @db.Decimal(10, 2)
+  unit          UnitOfMeasure
+  notes         Json?
 
   recipe     Recipe     @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredient_id], references: [id])

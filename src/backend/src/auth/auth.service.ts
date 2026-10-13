@@ -11,7 +11,6 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import * as qrcode from 'qrcode';
 import { generateSecret, generateURI, verify } from 'otplib';
-
 import { createHttpException, errors } from 'src/common/config/error.config';
 import { EncryptionService } from './encryption.service';
 import { Prisma, User } from '@prisma/client';
@@ -109,7 +108,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: payloads.userId },
     });
-    if (!user || !user.status || user.deleted_at)
+    if (!user || user.status !== 'active' || user.deleted_at)
       throw createHttpException(errors.auth.accessDenied);
     // decrypto la password nel database
     const twoFactorCodeDecrypted = this.encryptionService.decrypting(
@@ -136,7 +135,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('invalid password or email');
     }
-    if (!user.status || user.deleted_at) {
+    if (user.status !== 'active' || user.deleted_at) {
       throw createHttpException(errors.users.inactive);
     }
     if (!(await bcrypt.compare(pass, user.password_hash))) {
@@ -214,7 +213,7 @@ export class AuthService {
     }
 
     const user = await this.usersService.getUserById(payload.id);
-    if (!user || !user.status || user.deleted_at) {
+    if (!user || user.status !== 'active' || user.deleted_at) {
       throw createHttpException(errors.auth.accessDenied);
     }
     const refreshTokenSession = await this.prisma.jwtSession.findUnique({

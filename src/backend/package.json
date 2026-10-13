@@ -18,8 +18,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio",
-    "prisma:seed": "prisma db seed"
+    "prisma:studio": "node prisma/studio.js",
+    "prisma:seed": "prisma db seed",
+    "postinstall": "prisma generate || true"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -42,6 +43,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-socket.io": "^11.2.7",
     "@nestjs/schedule": "^12.0.2",
+    "@nestjs/swagger": "^11.4.7",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^11.2.7",
     "@prisma/client": "^7.8.0",
@@ -55,7 +57,8 @@
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.4"
+    "socket.io": "^4.8.4",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -68,6 +71,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.3.0",
     "@types/node": "^24.13.3",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.23.1",
@@ -107,7 +111,13 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(@nestjs/jwt|otplib|@otplib|@scure))"
+    ]
   },
   "allowScripts": {
     "@parcel/watcher@2.6.0": true,
