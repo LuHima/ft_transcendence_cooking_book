@@ -1,3 +1,4 @@
+import { UseFilters } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
@@ -8,8 +9,16 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-
+import { WsException } from '@nestjs/websockets';
+import { create } from 'domain';
 import { Socket, Server } from 'socket.io';
+import {
+  AppErrorDefinition,
+  createWebSocketException,
+  errors,
+} from 'src/common/config/error.config';
+import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
+import { WebSocketExceptionFilter } from 'src/common/filters/webSocket.exception.filter';
 
 // Quando si usa WebSocket si aggancia allo stesso server e utilizza la stessa porta
 // (che puo essere anche cambiata per i socket su uno vuole) HTTP di NestJS (porta 3000)
@@ -25,56 +34,88 @@ export class NotificationGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(private readonly jwtService: JwtService) {}
+  @WebSocketServer() server!: Server;
+  // il '!' dice a typescript che è stata inizializzata e mi toglie l'errore
 
-  findToken(cookie: string | undefined) {
+  private findToken(cookie: string | undefined): string {
     if (!cookie) return '';
     const accessToken = cookie
       .split(';')
       .find((str) => str.trim().startsWith('accessToken='));
     if (!accessToken) return '';
     const jwt = accessToken.split('=');
-    return accessToken;
+    if (!jwt) return '';
+    return jwt[1];
   }
+
+  private handleJwtVerification(jwt: string) {
+    let payload: any;
+
+    try {
+      payload = this.jwtService.verify(jwt);
+    } catch (error) {
+      throw createWebSocketException(errors.socket.unauthorized);
+    }
+    return payload;
+  }
+
+  private verify(cookie: string) {
+    return this.handleJwtVerification(this.findToken(cookie));
+  }
+  
   handleConnection(client: Socket, ...args: any[]) {
-    const cookie = client.handshake.headers.cookie;
-    if (!cookie) {
-      client.disconnect();
-      console.log('no cookie found', cookie);
-    }
-    const jwt: string = this.findToken(cookie);
-    if (jwt.length === 0) {
-      console.log('access token not found');
-      return;
-    }
-    if (this.jwtService.verify(jwt)) {
-      console.log('access Denied, invalid token');
+    try {
+      const cookie = client.handshake.headers.cookie;
+      if (!cookie) throw createWebSocketException(errors.socket.unauthorized);
+      const jwt: string = this.findToken(cookie);
+      const payload = this.handleJwtVerification(jwt);
+      client.data.user = payload;
+      client.join('room-' + payload.id); // creo le stanze in maniere che piu utenti che entrano nello stesso dispositivo ricevano le notifiche
+    } catch (error: any) {
+      const returnError = error.getError() as AppErrorDefinition;
+      client.timeout(2000).emit('error', returnError, () => {
+        client.disconnect(true);
+      });
       return;
     }
     console.log('User Connected', client.id);
-
-    client.disconnect(); // !TODO : pusho per lavorare sul fisso
   }
+
   handleDisconnect(client: Socket) {
     console.log('User Disconnected', client.id);
+    // client.disconnect();
   }
 
   async notification(userId: string, notification: string) {}
-  @WebSocketServer() server!: Server;
-  // il '!' dice a typescript che è stata inizializzata e mi toglie l'errore
 
-  @SubscribeMessage('Hellooooo') // nome dell'evento un po come il path delle API
-  handleNewMessagge(@MessageBody() message: any) {
+  @SubscribeMessage('Friend request') // nome dell'evento un po come il path delle API
+  friendRequests(@MessageBody() message: any) {
     console.log('hello');
   }
 
-  @SubscribeMessage('Ehi') // nome dell'evento un po come il path delle API
-  handleNewMsg(@ConnectedSocket() client: Socket, @MessageBody() message: any) {
+  @SubscribeMessage('comment on your the recipe')
+  commentOnTheRecipe(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() message: any,
+  ) {
     console.log(message);
     client.emit('Ehi', 'Ciaoooo');
   }
 
-  @SubscribeMessage('All_User') // nome dell'evento un po come il path delle API
-  BroadCast(@ConnectedSocket() client: Socket, @MessageBody() message: any) {
+  @SubscribeMessage('Response on your comment')
+  responseComment(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() message: any,
+  ) {
+    console.log(message);
+    client.emit('Ehi', 'Ciaoooo');
+  }
+
+  @SubscribeMessage('Friend public a recipe')
+  postingRecipe(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() message: any,
+  ) {
     console.log(message);
     this.server.emit('All_User', 'broadcast');
   }
