@@ -36,6 +36,8 @@ import { CatalogService } from '../catalog/catalog.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { RecipeCommentResponseDto } from './dto/comment-response.dto';
 import {
   LocalizedRecipeDetailResponse,
   RecipeMediaResponse,
@@ -679,6 +681,41 @@ export class RecipeController {
     @CurrentUser('id') userId: number,
   ) {
     return this.recipeService.unlikeRecipe(id, userId);
+  }
+
+  /**
+   * Post a new comment or reply to a recipe.
+   */
+  @ApiOperation({
+    summary: 'Post recipe comment or reply',
+    description:
+      'Creates a new top-level comment or reply to an existing comment on the recipe. Normalizes nested replies to maintain a 2-level discussion thread structure.',
+  })
+  @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
+  @ApiCreatedResponse({
+    description: 'Comment created successfully',
+    type: RecipeCommentResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid input or parent comment not found/mismatched',
+    type: ApiErrorResponseDto,
+  })
+  @Auth()
+  @Post(':id/comments')
+  async createComment(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @CurrentUser('id') userId: number,
+    @Body() createCommentDto: CreateCommentDto,
+  ) {
+    return await this.recipeService.createComment(
+      recipeId,
+      userId,
+      createCommentDto,
+    );
   }
 }
 

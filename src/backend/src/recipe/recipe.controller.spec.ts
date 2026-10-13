@@ -9,6 +9,7 @@ import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
 
 describe('RecipeController', () => {
   let controller: RecipeController;
@@ -38,6 +39,7 @@ describe('RecipeController', () => {
     deleteGalleryMedia: jest.fn(),
     likeRecipe: jest.fn(),
     unlikeRecipe: jest.fn(),
+    createComment: jest.fn(),
   };
 
   const sampleDto: CreateRecipeDto = {
@@ -408,6 +410,31 @@ describe('RecipeController', () => {
       const result = await controller.unlikeRecipe(1, 42);
 
       expect(service.unlikeRecipe).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('createComment', () => {
+    it('delegates to service.createComment with recipeId, userId, and commentDto', async () => {
+      const mockCommentDto: CreateCommentDto = {
+        content: 'Buonissima ricetta!',
+        parent_id: 1,
+      };
+      const mockResult = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 42,
+        parent_id: 1,
+        content: 'Buonissima ricetta!',
+        is_active: true,
+        created_at: new Date(),
+        user: { id: 42, username: 'mario', avatar_url: null },
+      };
+      mockRecipeService.createComment.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.createComment(1, 42, mockCommentDto);
+
+      expect(service.createComment).toHaveBeenCalledWith(1, 42, mockCommentDto);
       expect(result).toEqual(mockResult);
     });
   });

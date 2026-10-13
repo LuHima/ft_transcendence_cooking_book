@@ -8,6 +8,7 @@ import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
 import { RecipeService } from './recipe.service';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
@@ -66,6 +67,13 @@ describe('RecipeService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
+    },
+    comment: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
   };
 
@@ -1947,6 +1955,133 @@ describe('RecipeService', () => {
         }),
       );
       expect((result.returnPage[0] as any).user).toBeUndefined();
+    });
+  });
+
+  describe('createComment', () => {
+    const commentDto: CreateCommentDto = {
+      content: 'Ottima ricetta!',
+    };
+
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.createComment(999, 1, commentDto)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws BadRequestException when parent_id does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.createComment(1, 1, { ...commentDto, parent_id: 888 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when parent comment belongs to a different recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 2,
+        parent_id: null,
+      });
+
+      await expect(
+        service.createComment(1, 1, { ...commentDto, parent_id: 10 }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('creates a root comment when parent_id is omitted', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      const createdComment = {
+        id: 100,
+        recipe_id: 1,
+        user_id: 5,
+        parent_id: null,
+        content: 'Ottima ricetta!',
+        is_active: true,
+        created_at: new Date('2026-10-13T10:00:00Z'),
+        user: {
+          id: 5,
+          username: 'mario',
+          avatar_url: 'https://example.com/avatar.jpg',
+        },
+      };
+      mockPrisma.comment.create.mockResolvedValueOnce(createdComment);
+
+      const result = await service.createComment(1, 5, commentDto);
+
+      expect(mockPrisma.comment.create).toHaveBeenCalledWith({
+        data: {
+          recipe_id: 1,
+          user_id: 5,
+          content: 'Ottima ricetta!',
+          parent_id: null,
+          is_active: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(createdComment);
+    });
+
+    it('creates a reply and normalizes reply-to-reply when parent comment is already a reply', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 20,
+        recipe_id: 1,
+        parent_id: 10,
+      });
+
+      const createdReply = {
+        id: 30,
+        recipe_id: 1,
+        user_id: 7,
+        parent_id: 10,
+        content: 'Concordo!',
+        is_active: true,
+        created_at: new Date('2026-10-13T10:05:00Z'),
+        user: {
+          id: 7,
+          username: 'luigi',
+          avatar_url: null,
+        },
+      };
+      mockPrisma.comment.create.mockResolvedValueOnce(createdReply);
+
+      const result = await service.createComment(1, 7, {
+        content: 'Concordo!',
+        parent_id: 20,
+      });
+
+      expect(mockPrisma.comment.create).toHaveBeenCalledWith({
+        data: {
+          recipe_id: 1,
+          user_id: 7,
+          content: 'Concordo!',
+          parent_id: 10,
+          is_active: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(createdReply);
     });
   });
 });

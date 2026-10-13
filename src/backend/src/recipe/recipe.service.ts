@@ -11,6 +11,7 @@ import type { Prisma, Recipe } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
 import {
   LocalizedRecipeStepResponse,
   LocalizedRecipeIngredientResponse,
@@ -40,7 +41,7 @@ export class RecipeService {
     currentUserId?: number,
   ) {
     const filterDto: FilterRecipeDto =
-      typeof filters === 'string' ? { lang: filters as any } : (filters || {});
+      typeof filters === 'string' ? { lang: filters as any } : filters || {};
 
     const where: Prisma.RecipeWhereInput = {};
 
@@ -1616,5 +1617,60 @@ export class RecipeService {
     }
 
     return { message: 'Recipe unliked successfully', liked: false };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Post a new comment or reply on a recipe with 2-level hierarchy normalization.
+   */
+  async createComment(recipeId: number, userId: number, dto: CreateCommentDto) {
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    let parentId: number | null = null;
+
+    if (dto.parent_id !== undefined && dto.parent_id !== null) {
+      const parent = await this.prisma.comment.findUnique({
+        where: { id: dto.parent_id },
+      });
+
+      if (!parent) {
+        throw new BadRequestException('Parent comment does not exist');
+      } else if (parent.recipe_id !== recipeId) {
+        throw new BadRequestException(
+          'Parent comment does not belong to this recipe',
+        );
+      }
+
+      // Enforce 2-level hierarchy: if parent is already a reply, normalize to
+      // its root parent_id
+      parentId = parent.parent_id !== null ? parent.parent_id : parent.id;
+    }
+
+    return await this.prisma.comment.create({
+      data: {
+        recipe_id: recipeId,
+        user_id: userId,
+        content: dto.content,
+        parent_id: parentId,
+        is_active: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar_url: true,
+          },
+        },
+      },
+    });
   }
 }

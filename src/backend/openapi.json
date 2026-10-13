@@ -2332,6 +2332,85 @@
           "Recipes"
         ]
       }
+    },
+    "/api/recipes/{id}/comments": {
+      "post": {
+        "description": "Creates a new top-level comment or reply to an existing comment on the recipe. Normalizes nested replies to maintain a 2-level discussion thread structure.",
+        "operationId": "RecipeController_createComment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Recipe ID",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeCommentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or parent comment not found/mismatched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Post recipe comment or reply",
+        "tags": [
+          "Recipes"
+        ]
+      }
     }
   },
   "info": {
@@ -3968,6 +4047,91 @@
         "required": [
           "message",
           "liked"
+        ]
+      },
+      "CreateCommentDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Comment content text (1 to 1000 characters)",
+            "example": "Ottima ricetta, ho provato ad aggiungere un pizzico di pepe in più!",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "parent_id": {
+            "type": "number",
+            "description": "Optional parent comment ID if this comment is a reply. Automatically normalized to root comment.",
+            "example": 1,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "RecipeCommentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique comment ID",
+            "example": 1
+          },
+          "recipe_id": {
+            "type": "number",
+            "description": "Recipe ID",
+            "example": 42
+          },
+          "user_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Author user ID",
+            "example": 10
+          },
+          "parent_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Parent root comment ID if reply, or null for top-level comment",
+            "example": null
+          },
+          "content": {
+            "type": "string",
+            "nullable": true,
+            "description": "Comment content text, or null if deleted/deactivated with active replies",
+            "example": "Ottima ricetta!"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the comment is active or deactivated",
+            "example": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2026-10-13T10:00:00.000Z"
+          },
+          "user": {
+            "nullable": true,
+            "description": "Author profile summary, or null if deactivated",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "recipe_id",
+          "user_id",
+          "parent_id",
+          "content",
+          "is_active",
+          "created_at",
+          "user"
         ]
       }
     }
