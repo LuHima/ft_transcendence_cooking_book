@@ -21,6 +21,7 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiForbiddenResponse,
   ApiParam,
   ApiQuery,
   ApiConsumes,
@@ -37,7 +38,10 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { RecipeCommentResponseDto } from './dto/comment-response.dto';
+import {
+  RecipeCommentResponseDto,
+  ThreadedRecipeCommentResponseDto,
+} from './dto/comment-response.dto';
 import {
   LocalizedRecipeDetailResponse,
   RecipeMediaResponse,
@@ -716,6 +720,59 @@ export class RecipeController {
       userId,
       createCommentDto,
     );
+  }
+
+  /**
+   * Get all comments and nested replies for a recipe.
+   */
+  @ApiOperation({
+    summary: 'Get recipe comments',
+    description:
+      'Retrieves threaded comments and replies for a recipe, preserving conversational context for intermediate deactivated replies and pruning trailing deactivated replies.',
+  })
+  @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
+  @ApiOkResponse({
+    description: 'List of threaded comments',
+    type: [ThreadedRecipeCommentResponseDto],
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiErrorResponseDto,
+  })
+  @Get(':id/comments')
+  async getComments(@Param('id', ParseIntPipe) recipeId: number) {
+    return await this.recipeService.getComments(recipeId);
+  }
+
+  /**
+   * Deactivate a recipe comment non-destructively.
+   */
+  @ApiOperation({
+    summary: 'Deactivate recipe comment',
+    description:
+      'Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author.',
+  })
+  @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
+  @ApiParam({ name: 'commentId', description: 'Comment ID', example: 10 })
+  @ApiOkResponse({
+    description: 'Comment deactivated successfully',
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe or comment not found',
+    type: ApiErrorResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: user is neither comment author nor recipe author',
+    type: ApiErrorResponseDto,
+  })
+  @Auth()
+  @Delete(':id/comments/:commentId')
+  async deleteComment(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @CurrentUser('id') userId: number,
+  ) {
+    return await this.recipeService.deleteComment(recipeId, commentId, userId);
   }
 }
 

@@ -40,6 +40,8 @@ describe('RecipeController', () => {
     likeRecipe: jest.fn(),
     unlikeRecipe: jest.fn(),
     createComment: jest.fn(),
+    getComments: jest.fn(),
+    deleteComment: jest.fn(),
   };
 
   const sampleDto: CreateRecipeDto = {
@@ -438,4 +440,41 @@ describe('RecipeController', () => {
       expect(result).toEqual(mockResult);
     });
   });
+
+  describe('getComments', () => {
+    it('delegates to service.getComments with recipeId', async () => {
+      const mockResult = [
+        {
+          id: 1,
+          recipe_id: 1,
+          user_id: 10,
+          parent_id: null,
+          content: 'Parent comment',
+          is_active: true,
+          created_at: new Date(),
+          user: { id: 10, username: 'marco', avatar_url: null },
+          replies: [],
+        },
+      ];
+      mockRecipeService.getComments.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.getComments(1);
+
+      expect(service.getComments).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteComment', () => {
+    it('delegates to service.deleteComment with recipeId, commentId, and userId', async () => {
+      const mockResult = { message: 'Comment deactivated successfully' };
+      mockRecipeService.deleteComment.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.deleteComment(1, 10, 42);
+
+      expect(service.deleteComment).toHaveBeenCalledWith(1, 10, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
 });
+

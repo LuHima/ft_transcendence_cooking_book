@@ -2,6 +2,7 @@ import {
   BadRequestException,
   NotFoundException,
   HttpException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
@@ -2084,4 +2085,290 @@ describe('RecipeService', () => {
       expect(result).toEqual(createdReply);
     });
   });
+
+  describe('getComments', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getComments(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('returns threaded comments, preserving intermediate deactivated replies and dropping trailing deactivated replies', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+
+      const mockCommentsFromDb = [
+        // Root 1: Active, with 4 replies (active, inactive-intermediate, active, inactive-trailing)
+        {
+          id: 1,
+          recipe_id: 1,
+          user_id: 10,
+          parent_id: null,
+          content: 'Parent comment 1',
+          is_active: true,
+          created_at: new Date('2026-10-13T10:00:00Z'),
+          user: { id: 10, username: 'marco', avatar_url: null },
+          replies: [
+            {
+              id: 2,
+              recipe_id: 1,
+              user_id: 20,
+              parent_id: 1,
+              content: 'Reply 1 (active)',
+              is_active: true,
+              created_at: new Date('2026-10-13T10:01:00Z'),
+              user: { id: 20, username: 'lara', avatar_url: null },
+            },
+            {
+              id: 3,
+              recipe_id: 1,
+              user_id: 30,
+              parent_id: 1,
+              content: 'Reply 2 (inactive - intermediate)',
+              is_active: false,
+              created_at: new Date('2026-10-13T10:02:00Z'),
+              user: { id: 30, username: 'giovanni', avatar_url: null },
+            },
+            {
+              id: 4,
+              recipe_id: 1,
+              user_id: 40,
+              parent_id: 1,
+              content: 'Reply 3 (active)',
+              is_active: true,
+              created_at: new Date('2026-10-13T10:03:00Z'),
+              user: { id: 40, username: 'anna', avatar_url: null },
+            },
+            {
+              id: 5,
+              recipe_id: 1,
+              user_id: 50,
+              parent_id: 1,
+              content: 'Reply 4 (inactive - trailing)',
+              is_active: false,
+              created_at: new Date('2026-10-13T10:04:00Z'),
+              user: { id: 50, username: 'paolo', avatar_url: null },
+            },
+          ],
+        },
+        // Root 2: Inactive, with only trailing inactive replies -> omitted completely
+        {
+          id: 6,
+          recipe_id: 1,
+          user_id: 60,
+          parent_id: null,
+          content: 'Parent comment 2 (inactive)',
+          is_active: false,
+          created_at: new Date('2026-10-13T10:05:00Z'),
+          user: { id: 60, username: 'luca', avatar_url: null },
+          replies: [
+            {
+              id: 7,
+              recipe_id: 1,
+              user_id: 70,
+              parent_id: 6,
+              content: 'Reply (inactive)',
+              is_active: false,
+              created_at: new Date('2026-10-13T10:06:00Z'),
+              user: { id: 70, username: 'sara', avatar_url: null },
+            },
+          ],
+        },
+        // Root 3: Inactive, but has active replies -> kept redacted
+        {
+          id: 8,
+          recipe_id: 1,
+          user_id: 80,
+          parent_id: null,
+          content: 'Parent comment 3 (inactive with active reply)',
+          is_active: false,
+          created_at: new Date('2026-10-13T10:07:00Z'),
+          user: { id: 80, username: 'elena', avatar_url: null },
+          replies: [
+            {
+              id: 9,
+              recipe_id: 1,
+              user_id: 90,
+              parent_id: 8,
+              content: 'Reply to deleted root (active)',
+              is_active: true,
+              created_at: new Date('2026-10-13T10:08:00Z'),
+              user: { id: 90, username: 'matteo', avatar_url: null },
+            },
+          ],
+        },
+        // Root 4: Active with no replies
+        {
+          id: 10,
+          recipe_id: 1,
+          user_id: 100,
+          parent_id: null,
+          content: 'Parent comment 4 (active, no replies)',
+          is_active: true,
+          created_at: new Date('2026-10-13T10:09:00Z'),
+          user: { id: 100, username: 'chiara', avatar_url: null },
+          replies: [],
+        },
+      ];
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce(mockCommentsFromDb);
+
+      const result = await service.getComments(1);
+
+      expect(mockPrisma.recipe.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: { id: true },
+      });
+
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith({
+        where: { recipe_id: 1, parent_id: null },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+          replies: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatar_url: true,
+                },
+              },
+            },
+            orderBy: { created_at: 'asc' },
+          },
+        },
+        orderBy: { created_at: 'asc' },
+      });
+
+      // Assertions on result: Root 2 must be excluded!
+      expect(result).toHaveLength(3);
+
+      // Root 1
+      expect(result[0].id).toBe(1);
+      expect(result[0].content).toBe('Parent comment 1');
+      expect(result[0].is_active).toBe(true);
+      expect(result[0].replies).toHaveLength(3);
+      expect(result[0].replies[0]).toEqual(mockCommentsFromDb[0].replies[0]);
+      // Intermediate inactive reply is redacted
+      expect(result[0].replies[1]).toEqual({
+        id: 3,
+        recipe_id: 1,
+        user_id: null,
+        parent_id: 1,
+        content: null,
+        is_active: false,
+        created_at: new Date('2026-10-13T10:02:00Z'),
+        user: null,
+      });
+      // 3rd reply is active
+      expect(result[0].replies[2]).toEqual(mockCommentsFromDb[0].replies[2]);
+
+      // Root 3 (was inactive, but has active reply, so kept redacted)
+      expect(result[1].id).toBe(8);
+      expect(result[1].content).toBeNull();
+      expect(result[1].user).toBeNull();
+      expect(result[1].user_id).toBeNull();
+      expect(result[1].is_active).toBe(false);
+      expect(result[1].replies).toHaveLength(1);
+      expect(result[1].replies[0]).toEqual(mockCommentsFromDb[2].replies[0]);
+
+      // Root 4 (active with no replies)
+      expect(result[2].id).toBe(10);
+      expect(result[2].content).toBe('Parent comment 4 (active, no replies)');
+      expect(result[2].replies).toEqual([]);
+    });
+  });
+
+  describe('deleteComment', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.deleteComment(999, 10, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when comment does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.deleteComment(1, 888, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when comment belongs to a different recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 2,
+        user_id: 1,
+      });
+
+      await expect(service.deleteComment(1, 10, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws ForbiddenException when user is neither comment author nor recipe author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+
+      await expect(service.deleteComment(1, 10, 99)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('deactivates comment when user is the comment author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+
+      const result = await service.deleteComment(1, 10, 50);
+
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { is_active: false },
+      });
+      expect(result).toEqual({ message: 'Comment deactivated successfully' });
+    });
+
+    it('deactivates comment when user is the recipe author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+
+      const result = await service.deleteComment(1, 10, 100);
+
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { is_active: false },
+      });
+      expect(result).toEqual({ message: 'Comment deactivated successfully' });
+    });
+  });
 });
+

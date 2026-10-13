@@ -2410,6 +2410,123 @@
         "tags": [
           "Recipes"
         ]
+      },
+      "get": {
+        "description": "Retrieves threaded comments and replies for a recipe, preserving conversational context for intermediate deactivated replies and pruning trailing deactivated replies.",
+        "operationId": "RecipeController_getComments",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Recipe ID",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of threaded comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ThreadedRecipeCommentResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get recipe comments",
+        "tags": [
+          "Recipes"
+        ]
+      }
+    },
+    "/api/recipes/{id}/comments/{commentId}": {
+      "delete": {
+        "description": "Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author.",
+        "operationId": "RecipeController_deleteComment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Recipe ID",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          },
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "description": "Comment ID",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment deactivated successfully"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: user is neither comment author nor recipe author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe or comment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Deactivate recipe comment",
+        "tags": [
+          "Recipes"
+        ]
       }
     }
   },
@@ -4132,6 +4249,78 @@
           "is_active",
           "created_at",
           "user"
+        ]
+      },
+      "ThreadedRecipeCommentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique comment ID",
+            "example": 1
+          },
+          "recipe_id": {
+            "type": "number",
+            "description": "Recipe ID",
+            "example": 42
+          },
+          "user_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Author user ID",
+            "example": 10
+          },
+          "parent_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Parent root comment ID if reply, or null for top-level comment",
+            "example": null
+          },
+          "content": {
+            "type": "string",
+            "nullable": true,
+            "description": "Comment content text, or null if deleted/deactivated with active replies",
+            "example": "Ottima ricetta!"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the comment is active or deactivated",
+            "example": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2026-10-13T10:00:00.000Z"
+          },
+          "user": {
+            "nullable": true,
+            "description": "Author profile summary, or null if deactivated",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          },
+          "replies": {
+            "description": "Chronological list of replies to this top-level comment",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeCommentResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "recipe_id",
+          "user_id",
+          "parent_id",
+          "content",
+          "is_active",
+          "created_at",
+          "user",
+          "replies"
         ]
       }
     }

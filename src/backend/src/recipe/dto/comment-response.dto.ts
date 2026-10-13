@@ -49,3 +49,14 @@ export class RecipeCommentResponseDto {
   })
   user: RecipeAuthorSummaryDto | null;
 }
+
+/**
+ * Public response representation of a top-level recipe comment with nested replies.
+ */
+export class ThreadedRecipeCommentResponseDto extends RecipeCommentResponseDto {
+  @ApiProperty({
+    type: [RecipeCommentResponseDto],
+    description: 'Chronological list of replies to this top-level comment',
+  })
+  replies: RecipeCommentResponseDto[];
+}

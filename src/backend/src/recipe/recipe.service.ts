@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
@@ -12,6 +13,7 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { ThreadedRecipeCommentResponseDto } from './dto/comment-response.dto';
 import {
   LocalizedRecipeStepResponse,
   LocalizedRecipeIngredientResponse,
@@ -1672,5 +1674,154 @@ export class RecipeService {
         },
       },
     });
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Retrieve threaded comments for a recipe, preserving intermediate deactivated replies
+   * for conversational context and dropping trailing deactivated replies.
+   */
+  async getComments(
+    recipeId: number,
+  ): Promise<ThreadedRecipeCommentResponseDto[]> {
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    const rootComments = await this.prisma.comment.findMany({
+      where: {
+        recipe_id: recipeId,
+        parent_id: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar_url: true,
+          },
+        },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatar_url: true,
+              },
+            },
+          },
+          orderBy: { created_at: 'asc' },
+        },
+      },
+      orderBy: { created_at: 'asc' },
+    });
+
+    const result: ThreadedRecipeCommentResponseDto[] = [];
+
+    for (const root of rootComments) {
+      const replies = root.replies || [];
+      const lastActiveIndex = replies.findLastIndex((r) => r.is_active);
+
+      const keptReplies =
+        lastActiveIndex === -1
+          ? []
+          : replies.slice(0, lastActiveIndex + 1).map((r) =>
+              r.is_active
+                ? {
+                    id: r.id,
+                    recipe_id: r.recipe_id,
+                    user_id: r.user_id,
+                    parent_id: r.parent_id,
+                    content: r.content,
+                    is_active: r.is_active,
+                    created_at: r.created_at,
+                    user: r.user,
+                  }
+                : {
+                    id: r.id,
+                    recipe_id: r.recipe_id,
+                    user_id: null,
+                    parent_id: r.parent_id,
+                    content: null,
+                    is_active: false,
+                    created_at: r.created_at,
+                    user: null,
+                  },
+            );
+
+      if (root.is_active) {
+        result.push({
+          id: root.id,
+          recipe_id: root.recipe_id,
+          user_id: root.user_id,
+          parent_id: root.parent_id,
+          content: root.content,
+          is_active: root.is_active,
+          created_at: root.created_at,
+          user: root.user,
+          replies: keptReplies,
+        });
+      } else if (keptReplies.length > 0) {
+        result.push({
+          id: root.id,
+          recipe_id: root.recipe_id,
+          user_id: null,
+          parent_id: root.parent_id,
+          content: null,
+          is_active: false,
+          created_at: root.created_at,
+          user: null,
+          replies: keptReplies,
+        });
+      }
+      // If root is deactivated and has no kept replies, prune completely
+    }
+
+    return result;
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Deactivate a comment non-destructively (is_active = false).
+   * Authorized only for the comment author or the recipe author.
+   */
+  async deleteComment(recipeId: number, commentId: number, userId: number) {
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true, user_id: true },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment || comment.recipe_id !== recipeId) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    if (comment.user_id !== userId && recipe.user_id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to deactivate this comment',
+      );
+    }
+
+    await this.prisma.comment.update({
+      where: { id: commentId },
+      data: { is_active: false },
+    });
+
+    return { message: 'Comment deactivated successfully' };
   }
 }
