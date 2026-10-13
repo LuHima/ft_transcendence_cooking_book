@@ -989,30 +989,113 @@
     },
     "/api/recipes": {
       "get": {
-        "description": "Fetches all recipes in the system. When `lang` is specified, projects localized title and description according to preference hierarchy.",
+        "description": "Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy.",
         "operationId": "RecipeController_getRecipes",
         "parameters": [
+          {
+            "name": "course",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by course meal category",
+            "schema": {
+              "example": "main_course",
+              "type": "string",
+              "enum": [
+                "appetizer",
+                "first_course",
+                "main_course",
+                "dessert",
+                "side_dish",
+                "drink",
+                "snack"
+              ]
+            }
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by difficulty level",
+            "schema": {
+              "example": "easy",
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            }
+          },
+          {
+            "name": "tag_ids",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by tag IDs (supports comma-separated string e.g. \"1,2\" or numbers)",
+            "schema": {
+              "example": [
+                1,
+                2
+              ],
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
+            "name": "max_time",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes where total_time is less than or equal to this limit (in minutes)",
+            "schema": {
+              "minimum": 0,
+              "example": 30,
+              "type": "number"
+            }
+          },
+          {
+            "name": "author_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes authored by a specific user ID",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Keyword search query matching recipe title or description",
+            "schema": {
+              "example": "pasta",
+              "type": "string"
+            }
+          },
           {
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target locale code for projected titles and descriptions (it, en, fr)",
+            "description": "Target locale code for projected title and description",
             "schema": {
+              "example": "it",
+              "type": "string",
               "enum": [
                 "it",
                 "en",
                 "fr"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Array of recipes with translations"
+            "description": "Array of recipes with translations matching criteria"
           }
         },
-        "summary": "List all recipes",
+        "summary": "List recipes with multi-criteria filtering and search",
         "tags": [
           "Recipes"
         ]

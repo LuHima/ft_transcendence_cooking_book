@@ -6,6 +6,7 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/role.guard';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { FilterRecipeDto } from './dto/filter-recipe.dto';
 
 describe('RecipeController', () => {
   let controller: RecipeController;
@@ -100,9 +101,29 @@ describe('RecipeController', () => {
       const mockResult = [{ id: 1, title: 'Carbonara' }];
       mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getRecipes('it');
+      const result = await controller.getRecipes({ lang: 'it' });
 
-      expect(service.getAllRecipe).toHaveBeenCalledWith('it');
+      expect(service.getAllRecipe).toHaveBeenCalledWith({ lang: 'it' });
+      expect(result).toEqual(mockResult);
+    });
+
+    it('delegates to service.getAllRecipe with multi-criteria filters', async () => {
+      const mockResult = [{ id: 1, title: 'Pasta' }];
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
+
+      const filterDto: FilterRecipeDto = {
+        course: Course.main_course,
+        difficulty: RecipeDifficulty.easy,
+        search: 'pasta',
+        max_time: 30,
+        author_id: 1,
+        tag_ids: [1, 2],
+        lang: 'it',
+      };
+
+      const result = await controller.getRecipes(filterDto);
+
+      expect(service.getAllRecipe).toHaveBeenCalledWith(filterDto);
       expect(result).toEqual(mockResult);
     });
   });

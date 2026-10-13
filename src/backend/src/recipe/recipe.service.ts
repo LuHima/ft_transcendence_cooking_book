@@ -10,6 +10,7 @@ import { MediaType, OwnerType, TranslationStatus } from '@prisma/client';
 import type { Prisma, Recipe } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import {
   LocalizedRecipeStepResponse,
   LocalizedRecipeIngredientResponse,
@@ -34,14 +35,57 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
-  public async getAllRecipe(lang?: string) {
-    // Fetch all recipes together with their translations
+  public async getAllRecipe(filters?: FilterRecipeDto | string) {
+    const filterDto: FilterRecipeDto =
+      typeof filters === 'string' ? { lang: filters as any } : (filters || {});
+
+    const where: Prisma.RecipeWhereInput = {};
+
+    if (filterDto.course) {
+      where.course = filterDto.course;
+    }
+
+    if (filterDto.difficulty) {
+      where.difficulty = filterDto.difficulty;
+    }
+
+    if (filterDto.author_id) {
+      where.user_id = filterDto.author_id;
+    }
+
+    if (filterDto.max_time !== undefined) {
+      where.total_time = { lte: filterDto.max_time };
+    }
+
+    if (filterDto.tag_ids && filterDto.tag_ids.length > 0) {
+      where.recipe_tags = {
+        some: {
+          tag_id: { in: filterDto.tag_ids },
+        },
+      };
+    }
+
+    if (filterDto.search && filterDto.search.trim() !== '') {
+      const keyword = filterDto.search.trim();
+      where.translations = {
+        some: {
+          OR: [
+            { title: { contains: keyword, mode: 'insensitive' } },
+            { description: { contains: keyword, mode: 'insensitive' } },
+          ],
+        },
+      };
+    }
+
+    // Fetch recipes matching filter criteria together with their translations
     const recipes = await this.prisma.recipe.findMany({
+      ...(Object.keys(where).length > 0 ? { where } : {}),
       include: {
         translations: true,
       },
     });
 
+    const lang = filterDto.lang;
     if (!lang) {
       return recipes;
     }

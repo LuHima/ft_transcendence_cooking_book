@@ -35,6 +35,7 @@ import { RecipeService } from './recipe.service';
 import { CatalogService } from '../catalog/catalog.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import {
   LocalizedRecipeDetailResponse,
   RecipeMediaResponse,
@@ -69,27 +70,19 @@ export class RecipeController {
   // TODO @Roles(Role.admin)
 
   /**
-   * Retrieve all recipes with optional localization.
+   * Retrieve recipes with multi-criteria filtering, search, and optional localization.
    */
   @ApiOperation({
-    summary: 'List all recipes',
+    summary: 'List recipes with multi-criteria filtering and search',
     description:
-      'Fetches all recipes in the system. When `lang` is specified, projects localized title and description according to preference hierarchy.',
-  })
-  @ApiQuery({
-    name: 'lang',
-    required: false,
-    description:
-      'Target locale code for projected titles and descriptions (it, en, fr)',
-    enum: ['it', 'en', 'fr'],
-    example: 'it',
+      'Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy.',
   })
   @ApiOkResponse({
-    description: 'Array of recipes with translations',
+    description: 'Array of recipes with translations matching criteria',
   })
   @Get()
-  async getRecipes(@Query('lang') lang?: string) {
-    return await this.recipeService.getAllRecipe(lang);
+  async getRecipes(@Query() filterDto: FilterRecipeDto) {
+    return await this.recipeService.getAllRecipe(filterDto);
   }
 
   /**

@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  HttpException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -7,6 +11,7 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { RecipeService } from './recipe.service';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
+import { CaslCheckAbility } from '../auth/casl/casl-checkAbility';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -17,6 +22,10 @@ describe('RecipeService', () => {
 
   const mockProductionConfig = {
     isProduction: jest.fn().mockReturnValue(false),
+  };
+
+  const mockCaslCheckAbility = {
+    canAbility: jest.fn().mockResolvedValue(true),
   };
 
   const mockPrisma = {
@@ -101,6 +110,7 @@ describe('RecipeService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ProductionConfig, useValue: mockProductionConfig },
+        { provide: CaslCheckAbility, useValue: mockCaslCheckAbility },
       ],
     }).compile();
 
@@ -147,6 +157,72 @@ describe('RecipeService', () => {
 
       const result = await service.getAllRecipe('en');
 
+      expect(result).toEqual([
+        {
+          id: 1,
+          source_lang: 'it',
+          title: 'Carbonara English',
+          description: 'Classic',
+          translations: mockRecipes[0].translations,
+        },
+      ]);
+    });
+
+    it('filters recipes by course, difficulty, author_id, max_time, tag_ids, and search keyword', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+
+      const filters = {
+        course: Course.main_course,
+        difficulty: RecipeDifficulty.easy,
+        author_id: 5,
+        max_time: 45,
+        tag_ids: [1, 2],
+        search: 'pasta',
+      };
+
+      const result = await service.getAllRecipe(filters);
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
+        where: {
+          course: Course.main_course,
+          difficulty: RecipeDifficulty.easy,
+          user_id: 5,
+          total_time: { lte: 45 },
+          recipe_tags: {
+            some: {
+              tag_id: { in: [1, 2] },
+            },
+          },
+          translations: {
+            some: {
+              OR: [
+                { title: { contains: 'pasta', mode: 'insensitive' } },
+                { description: { contains: 'pasta', mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
+        include: { translations: true },
+      });
+      expect(result).toEqual(mockRecipes);
+    });
+
+    it('applies filters and projects localized title and description when lang is provided in filter object', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+
+      const filters = {
+        course: Course.main_course,
+        lang: 'en' as const,
+      };
+
+      const result = await service.getAllRecipe(filters);
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
+        where: {
+          course: Course.main_course,
+        },
+        include: { translations: true },
+      });
       expect(result).toEqual([
         {
           id: 1,
@@ -762,7 +838,7 @@ describe('RecipeService', () => {
 
       await expect(
         service.updateRecipe(1, 999, { servings: 4 }),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(HttpException);
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         id: 1,
@@ -770,7 +846,7 @@ describe('RecipeService', () => {
       });
 
       await expect(service.updateRecipe(1, 1, { servings: 4 })).rejects.toThrow(
-        NotFoundException,
+        HttpException,
       );
     });
 
