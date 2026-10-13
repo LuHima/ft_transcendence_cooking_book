@@ -144,11 +144,15 @@ stop: ## |Stop containers without removing them (keep volumes/data)
 
 # Rebuild stack from scratch (fclean + all)
 .PHONY: re
-re: fclean up-rebuild ## |Rebuild stack from scratch (without cache)
+re: fclean up-rebuild ## |Rebuild stack from scratch (no cache, delete volumes)
+
+# Rebuild stack from scratch (clean + all, keep volumes)
+.PHONY: re-v
+re-v: clean up-rebuild ## |Rebuild stack from scratch (no cache, keep volumes)
 
 # Stops and removes containers, networks, and removes project images
 .PHONY: clean
-clean: ## |Stop stack and remove project images
+clean: ## |Stop stack and remove project images (keep volumes and logs)
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) down --rmi all --remove-orphans
 
 # Stops and removes containers, project images, volumes, and build logs
