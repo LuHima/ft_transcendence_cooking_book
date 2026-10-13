@@ -7,7 +7,8 @@
   "default": {
     "workspace": "ft_transcendence",
     "collection": "wecook-backend-api",
-    "environment": "wecook-development"
+    "environment": "wecook-development",
+    "spec": "wecook-api-spec"
   },
   "workspaces": {
     "ft_transcendence": {
@@ -16,11 +17,24 @@
       "type": "team"
     }
   },
+  "specs": {
+    "wecook-api-spec": {
+      "id": "985a2bd8-1fd5-47c4-8630-b84b310ed91c",
+      "name": "WeCook API",
+      "type": "OPENAPI:3.0"
+    }
+  },
   "collections": {
     "wecook-backend-api": {
       "id": "4155a7cc-8493-43d1-893a-5bbefcf3d126",
       "uid": "55074297-4155a7cc-8493-43d1-893a-5bbefcf3d126",
       "name": "WeCook Backend API",
+      "workspace": "ft_transcendence"
+    },
+    "wecook-api-generated": {
+      "id": "6cea2a4e-1dde-4ec2-9aa1-e861f9fee048",
+      "uid": "55074297-6cea2a4e-1dde-4ec2-9aa1-e861f9fee048",
+      "name": "WeCook API (Generated from OpenAPI)",
       "workspace": "ft_transcendence"
     }
   },
