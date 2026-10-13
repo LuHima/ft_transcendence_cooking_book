@@ -725,6 +725,52 @@
         ]
       }
     },
+    "/api/users/me/recipes": {
+      "get": {
+        "description": "Returns recipes authored by the authenticated user, ordered by creation date.",
+        "operationId": "UsersController_getMyRecipes",
+        "parameters": [
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target language for projected recipe titles and descriptions",
+            "schema": {
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of recipes authored by the user"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get current user authored recipes",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
     "/api/users/search": {
       "get": {
         "description": "Searches users by username substring matching (case-insensitive).",

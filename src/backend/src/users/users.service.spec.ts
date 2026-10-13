@@ -41,6 +41,9 @@ describe('UsersService', () => {
             like: {
               findMany: jest.fn(),
             },
+            recipe: {
+              findMany: jest.fn(),
+            },
           },
         },
       ],
@@ -289,6 +292,56 @@ describe('UsersService', () => {
       expect(result[0].id).toBe(10);
       expect((result[0] as any).title).toBe('Carbonara English');
       expect((result[0] as any).description).toBe('Classic');
+    });
+  });
+
+  describe('getMyRecipes', () => {
+    const mockRecipes = [
+      {
+        id: 101,
+        user_id: 1,
+        source_lang: 'it',
+        translations: [
+          { locale: 'it', title: 'Tiramisù', description: 'Dolce classico' },
+          { locale: 'en', title: 'Tiramisu', description: 'Classic dessert' },
+        ],
+        user: { id: 1, username: 'mario', avatar_url: null },
+      },
+    ];
+
+    it('should return authored recipes with all translations when lang is omitted', async () => {
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+
+      const result = await service.getMyRecipes(1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(101);
+      expect(result[0].translations).toBeDefined();
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith({
+        where: { user_id: 1 },
+        orderBy: { created_at: 'desc' },
+        include: {
+          translations: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should project localized title and description when lang is provided', async () => {
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+
+      const result = await service.getMyRecipes(1, 'en');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(101);
+      expect((result[0] as any).title).toBe('Tiramisu');
+      expect((result[0] as any).description).toBe('Classic dessert');
     });
   });
 

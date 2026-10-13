@@ -266,4 +266,48 @@ export class UsersService {
       };
     });
   }
+
+  // ---------------------------------------------------------------------------
+
+  async getMyRecipes(userId: number, lang?: string) {
+    // Retrieve all recipes authored by the user, ordered from newest to oldest
+    const recipes = await this.prisma.recipe.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: 'desc' },
+      include: {
+        translations: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar_url: true,
+          },
+        },
+      },
+    });
+
+    // If no language is specified, return raw recipes with all translations
+    if (!lang) {
+      return recipes;
+    }
+
+    // When a language is provided, project localized title and description
+    return recipes.map((recipe) => {
+      const targetLocale =
+        lang === 'it' || lang === 'en' || lang === 'fr'
+          ? lang
+          : recipe.source_lang;
+
+      const translation =
+        recipe.translations.find((t) => t.locale === targetLocale) ??
+        recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+        recipe.translations[0];
+
+      return {
+        ...recipe,
+        title: translation?.title ?? null,
+        description: translation?.description ?? null,
+      };
+    });
+  }
 }

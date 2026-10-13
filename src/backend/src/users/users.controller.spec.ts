@@ -117,6 +117,20 @@ describe('UsersController', () => {
     });
   });
 
+  describe('getMyRecipes', () => {
+    it('should return authored recipes for the authenticated user', async () => {
+      const mockRecipes = [{ id: 101, title: 'Tiramisù' }];
+      (service.getMyRecipes as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockRecipes);
+
+      const result = await controller.getMyRecipes(1, 'it');
+
+      expect(result).toEqual(mockRecipes);
+      expect(service.getMyRecipes).toHaveBeenCalledWith(1, 'it');
+    });
+  });
+
   describe('getUser', () => {
     it('should delegate to service.getUser with user id', async () => {
       const publicUser = {

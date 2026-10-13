@@ -187,6 +187,33 @@ export class UsersController {
   }
 
   /**
+   * Retrieve list of recipes authored by the authenticated user.
+   */
+  @ApiOperation({
+    summary: 'Get current user authored recipes',
+    description:
+      'Returns recipes authored by the authenticated user, ordered by creation date.',
+  })
+  @ApiQuery({
+    name: 'lang',
+    required: false,
+    description: 'Target language for projected recipe titles and descriptions',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  @ApiOkResponse({
+    description: 'List of recipes authored by the user',
+  })
+  @Auth()
+  @Get('me/recipes')
+  async getMyRecipes(
+    @CurrentUser('id') id: number,
+    @Query('lang') lang?: string,
+  ) {
+    return await this.userService.getMyRecipes(id, lang);
+  }
+
+  /**
    * Search users by username substring.
    */
   @ApiOperation({
