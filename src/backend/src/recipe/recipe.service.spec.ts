@@ -138,6 +138,11 @@ describe('RecipeService', () => {
           { locale: 'it', title: 'Carbonara', description: 'Classica' },
           { locale: 'en', title: 'Carbonara English', description: 'Classic' },
         ],
+        _count: {
+          likes: 0,
+          comments: 0,
+        },
+        likes: [],
       },
     ];
 
@@ -147,9 +152,16 @@ describe('RecipeService', () => {
       const result = await service.getAllRecipe();
 
       expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        include: { translations: true },
+        include: expect.objectContaining({ translations: true }),
       });
-      expect(result).toEqual(mockRecipes);
+      expect(result).toEqual([
+        {
+          ...mockRecipes[0],
+          likes_count: 0,
+          comments_count: 0,
+          is_liked: false,
+        },
+      ]);
     });
 
     it('projects localized title and description when lang is provided', async () => {
@@ -164,6 +176,11 @@ describe('RecipeService', () => {
           title: 'Carbonara English',
           description: 'Classic',
           translations: mockRecipes[0].translations,
+          _count: { likes: 0, comments: 0 },
+          likes: [],
+          likes_count: 0,
+          comments_count: 0,
+          is_liked: false,
         },
       ]);
     });
@@ -202,9 +219,16 @@ describe('RecipeService', () => {
             },
           },
         },
-        include: { translations: true },
+        include: expect.objectContaining({ translations: true }),
       });
-      expect(result).toEqual(mockRecipes);
+      expect(result).toEqual([
+        {
+          ...mockRecipes[0],
+          likes_count: 0,
+          comments_count: 0,
+          is_liked: false,
+        },
+      ]);
     });
 
     it('applies filters and projects localized title and description when lang is provided in filter object', async () => {
@@ -221,7 +245,7 @@ describe('RecipeService', () => {
         where: {
           course: Course.main_course,
         },
-        include: { translations: true },
+        include: expect.objectContaining({ translations: true }),
       });
       expect(result).toEqual([
         {
@@ -230,8 +254,37 @@ describe('RecipeService', () => {
           title: 'Carbonara English',
           description: 'Classic',
           translations: mockRecipes[0].translations,
+          _count: { likes: 0, comments: 0 },
+          likes: [],
+          likes_count: 0,
+          comments_count: 0,
+          is_liked: false,
         },
       ]);
+    });
+
+    it('returns likes_count, comments_count, and is_liked for recipe cards in listing', async () => {
+      const mockRecipesWithSocial = [
+        {
+          id: 1,
+          source_lang: 'it',
+          translations: [
+            { locale: 'it', title: 'Carbonara', description: 'Classica' },
+          ],
+          _count: {
+            likes: 5,
+            comments: 3,
+          },
+          likes: [{ user_id: 10 }],
+        },
+      ];
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipesWithSocial);
+
+      const result = await service.getAllRecipe({}, 10);
+
+      expect(result[0].likes_count).toBe(5);
+      expect(result[0].comments_count).toBe(3);
+      expect(result[0].is_liked).toBe(true);
     });
   });
 
@@ -647,6 +700,78 @@ describe('RecipeService', () => {
       expect(result.ingredients[0].notes).toBe('fresco e cremoso');
 
       expect(result.tags[0].name).toBe('Vegetariano');
+    });
+
+    it('returns likes_count, active comments_count, and is_liked=true when user liked recipe', async () => {
+      const mockRecipeWithSocial = {
+        id: 1,
+        course: Course.first_course,
+        difficulty: RecipeDifficulty.easy,
+        prep_time: 10,
+        cook_time: 15,
+        total_time: 25,
+        servings: 2,
+        source_lang: 'it',
+        translation_status: 'completed',
+        cover_image_url: null,
+        video_url: null,
+        created_at: new Date('2026-01-01T00:00:00Z'),
+        updated_at: new Date('2026-01-01T00:00:00Z'),
+        user: { id: 10, username: 'mario', avatar_url: null },
+        translations: [{ locale: 'it', title: 'Carbonara', description: 'Buona' }],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: {
+          likes: 12,
+          comments: 4,
+        },
+        likes: [{ user_id: 10 }],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipeWithSocial);
+
+      const result = await service.getRecipeById(1, 'it', 10);
+
+      expect(result.likes_count).toBe(12);
+      expect(result.comments_count).toBe(4);
+      expect(result.is_liked).toBe(true);
+    });
+
+    it('returns likes_count, comments_count, and is_liked=false for unauthenticated guest', async () => {
+      const mockRecipeWithSocial = {
+        id: 1,
+        course: Course.first_course,
+        difficulty: RecipeDifficulty.easy,
+        prep_time: 10,
+        cook_time: 15,
+        total_time: 25,
+        servings: 2,
+        source_lang: 'it',
+        translation_status: 'completed',
+        cover_image_url: null,
+        video_url: null,
+        created_at: new Date('2026-01-01T00:00:00Z'),
+        updated_at: new Date('2026-01-01T00:00:00Z'),
+        user: { id: 10, username: 'mario', avatar_url: null },
+        translations: [{ locale: 'it', title: 'Carbonara', description: 'Buona' }],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: {
+          likes: 7,
+          comments: 2,
+        },
+        likes: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipeWithSocial);
+
+      const result = await service.getRecipeById(1, 'it');
+
+      expect(result.likes_count).toBe(7);
+      expect(result.comments_count).toBe(2);
+      expect(result.is_liked).toBe(false);
     });
   });
 

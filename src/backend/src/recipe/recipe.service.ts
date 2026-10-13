@@ -35,7 +35,10 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
-  public async getAllRecipe(filters?: FilterRecipeDto | string) {
+  public async getAllRecipe(
+    filters?: FilterRecipeDto | string,
+    currentUserId?: number,
+  ) {
     const filterDto: FilterRecipeDto =
       typeof filters === 'string' ? { lang: filters as any } : (filters || {});
 
@@ -77,33 +80,60 @@ export class RecipeService {
       };
     }
 
-    // Fetch recipes matching filter criteria together with their translations
-    const recipes = await this.prisma.recipe.findMany({
-      ...(Object.keys(where).length > 0 ? { where } : {}),
-      include: {
-        translations: true,
+    // Fetch recipes matching filter criteria together with translations and social metrics
+    const includeConfig: any = {
+      translations: true,
+      _count: {
+        select: {
+          likes: true,
+          comments: {
+            where: { is_active: true },
+          },
+        },
       },
+    };
+
+    if (currentUserId) {
+      includeConfig.likes = {
+        where: { user_id: currentUserId },
+        select: { user_id: true },
+      };
+    }
+
+    const recipes = (await this.prisma.recipe.findMany({
+      ...(Object.keys(where).length > 0 ? { where } : {}),
+      include: includeConfig,
+    })) as any[];
+
+    const mapSocial = (recipe: any) => ({
+      ...recipe,
+      likes_count: recipe._count?.likes ?? 0,
+      comments_count: recipe._count?.comments ?? 0,
+      is_liked: currentUserId
+        ? Boolean(recipe.likes && recipe.likes.length > 0)
+        : false,
     });
 
     const lang = filterDto.lang;
     if (!lang) {
-      return recipes;
+      return recipes.map(mapSocial);
     }
 
     // Attach localized title and description when a language is requested
     return recipes.map((recipe) => {
+      const base = mapSocial(recipe);
       const targetLocale =
         lang === 'it' || lang === 'en' || lang === 'fr'
           ? lang
           : recipe.source_lang;
 
       const translation =
-        recipe.translations.find((t) => t.locale === targetLocale) ??
-        recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+        recipe.translations.find((t: any) => t.locale === targetLocale) ??
+        recipe.translations.find((t: any) => t.locale === recipe.source_lang) ??
         recipe.translations[0];
 
       return {
-        ...recipe,
+        ...base,
         title: translation?.title ?? null,
         description: translation?.description ?? null,
       };
@@ -181,53 +211,71 @@ export class RecipeService {
   async getRecipeById(
     id: number,
     lang?: string,
+    currentUserId?: number,
   ): Promise<LocalizedRecipeDetailResponse> {
+    const includeConfig: any = {
+      translations: true,
+      steps: {
+        include: {
+          translations: true,
+        },
+        orderBy: {
+          step_number: 'asc',
+        },
+      },
+      recipe_ingredients: {
+        include: {
+          ingredient: {
+            include: {
+              translations: true,
+            },
+          },
+        },
+      },
+      recipe_tags: {
+        include: {
+          tag: {
+            include: {
+              translations: true,
+            },
+          },
+        },
+      },
+      recipe_media: {
+        orderBy: {
+          order: 'asc',
+        },
+      },
+      user: {
+        select: {
+          id: true,
+          username: true,
+          avatar_url: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: {
+            where: { is_active: true },
+          },
+        },
+      },
+    };
+
+    if (currentUserId) {
+      includeConfig.likes = {
+        where: { user_id: currentUserId },
+        select: { user_id: true },
+      };
+    }
+
     // Fetch the recipe from database, joining it with its translations
-    const recipe = await this.prisma.recipe.findUnique({
+    const recipe: any = await this.prisma.recipe.findUnique({
       where: {
         id: id,
       },
-      include: {
-        translations: true,
-        steps: {
-          include: {
-            translations: true,
-          },
-          orderBy: {
-            step_number: 'asc',
-          },
-        },
-        recipe_ingredients: {
-          include: {
-            ingredient: {
-              include: {
-                translations: true,
-              },
-            },
-          },
-        },
-        recipe_tags: {
-          include: {
-            tag: {
-              include: {
-                translations: true,
-              },
-            },
-          },
-        },
-        recipe_media: {
-          orderBy: {
-            order: 'asc',
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            username: true,
-            avatar_url: true,
-          },
-        },
-      },
+      include: includeConfig,
     });
 
     // If recipe is not found -> throw 404 Not Found
@@ -354,6 +402,11 @@ export class RecipeService {
       ingredients,
       tags,
       media,
+      likes_count: recipe._count?.likes ?? 0,
+      comments_count: recipe._count?.comments ?? 0,
+      is_liked: currentUserId
+        ? Boolean(recipe.likes && recipe.likes.length > 0)
+        : false,
     };
   }
 

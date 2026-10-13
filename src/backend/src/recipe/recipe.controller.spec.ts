@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
 import { RecipeController } from './recipe.controller';
 import { RecipeService } from './recipe.service';
 import { CatalogService } from '../catalog/catalog.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/role.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
@@ -79,11 +81,19 @@ describe('RecipeController', () => {
           provide: CatalogService,
           useValue: mockCatalogService,
         },
+        {
+          provide: JwtService,
+          useValue: {
+            verifyAsync: jest.fn(),
+          },
+        },
       ],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: () => true })
       .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(OptionalAuthGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
@@ -103,7 +113,7 @@ describe('RecipeController', () => {
 
       const result = await controller.getRecipes({ lang: 'it' });
 
-      expect(service.getAllRecipe).toHaveBeenCalledWith({ lang: 'it' });
+      expect(service.getAllRecipe).toHaveBeenCalledWith({ lang: 'it' }, undefined);
       expect(result).toEqual(mockResult);
     });
 
@@ -123,7 +133,17 @@ describe('RecipeController', () => {
 
       const result = await controller.getRecipes(filterDto);
 
-      expect(service.getAllRecipe).toHaveBeenCalledWith(filterDto);
+      expect(service.getAllRecipe).toHaveBeenCalledWith(filterDto, undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('delegates to service.getAllRecipe with filter options and current user id when authenticated', async () => {
+      const mockResult = [{ id: 1, title: 'Pasta', likes_count: 5, comments_count: 2, is_liked: true }];
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.getRecipes({}, 42);
+
+      expect(service.getAllRecipe).toHaveBeenCalledWith({}, 42);
       expect(result).toEqual(mockResult);
     });
   });
@@ -222,7 +242,17 @@ describe('RecipeController', () => {
 
       const result = await controller.getRecipeById(1, 'it');
 
-      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it');
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('delegates to service.getRecipeById with id, lang, and current user id when authenticated', async () => {
+      const mockResult = { id: 1, title: 'Carbonara', likes_count: 10, comments_count: 3, is_liked: true };
+      mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.getRecipeById(1, 'it', 42);
+
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 42);
       expect(result).toEqual(mockResult);
     });
   });

@@ -3534,6 +3534,21 @@
             "items": {
               "$ref": "#/components/schemas/RecipeMediaResponse"
             }
+          },
+          "likes_count": {
+            "type": "number",
+            "description": "Total number of likes received by this recipe",
+            "example": 42
+          },
+          "comments_count": {
+            "type": "number",
+            "description": "Total number of active comments on this recipe",
+            "example": 8
+          },
+          "is_liked": {
+            "type": "boolean",
+            "description": "Whether the requesting authenticated user has liked this recipe (false for guests)",
+            "example": true
           }
         },
         "required": [
@@ -3558,7 +3573,10 @@
           "steps",
           "ingredients",
           "tags",
-          "media"
+          "media",
+          "likes_count",
+          "comments_count",
+          "is_liked"
         ]
       },
       "CreateRecipeStepDto": {

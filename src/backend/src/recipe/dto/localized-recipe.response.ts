@@ -453,4 +453,36 @@ export class LocalizedRecipeDetailResponse {
     description: 'Supplementary gallery plating photos',
   })
   media: RecipeMediaResponse[];
+
+  /**
+   * Total number of likes received by this recipe.
+   * @example 42
+   */
+  @ApiProperty({
+    description: 'Total number of likes received by this recipe',
+    example: 42,
+  })
+  likes_count: number;
+
+  /**
+   * Total number of active comments on this recipe.
+   * @example 8
+   */
+  @ApiProperty({
+    description: 'Total number of active comments on this recipe',
+    example: 8,
+  })
+  comments_count: number;
+
+  /**
+   * Indicates whether the requesting user has liked this recipe.
+   * Defaults to false for unauthenticated guests.
+   * @example true
+   */
+  @ApiProperty({
+    description:
+      'Whether the requesting authenticated user has liked this recipe (false for guests)',
+    example: true,
+  })
+  is_liked: boolean;
 }

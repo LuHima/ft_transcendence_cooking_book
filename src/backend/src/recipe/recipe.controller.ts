@@ -52,6 +52,7 @@ import { CatalogMetadataResponseDto } from '../catalog/dto/catalog-response.dto'
 import { ApiErrorResponseDto } from 'src/common/dto/api-error-response.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
 import { authenticate } from 'passport';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { Action } from 'src/auth/casl/action.enum';
@@ -80,9 +81,13 @@ export class RecipeController {
   @ApiOkResponse({
     description: 'Array of recipes with translations matching criteria',
   })
+  @UseGuards(OptionalAuthGuard)
   @Get()
-  async getRecipes(@Query() filterDto: FilterRecipeDto) {
-    return await this.recipeService.getAllRecipe(filterDto);
+  async getRecipes(
+    @Query() filterDto: FilterRecipeDto,
+    @CurrentUser('id') currentUserId?: number,
+  ) {
+    return await this.recipeService.getAllRecipe(filterDto, currentUserId);
   }
 
   /**
@@ -191,12 +196,14 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiErrorResponseDto,
   })
+  @UseGuards(OptionalAuthGuard)
   @Get(':id')
   async getRecipeById(
     @Param('id', ParseIntPipe) id: number,
     @Query('lang') lang?: string,
+    @CurrentUser('id') currentUserId?: number,
   ) {
-    return await this.recipeService.getRecipeById(Number(id), lang);
+    return await this.recipeService.getRecipeById(Number(id), lang, currentUserId);
   }
 
   /**
