@@ -86,7 +86,9 @@ export class NotificationGateway
     // client.disconnect();
   }
 
-  async notification(userId: string, notification: string) {}
+  async notification(userId: string, notification: string) {
+    
+  }
 
   @SubscribeMessage('Friend request') // nome dell'evento un po come il path delle API
   friendRequests(@MessageBody() message: any) {

@@ -14,6 +14,10 @@ export interface CaslActionData {
   subject: string;
 }
 
+/* export interface User {
+  action: Action;
+  subject: string;
+} */
 // TODO da rivedere per capire come non fare 2 query al database.... !!!!!!
 
 @Injectable({ scope: Scope.REQUEST }) // {scope: Scope.REQUEST} serve perche all'avvio nest con inject la instanzia una sola volta per tutti quindi ogni utilizzo avra la
@@ -28,41 +32,26 @@ export class CaslCheckAbility {
     @Inject(REQUEST) private req: Request,
   ) {}
   // nel costruttore poi inietto la richiesta http in maniera da leggere il payload
-  async canAbility(idTarget: number): Promise<boolean> {
+  async canAbility(target: any): Promise<boolean> {
     const casl = this.req['casl'] as CaslActionData | undefined;
     const user = this.req['user'] as ActiveUserData | undefined;
 
     if (!casl || !user) throw createHttpException(errors.common.unauthorized);
-    let target: any = null;
-    if (casl.subject === 'User')
-      target = await this.prisma.user.findUnique({ where: { id: idTarget } });
-    else if (casl.subject === 'Recipe')
-      target = await this.prisma.recipe.findUnique({
-        where: { id: idTarget },
-        include: { user: { select: { id: true, role: true } } },
-      });
-    else if (casl.subject === 'Comment')
-      target = await this.prisma.comment.findUnique({
-        where: { id: idTarget },
-        include: { user: { select: { id: true, role: true } } },
-      });
-    /* 
-		include: include anche la tabella anidata come oggetto
-		dico a prisma quanto passa l'oggetto (ricetta per esempio) passa anche le sue tabelle anidata quindi anche user
-		ricetta = {
-			id: 1,
-			...il resto
-			user: {
-				tutte le (io ci ho messo una select per diminurire la roba)
-			}
-		}
-		*/
-
     if (!target) throw createHttpException(errors.common.notFound);
+
+    let wrapper;
+    if (casl.subject === 'Recipe' || casl.subject === 'Comment') {
+      wrapper = {
+        user_id: target.id,
+        user: target,
+      };
+    } else {
+      wrapper = target;
+    }
 
     const ability = this.caslFactory.createForUser(user);
 
     // subject(casl.subject, target) aggiugo un target che è praticamente la mia tabella utente per vedere nel can se puo fare quella azione
-    return ability.can(casl.action, subject(casl.subject, target));
+    return ability.can(casl.action, subject(casl.subject, wrapper));
   }
 }
