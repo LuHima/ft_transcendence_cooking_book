@@ -221,6 +221,7 @@ function useLeatherMaterial1() {
 
 export default function Book({
   controlsRef,
+  registerCloseBook,
   recipes,
   hasPreviousPage,
   hasNextPage,
@@ -259,11 +260,25 @@ export default function Book({
   const pageProgressRefs = useRef<Array<{ current: number }>>([]);
   const { pageProgress, currentPage, nextPage, prevPage, closePages } =
     useBookPages(recipes.length, currentApiPage);
+  const { camera } = useThree();
+  const camPhase = useRef<"idle" | "zooming-in" | "zooming-out">("idle");
+  const camProgress = useRef(0);
 
   useEffect(() => {
     trackedTurnedPageCount.current = 0;
     setTurnedPageCount(0);
   }, [currentApiPage, recipes.length]);
+
+  useEffect(() => {
+    const closeBook = () => {
+      if (camPhase.current === "zooming-in") {
+        camPhase.current = "zooming-out";
+      }
+      if (isOpen) setIsOpen(false);
+    };
+
+    return registerCloseBook(closeBook);
+  }, [isOpen, registerCloseBook]);
 
   // stato dell'animazione di apertura del libro
   const progress = useRef(0);
@@ -308,10 +323,6 @@ export default function Book({
       closePages();
     }
   }, [isOpen, closePages]);
-
-  const { camera } = useThree();
-  const camPhase = useRef<"idle" | "zooming-in" | "zooming-out">("idle");
-  const camProgress = useRef(0);
 
   // posizione iniziale e target della camera prima dell'apertura del libro
   const initialCamPos = useRef(new Vector3(-10, 1.5, 0));

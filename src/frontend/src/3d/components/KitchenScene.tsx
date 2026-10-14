@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Environment } from "@react-three/drei";
 import { DefaultLoadingManager, Group, PCFShadowMap, SpotLight } from "three";
@@ -29,6 +29,8 @@ async function fetchData(url: string): Promise<fetchedValues> {
 
 function SceneContent({
   controlsRef,
+  onOutsideClick,
+  registerCloseBook,
   recipes,
   hasPreviousPage,
   hasNextPage,
@@ -41,9 +43,10 @@ function SceneContent({
 
   return (
     <>
-      <KitchenModel scene={scene} />
+      <KitchenModel scene={scene} onClick={onOutsideClick} />
       <Book
         controlsRef={controlsRef}
+        registerCloseBook={registerCloseBook}
         recipes={recipes}
         hasPreviousPage={hasPreviousPage}
         hasNextPage={hasNextPage}
@@ -70,6 +73,16 @@ export default function Scene() {
   const assetProgressRef = useRef(0);
   const assetsActiveRef = useRef(true);
   const controlsRef = useRef<any>(null);
+  const closeBookRef = useRef<(() => void) | null>(null);
+  const registerCloseBook = useCallback((closeBook: () => void) => {
+    closeBookRef.current = closeBook;
+    return () => {
+      if (closeBookRef.current === closeBook) closeBookRef.current = null;
+    };
+  }, []);
+  const handleOutsideClick = useCallback(() => {
+    closeBookRef.current?.();
+  }, []);
   const sideLightRef = useRef<SpotLight | null>(null);
   const sideTargetRef = useRef<Group | null>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
@@ -186,7 +199,10 @@ export default function Scene() {
             strokeWidth="1.8"
           >
             <circle cx="12" cy="12" r="3.5" />
-            <path strokeLinecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+            <path
+              strokeLinecap="round"
+              d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"
+            />
           </svg>
           <svg
             viewBox="0 0 24 24"
@@ -195,11 +211,16 @@ export default function Scene() {
             stroke="currentColor"
             strokeWidth="1.8"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"
+            />
           </svg>
         </span>
       </button>
       <Canvas
+        onPointerMissed={handleOutsideClick}
         fallback={
           <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
             <div className="max-w-lg space-y-3">
@@ -230,6 +251,8 @@ export default function Scene() {
             <Environment preset="apartment" environmentIntensity={0.1} />
             <SceneContent
               controlsRef={controlsRef}
+              onOutsideClick={handleOutsideClick}
+              registerCloseBook={registerCloseBook}
               recipes={recipes}
               hasPreviousPage={hasPreviousPage}
               hasNextPage={hasNextPage}
