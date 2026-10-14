@@ -39,7 +39,12 @@ import {
   AvatarUploadResponseDto,
   UserMessageResponseDto,
 } from './dto/user-profile-response.dto';
-import { ApiErrorResponseDto } from 'src/common/dto/api-error-response.dto';
+import {
+  ApiBadRequestResponseDto,
+  ApiNotFoundResponseDto,
+  ApiConflictResponseDto,
+} from 'src/common/dto/api-error-response.dto';
+import { LocalizedRecipeDetailResponse } from 'src/recipe/dto/localized-recipe.response';
 
 /**
  * Controller handling user profiles, account preferences, avatar uploads, and social interactions.
@@ -64,7 +69,7 @@ export class UsersController {
   })
   @ApiNotFoundResponse({
     description: 'User record not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Get('me')
@@ -86,11 +91,11 @@ export class UsersController {
   })
   @ApiBadRequestResponse({
     description: 'Validation failed or invalid date format',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiConflictResponse({
     description: 'Username or email is already taken by another account',
-    type: ApiErrorResponseDto,
+    type: ApiConflictResponseDto,
   })
   @Auth()
   @Patch('me')
@@ -129,7 +134,7 @@ export class UsersController {
   })
   @ApiBadRequestResponse({
     description: 'File missing or invalid file format',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Post('me/avatar')
@@ -176,6 +181,7 @@ export class UsersController {
   })
   @ApiOkResponse({
     description: 'List of recipes liked by the user',
+    type: [LocalizedRecipeDetailResponse],
   })
   @Auth()
   @Get('me/likes')
@@ -203,6 +209,7 @@ export class UsersController {
   })
   @ApiOkResponse({
     description: 'List of recipes authored by the user',
+    type: [LocalizedRecipeDetailResponse],
   })
   @Auth()
   @Get('me/recipes')
@@ -253,9 +260,13 @@ export class UsersController {
     description: 'Public user profile',
     type: PublicUserResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid user ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'User not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Get(':id')
   async getUser(@Param('id', ParseIntPipe) id: number) {

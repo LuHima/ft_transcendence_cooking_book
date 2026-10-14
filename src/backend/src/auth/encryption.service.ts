@@ -6,7 +6,8 @@ import { createHttpException, errors } from 'src/common/config/error.config';
 @Injectable()
 export class EncryptionService {
   private readonly encryptionKey = Buffer.from(
-    process.env.TWO_FACTOR_AUTH!,
+    process.env.TWO_FACTOR_AUTH ||
+      '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     'hex',
   );
 

@@ -55,7 +55,12 @@ import {
   RecipeMessageResponseDto,
 } from './dto/recipe-response.dto';
 import { CatalogMetadataResponseDto } from '../catalog/dto/catalog-response.dto';
-import { ApiErrorResponseDto } from 'src/common/dto/api-error-response.dto';
+import {
+  ApiBadRequestResponseDto,
+  ApiUnauthorizedResponseDto,
+  ApiForbiddenResponseDto,
+  ApiNotFoundResponseDto,
+} from 'src/common/dto/api-error-response.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
@@ -82,10 +87,11 @@ export class RecipeController {
   @ApiOperation({
     summary: 'List recipes with multi-criteria filtering and search',
     description:
-      'Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy.',
+      'Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy. If authenticated via `accessToken` cookie, contextual social metrics like `is_liked` are populated.',
   })
   @ApiOkResponse({
     description: 'Array of recipes with translations matching criteria',
+    type: [LocalizedRecipeDetailResponse],
   })
   @UseGuards(OptionalAuthGuard)
   @Get()
@@ -120,6 +126,10 @@ export class RecipeController {
     description:
       'Paginated recipe window with hasNextPage and hasPreviousPage booleans',
     type: RecipePaginationResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid page parameter (must be a positive integer)',
+    type: ApiBadRequestResponseDto,
   })
   @Get('page')
   async getRecipeStack(
@@ -166,6 +176,7 @@ export class RecipeController {
   })
   @ApiOkResponse({
     description: 'List of recipes matching the title search query',
+    type: [LocalizedRecipeDetailResponse],
   })
   @Get('search')
   async getRecipe(@Query('value') name: string) {
@@ -198,9 +209,13 @@ export class RecipeController {
     description: 'Complete localized recipe specification',
     type: LocalizedRecipeDetailResponse,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @UseGuards(OptionalAuthGuard)
   @Get(':id')
@@ -209,7 +224,11 @@ export class RecipeController {
     @Query('lang') lang?: string,
     @CurrentUser('id') currentUserId?: number,
   ) {
-    return await this.recipeService.getRecipeById(Number(id), lang, currentUserId);
+    return await this.recipeService.getRecipeById(
+      Number(id),
+      lang,
+      currentUserId,
+    );
   }
 
   /**
@@ -227,7 +246,7 @@ export class RecipeController {
   @ApiBadRequestResponse({
     description:
       'Validation failed on inputs or referenced catalog items do not exist',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @Auth(Action.Create, 'Recipe')
   @Post()
@@ -247,10 +266,17 @@ export class RecipeController {
       'Re-triggers LibreTranslate for a recipe whose translation status is marked as failed.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
-  @ApiOkResponse({ description: 'Translation retry processed' })
+  @ApiOkResponse({
+    description: 'Translation retry processed',
+    type: RecipeMessageResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/translate')
@@ -279,14 +305,15 @@ export class RecipeController {
   })
   @ApiOkResponse({
     description: 'Recipe updated successfully',
+    type: LocalizedRecipeDetailResponse,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid update payload',
-    type: ApiErrorResponseDto,
+    description: 'Invalid update payload or parameter format',
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Patch(':id')
@@ -318,9 +345,13 @@ export class RecipeController {
     description: 'Recipe deleted successfully',
     type: RecipeMessageResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Delete, 'Recipe')
   @Delete(':id')
@@ -360,11 +391,11 @@ export class RecipeController {
   })
   @ApiBadRequestResponse({
     description: 'File missing or invalid file format',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/cover')
@@ -411,11 +442,11 @@ export class RecipeController {
   })
   @ApiBadRequestResponse({
     description: 'File missing or invalid image',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe or step not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/steps/:stepNumber/image')
@@ -466,11 +497,11 @@ export class RecipeController {
   })
   @ApiBadRequestResponse({
     description: 'Maximum 3 gallery images exceeded or invalid format',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/gallery')
@@ -512,11 +543,11 @@ export class RecipeController {
   })
   @ApiBadRequestResponse({
     description: 'File missing or invalid video format',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Post(':id/video')
@@ -543,8 +574,8 @@ export class RecipeController {
     type: RecipeMessageResponseDto,
   })
   @ApiNotFoundResponse({
-    description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    description: 'Cover image not found or already deleted',
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/cover')
@@ -569,8 +600,8 @@ export class RecipeController {
     type: RecipeMessageResponseDto,
   })
   @ApiNotFoundResponse({
-    description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    description: 'Recipe or video not found',
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/video')
@@ -601,7 +632,7 @@ export class RecipeController {
   })
   @ApiNotFoundResponse({
     description: 'Recipe or step not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/steps/:stepNumber/image')
@@ -629,7 +660,7 @@ export class RecipeController {
   })
   @ApiNotFoundResponse({
     description: 'Recipe or media item not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth(Action.Update, 'Recipe')
   @Delete(':id/gallery/:mediaId')
@@ -653,7 +684,7 @@ export class RecipeController {
   @ApiOkResponse({ description: 'Recipe liked', type: RecipeLikeResponseDto })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Post(':id/like')
@@ -676,7 +707,7 @@ export class RecipeController {
   @ApiOkResponse({ description: 'Recipe unliked', type: RecipeLikeResponseDto })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Delete(':id/like')
@@ -700,13 +731,13 @@ export class RecipeController {
     description: 'Comment created successfully',
     type: RecipeCommentResponseDto,
   })
-  @ApiNotFoundResponse({
-    description: 'Recipe not found',
-    type: ApiErrorResponseDto,
-  })
   @ApiBadRequestResponse({
     description: 'Invalid input or parent comment not found/mismatched',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe not found',
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Post(':id/comments')
@@ -735,9 +766,13 @@ export class RecipeController {
     description: 'List of threaded comments',
     type: [ThreadedRecipeCommentResponseDto],
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Get(':id/comments')
   async getComments(@Param('id', ParseIntPipe) recipeId: number) {
@@ -756,14 +791,19 @@ export class RecipeController {
   @ApiParam({ name: 'commentId', description: 'Comment ID', example: 10 })
   @ApiOkResponse({
     description: 'Comment deactivated successfully',
+    type: RecipeMessageResponseDto,
   })
-  @ApiNotFoundResponse({
-    description: 'Recipe or comment not found',
-    type: ApiErrorResponseDto,
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID or comment ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
   })
   @ApiForbiddenResponse({
     description: 'Forbidden: user is neither comment author nor recipe author',
-    type: ApiErrorResponseDto,
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe or comment not found',
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Delete(':id/comments/:commentId')

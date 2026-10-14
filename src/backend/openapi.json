@@ -63,7 +63,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -73,7 +73,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -116,7 +116,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -126,7 +126,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
                 }
               }
             }
@@ -159,7 +159,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -197,7 +197,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -245,7 +245,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -255,7 +255,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -265,7 +265,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
                 }
               }
             }
@@ -313,7 +313,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -323,7 +323,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -366,7 +366,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -376,7 +376,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -424,7 +424,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -434,7 +434,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -444,7 +444,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
                 }
               }
             }
@@ -482,7 +482,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -492,7 +492,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -538,7 +538,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -548,7 +548,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -558,7 +558,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
                 }
               }
             }
@@ -616,7 +616,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -626,7 +626,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -662,7 +662,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -701,14 +701,24 @@
         ],
         "responses": {
           "200": {
-            "description": "List of recipes liked by the user"
+            "description": "List of recipes liked by the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -747,14 +757,24 @@
         ],
         "responses": {
           "200": {
-            "description": "List of recipes authored by the user"
+            "description": "List of recipes authored by the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -835,12 +855,22 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid user ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "User not found",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -989,7 +1019,7 @@
     },
     "/api/recipes": {
       "get": {
-        "description": "Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy.",
+        "description": "Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy. If authenticated via `accessToken` cookie, contextual social metrics like `is_liked` are populated.",
         "operationId": "RecipeController_getRecipes",
         "parameters": [
           {
@@ -1092,7 +1122,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Array of recipes with translations matching criteria"
+            "description": "Array of recipes with translations matching criteria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "List recipes with multi-criteria filtering and search",
@@ -1130,7 +1170,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -1140,7 +1180,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1150,7 +1190,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1203,6 +1243,16 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid page parameter (must be a positive integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get paginated recipe stack",
@@ -1229,7 +1279,17 @@
         ],
         "responses": {
           "200": {
-            "description": "List of recipes matching the title search query"
+            "description": "List of recipes matching the title search query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Search recipes by title",
@@ -1279,12 +1339,22 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Recipe not found",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1332,14 +1402,21 @@
         },
         "responses": {
           "200": {
-            "description": "Recipe updated successfully"
-          },
-          "400": {
-            "description": "Invalid update payload",
+            "description": "Recipe updated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid update payload or parameter format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -1349,7 +1426,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1359,7 +1436,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1369,7 +1446,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1411,12 +1488,22 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1426,7 +1513,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1436,7 +1523,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1471,14 +1558,31 @@
         ],
         "responses": {
           "200": {
-            "description": "Translation retry processed"
+            "description": "Translation retry processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1488,7 +1592,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1498,7 +1602,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1567,7 +1671,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -1577,7 +1681,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1587,7 +1691,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1597,7 +1701,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1644,7 +1748,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1654,17 +1758,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
           },
           "404": {
-            "description": "Recipe not found",
+            "description": "Cover image not found or already deleted",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1743,7 +1847,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -1753,7 +1857,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1763,7 +1867,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1773,7 +1877,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1830,7 +1934,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1840,7 +1944,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1850,7 +1954,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1925,7 +2029,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -1935,7 +2039,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -1945,7 +2049,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1955,7 +2059,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2024,7 +2128,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -2034,7 +2138,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -2044,7 +2148,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -2054,7 +2158,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2101,7 +2205,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -2111,17 +2215,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
           },
           "404": {
-            "description": "Recipe not found",
+            "description": "Recipe or video not found",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2180,7 +2284,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -2190,7 +2294,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -2200,7 +2304,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2249,7 +2353,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -2259,7 +2363,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2306,7 +2410,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -2316,7 +2420,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2375,7 +2479,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -2385,7 +2489,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -2395,7 +2499,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2440,12 +2544,22 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Recipe not found",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2485,14 +2599,31 @@
         ],
         "responses": {
           "200": {
-            "description": "Comment deactivated successfully"
+            "description": "Comment deactivated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid recipe ID or comment ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
                 }
               }
             }
@@ -2502,7 +2633,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -2512,7 +2643,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -2632,31 +2763,30 @@
           "password"
         ]
       },
-      "ApiErrorResponseDto": {
+      "ApiBadRequestResponseDto": {
         "type": "object",
         "properties": {
           "statusCode": {
             "type": "number",
-            "description": "HTTP status code representing the error category",
+            "description": "HTTP status code representing client bad request or validation error",
             "example": 400
           },
           "timestamp": {
             "type": "string",
             "description": "ISO 8601 formatted timestamp of when the error occurred",
-            "example": "2026-10-09T17:30:00.000Z"
+            "example": "2026-10-14T10:00:00.000Z"
           },
           "path": {
             "type": "string",
             "description": "Requested URL path that produced the error",
-            "example": "/api/recipes/42"
+            "example": "/api/recipes"
           },
           "message": {
-            "description": "Error description or list of validation error messages",
-            "example": "Recipe not found",
+            "description": "Validation error description or array of constraint violations",
             "oneOf": [
               {
                 "type": "string",
-                "example": "Recipe not found"
+                "example": "Bad Request"
               },
               {
                 "type": "array",
@@ -2668,6 +2798,37 @@
                 ]
               }
             ]
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
+      },
+      "ApiUnauthorizedResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing missing or invalid authentication credentials",
+            "example": 401
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes"
+          },
+          "message": {
+            "type": "string",
+            "description": "Authentication failure message",
+            "example": "Authentication required: missing or invalid accessToken cookie"
           }
         },
         "required": [
@@ -2751,6 +2912,37 @@
           "email",
           "role",
           "created_at"
+        ]
+      },
+      "ApiConflictResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing conflicting state or duplicate resource",
+            "example": 409
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/auth/signup"
+          },
+          "message": {
+            "type": "string",
+            "description": "Conflict failure message",
+            "example": "Username or email is already taken"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
         ]
       },
       "ConfirmPasswordDto": {
@@ -2922,6 +3114,37 @@
           "created_at"
         ]
       },
+      "ApiNotFoundResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing requested resource not found",
+            "example": 404
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42"
+          },
+          "message": {
+            "type": "string",
+            "description": "Resource not found message",
+            "example": "Recipe not found"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
+      },
       "UpdateUserDto": {
         "type": "object",
         "properties": {
@@ -3005,372 +3228,6 @@
         },
         "required": [
           "message"
-        ]
-      },
-      "UserSearchResultDto": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "description": "Matching username",
-            "example": "mario_rossi"
-          }
-        },
-        "required": [
-          "username"
-        ]
-      },
-      "PublicUserResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "User identifier",
-            "example": 1
-          },
-          "username": {
-            "type": "string",
-            "description": "Username",
-            "example": "mario_rossi"
-          },
-          "avatar_url": {
-            "type": "string",
-            "nullable": true,
-            "description": "Public avatar photo URL",
-            "example": "/uploads/avatars/avatar_1.webp"
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Member since date",
-            "example": "2026-10-09T18:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "username",
-          "avatar_url",
-          "created_at"
-        ]
-      },
-      "CatalogMetadataResponseDto": {
-        "type": "object",
-        "properties": {
-          "courses": {
-            "type": "array",
-            "description": "List of meal courses (e.g. appetizer, first_course, dessert)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "appetizer",
-                "first_course",
-                "main_course",
-                "dessert",
-                "side_dish",
-                "drink",
-                "snack"
-              ]
-            },
-            "example": [
-              "appetizer",
-              "first_course",
-              "main_course",
-              "dessert",
-              "side_dish",
-              "drink",
-              "snack"
-            ]
-          },
-          "difficulties": {
-            "type": "array",
-            "description": "List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "easy",
-                "medium",
-                "hard"
-              ]
-            },
-            "example": [
-              "easy",
-              "medium",
-              "hard"
-            ]
-          },
-          "units": {
-            "type": "array",
-            "description": "Supported measurement units (grams, milliliters, spoons, pieces, etc.)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "g",
-                "kg",
-                "ml",
-                "cl",
-                "l",
-                "oz",
-                "lb",
-                "fl_oz",
-                "cup",
-                "tbsp",
-                "tsp",
-                "piece",
-                "pinch"
-              ]
-            },
-            "example": [
-              "g",
-              "kg",
-              "ml",
-              "cl",
-              "l",
-              "oz",
-              "lb",
-              "fl_oz",
-              "cup",
-              "tbsp",
-              "tsp",
-              "piece",
-              "pinch"
-            ]
-          },
-          "categories": {
-            "type": "array",
-            "description": "Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "produce",
-                "dairy_eggs",
-                "meat_poultry",
-                "seafood",
-                "bakery_grains",
-                "pantry_spices",
-                "legumes_nuts",
-                "beverages_liquids",
-                "other"
-              ]
-            },
-            "example": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ]
-          }
-        },
-        "required": [
-          "courses",
-          "difficulties",
-          "units",
-          "categories"
-        ]
-      },
-      "TagResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique tag identifier",
-            "example": 1
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical tag slug",
-            "example": "vegetarian"
-          },
-          "name": {
-            "type": "string",
-            "description": "Localized tag display name",
-            "example": "Vegetariano"
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "name"
-        ]
-      },
-      "IngredientResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique ingredient catalog identifier",
-            "example": 12
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical ingredient slug",
-            "example": "parmigiano-reggiano"
-          },
-          "category": {
-            "description": "Ingredient culinary category",
-            "example": "dairy_eggs",
-            "enum": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ],
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "description": "Localized ingredient display name",
-            "example": "Parmigiano Reggiano DOP"
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "category",
-          "name"
-        ]
-      },
-      "RecipeStackItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Recipe identifier",
-            "example": 1
-          },
-          "course": {
-            "enum": [
-              "appetizer",
-              "first_course",
-              "main_course",
-              "dessert",
-              "side_dish",
-              "drink",
-              "snack"
-            ],
-            "type": "string",
-            "description": "Course classification",
-            "example": "first_course"
-          },
-          "difficulty": {
-            "enum": [
-              "easy",
-              "medium",
-              "hard"
-            ],
-            "type": "string",
-            "description": "Difficulty level",
-            "example": "easy"
-          },
-          "prep_time": {
-            "type": "number",
-            "description": "Preparation time in minutes",
-            "example": 15
-          },
-          "cook_time": {
-            "type": "number",
-            "description": "Cooking time in minutes",
-            "example": 20
-          },
-          "total_time": {
-            "type": "number",
-            "description": "Total time in minutes",
-            "example": 35
-          },
-          "servings": {
-            "type": "number",
-            "description": "Servings yielded",
-            "example": 4
-          },
-          "source_lang": {
-            "type": "string",
-            "description": "Author source language code",
-            "example": "it"
-          },
-          "translation_status": {
-            "enum": [
-              "completed",
-              "failed"
-            ],
-            "type": "string",
-            "description": "Translation state",
-            "example": "completed"
-          },
-          "cover_image_url": {
-            "type": "string",
-            "nullable": true,
-            "description": "Cover image URL path",
-            "example": "/uploads/recipes/cover.webp"
-          },
-          "video_url": {
-            "type": "string",
-            "nullable": true,
-            "description": "Tutorial video URL path",
-            "example": "/uploads/recipes/video.mp4"
-          },
-          "username": {
-            "type": "string",
-            "nullable": true,
-            "description": "Author username",
-            "example": "mario_rossi"
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Creation date",
-            "example": "2026-10-09T18:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "course",
-          "difficulty",
-          "prep_time",
-          "cook_time",
-          "total_time",
-          "servings",
-          "source_lang",
-          "translation_status",
-          "cover_image_url",
-          "video_url",
-          "username",
-          "created_at"
-        ]
-      },
-      "RecipePaginationResponseDto": {
-        "type": "object",
-        "properties": {
-          "returnPage": {
-            "description": "Recipes in the requested page window",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecipeStackItemDto"
-            }
-          },
-          "hasNextPage": {
-            "type": "boolean",
-            "description": "Indicates if a next page exists",
-            "example": true
-          },
-          "hasPreviousPage": {
-            "type": "boolean",
-            "description": "Indicates if a previous page exists",
-            "example": false
-          }
-        },
-        "required": [
-          "returnPage",
-          "hasNextPage",
-          "hasPreviousPage"
         ]
       },
       "RecipeAuthorSummaryDto": {
@@ -3775,6 +3632,372 @@
           "is_liked"
         ]
       },
+      "UserSearchResultDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Matching username",
+            "example": "mario_rossi"
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "PublicUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "User identifier",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Username",
+            "example": "mario_rossi"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Public avatar photo URL",
+            "example": "/uploads/avatars/avatar_1.webp"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Member since date",
+            "example": "2026-10-09T18:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url",
+          "created_at"
+        ]
+      },
+      "CatalogMetadataResponseDto": {
+        "type": "object",
+        "properties": {
+          "courses": {
+            "type": "array",
+            "description": "List of meal courses (e.g. appetizer, first_course, dessert)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "appetizer",
+                "first_course",
+                "main_course",
+                "dessert",
+                "side_dish",
+                "drink",
+                "snack"
+              ]
+            },
+            "example": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ]
+          },
+          "difficulties": {
+            "type": "array",
+            "description": "List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            },
+            "example": [
+              "easy",
+              "medium",
+              "hard"
+            ]
+          },
+          "units": {
+            "type": "array",
+            "description": "Supported measurement units (grams, milliliters, spoons, pieces, etc.)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "g",
+                "kg",
+                "ml",
+                "cl",
+                "l",
+                "oz",
+                "lb",
+                "fl_oz",
+                "cup",
+                "tbsp",
+                "tsp",
+                "piece",
+                "pinch"
+              ]
+            },
+            "example": [
+              "g",
+              "kg",
+              "ml",
+              "cl",
+              "l",
+              "oz",
+              "lb",
+              "fl_oz",
+              "cup",
+              "tbsp",
+              "tsp",
+              "piece",
+              "pinch"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "description": "Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "produce",
+                "dairy_eggs",
+                "meat_poultry",
+                "seafood",
+                "bakery_grains",
+                "pantry_spices",
+                "legumes_nuts",
+                "beverages_liquids",
+                "other"
+              ]
+            },
+            "example": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "courses",
+          "difficulties",
+          "units",
+          "categories"
+        ]
+      },
+      "TagResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "vegetarian"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized tag display name",
+            "example": "Vegetariano"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ]
+      },
+      "IngredientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique ingredient catalog identifier",
+            "example": 12
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical ingredient slug",
+            "example": "parmigiano-reggiano"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "dairy_eggs",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized ingredient display name",
+            "example": "Parmigiano Reggiano DOP"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "category",
+          "name"
+        ]
+      },
+      "RecipeStackItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Recipe identifier",
+            "example": 1
+          },
+          "course": {
+            "enum": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ],
+            "type": "string",
+            "description": "Course classification",
+            "example": "first_course"
+          },
+          "difficulty": {
+            "enum": [
+              "easy",
+              "medium",
+              "hard"
+            ],
+            "type": "string",
+            "description": "Difficulty level",
+            "example": "easy"
+          },
+          "prep_time": {
+            "type": "number",
+            "description": "Preparation time in minutes",
+            "example": 15
+          },
+          "cook_time": {
+            "type": "number",
+            "description": "Cooking time in minutes",
+            "example": 20
+          },
+          "total_time": {
+            "type": "number",
+            "description": "Total time in minutes",
+            "example": 35
+          },
+          "servings": {
+            "type": "number",
+            "description": "Servings yielded",
+            "example": 4
+          },
+          "source_lang": {
+            "type": "string",
+            "description": "Author source language code",
+            "example": "it"
+          },
+          "translation_status": {
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "type": "string",
+            "description": "Translation state",
+            "example": "completed"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cover image URL path",
+            "example": "/uploads/recipes/cover.webp"
+          },
+          "video_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tutorial video URL path",
+            "example": "/uploads/recipes/video.mp4"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true,
+            "description": "Author username",
+            "example": "mario_rossi"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation date",
+            "example": "2026-10-09T18:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "course",
+          "difficulty",
+          "prep_time",
+          "cook_time",
+          "total_time",
+          "servings",
+          "source_lang",
+          "translation_status",
+          "cover_image_url",
+          "video_url",
+          "username",
+          "created_at"
+        ]
+      },
+      "RecipePaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "returnPage": {
+            "description": "Recipes in the requested page window",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeStackItemDto"
+            }
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "Indicates if a next page exists",
+            "example": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "Indicates if a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "returnPage",
+          "hasNextPage",
+          "hasPreviousPage"
+        ]
+      },
       "CreateRecipeStepDto": {
         "type": "object",
         "properties": {
@@ -3972,6 +4195,50 @@
           "ingredients"
         ]
       },
+      "ApiForbiddenResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing insufficient permissions to perform action",
+            "example": 403
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42"
+          },
+          "message": {
+            "type": "string",
+            "description": "Authorization failure message",
+            "example": "Forbidden: insufficient permissions for this action on the target resource"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
+      },
+      "RecipeMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Status message",
+            "example": "Recipe deleted successfully"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
       "UpdateRecipeDto": {
         "type": "object",
         "properties": {
@@ -4088,19 +4355,6 @@
             ]
           }
         }
-      },
-      "RecipeMessageResponseDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "Status message",
-            "example": "Recipe deleted successfully"
-          }
-        },
-        "required": [
-          "message"
-        ]
       },
       "CoverImageUploadResponseDto": {
         "type": "object",
