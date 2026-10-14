@@ -1,0 +1,35 @@
+{
+  "version": "0.1",
+  "project": {
+    "name": "WeCook",
+    "baseUrl": "https://app.we-cook.it:8443/api"
+  },
+  "default": {
+    "workspace": "ft_transcendence",
+    "collection": "wecook-backend-api",
+    "environment": "wecook-development"
+  },
+  "workspaces": {
+    "ft_transcendence": {
+      "id": "98e69e5b-75fc-4599-a4fe-a75257401976",
+      "name": "ft_transcendence",
+      "type": "team"
+    }
+  },
+  "collections": {
+    "wecook-backend-api": {
+      "id": "4155a7cc-8493-43d1-893a-5bbefcf3d126",
+      "uid": "55074297-4155a7cc-8493-43d1-893a-5bbefcf3d126",
+      "name": "WeCook Backend API",
+      "workspace": "ft_transcendence"
+    }
+  },
+  "environments": {
+    "wecook-development": {
+      "id": "23f04ddb-80a7-4ea2-bc68-77e88bb3a835",
+      "uid": "55074297-23f04ddb-80a7-4ea2-bc68-77e88bb3a835",
+      "name": "WeCook Development",
+      "workspace": "ft_transcendence"
+    }
+  }
+}

@@ -1,141 +1,1523 @@
-import { Injectable, BadRequestException, NotFoundException} from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TranslationService } from '../translation/translation.service';
+import { MediaType, OwnerType, TranslationStatus } from '@prisma/client';
 import type { Prisma, Recipe } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import {
+  LocalizedRecipeStepResponse,
+  LocalizedRecipeIngredientResponse,
+  LocalizedRecipeTagResponse,
+  RecipeMediaResponse,
+  LocalizedRecipeDetailResponse,
+} from './dto/localized-recipe.response';
+import { ProductionConfig } from '../common/config/production.config';
+import { resolveStoredUploadPath } from '../common/config/upload-paths';
+import * as fs from 'fs';
+import { createHttpException, errors } from 'src/common/config/error.config';
+import { CaslCheckAbility } from 'src/auth/casl/casl-checkAbility';
 
 @Injectable()
 export class RecipeService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly translationService: TranslationService,
+    private readonly productionConfig: ProductionConfig,
+    private readonly caslCheckAbility: CaslCheckAbility,
+  ) {}
 
-	constructor(private prisma: PrismaService) {}
+  // ---------------------------------------------------------------------------
 
-	public async getAllRecipe(who?: 'user' | 'id') // ! who e' solo per testare  
-	{
-		if(who)
-		{
-			return "hello";
-		}
-		return await this.prisma.recipe.findMany({select: {id: true, title: true}});
-	}
+  public async getAllRecipe(lang?: string) {
+    // Fetch all recipes together with their translations
+    const recipes = await this.prisma.recipe.findMany({
+      include: {
+        translations: true,
+      },
+    });
 
-	public async getRecipeStack(page: number)
-	{
-		let limit: number = 30;
-	
-		if (!page || page < 1) {
-			throw new BadRequestException('Page number must be greater than 0');
-		}
-		let recipes =  await this.prisma.recipe.findMany({
-			skip: (page - 1) * limit,
-			take: limit + 1,
-			select: {
-				id: true,
-				title: true,
-				description: true,
-				user: {
-					select: {
-						username: true,
-					},
-				}, 
-				
-			},
-			orderBy: {
-			  id: 'asc',
-			},
+    if (!lang) {
+      return recipes;
+    }
 
-		});
-		if (recipes.length === 0 )
-			throw new NotFoundException('Recipes not found');
+    // Attach localized title and description when a language is requested
+    return recipes.map((recipe) => {
+      const targetLocale =
+        lang === 'it' || lang === 'en' || lang === 'fr'
+          ? lang
+          : recipe.source_lang;
 
-		const hasNextPage = recipes.length > limit;
-  
-		const hasPreviousPage = page > 1;
+      const translation =
+        recipe.translations.find((t) => t.locale === targetLocale) ??
+        recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+        recipe.translations[0];
 
-		const items = hasNextPage ? recipes.slice(0, limit) : recipes;
+      return {
+        ...recipe,
+        title: translation?.title ?? null,
+        description: translation?.description ?? null,
+      };
+    });
+  }
 
-		let returnPage = items.map(({ user, ...recipe }) => ({ //map è un metodo degli array che ritorna un nuovo array modificato come richiesta (Non modifica l'oggetto attuale)
-			...recipe,
-			username: user?.username ?? null,
-		}));
-		return {returnPage, hasNextPage, hasPreviousPage};
-	}
+  // ---------------------------------------------------------------------------
 
-	async getRecipesByName(name :string)
-	{
-		const recipe = await this.prisma.recipe.findMany({
-			where: {
-				title: {
-					contains: name,
-					mode: 'insensitive', 
-				},
-			},
-			select: {
-				id: true,
-				title: true,
-				description: true
-			}
-		})
-		return recipe;
-	}
+  public async getRecipeStack(page: number) {
+    const limit = 30;
+    if (!page || page < 1) {
+      throw new BadRequestException('Page number must be greater than 0');
+    }
 
-	async getRecipeById(id :number)
-	{
-		const recipe = await this.prisma.recipe.findUnique({
-			where: {
-				id: id
-			}
-		})
+    const recipes = await this.prisma.recipe.findMany({
+      skip: (page - 1) * limit,
+      take: limit + 1,
+      include: {
+        translations: true,
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        id: 'asc',
+      },
+    });
 
-		if(!recipe)
-			throw new NotFoundException('Recipe not found');
+    const hasNextPage = recipes.length > limit;
+    const hasPreviousPage = page > 1;
+    const items = hasNextPage ? recipes.slice(0, limit) : recipes;
+    const returnPage = items.map(({ user, ...recipe }) => ({
+      ...recipe,
+      username: user?.username ?? null,
+    }));
 
-		return recipe;
-	}
+    return {
+      returnPage,
+      hasNextPage,
+      hasPreviousPage,
+    };
+  }
 
-	async createRecipe(recipe: CreateRecipeDto, userId: number)
-	{
-		return await this.prisma.recipe.create({
-			data: {
-				title: recipe.title,
-				user_id: userId,
-			} 
-		});
-	}
+  // ---------------------------------------------------------------------------
 
+  async getRecipesByName(name: string) {
+    // Search translated recipe titles without regard to letter casing
+    const recipe = await this.prisma.recipe.findMany({
+      where: {
+        translations: {
+          some: {
+            title: {
+              contains: name,
+              mode: 'insensitive',
+            },
+          },
+        },
+      },
+      include: {
+        translations: true,
+      },
+    });
 
-	async updateRecipe(userId: number, recipeId :number, recipeUpdate: Prisma.RecipeUpdateInput)
-	{
-		const recipe = await this.prisma.recipe.findUnique({
-			where: {
-				id: recipeId
-			}
-		})
+    // Include every translation needed by the caller
+    return recipe;
+  }
 
-		if(!recipe || recipe.user_id != userId)
-			throw new NotFoundException('Recipe not found');
+  // ---------------------------------------------------------------------------
 
-		return await this.prisma.recipe.update({
-			where: {
-				id: recipeId
-			},
-			data: recipeUpdate
-		});
-	}
+  /* 
+  GET /api/recipes/:id?lang=it|en|fr
+  */
+  async getRecipeById(
+    id: number,
+    lang?: string,
+  ): Promise<LocalizedRecipeDetailResponse> {
+    // Fetch the recipe from database, joining it with its translations
+    const recipe = await this.prisma.recipe.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        translations: true,
+        steps: {
+          include: {
+            translations: true,
+          },
+          orderBy: {
+            step_number: 'asc',
+          },
+        },
+        recipe_ingredients: {
+          include: {
+            ingredient: {
+              include: {
+                translations: true,
+              },
+            },
+          },
+        },
+        recipe_tags: {
+          include: {
+            tag: {
+              include: {
+                translations: true,
+              },
+            },
+          },
+        },
+        recipe_media: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar_url: true,
+          },
+        },
+      },
+    });
 
-	async deleteRecipe(recipeId :number, userId: number)
-	{ 
-		const recipe = await this.prisma.recipe.findUnique({
-			where: {
-				id: recipeId
-			}
-		})
+    // If recipe is not found -> throw 404 Not Found
+    if (!recipe) throw new NotFoundException('Recipe not found');
 
-		if(!recipe || recipe.user_id != userId)
-			throw new NotFoundException('Recipe not found');
+    // Define requested language from query.
+    // Falls back to source language if lang is not supported or not defined.
+    const targetLocale =
+      lang === 'it' || lang === 'en' || lang === 'fr'
+        ? lang
+        : recipe.source_lang;
 
-		return await this.prisma.recipe.delete({
-			where: {
-				id: recipeId
-			}
-		});
-	}
+    // Define which translation to send as a response
+    const translation =
+      recipe.translations.find((t) => t.locale === targetLocale) ??
+      recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+      recipe.translations[0];
+
+    // Sort recipe steps by their number
+    const sortedSteps = [...recipe.steps].sort(
+      (a, b) => a.step_number - b.step_number,
+    );
+
+    // Organize sorted steps as an array of LocalizedRecipeStepResponse
+    const steps: LocalizedRecipeStepResponse[] = sortedSteps.map((s) => {
+      const stepTrans =
+        s.translations.find((t) => t.locale === targetLocale) ??
+        s.translations.find((t) => t.locale === recipe.source_lang) ??
+        s.translations[0];
+      return {
+        id: s.id,
+        step_number: s.step_number,
+        title: stepTrans?.title ?? null,
+        description: stepTrans?.description ?? '',
+        duration: s.duration,
+        image_url: s.image_url,
+      };
+    });
+
+    // Organize recipe ingredients as an array of
+    // LocalizedRecipeIngredientResponse
+    const ingredients: LocalizedRecipeIngredientResponse[] =
+      recipe.recipe_ingredients.map((ri) => {
+        const ing = ri.ingredient;
+        const ingTrans =
+          ing.translations.find((t) => t.locale === targetLocale) ??
+          ing.translations.find((t) => t.locale === recipe.source_lang) ??
+          ing.translations.find((t) => t.locale === 'en');
+        let note: string | null = null;
+        if (ri.notes) {
+          if (typeof ri.notes === 'object' && !Array.isArray(ri.notes)) {
+            const notesObj = ri.notes as Record<string, string>;
+            note =
+              notesObj[targetLocale] ??
+              notesObj[recipe.source_lang] ??
+              notesObj['en'] ??
+              null;
+          } else if (typeof ri.notes === 'string') {
+            note = ri.notes;
+          }
+        }
+        return {
+          id: ing.id,
+          slug: ing.slug,
+          category: ing.category,
+          name: ingTrans?.name ?? ing.slug,
+          quantity: Number(ri.quantity),
+          unit: ri.unit,
+          notes: note,
+        };
+      });
+
+    // Organize recipe tags as an array of LocalizedRecipeTagResponse
+    const tags: LocalizedRecipeTagResponse[] = recipe.recipe_tags.map((rt) => {
+      const t = rt.tag;
+      const tagTrans =
+        t.translations.find((tr) => tr.locale === targetLocale) ??
+        t.translations.find((tr) => tr.locale === recipe.source_lang) ??
+        t.translations.find((tr) => tr.locale === 'en');
+      return {
+        id: t.id,
+        slug: t.slug,
+        name: tagTrans?.name ?? t.slug,
+      };
+    });
+
+    // Organize recipe media as an array of RecipeMediaResponse
+    const media: RecipeMediaResponse[] = (recipe.recipe_media ?? []).map(
+      (m) => ({
+        id: m.id,
+        url: m.url,
+        media_type: m.media_type,
+        order: m.order,
+      }),
+    );
+
+    // Return the recipe as an object of type LocalizedRecipeDetailResponse
+    return {
+      id: recipe.id,
+      course: recipe.course,
+      difficulty: recipe.difficulty,
+      prep_time: recipe.prep_time,
+      cook_time: recipe.cook_time,
+      total_time: recipe.total_time,
+      servings: recipe.servings,
+      source_lang: recipe.source_lang,
+      translation_status: recipe.translation_status,
+      cover_image_url: recipe.cover_image_url,
+      video_url: recipe.video_url,
+      created_at: recipe.created_at,
+      updated_at: recipe.updated_at,
+      author: recipe.user
+        ? {
+            id: recipe.user.id,
+            username: recipe.user.username,
+            avatar_url: recipe.user.avatar_url,
+          }
+        : null,
+      title: translation?.title ?? '',
+      description: translation?.description ?? '',
+      preservation: translation?.preservation ?? null,
+      tips: translation?.tips ?? null,
+      steps,
+      ingredients,
+      tags,
+      media,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /* 
+  POST /api/recipes
+  */
+  async createRecipe(recipe: CreateRecipeDto, userId: number) {
+    // Language verification
+    const textToVerify = [
+      recipe.title,
+      recipe.description,
+      ...recipe.steps.map((s) => s.description),
+    ].join(' ');
+    await this.translationService.verifySourceLanguage(
+      textToVerify,
+      recipe.source_lang,
+    );
+
+    // Validate catalog references (verify ingredients and tags exist)
+    const requestedIngredientIds = Array.from(
+      new Set(recipe.ingredients.map((i) => i.ingredient_id)),
+    );
+    const existingIngredients = await this.prisma.ingredient.findMany({
+      where: { id: { in: requestedIngredientIds } },
+      select: { id: true },
+    });
+    const existingIngredientIds = new Set(existingIngredients.map((i) => i.id));
+    for (const id of requestedIngredientIds) {
+      if (!existingIngredientIds.has(id)) {
+        throw new BadRequestException(
+          `Ingredient with ID ${id} does not exist in catalog`,
+        );
+      }
+    }
+    if (recipe.tag_ids && recipe.tag_ids.length > 0) {
+      const requestedTagIds = Array.from(new Set(recipe.tag_ids));
+      const existingTags = await this.prisma.tag.findMany({
+        where: { id: { in: requestedTagIds } },
+        select: { id: true },
+      });
+      const existingTagIds = new Set(existingTags.map((t) => t.id));
+      for (const id of requestedTagIds) {
+        if (!existingTagIds.has(id)) {
+          throw new BadRequestException(
+            `Tag with ID ${id} does not exist in catalog`,
+          );
+        }
+      }
+    }
+
+    // Prepare text payload for batch translation
+    const allLocales = ['it', 'en', 'fr'];
+    const targetLocales = allLocales.filter((l) => l !== recipe.source_lang);
+    const textsToTranslate: string[] = [
+      recipe.title,
+      recipe.description,
+      recipe.preservation ?? '',
+      recipe.tips ?? '',
+    ];
+    for (const step of recipe.steps) {
+      textsToTranslate.push(step.title ?? '');
+      textsToTranslate.push(step.description);
+    }
+
+    // Translate across target locales
+    let overallTranslationSuccess = true;
+    const translationsByLocale: Record<
+      string,
+      {
+        title: string;
+        description: string;
+        preservation?: string | null;
+        tips?: string | null;
+        steps: Array<{ title?: string | null; description: string }>;
+      }
+    > = {};
+
+    // Source locale translation
+    translationsByLocale[recipe.source_lang] = {
+      title: recipe.title,
+      description: recipe.description,
+      preservation: recipe.preservation ?? null,
+      tips: recipe.tips ?? null,
+      steps: recipe.steps.map((s) => ({
+        title: s.title ?? null,
+        description: s.description,
+      })),
+    };
+
+    for (const targetLang of targetLocales) {
+      const res = await this.translationService.translateBatch(
+        textsToTranslate,
+        recipe.source_lang,
+        targetLang,
+      );
+      if (!res.success) {
+        overallTranslationSuccess = false;
+        translationsByLocale[targetLang] = {
+          title: recipe.title,
+          description: recipe.description,
+          preservation: recipe.preservation ?? null,
+          tips: recipe.tips ?? null,
+          steps: recipe.steps.map((s) => ({
+            title: s.title ?? null,
+            description: s.description,
+          })),
+        };
+      } else {
+        const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
+          res.translations;
+        const translatedSteps: Array<{
+          title?: string | null;
+          description: string;
+        }> = [];
+        for (let i = 0; i < recipe.steps.length; i++) {
+          const stepTitle = stepTexts[i * 2] || null;
+          const stepDesc = stepTexts[i * 2 + 1] || recipe.steps[i].description;
+          translatedSteps.push({
+            title: stepTitle,
+            description: stepDesc,
+          });
+        }
+        translationsByLocale[targetLang] = {
+          title: transTitle || recipe.title,
+          description: transDesc || recipe.description,
+          preservation: transPres || null,
+          tips: transTips || null,
+          steps: translatedSteps,
+        };
+      }
+    }
+
+    // Invariant metrics
+    const total_time = recipe.prep_time + recipe.cook_time;
+    const translation_status = overallTranslationSuccess
+      ? TranslationStatus.completed
+      : TranslationStatus.failed;
+
+    // Structure relational payload
+    const recipeTranslationsData = allLocales.map((locale) => ({
+      locale,
+      title: translationsByLocale[locale].title,
+      description: translationsByLocale[locale].description,
+      preservation: translationsByLocale[locale].preservation,
+      tips: translationsByLocale[locale].tips,
+    }));
+    const stepsData = recipe.steps.map((step, index) => ({
+      step_number: step.step_number,
+      duration: step.duration ?? null,
+      translations: {
+        create: allLocales.map((locale) => ({
+          locale,
+          title: translationsByLocale[locale].steps[index]?.title ?? null,
+          description:
+            translationsByLocale[locale].steps[index]?.description ??
+            step.description,
+        })),
+      },
+    }));
+    const recipeIngredientsData = recipe.ingredients.map((ing) => ({
+      ingredient_id: ing.ingredient_id,
+      quantity: ing.quantity,
+      unit: ing.unit,
+      notes: ing.notes
+        ? typeof ing.notes === 'string'
+          ? { [recipe.source_lang]: ing.notes }
+          : ing.notes
+        : undefined,
+    }));
+    const recipeTagsData =
+      recipe.tag_ids && recipe.tag_ids.length > 0
+        ? {
+            create: recipe.tag_ids.map((tagId) => ({
+              tag_id: tagId,
+            })),
+          }
+        : undefined;
+
+    // Execute database transaction
+    return await this.prisma.$transaction(async (tx) => {
+      return await tx.recipe.create({
+        data: {
+          user_id: userId,
+          owner_type: OwnerType.user,
+          course: recipe.course,
+          difficulty: recipe.difficulty,
+          prep_time: recipe.prep_time,
+          cook_time: recipe.cook_time,
+          total_time,
+          servings: recipe.servings,
+          source_lang: recipe.source_lang,
+          translation_status,
+          translations: {
+            create: recipeTranslationsData,
+          },
+          steps: {
+            create: stepsData,
+          },
+          recipe_ingredients: {
+            create: recipeIngredientsData,
+          },
+          recipe_tags: recipeTagsData,
+        },
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /* 
+  PATCH /api/recipes/:id
+  */
+  async updateRecipe(
+    userId: number,
+    recipeId: number,
+    recipeUpdate: UpdateRecipeDto,
+    retranslate?: boolean,
+  ) {
+    // Fetch recipe with translations and steps to verify existence and
+    // ownership
+    const recipe = await this.prisma.recipe.findUnique({
+      where: {
+        id: recipeId,
+      },
+      include: {
+        translations: true,
+        steps: {
+          include: { translations: true },
+          orderBy: { step_number: 'asc' },
+        },
+      },
+    });
+
+    // Guard: Verify existence and ownership (only author can update recipe)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw createHttpException(errors.recipes.notFound, 'Recipe not found');
+    //new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // TODO implementa questi check quando abbiamo risolto caslCheckAbility !!!!!!
+    // Check if current user has permission to update the recipe
+    /* if (!(await this.caslCheckAbility.canAbility(recipeId)))
+      throw createHttpException(errors.common.forbidden); */
+
+    // Update locale-invariant data of the recipe
+    const updateData: any = {};
+    if (recipeUpdate.course !== undefined)
+      updateData.course = recipeUpdate.course;
+    if (recipeUpdate.difficulty !== undefined)
+      updateData.difficulty = recipeUpdate.difficulty;
+    if (recipeUpdate.servings !== undefined)
+      updateData.servings = recipeUpdate.servings;
+    if (recipeUpdate.prep_time !== undefined)
+      updateData.prep_time = recipeUpdate.prep_time;
+    if (recipeUpdate.cook_time !== undefined)
+      updateData.cook_time = recipeUpdate.cook_time;
+
+    // Recalculate total_time if prep_time or cook_time was modified
+    if (
+      recipeUpdate.prep_time !== undefined ||
+      recipeUpdate.cook_time !== undefined
+    ) {
+      const pTime =
+        recipeUpdate.prep_time !== undefined
+          ? recipeUpdate.prep_time
+          : recipe.prep_time;
+      const cTime =
+        recipeUpdate.cook_time !== undefined
+          ? recipeUpdate.cook_time
+          : recipe.cook_time;
+      updateData.total_time = pTime + cTime;
+    }
+
+    // Determine target locale for translation update (defaults to recipe
+    // source_lang)
+    const targetLocale = recipeUpdate.locale ?? recipe.source_lang;
+
+    // Validate retranslation invariant: retranslation is only allowed when modifying source_lang
+    if (
+      retranslate &&
+      recipeUpdate.locale &&
+      recipeUpdate.locale !== recipe.source_lang
+    ) {
+      throw new BadRequestException(
+        `Automatic retranslation is only permitted when modifying the recipe in its source language ('${recipe.source_lang}')`,
+      );
+    }
+
+    const transUpdate: any = {};
+    if (recipeUpdate.title !== undefined)
+      transUpdate.title = recipeUpdate.title;
+    if (recipeUpdate.description !== undefined)
+      transUpdate.description = recipeUpdate.description;
+    if (recipeUpdate.preservation !== undefined)
+      transUpdate.preservation = recipeUpdate.preservation;
+    if (recipeUpdate.tips !== undefined) transUpdate.tips = recipeUpdate.tips;
+
+    const translatedDataByLocale: Record<
+      string,
+      {
+        title: string;
+        description: string;
+        preservation?: string | null;
+        tips?: string | null;
+        steps: Array<{
+          stepId: number;
+          title: string | null;
+          description: string;
+        }>;
+      }
+    > = {};
+
+    // Re-translate content across remaining locales if retranslate flag is
+    // enabled
+    if (retranslate) {
+      // Resolve canonical source text combining existing values with incoming
+      // updates
+      const sourceTrans = recipe.translations?.find(
+        (t) => t.locale === recipe.source_lang,
+      );
+      const sourceTitle =
+        (targetLocale === recipe.source_lang
+          ? recipeUpdate.title
+          : undefined) ??
+        sourceTrans?.title ??
+        recipeUpdate.title ??
+        '';
+      const sourceDesc =
+        (targetLocale === recipe.source_lang
+          ? recipeUpdate.description
+          : undefined) ??
+        sourceTrans?.description ??
+        recipeUpdate.description ??
+        '';
+      const sourcePres =
+        (targetLocale === recipe.source_lang
+          ? recipeUpdate.preservation
+          : undefined) ??
+        sourceTrans?.preservation ??
+        recipeUpdate.preservation ??
+        null;
+      const sourceTips =
+        (targetLocale === recipe.source_lang ? recipeUpdate.tips : undefined) ??
+        sourceTrans?.tips ??
+        recipeUpdate.tips ??
+        null;
+
+      // Prepare text payload for batch machine translation
+      const textsToTranslate: string[] = [
+        sourceTitle,
+        sourceDesc,
+        sourcePres ?? '',
+        sourceTips ?? '',
+      ];
+
+      for (const step of recipe.steps ?? []) {
+        const stepSourceTrans = step.translations?.find(
+          (t) => t.locale === recipe.source_lang,
+        );
+        textsToTranslate.push(stepSourceTrans?.title ?? '');
+        textsToTranslate.push(stepSourceTrans?.description ?? '');
+      }
+
+      // Execute machine translation across all other target locales
+      const allLocales = ['it', 'en', 'fr'];
+      const targetLocales = allLocales.filter((l) => l !== recipe.source_lang);
+      let overallSuccess = true;
+
+      for (const targetLang of targetLocales) {
+        const res = await this.translationService.translateBatch(
+          textsToTranslate,
+          recipe.source_lang,
+          targetLang,
+        );
+        if (!res.success) {
+          overallSuccess = false;
+          break;
+        }
+        const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
+          res.translations;
+        const stepTranslations: Array<{
+          stepId: number;
+          title: string | null;
+          description: string;
+        }> = [];
+        for (let i = 0; i < (recipe.steps ?? []).length; i++) {
+          const step = recipe.steps[i];
+          const sTitle = stepTexts[i * 2] || null;
+          const sDesc = stepTexts[i * 2 + 1] || '';
+          stepTranslations.push({
+            stepId: step.id,
+            title: sTitle,
+            description: sDesc,
+          });
+        }
+        translatedDataByLocale[targetLang] = {
+          title: transTitle || sourceTitle,
+          description: transDesc || sourceDesc,
+          preservation: transPres || null,
+          tips: transTips || null,
+          steps: stepTranslations,
+        };
+      }
+
+      // Update translation status based on batch translation result
+      updateData.translation_status = overallSuccess ? 'completed' : 'failed';
+    }
+
+    // Execute atomic database updates inside transaction
+    return await this.prisma.$transaction(async (tx) => {
+      // Upsert direct translation modifications for the targeted locale
+      if (Object.keys(transUpdate).length > 0) {
+        await tx.recipeTranslation.upsert({
+          where: {
+            recipe_id_locale: {
+              recipe_id: recipeId,
+              locale: targetLocale,
+            },
+          },
+          create: {
+            recipe_id: recipeId,
+            locale: targetLocale,
+            title: recipeUpdate.title ?? '',
+            description: recipeUpdate.description ?? '',
+            preservation: recipeUpdate.preservation ?? null,
+            tips: recipeUpdate.tips ?? null,
+          },
+          update: transUpdate,
+        });
+      }
+
+      // Upsert re-translated content for remaining locales when retranslate
+      // succeeded
+      if (retranslate && updateData.translation_status === 'completed') {
+        for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+          await tx.recipeTranslation.upsert({
+            where: {
+              recipe_id_locale: {
+                recipe_id: recipeId,
+                locale,
+              },
+            },
+            create: {
+              recipe_id: recipeId,
+              locale,
+              title: trans.title,
+              description: trans.description,
+              preservation: trans.preservation,
+              tips: trans.tips,
+            },
+            update: {
+              title: trans.title,
+              description: trans.description,
+              preservation: trans.preservation,
+              tips: trans.tips,
+            },
+          });
+
+          for (const stepTrans of trans.steps) {
+            await tx.recipeStepTranslation.upsert({
+              where: {
+                step_id_locale: {
+                  step_id: stepTrans.stepId,
+                  locale,
+                },
+              },
+              create: {
+                step_id: stepTrans.stepId,
+                locale,
+                title: stepTrans.title,
+                description: stepTrans.description,
+              },
+              update: {
+                title: stepTrans.title,
+                description: stepTrans.description,
+              },
+            });
+          }
+        }
+      }
+
+      // Update invariant recipe fields and translation status
+      return await tx.recipe.update({
+        where: {
+          id: recipeId,
+        },
+        data: updateData,
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+
+  // Helper to safely delete physical file from disk
+  private async safeUnlink(fileUrl?: string | null): Promise<void> {
+    if (!fileUrl) return;
+    const absolutePath = resolveStoredUploadPath(fileUrl);
+    if (!absolutePath) return;
+    try {
+      await fs.promises.unlink(absolutePath);
+    } catch (err: any) {
+      if (err?.code !== 'ENOENT') {
+        // Safe fallback ignoring non-existent files
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /* 
+  DELETE /api/recipes/:id
+  */
+  async deleteRecipe(recipeId: number, userId: number) {
+    // Verify that the recipe exists and belongs to the requesting user
+    const recipe = await this.prisma.recipe.findUnique({
+      where: {
+        id: recipeId,
+      },
+      include: {
+        steps: {
+          select: { image_url: true },
+        },
+        recipe_media: {
+          select: { url: true },
+        },
+      },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete recipe)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Collect all media URLs to clean up from disk
+    const mediaUrls: string[] = [];
+    if (recipe.cover_image_url) mediaUrls.push(recipe.cover_image_url);
+    if (recipe.video_url) mediaUrls.push(recipe.video_url);
+    for (const step of recipe.steps ?? []) {
+      if (step.image_url) mediaUrls.push(step.image_url);
+    }
+    for (const media of recipe.recipe_media ?? []) {
+      if (media.url) mediaUrls.push(media.url);
+    }
+
+    // Delete the verified recipe from database (cascades relational rows)
+    const deleted = await this.prisma.recipe.delete({
+      where: {
+        id: recipeId,
+      },
+    });
+
+    // Safely remove physical files from filesystem
+    for (const url of mediaUrls) {
+      await this.safeUnlink(url);
+    }
+
+    return deleted;
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  POST /api/recipes/:id/translate
+  */
+  async retryTranslation(recipeId: number, userId: number) {
+    // Fetch the recipe from database, joining it with its translations and
+    // ordered steps
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      include: {
+        translations: true,
+        steps: {
+          include: { translations: true },
+          orderBy: { step_number: 'asc' },
+        },
+      },
+    });
+
+    // Guard: Verify existence and ownership (only author can update recipe)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Guard: Only allow retry when previous translation status failed
+    if (recipe.translation_status !== 'failed') {
+      throw new BadRequestException(
+        'Translation retry is only available for failed translations',
+      );
+    }
+
+    // Find original language canonical translation
+    const sourceTrans = recipe.translations.find(
+      (t) => t.locale === recipe.source_lang,
+    );
+    if (!sourceTrans) {
+      throw new NotFoundException('Source translation not found');
+    }
+
+    // Prepare text payload for batch translation
+    const allLocales = ['it', 'en', 'fr'];
+    const targetLocales = allLocales.filter((l) => l !== recipe.source_lang);
+    const textsToTranslate: string[] = [
+      sourceTrans.title,
+      sourceTrans.description,
+      sourceTrans.preservation ?? '',
+      sourceTrans.tips ?? '',
+    ];
+    for (const step of recipe.steps) {
+      const stepSourceTrans = step.translations.find(
+        (t) => t.locale === recipe.source_lang,
+      );
+      textsToTranslate.push(stepSourceTrans?.title ?? '');
+      textsToTranslate.push(stepSourceTrans?.description ?? '');
+    }
+
+    // Translate across target locales
+    let overallSuccess = true;
+    const translatedDataByLocale: Record<
+      string,
+      {
+        title: string;
+        description: string;
+        preservation?: string | null;
+        tips?: string | null;
+        steps: Array<{
+          stepId: number;
+          title: string | null;
+          description: string;
+        }>;
+      }
+    > = {};
+
+    for (const targetLang of targetLocales) {
+      const res = await this.translationService.translateBatch(
+        textsToTranslate,
+        recipe.source_lang,
+        targetLang,
+      );
+      if (!res.success) {
+        overallSuccess = false;
+        break;
+      }
+      const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
+        res.translations;
+      const stepTranslations: Array<{
+        stepId: number;
+        title: string | null;
+        description: string;
+      }> = [];
+      for (let i = 0; i < recipe.steps.length; i++) {
+        const step = recipe.steps[i];
+        const sTitle = stepTexts[i * 2] || null;
+        const sDesc = stepTexts[i * 2 + 1] || '';
+        stepTranslations.push({
+          stepId: step.id,
+          title: sTitle,
+          description: sDesc,
+        });
+      }
+      translatedDataByLocale[targetLang] = {
+        title: transTitle || sourceTrans.title,
+        description: transDesc || sourceTrans.description,
+        preservation: transPres || null,
+        tips: transTips || null,
+        steps: stepTranslations,
+      };
+    }
+
+    // If translation service failed, maintain failed status in database
+    if (!overallSuccess) {
+      return await this.prisma.recipe.update({
+        where: { id: recipe.id },
+        data: { translation_status: 'failed' },
+      });
+    }
+
+    // Execute database transaction to persist translated records and set
+    // status to completed
+    return await this.prisma.$transaction(async (tx) => {
+      // Upsert translations for each target locale
+      for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+        await tx.recipeTranslation.upsert({
+          where: {
+            recipe_id_locale: {
+              recipe_id: recipe.id,
+              locale,
+            },
+          },
+          create: {
+            recipe_id: recipe.id,
+            locale,
+            title: trans.title,
+            description: trans.description,
+            preservation: trans.preservation,
+            tips: trans.tips,
+          },
+          update: {
+            title: trans.title,
+            description: trans.description,
+            preservation: trans.preservation,
+            tips: trans.tips,
+          },
+        });
+
+        // Upsert step translations for each step in this locale
+        for (const stepTrans of trans.steps) {
+          await tx.recipeStepTranslation.upsert({
+            where: {
+              step_id_locale: {
+                step_id: stepTrans.stepId,
+                locale,
+              },
+            },
+            create: {
+              step_id: stepTrans.stepId,
+              locale,
+              title: stepTrans.title,
+              description: stepTrans.description,
+            },
+            update: {
+              title: stepTrans.title,
+              description: stepTrans.description,
+            },
+          });
+        }
+      }
+
+      // Update recipe translation status to completed
+      return await tx.recipe.update({
+        where: { id: recipe.id },
+        data: { translation_status: 'completed' },
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  POST /api/recipes/:id/cover
+  */
+  async uploadCoverImage(
+    recipeId: number,
+    userId: number,
+    file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can post images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    if (recipe.cover_image_url) {
+      await this.safeUnlink(recipe.cover_image_url);
+    }
+
+    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+
+    // Update cover_image_url on recipe
+    await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { cover_image_url: fileUrl },
+    });
+
+    return { cover_image_url: fileUrl };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  POST /api/recipes/:id/steps/:stepNumber/image
+  */
+  async uploadStepImage(
+    recipeId: number,
+    stepNumber: number,
+    userId: number,
+    file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can post images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Guard: Verify recipe step exists
+    const step = await this.prisma.recipeStep.findFirst({
+      where: {
+        recipe_id: recipeId,
+        step_number: stepNumber,
+      },
+    });
+    if (!step) {
+      throw new NotFoundException('Recipe step not found');
+    }
+
+    if (step.image_url) {
+      await this.safeUnlink(step.image_url);
+    }
+
+    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+
+    // Update image_url on step
+    await this.prisma.recipeStep.update({
+      where: { id: step.id },
+      data: { image_url: fileUrl },
+    });
+
+    return { step_number: stepNumber, image_url: fileUrl };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  POST /api/recipes/:id/gallery
+  */
+  async uploadGalleryMedia(
+    recipeId: number,
+    userId: number,
+    files: Express.Multer.File[],
+  ) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can post images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Guard: Validate that at least one file is provided
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one file must be provided');
+    }
+
+    // Guard: Fetch existing gallery media and ensure limit of 3 is respected
+    const existingMedia = await this.prisma.recipeMedia.findMany({
+      where: {
+        recipe_id: recipeId,
+        media_type: MediaType.image,
+      },
+      orderBy: { order: 'asc' },
+    });
+
+    if (existingMedia.length + files.length > 3) {
+      throw new BadRequestException(
+        `Cannot upload more than 3 gallery images per recipe. Already has ${existingMedia.length}.`,
+      );
+    }
+
+    // Persist each gallery media item with sequential ordering
+    const createdMedia: any[] = [];
+    const startingOrder = existingMedia.length;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+      const media = await this.prisma.recipeMedia.create({
+        data: {
+          recipe_id: recipeId,
+          url: fileUrl,
+          media_type: MediaType.image,
+          order: startingOrder + i,
+        },
+      });
+      createdMedia.push(media);
+    }
+
+    return createdMedia;
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  POST /api/recipes/:id/video
+  */
+  async uploadVideo(
+    recipeId: number,
+    userId: number,
+    file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can post the video)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    if (recipe.video_url) {
+      await this.safeUnlink(recipe.video_url);
+    }
+
+    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+
+    // Update video_url on recipe
+    await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { video_url: fileUrl },
+    });
+
+    return { video_url: fileUrl };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/cover
+  */
+  async deleteCoverImage(recipeId: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Safely remove cover image file from disk
+    if (recipe.cover_image_url) {
+      await this.safeUnlink(recipe.cover_image_url);
+    }
+
+    // Nullify cover_image_url on recipe
+    await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { cover_image_url: null },
+    });
+
+    return { message: 'Cover image deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/video
+  */
+  async deleteVideo(recipeId: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete the video)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Safely remove video file from disk
+    if (recipe.video_url) {
+      await this.safeUnlink(recipe.video_url);
+    }
+
+    // Nullify video_url on recipe
+    await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { video_url: null },
+    });
+
+    return { message: 'Recipe video deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/steps/:stepNumber/image
+  */
+  async deleteStepImage(recipeId: number, stepNumber: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Locate requested step
+    const step = await this.prisma.recipeStep.findFirst({
+      where: {
+        recipe_id: recipeId,
+        step_number: stepNumber,
+      },
+    });
+    if (!step) {
+      throw new NotFoundException('Step not found');
+    }
+
+    // Safely remove step image file from disk
+    if (step.image_url) {
+      await this.safeUnlink(step.image_url);
+    }
+
+    // Nullify image_url on step
+    await this.prisma.recipeStep.update({
+      where: { id: step.id },
+      data: { image_url: null },
+    });
+
+    return { message: 'Step image deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /*
+  DELETE /api/recipes/:id/gallery/:mediaId
+  */
+  async deleteGalleryMedia(recipeId: number, mediaId: number, userId: number) {
+    // Fetch recipe from database
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // Guard: Verify existence and ownership (only author can delete images)
+    // In production, both return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    )
+      throw new NotFoundException('Recipe not found');
+    else if (recipe.user_id !== userId)
+      // Development only
+      throw new NotFoundException('UserId not the author of the recipe');
+
+    // Locate requested gallery media
+    const media = await this.prisma.recipeMedia.findFirst({
+      where: {
+        id: mediaId,
+        recipe_id: recipeId,
+      },
+    });
+    if (!media) {
+      throw new NotFoundException('Gallery media not found');
+    }
+
+    // Safely remove gallery image file from disk
+    if (media.url) {
+      await this.safeUnlink(media.url);
+    }
+
+    // Delete gallery media record
+    await this.prisma.recipeMedia.delete({
+      where: { id: media.id },
+    });
+
+    return { message: 'Gallery media deleted successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  async likeRecipe(
+    recipeId: number,
+    userId: number,
+  ): Promise<{ message: string; liked: boolean }> {
+    // Verify that the recipe exists
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    // Check if the like already exists
+    const existingLike = await this.prisma.like.findUnique({
+      where: {
+        user_id_recipe_id: {
+          user_id: userId,
+          recipe_id: recipeId,
+        },
+      },
+    });
+
+    // Create like record if it does not exist yet (idempotent)
+    if (!existingLike) {
+      await this.prisma.like.create({
+        data: {
+          user_id: userId,
+          recipe_id: recipeId,
+        },
+      });
+    }
+
+    return { message: 'Recipe liked successfully', liked: true };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  async unlikeRecipe(
+    recipeId: number,
+    userId: number,
+  ): Promise<{ message: string; liked: boolean }> {
+    // Verify that the recipe exists
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    // Check if the like exists
+    const existingLike = await this.prisma.like.findUnique({
+      where: {
+        user_id_recipe_id: {
+          user_id: userId,
+          recipe_id: recipeId,
+        },
+      },
+    });
+
+    // Remove like record if present (idempotent)
+    if (existingLike) {
+      await this.prisma.like.delete({
+        where: {
+          user_id_recipe_id: {
+            user_id: userId,
+            recipe_id: recipeId,
+          },
+        },
+      });
+    }
+
+    return { message: 'Recipe unliked successfully', liked: false };
+  }
 }

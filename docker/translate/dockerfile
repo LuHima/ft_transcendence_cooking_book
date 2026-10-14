@@ -1,0 +1,34 @@
+# Base image: official LibreTranslate image (pinned version)
+FROM libretranslate/libretranslate:v1.9.6
+
+# Download language models at build time so the container can run completely
+# offline without requiring runtime internet access.
+# Models installed: English (en), Italian (it), and French (fr).
+RUN ./venv/bin/python scripts/install_models.py \
+  --load_only_lang_codes "en,it,fr"
+
+# Expose the LibreTranslate service port
+EXPOSE 5000
+
+# Health check: verifies that the LibreTranslate service is running and
+# healthy. It uses the native healthcheck script included in the LibreTranslate
+# virtual environment.
+# Flags:
+#   --interval=10s:      check every 10 seconds
+#   --timeout=5s:        fail check if response exceeds 5 seconds
+#   --start-period=15s:  grace period to allow language models to load into mem.
+#   --retries=3:         mark unhealthy after 3 consecutive failures
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+  CMD ./venv/bin/python scripts/healthcheck.py || exit 1
+
+# Define the entrypoint script (inherited from base image)
+ENTRYPOINT ["./scripts/entrypoint.sh"]
+
+# Default command: launch LibreTranslate server in foreground.
+# LibreTranslate Python service is launched inside the entrypoint and 
+# these arguments are forwarded to it (via "$@").
+# Parameters:
+#   --host 0.0.0.0: bind to all network interfaces inside container
+#   --port 5000:    listen on port 5000
+#   --load-only:    load only English, Italian, and French into memory
+CMD ["--host", "0.0.0.0", "--port", "5000", "--load-only", "en,it,fr"]
