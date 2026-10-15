@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -138,10 +139,16 @@ export class UsersService {
       });
       return updatedUser;
     } catch (error: any) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       if (error?.code === 'P2002') {
         throw new ConflictException('Username or email already in use');
       }
-      throw new NotFoundException('User not found');
+      if (error?.code === 'P2025') {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
     }
   }
 

@@ -67,7 +67,7 @@ describe('UsersController', () => {
         .fn<() => Promise<any>>()
         .mockResolvedValue(updatedUser);
 
-      const result = await controller.updateMe(1, updateDto as any);
+      const result = await controller.updateMe(1, updateDto);
 
       expect(result).toEqual(updatedUser);
       expect(service.updateMe).toHaveBeenCalledWith(1, updateDto);

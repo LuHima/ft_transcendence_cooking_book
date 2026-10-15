@@ -123,14 +123,23 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw NotFoundException if user is not found during update', async () => {
-      (prisma.user.update as jest.Mock).mockRejectedValue(
-        new Error('Record not found'),
-      );
+    it('should throw NotFoundException if user is not found during update (Prisma P2025)', async () => {
+      const p2025Error = new Error('Record to update not found');
+      (p2025Error as any).code = 'P2025';
+      (prisma.user.update as jest.Mock).mockRejectedValue(p2025Error);
 
       await expect(
         service.updateMe(999, { first_name: 'Luigi' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should rethrow unexpected database errors to let them bubble up to global filter', async () => {
+      const unexpectedError = new Error('Connection terminated unexpectedly');
+      (prisma.user.update as jest.Mock).mockRejectedValue(unexpectedError);
+
+      await expect(
+        service.updateMe(1, { first_name: 'Luigi' }),
+      ).rejects.toThrow('Connection terminated unexpectedly');
     });
 
     it('should convert birth_date string to Date object and empty string to null', async () => {

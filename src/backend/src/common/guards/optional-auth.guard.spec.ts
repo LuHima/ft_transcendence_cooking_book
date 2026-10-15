@@ -7,7 +7,9 @@ describe('OptionalAuthGuard', () => {
   let guard: OptionalAuthGuard;
   let jwtService: JwtService;
 
-  const createMockContext = (cookies: Record<string, any> = {}): ExecutionContext => {
+  const createMockContext = (
+    cookies: Record<string, any> = {},
+  ): ExecutionContext => {
     const request: any = { cookies };
     return {
       switchToHttp: () => ({

@@ -17,6 +17,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "System health check probe",
@@ -77,6 +87,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Sign in with email and password",
@@ -130,6 +150,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Register a new user account",
@@ -160,6 +190,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -198,6 +238,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -269,6 +319,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -327,6 +387,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Complete two-factor sign-in",
@@ -377,6 +447,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -448,6 +528,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -493,6 +583,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -559,6 +659,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -630,6 +740,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -663,6 +783,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -722,6 +852,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -778,6 +918,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -817,6 +967,16 @@
                   "items": {
                     "$ref": "#/components/schemas/UserSearchResultDto"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -874,6 +1034,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get public user profile by ID",
@@ -894,6 +1064,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CatalogMetadataResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -935,6 +1115,16 @@
                   "items": {
                     "$ref": "#/components/schemas/TagResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1006,6 +1196,16 @@
                   "items": {
                     "$ref": "#/components/schemas/IngredientResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1133,6 +1333,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "List recipes with multi-criteria filtering and search",
@@ -1191,6 +1401,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1253,6 +1473,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get paginated recipe stack",
@@ -1287,6 +1517,16 @@
                   "items": {
                     "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1355,6 +1595,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1450,6 +1700,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1524,6 +1784,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1603,6 +1873,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1705,6 +1985,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1769,6 +2059,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -1881,6 +2181,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1955,6 +2265,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -2063,6 +2383,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2162,6 +2492,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2226,6 +2566,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -2308,6 +2658,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2367,6 +2727,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2421,6 +2791,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -2503,6 +2883,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2560,6 +2950,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
                 }
               }
             }
@@ -2647,6 +3047,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2655,6 +3065,113 @@
           }
         ],
         "summary": "Deactivate recipe comment",
+        "tags": [
+          "Recipes"
+        ]
+      },
+      "patch": {
+        "description": "Updates the content of an active comment. Authorized only for the comment author. Sets is_edited to true.",
+        "operationId": "RecipeController_updateComment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Recipe ID",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          },
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "description": "Comment ID",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comment successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeCommentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or comment is deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: user is not the comment author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe or comment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Update recipe comment",
         "tags": [
           "Recipes"
         ]
@@ -2709,6 +3226,37 @@
       }
     },
     "schemas": {
+      "ApiInternalServerErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing an unhandled internal server error",
+            "example": 500
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes"
+          },
+          "message": {
+            "type": "string",
+            "description": "Internal server error message",
+            "example": "Internal server error"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
+      },
       "AuthMessageResponseDto": {
         "type": "object",
         "properties": {
@@ -4477,11 +5025,23 @@
             "description": "Whether the comment is active or deactivated",
             "example": true
           },
+          "is_edited": {
+            "type": "boolean",
+            "description": "Whether the comment was edited after posting",
+            "example": false
+          },
           "created_at": {
             "format": "date-time",
             "type": "string",
             "description": "Creation timestamp",
             "example": "2026-10-13T10:00:00.000Z"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Last update timestamp, or null if never edited",
+            "example": "2026-10-15T11:00:00.000Z"
           },
           "user": {
             "nullable": true,
@@ -4501,7 +5061,9 @@
           "parent_id",
           "content",
           "is_active",
+          "is_edited",
           "created_at",
+          "updated_at",
           "user"
         ]
       },
@@ -4541,11 +5103,23 @@
             "description": "Whether the comment is active or deactivated",
             "example": true
           },
+          "is_edited": {
+            "type": "boolean",
+            "description": "Whether the comment was edited after posting",
+            "example": false
+          },
           "created_at": {
             "format": "date-time",
             "type": "string",
             "description": "Creation timestamp",
             "example": "2026-10-13T10:00:00.000Z"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Last update timestamp, or null if never edited",
+            "example": "2026-10-15T11:00:00.000Z"
           },
           "user": {
             "nullable": true,
@@ -4572,9 +5146,25 @@
           "parent_id",
           "content",
           "is_active",
+          "is_edited",
           "created_at",
+          "updated_at",
           "user",
           "replies"
+        ]
+      },
+      "UpdateCommentDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Updated comment text (maximum 1000 characters)",
+            "example": "Ho rifatto la ricetta aggiungendo un pizzico di pepe in più: fantastica!",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "content"
         ]
       }
     }

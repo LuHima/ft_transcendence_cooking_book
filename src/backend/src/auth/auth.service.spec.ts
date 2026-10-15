@@ -14,8 +14,13 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: {} },
         { provide: JwtService, useValue: {} },
         { provide: PrismaService, useValue: {} },
+        { provide: 'EncryptionService', useValue: {} },
       ],
-    }).compile();
+    })
+      .useMocker((token) => {
+        return {};
+      })
+      .compile();
 
     service = module.get<AuthService>(AuthService);
   });

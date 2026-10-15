@@ -4,6 +4,7 @@ import {
   ApiOperation,
   ApiOkResponse,
   ApiQuery,
+  ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import { IngredientCategory } from '@prisma/client';
@@ -12,11 +13,16 @@ import {
   IngredientResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
+import { ApiInternalServerErrorResponseDto } from 'src/common/dto/api-error-response.dto';
 
 /**
  * Controller providing access to system metadata dictionaries, curated tags, and ingredient catalogs.
  */
 @ApiTags('Catalog')
+@ApiInternalServerErrorResponse({
+  type: ApiInternalServerErrorResponseDto,
+  description: 'Internal server error',
+})
 @Controller()
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}

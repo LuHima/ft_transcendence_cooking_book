@@ -19,6 +19,7 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiConflictResponse,
+  ApiInternalServerErrorResponse,
   ApiCookieAuth,
   ApiExtraModels,
   getSchemaPath,
@@ -44,6 +45,7 @@ import {
   ApiBadRequestResponseDto,
   ApiUnauthorizedResponseDto,
   ApiConflictResponseDto,
+  ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 
 export class ConfirmPasswordDto extends PickType(SignInUserDto, [
@@ -69,6 +71,10 @@ interface twofactor {
  * Controller handling authentication, user registration, token refreshing, and two-factor authentication (2FA).
  */
 @ApiTags('Auth')
+@ApiInternalServerErrorResponse({
+  type: ApiInternalServerErrorResponseDto,
+  description: 'Internal server error',
+})
 @ApiExtraModels(AuthMessageResponseDto, TwoFactorChallengeResponseDto)
 @Controller('auth')
 export class AuthController {
@@ -127,7 +133,7 @@ export class AuthController {
     @Body() signInDto: SignInUserDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    let result: jwts | twofactor = await this.authService.signIn(
+    const result: jwts | twofactor = await this.authService.signIn(
       signInDto.email,
       signInDto.password,
     );

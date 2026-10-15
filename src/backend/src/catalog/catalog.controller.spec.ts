@@ -32,16 +32,14 @@ describe('CatalogController', () => {
               .mockResolvedValue([
                 { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
               ]),
-            getIngredients: jest
-              .fn()
-              .mockResolvedValue([
-                {
-                  id: 1,
-                  slug: 'tomato',
-                  category: IngredientCategory.produce,
-                  name: 'Pomodoro',
-                },
-              ]),
+            getIngredients: jest.fn().mockResolvedValue([
+              {
+                id: 1,
+                slug: 'tomato',
+                category: IngredientCategory.produce,
+                name: 'Pomodoro',
+              },
+            ]),
           },
         },
       ],

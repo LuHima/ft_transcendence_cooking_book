@@ -20,6 +20,7 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
+  ApiInternalServerErrorResponse,
   ApiParam,
   ApiQuery,
   ApiConsumes,
@@ -43,6 +44,7 @@ import {
   ApiBadRequestResponseDto,
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
+  ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { LocalizedRecipeDetailResponse } from 'src/recipe/dto/localized-recipe.response';
 
@@ -50,6 +52,10 @@ import { LocalizedRecipeDetailResponse } from 'src/recipe/dto/localized-recipe.r
  * Controller handling user profiles, account preferences, avatar uploads, and social interactions.
  */
 @ApiTags('Users')
+@ApiInternalServerErrorResponse({
+  type: ApiInternalServerErrorResponseDto,
+  description: 'Internal server error',
+})
 @Controller('users')
 @UseFilters(HttpExceptionFilter)
 export class UsersController {
