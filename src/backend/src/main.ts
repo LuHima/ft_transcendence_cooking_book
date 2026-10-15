@@ -5,8 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pipe';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
-import { HttpExceptionFilter } from './common/filters/http.exeption.filter';
-import { PrismaExceptionFilter } from './common/filters/prisma.exception.filter';
+import { GlobalExceptionFilter } from './common/filters/global.exception.filter';
 import {
   RECIPE_UPLOADS_DIR,
   AVATAR_UPLOADS_DIR,
@@ -29,8 +28,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   // Per lavorare con i cookie
   app.use(cookieParser(process.env.COOKIE_SECRET));
-  // Uso il mio filtro per gestire l'errore
-  app.useGlobalFilters(new HttpExceptionFilter(), new PrismaExceptionFilter());
+  // Centralized global exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(
     // Blocca {} vuoti su tutti i body
     new GlobalNotEmptyBodyPipe(),

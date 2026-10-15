@@ -8,7 +8,6 @@ import {
   Delete,
   Body,
   Query,
-  UseFilters,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
@@ -28,7 +27,6 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
-import { HttpExceptionFilter } from 'src/common/filters/http.exeption.filter';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -57,7 +55,6 @@ import { LocalizedRecipeDetailResponse } from 'src/recipe/dto/localized-recipe.r
   description: 'Internal server error',
 })
 @Controller('users')
-@UseFilters(HttpExceptionFilter)
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 

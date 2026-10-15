@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * Standardized API error response payload returned by HttpExceptionFilter.
+ * Standardized API error response payload returned by GlobalExceptionFilter.
  */
 export class ApiErrorResponseDto {
   /**
