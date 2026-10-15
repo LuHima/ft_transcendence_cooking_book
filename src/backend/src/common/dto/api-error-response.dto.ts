@@ -57,7 +57,8 @@ export class ApiErrorResponseDto {
  */
 export class ApiBadRequestResponseDto {
   @ApiProperty({
-    description: 'HTTP status code representing client bad request or validation error',
+    description:
+      'HTTP status code representing client bad request or validation error',
     example: 400,
   })
   statusCode: number;
@@ -75,7 +76,8 @@ export class ApiBadRequestResponseDto {
   path: string;
 
   @ApiProperty({
-    description: 'Validation error description or array of constraint violations',
+    description:
+      'Validation error description or array of constraint violations',
     oneOf: [
       { type: 'string', example: 'Bad Request' },
       {
@@ -93,7 +95,8 @@ export class ApiBadRequestResponseDto {
  */
 export class ApiUnauthorizedResponseDto {
   @ApiProperty({
-    description: 'HTTP status code representing missing or invalid authentication credentials',
+    description:
+      'HTTP status code representing missing or invalid authentication credentials',
     example: 401,
   })
   statusCode: number;
@@ -122,7 +125,8 @@ export class ApiUnauthorizedResponseDto {
  */
 export class ApiForbiddenResponseDto {
   @ApiProperty({
-    description: 'HTTP status code representing insufficient permissions to perform action',
+    description:
+      'HTTP status code representing insufficient permissions to perform action',
     example: 403,
   })
   statusCode: number;
@@ -141,7 +145,8 @@ export class ApiForbiddenResponseDto {
 
   @ApiProperty({
     description: 'Authorization failure message',
-    example: 'Forbidden: insufficient permissions for this action on the target resource',
+    example:
+      'Forbidden: insufficient permissions for this action on the target resource',
   })
   message: string;
 }
@@ -180,7 +185,8 @@ export class ApiNotFoundResponseDto {
  */
 export class ApiConflictResponseDto {
   @ApiProperty({
-    description: 'HTTP status code representing conflicting state or duplicate resource',
+    description:
+      'HTTP status code representing conflicting state or duplicate resource',
     example: 409,
   })
   statusCode: number;
@@ -203,3 +209,34 @@ export class ApiConflictResponseDto {
   })
   message: string;
 }
+
+/**
+ * Standard 500 Internal Server Error response.
+ */
+export class ApiInternalServerErrorResponseDto {
+  @ApiProperty({
+    description:
+      'HTTP status code representing an unhandled internal server error',
+    example: 500,
+  })
+  statusCode: number;
+
+  @ApiProperty({
+    description: 'ISO 8601 formatted timestamp of when the error occurred',
+    example: '2026-10-14T10:00:00.000Z',
+  })
+  timestamp: string;
+
+  @ApiProperty({
+    description: 'Requested URL path that produced the error',
+    example: '/api/recipes',
+  })
+  path: string;
+
+  @ApiProperty({
+    description: 'Internal server error message',
+    example: 'Internal server error',
+  })
+  message: string;
+}
+
