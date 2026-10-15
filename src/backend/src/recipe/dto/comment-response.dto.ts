@@ -37,10 +37,23 @@ export class RecipeCommentResponseDto {
   is_active: boolean;
 
   @ApiProperty({
+    description: 'Whether the comment was edited after posting',
+    example: false,
+  })
+  is_edited: boolean;
+
+  @ApiProperty({
     description: 'Creation timestamp',
     example: '2026-10-13T10:00:00.000Z',
   })
   created_at: Date;
+
+  @ApiProperty({
+    description: 'Last update timestamp, or null if never edited',
+    example: '2026-10-15T11:00:00.000Z',
+    nullable: true,
+  })
+  updated_at: Date | null;
 
   @ApiProperty({
     type: RecipeAuthorSummaryDto,

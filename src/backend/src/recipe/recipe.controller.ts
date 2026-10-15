@@ -22,6 +22,7 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiForbiddenResponse,
+  ApiInternalServerErrorResponse,
   ApiParam,
   ApiQuery,
   ApiConsumes,
@@ -38,6 +39,7 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import {
   RecipeCommentResponseDto,
   ThreadedRecipeCommentResponseDto,
@@ -60,6 +62,7 @@ import {
   ApiUnauthorizedResponseDto,
   ApiForbiddenResponseDto,
   ApiNotFoundResponseDto,
+  ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
@@ -72,6 +75,10 @@ import { Action } from 'src/auth/casl/action.enum';
  * Controller handling recipe lifecycle, search, pagination, multilingual translations, media uploads, and likes.
  */
 @ApiTags('Recipes')
+@ApiInternalServerErrorResponse({
+  type: ApiInternalServerErrorResponseDto,
+  description: 'Internal server error',
+})
 @Controller('recipes')
 export class RecipeController {
   constructor(
@@ -813,6 +820,48 @@ export class RecipeController {
     @CurrentUser('id') userId: number,
   ) {
     return await this.recipeService.deleteComment(recipeId, commentId, userId);
+  }
+
+  /**
+   * Update an existing comment text.
+   */
+  @ApiOperation({
+    summary: 'Update recipe comment',
+    description:
+      'Updates the content of an active comment. Authorized only for the comment author. Sets is_edited to true.',
+  })
+  @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
+  @ApiParam({ name: 'commentId', description: 'Comment ID', example: 10 })
+  @ApiOkResponse({
+    description: 'Comment successfully updated',
+    type: RecipeCommentResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid input or comment is deactivated',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: user is not the comment author',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe or comment not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Auth()
+  @Patch(':id/comments/:commentId')
+  async updateComment(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @CurrentUser('id') userId: number,
+    @Body() updateCommentDto: UpdateCommentDto,
+  ) {
+    return await this.recipeService.updateComment(
+      recipeId,
+      commentId,
+      userId,
+      updateCommentDto,
+    );
   }
 }
 

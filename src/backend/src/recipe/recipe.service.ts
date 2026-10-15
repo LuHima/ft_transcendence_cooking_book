@@ -13,6 +13,7 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ThreadedRecipeCommentResponseDto } from './dto/comment-response.dto';
 import {
   LocalizedRecipeStepResponse,
@@ -1741,7 +1742,9 @@ export class RecipeService {
                     parent_id: r.parent_id,
                     content: r.content,
                     is_active: r.is_active,
+                    is_edited: r.is_edited ?? false,
                     created_at: r.created_at,
+                    updated_at: r.updated_at ?? null,
                     user: r.user,
                   }
                 : {
@@ -1751,7 +1754,9 @@ export class RecipeService {
                     parent_id: r.parent_id,
                     content: null,
                     is_active: false,
+                    is_edited: false,
                     created_at: r.created_at,
+                    updated_at: null,
                     user: null,
                   },
             );
@@ -1764,7 +1769,9 @@ export class RecipeService {
           parent_id: root.parent_id,
           content: root.content,
           is_active: root.is_active,
+          is_edited: root.is_edited ?? false,
           created_at: root.created_at,
+          updated_at: root.updated_at ?? null,
           user: root.user,
           replies: keptReplies,
         });
@@ -1776,7 +1783,9 @@ export class RecipeService {
           parent_id: root.parent_id,
           content: null,
           is_active: false,
+          is_edited: false,
           created_at: root.created_at,
+          updated_at: null,
           user: null,
           replies: keptReplies,
         });
@@ -1823,5 +1832,62 @@ export class RecipeService {
     });
 
     return { message: 'Comment deactivated successfully' };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Update an existing comment text.
+   * Authorized only for the comment author. Deactivated comments cannot be edited.
+   */
+  async updateComment(
+    recipeId: number,
+    commentId: number,
+    userId: number,
+    dto: UpdateCommentDto,
+  ) {
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment || comment.recipe_id !== recipeId) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    if (!comment.is_active) {
+      throw new BadRequestException('Cannot edit a deactivated comment');
+    }
+
+    if (comment.user_id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to edit this comment',
+      );
+    }
+
+    return await this.prisma.comment.update({
+      where: { id: commentId },
+      data: {
+        content: dto.content,
+        is_edited: true,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar_url: true,
+          },
+        },
+      },
+    });
   }
 }

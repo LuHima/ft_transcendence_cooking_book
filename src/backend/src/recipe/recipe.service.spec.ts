@@ -727,7 +727,9 @@ describe('RecipeService', () => {
         created_at: new Date('2026-01-01T00:00:00Z'),
         updated_at: new Date('2026-01-01T00:00:00Z'),
         user: { id: 10, username: 'mario', avatar_url: null },
-        translations: [{ locale: 'it', title: 'Carbonara', description: 'Buona' }],
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
         steps: [],
         recipe_ingredients: [],
         recipe_tags: [],
@@ -763,7 +765,9 @@ describe('RecipeService', () => {
         created_at: new Date('2026-01-01T00:00:00Z'),
         updated_at: new Date('2026-01-01T00:00:00Z'),
         user: { id: 10, username: 'mario', avatar_url: null },
-        translations: [{ locale: 'it', title: 'Carbonara', description: 'Buona' }],
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
         steps: [],
         recipe_ingredients: [],
         recipe_tags: [],
@@ -2115,7 +2119,9 @@ describe('RecipeService', () => {
               parent_id: 1,
               content: 'Reply 1 (active)',
               is_active: true,
+              is_edited: false,
               created_at: new Date('2026-10-13T10:01:00Z'),
+              updated_at: null,
               user: { id: 20, username: 'lara', avatar_url: null },
             },
             {
@@ -2125,7 +2131,9 @@ describe('RecipeService', () => {
               parent_id: 1,
               content: 'Reply 2 (inactive - intermediate)',
               is_active: false,
+              is_edited: false,
               created_at: new Date('2026-10-13T10:02:00Z'),
+              updated_at: null,
               user: { id: 30, username: 'giovanni', avatar_url: null },
             },
             {
@@ -2135,7 +2143,9 @@ describe('RecipeService', () => {
               parent_id: 1,
               content: 'Reply 3 (active)',
               is_active: true,
+              is_edited: false,
               created_at: new Date('2026-10-13T10:03:00Z'),
+              updated_at: null,
               user: { id: 40, username: 'anna', avatar_url: null },
             },
             {
@@ -2145,7 +2155,9 @@ describe('RecipeService', () => {
               parent_id: 1,
               content: 'Reply 4 (inactive - trailing)',
               is_active: false,
+              is_edited: false,
               created_at: new Date('2026-10-13T10:04:00Z'),
+              updated_at: null,
               user: { id: 50, username: 'paolo', avatar_url: null },
             },
           ],
@@ -2158,7 +2170,9 @@ describe('RecipeService', () => {
           parent_id: null,
           content: 'Parent comment 2 (inactive)',
           is_active: false,
+          is_edited: false,
           created_at: new Date('2026-10-13T10:05:00Z'),
+          updated_at: null,
           user: { id: 60, username: 'luca', avatar_url: null },
           replies: [
             {
@@ -2168,7 +2182,9 @@ describe('RecipeService', () => {
               parent_id: 6,
               content: 'Reply (inactive)',
               is_active: false,
+              is_edited: false,
               created_at: new Date('2026-10-13T10:06:00Z'),
+              updated_at: null,
               user: { id: 70, username: 'sara', avatar_url: null },
             },
           ],
@@ -2181,7 +2197,9 @@ describe('RecipeService', () => {
           parent_id: null,
           content: 'Parent comment 3 (inactive with active reply)',
           is_active: false,
+          is_edited: false,
           created_at: new Date('2026-10-13T10:07:00Z'),
+          updated_at: null,
           user: { id: 80, username: 'elena', avatar_url: null },
           replies: [
             {
@@ -2191,7 +2209,9 @@ describe('RecipeService', () => {
               parent_id: 8,
               content: 'Reply to deleted root (active)',
               is_active: true,
+              is_edited: false,
               created_at: new Date('2026-10-13T10:08:00Z'),
+              updated_at: null,
               user: { id: 90, username: 'matteo', avatar_url: null },
             },
           ],
@@ -2204,7 +2224,9 @@ describe('RecipeService', () => {
           parent_id: null,
           content: 'Parent comment 4 (active, no replies)',
           is_active: true,
+          is_edited: false,
           created_at: new Date('2026-10-13T10:09:00Z'),
+          updated_at: null,
           user: { id: 100, username: 'chiara', avatar_url: null },
           replies: [],
         },
@@ -2262,7 +2284,9 @@ describe('RecipeService', () => {
         parent_id: 1,
         content: null,
         is_active: false,
+        is_edited: false,
         created_at: new Date('2026-10-13T10:02:00Z'),
+        updated_at: null,
         user: null,
       });
       // 3rd reply is active
@@ -2294,7 +2318,10 @@ describe('RecipeService', () => {
     });
 
     it('throws NotFoundException when comment does not exist', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
       mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
 
       await expect(service.deleteComment(1, 888, 1)).rejects.toThrow(
@@ -2303,7 +2330,10 @@ describe('RecipeService', () => {
     });
 
     it('throws NotFoundException when comment belongs to a different recipe', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
       mockPrisma.comment.findUnique.mockResolvedValueOnce({
         id: 10,
         recipe_id: 2,
@@ -2316,7 +2346,10 @@ describe('RecipeService', () => {
     });
 
     it('throws ForbiddenException when user is neither comment author nor recipe author', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
       mockPrisma.comment.findUnique.mockResolvedValueOnce({
         id: 10,
         recipe_id: 1,
@@ -2329,7 +2362,10 @@ describe('RecipeService', () => {
     });
 
     it('deactivates comment when user is the comment author', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
       mockPrisma.comment.findUnique.mockResolvedValueOnce({
         id: 10,
         recipe_id: 1,
@@ -2350,7 +2386,10 @@ describe('RecipeService', () => {
     });
 
     it('deactivates comment when user is the recipe author', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 100 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
       mockPrisma.comment.findUnique.mockResolvedValueOnce({
         id: 10,
         recipe_id: 1,
@@ -2370,5 +2409,120 @@ describe('RecipeService', () => {
       expect(result).toEqual({ message: 'Comment deactivated successfully' });
     });
   });
-});
 
+  describe('updateComment', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateComment(999, 10, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when comment does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateComment(1, 888, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when comment belongs to a different recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 2,
+        user_id: 1,
+        is_active: true,
+      });
+
+      await expect(
+        service.updateComment(1, 10, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when comment is deactivated', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 1,
+        is_active: false,
+      });
+
+      await expect(
+        service.updateComment(1, 10, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws ForbiddenException when user is not the comment author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+        is_active: true,
+      });
+
+      await expect(
+        service.updateComment(1, 10, 99, { content: 'Updated content' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('updates comment content, sets is_edited: true, and returns updated comment with user when user is author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+        is_active: true,
+        content: 'Original content',
+      });
+
+      const updatedComment = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+        parent_id: null,
+        content: 'Updated content',
+        is_active: true,
+        is_edited: true,
+        created_at: new Date('2026-10-14T10:00:00Z'),
+        updated_at: new Date('2026-10-15T11:00:00Z'),
+        user: {
+          id: 50,
+          username: 'chef_mario',
+          avatar_url: '/uploads/avatars/chef_mario.webp',
+        },
+      };
+
+      mockPrisma.comment.update.mockResolvedValueOnce(updatedComment);
+
+      const result = await service.updateComment(1, 10, 50, {
+        content: 'Updated content',
+      });
+
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: {
+          content: 'Updated content',
+          is_edited: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(updatedComment);
+    });
+  });
+});

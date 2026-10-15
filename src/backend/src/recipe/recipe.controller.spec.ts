@@ -42,6 +42,7 @@ describe('RecipeController', () => {
     createComment: jest.fn(),
     getComments: jest.fn(),
     deleteComment: jest.fn(),
+    updateComment: jest.fn(),
   };
 
   const sampleDto: CreateRecipeDto = {
@@ -117,7 +118,10 @@ describe('RecipeController', () => {
 
       const result = await controller.getRecipes({ lang: 'it' });
 
-      expect(service.getAllRecipe).toHaveBeenCalledWith({ lang: 'it' }, undefined);
+      expect(service.getAllRecipe).toHaveBeenCalledWith(
+        { lang: 'it' },
+        undefined,
+      );
       expect(result).toEqual(mockResult);
     });
 
@@ -142,7 +146,15 @@ describe('RecipeController', () => {
     });
 
     it('delegates to service.getAllRecipe with filter options and current user id when authenticated', async () => {
-      const mockResult = [{ id: 1, title: 'Pasta', likes_count: 5, comments_count: 2, is_liked: true }];
+      const mockResult = [
+        {
+          id: 1,
+          title: 'Pasta',
+          likes_count: 5,
+          comments_count: 2,
+          is_liked: true,
+        },
+      ];
       mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
 
       const result = await controller.getRecipes({}, 42);
@@ -251,7 +263,13 @@ describe('RecipeController', () => {
     });
 
     it('delegates to service.getRecipeById with id, lang, and current user id when authenticated', async () => {
-      const mockResult = { id: 1, title: 'Carbonara', likes_count: 10, comments_count: 3, is_liked: true };
+      const mockResult = {
+        id: 1,
+        title: 'Carbonara',
+        likes_count: 10,
+        comments_count: 3,
+        is_liked: true,
+      };
       mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
 
       const result = await controller.getRecipeById(1, 'it', 42);
@@ -476,5 +494,28 @@ describe('RecipeController', () => {
       expect(result).toEqual(mockResult);
     });
   });
-});
 
+  describe('updateComment', () => {
+    it('delegates to service.updateComment with recipeId, commentId, userId, and updateCommentDto', async () => {
+      const mockResult = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 42,
+        parent_id: null,
+        content: 'Updated content',
+        is_active: true,
+        is_edited: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+        user: { id: 42, username: 'chef_mario', avatar_url: null },
+      };
+      mockRecipeService.updateComment.mockResolvedValueOnce(mockResult);
+
+      const updateDto = { content: 'Updated content' };
+      const result = await controller.updateComment(1, 10, 42, updateDto);
+
+      expect(service.updateComment).toHaveBeenCalledWith(1, 10, 42, updateDto);
+      expect(result).toEqual(mockResult);
+    });
+  });
+});

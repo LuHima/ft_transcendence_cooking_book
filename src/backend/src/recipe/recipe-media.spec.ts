@@ -10,25 +10,25 @@ describe('RecipeMediaMulter', () => {
   describe('recipeImageFilter', () => {
     it('accepts valid image MIME types (jpeg, png, webp)', () => {
       const cb = jest.fn();
-      recipeImageFilter({}, { mimetype: 'image/jpeg' } as any, cb);
+      recipeImageFilter({}, { mimetype: 'image/jpeg' }, cb);
       expect(cb).toHaveBeenCalledWith(null, true);
 
       cb.mockClear();
-      recipeImageFilter({}, { mimetype: 'image/png' } as any, cb);
+      recipeImageFilter({}, { mimetype: 'image/png' }, cb);
       expect(cb).toHaveBeenCalledWith(null, true);
 
       cb.mockClear();
-      recipeImageFilter({}, { mimetype: 'image/webp' } as any, cb);
+      recipeImageFilter({}, { mimetype: 'image/webp' }, cb);
       expect(cb).toHaveBeenCalledWith(null, true);
     });
 
     it('rejects unsupported MIME types with BadRequestException', () => {
       const cb = jest.fn();
-      recipeImageFilter({}, { mimetype: 'application/pdf' } as any, cb);
+      recipeImageFilter({}, { mimetype: 'application/pdf' }, cb);
       expect(cb).toHaveBeenCalledWith(expect.any(BadRequestException), false);
 
       cb.mockClear();
-      recipeImageFilter({}, { mimetype: 'video/mp4' } as any, cb);
+      recipeImageFilter({}, { mimetype: 'video/mp4' }, cb);
       expect(cb).toHaveBeenCalledWith(expect.any(BadRequestException), false);
     });
   });
@@ -36,25 +36,25 @@ describe('RecipeMediaMulter', () => {
   describe('recipeVideoFilter', () => {
     it('accepts valid video MIME types (mp4, webm, quicktime)', () => {
       const cb = jest.fn();
-      recipeVideoFilter({}, { mimetype: 'video/mp4' } as any, cb);
+      recipeVideoFilter({}, { mimetype: 'video/mp4' }, cb);
       expect(cb).toHaveBeenCalledWith(null, true);
 
       cb.mockClear();
-      recipeVideoFilter({}, { mimetype: 'video/webm' } as any, cb);
+      recipeVideoFilter({}, { mimetype: 'video/webm' }, cb);
       expect(cb).toHaveBeenCalledWith(null, true);
 
       cb.mockClear();
-      recipeVideoFilter({}, { mimetype: 'video/quicktime' } as any, cb);
+      recipeVideoFilter({}, { mimetype: 'video/quicktime' }, cb);
       expect(cb).toHaveBeenCalledWith(null, true);
     });
 
     it('rejects unsupported video MIME types with BadRequestException', () => {
       const cb = jest.fn();
-      recipeVideoFilter({}, { mimetype: 'image/jpeg' } as any, cb);
+      recipeVideoFilter({}, { mimetype: 'image/jpeg' }, cb);
       expect(cb).toHaveBeenCalledWith(expect.any(BadRequestException), false);
 
       cb.mockClear();
-      recipeVideoFilter({}, { mimetype: 'audio/mp3' } as any, cb);
+      recipeVideoFilter({}, { mimetype: 'audio/mp3' }, cb);
       expect(cb).toHaveBeenCalledWith(expect.any(BadRequestException), false);
     });
   });

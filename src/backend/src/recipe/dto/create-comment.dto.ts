@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, IsNotEmpty, IsOptional, IsString, Length, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Min,
+} from 'class-validator';
 
 /**
  * Data transfer object for adding a new comment or reply to a recipe.
@@ -12,7 +19,8 @@ export class CreateCommentDto {
    */
   @ApiProperty({
     description: 'Comment content text (1 to 1000 characters)',
-    example: 'Ottima ricetta, ho provato ad aggiungere un pizzico di pepe in più!',
+    example:
+      'Ottima ricetta, ho provato ad aggiungere un pizzico di pepe in più!',
     minLength: 1,
     maxLength: 1000,
   })
