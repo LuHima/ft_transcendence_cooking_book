@@ -36,13 +36,16 @@ describe('UsersService', () => {
           useValue: {
             user: {
               findUnique: jest.fn(),
+              findMany: jest.fn(),
               update: jest.fn(),
             },
             like: {
               findMany: jest.fn(),
+              count: jest.fn(),
             },
             recipe: {
               findMany: jest.fn(),
+              count: jest.fn(),
             },
           },
         },
@@ -260,6 +263,28 @@ describe('UsersService', () => {
     });
   });
 
+  describe('findUser', () => {
+    it('returns matching usernames via case-insensitive contains', async () => {
+      const mockUsers = [{ username: 'mario' }, { username: 'mario_chef' }];
+      (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+
+      const result = await service.findUser('mario');
+
+      expect(result).toEqual(mockUsers);
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          username: {
+            contains: 'mario',
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          username: true,
+        },
+      });
+    });
+  });
+
   describe('getLikedRecipes', () => {
     const mockLikes = [
       {
@@ -269,6 +294,17 @@ describe('UsersService', () => {
         recipe: {
           id: 10,
           source_lang: 'it',
+          course: 'first_course',
+          difficulty: 'medium',
+          prep_time: 15,
+          cook_time: 10,
+          total_time: 25,
+          servings: 4,
+          translation_status: 'completed',
+          cover_image_url: '/uploads/recipes/cover.webp',
+          video_url: null,
+          created_at: new Date('2026-09-10'),
+          updated_at: null,
           translations: [
             { locale: 'it', title: 'Carbonara', description: 'Classica' },
             {
@@ -278,29 +314,46 @@ describe('UsersService', () => {
             },
           ],
           user: { id: 2, username: 'chef_mario', avatar_url: null },
+          recipe_tags: [],
+          _count: { likes: 5, comments: 2 },
         },
       },
     ];
 
-    it('should return liked recipes with translations by default', async () => {
+    it('should return paginated envelope with card items and pagination metadata', async () => {
       (prisma.like.findMany as jest.Mock).mockResolvedValue(mockLikes);
+      (prisma.like.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await service.getLikedRecipes(1);
+      const result = await service.getLikedRecipes(1, { page: 1, limit: 20 });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(10);
-      expect(result[0].translations).toBeDefined();
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(10);
+      expect(result.items[0].title).toBe('Carbonara');
+      expect(result.items[0].is_liked).toBe(true);
+      expect(result.items[0].resolved_lang).toBe('it');
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.total_pages).toBe(1);
+      expect(result.has_next_page).toBe(false);
+      expect(result.has_prev_page).toBe(false);
     });
 
-    it('should return liked recipes with localized title and description when lang is provided', async () => {
+    it('should return liked recipes localized in requested language with pagination', async () => {
       (prisma.like.findMany as jest.Mock).mockResolvedValue(mockLikes);
+      (prisma.like.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await service.getLikedRecipes(1, 'en');
+      const result = await service.getLikedRecipes(1, {
+        page: 1,
+        limit: 10,
+        lang: 'en',
+      });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(10);
-      expect((result[0] as any).title).toBe('Carbonara English');
-      expect((result[0] as any).description).toBe('Classic');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(10);
+      expect(result.items[0].title).toBe('Carbonara English');
+      expect(result.items[0].description).toBe('Classic');
+      expect(result.items[0].resolved_lang).toBe('en');
     });
   });
 
@@ -310,47 +363,66 @@ describe('UsersService', () => {
         id: 101,
         user_id: 1,
         source_lang: 'it',
+        course: 'dessert',
+        difficulty: 'easy',
+        prep_time: 20,
+        cook_time: 0,
+        total_time: 20,
+        servings: 6,
+        translation_status: 'completed',
+        cover_image_url: null,
+        video_url: null,
+        created_at: new Date('2026-09-01'),
+        updated_at: null,
         translations: [
           { locale: 'it', title: 'Tiramisù', description: 'Dolce classico' },
           { locale: 'en', title: 'Tiramisu', description: 'Classic dessert' },
         ],
         user: { id: 1, username: 'mario', avatar_url: null },
+        recipe_tags: [],
+        likes: [{ user_id: 1 }],
+        _count: { likes: 12, comments: 4 },
       },
     ];
 
-    it('should return authored recipes with all translations when lang is omitted', async () => {
+    it('should return paginated authored recipes with card projection', async () => {
       (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await service.getMyRecipes(1);
+      const result = await service.getMyRecipes(1, { page: 1, limit: 20 });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(101);
-      expect(result[0].translations).toBeDefined();
-      expect(prisma.recipe.findMany).toHaveBeenCalledWith({
-        where: { user_id: 1 },
-        orderBy: { created_at: 'desc' },
-        include: {
-          translations: true,
-          user: {
-            select: {
-              id: true,
-              username: true,
-              avatar_url: true,
-            },
-          },
-        },
-      });
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(101);
+      expect(result.items[0].title).toBe('Tiramisù');
+      expect(result.items[0].is_liked).toBe(true);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { user_id: 1 },
+          skip: 0,
+          take: 20,
+          orderBy: { created_at: 'desc' },
+        }),
+      );
     });
 
     it('should project localized title and description when lang is provided', async () => {
       (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
 
-      const result = await service.getMyRecipes(1, 'en');
+      const result = await service.getMyRecipes(1, {
+        page: 1,
+        limit: 20,
+        lang: 'en',
+      });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(101);
-      expect((result[0] as any).title).toBe('Tiramisu');
-      expect((result[0] as any).description).toBe('Classic dessert');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(101);
+      expect(result.items[0].title).toBe('Tiramisu');
+      expect(result.items[0].description).toBe('Classic dessert');
+      expect(result.items[0].resolved_lang).toBe('en');
     });
   });
 

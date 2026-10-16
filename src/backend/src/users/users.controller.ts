@@ -44,8 +44,9 @@ import {
   ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
-import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
-import { LocalizedRecipeDetailResponse } from 'src/recipe/dto/localized-recipe.response';
+import { SearchUserQueryDto } from './dto/search-user-query.dto';
+import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
+import { PaginatedRecipeResponseDto } from 'src/recipe/dto/recipe-response.dto';
 
 /**
  * Controller handling user profiles, account preferences, avatar uploads, and social interactions.
@@ -177,20 +178,20 @@ export class UsersController {
       'Returns recipes previously liked by the current user, ordered by most recently liked.',
   })
   @ApiOkResponse({
-    description: 'List of recipes liked by the user',
-    type: [LocalizedRecipeDetailResponse],
+    description: 'Paginated recipes liked by the user',
+    type: PaginatedRecipeResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    description: 'Invalid pagination or language parameter',
     type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Get('me/likes')
   async getLikedRecipes(
     @CurrentUser('id') id: number,
-    @Query() localeDto: LocaleQueryDto,
+    @Query() query: UserCookbookQueryDto,
   ) {
-    return await this.userService.getLikedRecipes(id, localeDto?.lang);
+    return await this.userService.getLikedRecipes(id, query);
   }
 
   /**
@@ -202,20 +203,20 @@ export class UsersController {
       'Returns recipes authored by the authenticated user, ordered by creation date.',
   })
   @ApiOkResponse({
-    description: 'List of recipes authored by the user',
-    type: [LocalizedRecipeDetailResponse],
+    description: 'Paginated recipes authored by the user',
+    type: PaginatedRecipeResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    description: 'Invalid pagination or language parameter',
     type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Get('me/recipes')
   async getMyRecipes(
     @CurrentUser('id') id: number,
-    @Query() localeDto: LocaleQueryDto,
+    @Query() query: UserCookbookQueryDto,
   ) {
-    return await this.userService.getMyRecipes(id, localeDto?.lang);
+    return await this.userService.getMyRecipes(id, query);
   }
 
   /**
@@ -226,19 +227,17 @@ export class UsersController {
     description:
       'Searches users by username substring matching (case-insensitive).',
   })
-  @ApiQuery({
-    name: 'value',
-    required: true,
-    description: 'Username substring search query',
-    example: 'mario',
-  })
   @ApiOkResponse({
     description: 'List of matching usernames',
     type: [UserSearchResultDto],
   })
-  @Get('search')
-  async searchUser(@Query('value') username: string) {
-    return await this.userService.findUser(username);
+  @ApiBadRequestResponse({
+    description: 'Search parameter is missing or empty',
+    type: ApiBadRequestResponseDto,
+  })
+  @Get()
+  async searchUser(@Query() query: SearchUserQueryDto) {
+    return await this.userService.findUser(query.search);
   }
 
   /**

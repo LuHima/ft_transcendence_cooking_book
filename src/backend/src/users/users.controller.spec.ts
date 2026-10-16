@@ -105,29 +105,61 @@ describe('UsersController', () => {
 
   describe('getLikedRecipes', () => {
     it('should return liked recipes for the authenticated user', async () => {
-      const mockRecipes = [{ id: 10, title: 'Carbonara' }];
+      const mockRecipes = {
+        items: [{ id: 10, title: 'Carbonara' }],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
       (service.getLikedRecipes as jest.Mock<any>) = jest
         .fn<() => Promise<any>>()
         .mockResolvedValue(mockRecipes);
 
-      const result = await controller.getLikedRecipes(1, { lang: 'it' });
+      const query = { page: 1, limit: 20, lang: 'it' as const };
+      const result = await controller.getLikedRecipes(1, query);
 
       expect(result).toEqual(mockRecipes);
-      expect(service.getLikedRecipes).toHaveBeenCalledWith(1, 'it');
+      expect(service.getLikedRecipes).toHaveBeenCalledWith(1, query);
     });
   });
 
   describe('getMyRecipes', () => {
     it('should return authored recipes for the authenticated user', async () => {
-      const mockRecipes = [{ id: 101, title: 'Tiramisù' }];
+      const mockRecipes = {
+        items: [{ id: 101, title: 'Tiramisù' }],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
       (service.getMyRecipes as jest.Mock<any>) = jest
         .fn<() => Promise<any>>()
         .mockResolvedValue(mockRecipes);
 
-      const result = await controller.getMyRecipes(1, { lang: 'it' });
+      const query = { page: 1, limit: 20, lang: 'it' as const };
+      const result = await controller.getMyRecipes(1, query);
 
       expect(result).toEqual(mockRecipes);
-      expect(service.getMyRecipes).toHaveBeenCalledWith(1, 'it');
+      expect(service.getMyRecipes).toHaveBeenCalledWith(1, query);
+    });
+  });
+
+  describe('searchUser', () => {
+    it('should delegate to service.findUser with search query parameter', async () => {
+      const mockResult = [{ username: 'mario' }, { username: 'mario_chef' }];
+      (service.findUser as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockResult);
+
+      const result = await controller.searchUser({ search: 'mario' });
+
+      expect(result).toEqual(mockResult);
+      expect(service.findUser).toHaveBeenCalledWith('mario');
     });
   });
 

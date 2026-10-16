@@ -815,6 +815,31 @@
         "operationId": "UsersController_getLikedRecipes",
         "parameters": [
           {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
             "name": "lang",
             "required": false,
             "in": "query",
@@ -832,20 +857,17 @@
         ],
         "responses": {
           "200": {
-            "description": "List of recipes liked by the user",
+            "description": "Paginated recipes liked by the user",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
-                  }
+                  "$ref": "#/components/schemas/PaginatedRecipeResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid language parameter (must be one of: it, en, fr)",
+            "description": "Invalid pagination or language parameter",
             "content": {
               "application/json": {
                 "schema": {
@@ -892,6 +914,31 @@
         "operationId": "UsersController_getMyRecipes",
         "parameters": [
           {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
             "name": "lang",
             "required": false,
             "in": "query",
@@ -909,20 +956,17 @@
         ],
         "responses": {
           "200": {
-            "description": "List of recipes authored by the user",
+            "description": "Paginated recipes authored by the user",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
-                  }
+                  "$ref": "#/components/schemas/PaginatedRecipeResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid language parameter (must be one of: it, en, fr)",
+            "description": "Invalid pagination or language parameter",
             "content": {
               "application/json": {
                 "schema": {
@@ -963,13 +1007,13 @@
         ]
       }
     },
-    "/api/users/search": {
+    "/api/users": {
       "get": {
         "description": "Searches users by username substring matching (case-insensitive).",
         "operationId": "UsersController_searchUser",
         "parameters": [
           {
-            "name": "value",
+            "name": "search",
             "required": true,
             "in": "query",
             "description": "Username substring search query",
@@ -989,6 +1033,16 @@
                   "items": {
                     "$ref": "#/components/schemas/UserSearchResultDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Search parameter is missing or empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -3796,6 +3850,478 @@
           "resolved_lang"
         ]
       },
+      "LocalizedRecipeSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique recipe identifier",
+            "example": 42
+          },
+          "course": {
+            "type": "string",
+            "enum": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ],
+            "description": "Course classification",
+            "example": "first_course"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "easy",
+              "medium",
+              "hard"
+            ],
+            "description": "Difficulty level",
+            "example": "medium"
+          },
+          "prep_time": {
+            "type": "number",
+            "description": "Preparation time in minutes",
+            "example": 15
+          },
+          "cook_time": {
+            "type": "number",
+            "description": "Cooking time in minutes",
+            "example": 10
+          },
+          "total_time": {
+            "type": "number",
+            "description": "Total time in minutes (prep_time + cook_time)",
+            "example": 25
+          },
+          "servings": {
+            "type": "number",
+            "description": "Portions / servings yielded",
+            "example": 4
+          },
+          "source_lang": {
+            "type": "string",
+            "description": "Original author language",
+            "example": "it"
+          },
+          "translation_status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "description": "Automated machine translation state",
+            "example": "completed"
+          },
+          "cover_image_url": {
+            "type": "object",
+            "description": "Primary hero recipe cover image URL",
+            "example": "/uploads/recipes/carbonara_cover.webp",
+            "nullable": true
+          },
+          "video_url": {
+            "type": "object",
+            "description": "Tutorial demonstration video URL",
+            "example": "/uploads/recipes/carbonara_tutorial.mp4",
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2026-10-09T18:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "object",
+            "description": "Last update timestamp",
+            "example": "2026-10-09T18:30:00.000Z",
+            "nullable": true
+          },
+          "author": {
+            "description": "Author profile summary",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Localized recipe title",
+            "example": "Spaghetti alla Carbonara"
+          },
+          "description": {
+            "type": "string",
+            "description": "Localized introduction and dish description",
+            "example": "Il grande classico della cucina romana con guanciale, pecorino e tuorli."
+          },
+          "tags": {
+            "description": "Classification tags attached to the recipe",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeTagResponse"
+            }
+          },
+          "likes_count": {
+            "type": "number",
+            "description": "Total number of likes received by this recipe",
+            "example": 42
+          },
+          "comments_count": {
+            "type": "number",
+            "description": "Total number of active comments on this recipe",
+            "example": 8
+          },
+          "is_liked": {
+            "type": "boolean",
+            "description": "Whether the requesting authenticated user has liked this recipe (false for guests)",
+            "example": true
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized text fields",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ],
+            "example": "it"
+          }
+        },
+        "required": [
+          "id",
+          "course",
+          "difficulty",
+          "prep_time",
+          "cook_time",
+          "total_time",
+          "servings",
+          "source_lang",
+          "translation_status",
+          "cover_image_url",
+          "video_url",
+          "created_at",
+          "updated_at",
+          "author",
+          "title",
+          "description",
+          "tags",
+          "likes_count",
+          "comments_count",
+          "is_liked",
+          "resolved_lang"
+        ]
+      },
+      "PaginatedRecipeResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Array of localized recipe summary cards for current page window",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeSummaryResponse"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of recipes matching filter criteria",
+            "example": 150
+          },
+          "page": {
+            "type": "number",
+            "description": "Current 1-based page window index",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of pages",
+            "example": 8
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates if another page exists after current page",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates if an earlier page precedes current page",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
+      "UserSearchResultDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Matching username",
+            "example": "mario_rossi"
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "PublicUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "User identifier",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Username",
+            "example": "mario_rossi"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Public avatar photo URL",
+            "example": "/uploads/avatars/avatar_1.webp"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Member since date",
+            "example": "2026-10-09T18:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url",
+          "created_at"
+        ]
+      },
+      "CatalogMetadataResponseDto": {
+        "type": "object",
+        "properties": {
+          "courses": {
+            "type": "array",
+            "description": "List of meal courses (e.g. appetizer, first_course, dessert)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "appetizer",
+                "first_course",
+                "main_course",
+                "dessert",
+                "side_dish",
+                "drink",
+                "snack"
+              ]
+            },
+            "example": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ]
+          },
+          "difficulties": {
+            "type": "array",
+            "description": "List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            },
+            "example": [
+              "easy",
+              "medium",
+              "hard"
+            ]
+          },
+          "units": {
+            "type": "array",
+            "description": "Supported measurement units (grams, milliliters, spoons, pieces, etc.)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "g",
+                "kg",
+                "ml",
+                "cl",
+                "l",
+                "oz",
+                "lb",
+                "fl_oz",
+                "cup",
+                "tbsp",
+                "tsp",
+                "piece",
+                "pinch"
+              ]
+            },
+            "example": [
+              "g",
+              "kg",
+              "ml",
+              "cl",
+              "l",
+              "oz",
+              "lb",
+              "fl_oz",
+              "cup",
+              "tbsp",
+              "tsp",
+              "piece",
+              "pinch"
+            ]
+          },
+          "categories": {
+            "type": "array",
+            "description": "Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "produce",
+                "dairy_eggs",
+                "meat_poultry",
+                "seafood",
+                "bakery_grains",
+                "pantry_spices",
+                "legumes_nuts",
+                "beverages_liquids",
+                "other"
+              ]
+            },
+            "example": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "courses",
+          "difficulties",
+          "units",
+          "categories"
+        ]
+      },
+      "TagResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "vegetarian"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized tag display name",
+            "example": "Vegetariano"
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized tag name",
+            "example": "it",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "resolved_lang"
+        ]
+      },
+      "IngredientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique ingredient catalog identifier",
+            "example": 12
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical ingredient slug",
+            "example": "parmigiano-reggiano"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "dairy_eggs",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized ingredient display name",
+            "example": "Parmigiano Reggiano DOP"
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized ingredient name",
+            "example": "it",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "category",
+          "name",
+          "resolved_lang"
+        ]
+      },
       "LocalizedRecipeStepResponse": {
         "type": "object",
         "properties": {
@@ -4167,478 +4693,6 @@
           "steps",
           "ingredients",
           "media"
-        ]
-      },
-      "UserSearchResultDto": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "description": "Matching username",
-            "example": "mario_rossi"
-          }
-        },
-        "required": [
-          "username"
-        ]
-      },
-      "PublicUserResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "User identifier",
-            "example": 1
-          },
-          "username": {
-            "type": "string",
-            "description": "Username",
-            "example": "mario_rossi"
-          },
-          "avatar_url": {
-            "type": "string",
-            "nullable": true,
-            "description": "Public avatar photo URL",
-            "example": "/uploads/avatars/avatar_1.webp"
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Member since date",
-            "example": "2026-10-09T18:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "username",
-          "avatar_url",
-          "created_at"
-        ]
-      },
-      "CatalogMetadataResponseDto": {
-        "type": "object",
-        "properties": {
-          "courses": {
-            "type": "array",
-            "description": "List of meal courses (e.g. appetizer, first_course, dessert)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "appetizer",
-                "first_course",
-                "main_course",
-                "dessert",
-                "side_dish",
-                "drink",
-                "snack"
-              ]
-            },
-            "example": [
-              "appetizer",
-              "first_course",
-              "main_course",
-              "dessert",
-              "side_dish",
-              "drink",
-              "snack"
-            ]
-          },
-          "difficulties": {
-            "type": "array",
-            "description": "List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "easy",
-                "medium",
-                "hard"
-              ]
-            },
-            "example": [
-              "easy",
-              "medium",
-              "hard"
-            ]
-          },
-          "units": {
-            "type": "array",
-            "description": "Supported measurement units (grams, milliliters, spoons, pieces, etc.)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "g",
-                "kg",
-                "ml",
-                "cl",
-                "l",
-                "oz",
-                "lb",
-                "fl_oz",
-                "cup",
-                "tbsp",
-                "tsp",
-                "piece",
-                "pinch"
-              ]
-            },
-            "example": [
-              "g",
-              "kg",
-              "ml",
-              "cl",
-              "l",
-              "oz",
-              "lb",
-              "fl_oz",
-              "cup",
-              "tbsp",
-              "tsp",
-              "piece",
-              "pinch"
-            ]
-          },
-          "categories": {
-            "type": "array",
-            "description": "Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)",
-            "items": {
-              "type": "string",
-              "enum": [
-                "produce",
-                "dairy_eggs",
-                "meat_poultry",
-                "seafood",
-                "bakery_grains",
-                "pantry_spices",
-                "legumes_nuts",
-                "beverages_liquids",
-                "other"
-              ]
-            },
-            "example": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ]
-          }
-        },
-        "required": [
-          "courses",
-          "difficulties",
-          "units",
-          "categories"
-        ]
-      },
-      "TagResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique tag identifier",
-            "example": 1
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical tag slug",
-            "example": "vegetarian"
-          },
-          "name": {
-            "type": "string",
-            "description": "Localized tag display name",
-            "example": "Vegetariano"
-          },
-          "resolved_lang": {
-            "type": "string",
-            "description": "Resolved locale code used for localized tag name",
-            "example": "it",
-            "enum": [
-              "it",
-              "en",
-              "fr"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "name",
-          "resolved_lang"
-        ]
-      },
-      "IngredientResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique ingredient catalog identifier",
-            "example": 12
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical ingredient slug",
-            "example": "parmigiano-reggiano"
-          },
-          "category": {
-            "description": "Ingredient culinary category",
-            "example": "dairy_eggs",
-            "enum": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ],
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "description": "Localized ingredient display name",
-            "example": "Parmigiano Reggiano DOP"
-          },
-          "resolved_lang": {
-            "type": "string",
-            "description": "Resolved locale code used for localized ingredient name",
-            "example": "it",
-            "enum": [
-              "it",
-              "en",
-              "fr"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "category",
-          "name",
-          "resolved_lang"
-        ]
-      },
-      "LocalizedRecipeSummaryResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique recipe identifier",
-            "example": 42
-          },
-          "course": {
-            "type": "string",
-            "enum": [
-              "appetizer",
-              "first_course",
-              "main_course",
-              "dessert",
-              "side_dish",
-              "drink",
-              "snack"
-            ],
-            "description": "Course classification",
-            "example": "first_course"
-          },
-          "difficulty": {
-            "type": "string",
-            "enum": [
-              "easy",
-              "medium",
-              "hard"
-            ],
-            "description": "Difficulty level",
-            "example": "medium"
-          },
-          "prep_time": {
-            "type": "number",
-            "description": "Preparation time in minutes",
-            "example": 15
-          },
-          "cook_time": {
-            "type": "number",
-            "description": "Cooking time in minutes",
-            "example": 10
-          },
-          "total_time": {
-            "type": "number",
-            "description": "Total time in minutes (prep_time + cook_time)",
-            "example": 25
-          },
-          "servings": {
-            "type": "number",
-            "description": "Portions / servings yielded",
-            "example": 4
-          },
-          "source_lang": {
-            "type": "string",
-            "description": "Original author language",
-            "example": "it"
-          },
-          "translation_status": {
-            "type": "string",
-            "enum": [
-              "completed",
-              "failed"
-            ],
-            "description": "Automated machine translation state",
-            "example": "completed"
-          },
-          "cover_image_url": {
-            "type": "object",
-            "description": "Primary hero recipe cover image URL",
-            "example": "/uploads/recipes/carbonara_cover.webp",
-            "nullable": true
-          },
-          "video_url": {
-            "type": "object",
-            "description": "Tutorial demonstration video URL",
-            "example": "/uploads/recipes/carbonara_tutorial.mp4",
-            "nullable": true
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Creation timestamp",
-            "example": "2026-10-09T18:00:00.000Z"
-          },
-          "updated_at": {
-            "type": "object",
-            "description": "Last update timestamp",
-            "example": "2026-10-09T18:30:00.000Z",
-            "nullable": true
-          },
-          "author": {
-            "description": "Author profile summary",
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
-              }
-            ]
-          },
-          "title": {
-            "type": "string",
-            "description": "Localized recipe title",
-            "example": "Spaghetti alla Carbonara"
-          },
-          "description": {
-            "type": "string",
-            "description": "Localized introduction and dish description",
-            "example": "Il grande classico della cucina romana con guanciale, pecorino e tuorli."
-          },
-          "tags": {
-            "description": "Classification tags attached to the recipe",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LocalizedRecipeTagResponse"
-            }
-          },
-          "likes_count": {
-            "type": "number",
-            "description": "Total number of likes received by this recipe",
-            "example": 42
-          },
-          "comments_count": {
-            "type": "number",
-            "description": "Total number of active comments on this recipe",
-            "example": 8
-          },
-          "is_liked": {
-            "type": "boolean",
-            "description": "Whether the requesting authenticated user has liked this recipe (false for guests)",
-            "example": true
-          },
-          "resolved_lang": {
-            "type": "string",
-            "description": "Resolved locale code used for localized text fields",
-            "enum": [
-              "it",
-              "en",
-              "fr"
-            ],
-            "example": "it"
-          }
-        },
-        "required": [
-          "id",
-          "course",
-          "difficulty",
-          "prep_time",
-          "cook_time",
-          "total_time",
-          "servings",
-          "source_lang",
-          "translation_status",
-          "cover_image_url",
-          "video_url",
-          "created_at",
-          "updated_at",
-          "author",
-          "title",
-          "description",
-          "tags",
-          "likes_count",
-          "comments_count",
-          "is_liked",
-          "resolved_lang"
-        ]
-      },
-      "PaginatedRecipeResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "description": "Array of localized recipe summary cards for current page window",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LocalizedRecipeSummaryResponse"
-            }
-          },
-          "total": {
-            "type": "number",
-            "description": "Total number of recipes matching filter criteria",
-            "example": 150
-          },
-          "page": {
-            "type": "number",
-            "description": "Current 1-based page window index",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "description": "Number of items per page",
-            "example": 20
-          },
-          "total_pages": {
-            "type": "number",
-            "description": "Total number of pages",
-            "example": 8
-          },
-          "has_next_page": {
-            "type": "boolean",
-            "description": "Indicates if another page exists after current page",
-            "example": true
-          },
-          "has_prev_page": {
-            "type": "boolean",
-            "description": "Indicates if an earlier page precedes current page",
-            "example": false
-          }
-        },
-        "required": [
-          "items",
-          "total",
-          "page",
-          "limit",
-          "total_pages",
-          "has_next_page",
-          "has_prev_page"
         ]
       },
       "CreateRecipeStepDto": {
