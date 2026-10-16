@@ -6,6 +6,7 @@ import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pip
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { GlobalExceptionFilter } from './common/filters/global.exception.filter';
+import { ContentLanguageInterceptor } from './common/interceptors/content-language.interceptor';
 import {
   RECIPE_UPLOADS_DIR,
   AVATAR_UPLOADS_DIR,
@@ -30,6 +31,8 @@ async function bootstrap() {
   app.use(cookieParser(process.env.COOKIE_SECRET));
   // Centralized global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
+  // Standard RFC 9110 Content-Language response header interceptor
+  app.useGlobalInterceptors(new ContentLanguageInterceptor());
   app.useGlobalPipes(
     // Blocca {} vuoti su tutti i body
     new GlobalNotEmptyBodyPipe(),

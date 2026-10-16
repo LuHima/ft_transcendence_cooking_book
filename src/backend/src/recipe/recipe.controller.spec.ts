@@ -221,7 +221,7 @@ describe('RecipeController', () => {
       const mockResult = { id: 1, title: 'Carbonara' };
       mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getRecipeById(1, 'it');
+      const result = await controller.getRecipeById(1, { lang: 'it' });
 
       expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', undefined);
       expect(result).toEqual(mockResult);
@@ -237,7 +237,7 @@ describe('RecipeController', () => {
       };
       mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getRecipeById(1, 'it', 42);
+      const result = await controller.getRecipeById(1, { lang: 'it' }, 42);
 
       expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 42);
       expect(result).toEqual(mockResult);

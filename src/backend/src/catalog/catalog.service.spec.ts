@@ -79,8 +79,8 @@ describe('CatalogService', () => {
       const result = await service.getTags({ lang: 'it' });
 
       expect(result).toEqual([
-        { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
-        { id: 2, slug: 'quick_easy', name: 'Veloce e Facile' },
+        { id: 1, slug: 'vegetarian', name: 'Vegetariano', resolved_lang: 'it' },
+        { id: 2, slug: 'quick_easy', name: 'Veloce e Facile', resolved_lang: 'it' },
       ]);
     });
 
@@ -90,8 +90,8 @@ describe('CatalogService', () => {
       const result = await service.getTags({});
 
       expect(result).toEqual([
-        { id: 2, slug: 'quick_easy', name: 'Quick & Easy' },
-        { id: 1, slug: 'vegetarian', name: 'Vegetarian' },
+        { id: 2, slug: 'quick_easy', name: 'Quick & Easy', resolved_lang: 'en' },
+        { id: 1, slug: 'vegetarian', name: 'Vegetarian', resolved_lang: 'en' },
       ]);
     });
 
@@ -108,7 +108,7 @@ describe('CatalogService', () => {
       const result = await service.getTags({ lang: 'it' });
 
       expect(result).toEqual([
-        { id: 3, slug: 'comfort_food', name: 'Comfort Food' },
+        { id: 3, slug: 'comfort_food', name: 'Comfort Food', resolved_lang: 'en' },
       ]);
     });
   });
@@ -150,12 +150,14 @@ describe('CatalogService', () => {
           slug: 'parmesan',
           category: IngredientCategory.dairy_eggs,
           name: 'Parmigiano Reggiano',
+          resolved_lang: 'it',
         },
         {
           id: 1,
           slug: 'tomato',
           category: IngredientCategory.produce,
           name: 'Pomodoro',
+          resolved_lang: 'it',
         },
       ]);
     });
@@ -177,6 +179,7 @@ describe('CatalogService', () => {
           slug: 'tomato',
           category: IngredientCategory.produce,
           name: 'Pomodoro',
+          resolved_lang: 'it',
         },
       ]);
       expect(prisma.ingredient.findMany).toHaveBeenCalledWith(

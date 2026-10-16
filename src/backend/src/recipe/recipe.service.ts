@@ -174,6 +174,7 @@ export class RecipeService {
             id: t.id,
             slug: t.slug,
             name: tagTrans?.name ?? t.slug,
+            resolved_lang: tagTrans?.locale ?? 'en',
           };
         });
 
@@ -366,6 +367,7 @@ export class RecipeService {
           quantity: Number(ri.quantity),
           unit: ri.unit,
           notes: note,
+          resolved_lang: ingTrans?.locale ?? 'en',
         };
       });
 
@@ -380,6 +382,7 @@ export class RecipeService {
         id: t.id,
         slug: t.slug,
         name: tagTrans?.name ?? t.slug,
+        resolved_lang: tagTrans?.locale ?? 'en',
       };
     });
 
@@ -428,6 +431,7 @@ export class RecipeService {
       is_liked: currentUserId
         ? Boolean(recipe.likes && recipe.likes.length > 0)
         : false,
+      resolved_lang: translation?.locale ?? (recipe.source_lang || 'en'),
     };
   }
 

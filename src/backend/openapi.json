@@ -818,14 +818,15 @@
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target language for projected recipe titles and descriptions",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
             "schema": {
+              "example": "it",
+              "type": "string",
               "enum": [
                 "it",
                 "en",
                 "fr"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -839,6 +840,16 @@
                   "items": {
                     "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid language parameter (must be one of: it, en, fr)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -884,14 +895,15 @@
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target language for projected recipe titles and descriptions",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
             "schema": {
+              "example": "it",
+              "type": "string",
               "enum": [
                 "it",
                 "en",
                 "fr"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -905,6 +917,16 @@
                   "items": {
                     "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid language parameter (must be one of: it, en, fr)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -1094,14 +1116,15 @@
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target locale for tag translations (default: en)",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
             "schema": {
+              "example": "it",
+              "type": "string",
               "enum": [
                 "it",
                 "en",
                 "fr"
-              ],
-              "type": "string"
+              ]
             }
           }
         ],
@@ -1115,6 +1138,16 @@
                   "items": {
                     "$ref": "#/components/schemas/TagResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid language parameter (must be one of: it, en, fr)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -1145,14 +1178,15 @@
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target locale for ingredient names (default: en)",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
             "schema": {
+              "example": "it",
+              "type": "string",
               "enum": [
                 "it",
                 "en",
                 "fr"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1161,6 +1195,8 @@
             "in": "query",
             "description": "Filter ingredients by culinary category",
             "schema": {
+              "example": "dairy_eggs",
+              "type": "string",
               "enum": [
                 "produce",
                 "dairy_eggs",
@@ -1171,8 +1207,7 @@
                 "legumes_nuts",
                 "beverages_liquids",
                 "other"
-              ],
-              "type": "string"
+              ]
             }
           },
           {
@@ -1196,6 +1231,16 @@
                   "items": {
                     "$ref": "#/components/schemas/IngredientResponseDto"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid category or language parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -3732,12 +3777,23 @@
             "type": "string",
             "description": "Localized tag label",
             "example": "Tradizionale"
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized tag name",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ],
+            "example": "it"
           }
         },
         "required": [
           "id",
           "slug",
-          "name"
+          "name",
+          "resolved_lang"
         ]
       },
       "LocalizedRecipeStepResponse": {
@@ -3850,6 +3906,16 @@
             "description": "Localized preparation notes or cut advice",
             "example": "tagliato a listarelle spesse",
             "nullable": true
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized ingredient name",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ],
+            "example": "it"
           }
         },
         "required": [
@@ -3859,7 +3925,8 @@
           "name",
           "quantity",
           "unit",
-          "notes"
+          "notes",
+          "resolved_lang"
         ]
       },
       "RecipeMediaResponse": {
@@ -4032,6 +4099,11 @@
           "resolved_lang": {
             "type": "string",
             "description": "Resolved locale code used for localized text fields",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ],
             "example": "it"
           },
           "preservation": {
@@ -4279,12 +4351,23 @@
             "type": "string",
             "description": "Localized tag display name",
             "example": "Vegetariano"
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized tag name",
+            "example": "it",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ]
           }
         },
         "required": [
           "id",
           "slug",
-          "name"
+          "name",
+          "resolved_lang"
         ]
       },
       "IngredientResponseDto": {
@@ -4320,13 +4403,24 @@
             "type": "string",
             "description": "Localized ingredient display name",
             "example": "Parmigiano Reggiano DOP"
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized ingredient name",
+            "example": "it",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ]
           }
         },
         "required": [
           "id",
           "slug",
           "category",
-          "name"
+          "name",
+          "resolved_lang"
         ]
       },
       "LocalizedRecipeSummaryResponse": {
@@ -4464,6 +4558,11 @@
           "resolved_lang": {
             "type": "string",
             "description": "Resolved locale code used for localized text fields",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ],
             "example": "it"
           }
         },

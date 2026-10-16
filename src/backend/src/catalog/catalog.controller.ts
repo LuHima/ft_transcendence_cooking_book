@@ -3,17 +3,21 @@ import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
-  ApiQuery,
+  ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
-import { IngredientCategory } from '@prisma/client';
 import {
   CatalogMetadataResponseDto,
   IngredientResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
-import { ApiInternalServerErrorResponseDto } from 'src/common/dto/api-error-response.dto';
+import {
+  ApiBadRequestResponseDto,
+  ApiInternalServerErrorResponseDto,
+} from 'src/common/dto/api-error-response.dto';
+import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
+import { FilterIngredientDto } from './dto/filter-ingredient.dto';
 
 /**
  * Controller providing access to system metadata dictionaries, curated tags, and ingredient catalogs.
@@ -52,20 +56,17 @@ export class CatalogController {
     description:
       'Returns all curated tags (e.g. vegetarian, gluten-free), ordered alphabetically by localized name. Falls back to English if requested locale is missing.',
   })
-  @ApiQuery({
-    name: 'lang',
-    required: false,
-    description: 'Target locale for tag translations (default: en)',
-    enum: ['it', 'en', 'fr'],
-    example: 'it',
-  })
   @ApiOkResponse({
     description: 'Alphabetically ordered list of localized tags',
     type: [TagResponseDto],
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    type: ApiBadRequestResponseDto,
+  })
   @Get('tags')
-  async getTags(@Query('lang') lang?: string) {
-    return await this.catalogService.getTags({ lang });
+  async getTags(@Query() localeDto: LocaleQueryDto) {
+    return await this.catalogService.getTags({ lang: localeDto?.lang });
   }
 
   /**
@@ -76,36 +77,16 @@ export class CatalogController {
     description:
       'Returns curated catalog ingredients matching the given category or text query, ordered alphabetically by localized name.',
   })
-  @ApiQuery({
-    name: 'lang',
-    required: false,
-    description: 'Target locale for ingredient names (default: en)',
-    enum: ['it', 'en', 'fr'],
-    example: 'it',
-  })
-  @ApiQuery({
-    name: 'category',
-    required: false,
-    description: 'Filter ingredients by culinary category',
-    enum: IngredientCategory,
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    description:
-      'Case-insensitive substring search across ingredient slugs and translations',
-    example: 'pomodoro',
-  })
   @ApiOkResponse({
     description: 'Alphabetically ordered list of matching curated ingredients',
     type: [IngredientResponseDto],
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid category or language parameter',
+    type: ApiBadRequestResponseDto,
+  })
   @Get('ingredients')
-  async getIngredients(
-    @Query('lang') lang?: string,
-    @Query('category') category?: IngredientCategory,
-    @Query('search') search?: string,
-  ) {
-    return await this.catalogService.getIngredients({ lang, category, search });
+  async getIngredients(@Query() filterDto: FilterIngredientDto) {
+    return await this.catalogService.getIngredients(filterDto);
   }
 }

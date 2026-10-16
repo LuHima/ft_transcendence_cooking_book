@@ -110,7 +110,7 @@ describe('UsersController', () => {
         .fn<() => Promise<any>>()
         .mockResolvedValue(mockRecipes);
 
-      const result = await controller.getLikedRecipes(1, 'it');
+      const result = await controller.getLikedRecipes(1, { lang: 'it' });
 
       expect(result).toEqual(mockRecipes);
       expect(service.getLikedRecipes).toHaveBeenCalledWith(1, 'it');
@@ -124,7 +124,7 @@ describe('UsersController', () => {
         .fn<() => Promise<any>>()
         .mockResolvedValue(mockRecipes);
 
-      const result = await controller.getMyRecipes(1, 'it');
+      const result = await controller.getMyRecipes(1, { lang: 'it' });
 
       expect(result).toEqual(mockRecipes);
       expect(service.getMyRecipes).toHaveBeenCalledWith(1, 'it');

@@ -64,6 +64,7 @@ import {
   ApiNotFoundResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
+import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
@@ -163,12 +164,12 @@ export class RecipeController {
   @Get(':id')
   async getRecipeById(
     @Param('id', ParseIntPipe) id: number,
-    @Query('lang') lang?: string,
+    @Query() localeDto: LocaleQueryDto,
     @CurrentUser('id') currentUserId?: number,
   ) {
     return await this.recipeService.getRecipeById(
       Number(id),
-      lang,
+      localeDto?.lang,
       currentUserId,
     );
   }

@@ -231,7 +231,14 @@ describe('RecipeService', () => {
             },
             title: 'Carbonara',
             description: 'Classica',
-            tags: [{ id: 1, slug: 'traditional', name: 'Tradizionale' }],
+            tags: [
+              {
+                id: 1,
+                slug: 'traditional',
+                name: 'Tradizionale',
+                resolved_lang: 'it',
+              },
+            ],
             likes_count: 5,
             comments_count: 2,
             is_liked: false,
@@ -668,6 +675,9 @@ describe('RecipeService', () => {
       expect(result.tags).toHaveLength(1);
       expect(result.tags[0].slug).toBe('traditional');
       expect(result.tags[0].name).toBe('Traditional');
+      expect(result.tags[0].resolved_lang).toBe('en');
+      expect(result.ingredients[0].resolved_lang).toBe('en');
+      expect(result.resolved_lang).toBe('en');
     });
 
     it('gracefully falls back to source_lang when requested translation locale is not available', async () => {

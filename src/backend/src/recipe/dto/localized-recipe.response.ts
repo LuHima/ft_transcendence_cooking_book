@@ -141,6 +141,17 @@ export class LocalizedRecipeIngredientResponse {
     nullable: true,
   })
   notes: string | null;
+
+  /**
+   * Resolved locale code used for localized ingredient name.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized ingredient name',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  resolved_lang: string;
 }
 
 /**
@@ -167,6 +178,17 @@ export class LocalizedRecipeTagResponse {
    */
   @ApiProperty({ description: 'Localized tag label', example: 'Tradizionale' })
   name: string;
+
+  /**
+   * Resolved locale code used for localized tag name.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized tag name',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  resolved_lang: string;
 }
 
 /**
@@ -443,9 +465,10 @@ export class LocalizedRecipeSummaryResponse {
    */
   @ApiProperty({
     description: 'Resolved locale code used for localized text fields',
+    enum: ['it', 'en', 'fr'],
     example: 'it',
   })
-  resolved_lang?: string;
+  resolved_lang: string;
 }
 
 /**

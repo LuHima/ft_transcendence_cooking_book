@@ -44,6 +44,7 @@ import {
   ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
+import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { LocalizedRecipeDetailResponse } from 'src/recipe/dto/localized-recipe.response';
 
 /**
@@ -175,24 +176,21 @@ export class UsersController {
     description:
       'Returns recipes previously liked by the current user, ordered by most recently liked.',
   })
-  @ApiQuery({
-    name: 'lang',
-    required: false,
-    description: 'Target language for projected recipe titles and descriptions',
-    enum: ['it', 'en', 'fr'],
-    example: 'it',
-  })
   @ApiOkResponse({
     description: 'List of recipes liked by the user',
     type: [LocalizedRecipeDetailResponse],
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Get('me/likes')
   async getLikedRecipes(
     @CurrentUser('id') id: number,
-    @Query('lang') lang?: string,
+    @Query() localeDto: LocaleQueryDto,
   ) {
-    return await this.userService.getLikedRecipes(id, lang);
+    return await this.userService.getLikedRecipes(id, localeDto?.lang);
   }
 
   /**
@@ -203,24 +201,21 @@ export class UsersController {
     description:
       'Returns recipes authored by the authenticated user, ordered by creation date.',
   })
-  @ApiQuery({
-    name: 'lang',
-    required: false,
-    description: 'Target language for projected recipe titles and descriptions',
-    enum: ['it', 'en', 'fr'],
-    example: 'it',
-  })
   @ApiOkResponse({
     description: 'List of recipes authored by the user',
     type: [LocalizedRecipeDetailResponse],
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Get('me/recipes')
   async getMyRecipes(
     @CurrentUser('id') id: number,
-    @Query('lang') lang?: string,
+    @Query() localeDto: LocaleQueryDto,
   ) {
-    return await this.userService.getMyRecipes(id, lang);
+    return await this.userService.getMyRecipes(id, localeDto?.lang);
   }
 
   /**

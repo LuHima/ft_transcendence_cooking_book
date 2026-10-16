@@ -60,7 +60,7 @@ describe('CatalogController', () => {
 
   describe('getTags', () => {
     it('should delegate to service.getTags with lang parameter', async () => {
-      const result = await controller.getTags('it');
+      const result = await controller.getTags({ lang: 'it' });
 
       expect(result).toEqual([
         { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
@@ -71,11 +71,11 @@ describe('CatalogController', () => {
 
   describe('getIngredients', () => {
     it('should delegate to service.getIngredients with query parameters', async () => {
-      const result = await controller.getIngredients(
-        'it',
-        IngredientCategory.produce,
-        'pomo',
-      );
+      const result = await controller.getIngredients({
+        lang: 'it',
+        category: IngredientCategory.produce,
+        search: 'pomo',
+      });
 
       expect(result).toEqual([
         {
