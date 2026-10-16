@@ -12,13 +12,6 @@ describe('CatalogController', () => {
   let controller: CatalogController;
   let service: CatalogService;
 
-  const mockMeta = {
-    courses: Object.values(Course),
-    difficulties: Object.values(RecipeDifficulty),
-    units: Object.values(UnitOfMeasure),
-    categories: Object.values(IngredientCategory),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogController],
@@ -26,7 +19,6 @@ describe('CatalogController', () => {
         {
           provide: CatalogService,
           useValue: {
-            getMetadata: jest.fn().mockReturnValue(mockMeta),
             getTags: jest
               .fn()
               .mockResolvedValue([
@@ -47,15 +39,6 @@ describe('CatalogController', () => {
 
     controller = module.get<CatalogController>(CatalogController);
     service = module.get<CatalogService>(CatalogService);
-  });
-
-  describe('getMetadata', () => {
-    it('should return catalog metadata from service', () => {
-      const result = controller.getMetadata();
-
-      expect(result).toEqual(mockMeta);
-      expect(service.getMetadata).toHaveBeenCalled();
-    });
   });
 
   describe('getTags', () => {

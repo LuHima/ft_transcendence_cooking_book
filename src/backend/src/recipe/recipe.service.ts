@@ -613,7 +613,7 @@ export class RecipeService {
         : undefined;
 
     // Execute database transaction
-    return await this.prisma.$transaction(async (tx) => {
+    const createdRecipe = await this.prisma.$transaction(async (tx) => {
       return await tx.recipe.create({
         data: {
           user_id: userId,
@@ -639,6 +639,12 @@ export class RecipeService {
         },
       });
     });
+
+    return await this.getRecipeById(
+      createdRecipe.id,
+      recipe.source_lang,
+      userId,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -849,7 +855,7 @@ export class RecipeService {
     }
 
     // Execute atomic database updates inside transaction
-    return await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       // Upsert direct translation modifications for the targeted locale
       if (Object.keys(transUpdate).length > 0) {
         await tx.recipeTranslation.upsert({
@@ -922,13 +928,15 @@ export class RecipeService {
       }
 
       // Update invariant recipe fields and translation status
-      return await tx.recipe.update({
+      await tx.recipe.update({
         where: {
           id: recipeId,
         },
         data: updateData,
       });
     });
+
+    return await this.getRecipeById(recipeId, targetLocale, userId);
   }
 
   // ---------------------------------------------------------------------------

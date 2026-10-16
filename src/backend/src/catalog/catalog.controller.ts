@@ -8,7 +8,6 @@ import {
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import {
-  CatalogMetadataResponseDto,
   IngredientResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
@@ -30,23 +29,6 @@ import { FilterIngredientDto } from './dto/filter-ingredient.dto';
 @Controller()
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
-
-  /**
-   * Retrieve all static system enumerations in a single payload.
-   */
-  @ApiOperation({
-    summary: 'Get system enumeration metadata',
-    description:
-      'Provides clients with all static enum dictionaries (courses, difficulties, units of measure, ingredient categories) in a single request.',
-  })
-  @ApiOkResponse({
-    description: 'System metadata enumeration dictionary',
-    type: CatalogMetadataResponseDto,
-  })
-  @Get('recipes/metadata')
-  getMetadata() {
-    return this.catalogService.getMetadata();
-  }
 
   /**
    * Retrieve curated dietary and culinary tags.

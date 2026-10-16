@@ -440,6 +440,21 @@ describe('RecipeService', () => {
         translation_status: 'completed',
       };
 
+      const mockDetailRecipe = {
+        id: 42,
+        user_id: 1,
+        title: sampleDto.title,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        translation_status: 'completed',
+        resolved_lang: 'it',
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(mockDetailRecipe as any);
+
       mockPrisma.$transaction.mockImplementation(async (cb: any) => {
         if (typeof cb === 'function') {
           return cb(mockPrisma);
@@ -461,7 +476,8 @@ describe('RecipeService', () => {
           }),
         }),
       );
-      expect(result).toEqual(mockCreatedRecipe);
+      expect(service.getRecipeById).toHaveBeenCalledWith(42, 'it', 1);
+      expect(result).toEqual(mockDetailRecipe);
     });
 
     it('gracefully falls back to source text with failed translation_status when translation fails', async () => {
@@ -480,6 +496,19 @@ describe('RecipeService', () => {
         total_time: 25,
         translation_status: 'failed',
       };
+
+      const mockFailedDetailRecipe = {
+        id: 43,
+        user_id: 1,
+        title: sampleDto.title,
+        total_time: 25,
+        translation_status: 'failed',
+        resolved_lang: 'it',
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(mockFailedDetailRecipe as any);
 
       mockPrisma.$transaction.mockImplementation(async (cb: any) => {
         if (typeof cb === 'function') {
@@ -512,7 +541,8 @@ describe('RecipeService', () => {
           }),
         }),
       );
-      expect(result).toEqual(mockFailedRecipe);
+      expect(service.getRecipeById).toHaveBeenCalledWith(43, 'it', 1);
+      expect(result).toEqual(mockFailedDetailRecipe);
     });
   });
 
@@ -1058,6 +1088,19 @@ describe('RecipeService', () => {
         source_lang: 'it',
       };
 
+      const mockUpdatedDetail = {
+        ...existingRecipe,
+        prep_time: 25,
+        total_time: 35,
+        servings: 6,
+        difficulty: RecipeDifficulty.hard,
+        resolved_lang: 'it',
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(mockUpdatedDetail as any);
+
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
 
       const updateData = {
@@ -1086,6 +1129,7 @@ describe('RecipeService', () => {
           }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
       expect(result.total_time).toBe(35);
     });
 
@@ -1108,6 +1152,10 @@ describe('RecipeService', () => {
         ],
         steps: [],
       };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
 
@@ -1141,6 +1189,7 @@ describe('RecipeService', () => {
           }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
     });
 
     it('throws BadRequestException when retranslate is true but locale differs from source_lang', async () => {
@@ -1197,6 +1246,10 @@ describe('RecipeService', () => {
         steps: [],
       };
 
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
       mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
 
@@ -1226,6 +1279,7 @@ describe('RecipeService', () => {
           }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'en', 1);
     });
 
     it('re-translates source text across remaining locales when retranslate is true and updates translation_status', async () => {
@@ -1263,6 +1317,10 @@ describe('RecipeService', () => {
           },
         ],
       };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
 
@@ -1302,6 +1360,7 @@ describe('RecipeService', () => {
           data: expect.objectContaining({ translation_status: 'completed' }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
     });
   });
 

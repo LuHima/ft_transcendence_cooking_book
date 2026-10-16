@@ -1128,39 +1128,6 @@
         ]
       }
     },
-    "/api/recipes/metadata": {
-      "get": {
-        "description": "Convenience route returning enum dictionaries (courses, difficulties, units, categories) identical to `/api/recipes/metadata`.",
-        "operationId": "RecipeController_getMetadata",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "System metadata enumerations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CatalogMetadataResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get recipe metadata dictionaries",
-        "tags": [
-          "Recipes"
-        ]
-      }
-    },
     "/api/tags": {
       "get": {
         "description": "Returns all curated tags (e.g. vegetarian, gluten-free), ordered alphabetically by localized name. Falls back to English if requested locale is missing.",
@@ -1543,6 +1510,39 @@
           }
         ],
         "summary": "Create a new recipe",
+        "tags": [
+          "Recipes"
+        ]
+      }
+    },
+    "/api/recipes/metadata": {
+      "get": {
+        "description": "Convenience route returning enum dictionaries (courses, difficulties, units, categories) identical to `/api/recipes/metadata`.",
+        "operationId": "RecipeController_getMetadata",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "System metadata enumerations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogMetadataResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get recipe metadata dictionaries",
         "tags": [
           "Recipes"
         ]
@@ -4114,6 +4114,95 @@
           "created_at"
         ]
       },
+      "TagResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "vegetarian"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized tag display name",
+            "example": "Vegetariano"
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized tag name",
+            "example": "it",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "resolved_lang"
+        ]
+      },
+      "IngredientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique ingredient catalog identifier",
+            "example": 12
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical ingredient slug",
+            "example": "parmigiano-reggiano"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "dairy_eggs",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized ingredient display name",
+            "example": "Parmigiano Reggiano DOP"
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized ingredient name",
+            "example": "it",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "category",
+          "name",
+          "resolved_lang"
+        ]
+      },
       "CatalogMetadataResponseDto": {
         "type": "object",
         "properties": {
@@ -4231,95 +4320,6 @@
           "difficulties",
           "units",
           "categories"
-        ]
-      },
-      "TagResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique tag identifier",
-            "example": 1
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical tag slug",
-            "example": "vegetarian"
-          },
-          "name": {
-            "type": "string",
-            "description": "Localized tag display name",
-            "example": "Vegetariano"
-          },
-          "resolved_lang": {
-            "type": "string",
-            "description": "Resolved locale code used for localized tag name",
-            "example": "it",
-            "enum": [
-              "it",
-              "en",
-              "fr"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "name",
-          "resolved_lang"
-        ]
-      },
-      "IngredientResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique ingredient catalog identifier",
-            "example": 12
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical ingredient slug",
-            "example": "parmigiano-reggiano"
-          },
-          "category": {
-            "description": "Ingredient culinary category",
-            "example": "dairy_eggs",
-            "enum": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ],
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "description": "Localized ingredient display name",
-            "example": "Parmigiano Reggiano DOP"
-          },
-          "resolved_lang": {
-            "type": "string",
-            "description": "Resolved locale code used for localized ingredient name",
-            "example": "it",
-            "enum": [
-              "it",
-              "en",
-              "fr"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "category",
-          "name",
-          "resolved_lang"
         ]
       },
       "LocalizedRecipeStepResponse": {
