@@ -49,7 +49,7 @@ import {
   RecipeMediaResponse,
 } from './dto/localized-recipe.response';
 import {
-  RecipePaginationResponseDto,
+  PaginatedRecipeResponseDto,
   CoverImageUploadResponseDto,
   StepImageUploadResponseDto,
   VideoUploadResponseDto,
@@ -97,8 +97,8 @@ export class RecipeController {
       'Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy. If authenticated via `accessToken` cookie, contextual social metrics like `is_liked` are populated.',
   })
   @ApiOkResponse({
-    description: 'Array of recipes with translations matching criteria',
-    type: [LocalizedRecipeDetailResponse],
+    description: 'Paginated recipe cards with translations matching criteria',
+    type: PaginatedRecipeResponseDto,
   })
   @UseGuards(OptionalAuthGuard)
   @Get()
@@ -107,47 +107,6 @@ export class RecipeController {
     @CurrentUser('id') currentUserId?: number,
   ) {
     return await this.recipeService.getAllRecipe(filterDto, currentUserId);
-  }
-
-  /**
-   * Retrieve paginated recipe cards with cursor navigation.
-   */
-  @ApiOperation({
-    summary: 'Get paginated recipe stack',
-    description:
-      'Fetches a 30-item page window of recipes optimized for infinite scrolling or stacked presentation. Includes author username and pagination indicators.',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    description: 'Page index number (1-based, default: 1)',
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'value',
-    required: false,
-    description: 'Legacy page parameter alias',
-    example: 1,
-  })
-  @ApiOkResponse({
-    description:
-      'Paginated recipe window with hasNextPage and hasPreviousPage booleans',
-    type: RecipePaginationResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid page parameter (must be a positive integer)',
-    type: ApiBadRequestResponseDto,
-  })
-  @Get('page')
-  async getRecipeStack(
-    @Query('page') page?: number,
-    @Query('value') legacyValue?: number,
-  ) {
-    const rawPage = page ?? legacyValue ?? 1;
-    const pageNumber = Number(rawPage);
-    return await this.recipeService.getRecipeStack(
-      isNaN(pageNumber) || pageNumber < 1 ? 1 : pageNumber,
-    );
   }
 
   /**
@@ -165,30 +124,6 @@ export class RecipeController {
   @Get('metadata')
   getMetadata() {
     return this.catalogService.getMetadata();
-  }
-
-  /**
-   * Search recipes by title.
-   */
-  @ApiOperation({
-    summary: 'Search recipes by title',
-    description:
-      'Performs a case-insensitive search across recipe translation titles and returns matching recipes.',
-  })
-  @ApiQuery({
-    name: 'value',
-    required: true,
-    description: 'Text query to match in recipe titles',
-    example: 'carbonara',
-  })
-  @ApiOkResponse({
-    description: 'List of recipes matching the title search query',
-    type: [LocalizedRecipeDetailResponse],
-  })
-  @Get('search')
-  async getRecipe(@Query('value') name: string) {
-    if (!name) return [];
-    return await this.recipeService.getRecipesByName(name);
   }
 
   /**

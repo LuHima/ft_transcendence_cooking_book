@@ -9,11 +9,12 @@ import {
   IsString,
   Min,
 } from 'class-validator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 /**
- * Query parameter data transfer object for multi-criteria recipe catalog filtering and search.
+ * Query parameter data transfer object for multi-criteria recipe catalog filtering, search, and pagination.
  */
-export class FilterRecipeDto {
+export class FilterRecipeDto extends PaginationQueryDto {
   /**
    * Filter recipes by course category.
    * @example Course.main_course

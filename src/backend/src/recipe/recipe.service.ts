@@ -21,7 +21,9 @@ import {
   LocalizedRecipeTagResponse,
   RecipeMediaResponse,
   LocalizedRecipeDetailResponse,
+  LocalizedRecipeSummaryResponse,
 } from './dto/localized-recipe.response';
+import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
 import { ProductionConfig } from '../common/config/production.config';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import * as fs from 'fs';
@@ -42,9 +44,16 @@ export class RecipeService {
   public async getAllRecipe(
     filters?: FilterRecipeDto | string,
     currentUserId?: number,
-  ) {
+  ): Promise<PaginatedRecipeResponseDto> {
     const filterDto: FilterRecipeDto =
       typeof filters === 'string' ? { lang: filters as any } : filters || {};
+
+    const page = Number(filterDto.page) > 0 ? Number(filterDto.page) : 1;
+    const limit =
+      Number(filterDto.limit) > 0
+        ? Math.min(Number(filterDto.limit), 100)
+        : 20;
+    const skip = (page - 1) * limit;
 
     const where: Prisma.RecipeWhereInput = {};
 
@@ -87,6 +96,22 @@ export class RecipeService {
     // Fetch recipes matching filter criteria together with translations and social metrics
     const includeConfig: any = {
       translations: true,
+      user: {
+        select: {
+          id: true,
+          username: true,
+          avatar_url: true,
+        },
+      },
+      recipe_tags: {
+        include: {
+          tag: {
+            include: {
+              translations: true,
+            },
+          },
+        },
+      },
       _count: {
         select: {
           likes: true,
@@ -104,107 +129,99 @@ export class RecipeService {
       };
     }
 
-    const recipes = (await this.prisma.recipe.findMany({
-      ...(Object.keys(where).length > 0 ? { where } : {}),
-      include: includeConfig,
-    })) as any[];
-
-    const mapSocial = (recipe: any) => ({
-      ...recipe,
-      likes_count: recipe._count?.likes ?? 0,
-      comments_count: recipe._count?.comments ?? 0,
-      is_liked: currentUserId
-        ? Boolean(recipe.likes && recipe.likes.length > 0)
-        : false,
-    });
+    const [recipes, total] = await Promise.all([
+      this.prisma.recipe.findMany({
+        ...(Object.keys(where).length > 0 ? { where } : {}),
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: includeConfig,
+      }),
+      this.prisma.recipe.count({
+        ...(Object.keys(where).length > 0 ? { where } : {}),
+      }),
+    ]);
 
     const lang = filterDto.lang;
-    if (!lang) {
-      return recipes.map(mapSocial);
-    }
+    const items: LocalizedRecipeSummaryResponse[] = (recipes as any[]).map(
+      (recipe) => {
+        const targetLocale =
+          lang && (lang === 'it' || lang === 'en' || lang === 'fr')
+            ? lang
+            : recipe.source_lang;
 
-    // Attach localized title and description when a language is requested
-    return recipes.map((recipe) => {
-      const base = mapSocial(recipe);
-      const targetLocale =
-        lang === 'it' || lang === 'en' || lang === 'fr'
-          ? lang
-          : recipe.source_lang;
+        const translation =
+          recipe.translations.find((t: any) => t.locale === targetLocale) ??
+          recipe.translations.find(
+            (t: any) => t.locale === recipe.source_lang,
+          ) ??
+          recipe.translations.find((t: any) => t.locale === 'en') ??
+          recipe.translations[0];
 
-      const translation =
-        recipe.translations.find((t: any) => t.locale === targetLocale) ??
-        recipe.translations.find((t: any) => t.locale === recipe.source_lang) ??
-        recipe.translations[0];
+        const resolved_lang = translation?.locale ?? recipe.source_lang;
 
-      return {
-        ...base,
-        title: translation?.title ?? null,
-        description: translation?.description ?? null,
-      };
-    });
-  }
+        const tags: LocalizedRecipeTagResponse[] = (
+          recipe.recipe_tags ?? []
+        ).map((rt: any) => {
+          const t = rt.tag;
+          const tagTrans =
+            t?.translations?.find((tr: any) => tr.locale === targetLocale) ??
+            t?.translations?.find(
+              (tr: any) => tr.locale === recipe.source_lang,
+            ) ??
+            t?.translations?.find((tr: any) => tr.locale === 'en');
+          return {
+            id: t.id,
+            slug: t.slug,
+            name: tagTrans?.name ?? t.slug,
+          };
+        });
 
-  // ---------------------------------------------------------------------------
-
-  public async getRecipeStack(page: number) {
-    const limit = 30;
-    if (!page || page < 1) {
-      throw new BadRequestException('Page number must be greater than 0');
-    }
-
-    const recipes = await this.prisma.recipe.findMany({
-      skip: (page - 1) * limit,
-      take: limit + 1,
-      include: {
-        translations: true,
-        user: {
-          select: {
-            username: true,
-          },
-        },
+        return {
+          id: recipe.id,
+          course: recipe.course,
+          difficulty: recipe.difficulty,
+          prep_time: recipe.prep_time,
+          cook_time: recipe.cook_time,
+          total_time: recipe.total_time,
+          servings: recipe.servings,
+          source_lang: recipe.source_lang,
+          translation_status: recipe.translation_status,
+          cover_image_url: recipe.cover_image_url,
+          video_url: recipe.video_url,
+          created_at: recipe.created_at,
+          updated_at: recipe.updated_at,
+          author: recipe.user
+            ? {
+                id: recipe.user.id,
+                username: recipe.user.username,
+                avatar_url: recipe.user.avatar_url,
+              }
+            : null,
+          title: translation?.title ?? '',
+          description: translation?.description ?? '',
+          tags,
+          likes_count: recipe._count?.likes ?? 0,
+          comments_count: recipe._count?.comments ?? 0,
+          is_liked: currentUserId
+            ? Boolean(recipe.likes && recipe.likes.length > 0)
+            : false,
+          resolved_lang,
+        };
       },
-      orderBy: {
-        id: 'asc',
-      },
-    });
+    );
 
-    const hasNextPage = recipes.length > limit;
-    const hasPreviousPage = page > 1;
-    const items = hasNextPage ? recipes.slice(0, limit) : recipes;
-    const returnPage = items.map(({ user, ...recipe }) => ({
-      ...recipe,
-      username: user?.username ?? null,
-    }));
+    const total_pages = Math.ceil(total / limit);
 
     return {
-      returnPage,
-      hasNextPage,
-      hasPreviousPage,
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
     };
-  }
-
-  // ---------------------------------------------------------------------------
-
-  async getRecipesByName(name: string) {
-    // Search translated recipe titles without regard to letter casing
-    const recipe = await this.prisma.recipe.findMany({
-      where: {
-        translations: {
-          some: {
-            title: {
-              contains: name,
-              mode: 'insensitive',
-            },
-          },
-        },
-      },
-      include: {
-        translations: true,
-      },
-    });
-
-    // Include every translation needed by the caller
-    return recipe;
   }
 
   // ---------------------------------------------------------------------------

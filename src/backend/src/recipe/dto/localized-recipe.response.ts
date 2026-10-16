@@ -240,9 +240,10 @@ export class RecipeAuthorSummaryDto {
 }
 
 /**
- * Complete localized recipe detail payload.
+ * Lightweight localized recipe summary card returned in feeds, listings, and paginated searches.
+ * Omits heavy step instructions and ingredient lists to prevent bandwidth bloat.
  */
-export class LocalizedRecipeDetailResponse {
+export class LocalizedRecipeSummaryResponse {
   /**
    * Unique recipe identifier.
    * @example 42
@@ -396,6 +397,62 @@ export class LocalizedRecipeDetailResponse {
   description: string;
 
   /**
+   * List of localized dietary and culinary tags.
+   */
+  @ApiProperty({
+    type: [LocalizedRecipeTagResponse],
+    description: 'Classification tags attached to the recipe',
+  })
+  tags: LocalizedRecipeTagResponse[];
+
+  /**
+   * Total number of likes received by this recipe.
+   * @example 42
+   */
+  @ApiProperty({
+    description: 'Total number of likes received by this recipe',
+    example: 42,
+  })
+  likes_count: number;
+
+  /**
+   * Total number of active comments on this recipe.
+   * @example 8
+   */
+  @ApiProperty({
+    description: 'Total number of active comments on this recipe',
+    example: 8,
+  })
+  comments_count: number;
+
+  /**
+   * Indicates whether the requesting user has liked this recipe.
+   * Defaults to false for unauthenticated guests.
+   * @example true
+   */
+  @ApiProperty({
+    description:
+      'Whether the requesting authenticated user has liked this recipe (false for guests)',
+    example: true,
+  })
+  is_liked: boolean;
+
+  /**
+   * Resolved locale code used for translation projection.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized text fields',
+    example: 'it',
+  })
+  resolved_lang?: string;
+}
+
+/**
+ * Complete localized recipe detail payload including step instructions, ingredients, and media.
+ */
+export class LocalizedRecipeDetailResponse extends LocalizedRecipeSummaryResponse {
+  /**
    * Localized preservation and storage advice.
    * @example 'Si consiglia di consumare al momento. Non congelare.'
    */
@@ -437,15 +494,6 @@ export class LocalizedRecipeDetailResponse {
   ingredients: LocalizedRecipeIngredientResponse[];
 
   /**
-   * List of localized dietary and culinary tags.
-   */
-  @ApiProperty({
-    type: [LocalizedRecipeTagResponse],
-    description: 'Classification tags attached to the recipe',
-  })
-  tags: LocalizedRecipeTagResponse[];
-
-  /**
    * Supplementary photos in the recipe gallery (up to 3 items).
    */
   @ApiProperty({
@@ -453,36 +501,4 @@ export class LocalizedRecipeDetailResponse {
     description: 'Supplementary gallery plating photos',
   })
   media: RecipeMediaResponse[];
-
-  /**
-   * Total number of likes received by this recipe.
-   * @example 42
-   */
-  @ApiProperty({
-    description: 'Total number of likes received by this recipe',
-    example: 42,
-  })
-  likes_count: number;
-
-  /**
-   * Total number of active comments on this recipe.
-   * @example 8
-   */
-  @ApiProperty({
-    description: 'Total number of active comments on this recipe',
-    example: 8,
-  })
-  comments_count: number;
-
-  /**
-   * Indicates whether the requesting user has liked this recipe.
-   * Defaults to false for unauthenticated guests.
-   * @example true
-   */
-  @ApiProperty({
-    description:
-      'Whether the requesting authenticated user has liked this recipe (false for guests)',
-    example: true,
-  })
-  is_liked: boolean;
 }

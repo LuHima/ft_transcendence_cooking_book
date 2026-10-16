@@ -6,7 +6,7 @@ import { CatalogService } from '../catalog/catalog.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/role.guard';
 import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
-import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
+import { Course, RecipeDifficulty, TranslationStatus, UnitOfMeasure } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -23,8 +23,6 @@ describe('RecipeController', () => {
   const mockRecipeService = {
     createRecipe: jest.fn(),
     getAllRecipe: jest.fn(),
-    getRecipeStack: jest.fn(),
-    getRecipesByName: jest.fn(),
     getRecipeById: jest.fn(),
     retryTranslation: jest.fn(),
     updateRecipe: jest.fn(),
@@ -112,9 +110,42 @@ describe('RecipeController', () => {
   });
 
   describe('getRecipes', () => {
+    const mockPaginatedResult = {
+      items: [
+        {
+          id: 1,
+          title: 'Carbonara',
+          description: 'Classica',
+          course: Course.first_course,
+          difficulty: RecipeDifficulty.medium,
+          prep_time: 15,
+          cook_time: 10,
+          total_time: 25,
+          servings: 4,
+          source_lang: 'it',
+          translation_status: TranslationStatus.completed,
+          cover_image_url: null,
+          video_url: null,
+          created_at: new Date('2026-10-09T18:00:00.000Z'),
+          updated_at: null,
+          author: { id: 1, username: 'chef_mario', avatar_url: null },
+          tags: [],
+          likes_count: 5,
+          comments_count: 2,
+          is_liked: false,
+          resolved_lang: 'it',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 20,
+      total_pages: 1,
+      has_next_page: false,
+      has_prev_page: false,
+    };
+
     it('delegates to service.getAllRecipe with optional lang query parameter', async () => {
-      const mockResult = [{ id: 1, title: 'Carbonara' }];
-      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockPaginatedResult);
 
       const result = await controller.getRecipes({ lang: 'it' });
 
@@ -122,14 +153,15 @@ describe('RecipeController', () => {
         { lang: 'it' },
         undefined,
       );
-      expect(result).toEqual(mockResult);
+      expect(result).toEqual(mockPaginatedResult);
     });
 
-    it('delegates to service.getAllRecipe with multi-criteria filters', async () => {
-      const mockResult = [{ id: 1, title: 'Pasta' }];
-      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
+    it('delegates to service.getAllRecipe with multi-criteria filters and pagination', async () => {
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockPaginatedResult);
 
       const filterDto: FilterRecipeDto = {
+        page: 2,
+        limit: 10,
         course: Course.main_course,
         difficulty: RecipeDifficulty.easy,
         search: 'pasta',
@@ -142,83 +174,16 @@ describe('RecipeController', () => {
       const result = await controller.getRecipes(filterDto);
 
       expect(service.getAllRecipe).toHaveBeenCalledWith(filterDto, undefined);
-      expect(result).toEqual(mockResult);
+      expect(result).toEqual(mockPaginatedResult);
     });
 
     it('delegates to service.getAllRecipe with filter options and current user id when authenticated', async () => {
-      const mockResult = [
-        {
-          id: 1,
-          title: 'Pasta',
-          likes_count: 5,
-          comments_count: 2,
-          is_liked: true,
-        },
-      ];
-      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockPaginatedResult);
 
       const result = await controller.getRecipes({}, 42);
 
       expect(service.getAllRecipe).toHaveBeenCalledWith({}, 42);
-      expect(result).toEqual(mockResult);
-    });
-  });
-
-  describe('getRecipeStack', () => {
-    it('defaults to page 1 and returns paginated response object', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: false,
-      };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
-
-      const result = await controller.getRecipeStack(undefined, undefined);
-
-      expect(service.getRecipeStack).toHaveBeenCalledWith(1);
-      expect(result).toEqual(mockPage);
-    });
-
-    it('accepts page query parameter over legacy value parameter', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: true,
-      };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
-
-      const result = await controller.getRecipeStack(2, undefined);
-
-      expect(service.getRecipeStack).toHaveBeenCalledWith(2);
-      expect(result).toEqual(mockPage);
-    });
-
-    it('falls back to legacy value query parameter if page is not provided', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: true,
-      };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
-
-      const result = await controller.getRecipeStack(undefined, 3);
-
-      expect(service.getRecipeStack).toHaveBeenCalledWith(3);
-      expect(result).toEqual(mockPage);
-    });
-
-    it('sanitizes invalid or negative page numbers to 1', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: false,
-      };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
-
-      const result = await controller.getRecipeStack(-5, undefined);
-
-      expect(service.getRecipeStack).toHaveBeenCalledWith(1);
-      expect(result).toEqual(mockPage);
+      expect(result).toEqual(mockPaginatedResult);
     });
   });
 

@@ -4,8 +4,13 @@ import {
   HttpException,
   ForbiddenException,
 } from '@nestjs/common';
+import {
+  Course,
+  RecipeDifficulty,
+  TranslationStatus,
+  UnitOfMeasure,
+} from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
@@ -38,6 +43,7 @@ describe('RecipeService', () => {
       findMany: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
     recipeTranslation: {
       upsert: jest.fn(),
@@ -139,65 +145,148 @@ describe('RecipeService', () => {
   });
 
   describe('getAllRecipe', () => {
-    const mockRecipes = [
+    const mockDbRecipes = [
       {
         id: 1,
+        course: Course.first_course,
+        difficulty: RecipeDifficulty.medium,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
         source_lang: 'it',
+        translation_status: TranslationStatus.completed,
+        cover_image_url: '/uploads/recipes/cover.webp',
+        video_url: null,
+        created_at: new Date('2026-10-09T18:00:00.000Z'),
+        updated_at: null,
         translations: [
           { locale: 'it', title: 'Carbonara', description: 'Classica' },
           { locale: 'en', title: 'Carbonara English', description: 'Classic' },
         ],
+        recipe_tags: [
+          {
+            tag: {
+              id: 1,
+              slug: 'traditional',
+              translations: [
+                { locale: 'it', name: 'Tradizionale' },
+                { locale: 'en', name: 'Traditional' },
+              ],
+            },
+          },
+        ],
+        user: {
+          id: 1,
+          username: 'chef_mario',
+          avatar_url: '/uploads/avatars/chef_mario.webp',
+        },
         _count: {
-          likes: 0,
-          comments: 0,
+          likes: 5,
+          comments: 2,
         },
         likes: [],
       },
     ];
 
-    it('returns all recipes with translations when lang is omitted', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+    it('returns paginated envelope with default page=1 and limit=20 and lightweight cards', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
 
       const result = await service.getAllRecipe();
 
       expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        include: expect.objectContaining({ translations: true }),
+        skip: 0,
+        take: 20,
+        orderBy: { created_at: 'desc' },
+        include: expect.objectContaining({
+          translations: true,
+          user: { select: { id: true, username: true, avatar_url: true } },
+          recipe_tags: { include: { tag: { include: { translations: true } } } },
+          _count: expect.any(Object),
+        }),
       });
-      expect(result).toEqual([
-        {
-          ...mockRecipes[0],
-          likes_count: 0,
-          comments_count: 0,
-          is_liked: false,
-        },
-      ]);
+      expect(mockPrisma.recipe.count).toHaveBeenCalledWith({});
+
+      expect(result).toEqual({
+        items: [
+          {
+            id: 1,
+            course: Course.first_course,
+            difficulty: RecipeDifficulty.medium,
+            prep_time: 15,
+            cook_time: 10,
+            total_time: 25,
+            servings: 4,
+            source_lang: 'it',
+            translation_status: TranslationStatus.completed,
+            cover_image_url: '/uploads/recipes/cover.webp',
+            video_url: null,
+            created_at: expect.any(Date),
+            updated_at: null,
+            author: {
+              id: 1,
+              username: 'chef_mario',
+              avatar_url: '/uploads/avatars/chef_mario.webp',
+            },
+            title: 'Carbonara',
+            description: 'Classica',
+            tags: [{ id: 1, slug: 'traditional', name: 'Tradizionale' }],
+            likes_count: 5,
+            comments_count: 2,
+            is_liked: false,
+            resolved_lang: 'it',
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      });
+      // Steps and ingredients are omitted from the summary card
+      expect((result.items[0] as any).steps).toBeUndefined();
+      expect((result.items[0] as any).ingredients).toBeUndefined();
     });
 
-    it('projects localized title and description when lang is provided', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+    it('calculates skip, take, total_pages, and navigation flags for custom page and limit', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(45);
 
-      const result = await service.getAllRecipe('en');
+      const result = await service.getAllRecipe({ page: 2, limit: 10 });
 
-      expect(result).toEqual([
-        {
-          id: 1,
-          source_lang: 'it',
-          title: 'Carbonara English',
-          description: 'Classic',
-          translations: mockRecipes[0].translations,
-          _count: { likes: 0, comments: 0 },
-          likes: [],
-          likes_count: 0,
-          comments_count: 0,
-          is_liked: false,
-        },
-      ]);
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 10,
+          take: 10,
+        }),
+      );
+      expect(result.total).toBe(45);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(10);
+      expect(result.total_pages).toBe(5);
+      expect(result.has_next_page).toBe(true);
+      expect(result.has_prev_page).toBe(true);
+    });
+
+    it('projects localized title, description, and tags when lang is specified', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      const result = await service.getAllRecipe({ lang: 'en' });
+
+      expect(result.items[0].title).toBe('Carbonara English');
+      expect(result.items[0].description).toBe('Classic');
+      expect(result.items[0].tags[0].name).toBe('Traditional');
+      expect(result.items[0].resolved_lang).toBe('en');
     });
 
     it('filters recipes by course, difficulty, author_id, max_time, tag_ids, and search keyword', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
 
-      const filters = {
+      const filters: FilterRecipeDto = {
         course: Course.main_course,
         difficulty: RecipeDifficulty.easy,
         author_id: 5,
@@ -208,92 +297,50 @@ describe('RecipeService', () => {
 
       const result = await service.getAllRecipe(filters);
 
-      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        where: {
-          course: Course.main_course,
-          difficulty: RecipeDifficulty.easy,
-          user_id: 5,
-          total_time: { lte: 45 },
-          recipe_tags: {
-            some: {
-              tag_id: { in: [1, 2] },
-            },
-          },
-          translations: {
-            some: {
-              OR: [
-                { title: { contains: 'pasta', mode: 'insensitive' } },
-                { description: { contains: 'pasta', mode: 'insensitive' } },
-              ],
-            },
-          },
-        },
-        include: expect.objectContaining({ translations: true }),
-      });
-      expect(result).toEqual([
-        {
-          ...mockRecipes[0],
-          likes_count: 0,
-          comments_count: 0,
-          is_liked: false,
-        },
-      ]);
-    });
-
-    it('applies filters and projects localized title and description when lang is provided in filter object', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
-
-      const filters = {
+      const expectedWhere = {
         course: Course.main_course,
-        lang: 'en' as const,
+        difficulty: RecipeDifficulty.easy,
+        user_id: 5,
+        total_time: { lte: 45 },
+        recipe_tags: {
+          some: {
+            tag_id: { in: [1, 2] },
+          },
+        },
+        translations: {
+          some: {
+            OR: [
+              { title: { contains: 'pasta', mode: 'insensitive' } },
+              { description: { contains: 'pasta', mode: 'insensitive' } },
+            ],
+          },
+        },
       };
 
-      const result = await service.getAllRecipe(filters);
-
-      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        where: {
-          course: Course.main_course,
-        },
-        include: expect.objectContaining({ translations: true }),
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expectedWhere,
+        }),
+      );
+      expect(mockPrisma.recipe.count).toHaveBeenCalledWith({
+        where: expectedWhere,
       });
-      expect(result).toEqual([
-        {
-          id: 1,
-          source_lang: 'it',
-          title: 'Carbonara English',
-          description: 'Classic',
-          translations: mockRecipes[0].translations,
-          _count: { likes: 0, comments: 0 },
-          likes: [],
-          likes_count: 0,
-          comments_count: 0,
-          is_liked: false,
-        },
-      ]);
+      expect(result.total).toBe(1);
     });
 
-    it('returns likes_count, comments_count, and is_liked for recipe cards in listing', async () => {
-      const mockRecipesWithSocial = [
+    it('populates is_liked=true when currentUserId has liked the recipe', async () => {
+      const mockWithUserLike = [
         {
-          id: 1,
-          source_lang: 'it',
-          translations: [
-            { locale: 'it', title: 'Carbonara', description: 'Classica' },
-          ],
-          _count: {
-            likes: 5,
-            comments: 3,
-          },
-          likes: [{ user_id: 10 }],
+          ...mockDbRecipes[0],
+          likes: [{ user_id: 42 }],
         },
       ];
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipesWithSocial);
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockWithUserLike);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
 
-      const result = await service.getAllRecipe({}, 10);
+      const result = await service.getAllRecipe({}, 42);
 
-      expect(result[0].likes_count).toBe(5);
-      expect(result[0].comments_count).toBe(3);
-      expect(result[0].is_liked).toBe(true);
+      expect(result.items[0].is_liked).toBe(true);
     });
   });
 
@@ -1887,79 +1934,6 @@ describe('RecipeService', () => {
         message: 'Recipe unliked successfully',
         liked: false,
       });
-    });
-  });
-
-  describe('getRecipeStack', () => {
-    it('throws BadRequestException if page is less than 1 or not provided', async () => {
-      await expect(service.getRecipeStack(0)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(service.getRecipeStack(-1)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('returns empty returnPage array without throwing 404 when no recipes exist on page', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce([]);
-
-      const result = await service.getRecipeStack(5);
-
-      expect(result).toEqual({
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: true,
-      });
-    });
-
-    it('returns empty returnPage array with hasPreviousPage false on page 1', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce([]);
-
-      const result = await service.getRecipeStack(1);
-
-      expect(result).toEqual({
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: false,
-      });
-    });
-
-    it('returns paginated items and indicates hasNextPage when more items exist', async () => {
-      const mockRecipes = Array.from({ length: 31 }, (_, i) => ({
-        id: i + 1,
-        title: `Recipe ${i + 1}`,
-        user: { username: `chef${i + 1}` },
-        translations: [],
-      }));
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
-
-      const result = await service.getRecipeStack(1);
-
-      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 31,
-        include: {
-          translations: true,
-          user: {
-            select: {
-              username: true,
-            },
-          },
-        },
-        orderBy: {
-          id: 'asc',
-        },
-      });
-      expect(result.hasNextPage).toBe(true);
-      expect(result.hasPreviousPage).toBe(false);
-      expect(result.returnPage).toHaveLength(30);
-      expect(result.returnPage[0]).toEqual(
-        expect.objectContaining({
-          id: 1,
-          username: 'chef1',
-        }),
-      );
-      expect((result.returnPage[0] as any).user).toBeUndefined();
     });
   });
 

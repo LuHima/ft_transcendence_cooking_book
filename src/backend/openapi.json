@@ -1223,6 +1223,31 @@
         "operationId": "RecipeController_getRecipes",
         "parameters": [
           {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
             "name": "course",
             "required": false,
             "in": "query",
@@ -1322,14 +1347,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Array of recipes with translations matching criteria",
+            "description": "Paginated recipe cards with translations matching criteria",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
-                  }
+                  "$ref": "#/components/schemas/PaginatedRecipeResponseDto"
                 }
               }
             }
@@ -1422,117 +1444,6 @@
           }
         ],
         "summary": "Create a new recipe",
-        "tags": [
-          "Recipes"
-        ]
-      }
-    },
-    "/api/recipes/page": {
-      "get": {
-        "description": "Fetches a 30-item page window of recipes optimized for infinite scrolling or stacked presentation. Includes author username and pagination indicators.",
-        "operationId": "RecipeController_getRecipeStack",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "Page index number (1-based, default: 1)",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "value",
-            "required": false,
-            "in": "query",
-            "description": "Legacy page parameter alias",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated recipe window with hasNextPage and hasPreviousPage booleans",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RecipePaginationResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid page parameter (must be a positive integer)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get paginated recipe stack",
-        "tags": [
-          "Recipes"
-        ]
-      }
-    },
-    "/api/recipes/search": {
-      "get": {
-        "description": "Performs a case-insensitive search across recipe translation titles and returns matching recipes.",
-        "operationId": "RecipeController_getRecipe",
-        "parameters": [
-          {
-            "name": "value",
-            "required": true,
-            "in": "query",
-            "description": "Text query to match in recipe titles",
-            "schema": {
-              "example": "carbonara",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of recipes matching the title search query",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LocalizedRecipeDetailResponse"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Search recipes by title",
         "tags": [
           "Recipes"
         ]
@@ -3804,6 +3715,31 @@
           "avatar_url"
         ]
       },
+      "LocalizedRecipeTagResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "traditional"
+          },
+          "name": {
+            "type": "string",
+            "description": "Localized tag label",
+            "example": "Tradizionale"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ]
+      },
       "LocalizedRecipeStepResponse": {
         "type": "object",
         "properties": {
@@ -3924,31 +3860,6 @@
           "quantity",
           "unit",
           "notes"
-        ]
-      },
-      "LocalizedRecipeTagResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Tag identifier",
-            "example": 1
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical tag slug",
-            "example": "traditional"
-          },
-          "name": {
-            "type": "string",
-            "description": "Localized tag label",
-            "example": "Tradizionale"
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "name"
         ]
       },
       "RecipeMediaResponse": {
@@ -4096,6 +4007,33 @@
             "description": "Localized introduction and dish description",
             "example": "Il grande classico della cucina romana con guanciale, pecorino e tuorli."
           },
+          "tags": {
+            "description": "Classification tags attached to the recipe",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeTagResponse"
+            }
+          },
+          "likes_count": {
+            "type": "number",
+            "description": "Total number of likes received by this recipe",
+            "example": 42
+          },
+          "comments_count": {
+            "type": "number",
+            "description": "Total number of active comments on this recipe",
+            "example": 8
+          },
+          "is_liked": {
+            "type": "boolean",
+            "description": "Whether the requesting authenticated user has liked this recipe (false for guests)",
+            "example": true
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized text fields",
+            "example": "it"
+          },
           "preservation": {
             "type": "object",
             "description": "Localized storage and preservation notes",
@@ -4122,34 +4060,12 @@
               "$ref": "#/components/schemas/LocalizedRecipeIngredientResponse"
             }
           },
-          "tags": {
-            "description": "Classification tags attached to the recipe",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LocalizedRecipeTagResponse"
-            }
-          },
           "media": {
             "description": "Supplementary gallery plating photos",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RecipeMediaResponse"
             }
-          },
-          "likes_count": {
-            "type": "number",
-            "description": "Total number of likes received by this recipe",
-            "example": 42
-          },
-          "comments_count": {
-            "type": "number",
-            "description": "Total number of active comments on this recipe",
-            "example": 8
-          },
-          "is_liked": {
-            "type": "boolean",
-            "description": "Whether the requesting authenticated user has liked this recipe (false for guests)",
-            "example": true
           }
         },
         "required": [
@@ -4169,15 +4085,16 @@
           "author",
           "title",
           "description",
+          "tags",
+          "likes_count",
+          "comments_count",
+          "is_liked",
+          "resolved_lang",
           "preservation",
           "tips",
           "steps",
           "ingredients",
-          "tags",
-          "media",
-          "likes_count",
-          "comments_count",
-          "is_liked"
+          "media"
         ]
       },
       "UserSearchResultDto": {
@@ -4412,15 +4329,16 @@
           "name"
         ]
       },
-      "RecipeStackItemDto": {
+      "LocalizedRecipeSummaryResponse": {
         "type": "object",
         "properties": {
           "id": {
             "type": "number",
-            "description": "Recipe identifier",
-            "example": 1
+            "description": "Unique recipe identifier",
+            "example": 42
           },
           "course": {
+            "type": "string",
             "enum": [
               "appetizer",
               "first_course",
@@ -4430,19 +4348,18 @@
               "drink",
               "snack"
             ],
-            "type": "string",
             "description": "Course classification",
             "example": "first_course"
           },
           "difficulty": {
+            "type": "string",
             "enum": [
               "easy",
               "medium",
               "hard"
             ],
-            "type": "string",
             "description": "Difficulty level",
-            "example": "easy"
+            "example": "medium"
           },
           "prep_time": {
             "type": "number",
@@ -4452,55 +4369,102 @@
           "cook_time": {
             "type": "number",
             "description": "Cooking time in minutes",
-            "example": 20
+            "example": 10
           },
           "total_time": {
             "type": "number",
-            "description": "Total time in minutes",
-            "example": 35
+            "description": "Total time in minutes (prep_time + cook_time)",
+            "example": 25
           },
           "servings": {
             "type": "number",
-            "description": "Servings yielded",
+            "description": "Portions / servings yielded",
             "example": 4
           },
           "source_lang": {
             "type": "string",
-            "description": "Author source language code",
+            "description": "Original author language",
             "example": "it"
           },
           "translation_status": {
+            "type": "string",
             "enum": [
               "completed",
               "failed"
             ],
-            "type": "string",
-            "description": "Translation state",
+            "description": "Automated machine translation state",
             "example": "completed"
           },
           "cover_image_url": {
-            "type": "string",
-            "nullable": true,
-            "description": "Cover image URL path",
-            "example": "/uploads/recipes/cover.webp"
+            "type": "object",
+            "description": "Primary hero recipe cover image URL",
+            "example": "/uploads/recipes/carbonara_cover.webp",
+            "nullable": true
           },
           "video_url": {
-            "type": "string",
-            "nullable": true,
-            "description": "Tutorial video URL path",
-            "example": "/uploads/recipes/video.mp4"
-          },
-          "username": {
-            "type": "string",
-            "nullable": true,
-            "description": "Author username",
-            "example": "mario_rossi"
+            "type": "object",
+            "description": "Tutorial demonstration video URL",
+            "example": "/uploads/recipes/carbonara_tutorial.mp4",
+            "nullable": true
           },
           "created_at": {
             "format": "date-time",
             "type": "string",
-            "description": "Creation date",
+            "description": "Creation timestamp",
             "example": "2026-10-09T18:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "object",
+            "description": "Last update timestamp",
+            "example": "2026-10-09T18:30:00.000Z",
+            "nullable": true
+          },
+          "author": {
+            "description": "Author profile summary",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Localized recipe title",
+            "example": "Spaghetti alla Carbonara"
+          },
+          "description": {
+            "type": "string",
+            "description": "Localized introduction and dish description",
+            "example": "Il grande classico della cucina romana con guanciale, pecorino e tuorli."
+          },
+          "tags": {
+            "description": "Classification tags attached to the recipe",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeTagResponse"
+            }
+          },
+          "likes_count": {
+            "type": "number",
+            "description": "Total number of likes received by this recipe",
+            "example": 42
+          },
+          "comments_count": {
+            "type": "number",
+            "description": "Total number of active comments on this recipe",
+            "example": 8
+          },
+          "is_liked": {
+            "type": "boolean",
+            "description": "Whether the requesting authenticated user has liked this recipe (false for guests)",
+            "example": true
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized text fields",
+            "example": "it"
           }
         },
         "required": [
@@ -4515,35 +4479,67 @@
           "translation_status",
           "cover_image_url",
           "video_url",
-          "username",
-          "created_at"
+          "created_at",
+          "updated_at",
+          "author",
+          "title",
+          "description",
+          "tags",
+          "likes_count",
+          "comments_count",
+          "is_liked",
+          "resolved_lang"
         ]
       },
-      "RecipePaginationResponseDto": {
+      "PaginatedRecipeResponseDto": {
         "type": "object",
         "properties": {
-          "returnPage": {
-            "description": "Recipes in the requested page window",
+          "items": {
+            "description": "Array of localized recipe summary cards for current page window",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/RecipeStackItemDto"
+              "$ref": "#/components/schemas/LocalizedRecipeSummaryResponse"
             }
           },
-          "hasNextPage": {
+          "total": {
+            "type": "number",
+            "description": "Total number of recipes matching filter criteria",
+            "example": 150
+          },
+          "page": {
+            "type": "number",
+            "description": "Current 1-based page window index",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of pages",
+            "example": 8
+          },
+          "has_next_page": {
             "type": "boolean",
-            "description": "Indicates if a next page exists",
+            "description": "Indicates if another page exists after current page",
             "example": true
           },
-          "hasPreviousPage": {
+          "has_prev_page": {
             "type": "boolean",
-            "description": "Indicates if a previous page exists",
+            "description": "Indicates if an earlier page precedes current page",
             "example": false
           }
         },
         "required": [
-          "returnPage",
-          "hasNextPage",
-          "hasPreviousPage"
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
         ]
       },
       "CreateRecipeStepDto": {
