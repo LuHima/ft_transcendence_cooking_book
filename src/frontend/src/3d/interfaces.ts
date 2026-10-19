@@ -7,6 +7,7 @@ export interface BookProps {
   isChangingApiPage: boolean;
   onPreviousApiPage: () => void;
   onNextApiPage: () => void;
+  onDefaultPage?: () => void;
   currentApiPage: number;
 }
 
@@ -33,6 +34,7 @@ export interface SceneContentProps {
   isChangingApiPage: boolean;
   onPreviousApiPage: () => void;
   onNextApiPage: () => void;
+  onDefaultPage?: () => void;
   currentApiPage: number;
 }
 

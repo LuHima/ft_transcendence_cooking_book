@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useTexture } from "@react-three/drei";
+import { useTexture, Edges } from "@react-three/drei";
 import {
   Color,
   DoubleSide,
@@ -228,6 +228,7 @@ export default function Book({
   isChangingApiPage,
   onPreviousApiPage,
   onNextApiPage,
+  onDefaultPage,
   currentApiPage,
 }: BookProps) {
   // limiti iniziali per la camera quando si ruota intorno alla scena
@@ -258,11 +259,15 @@ export default function Book({
   const [turnedPageCount, setTurnedPageCount] = useState(0);
   const trackedTurnedPageCount = useRef(0);
   const pageProgressRefs = useRef<Array<{ current: number }>>([]);
-  const { pageProgress, currentPage, nextPage, prevPage, closePages } =
+  const { pageProgress, currentPage, nextPage, prevPage, turning, closePages } =
     useBookPages(recipes.length, currentApiPage);
   const { camera } = useThree();
   const camPhase = useRef<"idle" | "zooming-in" | "zooming-out">("idle");
   const camProgress = useRef(0);
+  const triggerPageAction = (action: () => void) => {
+    if (!isOpen || camPhase.current !== "idle" || turning.current) return;
+    action();
+  };
 
   useEffect(() => {
     trackedTurnedPageCount.current = 0;
@@ -658,6 +663,47 @@ export default function Book({
           </group>
         );
       })}
+      {[
+        ...(turnedPageCount > 0
+          ? [
+              { key: "left-outer", y: 0.325, action: prevPage },
+              {
+                key: "left-inner",
+                y: 0.215,
+                action: () => onDefaultPage?.(),
+              },
+            ]
+          : []),
+        ...(turnedPageCount < recipes.length
+          ? [
+              {
+                key: "right-inner",
+                y: 0.081,
+                action: () => onDefaultPage?.(),
+              },
+              { key: "right-outer", y: -0.029, action: nextPage },
+            ]
+          : []),
+      ].map(({ key, y, action }) => (
+        <mesh
+          key={key}
+          position={[-0.005, y, 0.15]}
+          onClick={(event) => {
+            event.stopPropagation();
+            triggerPageAction(action);
+          }}
+        >
+          <planeGeometry args={[0.31, 0.1105]} />
+          <meshBasicMaterial
+            transparent
+            opacity={0}
+            colorWrite={false}
+            depthWrite={false}
+            side={DoubleSide}
+            color={"#FF0000"}
+          />
+        </mesh>
+      ))}
     </group>
   );
 }
