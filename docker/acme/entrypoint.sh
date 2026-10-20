@@ -11,7 +11,7 @@ DOMAIN="${DOMAIN_NAME:-localhost}"
 # (useful for local dev without Vault, or if Vault is unreachable).
 VAULT_ADDR="${VAULT_ADDR:-http://vault:8200}"
 
-if [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_SECRET_ID" ]; then
+if [ "${USE_VAULT:-true}" = "true" ] && [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_SECRET_ID" ]; then
 	echo "=== Authenticating to Vault (acme-role) ==="
 
 	LOGIN_RESPONSE=$(curl -s --fail -X POST \
@@ -37,7 +37,7 @@ if [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_SECRET_ID" ]; then
 		echo "WARNING: Could not authenticate to Vault; using existing environment value (if any)."
 	fi
 else
-	echo "INFO: VAULT_ROLE_ID/VAULT_SECRET_ID not set; skipping Vault fetch."
+	echo "INFO: Vault disabled (USE_VAULT=false) or credentials not set; skipping Vault fetch."
 fi
 
 mkdir -p "$SSL_DIR"

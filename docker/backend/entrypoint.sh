@@ -33,20 +33,24 @@ const secretId = process.env.BACKEND_VAULT_SECRET_ID;
 })().catch((e) => { console.error(e.message); process.exit(1); });
 '
 
-echo "Fetching secrets from Vault..."
-attempts=0
-until VAULT_ENV=$(node -e "$VAULT_JS"); do
-  attempts=$((attempts + 1))
-  if [ "$attempts" -ge 30 ]; then
-    echo "ERROR: Vault not reachable/unsealed after 30 attempts. Aborting."
-    exit 1
-  fi
-  echo "Vault not ready (attempt $attempts/30), retrying in 5s..."
-  sleep 5
-done
-eval "$VAULT_ENV"
-unset VAULT_ENV BACKEND_VAULT_SECRET_ID   # the SecretID is no longer needed
-echo "Secrets loaded from Vault."
+if [ "${USE_VAULT:-true}" = "true" ]; then
+  echo "Fetching secrets from Vault..."
+  attempts=0
+  until VAULT_ENV=$(node -e "$VAULT_JS"); do
+    attempts=$((attempts + 1))
+    if [ "$attempts" -ge 30 ]; then
+      echo "ERROR: Vault not reachable/unsealed after 30 attempts. Aborting."
+      exit 1
+    fi
+    echo "Vault not ready (attempt $attempts/30), retrying in 5s..."
+    sleep 5
+  done
+  eval "$VAULT_ENV"
+  unset VAULT_ENV BACKEND_VAULT_SECRET_ID   # the SecretID is no longer needed
+  echo "Secrets loaded from Vault."
+else
+  echo "USE_VAULT=false: Vault disabled, using the secrets from the environment (.env)."
+fi
 
 # Generate Prisma client based on current schema
 echo "Generating Prisma Client..."

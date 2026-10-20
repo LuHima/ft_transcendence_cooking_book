@@ -17,13 +17,13 @@ services:
     stop_grace_period: 10s
     #tolto ports, cuz 5432:5432 pubblica il databasesul mio host.
     #il backend loo raggiunge gia tramite db-net, so none needs it
-    # Load database credentials and config from .env
-    env_file:
-      - .env
+    # Non-secret Postgres settings only: the password is fetched from Vault
     environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
       VAULT_ADDR: http://vault:8200
-      VAULT_ROLE_ID: ${DATABASE_VAULT_ROLE_ID}
-      VAULT_SECRET_ID: ${DATABASE_VAULT_SECRET_ID}
+      VAULT_ROLE_ID: ${DATABASE_VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID: ${DATABASE_VAULT_SECRET_ID:-}
     # Persistent volume for PostgreSQL data
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -102,8 +102,8 @@ services:
       ACME_EMAIL: ${ACME_EMAIL:-}
       ACME_STAGING: ${ACME_STAGING:-false}
       VAULT_ADDR: http://vault:8200
-      VAULT_ROLE_ID: ${ACME_VAULT_ROLE_ID}
-      VAULT_SECRET_ID: ${ACME_VAULT_SECRET_ID}
+      VAULT_ROLE_ID: ${ACME_VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID: ${ACME_VAULT_SECRET_ID:-}
     volumes:
       - nginx_ssl:/etc/nginx/ssl
       - acme_data:/root/.acme.sh
@@ -133,15 +133,11 @@ services:
     stop_grace_period: 10s
     environment:
       VAULT_ADDR: http://vault:8200
-      BACKEND_VAULT_ROLE_ID: ${BACKEND_VAULT_ROLE_ID}
-      BACKEND_VAULT_SECRET_ID: ${BACKEND_VAULT_SECRET_ID}
-      DATABASE_URL: ${DATABASE_URL}
+      BACKEND_VAULT_ROLE_ID: ${BACKEND_VAULT_ROLE_ID:-}
+      BACKEND_VAULT_SECRET_ID: ${BACKEND_VAULT_SECRET_ID:-}
       LIBRETRANSLATE_URL: ${LIBRETRANSLATE_URL}
+      UPLOADS_DIR: ${UPLOADS_DIR}
       PORT: ${PORT:-3000}
-      TWO_FACTOR_AUTH: ${TWO_FACTOR_AUTH} # TODO remove when moved in vault
-    # Expose Prisma Studio port to host (TODO: remove in production release)
-    ports:
-      - "5555:5555"
     # Mount backend source code for live development and protect container
     # node_modules
     volumes:
@@ -219,7 +215,7 @@ services:
     # Non-sensitive environment variable default
     environment:
       MODSEC_RULE_ENGINE: "On"
-      # BLOCKING_PARANOIA: "3"
+      BLOCKING_PARANOIA: ${WAF_PARANOIA:-1}
     # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
     ports:
       - "8443:8443"

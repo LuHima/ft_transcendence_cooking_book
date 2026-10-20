@@ -1,12 +1,12 @@
 import { NestFactory, APP_GUARD } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pipe';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http.exeption.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma.exception.filter';
-import { fetchFromVault } from './vault-bootstrap';
 import {
   RECIPE_UPLOADS_DIR,
   AVATAR_UPLOADS_DIR,
@@ -16,8 +16,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 
 async function bootstrap() {
-  //sara.must recuperare dati prima di passarli con env
-  const { AppModule } = await import('./app.module.js');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // Spegnimanto pulito in caso di SIGINT ecc..
   app.enableShutdownHooks();

@@ -1,0 +1,25 @@
+# Development override, used by the Makefile ONLY when USE_VAULT=false in
+# docker/.env. It is merged on top of docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.novault.yml ...
+#
+# In this mode Vault is not used: database and backend read their secrets
+# straight from docker/.env (the way the project worked before Vault).
+# The default mode (USE_VAULT=true) does not load this file, so no secret from
+# .env ever reaches the containers.
+services:
+  database:
+    env_file:
+      - .env
+    environment:
+      USE_VAULT: "false"
+
+  backend:
+    env_file:
+      - .env
+    environment:
+      USE_VAULT: "false"
+
+  acme:
+    environment:
+      USE_VAULT: "false"

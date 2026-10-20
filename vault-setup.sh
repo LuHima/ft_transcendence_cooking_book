@@ -217,14 +217,20 @@ done
 # ---------------------------------------------------------------------------
 step "Secrets"
 # ---------------------------------------------------------------------------
-ACME_TOKEN="$(get_env_var INFOMANIAK_API_TOKEN)"
-vexec kv put secret/acme INFOMANIAK_API_TOKEN="$ACME_TOKEN" >/dev/null
-log "secret/acme written (INFOMANIAK_API_TOKEN; empty is fine in dev mode)."
 
+# Secret per il database: la password Postgres.
 PG_PASS="$(get_env_var POSTGRES_PASSWORD)"
 [ -n "$PG_PASS" ] || die "POSTGRES_PASSWORD is missing in $ENV_FILE."
 vexec kv put secret/database POSTGRES_PASSWORD="$PG_PASS" >/dev/null
 log "secret/database written (POSTGRES_PASSWORD)."
+
+# DATABASE_URL: costruita dalle variabili Postgres, così il backend la legge
+# da Vault e non dal compose (punto 7).
+PG_USER="$(get_env_var POSTGRES_USER)"
+PG_DB="$(get_env_var POSTGRES_DB)"
+[ -n "$PG_USER" ] || die "POSTGRES_USER is missing in $ENV_FILE."
+[ -n "$PG_DB" ]   || die "POSTGRES_DB is missing in $ENV_FILE."
+DB_URL="postgresql://${PG_USER}:${PG_PASS}@database:5432/${PG_DB}?schema=public"
 
 JWT_SECRET_V="$(get_env_var JWT_SECRET)"
 JWT_REFRESH_V="$(get_env_var JWT_REFRESH_SECRET)"
@@ -236,11 +242,12 @@ TWOFA_V="$(get_env_var TWO_FACTOR_AUTH)"
 [ -n "$TWOFA_V" ]       || { TWOFA_V="$(gen_secret)";       log "TWO_FACTOR_AUTH not in .env: generated."; }
 
 vexec kv put secret/backend \
-	JWT_SECRET="$JWT_SECRET_V" \
-	JWT_REFRESH_SECRET="$JWT_REFRESH_V" \
-	COOKIE_SECRET="$COOKIE_V" \
-	TWO_FACTOR_AUTH="$TWOFA_V" >/dev/null
-log "secret/backend written (JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH)."
+        DATABASE_URL="$DB_URL" \
+        JWT_SECRET="$JWT_SECRET_V" \
+        JWT_REFRESH_SECRET="$JWT_REFRESH_V" \
+        COOKIE_SECRET="$COOKIE_V" \
+        TWO_FACTOR_AUTH="$TWOFA_V" >/dev/null
+log "secret/backend written (DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH)."
 
 # ---------------------------------------------------------------------------
 step "role_id / secret_id -> $ENV_FILE"
@@ -262,7 +269,7 @@ log "Vault is initialized, unsealed and configured."
 log ""
 log "Next steps:"
 log "  1. Remove (or comment out) the secrets that now live in Vault from"
-log "     $ENV_FILE: JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH."
+log "     $ENV_FILE: DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH."
 log "  2. Start the whole stack:  make"
 log "  3. After any future restart Vault comes back sealed:"
 log "     ./unseal.sh <key1> <key2> <key3>   (keys are in $KEYS_FILE)"

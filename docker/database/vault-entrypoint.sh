@@ -7,6 +7,13 @@ set -e
 
 VAULT_ADDR="${VAULT_ADDR:-http://vault:8200}"
 
+# Development mode (USE_VAULT=false): skip Vault, POSTGRES_PASSWORD comes
+# from the environment (.env).
+if [ "${USE_VAULT:-true}" != "true" ]; then
+	echo "USE_VAULT=false: Vault disabled, using POSTGRES_PASSWORD from the environment."
+	exec docker-entrypoint.sh postgres
+fi
+
 if [ -z "$VAULT_ROLE_ID" ] || [ -z "$VAULT_SECRET_ID" ]; then
 	echo "ERROR: VAULT_ROLE_ID or VAULT_SECRET_ID is missing."
 	exit 1
