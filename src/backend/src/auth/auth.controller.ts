@@ -143,7 +143,9 @@ export class AuthController {
     else this.setAuthCookie(response, result);
 
     return {
-      message: 'Authentication append with success',
+      // Luis p.D. (no, non è partito democratico...) studiati l'inglese!!
+      // message: 'Authentication append with success',
+      message: 'Authentication was successful',
     };
   }
 
