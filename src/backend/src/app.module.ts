@@ -17,6 +17,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CaslModule } from './auth/casl/casl-ability.factory/casl-ability.module';
 import { CleanExpiredToken } from './common/task/clean-expired-token.service';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProductionConfigModule } from './common/config/production-config.module';
 
@@ -38,6 +39,7 @@ import { ProductionConfigModule } from './common/config/production-config.module
     ThrottlerModule.forRoot([{ ttl: 100, limit: 4 }]),
     CaslModule,
     ProductionConfigModule,
+    EventEmitterModule.forRoot(),
     NotificationsModule,
   ],
   // Qui ci vanno i file controller

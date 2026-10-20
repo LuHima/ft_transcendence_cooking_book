@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "OwnerType" AS ENUM ('user', 'platform');
 
@@ -29,10 +26,16 @@ CREATE TYPE "IngredientCategory" AS ENUM ('produce', 'dairy_eggs', 'meat_poultry
 CREATE TYPE "Role" AS ENUM ('admin', 'moderator', 'user');
 
 -- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('like', 'comment');
+CREATE TYPE "UserStatus" AS ENUM ('active', 'disabled', 'banned');
 
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('active', 'disabled', 'banned');
+CREATE TYPE "NotificationSubject" AS ENUM ('recipe', 'comment', 'user');
+
+-- CreateEnum
+CREATE TYPE "NotificationAction" AS ENUM ('like', 'comment', 'friend_request', 'friend_accept', 'post');
+
+-- CreateEnum
+CREATE TYPE "NotificationStatus" AS ENUM ('pending', 'accepted', 'rejected', 'none');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -202,8 +205,10 @@ CREATE TABLE "notifications" (
     "id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
     "actor_id" INTEGER NOT NULL,
-    "recipe_id" INTEGER NOT NULL,
-    "type" "NotificationType" NOT NULL,
+    "subject" "NotificationSubject" NOT NULL,
+    "action" "NotificationAction" NOT NULL,
+    "status" "NotificationStatus" NOT NULL DEFAULT 'none',
+    "target_id" INTEGER,
     "is_read" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -339,9 +344,6 @@ ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_recipe_id_fkey" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "meal_plans" ADD CONSTRAINT "meal_plans_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

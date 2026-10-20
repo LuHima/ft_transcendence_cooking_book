@@ -9,12 +9,14 @@ import {
   OwnerType,
   RecipeDifficulty,
   MediaType,
-  NotificationType,
   MealType,
   IngredientCategory,
   UnitOfMeasure,
   TranslationStatus,
   Course,
+  NotificationSubject,
+  NotificationAction,
+  NotificationStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -24,7 +26,9 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log('🧹 Pulizia dei dati relazionali precedenti (per evitare duplicati)...');
+  console.log(
+    '🧹 Pulizia dei dati relazionali precedenti (per evitare duplicati)...',
+  );
   await prisma.follow.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.recipeMedia.deleteMany();
@@ -1022,8 +1026,10 @@ async function main() {
     data: {
       user_id: userMario.id,
       actor_id: userGiulia.id,
-      recipe_id: carbonara.id,
-      type: NotificationType.comment,
+      target_id: carbonara.id,
+      subject: NotificationSubject.recipe, // oppure 'recipe'
+      action: NotificationAction.comment, // oppure 'comment'
+      status: NotificationStatus.none, // oppure 'none'
     },
   });
 
@@ -1061,14 +1067,18 @@ async function main() {
       {
         user_id: userMario.id,
         actor_id: userGiulia.id,
-        recipe_id: carbonara.id,
-        type: NotificationType.like,
+        target_id: carbonara.id,
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.like,
+        status: NotificationStatus.none,
       },
       {
         user_id: userGiulia.id,
         actor_id: adminMarghe.id,
-        recipe_id: tiramisu.id,
-        type: NotificationType.like,
+        target_id: tiramisu.id,
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.like,
+        status: NotificationStatus.none,
       },
     ],
   });
@@ -1110,8 +1120,12 @@ async function main() {
   });
 
   console.log('✅ Seed completato con successo!');
-  console.log(`   Utenti di prova (password: Password123): ${adminMarghe.username} (admin), ${userMario.username}, ${userGiulia.username}`);
-  console.log(`   Per test admin: ${userDisabled.username} (disattivato), ${userBanned.username} (bannato)`);
+  console.log(
+    `   Utenti di prova (password: Password123): ${adminMarghe.username} (admin), ${userMario.username}, ${userGiulia.username}`,
+  );
+  console.log(
+    `   Per test admin: ${userDisabled.username} (disattivato), ${userBanned.username} (bannato)`,
+  );
 }
 
 main()

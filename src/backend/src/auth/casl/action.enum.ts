@@ -6,4 +6,6 @@ export enum Action {
   Update = 'update',
   Delete = 'delete',
   Report = 'report',
+  Accept = 'accept',
+  Refuse = 'refuse',
 }

@@ -327,6 +327,42 @@ export const errors = {
       error: 'Forbidden',
     },
   },
+
+  // ─────────────────────────────────────────────────────────
+  // Notification error
+  // ─────────────────────────────────────────────────────────
+  notification: {
+    BadRequestError: {
+      // 400
+      statusCode: HttpStatus.BAD_REQUEST,
+      message: 'General Error notification',
+      error: 'Bad Request',
+    },
+    unauthorized: {
+      // 401
+      statusCode: HttpStatus.UNAUTHORIZED,
+      message: 'Unauthorized access',
+      error: 'Unauthorized',
+    },
+    NotFound: {
+      //404
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Not found, notification error',
+      error: 'Not Found',
+    },
+    internalError: {
+      // 500
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: 'Execution error, notification error',
+      error: 'Internal Server Error',
+    },
+    Forbidden: {
+      // 403
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'You do not have the permission to act on this notification',
+      error: 'Forbidden',
+    },
+  },
 } as const;
 
 //	 creo questa funzione per creare degli exeption che mi servono

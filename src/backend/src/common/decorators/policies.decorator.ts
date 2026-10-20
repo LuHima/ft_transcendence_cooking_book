@@ -11,9 +11,9 @@ import {
 } from '@nestjs/swagger';
 import { AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 import { Action } from 'src/auth/casl/action.enum';
+import { Subjects } from '../../auth/casl/casl-ability.factory/casl-ability.factory';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from '../guards/role.guard';
-import { Subjects } from '../../auth/casl/casl-ability.factory/casl-ability.factory';
 import { ApiErrorResponseDto } from '../dto/api-error-response.dto';
 
 export type HandlerRolePolicy = (ability: AppAbility) => boolean;
