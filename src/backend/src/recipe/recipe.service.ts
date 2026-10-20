@@ -50,9 +50,7 @@ export class RecipeService {
 
     const page = Number(filterDto.page) > 0 ? Number(filterDto.page) : 1;
     const limit =
-      Number(filterDto.limit) > 0
-        ? Math.min(Number(filterDto.limit), 100)
-        : 20;
+      Number(filterDto.limit) > 0 ? Math.min(Number(filterDto.limit), 100) : 20;
     const skip = (page - 1) * limit;
 
     const where: Prisma.RecipeWhereInput = {};
@@ -441,6 +439,56 @@ export class RecipeService {
   POST /api/recipes
   */
   async createRecipe(recipe: CreateRecipeDto, userId: number) {
+    // Check if there are duplicate step numbers
+    const stepNumbers = recipe.steps.map((step) => step.step_number);
+    const uniqueStepNumbers = new Set(stepNumbers);
+    if (uniqueStepNumbers.size !== stepNumbers.length) {
+      const duplicateStepNumber = stepNumbers.find(
+        (stepNumber, index) => stepNumbers.indexOf(stepNumber) !== index,
+      );
+      throw new BadRequestException(
+        `Duplicate step number: ${duplicateStepNumber}. Each step number must be unique.`,
+      );
+    }
+
+    // Check if steps numbers are not consecutive
+    const sortedStepNumbers = [...stepNumbers].sort((a, b) => a - b);
+    const missingStepIndex = sortedStepNumbers.findIndex(
+      (stepNumber, index) => stepNumber !== index + 1,
+    );
+    if (missingStepIndex !== -1) {
+      const missingStepNumber = missingStepIndex + 1;
+      throw new BadRequestException(
+        `Step numbers must be consecutive starting at 1. Missing step number: ${missingStepNumber}.`,
+      );
+    }
+
+    // Check if there are duplicate ingredients
+    const ingredientIds = recipe.ingredients.map(
+      (ingredient) => ingredient.ingredient_id,
+    );
+    const uniqueIngredientIds = new Set(ingredientIds);
+    if (uniqueIngredientIds.size !== ingredientIds.length) {
+      const duplicateIngredientId = ingredientIds.find(
+        (ingredientId, index) => ingredientIds.indexOf(ingredientId) !== index,
+      );
+      throw new BadRequestException(
+        `Duplicate ingredient ID: ${duplicateIngredientId}. Each ingredient may only be added once.`,
+      );
+    }
+
+    // Check if there are duplicate tags
+    const tagIds = recipe.tag_ids ?? [];
+    const uniqueTagIds = new Set(tagIds);
+    if (uniqueTagIds.size !== tagIds.length) {
+      const duplicateTagId = tagIds.find(
+        (tagId, index) => tagIds.indexOf(tagId) !== index,
+      );
+      throw new BadRequestException(
+        `Duplicate tag ID: ${duplicateTagId}. Each tag may only be added once.`,
+      );
+    }
+
     // Language verification
     const textToVerify = [
       recipe.title,
@@ -531,16 +579,6 @@ export class RecipeService {
       );
       if (!res.success) {
         overallTranslationSuccess = false;
-        translationsByLocale[targetLang] = {
-          title: recipe.title,
-          description: recipe.description,
-          preservation: recipe.preservation ?? null,
-          tips: recipe.tips ?? null,
-          steps: recipe.steps.map((s) => ({
-            title: s.title ?? null,
-            description: s.description,
-          })),
-        };
       } else {
         const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
           res.translations;
@@ -571,9 +609,12 @@ export class RecipeService {
     const translation_status = overallTranslationSuccess
       ? TranslationStatus.completed
       : TranslationStatus.failed;
+    const localesWithTranslations = allLocales.filter(
+      (locale) => translationsByLocale[locale],
+    );
 
     // Structure relational payload
-    const recipeTranslationsData = allLocales.map((locale) => ({
+    const recipeTranslationsData = localesWithTranslations.map((locale) => ({
       locale,
       title: translationsByLocale[locale].title,
       description: translationsByLocale[locale].description,
@@ -584,7 +625,7 @@ export class RecipeService {
       step_number: step.step_number,
       duration: step.duration ?? null,
       translations: {
-        create: allLocales.map((locale) => ({
+        create: localesWithTranslations.map((locale) => ({
           locale,
           title: translationsByLocale[locale].steps[index]?.title ?? null,
           description:

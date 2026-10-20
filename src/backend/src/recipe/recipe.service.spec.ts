@@ -15,6 +15,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { RecipeService } from './recipe.service';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
@@ -202,7 +203,9 @@ describe('RecipeService', () => {
         include: expect.objectContaining({
           translations: true,
           user: { select: { id: true, username: true, avatar_url: true } },
-          recipe_tags: { include: { tag: { include: { translations: true } } } },
+          recipe_tags: {
+            include: { tag: { include: { translations: true } } },
+          },
           _count: expect.any(Object),
         }),
       });
@@ -352,6 +355,96 @@ describe('RecipeService', () => {
   });
 
   describe('createRecipe', () => {
+    it('throws BadRequestException when step numbers are duplicated', async () => {
+      const recipeWithDuplicateSteps = {
+        ...sampleDto,
+        steps: [
+          sampleDto.steps[0],
+          { ...sampleDto.steps[0], step_number: 1 },
+        ],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithDuplicateSteps, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Duplicate step number: 1. Each step number must be unique.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when step numbers are not consecutive', async () => {
+      const recipeWithNonConsecutiveSteps = {
+        ...sampleDto,
+        steps: [
+          sampleDto.steps[0],
+          { ...sampleDto.steps[0], step_number: 2 },
+          { ...sampleDto.steps[0], step_number: 4 },
+        ],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithNonConsecutiveSteps, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Step numbers must be consecutive starting at 1. Missing step number: 3.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when ingredient IDs are duplicated', async () => {
+      const recipeWithDuplicateIngredients = {
+        ...sampleDto,
+        ingredients: [
+          sampleDto.ingredients[0],
+          { ...sampleDto.ingredients[0], quantity: 100 },
+        ],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithDuplicateIngredients, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Duplicate ingredient ID: 1. Each ingredient may only be added once.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when tag IDs are duplicated', async () => {
+      const recipeWithDuplicateTags = {
+        ...sampleDto,
+        tag_ids: [1, 1],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithDuplicateTags, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Duplicate tag ID: 1. Each tag may only be added once.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it('throws BadRequestException and does not execute transaction if language verification fails', async () => {
       mockTranslationService.verifySourceLanguage.mockRejectedValueOnce(
         new BadRequestException(
@@ -480,7 +573,7 @@ describe('RecipeService', () => {
       expect(result).toEqual(mockDetailRecipe);
     });
 
-    it('gracefully falls back to source text with failed translation_status when translation fails', async () => {
+    it('does not persist target translations when translation fails', async () => {
       mockTranslationService.verifySourceLanguage.mockResolvedValueOnce(
         undefined,
       );
@@ -527,20 +620,20 @@ describe('RecipeService', () => {
           data: expect.objectContaining({
             translation_status: 'failed',
             translations: {
-              create: expect.arrayContaining([
+              create: [
                 expect.objectContaining({
-                  locale: 'en',
+                  locale: 'it',
                   title: sampleDto.title,
                 }),
-                expect.objectContaining({
-                  locale: 'fr',
-                  title: sampleDto.title,
-                }),
-              ]),
+              ],
             },
           }),
         }),
       );
+      const createCall = mockPrisma.recipe.create.mock.calls[0][0];
+      expect(createCall.data.steps.create[0].translations.create).toEqual([
+        expect.objectContaining({ locale: 'it' }),
+      ]);
       expect(service.getRecipeById).toHaveBeenCalledWith(43, 'it', 1);
       expect(result).toEqual(mockFailedDetailRecipe);
     });
