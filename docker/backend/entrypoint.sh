@@ -54,7 +54,9 @@ fi
 
 # Generate Prisma client based on current schema
 echo "Generating Prisma Client..."
-npx prisma generate
+#npx prisma generate
+#npx -y prisma@7 generate
+./node_modules/.bin/prisma generate
 
 # Apply any pending database migrations
 echo "Applying database migrations..."
