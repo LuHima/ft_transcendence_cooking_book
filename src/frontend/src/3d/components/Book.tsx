@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useTexture, Edges } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
 import {
   Color,
   DoubleSide,
@@ -700,7 +700,6 @@ export default function Book({
             colorWrite={false}
             depthWrite={false}
             side={DoubleSide}
-            color={"#FF0000"}
           />
         </mesh>
       ))}

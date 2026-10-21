@@ -1,7 +1,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Environment } from "@react-three/drei";
-import { DefaultLoadingManager, Group, PCFShadowMap, SpotLight } from "three";
+import { Group, PCFShadowMap, SpotLight } from "three";
 
 import KitchenModel from "./KitchenModel.tsx";
 import LoadingOverlay from "./LoadingOverlay.tsx";
@@ -76,8 +76,6 @@ export default function Scene({
   const pageRequestInProgress = useRef(false);
   const [recipesLoaded, setRecipesLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
-  const assetProgressRef = useRef(0);
-  const assetsActiveRef = useRef(true);
   const controlsRef = useRef<any>(null);
   const closeBookRef = useRef<(() => void) | null>(null);
   const registerCloseBook = useCallback((closeBook: () => void) => {
@@ -92,35 +90,6 @@ export default function Scene({
   const sideLightRef = useRef<SpotLight | null>(null);
   const sideTargetRef = useRef<Group | null>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
-
-  useEffect(() => {
-    const previousOnStart = DefaultLoadingManager.onStart;
-    const previousOnProgress = DefaultLoadingManager.onProgress;
-    const previousOnLoad = DefaultLoadingManager.onLoad;
-    const previousOnError = DefaultLoadingManager.onError;
-
-    DefaultLoadingManager.onStart = (_url, loaded, total) => {
-      assetsActiveRef.current = true;
-      assetProgressRef.current = total > 0 ? (loaded / total) * 100 : 0;
-    };
-    DefaultLoadingManager.onProgress = (_url, loaded, total) => {
-      assetProgressRef.current = total > 0 ? (loaded / total) * 100 : 0;
-    };
-    DefaultLoadingManager.onLoad = () => {
-      assetProgressRef.current = 100;
-      assetsActiveRef.current = false;
-    };
-    DefaultLoadingManager.onError = () => {
-      assetsActiveRef.current = false;
-    };
-
-    return () => {
-      DefaultLoadingManager.onStart = previousOnStart;
-      DefaultLoadingManager.onProgress = previousOnProgress;
-      DefaultLoadingManager.onLoad = previousOnLoad;
-      DefaultLoadingManager.onError = previousOnError;
-    };
-  }, []);
 
   useEffect(() => {
     fetchData(`/api/recipes/page?value=${initialApiPage}`)
@@ -294,12 +263,7 @@ export default function Scene({
           {paginationError}
         </div>
       )}
-      <LoadingOverlay
-        recipesLoaded={recipesLoaded}
-        sceneReady={sceneReady}
-        progressRef={assetProgressRef}
-        activeRef={assetsActiveRef}
-      />
+      <LoadingOverlay recipesLoaded={recipesLoaded} sceneReady={sceneReady} />
     </div>
   );
 }
