@@ -1,7 +1,7 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Environment } from "@react-three/drei";
-import { DefaultLoadingManager, Group, PCFShadowMap, SpotLight } from "three";
+import { Group, PCFShadowMap, SpotLight } from "three";
 
 import KitchenModel from "./KitchenModel.tsx";
 import LoadingOverlay from "./LoadingOverlay.tsx";
@@ -29,34 +29,43 @@ async function fetchData(url: string): Promise<fetchedValues> {
 
 function SceneContent({
   controlsRef,
+  onOutsideClick,
+  registerCloseBook,
   recipes,
   hasPreviousPage,
   hasNextPage,
   isChangingApiPage,
   onPreviousApiPage,
   onNextApiPage,
+  onDefaultPage,
   currentApiPage,
 }: SceneContentProps) {
   const { scene } = useGLTF(kitchenUrl);
 
   return (
     <>
-      <KitchenModel scene={scene} />
+      <KitchenModel scene={scene} onClick={onOutsideClick} />
       <Book
         controlsRef={controlsRef}
+        registerCloseBook={registerCloseBook}
         recipes={recipes}
         hasPreviousPage={hasPreviousPage}
         hasNextPage={hasNextPage}
         isChangingApiPage={isChangingApiPage}
         onPreviousApiPage={onPreviousApiPage}
         onNextApiPage={onNextApiPage}
+        onDefaultPage={onDefaultPage}
         currentApiPage={currentApiPage}
       />
     </>
   );
 }
 
-export default function Scene() {
+export default function Scene({
+  onDefaultPage,
+}: {
+  onDefaultPage?: () => void;
+} = {}) {
   const initialApiPage = 1;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
@@ -67,41 +76,20 @@ export default function Scene() {
   const pageRequestInProgress = useRef(false);
   const [recipesLoaded, setRecipesLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
-  const assetProgressRef = useRef(0);
-  const assetsActiveRef = useRef(true);
   const controlsRef = useRef<any>(null);
+  const closeBookRef = useRef<(() => void) | null>(null);
+  const registerCloseBook = useCallback((closeBook: () => void) => {
+    closeBookRef.current = closeBook;
+    return () => {
+      if (closeBookRef.current === closeBook) closeBookRef.current = null;
+    };
+  }, []);
+  const handleOutsideClick = useCallback(() => {
+    closeBookRef.current?.();
+  }, []);
   const sideLightRef = useRef<SpotLight | null>(null);
   const sideTargetRef = useRef<Group | null>(null);
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
-
-  useEffect(() => {
-    const previousOnStart = DefaultLoadingManager.onStart;
-    const previousOnProgress = DefaultLoadingManager.onProgress;
-    const previousOnLoad = DefaultLoadingManager.onLoad;
-    const previousOnError = DefaultLoadingManager.onError;
-
-    DefaultLoadingManager.onStart = (_url, loaded, total) => {
-      assetsActiveRef.current = true;
-      assetProgressRef.current = total > 0 ? (loaded / total) * 100 : 0;
-    };
-    DefaultLoadingManager.onProgress = (_url, loaded, total) => {
-      assetProgressRef.current = total > 0 ? (loaded / total) * 100 : 0;
-    };
-    DefaultLoadingManager.onLoad = () => {
-      assetProgressRef.current = 100;
-      assetsActiveRef.current = false;
-    };
-    DefaultLoadingManager.onError = () => {
-      assetsActiveRef.current = false;
-    };
-
-    return () => {
-      DefaultLoadingManager.onStart = previousOnStart;
-      DefaultLoadingManager.onProgress = previousOnProgress;
-      DefaultLoadingManager.onLoad = previousOnLoad;
-      DefaultLoadingManager.onError = previousOnError;
-    };
-  }, []);
 
   useEffect(() => {
     fetchData(`/api/recipes/page?value=${initialApiPage}`)
@@ -171,11 +159,43 @@ export default function Scene() {
       <button
         type="button"
         onClick={() => setIsBullseyeOn((prev) => !prev)}
-        className="absolute left-4 top-4 z-10 rounded-full border border-amber-200/60 bg-[#2b1a0d]/80 px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 shadow-lg backdrop-blur-sm transition hover:bg-[#3b260f]"
+        role="switch"
+        className={`absolute left-4 top-4 z-10 flex h-10 w-[4.5rem] items-center rounded-full border p-1 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 motion-reduce:transition-none ${isBullseyeOn ? "border-amber-200/70 bg-amber-100/15 shadow-amber-300/20" : "border-white/20 bg-black/40 shadow-black/30"}`}
       >
-        {isBullseyeOn ? "Occhio di bue: on" : "Occhio di bue: off"}
+        <span
+          aria-hidden="true"
+          className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-lg transition-all duration-500 ease-out motion-reduce:transition-none ${isBullseyeOn ? "translate-x-0 bg-amber-200 text-[#38220b] shadow-amber-300/40" : "translate-x-8 bg-stone-200 text-[#26303b] shadow-black/40"}`}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className={`absolute h-5 w-5 transition-all duration-300 ease-out motion-reduce:transition-none ${isBullseyeOn ? "rotate-0 scale-100 opacity-100" : "-rotate-45 scale-50 opacity-0"}`}
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <circle cx="12" cy="12" r="3.5" />
+            <path
+              strokeLinecap="round"
+              d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"
+            />
+          </svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            className={`absolute h-5 w-5 transition-all duration-300 ease-out motion-reduce:transition-none ${isBullseyeOn ? "rotate-45 scale-50 opacity-0" : "rotate-0 scale-100 opacity-100"}`}
+            stroke="currentColor"
+            strokeWidth="1.8"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"
+            />
+          </svg>
+        </span>
       </button>
       <Canvas
+        onPointerMissed={handleOutsideClick}
         fallback={
           <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
             <div className="max-w-lg space-y-3">
@@ -206,12 +226,15 @@ export default function Scene() {
             <Environment preset="apartment" environmentIntensity={0.1} />
             <SceneContent
               controlsRef={controlsRef}
+              onOutsideClick={handleOutsideClick}
+              registerCloseBook={registerCloseBook}
               recipes={recipes}
               hasPreviousPage={hasPreviousPage}
               hasNextPage={hasNextPage}
               isChangingApiPage={isChangingApiPage}
               onPreviousApiPage={goToPreviousApiPage}
               onNextApiPage={goToNextApiPage}
+              onDefaultPage={onDefaultPage}
               currentApiPage={currentApiPage}
             />
             <SceneReady onReady={() => setSceneReady(true)} />
@@ -240,12 +263,7 @@ export default function Scene() {
           {paginationError}
         </div>
       )}
-      <LoadingOverlay
-        recipesLoaded={recipesLoaded}
-        sceneReady={sceneReady}
-        progressRef={assetProgressRef}
-        activeRef={assetsActiveRef}
-      />
+      <LoadingOverlay recipesLoaded={recipesLoaded} sceneReady={sceneReady} />
     </div>
   );
 }

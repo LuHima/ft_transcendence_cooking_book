@@ -1,7 +1,13 @@
 import { useEffect } from "react";
 import type { Object3D } from "three";
 
-export default function KitchenModel({ scene }: { scene: Object3D }) {
+export default function KitchenModel({
+  scene,
+  onClick,
+}: {
+  scene: Object3D;
+  onClick: () => void;
+}) {
   useEffect(() => {
     scene.traverse((c: any) => {
       if (c.isMesh) {
@@ -21,5 +27,5 @@ export default function KitchenModel({ scene }: { scene: Object3D }) {
     });
   }, [scene]);
 
-  return <primitive object={scene} dispose={null} />;
+  return <primitive object={scene} dispose={null} onClick={onClick} />;
 }

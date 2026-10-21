@@ -4,29 +4,18 @@ import { useEffect, useRef, useState } from "react";
 export default function LoadingOverlay({
   recipesLoaded,
   sceneReady,
-  progressRef,
-  activeRef,
 }: {
   recipesLoaded: boolean;
   sceneReady: boolean;
-  progressRef: React.RefObject<number>;
-  activeRef: React.RefObject<boolean>;
 }) {
   const [displayProgress, setDisplayProgress] = useState(1);
   const [hidden, setHidden] = useState(false);
-  const [assetsReady, setAssetsReady] = useState(false);
-  const loadingComplete = recipesLoaded && assetsReady && sceneReady;
+  const loadingComplete = recipesLoaded && sceneReady;
 
   useEffect(() => {
     let frame = 0;
 
     const animate = () => {
-      const currentAssetsReady =
-        !activeRef.current && progressRef.current >= 100;
-      if (recipesLoaded && sceneReady && currentAssetsReady) {
-        setAssetsReady(true);
-      }
-
       setDisplayProgress((currentProgress) => {
         if (loadingComplete) {
           return Math.min(100, currentProgress + 2);
@@ -39,7 +28,7 @@ export default function LoadingOverlay({
 
     frame = window.requestAnimationFrame(animate);
     return () => window.cancelAnimationFrame(frame);
-  }, [activeRef, loadingComplete, progressRef, recipesLoaded, sceneReady]);
+  }, [loadingComplete]);
 
   useEffect(() => {
     if (!loadingComplete || displayProgress < 100) return;
