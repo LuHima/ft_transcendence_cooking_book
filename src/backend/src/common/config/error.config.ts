@@ -1,4 +1,7 @@
+import { ForbiddenError } from '@casl/ability';
 import { HttpStatus, HttpException } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
+import { NotFoundError } from 'rxjs';
 
 export interface AppErrorDefinition {
   statusCode: HttpStatus; // numero dell'errore
@@ -289,6 +292,77 @@ export const errors = {
       error: 'Internal Server Error',
     },
   },
+  // ─────────────────────────────────────────────────────────
+  // SOCKET (Ho messo un po di errori generale con lo statuss code dell'http)
+  // ─────────────────────────────────────────────────────────
+  socket: {
+    BadRequestError: {
+      // 400
+      statusCode: HttpStatus.BAD_REQUEST,
+      message: 'General Error',
+      error: 'Bad Request',
+    },
+    unauthorized: {
+      // 401
+      statusCode: HttpStatus.UNAUTHORIZED,
+      message: 'Unauthorized access',
+      error: 'Unauthorized',
+    },
+    NotFound: {
+      //404
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Not found',
+      error: 'Not Found',
+    },
+    internalError: {
+      // 500
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: 'Execution error',
+      error: 'Internal Server Error',
+    },
+    Forbidden: {
+      // 403
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'You do not have the permission',
+      error: 'Forbidden',
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // Notification error
+  // ─────────────────────────────────────────────────────────
+  notification: {
+    BadRequestError: {
+      // 400
+      statusCode: HttpStatus.BAD_REQUEST,
+      message: 'General Error notification',
+      error: 'Bad Request',
+    },
+    unauthorized: {
+      // 401
+      statusCode: HttpStatus.UNAUTHORIZED,
+      message: 'Unauthorized access',
+      error: 'Unauthorized',
+    },
+    NotFound: {
+      //404
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Not found, notification error',
+      error: 'Not Found',
+    },
+    internalError: {
+      // 500
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: 'Execution error, notification error',
+      error: 'Internal Server Error',
+    },
+    Forbidden: {
+      // 403
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'You do not have the permission to act on this notification',
+      error: 'Forbidden',
+    },
+  },
 } as const;
 
 //	 creo questa funzione per creare degli exeption che mi servono
@@ -306,4 +380,15 @@ export function createHttpException(
     },
     errorDef.statusCode,
   );
+}
+
+export function createWebSocketException(
+  errorDef: AppErrorDefinition,
+  customMessage?: string,
+): WsException {
+  return new WsException({
+    statusCode: errorDef.statusCode,
+    message: customMessage || errorDef.message,
+    error: errorDef.error,
+  });
 }

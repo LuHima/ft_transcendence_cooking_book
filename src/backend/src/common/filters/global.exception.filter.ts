@@ -7,6 +7,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 import { Prisma } from '@prisma/client';
 import { Response, Request } from 'express';
 import { createHttpException, errors } from '../config/error.config';
@@ -22,6 +23,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
+    if (host.getType?.() === 'ws') {
+      this.catchWebSocketException(exception, host);
+      return;
+    }
+
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -100,6 +106,46 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       path: request.url,
       message,
     });
+  }
+
+  private catchWebSocketException(exception: unknown, host: ArgumentsHost) {
+    const client = host.switchToWs().getClient<{
+      emit: (event: string, payload: unknown, callback?: () => void) => void;
+      timeout: (milliseconds: number) => {
+        emit: (
+          event: string,
+          payload: unknown,
+          callback?: () => void,
+        ) => void;
+      };
+      disconnect: (close?: boolean) => void;
+    }>();
+
+    const error = exception instanceof WsException ? exception.getError() : null;
+    const errorDef =
+      error && typeof error === 'object'
+        ? (error as Partial<typeof errors.socket.unauthorized>)
+        : {
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: 'Internal server error',
+            error: 'Internal server error',
+          };
+    const returnError = {
+      statusCode: errorDef.statusCode ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      timestamp: new Date().toISOString(),
+      message: errorDef.message ?? 'Internal server error',
+      error: errorDef.error ?? 'Internal server error',
+    };
+
+    this.logger.warn(`${returnError.statusCode}${returnError.message}`);
+
+    if (returnError.statusCode === HttpStatus.UNAUTHORIZED) {
+      client.timeout(2000).emit('error', returnError, () => {
+        client.disconnect(true);
+      });
+    } else {
+      client.emit('error', returnError);
+    }
   }
 
   private handlePrismaKnownRequestError(

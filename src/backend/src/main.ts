@@ -29,7 +29,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   // Per lavorare con i cookie
   app.use(cookieParser(process.env.COOKIE_SECRET));
-  // Centralized global exception filter
+  // Centralized HTTP and WebSocket exception handling
   app.useGlobalFilters(new GlobalExceptionFilter());
   // Standard RFC 9110 Content-Language response header interceptor
   app.useGlobalInterceptors(new ContentLanguageInterceptor());
@@ -46,7 +46,7 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: ['http://localhost:5173', 'https://localhost:8443'],
+    origin: ['https://localhost:8443'],
     credentials: true,
   });
 
@@ -113,16 +113,6 @@ async function bootstrap() {
   });
   // Export openapi.json for Fern, Postman, and AI agent consumers
   fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2));
-  /* try {
-    fs.writeFileSync('../openapi.json', JSON.stringify(document, null, 2));
-  } catch {
-    // Silently continue if root write is not accessible
-  }
-  try {
-    fs.writeFileSync('../fern/openapi/openapi.json', JSON.stringify(document, null, 2));
-  } catch {
-    // Silently continue if fern directory is not accessible
-  } */
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }

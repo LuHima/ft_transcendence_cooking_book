@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { Action } from '../action.enum';
 import {
   AbilityBuilder,
@@ -7,19 +6,16 @@ import {
   InferSubjects,
   ForcedSubject,
 } from '@casl/ability'; //MongoAbility non centra niente con MongoDB
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { UseGuards, Injectable } from '@nestjs/common';
-import {
-  CurrentUser,
-  ActiveUserData,
-} from 'src/common/decorators/current-user.decorator';
-import { Recipe, Comment, User, Role } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
+import { Recipe, Comment, User, Role, Notification } from '@prisma/client';
 
 // Definisce i soggetti (come stringhe per Prisma, o 'all')
 export type Subjects =
   | InferSubjects<Recipe & ForcedSubject<'Recipe'>>
   | InferSubjects<Comment & ForcedSubject<'Comment'>>
   | InferSubjects<User & ForcedSubject<'User'>>
+  | InferSubjects<Notification & ForcedSubject<'Notification'>>
   | 'all';
 
 // Definisce il tipo AppAbility con MongoAbility
@@ -81,7 +77,7 @@ export class CaslAbilityFactory {
       can(Action.Delete, 'Recipe', { user_id: user.id });
       can(Action.Report, 'Recipe');
       can(Action.Report, 'Comment');
-
+      can(Action.Read, 'Notification', { user_id: user.id });
       // i cannot sono inutili in questo caso tutto cio che non è can diventa
       // cannot però per vedere come funziona o lasciato cosi che mi sembra piu chiaro
       cannot(Action.Manage, 'all');
@@ -89,6 +85,12 @@ export class CaslAbilityFactory {
       cannot(Action.Ban, 'Comment');
       cannot(Action.Ban, 'User');
     }
+
+    can(Action.Read, 'Notification', { user_id: user.id });
+    can(Action.Delete, 'Notification', { user_id: user.id });
+    can(Action.Accept, 'Notification', { user_id: user.id });
+    can(Action.Refuse, 'Notification', { user_id: user.id });
+
     return build();
   }
 }

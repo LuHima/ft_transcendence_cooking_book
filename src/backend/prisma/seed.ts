@@ -9,12 +9,13 @@ import {
   OwnerType,
   RecipeDifficulty,
   MediaType,
-  NotificationType,
   MealType,
   IngredientCategory,
   UnitOfMeasure,
   TranslationStatus,
   Course,
+  NotificationSubject,
+  NotificationAction,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -2921,16 +2922,6 @@ async function main() {
     },
   });
 
-  await prisma.comment.create({
-    data: {
-      recipe_id: carbonara.id,
-      user_id: userMario.id,
-      parent_id: commCarbonara1.id,
-      content:
-        'Assolutamente no! Niente vino e niente aglio, solo il grasso del guanciale 🤤',
-    },
-  });
-
   // Commento modificato
   await prisma.comment.create({
     data: {
@@ -3061,62 +3052,24 @@ async function main() {
       {
         user_id: userMario.id,
         actor_id: userGiulia.id,
-        recipe_id: carbonara.id,
-        type: NotificationType.comment,
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.comment,
+        target_id: carbonara.id,
         is_read: true,
       },
       {
         user_id: userMario.id,
         actor_id: userGiulia.id,
-        recipe_id: carbonara.id,
-        type: NotificationType.like,
-        is_read: false,
-      },
-      {
-        user_id: userMario.id,
-        actor_id: modSarah.id,
-        recipe_id: carbonara.id,
-        type: NotificationType.like,
-        is_read: false,
-      },
-
-      // Per Giulia (autrice Tiramisù e Salmone)
-      {
-        user_id: userGiulia.id,
-        actor_id: userSophie.id,
-        recipe_id: tiramisu.id,
-        type: NotificationType.comment,
-        is_read: false,
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.like,
+        target_id: carbonara.id,
       },
       {
         user_id: userGiulia.id,
-        actor_id: userMario.id,
-        recipe_id: tiramisu.id,
-        type: NotificationType.like,
-        is_read: true,
-      },
-      {
-        user_id: userGiulia.id,
-        actor_id: modSarah.id,
-        recipe_id: salmonDish.id,
-        type: NotificationType.like,
-        is_read: false,
-      },
-
-      // Per Marco (autore Risotto)
-      {
-        user_id: userMarco.id,
-        actor_id: userKenji.id,
-        recipe_id: risotto.id,
-        type: NotificationType.comment,
-        is_read: false,
-      },
-      {
-        user_id: userMarco.id,
         actor_id: adminMarghe.id,
-        recipe_id: risotto.id,
-        type: NotificationType.like,
-        is_read: true,
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.like,
+        target_id: tiramisu.id,
       },
     ],
   });
@@ -3219,21 +3172,8 @@ async function main() {
   });
 
   console.log('✅ Seed completato con successo!');
-  console.log('   👤 Utenti disponibili (Password per tutti: "Password123"):');
-  console.log('      - Admin: marghe_admin (marghe@example.com)');
-  console.log('      - Moderator: sarah_mod (sarah@example.com)');
-  console.log(
-    '      - Chef / Utenti attivi: mario_bianchi, giuly_cooks, chef_marco, sophie_pastry, kenji_noodles, elena_vegan, carlos_mex',
-  );
-  console.log(
-    '      - 2FA Test: alex_secure (alex2fa@example.com - 2FA abilitata)',
-  );
-  console.log(
-    '      - Moderazione / Casi limite: luca_disattivato (disabled), spam_bot (banned), ex_utente (soft-deleted)',
-  );
-  console.log(
-    '   🍳 20 Ricette diversificate caricate su tutte le 7 portate, 3 difficoltà e fasce di tempo!',
-  );
+  console.log(`   Utenti di prova (password: Password123): ${adminMarghe.username} (admin), ${userMario.username}, ${userGiulia.username}`);
+  console.log(`   Per test admin: ${userDisabled.username} (disattivato), ${userBanned.username} (bannato)`);
 }
 
 main()
