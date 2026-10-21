@@ -289,8 +289,7 @@ export class UsersService {
         recipe.translations.find((t) => t.locale === 'en') ??
         recipe.translations[0];
 
-      const resolved_lang =
-        translation?.locale ?? (recipe.source_lang || 'en');
+      const resolved_lang = translation?.locale ?? (recipe.source_lang || 'en');
 
       const tags = (recipe.recipe_tags ?? []).map((rt: any) => {
         const t = rt.tag ?? rt;
@@ -407,67 +406,69 @@ export class UsersService {
       }),
     ]);
 
-    const items: LocalizedRecipeSummaryResponse[] = recipes.map((recipe: any) => {
-      const targetLocale = query.lang;
-      const translation =
-        (targetLocale
-          ? recipe.translations.find((t) => t.locale === targetLocale)
-          : null) ??
-        recipe.translations.find((t) => t.locale === recipe.source_lang) ??
-        recipe.translations.find((t) => t.locale === 'en') ??
-        recipe.translations[0];
+    const items: LocalizedRecipeSummaryResponse[] = recipes.map(
+      (recipe: any) => {
+        const targetLocale = query.lang;
+        const translation =
+          (targetLocale
+            ? recipe.translations.find((t) => t.locale === targetLocale)
+            : null) ??
+          recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+          recipe.translations.find((t) => t.locale === 'en') ??
+          recipe.translations[0];
 
-      const resolved_lang =
-        translation?.locale ?? (recipe.source_lang || 'en');
+        const resolved_lang =
+          translation?.locale ?? (recipe.source_lang || 'en');
 
-      const tags = (recipe.recipe_tags ?? []).map((rt: any) => {
-        const t = rt.tag ?? rt;
-        const tagTrans =
-          t?.translations?.find(
-            (tr: any) => tr.locale === (query.lang || recipe.source_lang),
-          ) ??
-          t?.translations?.find(
-            (tr: any) => tr.locale === recipe.source_lang,
-          ) ??
-          t?.translations?.find((tr: any) => tr.locale === 'en');
+        const tags = (recipe.recipe_tags ?? []).map((rt: any) => {
+          const t = rt.tag ?? rt;
+          const tagTrans =
+            t?.translations?.find(
+              (tr: any) => tr.locale === (query.lang || recipe.source_lang),
+            ) ??
+            t?.translations?.find(
+              (tr: any) => tr.locale === recipe.source_lang,
+            ) ??
+            t?.translations?.find((tr: any) => tr.locale === 'en');
+          return {
+            id: t.id,
+            slug: t.slug,
+            name: tagTrans?.name ?? t.slug,
+            resolved_lang: tagTrans?.locale ?? 'en',
+          };
+        });
+
         return {
-          id: t.id,
-          slug: t.slug,
-          name: tagTrans?.name ?? t.slug,
-          resolved_lang: tagTrans?.locale ?? 'en',
+          id: recipe.id,
+          course: recipe.course,
+          difficulty: recipe.difficulty,
+          prep_time: recipe.prep_time,
+          cook_time: recipe.cook_time,
+          total_time: recipe.total_time,
+          servings: recipe.servings,
+          source_lang: recipe.source_lang,
+          translation_status: recipe.translation_status,
+          cover_image_url: recipe.cover_image_url,
+          video_url: recipe.video_url,
+          created_at: recipe.created_at,
+          updated_at: recipe.updated_at,
+          author: recipe.user
+            ? {
+                id: recipe.user.id,
+                username: recipe.user.username,
+                avatar_url: recipe.user.avatar_url,
+              }
+            : null,
+          title: translation?.title ?? '',
+          description: translation?.description ?? '',
+          tags,
+          likes_count: recipe._count?.likes ?? 0,
+          comments_count: recipe._count?.comments ?? 0,
+          is_liked: Boolean(recipe.likes && recipe.likes.length > 0),
+          resolved_lang,
         };
-      });
-
-      return {
-        id: recipe.id,
-        course: recipe.course,
-        difficulty: recipe.difficulty,
-        prep_time: recipe.prep_time,
-        cook_time: recipe.cook_time,
-        total_time: recipe.total_time,
-        servings: recipe.servings,
-        source_lang: recipe.source_lang,
-        translation_status: recipe.translation_status,
-        cover_image_url: recipe.cover_image_url,
-        video_url: recipe.video_url,
-        created_at: recipe.created_at,
-        updated_at: recipe.updated_at,
-        author: recipe.user
-          ? {
-              id: recipe.user.id,
-              username: recipe.user.username,
-              avatar_url: recipe.user.avatar_url,
-            }
-          : null,
-        title: translation?.title ?? '',
-        description: translation?.description ?? '',
-        tags,
-        likes_count: recipe._count?.likes ?? 0,
-        comments_count: recipe._count?.comments ?? 0,
-        is_liked: Boolean(recipe.likes && recipe.likes.length > 0),
-        resolved_lang,
-      };
-    });
+      },
+    );
 
     const total_pages = Math.ceil(total / limit);
 
