@@ -24,7 +24,10 @@ export class ContentLanguageInterceptor implements NestInterceptor {
 
         // 1. Inspect data payload for resolved_lang
         if (data && typeof data === 'object') {
-          if ('resolved_lang' in data && typeof data.resolved_lang === 'string') {
+          if (
+            'resolved_lang' in data &&
+            typeof data.resolved_lang === 'string'
+          ) {
             lang = data.resolved_lang;
           } else if (
             Array.isArray(data) &&

@@ -25,8 +25,12 @@ describe('HttpExceptionFilter (Catch-All Exception Filter)', () => {
       }),
     } as any;
 
-    loggerErrorSpy = jest.spyOn((filter as any).logger, 'error').mockImplementation(() => {});
-    loggerWarnSpy = jest.spyOn((filter as any).logger, 'warn').mockImplementation(() => {});
+    loggerErrorSpy = jest
+      .spyOn((filter as any).logger, 'error')
+      .mockImplementation(() => {});
+    loggerWarnSpy = jest
+      .spyOn((filter as any).logger, 'warn')
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -54,7 +58,10 @@ describe('HttpExceptionFilter (Catch-All Exception Filter)', () => {
   it('handles array messages from class-validator DTO validation errors', () => {
     const exception = new BadRequestException({
       statusCode: 400,
-      message: ['title should not be empty', 'prep_time must be a positive number'],
+      message: [
+        'title should not be empty',
+        'prep_time must be a positive number',
+      ],
       error: 'Bad Request',
     });
 
@@ -65,12 +72,17 @@ describe('HttpExceptionFilter (Catch-All Exception Filter)', () => {
       statusCode: 400,
       timestamp: expect.any(String),
       path: '/api/recipes/42',
-      message: ['title should not be empty', 'prep_time must be a positive number'],
+      message: [
+        'title should not be empty',
+        'prep_time must be a positive number',
+      ],
     });
   });
 
   it('masks 500 HttpException message from client and logs internal error with stack trace', () => {
-    const exception = new InternalServerErrorException('Database timeout during query');
+    const exception = new InternalServerErrorException(
+      'Database timeout during query',
+    );
 
     filter.catch(exception, mockHost);
 

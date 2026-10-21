@@ -1285,7 +1285,7 @@
     },
     "/api/recipes": {
       "get": {
-        "description": "Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy. If authenticated via `accessToken` cookie, contextual social metrics like `is_liked` are populated.",
+        "description": "Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, returns localized title and description according to this order: requested language -[if not available]-> source language -[if not available]-> English. If authenticated via `accessToken` cookie, contextual social metrics such as `is_liked` are populated.",
         "operationId": "RecipeController_getRecipes",
         "parameters": [
           {
@@ -1317,7 +1317,7 @@
             "name": "course",
             "required": false,
             "in": "query",
-            "description": "Filter recipes by course meal category",
+            "description": "Filter recipes by course meal category (first course, main course, dessert, etc.)",
             "schema": {
               "example": "main_course",
               "type": "string",
@@ -1351,7 +1351,7 @@
             "name": "tag_ids",
             "required": false,
             "in": "query",
-            "description": "Filter recipes by tag IDs (supports comma-separated string e.g. \"1,2\" or numbers)",
+            "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or single numbers e.g. \"tag_ids=1&tag_ids=2\"",
             "schema": {
               "example": [
                 1,
@@ -1359,7 +1359,8 @@
               ],
               "type": "array",
               "items": {
-                "type": "number"
+                "type": "number",
+                "minimum": 1
               }
             }
           },
@@ -1422,6 +1423,16 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid recipe filter or pagination query parameter, including non-integer tag IDs, negative IDs or times, unsupported enum values, or an invalid language code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -1433,13 +1444,13 @@
             }
           }
         },
-        "summary": "List recipes with multi-criteria filtering and search",
+        "summary": "List recipes with filtering and search",
         "tags": [
           "Recipes"
         ]
       },
       "post": {
-        "description": "Creates a recipe in the declared `source_lang`, verifies language via LibreTranslate, validates catalog references, generates automated multilingual translations for all supported locales, and stores relational records.",
+        "description": "Creates a recipe in the declared `source_lang`, verifies that text is actually written in the declared language via LibreTranslate, validates catalog references and ingredients, generates automated multilingual translations for all supported locales, and stores the new recipe in database with all translations.",
         "operationId": "RecipeController_addRecipe",
         "parameters": [],
         "requestBody": {
@@ -1517,7 +1528,7 @@
     },
     "/api/recipes/metadata": {
       "get": {
-        "description": "Convenience route returning enum dictionaries (courses, difficulties, units, categories) identical to `/api/recipes/metadata`.",
+        "description": "Convenience route returning enum dictionaries (courses, difficulties, units, categories).",
         "operationId": "RecipeController_getMetadata",
         "parameters": [],
         "responses": {
@@ -1567,7 +1578,7 @@
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated.",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated. If source_lang is not available, defaults to English (en).",
             "schema": {
               "enum": [
                 "it",
@@ -3918,7 +3929,7 @@
           },
           "cover_image_url": {
             "type": "object",
-            "description": "Primary hero recipe cover image URL",
+            "description": "Recipe cover image URL",
             "example": "/uploads/recipes/carbonara_cover.webp",
             "nullable": true
           },
@@ -4332,7 +4343,7 @@
           },
           "step_number": {
             "type": "number",
-            "description": "1-based sequential step order",
+            "description": "Integer representing the sequential step order",
             "example": 1
           },
           "title": {
@@ -4558,7 +4569,7 @@
           },
           "cover_image_url": {
             "type": "object",
-            "description": "Primary hero recipe cover image URL",
+            "description": "Recipe cover image URL",
             "example": "/uploads/recipes/carbonara_cover.webp",
             "nullable": true
           },
@@ -4800,7 +4811,7 @@
             "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
           },
           "course": {
-            "description": "Course classification within a meal",
+            "description": "Course classification within a meal (first course, main course, dessert, etc.)",
             "example": "first_course",
             "enum": [
               "appetizer",
@@ -4868,14 +4879,15 @@
             }
           },
           "tag_ids": {
-            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags)",
+            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags).",
             "example": [
               1,
               3
             ],
             "type": "array",
             "items": {
-              "type": "number"
+              "type": "number",
+              "minimum": 1
             }
           }
         },
@@ -4963,7 +4975,7 @@
             "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
           },
           "course": {
-            "description": "Course classification within a meal",
+            "description": "Course classification within a meal (first course, main course, dessert, etc.)",
             "example": "first_course",
             "enum": [
               "appetizer",
@@ -5031,14 +5043,15 @@
             }
           },
           "tag_ids": {
-            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags)",
+            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags).",
             "example": [
               1,
               3
             ],
             "type": "array",
             "items": {
-              "type": "number"
+              "type": "number",
+              "minimum": 1
             }
           },
           "locale": {
@@ -5307,8 +5320,9 @@
         "properties": {
           "content": {
             "type": "string",
-            "description": "Updated comment text (maximum 1000 characters)",
+            "description": "Updated comment text (1 to 1000 characters)",
             "example": "Ho rifatto la ricetta aggiungendo un pizzico di pepe in più: fantastica!",
+            "minLength": 1,
             "maxLength": 1000
           }
         },

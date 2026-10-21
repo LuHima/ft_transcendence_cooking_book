@@ -23,7 +23,10 @@ export class LocalizedRecipeStepResponse {
    * Sequence step number (1-based).
    * @example 1
    */
-  @ApiProperty({ description: '1-based sequential step order', example: 1 })
+  @ApiProperty({
+    description: 'Integer representing the sequential step order',
+    example: 1,
+  })
   step_number: number;
 
   /**
@@ -94,7 +97,7 @@ export class LocalizedRecipeIngredientResponse {
 
   /**
    * Ingredient culinary category.
-   * @example IngredientCategory.meat
+   * @example IngredientCategory.meat_poultry
    */
   @ApiProperty({
     enum: IngredientCategory,
@@ -349,7 +352,7 @@ export class LocalizedRecipeSummaryResponse {
    * @example '/uploads/recipes/carbonara_cover.webp'
    */
   @ApiProperty({
-    description: 'Primary hero recipe cover image URL',
+    description: 'Recipe cover image URL',
     example: '/uploads/recipes/carbonara_cover.webp',
     nullable: true,
   })

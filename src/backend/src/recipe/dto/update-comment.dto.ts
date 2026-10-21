@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 
 /**
  * Payload for updating an existing comment.
@@ -11,15 +11,15 @@ export class UpdateCommentDto {
    * @example 'Ho rifatto la ricetta aggiungendo un pizzico di pepe in più: fantastica!'
    */
   @ApiProperty({
-    description: 'Updated comment text (maximum 1000 characters)',
+    description: 'Updated comment text (1 to 1000 characters)',
     example:
       'Ho rifatto la ricetta aggiungendo un pizzico di pepe in più: fantastica!',
+    minLength: 1,
+    maxLength: 1000,
   })
-  @Transform(({ value }: { value: unknown }): unknown =>
-    typeof value === 'string' ? value.trim() : value,
-  )
   @IsString()
   @IsNotEmpty()
-  @MaxLength(1000)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Length(1, 1000)
   content: string;
 }

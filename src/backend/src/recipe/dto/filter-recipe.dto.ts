@@ -12,7 +12,8 @@ import {
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 /**
- * Query parameter data transfer object for multi-criteria recipe catalog filtering, search, and pagination.
+ * Query parameter data transfer object for multi-criteria recipe catalog
+ * filtering, search, and pagination.
  */
 export class FilterRecipeDto extends PaginationQueryDto {
   /**
@@ -20,7 +21,8 @@ export class FilterRecipeDto extends PaginationQueryDto {
    * @example Course.main_course
    */
   @ApiPropertyOptional({
-    description: 'Filter recipes by course meal category',
+    description:
+      'Filter recipes by course meal category (first course, main course, dessert, etc.)',
     enum: Course,
     example: Course.main_course,
   })
@@ -43,23 +45,23 @@ export class FilterRecipeDto extends PaginationQueryDto {
 
   /**
    * Filter recipes associated with any of the specified tag IDs.
-   * Supports comma-separated query string (e.g., \`?tag_ids=1,2,3\`) or array.
+   * Supports comma-separated query string (e.g., \`?tag_ids=1,2,3\`) or
+   * arrays (e.g., \`?tag_ids=1&tag_ids=2&tag_ids=3\`).
    * @example [1, 2]
    */
   @ApiPropertyOptional({
     description:
-      'Filter recipes by tag IDs (supports comma-separated string e.g. "1,2" or numbers)',
+      'Filter recipes by tag IDs. Supports comma-separated string e.g. "tag_ids=1,2" or single numbers e.g. "tag_ids=1&tag_ids=2"',
     example: [1, 2],
     type: [Number],
   })
   @IsOptional()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
   @Transform(({ value }) => {
-    if (Array.isArray(value)) return value.map(Number).filter((n) => !isNaN(n));
+    if (Array.isArray(value)) return value.map(Number);
     if (typeof value === 'string') {
-      return value
-        .split(',')
-        .map((s) => Number(s.trim()))
-        .filter((n) => !isNaN(n));
+      return value.split(',').map((s) => Number(s.trim()));
     }
     if (typeof value === 'number') return [value];
     return undefined;

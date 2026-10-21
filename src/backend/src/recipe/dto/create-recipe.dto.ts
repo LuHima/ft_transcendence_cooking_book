@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
@@ -195,7 +195,8 @@ export class CreateRecipeDto {
    */
   @ApiProperty({
     enum: Course,
-    description: 'Course classification within a meal',
+    description:
+      'Course classification within a meal (first course, main course, dessert, etc.)',
     example: Course.first_course,
   })
   @IsEnum(Course)
@@ -300,11 +301,12 @@ export class CreateRecipeDto {
   @ApiPropertyOptional({
     type: [Number],
     description:
-      'Optional catalog tag IDs to attach (e.g. dietary or style tags)',
+      'Optional catalog tag IDs to attach (e.g. dietary or style tags).',
     example: [1, 3],
   })
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })
+  @Min(1, { each: true })
   tag_ids?: number[];
 }

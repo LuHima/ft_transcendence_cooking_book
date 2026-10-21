@@ -26,8 +26,12 @@ describe('GlobalExceptionFilter (Centralized Dispatcher)', () => {
       }),
     } as any;
 
-    loggerErrorSpy = jest.spyOn((filter as any).logger, 'error').mockImplementation(() => {});
-    loggerWarnSpy = jest.spyOn((filter as any).logger, 'warn').mockImplementation(() => {});
+    loggerErrorSpy = jest
+      .spyOn((filter as any).logger, 'error')
+      .mockImplementation(() => {});
+    loggerWarnSpy = jest
+      .spyOn((filter as any).logger, 'warn')
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -36,11 +40,14 @@ describe('GlobalExceptionFilter (Centralized Dispatcher)', () => {
 
   describe('Prisma Client Known Request Errors', () => {
     it('handles P2002 unique constraint violation and formats field message', () => {
-      const error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '5.19.0',
-        meta: { target: ['email'] },
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed',
+        {
+          code: 'P2002',
+          clientVersion: '5.19.0',
+          meta: { target: ['email'] },
+        },
+      );
 
       filter.catch(error, mockHost);
 
@@ -54,11 +61,14 @@ describe('GlobalExceptionFilter (Centralized Dispatcher)', () => {
     });
 
     it('handles P2025 record not found and formats 404 message', () => {
-      const error = new Prisma.PrismaClientKnownRequestError('Record not found', {
-        code: 'P2025',
-        clientVersion: '5.19.0',
-        meta: { modelName: 'Recipe' },
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        'Record not found',
+        {
+          code: 'P2025',
+          clientVersion: '5.19.0',
+          meta: { modelName: 'Recipe' },
+        },
+      );
 
       filter.catch(error, mockHost);
 
@@ -72,14 +82,17 @@ describe('GlobalExceptionFilter (Centralized Dispatcher)', () => {
     });
 
     it('handles P2003 foreign key violation and extracts field name cleanly', () => {
-      const error = new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
-        code: 'P2003',
-        clientVersion: '5.19.0',
-        meta: {
-          modelName: 'Recipe',
-          field_name: 'recipe_ingredients_ingredient_id_fkey',
+      const error = new Prisma.PrismaClientKnownRequestError(
+        'Foreign key constraint failed',
+        {
+          code: 'P2003',
+          clientVersion: '5.19.0',
+          meta: {
+            modelName: 'Recipe',
+            field_name: 'recipe_ingredients_ingredient_id_fkey',
+          },
         },
-      });
+      );
 
       filter.catch(error, mockHost);
 
@@ -93,10 +106,13 @@ describe('GlobalExceptionFilter (Centralized Dispatcher)', () => {
     });
 
     it('handles unhandled Prisma known codes by falling back to 500', () => {
-      const error = new Prisma.PrismaClientKnownRequestError('Unknown query syntax', {
-        code: 'P2999',
-        clientVersion: '5.19.0',
-      });
+      const error = new Prisma.PrismaClientKnownRequestError(
+        'Unknown query syntax',
+        {
+          code: 'P2999',
+          clientVersion: '5.19.0',
+        },
+      );
 
       filter.catch(error, mockHost);
 
@@ -171,7 +187,9 @@ describe('GlobalExceptionFilter (Centralized Dispatcher)', () => {
     });
 
     it('masks 500 HttpException client message and logs internal error with stack trace', () => {
-      const exception = new InternalServerErrorException('Database timeout during query');
+      const exception = new InternalServerErrorException(
+        'Database timeout during query',
+      );
 
       filter.catch(exception, mockHost);
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-	"preserveWatchOutput": true, // needed to preserve log when starting 'nest start --watch'
+    "preserveWatchOutput": true, // needed to preserve log when starting 'nest start --watch'
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
@@ -18,15 +18,16 @@
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
+    // "strictPropertyInitialization": false, // used to correct some intellisense errors
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-	"paths": {
+    "paths": {
       "src/*": ["./src/*"],
-	  "prisma/*": ["./prisma/*"]
+      "prisma/*": ["./prisma/*"]
     },
-	"typeRoots": ["./node_modules/@types"],
+    "typeRoots": ["./node_modules/@types"],
     "types": ["jest", "node"]
   }
 }

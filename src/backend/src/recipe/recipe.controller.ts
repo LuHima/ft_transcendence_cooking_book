@@ -90,16 +90,22 @@ export class RecipeController {
   // TODO @Roles(Role.admin)
 
   /**
-   * Retrieve recipes with multi-criteria filtering, search, and optional localization.
+   * Retrieve recipes with multi-criteria filtering, search, and optional
+   * localization.
    */
   @ApiOperation({
-    summary: 'List recipes with multi-criteria filtering and search',
+    summary: 'List recipes with filtering and search',
     description:
-      'Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, projects localized title and description according to preference hierarchy. If authenticated via `accessToken` cookie, contextual social metrics like `is_liked` are populated.',
+      'Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, returns localized title and description according to this order: requested language -[if not available]-> source language -[if not available]-> English. If authenticated via `accessToken` cookie, contextual social metrics such as `is_liked` are populated.',
   })
   @ApiOkResponse({
     description: 'Paginated recipe cards with translations matching criteria',
     type: PaginatedRecipeResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid recipe filter or pagination query parameter, including non-integer tag IDs, negative IDs or times, unsupported enum values, or an invalid language code',
+    type: ApiBadRequestResponseDto,
   })
   @UseGuards(OptionalAuthGuard)
   @Get()
@@ -116,7 +122,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Get recipe metadata dictionaries',
     description:
-      'Convenience route returning enum dictionaries (courses, difficulties, units, categories) identical to `/api/recipes/metadata`.',
+      'Convenience route returning enum dictionaries (courses, difficulties, units, categories).',
   })
   @ApiOkResponse({
     description: 'System metadata enumerations',
@@ -144,7 +150,7 @@ export class RecipeController {
     name: 'lang',
     required: false,
     description:
-      'Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated.',
+      'Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated. If source_lang is not available, defaults to English (en).',
     enum: ['it', 'en', 'fr'],
     example: 'it',
   })
@@ -180,7 +186,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Create a new recipe',
     description:
-      'Creates a recipe in the declared `source_lang`, verifies language via LibreTranslate, validates catalog references, generates automated multilingual translations for all supported locales, and stores relational records.',
+      'Creates a recipe in the declared `source_lang`, verifies that text is actually written in the declared language via LibreTranslate, validates catalog references and ingredients, generates automated multilingual translations for all supported locales, and stores the new recipe in database with all translations.',
   })
   @ApiCreatedResponse({
     description: 'Recipe successfully created',

@@ -4,8 +4,10 @@ import { Request } from 'express';
 
 /**
  * Optional authentication guard.
- * If an accessToken cookie is present and valid, attaches the authenticated user payload to request.user.
- * If absent, invalid, or expired, execution proceeds as a guest without throwing UnauthorizedException.
+ * If an accessToken cookie is present and valid, attaches the authenticated
+ * user payload to request.user.
+ * If absent, invalid, or expired, execution proceeds as a guest without
+ * throwing UnauthorizedException.
  */
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {

@@ -80,7 +80,12 @@ describe('CatalogService', () => {
 
       expect(result).toEqual([
         { id: 1, slug: 'vegetarian', name: 'Vegetariano', resolved_lang: 'it' },
-        { id: 2, slug: 'quick_easy', name: 'Veloce e Facile', resolved_lang: 'it' },
+        {
+          id: 2,
+          slug: 'quick_easy',
+          name: 'Veloce e Facile',
+          resolved_lang: 'it',
+        },
       ]);
     });
 
@@ -90,7 +95,12 @@ describe('CatalogService', () => {
       const result = await service.getTags({});
 
       expect(result).toEqual([
-        { id: 2, slug: 'quick_easy', name: 'Quick & Easy', resolved_lang: 'en' },
+        {
+          id: 2,
+          slug: 'quick_easy',
+          name: 'Quick & Easy',
+          resolved_lang: 'en',
+        },
         { id: 1, slug: 'vegetarian', name: 'Vegetarian', resolved_lang: 'en' },
       ]);
     });
@@ -108,7 +118,12 @@ describe('CatalogService', () => {
       const result = await service.getTags({ lang: 'it' });
 
       expect(result).toEqual([
-        { id: 3, slug: 'comfort_food', name: 'Comfort Food', resolved_lang: 'en' },
+        {
+          id: 3,
+          slug: 'comfort_food',
+          name: 'Comfort Food',
+          resolved_lang: 'en',
+        },
       ]);
     });
   });

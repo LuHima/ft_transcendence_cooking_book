@@ -28,7 +28,10 @@ export class RecipeStackItemDto {
   @ApiProperty({ description: 'Cooking time in minutes', example: 20 })
   cook_time: number;
 
-  @ApiProperty({ description: 'Total time in minutes', example: 35 })
+  @ApiProperty({
+    description: 'Total time (preparation time + cooking time) in minutes',
+    example: 35,
+  })
   total_time: number;
 
   @ApiProperty({ description: 'Servings yielded', example: 4 })
@@ -83,7 +86,8 @@ export class PaginatedRecipeResponseDto {
    */
   @ApiProperty({
     type: [LocalizedRecipeSummaryResponse],
-    description: 'Array of localized recipe summary cards for current page window',
+    description:
+      'Array of localized recipe summary cards for current page window',
   })
   items: LocalizedRecipeSummaryResponse[];
 
