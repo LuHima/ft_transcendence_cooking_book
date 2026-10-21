@@ -10,13 +10,13 @@ services:
     # Tag built image (uses APP_VERSION from .env or '1.0')
     image: database:${APP_VERSION:-1.0}
     # Fixed container name
-    container_name: database-container
+    container_name: database
     # Always use locally built image
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
-    #tolto ports, cuz 5432:5432 pubblica il databasesul mio host.
-    #il backend loo raggiunge gia tramite db-net, so none needs it
+    # Tolto ports, cuz 5432:5432 pubblica il database sul mio host.
+    # Il backend lo raggiunge gia tramite db-net, so none needs it
     # Non-secret Postgres settings only: the password is fetched from Vault
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -43,7 +43,7 @@ services:
     build:
       context: ./vault/
     image: vault:${APP_VERSION:-1.0}
-    container_name: vault-container
+    container_name: vault
     pull_policy: never
     stop_grace_period: 10s
     cap_add:
@@ -65,7 +65,7 @@ services:
     # Tag built image (uses APP_VERSION from .env or '1.0')
     image: libretranslate:${APP_VERSION:-1.0}
     # Fixed container name
-    container_name: libretranslate-container
+    container_name: libretranslate
     # Always use locally built image
     pull_policy: never
     # Graceful shutdown timeout
@@ -92,7 +92,7 @@ services:
     build:
       context: ./acme/
     image: acme:${APP_VERSION:-1.0}
-    container_name: acme-container
+    container_name: acme
     pull_policy: never
     stop_grace_period: 10s
     environment:
@@ -127,11 +127,12 @@ services:
     # Tag built image (uses APP_VERSION from .env or '1.0')
     image: backend:${APP_VERSION:-1.0}
     # Fixed container name
-    container_name: backend-container
+    container_name: backend
     # Always use locally built image
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
+    # Enviroment variables
     environment:
       VAULT_ADDR: http://vault:8200
       BACKEND_VAULT_ROLE_ID: ${BACKEND_VAULT_ROLE_ID:-}
@@ -174,7 +175,7 @@ services:
     # Tag built image (uses APP_VERSION from .env or '1.0')
     image: frontend:${APP_VERSION:-1.0}
     # Fixed container name
-    container_name: frontend-container
+    container_name: frontend
     # Always use locally built image
     pull_policy: never
     # Graceful shutdown timeout
@@ -208,7 +209,7 @@ services:
     # Tag built image (uses APP_VERSION from .env or '1.0')
     image: nginx:${APP_VERSION:-1.0}
     # Fixed container name
-    container_name: nginx-container
+    container_name: nginx
     # Always use locally built image
     pull_policy: never
     # Graceful shutdown timeout

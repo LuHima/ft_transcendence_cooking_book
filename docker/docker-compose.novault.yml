@@ -9,12 +9,16 @@
 # .env ever reaches the containers.
 services:
   database:
+    ports:
+      - 5432:5432
     env_file:
       - .env
     environment:
       USE_VAULT: "false"
 
   backend:
+    ports:
+      - 5555:5555
     env_file:
       - .env
     environment:
