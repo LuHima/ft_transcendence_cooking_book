@@ -1,6 +1,13 @@
 # Base image: official PostgreSQL 16 image based on Alpine Linux
 FROM postgres:16-alpine
 
+# Install curl, needed to call Vault's HTTP API at startup
+RUN apk add --no-cache curl
+# Copy the Vault-aware entrypoint wrapper
+COPY vault-entrypoint.sh /usr/local/bin/vault-entrypoint.sh
+RUN chmod +x /usr/local/bin/vault-entrypoint.sh
+
+
 # Expose the standard PostgreSQL port
 EXPOSE 5432
 
@@ -13,9 +20,12 @@ EXPOSE 5432
 #   --retries=5:		mark unhealthy after 5 consecutive failures
 # Command pg_isready is the native PostgreSQL utility to check connection
 # status for user and database
-HEALTHCHECK --interval=5s --timeout=5s --start-period=5s --retries=5 \
+HEALTHCHECK --interval=5s --timeout=5s --start-period=10s --retries=5 \
   CMD pg_isready -U ${POSTGRES_USER:-postgres} \
     -d ${POSTGRES_DB:-recipe_platform} || exit 1
+
+# Use our Vault-aware wrapper as entrypoint instead of the default one
+ENTRYPOINT ["vault-entrypoint.sh"]
 
 # Default command: run postgres server in the foreground
 # (inherits from base image)

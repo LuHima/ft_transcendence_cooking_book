@@ -9,6 +9,14 @@ NAME =			WeCook
 COMPOSE_FILE =	./docker/docker-compose.yml
 ENV_FILE =		./docker/.env
 ENV_EXAMPLE =	./docker/.env.example
+
+# Vault flag: with USE_VAULT=false in the env file the stack runs in
+# development mode (secrets read straight from the env file, Vault unused).
+# Default: true.
+USE_VAULT_OFF := $(shell grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' $(ENV_FILE) 2>/dev/null && echo yes)
+ifeq ($(USE_VAULT_OFF),yes)
+COMPOSE_FILE := ./docker/docker-compose.yml -f ./docker/docker-compose.novault.yml
+endif
 BUILD_LOG =		build.log
 
 # User ID and Group ID of the current user on host system
@@ -440,9 +448,18 @@ env-check: ## |Verify .env exists and required vars are present
 		exit 1; \
 	fi; \
 	missing=0; \
-	for var in PRODUCTION_FLAG INFOMANIAK_API_TOKEN ACME_EMAIL ACME_STAGING \
-	DOMAIN_NAME TWO_FACTOR_AUTH POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
-	DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET  UPLOADS_DIR; do \
+	if grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' "$(ENV_FILE)"; then \
+		echo "USE_VAULT=false: Vault disabled, secrets are read from $(ENV_FILE)."; \
+		mode_vars="DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET \
+		TWO_FACTOR_AUTH"; \
+	else \
+		mode_vars="ACME_VAULT_ROLE_ID ACME_VAULT_SECRET_ID \
+		DATABASE_VAULT_ROLE_ID DATABASE_VAULT_SECRET_ID \
+		BACKEND_VAULT_ROLE_ID BACKEND_VAULT_SECRET_ID"; \
+	fi; \
+	for var in PRODUCTION_FLAG ACME_EMAIL ACME_STAGING DOMAIN_NAME \
+	POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB UPLOADS_DIR \
+	$$mode_vars; do \
 		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
 			echo "Missing variable in $(ENV_FILE): $$var"; \
 			missing=1; \

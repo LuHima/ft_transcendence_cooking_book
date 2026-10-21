@@ -1,5 +1,4 @@
 services:
-
   #----------------------------------------------------------------------------#
   #                              DATABASE SERVICE                              #
   #----------------------------------------------------------------------------#
@@ -16,19 +15,102 @@ services:
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
-    # Expose PostgreSQL port to host (TODO: remove in final production release)
-    ports:
-      - "5432:5432"
-    # Load database credentials and config from .env
-    env_file:
-      - .env
+    #tolto ports, cuz 5432:5432 pubblica il databasesul mio host.
+    #il backend loo raggiunge gia tramite db-net, so none needs it
+    # Non-secret Postgres settings only: the password is fetched from Vault
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      VAULT_ADDR: http://vault:8200
+      VAULT_ROLE_ID: ${DATABASE_VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID: ${DATABASE_VAULT_SECRET_ID:-}
     # Persistent volume for PostgreSQL data
     volumes:
       - db_data:/var/lib/postgresql/data
     # Connect to custom bridge network
     networks:
-      - transcendence
+      - db-net
+      - vault-net
     # Auto-restart on crash or reboot unless manually stopped
+    restart: unless-stopped
+
+  #----------------------------------------------------------------------------#
+  #                                VAULT SERVICE                               #
+  #----------------------------------------------------------------------------#
+  # HashiCorp Vault: encrypted secret storage, sealed by default. Only
+  # services on vault-net can reach it; not exposed to the host.
+  vault:
+    build:
+      context: ./vault/
+    image: vault:${APP_VERSION:-1.0}
+    container_name: vault-container
+    pull_policy: never
+    stop_grace_period: 10s
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault_data:/vault/data
+    networks:
+      - vault-net
+    restart: unless-stopped
+
+  #----------------------------------------------------------------------------#
+  #                           LIBRETRANSLATE SERVICE                           #
+  #----------------------------------------------------------------------------#
+  # LibreTranslate machine translation engine (offline en, it, fr)
+  libretranslate:
+    # Build image from local Dockerfile in docker/translate/
+    build:
+      context: ./translate/
+    # Tag built image (uses APP_VERSION from .env or '1.0')
+    image: libretranslate:${APP_VERSION:-1.0}
+    # Fixed container name
+    container_name: libretranslate-container
+    # Always use locally built image
+    pull_policy: never
+    # Graceful shutdown timeout
+    stop_grace_period: 10s
+    # Runtime configuration: models are pre-installed in image; updates disabled
+    environment:
+      - LT_HOST=0.0.0.0
+      - LT_PORT=5000
+      - LT_LOAD_ONLY=en,it,fr
+      - LT_UPDATE_MODELS=false
+    # Connect to custom bridge network
+    networks:
+      - back-net
+    # Auto-restart on crash or reboot unless manually stopped
+    restart: unless-stopped
+
+  #----------------------------------------------------------------------------#
+  #                                ACME SERVICE                                #
+  #----------------------------------------------------------------------------#
+  # Issues and renews the TLS certificate (self-signed in dev, Let's Encrypt
+  # in production). Runs as root (needed for cron); nginx only reads the
+  # resulting certificate from the shared volume, read-only.
+  acme:
+    build:
+      context: ./acme/
+    image: acme:${APP_VERSION:-1.0}
+    container_name: acme-container
+    pull_policy: never
+    stop_grace_period: 10s
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      PRODUCTION_FLAG: ${PRODUCTION_FLAG:-false}
+      INFOMANIAK_API_TOKEN: ${INFOMANIAK_API_TOKEN:-}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+      ACME_STAGING: ${ACME_STAGING:-false}
+      VAULT_ADDR: http://vault:8200
+      VAULT_ROLE_ID: ${ACME_VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID: ${ACME_VAULT_SECRET_ID:-}
+      USE_VAULT: ${USE_VAULT:-true}
+    volumes:
+      - nginx_ssl:/etc/nginx/ssl
+      - acme_data:/root/.acme.sh
+    networks:
+      - acme-net
+      - vault-net
     restart: unless-stopped
 
   #----------------------------------------------------------------------------#
@@ -50,12 +132,13 @@ services:
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
-    # Load environment variables from .env
-    env_file:
-      - .env
-    # Expose Prisma Studio port to host (TODO: remove in production release)
-    ports:
-      - "5555:5555"
+    environment:
+      VAULT_ADDR: http://vault:8200
+      BACKEND_VAULT_ROLE_ID: ${BACKEND_VAULT_ROLE_ID:-}
+      BACKEND_VAULT_SECRET_ID: ${BACKEND_VAULT_SECRET_ID:-}
+      LIBRETRANSLATE_URL: ${LIBRETRANSLATE_URL}
+      UPLOADS_DIR: ${UPLOADS_DIR}
+      PORT: ${PORT:-3000}
     # Mount backend source code for live development and protect container
     # node_modules
     volumes:
@@ -63,14 +146,17 @@ services:
       - /usr/src/app/node_modules
     # Connect to custom bridge network
     networks:
-      - transcendence
-    # Start backend only after database and translation service are ready and
-    # healthy
+      - back-net
+      - db-net
+      - vault-net #reaches vault
+    # Start backend only after database is completely ready and healthy
     depends_on:
       database:
         condition: service_healthy
       libretranslate:
         condition: service_healthy
+      vault:
+        condition: service_started
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
@@ -103,7 +189,7 @@ services:
       - /usr/src/app/node_modules
     # Connect to custom bridge network
     networks:
-      - transcendence
+      - front-net
     # Start frontend only after backend API is completely ready and healthy
     depends_on:
       backend:
@@ -127,60 +213,28 @@ services:
     pull_policy: never
     # Graceful shutdown timeout
     stop_grace_period: 10s
-    # Load environment variables from .env
-    env_file:
-      - .env
-    # Environment variables for TLS certificate generation
+    # Non-sensitive environment variable default
     environment:
-      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
-      PRODUCTION_FLAG: ${PRODUCTION_FLAG:-false}
-      INFOMANIAK_API_TOKEN: ${INFOMANIAK_API_TOKEN:-}
-      ACME_EMAIL: ${ACME_EMAIL:-}
-      ACME_STAGING: ${ACME_STAGING:-false}
-    # Persistent volumes for SSL certificates and ACME state to avoid rate limits
-    volumes:
-      - nginx_ssl:/etc/nginx/ssl
-      - acme_data:/root/.acme.sh
+      MODSEC_RULE_ENGINE: "On"
+      BLOCKING_PARANOIA: ${WAF_PARANOIA:-1}
     # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
     ports:
-      - "8443:443"
+      - "8443:8443"
+      - "8080:8080"
     # Connect to custom bridge network
-    networks:
-      - transcendence
-    # Start Nginx only when both upstream services are ready and healthy
+    volumes:
+      - nginx_ssl:/etc/nginx/conf:ro
     depends_on:
       frontend:
         condition: service_healthy
       backend:
         condition: service_healthy
-    # Auto-restart on crash or reboot unless manually stopped
-    restart: unless-stopped
-
-  #----------------------------------------------------------------------------#
-  #                           LIBRETRANSLATE SERVICE                           #
-  #----------------------------------------------------------------------------#
-  # LibreTranslate machine translation engine (offline en, it, fr)
-  libretranslate:
-    # Build image from local Dockerfile in docker/translate/
-    build:
-      context: ./translate/
-    # Tag built image (uses APP_VERSION from .env or '1.0')
-    image: libretranslate:${APP_VERSION:-1.0}
-    # Fixed container name
-    container_name: libretranslate-container
-    # Always use locally built image
-    pull_policy: never
-    # Graceful shutdown timeout
-    stop_grace_period: 10s
-    # Runtime configuration: models are pre-installed in image; updates disabled
-    environment:
-      - LT_HOST=0.0.0.0
-      - LT_PORT=5000
-      - LT_LOAD_ONLY=en,it,fr
-      - LT_UPDATE_MODELS=false
-    # Connect to custom bridge network
+      acme:
+        condition: service_healthy
     networks:
-      - transcendence
+      - front-net
+      - back-net
+      - acme-net
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
@@ -188,8 +242,16 @@ services:
 #                                  NETWORKS                                    #
 #------------------------------------------------------------------------------#
 networks:
-  transcendence:
-    driver: bridge
+  front-net:
+  back-net:
+  db-net:
+    internal: true
+  # una rete internal non ha accesso al mondo esterno.
+  # Il database parla solo con chi è sulla sua rete, cioè il backend.
+  acme-net:
+  # Rete dedicata al container acme: deve uscire su internet per contattare
+  # Let's Encrypt e Infomaniak, e condivide il volume del certificato con nginx.
+  vault-net:
 
 #------------------------------------------------------------------------------#
 #                                  VOLUMES                                     #
@@ -201,3 +263,5 @@ volumes:
   nginx_ssl:
   # Persistent volume for acme.sh account data and certificate configs
   acme_data:
+  # Persistent volume for secrets
+  vault_data:
