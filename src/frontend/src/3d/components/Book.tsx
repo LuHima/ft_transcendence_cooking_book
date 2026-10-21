@@ -221,12 +221,14 @@ function useLeatherMaterial1() {
 
 export default function Book({
   controlsRef,
+  registerCloseBook,
   recipes,
   hasPreviousPage,
   hasNextPage,
   isChangingApiPage,
   onPreviousApiPage,
   onNextApiPage,
+  onDefaultPage,
   currentApiPage,
 }: BookProps) {
   // limiti iniziali per la camera quando si ruota intorno alla scena
@@ -257,13 +259,31 @@ export default function Book({
   const [turnedPageCount, setTurnedPageCount] = useState(0);
   const trackedTurnedPageCount = useRef(0);
   const pageProgressRefs = useRef<Array<{ current: number }>>([]);
-  const { pageProgress, currentPage, nextPage, prevPage, closePages } =
+  const { pageProgress, currentPage, nextPage, prevPage, turning, closePages } =
     useBookPages(recipes.length, currentApiPage);
+  const { camera } = useThree();
+  const camPhase = useRef<"idle" | "zooming-in" | "zooming-out">("idle");
+  const camProgress = useRef(0);
+  const triggerPageAction = (action: () => void) => {
+    if (!isOpen || camPhase.current !== "idle" || turning.current) return;
+    action();
+  };
 
   useEffect(() => {
     trackedTurnedPageCount.current = 0;
     setTurnedPageCount(0);
   }, [currentApiPage, recipes.length]);
+
+  useEffect(() => {
+    const closeBook = () => {
+      if (camPhase.current === "zooming-in") {
+        camPhase.current = "zooming-out";
+      }
+      if (isOpen) setIsOpen(false);
+    };
+
+    return registerCloseBook(closeBook);
+  }, [isOpen, registerCloseBook]);
 
   // stato dell'animazione di apertura del libro
   const progress = useRef(0);
@@ -308,10 +328,6 @@ export default function Book({
       closePages();
     }
   }, [isOpen, closePages]);
-
-  const { camera } = useThree();
-  const camPhase = useRef<"idle" | "zooming-in" | "zooming-out">("idle");
-  const camProgress = useRef(0);
 
   // posizione iniziale e target della camera prima dell'apertura del libro
   const initialCamPos = useRef(new Vector3(-10, 1.5, 0));
@@ -647,6 +663,46 @@ export default function Book({
           </group>
         );
       })}
+      {[
+        ...(turnedPageCount > 0
+          ? [
+              { key: "left-outer", y: 0.325, action: prevPage },
+              {
+                key: "left-inner",
+                y: 0.215,
+                action: () => onDefaultPage?.(),
+              },
+            ]
+          : []),
+        ...(turnedPageCount < recipes.length
+          ? [
+              {
+                key: "right-inner",
+                y: 0.081,
+                action: () => onDefaultPage?.(),
+              },
+              { key: "right-outer", y: -0.029, action: nextPage },
+            ]
+          : []),
+      ].map(({ key, y, action }) => (
+        <mesh
+          key={key}
+          position={[-0.005, y, 0.15]}
+          onClick={(event) => {
+            event.stopPropagation();
+            triggerPageAction(action);
+          }}
+        >
+          <planeGeometry args={[0.31, 0.1105]} />
+          <meshBasicMaterial
+            transparent
+            opacity={0}
+            colorWrite={false}
+            depthWrite={false}
+            side={DoubleSide}
+          />
+        </mesh>
+      ))}
     </group>
   );
 }

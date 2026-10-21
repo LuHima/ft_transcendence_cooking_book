@@ -41,7 +41,10 @@ export function useBookPages(numPages: number, pageSetKey: number) {
 		}
 
 		if (!turning.current) return
-		const i = currentPage.current
+		const i =
+			direction.current === 1
+				? currentPage.current
+				: currentPage.current - 1
 		pageProgress.current[i] = Math.max(
 			0,
 			Math.min(1, pageProgress.current[i] + direction.current * (delta / speed))
@@ -53,6 +56,7 @@ export function useBookPages(numPages: number, pageSetKey: number) {
 		}
 		if (direction.current === -1 && pageProgress.current[i] <= 0) {
 			turning.current = false
+			currentPage.current -= 1
 		}
 	})
 
@@ -64,7 +68,6 @@ export function useBookPages(numPages: number, pageSetKey: number) {
 
 	function prevPage() {
 		if (turning.current || currentPage.current <= 0) return
-		currentPage.current -= 1
 		direction.current = -1
 		turning.current = true
 	}
