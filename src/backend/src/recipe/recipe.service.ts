@@ -724,7 +724,7 @@ export class RecipeService {
     //new NotFoundException('Recipe not found');
     else if (recipe.user_id !== userId)
       // Development only
-      throw new NotFoundException('UserId not the author of the recipe');
+      throw new NotFoundException('UserId is not the author of the recipe');
 
     // TODO implementa questi check quando abbiamo risolto caslCheckAbility !!!!!!
     // Check if current user has permission to update the recipe
@@ -784,6 +784,139 @@ export class RecipeService {
       transUpdate.preservation = recipeUpdate.preservation;
     if (recipeUpdate.tips !== undefined) transUpdate.tips = recipeUpdate.tips;
 
+    if (recipeUpdate.steps !== undefined) {
+      const stepNumbers = recipeUpdate.steps.map((step) => step.step_number);
+      const uniqueStepNumbers = new Set(stepNumbers);
+      if (uniqueStepNumbers.size !== stepNumbers.length) {
+        const duplicateStepNumber = stepNumbers.find(
+          (stepNumber, index) => stepNumbers.indexOf(stepNumber) !== index,
+        );
+        throw new BadRequestException(
+          `Duplicate step number: ${duplicateStepNumber}. Each step number must be unique.`,
+        );
+      }
+
+      const sortedStepNumbers = [...stepNumbers].sort((a, b) => a - b);
+      const missingStepIndex = sortedStepNumbers.findIndex(
+        (stepNumber, index) => stepNumber !== index + 1,
+      );
+      if (missingStepIndex !== -1) {
+        throw new BadRequestException(
+          `Step numbers must be consecutive starting at 1. Missing step number: ${missingStepIndex + 1}.`,
+        );
+      }
+    }
+
+    if (recipeUpdate.ingredients !== undefined) {
+      const ingredientIds = recipeUpdate.ingredients.map(
+        (ingredient) => ingredient.ingredient_id,
+      );
+      const uniqueIngredientIds = new Set(ingredientIds);
+      if (uniqueIngredientIds.size !== ingredientIds.length) {
+        const duplicateIngredientId = ingredientIds.find(
+          (ingredientId, index) =>
+            ingredientIds.indexOf(ingredientId) !== index,
+        );
+        throw new BadRequestException(
+          `Duplicate ingredient ID: ${duplicateIngredientId}. Each ingredient may only be added once.`,
+        );
+      }
+
+      const existingIngredients = await this.prisma.ingredient.findMany({
+        where: { id: { in: ingredientIds } },
+        select: { id: true },
+      });
+      const existingIngredientIds = new Set(
+        existingIngredients.map((ingredient) => ingredient.id),
+      );
+      for (const ingredientId of ingredientIds) {
+        if (!existingIngredientIds.has(ingredientId)) {
+          throw new BadRequestException(
+            `Ingredient with ID ${ingredientId} does not exist in catalog`,
+          );
+        }
+      }
+    }
+
+    if (recipeUpdate.tag_ids !== undefined) {
+      const uniqueTagIds = new Set(recipeUpdate.tag_ids);
+      if (uniqueTagIds.size !== recipeUpdate.tag_ids.length) {
+        const duplicateTagId = recipeUpdate.tag_ids.find(
+          (tagId, index) => recipeUpdate.tag_ids!.indexOf(tagId) !== index,
+        );
+        throw new BadRequestException(
+          `Duplicate tag ID: ${duplicateTagId}. Each tag may only be added once.`,
+        );
+      }
+
+      const existingTags = await this.prisma.tag.findMany({
+        where: { id: { in: recipeUpdate.tag_ids } },
+        select: { id: true },
+      });
+      const existingTagIds = new Set(existingTags.map((tag) => tag.id));
+      for (const tagId of recipeUpdate.tag_ids) {
+        if (!existingTagIds.has(tagId)) {
+          throw new BadRequestException(
+            `Tag with ID ${tagId} does not exist in catalog`,
+          );
+        }
+      }
+    }
+
+    if (recipeUpdate.ingredients !== undefined) {
+      updateData.recipe_ingredients = {
+        deleteMany: {},
+        create: recipeUpdate.ingredients.map((ingredient) => ({
+          ingredient_id: ingredient.ingredient_id,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+          notes: ingredient.notes
+            ? typeof ingredient.notes === 'string'
+              ? { [recipe.source_lang]: ingredient.notes }
+              : ingredient.notes
+            : undefined,
+        })),
+      };
+    }
+
+    if (recipeUpdate.tag_ids !== undefined) {
+      updateData.recipe_tags = {
+        deleteMany: {},
+        create: recipeUpdate.tag_ids.map((tagId) => ({
+          tag_id: tagId,
+        })),
+      };
+    }
+
+    if (recipeUpdate.steps !== undefined) {
+      updateData.steps = {
+        deleteMany: {},
+        create: recipeUpdate.steps.map((step) => {
+          const existingStep = recipe.steps?.find(
+            (currentStep) => currentStep.step_number === step.step_number,
+          );
+          const translations = (existingStep?.translations ?? [])
+            .filter((translation) => translation.locale !== targetLocale)
+            .map((translation) => ({
+              locale: translation.locale,
+              title: translation.title,
+              description: translation.description,
+            }));
+          translations.push({
+            locale: targetLocale,
+            title: step.title ?? null,
+            description: step.description,
+          });
+
+          return {
+            step_number: step.step_number,
+            duration: step.duration ?? null,
+            translations: { create: translations },
+          };
+        }),
+      };
+    }
+
     const translatedDataByLocale: Record<
       string,
       {
@@ -792,7 +925,7 @@ export class RecipeService {
         preservation?: string | null;
         tips?: string | null;
         steps: Array<{
-          stepId: number;
+          stepNumber: number;
           title: string | null;
           description: string;
         }>;
@@ -842,12 +975,24 @@ export class RecipeService {
         sourceTips ?? '',
       ];
 
-      for (const step of recipe.steps ?? []) {
-        const stepSourceTrans = step.translations?.find(
-          (t) => t.locale === recipe.source_lang,
+      const stepsToTranslate = recipeUpdate.steps ?? recipe.steps ?? [];
+      for (const step of stepsToTranslate) {
+        const sourceStepTranslation =
+          'translations' in step
+            ? step.translations?.find(
+                (translation) => translation.locale === recipe.source_lang,
+              )
+            : undefined;
+        textsToTranslate.push(
+          'title' in step
+            ? (step.title ?? '')
+            : (sourceStepTranslation?.title ?? ''),
         );
-        textsToTranslate.push(stepSourceTrans?.title ?? '');
-        textsToTranslate.push(stepSourceTrans?.description ?? '');
+        textsToTranslate.push(
+          'description' in step
+            ? step.description
+            : (sourceStepTranslation?.description ?? ''),
+        );
       }
 
       // Execute machine translation across all other target locales
@@ -868,16 +1013,16 @@ export class RecipeService {
         const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
           res.translations;
         const stepTranslations: Array<{
-          stepId: number;
+          stepNumber: number;
           title: string | null;
           description: string;
         }> = [];
-        for (let i = 0; i < (recipe.steps ?? []).length; i++) {
-          const step = recipe.steps[i];
+        for (let i = 0; i < stepsToTranslate.length; i++) {
+          const step = stepsToTranslate[i];
           const sTitle = stepTexts[i * 2] || null;
           const sDesc = stepTexts[i * 2 + 1] || '';
           stepTranslations.push({
-            stepId: step.id,
+            stepNumber: step.step_number,
             title: sTitle,
             description: sDesc,
           });
@@ -893,6 +1038,41 @@ export class RecipeService {
 
       // Update translation status based on batch translation result
       updateData.translation_status = overallSuccess ? 'completed' : 'failed';
+
+      // Update steps translations
+      if (
+        recipeUpdate.steps !== undefined &&
+        updateData.translation_status === 'completed'
+      ) {
+        updateData.steps.create = recipeUpdate.steps.map((step) => {
+          const translations = [
+            {
+              locale: recipe.source_lang,
+              title: step.title ?? null,
+              description: step.description,
+            },
+          ];
+          for (const [locale, translation] of Object.entries(
+            translatedDataByLocale,
+          )) {
+            const translatedStep = translation.steps.find(
+              (candidate) => candidate.stepNumber === step.step_number,
+            );
+            if (translatedStep) {
+              translations.push({
+                locale,
+                title: translatedStep.title,
+                description: translatedStep.description,
+              });
+            }
+          }
+          return {
+            step_number: step.step_number,
+            duration: step.duration ?? null,
+            translations: { create: translations },
+          };
+        });
+      }
     }
 
     // Execute atomic database updates inside transaction
@@ -945,25 +1125,31 @@ export class RecipeService {
             },
           });
 
-          for (const stepTrans of trans.steps) {
-            await tx.recipeStepTranslation.upsert({
-              where: {
-                step_id_locale: {
-                  step_id: stepTrans.stepId,
-                  locale,
+          if (recipeUpdate.steps === undefined) {
+            for (const stepTrans of trans.steps) {
+              const step = recipe.steps?.find(
+                (recipeStep) => recipeStep.step_number === stepTrans.stepNumber,
+              );
+              if (!step) continue;
+              await tx.recipeStepTranslation.upsert({
+                where: {
+                  step_id_locale: {
+                    step_id: step.id,
+                    locale,
+                  },
                 },
-              },
-              create: {
-                step_id: stepTrans.stepId,
-                locale,
-                title: stepTrans.title,
-                description: stepTrans.description,
-              },
-              update: {
-                title: stepTrans.title,
-                description: stepTrans.description,
-              },
-            });
+                create: {
+                  step_id: step.id,
+                  locale,
+                  title: stepTrans.title,
+                  description: stepTrans.description,
+                },
+                update: {
+                  title: stepTrans.title,
+                  description: stepTrans.description,
+                },
+              });
+            }
           }
         }
       }

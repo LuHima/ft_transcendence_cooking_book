@@ -1226,6 +1226,128 @@ describe('RecipeService', () => {
       expect(result.total_time).toBe(35);
     });
 
+    it('updates steps, ingredients, and tags when those relations are provided', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        prep_time: 15,
+        cook_time: 10,
+        source_lang: 'it',
+        translations: [],
+        steps: [
+          {
+            id: 10,
+            step_number: 1,
+            translations: [
+              {
+                locale: 'it',
+                title: 'Vecchio titolo',
+                description: 'Vecchia descrizione.',
+              },
+              {
+                locale: 'en',
+                title: 'Old title',
+                description: 'Old description.',
+              },
+            ],
+          },
+        ],
+      };
+      const updateData = {
+        steps: [
+          {
+            step_number: 1,
+            title: 'Nuovo titolo',
+            description: 'Nuova descrizione.',
+            duration: 20,
+          },
+          {
+            step_number: 2,
+            title: 'Secondo titolo',
+            description: 'Seconda descrizione.',
+          },
+        ],
+        ingredients: [
+          {
+            ingredient_id: 2,
+            quantity: 100,
+            unit: UnitOfMeasure.g,
+            notes: 'Tritato',
+          },
+        ],
+        tag_ids: [2, 3],
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.ingredient.findMany.mockResolvedValueOnce([{ id: 2 }]);
+      mockPrisma.tag.findMany.mockResolvedValueOnce([{ id: 2 }, { id: 3 }]);
+      mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
+
+      await service.updateRecipe(1, 1, updateData);
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            recipe_ingredients: {
+              deleteMany: {},
+              create: [
+                {
+                  ingredient_id: 2,
+                  quantity: 100,
+                  unit: UnitOfMeasure.g,
+                  notes: { it: 'Tritato' },
+                },
+              ],
+            },
+            recipe_tags: {
+              deleteMany: {},
+              create: [{ tag_id: 2 }, { tag_id: 3 }],
+            },
+            steps: {
+              deleteMany: {},
+              create: [
+                {
+                  step_number: 1,
+                  duration: 20,
+                  translations: {
+                    create: [
+                      {
+                        locale: 'en',
+                        title: 'Old title',
+                        description: 'Old description.',
+                      },
+                      {
+                        locale: 'it',
+                        title: 'Nuovo titolo',
+                        description: 'Nuova descrizione.',
+                      },
+                    ],
+                  },
+                },
+                {
+                  step_number: 2,
+                  duration: null,
+                  translations: {
+                    create: [
+                      {
+                        locale: 'it',
+                        title: 'Secondo titolo',
+                        description: 'Seconda descrizione.',
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          }),
+        }),
+      );
+    });
+
     it('updates RecipeTranslation for a specific locale without touching other locales when retranslate is not specified', async () => {
       const existingRecipe = {
         id: 1,
