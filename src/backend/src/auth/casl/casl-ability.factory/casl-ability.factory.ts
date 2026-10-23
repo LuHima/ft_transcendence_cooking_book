@@ -16,7 +16,17 @@ export type Subjects =
   | InferSubjects<Comment & ForcedSubject<'Comment'>>
   | InferSubjects<User & ForcedSubject<'User'>>
   | InferSubjects<Notification & ForcedSubject<'Notification'>>
-  | 'all';
+  | 'all'
+  | AppSubject;
+
+export enum AppSubject {
+  Recipe = 'Recipe',
+  Comment = 'Comment',
+  User = 'User',
+  Notification = 'Notification',
+  Tag = 'Tag',
+  Ingredient = 'Ingredient',
+}
 
 // Definisce il tipo AppAbility con MongoAbility
 export type AppAbility = MongoAbility<[Action, Subjects], any>;
@@ -38,10 +48,14 @@ export class CaslAbilityFactory {
     } else if (user.role === Role.moderator) {
       can(Action.Read, 'all');
       can(Action.Create, 'Recipe');
-      can(Action.Update, 'Recipe');
-      can(Action.Delete, 'Recipe');
+      can([Action.Update, Action.Delete], 'Recipe', { user_id: user.id });
+      can(Action.Create, 'Comment');
+      can([Action.Update, Action.Delete], 'Comment', { user_id: user.id });
+
       can(Action.Report, 'Recipe');
       can(Action.Report, 'Comment');
+      can(Action.Report, 'User');
+
       can(Action.Ban, 'Recipe');
       can(Action.Ban, 'Comment');
       can(Action.Ban, 'User');
@@ -53,6 +67,10 @@ export class CaslAbilityFactory {
       cannot(Action.Ban, 'Recipe', { user_id: user.id });
       cannot(Action.Ban, 'Recipe', { 'user.role': Role.admin });
       cannot(Action.Ban, 'Recipe', { 'user.role': Role.moderator });
+
+      cannot([Action.Create, Action.Update, Action.Delete], 'Tag');
+      cannot([Action.Create, Action.Update, Action.Delete], 'Ingredient');
+
       // user.role mi fa vedere dentro la tabella user il ruolo perche piglia il target che li passo da fuori con la funzione ability.can()
       // e ci fa target.user.role
       // e essendo collegate le tabelle sul database, dalla ricetta arrivo all'utente
@@ -64,26 +82,26 @@ export class CaslAbilityFactory {
       cannot(Action.Update, 'Recipe', { 'user.role': Role.admin });
       cannot(Action.Update, 'Recipe', { 'user.role': Role.moderator });
 
-      cannot(Action.Delete, 'Recipe', { 'user.role': Role.admin });
-      cannot(Action.Delete, 'Recipe', { 'user.role': Role.moderator });
+      cannot(Action.Update, 'Recipe', { 'user.role': Role.admin });
+      cannot(Action.Update, 'Recipe', { 'user.role': Role.moderator });
 
       cannot(Action.Ban, 'Comment', { 'user.role': Role.admin });
       cannot(Action.Ban, 'Comment', { 'user.role': Role.moderator });
       cannot(Action.Ban, 'Comment', { user_id: user.id });
     } else {
       can(Action.Read, 'all');
+
       can(Action.Create, 'Recipe');
       can(Action.Update, 'Recipe', { user_id: user.id });
       can(Action.Delete, 'Recipe', { user_id: user.id });
+
+      can(Action.Create, 'Comment');
+      can(Action.Update, 'Comment', { user_id: user.id });
+      can(Action.Delete, 'Comment', { user_id: user.id });
+
       can(Action.Report, 'Recipe');
       can(Action.Report, 'Comment');
-      can(Action.Read, 'Notification', { user_id: user.id });
-      // i cannot sono inutili in questo caso tutto cio che non è can diventa
-      // cannot però per vedere come funziona o lasciato cosi che mi sembra piu chiaro
-      cannot(Action.Manage, 'all');
-      cannot(Action.Ban, 'Recipe');
-      cannot(Action.Ban, 'Comment');
-      cannot(Action.Ban, 'User');
+      can(Action.Report, 'User');
     }
 
     can(Action.Read, 'Notification', { user_id: user.id });

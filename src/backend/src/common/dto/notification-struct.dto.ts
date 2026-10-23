@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty , IsPositive } from 'class-validator';
+import { IsInt, IsNotEmpty, IsPositive } from 'class-validator';
 
 export class NotificationStructDto {
   @IsInt()
@@ -8,5 +8,5 @@ export class NotificationStructDto {
 
   @IsInt()
   @IsPositive()
-  id_target: number; // ricetta, commento, un altro utente
+  id_target: number; // ricetta, commento o un altro utente
 }

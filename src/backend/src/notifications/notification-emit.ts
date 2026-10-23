@@ -1,8 +1,15 @@
+import { subject } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NotificationSubject } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotifyData } from 'src/common/decorators/notify.decorator';
 import { NotificationStructDto } from 'src/common/dto/notification-struct.dto';
+
+interface targetInfo{
+  idTarget: number;
+  subject: string;
+}
 
 @Injectable()
 export class NotificationEmit {
@@ -36,11 +43,52 @@ export class NotificationEmit {
         return `${senderName} accepted your friend request`;
       case 'post':
         return `${senderName} posted a new recipe`;
+      case 'delete':
+        return `${senderName} delete a recipe`;
+      case 'update':
+        return `${senderName} update a recipe`;
       default:
         return `New notification from ${senderName}`;
     }
   }
-
+  private findTargetTable(
+    idTarget: number,
+    subject: NotificationSubject | string
+  ) : number{
+    let target;
+    if (subject == NotificationSubject.recipe) {
+      target = this.prisma.recipe.findUnique({
+        where: {
+          id: idTarget,
+        },
+        select :{
+          id: true,
+        }
+      });
+    }
+    if (subject == NotificationSubject.user) {
+      target = this.prisma.follow.findMany({
+        where: {
+          id: idTarget,
+        },
+        select :{
+          id: true,
+        }
+      });
+    }
+    if (subject == NotificationSubject.comment) {
+      target = this.prisma.comment.findUnique({
+        where: {
+          id: idTarget,
+        },
+        select :{
+          recipe_id: true,
+        }
+      });
+    }
+    
+    return target.id;
+  }
   private async fillNotificationTable(
     structNotify: NotificationStructDto,
     notifyData: NotifyData,
@@ -58,11 +106,16 @@ export class NotificationEmit {
         target_id: structNotify.id_target,
       })),
     });
+    const target = {
+      id: await this.findTargetTable(structNotify.id_user ,notifyData.subject),
+      subject: notifyData.subject,
+    }
     const msg = await this.notificationString(structNotify.id_user, notifyData);
     for (const f of friends) {
       this.eventEmitter.emit('newNotification', {
         idUser: f.follower_id,
         message: msg,
+        infoTarget: 
       });
     }
   }

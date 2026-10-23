@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { CaslCheckAbility } from 'src/auth/casl/casl-checkAbility';
 import { createHttpException, errors } from 'src/common/config/error.config';
 import { NotificationStatus } from '@prisma/client';
+import { CaslAbilityFactory } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 
 @Injectable()
 export class NotificationService {
   constructor(
     private prisma: PrismaService,
-    private checkAbility: CaslCheckAbility,
+    private caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
   private async check(notificationId: number) {
@@ -20,13 +20,18 @@ export class NotificationService {
             id: true,
             username: true,
             role: true,
+            session: true,
           },
         },
       },
     });
     if (!notification) throw createHttpException(errors.notification.NotFound);
-    if (!this.checkAbility.canAbility(notification.user))
-      throw createHttpException(errors.notification.Forbidden);
+    const ability = this.caslAbilityFactory.createForUser(notification.user);
+    ForbiddenError.from(ability).throwUnlessCan(
+      Action.Update,
+      subject('Recipe', recipe),
+    );
+    throw createHttpException(errors.notification.Forbidden);
     return notification;
   }
 
