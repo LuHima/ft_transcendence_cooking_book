@@ -10,7 +10,6 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { WsException } from '@nestjs/websockets';
-import { create } from 'domain';
 import { Socket, Server } from 'socket.io';
 import {
   AppErrorDefinition,
@@ -21,13 +20,6 @@ import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'prisma/prisma.service';
 
-// Quando si usa WebSocket si aggancia allo stesso server e utilizza la stessa porta
-// (che puo essere anche cambiata per i socket su uno vuole) HTTP di NestJS (porta 3000)
-// ma intercetta le richieste di tipo WebSocket
-// il WebSocketGateway è un punto di ingresso per le connessioni
-// è tipo il controlle delle API, però gestisce connessioni in tempo reale quindi se un utente si connette a quella porte lui gestisce
-// le notifiche (in questo caso) degli utenti collegati su quella porta
-// cors va messo perche è un'altro tipo di conessione  costante
 @WebSocketGateway({
   cors: { origin: 'https://localhost:8443', credentials: true },
 })
@@ -39,9 +31,7 @@ export class NotificationGateway
     private prisma: PrismaService,
   ) {}
   @WebSocketServer() server!: Server;
-  // il '!' dice a typescript che è stata inizializzata e mi toglie l'errore
 
-  // private isOnlyne <int, boolean>;
   private findToken(cookie: string | undefined): string {
     if (!cookie) return '';
     const accessToken = cookie
@@ -64,18 +54,25 @@ export class NotificationGateway
     return payload;
   }
 
-  /*   private verify(cookie: string) {
-    return this.handleJwtVerification(this.findToken(cookie));
-  } */
   private async findFriend(id: number) {
-    return this.prisma.follow.findMany({
-      where: { following_id: id },
-      select: { follower_id: true },
-    }); // momentaneo poi da aggiustare
+    const friendships = await this.prisma.friendship.findMany({
+      where: {
+        status: 'accepted',
+        OR: [{ requester_id: id }, { addressee_id: id }],
+      },
+      select: { requester_id: true, addressee_id: true },
+    });
+    return friendships.map((f) => {
+      const friendId = f.requester_id === id ? f.addressee_id : f.requester_id;
+      return {
+        friend_id: friendId,
+        follower_id: friendId,
+      };
+    });
   }
+
   private async statusUser(idUser: number, online: boolean) {
-    const numUserRoom = this.server.sockets.adapter.rooms.get('room-' + idUser);
-    // adapter è solo il registro che ha tutte le informazioni del socket
+    const numUserRoom = this.server?.sockets?.adapter?.rooms?.get('room-' + idUser);
     if (online === true) {
       if (!numUserRoom || numUserRoom.size > 1) return;
     }
@@ -85,14 +82,15 @@ export class NotificationGateway
     const userFriends = await this.findFriend(idUser);
 
     for (const f of userFriends) {
-      if (!this.server.sockets.adapter.rooms.has('room-' + f.follower_id))
+      if (!this.server?.sockets?.adapter?.rooms?.has('room-' + f.friend_id))
         continue;
-      this.server.to('room-' + f.follower_id).emit('userStatus', {
+      this.server.to('room-' + f.friend_id).emit('userStatus', {
         userId: idUser,
         isOnline: online,
       });
     }
   }
+
   async handleConnection(client: Socket, ...args: any[]) {
     try {
       const cookie = client.handshake.headers.cookie;
@@ -100,7 +98,7 @@ export class NotificationGateway
       const jwt: string = this.findToken(cookie);
       const payload = this.handleJwtVerification(jwt);
       client.data.user = payload;
-      client.join('room-' + payload.id); // creo le stanze in maniere che piu utenti che entrano nello stesso dispositivo ricevano le notifiche
+      client.join('room-' + payload.id);
       const notification = await this.prisma.notification.findMany({
         where: { user_id: payload.id, is_read: false },
       });
@@ -119,24 +117,18 @@ export class NotificationGateway
   }
 
   async handleDisconnect(client: Socket) {
-    //console.log('User Disconnected', client.id);
     if (client.data.user?.id) {
       await this.statusUser(client.data.user.id, false);
     }
   }
 
-  //  subscribeMessage aspetta un messaggio che contenga l'evento scritto in subscribe message
   @OnEvent('newNotification')
   handleNotificationEvent(userNotification: {
     idUser: number;
     message: string;
   }) {
     this.server
-      .to('room-' + userNotification.idUser)
-      .emit('newNotification', userNotification.message);
+      ?.to('room-' + userNotification.idUser)
+      ?.emit('newNotification', userNotification.message);
   }
 }
-
-// @SubscribeMessage è tipo socket.on() di javascript
-
-//socket.emit()

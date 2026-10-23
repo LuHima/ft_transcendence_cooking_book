@@ -10,7 +10,11 @@ export class NotificationEmit {
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
   ) {}
-  private async notificationString(id_sender: number, notifyData: NotifyData) {
+
+  private async notificationString(
+    id_sender: number,
+    notifyData: NotifyData,
+  ): Promise<string> {
     const sender = await this.prisma.user.findUnique({
       where: { id: id_sender },
       select: { username: true },
@@ -22,7 +26,7 @@ export class NotificationEmit {
         if (notifyData.subject === 'recipe') {
           return `${senderName} liked your recipe`;
         } else if (notifyData.subject === 'comment') {
-          return `${senderName} liked your recipe`;
+          return `${senderName} liked your comment`;
         }
         return `${senderName} liked your post`;
       case 'comment':
@@ -44,24 +48,53 @@ export class NotificationEmit {
   private async fillNotificationTable(
     structNotify: NotificationStructDto,
     notifyData: NotifyData,
-  ) {
-    const friends = await this.prisma.follow.findMany({
-      where: { following_id: structNotify.id_user },
-      select: { follower_id: true },
-    });
+  ): Promise<void> {
+    let targetUserIds: number[] = [];
+
+    if (
+      notifyData.action === 'friend_request' ||
+      notifyData.action === 'friend_accept'
+    ) {
+      if (structNotify.id_target) {
+        targetUserIds = [structNotify.id_target];
+      }
+    } else {
+      // Fan-out to accepted bidirectional friends
+      const friendships = await this.prisma.friendship.findMany({
+        where: {
+          status: 'accepted',
+          OR: [
+            { requester_id: structNotify.id_user },
+            { addressee_id: structNotify.id_user },
+          ],
+        },
+        select: { requester_id: true, addressee_id: true },
+      });
+      targetUserIds = friendships.map((f) =>
+        f.requester_id === structNotify.id_user
+          ? f.addressee_id
+          : f.requester_id,
+      );
+    }
+
+    if (targetUserIds.length === 0) {
+      return;
+    }
+
     await this.prisma.notification.createMany({
-      data: friends.map((f) => ({
-        user_id: f.follower_id,
+      data: targetUserIds.map((userId) => ({
+        user_id: userId,
         actor_id: structNotify.id_user,
         subject: notifyData.subject,
         action: notifyData.action,
         target_id: structNotify.id_target,
       })),
     });
+
     const msg = await this.notificationString(structNotify.id_user, notifyData);
-    for (const f of friends) {
+    for (const userId of targetUserIds) {
       this.eventEmitter.emit('newNotification', {
-        idUser: f.follower_id,
+        idUser: userId,
         message: msg,
       });
     }
@@ -70,7 +103,7 @@ export class NotificationEmit {
   public async notification(
     structNotify: NotificationStructDto,
     notifyData: NotifyData,
-  ) {
+  ): Promise<void> {
     await this.fillNotificationTable(structNotify, notifyData);
   }
 }
