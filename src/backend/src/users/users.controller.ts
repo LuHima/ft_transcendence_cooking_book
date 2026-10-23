@@ -8,7 +8,6 @@ import {
   Delete,
   Body,
   Query,
-  UseFilters,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
@@ -20,6 +19,7 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
+  ApiInternalServerErrorResponse,
   ApiParam,
   ApiQuery,
   ApiConsumes,
@@ -27,7 +27,6 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
-import { HttpExceptionFilter } from 'src/common/filters/http.exeption.filter';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -39,14 +38,25 @@ import {
   AvatarUploadResponseDto,
   UserMessageResponseDto,
 } from './dto/user-profile-response.dto';
-import { ApiErrorResponseDto } from 'src/common/dto/api-error-response.dto';
+import {
+  ApiBadRequestResponseDto,
+  ApiNotFoundResponseDto,
+  ApiConflictResponseDto,
+  ApiInternalServerErrorResponseDto,
+} from 'src/common/dto/api-error-response.dto';
+import { SearchUserQueryDto } from './dto/search-user-query.dto';
+import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
+import { PaginatedRecipeResponseDto } from 'src/recipe/dto/recipe-response.dto';
 
 /**
  * Controller handling user profiles, account preferences, avatar uploads, and social interactions.
  */
 @ApiTags('Users')
+@ApiInternalServerErrorResponse({
+  type: ApiInternalServerErrorResponseDto,
+  description: 'Internal server error',
+})
 @Controller('users')
-@UseFilters(HttpExceptionFilter)
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
@@ -64,7 +74,7 @@ export class UsersController {
   })
   @ApiNotFoundResponse({
     description: 'User record not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Get('me')
@@ -86,11 +96,11 @@ export class UsersController {
   })
   @ApiBadRequestResponse({
     description: 'Validation failed or invalid date format',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiConflictResponse({
     description: 'Username or email is already taken by another account',
-    type: ApiErrorResponseDto,
+    type: ApiConflictResponseDto,
   })
   @Auth()
   @Patch('me')
@@ -129,7 +139,7 @@ export class UsersController {
   })
   @ApiBadRequestResponse({
     description: 'File missing or invalid file format',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Post('me/avatar')
@@ -167,23 +177,46 @@ export class UsersController {
     description:
       'Returns recipes previously liked by the current user, ordered by most recently liked.',
   })
-  @ApiQuery({
-    name: 'lang',
-    required: false,
-    description: 'Target language for projected recipe titles and descriptions',
-    enum: ['it', 'en', 'fr'],
-    example: 'it',
-  })
   @ApiOkResponse({
-    description: 'List of recipes liked by the user',
+    description: 'Paginated recipes liked by the user',
+    type: PaginatedRecipeResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination or language parameter',
+    type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Get('me/likes')
   async getLikedRecipes(
     @CurrentUser('id') id: number,
-    @Query('lang') lang?: string,
+    @Query() query: UserCookbookQueryDto,
   ) {
-    return await this.userService.getLikedRecipes(id, lang);
+    return await this.userService.getLikedRecipes(id, query);
+  }
+
+  /**
+   * Retrieve list of recipes authored by the authenticated user.
+   */
+  @ApiOperation({
+    summary: 'Get current user authored recipes',
+    description:
+      'Returns recipes authored by the authenticated user, ordered by creation date.',
+  })
+  @ApiOkResponse({
+    description: 'Paginated recipes authored by the user',
+    type: PaginatedRecipeResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination or language parameter',
+    type: ApiBadRequestResponseDto,
+  })
+  @Auth()
+  @Get('me/recipes')
+  async getMyRecipes(
+    @CurrentUser('id') id: number,
+    @Query() query: UserCookbookQueryDto,
+  ) {
+    return await this.userService.getMyRecipes(id, query);
   }
 
   /**
@@ -194,19 +227,17 @@ export class UsersController {
     description:
       'Searches users by username substring matching (case-insensitive).',
   })
-  @ApiQuery({
-    name: 'value',
-    required: true,
-    description: 'Username substring search query',
-    example: 'mario',
-  })
   @ApiOkResponse({
     description: 'List of matching usernames',
     type: [UserSearchResultDto],
   })
-  @Get('search')
-  async searchUser(@Query('value') username: string) {
-    return await this.userService.findUser(username);
+  @ApiBadRequestResponse({
+    description: 'Search parameter is missing or empty',
+    type: ApiBadRequestResponseDto,
+  })
+  @Get()
+  async searchUser(@Query() query: SearchUserQueryDto) {
+    return await this.userService.findUser(query.search);
   }
 
   /**
@@ -226,9 +257,13 @@ export class UsersController {
     description: 'Public user profile',
     type: PublicUserResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid user ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'User not found',
-    type: ApiErrorResponseDto,
+    type: ApiNotFoundResponseDto,
   })
   @Get(':id')
   async getUser(@Param('id', ParseIntPipe) id: number) {

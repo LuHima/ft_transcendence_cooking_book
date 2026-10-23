@@ -60,6 +60,7 @@ export class CatalogService {
         id: t.id,
         slug: t.slug,
         name: trans?.name ?? t.slug,
+        resolved_lang: trans?.locale ?? 'en',
       };
     });
     // Returns the array of tags ordered by name
@@ -134,6 +135,7 @@ export class CatalogService {
         slug: i.slug,
         category: i.category,
         name: trans?.name ?? i.slug,
+        resolved_lang: trans?.locale ?? 'en',
       };
     });
     // Returns the array of ingredients ordered by name

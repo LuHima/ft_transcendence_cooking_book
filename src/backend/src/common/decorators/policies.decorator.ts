@@ -14,7 +14,10 @@ import { Action } from 'src/auth/casl/action.enum';
 import { Subjects } from '../../auth/casl/casl-ability.factory/casl-ability.factory';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from '../guards/role.guard';
-import { ApiErrorResponseDto } from '../dto/api-error-response.dto';
+import {
+  ApiUnauthorizedResponseDto,
+  ApiForbiddenResponseDto,
+} from '../dto/api-error-response.dto';
 
 export type HandlerRolePolicy = (ability: AppAbility) => boolean;
 
@@ -35,12 +38,12 @@ export function Auth(...args: [action: Action, subject: Subjects] | []) {
       ApiUnauthorizedResponse({
         description:
           'Authentication required: missing or invalid accessToken cookie',
-        type: ApiErrorResponseDto,
+        type: ApiUnauthorizedResponseDto,
       }),
       ApiForbiddenResponse({
         description:
           'Forbidden: insufficient permissions for this action on the target resource',
-        type: ApiErrorResponseDto,
+        type: ApiForbiddenResponseDto,
       }),
     );
   }
@@ -51,7 +54,7 @@ export function Auth(...args: [action: Action, subject: Subjects] | []) {
     ApiUnauthorizedResponse({
       description:
         'Authentication required: missing or invalid accessToken cookie',
-      type: ApiErrorResponseDto,
+      type: ApiUnauthorizedResponseDto,
     }),
   );
 }

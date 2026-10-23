@@ -1,11 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtService } from '@nestjs/jwt';
 import { RecipeController } from './recipe.controller';
 import { RecipeService } from './recipe.service';
 import { CatalogService } from '../catalog/catalog.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { RolesGuard } from '../common/guards/role.guard';
-import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
+import {
+  Course,
+  RecipeDifficulty,
+  TranslationStatus,
+  UnitOfMeasure,
+} from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { FilterRecipeDto } from './dto/filter-recipe.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
 
 describe('RecipeController', () => {
   let controller: RecipeController;
@@ -19,8 +28,6 @@ describe('RecipeController', () => {
   const mockRecipeService = {
     createRecipe: jest.fn(),
     getAllRecipe: jest.fn(),
-    getRecipeStack: jest.fn(),
-    getRecipesByName: jest.fn(),
     getRecipeById: jest.fn(),
     retryTranslation: jest.fn(),
     updateRecipe: jest.fn(),
@@ -35,6 +42,10 @@ describe('RecipeController', () => {
     deleteGalleryMedia: jest.fn(),
     likeRecipe: jest.fn(),
     unlikeRecipe: jest.fn(),
+    createComment: jest.fn(),
+    getComments: jest.fn(),
+    deleteComment: jest.fn(),
+    updateComment: jest.fn(),
   };
 
   const sampleDto: CreateRecipeDto = {
@@ -78,11 +89,19 @@ describe('RecipeController', () => {
           provide: CatalogService,
           useValue: mockCatalogService,
         },
+        {
+          provide: JwtService,
+          useValue: {
+            verifyAsync: jest.fn(),
+          },
+        },
       ],
     })
       .overrideGuard(AuthGuard)
       .useValue({ canActivate: () => true })
       .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(OptionalAuthGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
@@ -96,72 +115,80 @@ describe('RecipeController', () => {
   });
 
   describe('getRecipes', () => {
+    const mockPaginatedResult = {
+      items: [
+        {
+          id: 1,
+          title: 'Carbonara',
+          description: 'Classica',
+          course: Course.first_course,
+          difficulty: RecipeDifficulty.medium,
+          prep_time: 15,
+          cook_time: 10,
+          total_time: 25,
+          servings: 4,
+          source_lang: 'it',
+          translation_status: TranslationStatus.completed,
+          cover_image_url: null,
+          video_url: null,
+          created_at: new Date('2026-10-09T18:00:00.000Z'),
+          updated_at: null,
+          author: { id: 1, username: 'chef_mario', avatar_url: null },
+          tags: [],
+          likes_count: 5,
+          comments_count: 2,
+          is_liked: false,
+          resolved_lang: 'it',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 20,
+      total_pages: 1,
+      has_next_page: false,
+      has_prev_page: false,
+    };
+
     it('delegates to service.getAllRecipe with optional lang query parameter', async () => {
-      const mockResult = [{ id: 1, title: 'Carbonara' }];
-      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockResult);
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockPaginatedResult);
 
-      const result = await controller.getRecipes('it');
+      const result = await controller.getRecipes({ lang: 'it' });
 
-      expect(service.getAllRecipe).toHaveBeenCalledWith('it');
-      expect(result).toEqual(mockResult);
-    });
-  });
-
-  describe('getRecipeStack', () => {
-    it('defaults to page 1 and returns paginated response object', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: false,
-      };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
-
-      const result = await controller.getRecipeStack(undefined, undefined);
-
-      expect(service.getRecipeStack).toHaveBeenCalledWith(1);
-      expect(result).toEqual(mockPage);
+      expect(service.getAllRecipe).toHaveBeenCalledWith(
+        { lang: 'it' },
+        undefined,
+      );
+      expect(result).toEqual(mockPaginatedResult);
     });
 
-    it('accepts page query parameter over legacy value parameter', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: true,
+    it('delegates to service.getAllRecipe with multi-criteria filters and pagination', async () => {
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockPaginatedResult);
+
+      const filterDto: FilterRecipeDto = {
+        page: 2,
+        limit: 10,
+        course: Course.main_course,
+        difficulty: RecipeDifficulty.easy,
+        search: 'pasta',
+        max_time: 30,
+        author_id: 1,
+        tag_ids: [1, 2],
+        lang: 'it',
       };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
 
-      const result = await controller.getRecipeStack(2, undefined);
+      const result = await controller.getRecipes(filterDto);
 
-      expect(service.getRecipeStack).toHaveBeenCalledWith(2);
-      expect(result).toEqual(mockPage);
+      expect(service.getAllRecipe).toHaveBeenCalledWith(filterDto, undefined);
+      expect(result).toEqual(mockPaginatedResult);
     });
 
-    it('falls back to legacy value query parameter if page is not provided', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: true,
-      };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
+    it('delegates to service.getAllRecipe with filter options and current user id when authenticated', async () => {
+      mockRecipeService.getAllRecipe.mockResolvedValueOnce(mockPaginatedResult);
 
-      const result = await controller.getRecipeStack(undefined, 3);
+      const result = await controller.getRecipes({}, 42);
 
-      expect(service.getRecipeStack).toHaveBeenCalledWith(3);
-      expect(result).toEqual(mockPage);
-    });
-
-    it('sanitizes invalid or negative page numbers to 1', async () => {
-      const mockPage = {
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: false,
-      };
-      mockRecipeService.getRecipeStack.mockResolvedValueOnce(mockPage);
-
-      const result = await controller.getRecipeStack(-5, undefined);
-
-      expect(service.getRecipeStack).toHaveBeenCalledWith(1);
-      expect(result).toEqual(mockPage);
+      expect(service.getAllRecipe).toHaveBeenCalledWith({}, 42);
+      expect(result).toEqual(mockPaginatedResult);
     });
   });
 
@@ -199,9 +226,25 @@ describe('RecipeController', () => {
       const mockResult = { id: 1, title: 'Carbonara' };
       mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getRecipeById(1, 'it');
+      const result = await controller.getRecipeById(1, { lang: 'it' });
 
-      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it');
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('delegates to service.getRecipeById with id, lang, and current user id when authenticated', async () => {
+      const mockResult = {
+        id: 1,
+        title: 'Carbonara',
+        likes_count: 10,
+        comments_count: 3,
+        is_liked: true,
+      };
+      mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.getRecipeById(1, { lang: 'it' }, 42);
+
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 42);
       expect(result).toEqual(mockResult);
     });
   });
@@ -357,6 +400,91 @@ describe('RecipeController', () => {
       const result = await controller.unlikeRecipe(1, 42);
 
       expect(service.unlikeRecipe).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('createComment', () => {
+    it('delegates to service.createComment with recipeId, userId, and commentDto', async () => {
+      const mockCommentDto: CreateCommentDto = {
+        content: 'Buonissima ricetta!',
+        parent_id: 1,
+      };
+      const mockResult = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 42,
+        parent_id: 1,
+        content: 'Buonissima ricetta!',
+        is_active: true,
+        created_at: new Date(),
+        user: { id: 42, username: 'mario', avatar_url: null },
+      };
+      mockRecipeService.createComment.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.createComment(1, 42, mockCommentDto);
+
+      expect(service.createComment).toHaveBeenCalledWith(1, 42, mockCommentDto);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('getComments', () => {
+    it('delegates to service.getComments with recipeId', async () => {
+      const mockResult = [
+        {
+          id: 1,
+          recipe_id: 1,
+          user_id: 10,
+          parent_id: null,
+          content: 'Parent comment',
+          is_active: true,
+          created_at: new Date(),
+          user: { id: 10, username: 'marco', avatar_url: null },
+          replies: [],
+        },
+      ];
+      mockRecipeService.getComments.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.getComments(1);
+
+      expect(service.getComments).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteComment', () => {
+    it('delegates to service.deleteComment with recipeId, commentId, and userId', async () => {
+      const mockResult = { message: 'Comment deactivated successfully' };
+      mockRecipeService.deleteComment.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.deleteComment(1, 10, 42);
+
+      expect(service.deleteComment).toHaveBeenCalledWith(1, 10, 42);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('updateComment', () => {
+    it('delegates to service.updateComment with recipeId, commentId, userId, and updateCommentDto', async () => {
+      const mockResult = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 42,
+        parent_id: null,
+        content: 'Updated content',
+        is_active: true,
+        is_edited: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+        user: { id: 42, username: 'chef_mario', avatar_url: null },
+      };
+      mockRecipeService.updateComment.mockResolvedValueOnce(mockResult);
+
+      const updateDto = { content: 'Updated content' };
+      const result = await controller.updateComment(1, 10, 42, updateDto);
+
+      expect(service.updateComment).toHaveBeenCalledWith(1, 10, 42, updateDto);
       expect(result).toEqual(mockResult);
     });
   });

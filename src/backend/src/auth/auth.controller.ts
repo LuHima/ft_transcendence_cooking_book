@@ -19,6 +19,7 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiConflictResponse,
+  ApiInternalServerErrorResponse,
   ApiCookieAuth,
   ApiExtraModels,
   getSchemaPath,
@@ -40,7 +41,12 @@ import {
   SignUpResponseDto,
   TwoFactorEnableResponseDto,
 } from './dto/auth-response.dto';
-import { ApiErrorResponseDto } from 'src/common/dto/api-error-response.dto';
+import {
+  ApiBadRequestResponseDto,
+  ApiUnauthorizedResponseDto,
+  ApiConflictResponseDto,
+  ApiInternalServerErrorResponseDto,
+} from 'src/common/dto/api-error-response.dto';
 
 export class ConfirmPasswordDto extends PickType(SignInUserDto, [
   'password',
@@ -65,6 +71,10 @@ interface twofactor {
  * Controller handling authentication, user registration, token refreshing, and two-factor authentication (2FA).
  */
 @ApiTags('Auth')
+@ApiInternalServerErrorResponse({
+  type: ApiInternalServerErrorResponseDto,
+  description: 'Internal server error',
+})
 @ApiExtraModels(AuthMessageResponseDto, TwoFactorChallengeResponseDto)
 @Controller('auth')
 export class AuthController {
@@ -111,11 +121,11 @@ export class AuthController {
   @ApiBadRequestResponse({
     description:
       'Invalid input format (empty email, invalid email syntax, or short password)',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid credentials or inactive account',
-    type: ApiErrorResponseDto,
+    type: ApiUnauthorizedResponseDto,
   })
   @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
   @Post('signin')
@@ -123,7 +133,7 @@ export class AuthController {
     @Body() signInDto: SignInUserDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    let result: jwts | twofactor = await this.authService.signIn(
+    const result: jwts | twofactor = await this.authService.signIn(
       signInDto.email,
       signInDto.password,
     );
@@ -133,7 +143,9 @@ export class AuthController {
     else this.setAuthCookie(response, result);
 
     return {
-      message: 'Authentication append with success',
+      // Luis p.D. (no, non è partito democratico...) studiati l'inglese!!
+      // message: 'Authentication append with success',
+      message: 'Authentication was successful',
     };
   }
 
@@ -152,11 +164,11 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: 'Validation failed on registration fields',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiConflictResponse({
     description: 'Username or email is already taken',
-    type: ApiErrorResponseDto,
+    type: ApiConflictResponseDto,
   })
   @Post('signup')
   async signUp(@Body() signUpDto: SignUpUserDto) {
@@ -202,7 +214,7 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({
     description: 'Refresh token missing, invalid, or expired',
-    type: ApiErrorResponseDto,
+    type: ApiUnauthorizedResponseDto,
   })
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
@@ -243,16 +255,16 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: 'Password confirmation failed or is missing',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid password provided',
-    type: ApiErrorResponseDto,
+    type: ApiUnauthorizedResponseDto,
   })
   @ApiConflictResponse({
     description:
       'Two-factor authentication is already enabled for this account',
-    type: ApiErrorResponseDto,
+    type: ApiConflictResponseDto,
   })
   @Auth()
   @Post('twofactor/enable')
@@ -280,11 +292,11 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: 'Code must be exactly 6 digits; tempToken must be a valid JWT',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid or expired 2FA code or temporary token',
-    type: ApiErrorResponseDto,
+    type: ApiUnauthorizedResponseDto,
   })
   @HttpCode(HttpStatus.OK)
   @Post('twofactor/access')
@@ -313,11 +325,11 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: 'Code must be exactly 6 numeric digits',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid verification code',
-    type: ApiErrorResponseDto,
+    type: ApiUnauthorizedResponseDto,
   })
   @Auth()
   @Post('twofactor/verify')
@@ -339,15 +351,15 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: 'Password confirmation failed or is missing',
-    type: ApiErrorResponseDto,
+    type: ApiBadRequestResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid password',
-    type: ApiErrorResponseDto,
+    type: ApiUnauthorizedResponseDto,
   })
   @ApiConflictResponse({
     description: 'Two-factor authentication is already disabled',
-    type: ApiErrorResponseDto,
+    type: ApiConflictResponseDto,
   })
   @Auth()
   @Post('twofactor/disable')

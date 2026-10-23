@@ -28,7 +28,10 @@ export class RecipeStackItemDto {
   @ApiProperty({ description: 'Cooking time in minutes', example: 20 })
   cook_time: number;
 
-  @ApiProperty({ description: 'Total time in minutes', example: 35 })
+  @ApiProperty({
+    description: 'Total time (preparation time + cooking time) in minutes',
+    example: 35,
+  })
   total_time: number;
 
   @ApiProperty({ description: 'Servings yielded', example: 4 })
@@ -72,8 +75,86 @@ export class RecipeStackItemDto {
   created_at: Date;
 }
 
+import { LocalizedRecipeSummaryResponse } from './localized-recipe.response';
+
+/**
+ * Standard paginated collection envelope for recipes.
+ */
+export class PaginatedRecipeResponseDto {
+  /**
+   * Array of localized recipe summary cards for current page window.
+   */
+  @ApiProperty({
+    type: [LocalizedRecipeSummaryResponse],
+    description:
+      'Array of localized recipe summary cards for current page window',
+  })
+  items: LocalizedRecipeSummaryResponse[];
+
+  /**
+   * Total number of recipes matching filter criteria.
+   * @example 150
+   */
+  @ApiProperty({
+    description: 'Total number of recipes matching filter criteria',
+    example: 150,
+  })
+  total: number;
+
+  /**
+   * Current 1-based page window index.
+   * @example 1
+   */
+  @ApiProperty({
+    description: 'Current 1-based page window index',
+    example: 1,
+  })
+  page: number;
+
+  /**
+   * Number of items per page.
+   * @example 20
+   */
+  @ApiProperty({
+    description: 'Number of items per page',
+    example: 20,
+  })
+  limit: number;
+
+  /**
+   * Total number of pages.
+   * @example 8
+   */
+  @ApiProperty({
+    description: 'Total number of pages',
+    example: 8,
+  })
+  total_pages: number;
+
+  /**
+   * Indicates if another page exists after current page.
+   * @example true
+   */
+  @ApiProperty({
+    description: 'Indicates if another page exists after current page',
+    example: true,
+  })
+  has_next_page: boolean;
+
+  /**
+   * Indicates if an earlier page precedes current page.
+   * @example false
+   */
+  @ApiProperty({
+    description: 'Indicates if an earlier page precedes current page',
+    example: false,
+  })
+  has_prev_page: boolean;
+}
+
 /**
  * Paginated recipe stack response.
+ * @deprecated Use PaginatedRecipeResponseDto instead.
  */
 export class RecipePaginationResponseDto {
   /**

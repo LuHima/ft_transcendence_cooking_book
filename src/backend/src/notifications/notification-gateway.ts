@@ -18,7 +18,6 @@ import {
   errors,
 } from 'src/common/config/error.config';
 import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
-import { WebSocketExceptionFilter } from 'src/common/filters/webSocket.exception.filter';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'prisma/prisma.service';
 

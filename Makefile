@@ -9,6 +9,14 @@ NAME =			WeCook
 COMPOSE_FILE =	./docker/docker-compose.yml
 ENV_FILE =		./docker/.env
 ENV_EXAMPLE =	./docker/.env.example
+
+# Vault flag: with USE_VAULT=false in the env file the stack runs in
+# development mode (secrets read straight from the env file, Vault unused).
+# Default: true.
+USE_VAULT_OFF := $(shell grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' $(ENV_FILE) 2>/dev/null && echo yes)
+ifeq ($(USE_VAULT_OFF),yes)
+COMPOSE_FILE := ./docker/docker-compose.yml -f ./docker/docker-compose.novault.yml
+endif
 BUILD_LOG =		build.log
 
 # User ID and Group ID of the current user on host system
@@ -56,7 +64,7 @@ RESETCOLOR =	"\e[0m"
 
 # Allow passing CLI args like: make exec backend-container
 ARG_TARGETS = build rebuild exec inspect logs logsf restart stats db-migrate \
-db-reset
+db-reset db-studio
 ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@:)
@@ -144,11 +152,15 @@ stop: ## |Stop containers without removing them (keep volumes/data)
 
 # Rebuild stack from scratch (fclean + all)
 .PHONY: re
-re: fclean up-rebuild ## |Rebuild stack from scratch (without cache)
+re: fclean up-rebuild ## |Rebuild stack from scratch (no cache, delete volumes)
+
+# Rebuild stack from scratch (clean + all, keep volumes)
+.PHONY: re-v
+re-v: clean up-rebuild ## |Rebuild stack from scratch (no cache, keep volumes)
 
 # Stops and removes containers, networks, and removes project images
 .PHONY: clean
-clean: ## |Stop stack and remove project images
+clean: ## |Stop stack and remove project images (keep volumes and logs)
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) down --rmi all --remove-orphans
 
 # Stops and removes containers, project images, volumes, and build logs
@@ -341,19 +353,52 @@ db-status: env-check ## |Check database migration status
 
 # Launches Prisma Studio GUI on port 5555
 .PHONY: db-studio
-db-studio: env-check ## |Launch Prisma Studio GUI on port 5555
-	@echo "Opening Prisma Studio at: http://localhost:5555"
-	@echo "Press Ctrl+C to stop."
-	@TTY_OPT=""; \
-	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
-	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
-	-q backend 2>/dev/null)" ]; then \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend node \
-		prisma/studio.js; \
-	else \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
-		-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
+db-studio: env-check ## <start/kill>|Launch/Stop Prisma Studio GUI on port 5555
+	@if [ -z "$(ARGS)" ]; then \
+		echo "Usage: make db-studio <start/kill>"; \
+		echo "Example: make db-studio start -> Start Prisma Studio"; \
+		echo "Example: make db-studio kill  -> Stop Prisma Studio"; \
+		exit 1; \
 	fi
+	@case "$$(printf '%s' "$(ARGS)" | tr '[:upper:]' '[:lower:]')" in \
+		start) \
+			echo "Opening Prisma Studio at: http://localhost:5555"; \
+			echo "Press Ctrl+C to kill."; \
+			TTY_OPT=""; \
+			if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
+			if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status \
+			running -q backend 2>/dev/null)" ]; then \
+				$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT \
+				backend node prisma/studio.js; \
+			else \
+				$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
+				-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
+			fi \
+			;; \
+		kill) \
+			echo "Stopping Prisma Studio"; \
+			$(SUDO) docker compose -f docker/docker-compose.yml exec backend \
+			node -e "const fs = require('fs'); \
+			fs.readdirSync('/proc') \
+			.filter(pid => /^[0-9]+/.test(pid)) \
+			.forEach(pid => { \
+				try { \
+					const path = '/proc/' + pid + '/cmdline'; \
+					const cmd = fs.readFileSync(path, 'utf8'); \
+					if (cmd.includes('studio') && \
+						pid !== String(process.pid)) { \
+						process.kill(Number(pid), 'SIGKILL'); \
+					} \
+				} catch (error) {} \
+			});" \
+			;; \
+		*) \
+			echo "Usage: make db-studio <start/kill>"; \
+			echo "Example: make db-studio start -> Start Prisma Studio"; \
+			echo "Example: make db-studio kill  -> Stop Prisma Studio"; \
+			exit 1 \
+			;; \
+	esac
 
 # Squashes all migrations into a single consolidated 'init' migration
 .PHONY: db-squash
@@ -403,9 +448,18 @@ env-check: ## |Verify .env exists and required vars are present
 		exit 1; \
 	fi; \
 	missing=0; \
-	for var in PRODUCTION_FLAG INFOMANIAK_API_TOKEN ACME_EMAIL ACME_STAGING \
-	DOMAIN_NAME TWO_FACTOR_AUTH POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB \
-	DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET  UPLOADS_DIR; do \
+	if grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' "$(ENV_FILE)"; then \
+		echo "USE_VAULT=false: Vault disabled, secrets are read from $(ENV_FILE)."; \
+		mode_vars="DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET \
+		TWO_FACTOR_AUTH"; \
+	else \
+		mode_vars="ACME_VAULT_ROLE_ID ACME_VAULT_SECRET_ID \
+		DATABASE_VAULT_ROLE_ID DATABASE_VAULT_SECRET_ID \
+		BACKEND_VAULT_ROLE_ID BACKEND_VAULT_SECRET_ID"; \
+	fi; \
+	for var in PRODUCTION_FLAG ACME_EMAIL ACME_STAGING DOMAIN_NAME \
+	POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB UPLOADS_DIR \
+	$$mode_vars; do \
 		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
 			echo "Missing variable in $(ENV_FILE): $$var"; \
 			missing=1; \

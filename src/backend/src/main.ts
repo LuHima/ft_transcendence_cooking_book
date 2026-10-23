@@ -5,15 +5,14 @@ import { ValidationPipe } from '@nestjs/common';
 import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pipe';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
-import { HttpExceptionFilter } from './common/filters/http.exeption.filter';
-import { PrismaExceptionFilter } from './common/filters/prisma.exception.filter';
+import { GlobalExceptionFilter } from './common/filters/global.exception.filter';
+import { ContentLanguageInterceptor } from './common/interceptors/content-language.interceptor';
 import {
   RECIPE_UPLOADS_DIR,
   AVATAR_UPLOADS_DIR,
   UPLOADS_DIR,
 } from './common/config/upload-paths';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { WebSocketExceptionFilter } from './common/filters/webSocket.exception.filter';
 import * as fs from 'fs';
 
 async function bootstrap() {
@@ -30,12 +29,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   // Per lavorare con i cookie
   app.use(cookieParser(process.env.COOKIE_SECRET));
-  // Uso il mio filtro per gestire l'errore
-  app.useGlobalFilters(
-    new HttpExceptionFilter(),
-    new PrismaExceptionFilter(),
-    new WebSocketExceptionFilter(),
-  );
+  // Centralized HTTP and WebSocket exception handling
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  // Standard RFC 9110 Content-Language response header interceptor
+  app.useGlobalInterceptors(new ContentLanguageInterceptor());
   app.useGlobalPipes(
     // Blocca {} vuoti su tutti i body
     new GlobalNotEmptyBodyPipe(),
@@ -116,16 +113,6 @@ async function bootstrap() {
   });
   // Export openapi.json for Fern, Postman, and AI agent consumers
   fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2));
-  /* try {
-    fs.writeFileSync('../openapi.json', JSON.stringify(document, null, 2));
-  } catch {
-    // Silently continue if root write is not accessible
-  }
-  try {
-    fs.writeFileSync('../fern/openapi/openapi.json', JSON.stringify(document, null, 2));
-  } catch {
-    // Silently continue if fern directory is not accessible
-  } */
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }

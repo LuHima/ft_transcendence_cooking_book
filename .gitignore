@@ -20,7 +20,6 @@ docker/nginx/ssl/
 
 # Database dumps, raw data, and persistent container volume mounts
 *.sql
-!**/prisma/migrations/**/*.sql
 *.dump
 *.sqlite
 *.sqlite3
@@ -28,6 +27,10 @@ docker/nginx/ssl/
 db_data/
 **/db_data/
 postgres_data/
+
+# Prisma migrations
+# !**/prisma/migrations/**/*.sql
+src/backend/prisma/migrations
 src/backend/prisma/.migrations_archive/
 
 # ---------------------------------------------------------------------------- #

@@ -1,12 +1,25 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  HttpException,
+  ForbiddenException,
+} from '@nestjs/common';
+import {
+  Course,
+  RecipeDifficulty,
+  TranslationStatus,
+  UnitOfMeasure,
+} from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { RecipeService } from './recipe.service';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
+import { CaslCheckAbility } from '../auth/casl/casl-checkAbility';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -19,6 +32,10 @@ describe('RecipeService', () => {
     isProduction: jest.fn().mockReturnValue(false),
   };
 
+  const mockCaslCheckAbility = {
+    canAbility: jest.fn().mockResolvedValue(true),
+  };
+
   const mockPrisma = {
     $transaction: jest.fn(),
     recipe: {
@@ -27,6 +44,7 @@ describe('RecipeService', () => {
       findMany: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
     recipeTranslation: {
       upsert: jest.fn(),
@@ -57,6 +75,13 @@ describe('RecipeService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
+    },
+    comment: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
   };
 
@@ -101,6 +126,7 @@ describe('RecipeService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ProductionConfig, useValue: mockProductionConfig },
+        { provide: CaslCheckAbility, useValue: mockCaslCheckAbility },
       ],
     }).compile();
 
@@ -120,46 +146,305 @@ describe('RecipeService', () => {
   });
 
   describe('getAllRecipe', () => {
-    const mockRecipes = [
+    const mockDbRecipes = [
       {
         id: 1,
+        course: Course.first_course,
+        difficulty: RecipeDifficulty.medium,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
         source_lang: 'it',
+        translation_status: TranslationStatus.completed,
+        cover_image_url: '/uploads/recipes/cover.webp',
+        video_url: null,
+        created_at: new Date('2026-10-09T18:00:00.000Z'),
+        updated_at: null,
         translations: [
           { locale: 'it', title: 'Carbonara', description: 'Classica' },
           { locale: 'en', title: 'Carbonara English', description: 'Classic' },
         ],
+        recipe_tags: [
+          {
+            tag: {
+              id: 1,
+              slug: 'traditional',
+              translations: [
+                { locale: 'it', name: 'Tradizionale' },
+                { locale: 'en', name: 'Traditional' },
+              ],
+            },
+          },
+        ],
+        user: {
+          id: 1,
+          username: 'chef_mario',
+          avatar_url: '/uploads/avatars/chef_mario.webp',
+        },
+        _count: {
+          likes: 5,
+          comments: 2,
+        },
+        likes: [],
       },
     ];
 
-    it('returns all recipes with translations when lang is omitted', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+    it('returns paginated envelope with default page=1 and limit=20 and lightweight cards', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
 
       const result = await service.getAllRecipe();
 
       expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        include: { translations: true },
+        skip: 0,
+        take: 20,
+        orderBy: { created_at: 'desc' },
+        include: expect.objectContaining({
+          translations: true,
+          user: { select: { id: true, username: true, avatar_url: true } },
+          recipe_tags: {
+            include: { tag: { include: { translations: true } } },
+          },
+          _count: expect.any(Object),
+        }),
       });
-      expect(result).toEqual(mockRecipes);
+      expect(mockPrisma.recipe.count).toHaveBeenCalledWith({});
+
+      expect(result).toEqual({
+        items: [
+          {
+            id: 1,
+            course: Course.first_course,
+            difficulty: RecipeDifficulty.medium,
+            prep_time: 15,
+            cook_time: 10,
+            total_time: 25,
+            servings: 4,
+            source_lang: 'it',
+            translation_status: TranslationStatus.completed,
+            cover_image_url: '/uploads/recipes/cover.webp',
+            video_url: null,
+            created_at: expect.any(Date),
+            updated_at: null,
+            author: {
+              id: 1,
+              username: 'chef_mario',
+              avatar_url: '/uploads/avatars/chef_mario.webp',
+            },
+            title: 'Carbonara',
+            description: 'Classica',
+            tags: [
+              {
+                id: 1,
+                slug: 'traditional',
+                name: 'Tradizionale',
+                resolved_lang: 'it',
+              },
+            ],
+            likes_count: 5,
+            comments_count: 2,
+            is_liked: false,
+            resolved_lang: 'it',
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      });
+      // Steps and ingredients are omitted from the summary card
+      expect((result.items[0] as any).steps).toBeUndefined();
+      expect((result.items[0] as any).ingredients).toBeUndefined();
     });
 
-    it('projects localized title and description when lang is provided', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
+    it('calculates skip, take, total_pages, and navigation flags for custom page and limit', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(45);
 
-      const result = await service.getAllRecipe('en');
+      const result = await service.getAllRecipe({ page: 2, limit: 10 });
 
-      expect(result).toEqual([
-        {
-          id: 1,
-          source_lang: 'it',
-          title: 'Carbonara English',
-          description: 'Classic',
-          translations: mockRecipes[0].translations,
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 10,
+          take: 10,
+        }),
+      );
+      expect(result.total).toBe(45);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(10);
+      expect(result.total_pages).toBe(5);
+      expect(result.has_next_page).toBe(true);
+      expect(result.has_prev_page).toBe(true);
+    });
+
+    it('projects localized title, description, and tags when lang is specified', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      const result = await service.getAllRecipe({ lang: 'en' });
+
+      expect(result.items[0].title).toBe('Carbonara English');
+      expect(result.items[0].description).toBe('Classic');
+      expect(result.items[0].tags[0].name).toBe('Traditional');
+      expect(result.items[0].resolved_lang).toBe('en');
+    });
+
+    it('filters recipes by course, difficulty, author_id, max_time, tag_ids, and search keyword', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      const filters: FilterRecipeDto = {
+        course: Course.main_course,
+        difficulty: RecipeDifficulty.easy,
+        author_id: 5,
+        max_time: 45,
+        tag_ids: [1, 2],
+        search: 'pasta',
+      };
+
+      const result = await service.getAllRecipe(filters);
+
+      const expectedWhere = {
+        course: Course.main_course,
+        difficulty: RecipeDifficulty.easy,
+        user_id: 5,
+        total_time: { lte: 45 },
+        recipe_tags: {
+          some: {
+            tag_id: { in: [1, 2] },
+          },
         },
-      ]);
+        translations: {
+          some: {
+            OR: [
+              { title: { contains: 'pasta', mode: 'insensitive' } },
+              { description: { contains: 'pasta', mode: 'insensitive' } },
+            ],
+          },
+        },
+      };
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expectedWhere,
+        }),
+      );
+      expect(mockPrisma.recipe.count).toHaveBeenCalledWith({
+        where: expectedWhere,
+      });
+      expect(result.total).toBe(1);
+    });
+
+    it('populates is_liked=true when currentUserId has liked the recipe', async () => {
+      const mockWithUserLike = [
+        {
+          ...mockDbRecipes[0],
+          likes: [{ user_id: 42 }],
+        },
+      ];
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockWithUserLike);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      const result = await service.getAllRecipe({}, 42);
+
+      expect(result.items[0].is_liked).toBe(true);
     });
   });
 
   describe('createRecipe', () => {
+    it('throws BadRequestException when step numbers are duplicated', async () => {
+      const recipeWithDuplicateSteps = {
+        ...sampleDto,
+        steps: [
+          sampleDto.steps[0],
+          { ...sampleDto.steps[0], step_number: 1 },
+        ],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithDuplicateSteps, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Duplicate step number: 1. Each step number must be unique.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when step numbers are not consecutive', async () => {
+      const recipeWithNonConsecutiveSteps = {
+        ...sampleDto,
+        steps: [
+          sampleDto.steps[0],
+          { ...sampleDto.steps[0], step_number: 2 },
+          { ...sampleDto.steps[0], step_number: 4 },
+        ],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithNonConsecutiveSteps, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Step numbers must be consecutive starting at 1. Missing step number: 3.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when ingredient IDs are duplicated', async () => {
+      const recipeWithDuplicateIngredients = {
+        ...sampleDto,
+        ingredients: [
+          sampleDto.ingredients[0],
+          { ...sampleDto.ingredients[0], quantity: 100 },
+        ],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithDuplicateIngredients, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Duplicate ingredient ID: 1. Each ingredient may only be added once.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when tag IDs are duplicated', async () => {
+      const recipeWithDuplicateTags = {
+        ...sampleDto,
+        tag_ids: [1, 1],
+      };
+
+      await expect(
+        service.createRecipe(recipeWithDuplicateTags, 1),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Duplicate tag ID: 1. Each tag may only be added once.',
+        ),
+      );
+
+      expect(
+        mockTranslationService.verifySourceLanguage,
+      ).not.toHaveBeenCalled();
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it('throws BadRequestException and does not execute transaction if language verification fails', async () => {
       mockTranslationService.verifySourceLanguage.mockRejectedValueOnce(
         new BadRequestException(
@@ -248,6 +533,21 @@ describe('RecipeService', () => {
         translation_status: 'completed',
       };
 
+      const mockDetailRecipe = {
+        id: 42,
+        user_id: 1,
+        title: sampleDto.title,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        translation_status: 'completed',
+        resolved_lang: 'it',
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(mockDetailRecipe as any);
+
       mockPrisma.$transaction.mockImplementation(async (cb: any) => {
         if (typeof cb === 'function') {
           return cb(mockPrisma);
@@ -269,10 +569,11 @@ describe('RecipeService', () => {
           }),
         }),
       );
-      expect(result).toEqual(mockCreatedRecipe);
+      expect(service.getRecipeById).toHaveBeenCalledWith(42, 'it', 1);
+      expect(result).toEqual(mockDetailRecipe);
     });
 
-    it('gracefully falls back to source text with failed translation_status when translation fails', async () => {
+    it('does not persist target translations when translation fails', async () => {
       mockTranslationService.verifySourceLanguage.mockResolvedValueOnce(
         undefined,
       );
@@ -288,6 +589,19 @@ describe('RecipeService', () => {
         total_time: 25,
         translation_status: 'failed',
       };
+
+      const mockFailedDetailRecipe = {
+        id: 43,
+        user_id: 1,
+        title: sampleDto.title,
+        total_time: 25,
+        translation_status: 'failed',
+        resolved_lang: 'it',
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(mockFailedDetailRecipe as any);
 
       mockPrisma.$transaction.mockImplementation(async (cb: any) => {
         if (typeof cb === 'function') {
@@ -306,21 +620,22 @@ describe('RecipeService', () => {
           data: expect.objectContaining({
             translation_status: 'failed',
             translations: {
-              create: expect.arrayContaining([
+              create: [
                 expect.objectContaining({
-                  locale: 'en',
+                  locale: 'it',
                   title: sampleDto.title,
                 }),
-                expect.objectContaining({
-                  locale: 'fr',
-                  title: sampleDto.title,
-                }),
-              ]),
+              ],
             },
           }),
         }),
       );
-      expect(result).toEqual(mockFailedRecipe);
+      const createCall = mockPrisma.recipe.create.mock.calls[0][0];
+      expect(createCall.data.steps.create[0].translations.create).toEqual([
+        expect.objectContaining({ locale: 'it' }),
+      ]);
+      expect(service.getRecipeById).toHaveBeenCalledWith(43, 'it', 1);
+      expect(result).toEqual(mockFailedDetailRecipe);
     });
   });
 
@@ -483,6 +798,9 @@ describe('RecipeService', () => {
       expect(result.tags).toHaveLength(1);
       expect(result.tags[0].slug).toBe('traditional');
       expect(result.tags[0].name).toBe('Traditional');
+      expect(result.tags[0].resolved_lang).toBe('en');
+      expect(result.ingredients[0].resolved_lang).toBe('en');
+      expect(result.resolved_lang).toBe('en');
     });
 
     it('gracefully falls back to source_lang when requested translation locale is not available', async () => {
@@ -571,6 +889,82 @@ describe('RecipeService', () => {
       expect(result.ingredients[0].notes).toBe('fresco e cremoso');
 
       expect(result.tags[0].name).toBe('Vegetariano');
+    });
+
+    it('returns likes_count, active comments_count, and is_liked=true when user liked recipe', async () => {
+      const mockRecipeWithSocial = {
+        id: 1,
+        course: Course.first_course,
+        difficulty: RecipeDifficulty.easy,
+        prep_time: 10,
+        cook_time: 15,
+        total_time: 25,
+        servings: 2,
+        source_lang: 'it',
+        translation_status: 'completed',
+        cover_image_url: null,
+        video_url: null,
+        created_at: new Date('2026-01-01T00:00:00Z'),
+        updated_at: new Date('2026-01-01T00:00:00Z'),
+        user: { id: 10, username: 'mario', avatar_url: null },
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: {
+          likes: 12,
+          comments: 4,
+        },
+        likes: [{ user_id: 10 }],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipeWithSocial);
+
+      const result = await service.getRecipeById(1, 'it', 10);
+
+      expect(result.likes_count).toBe(12);
+      expect(result.comments_count).toBe(4);
+      expect(result.is_liked).toBe(true);
+    });
+
+    it('returns likes_count, comments_count, and is_liked=false for unauthenticated guest', async () => {
+      const mockRecipeWithSocial = {
+        id: 1,
+        course: Course.first_course,
+        difficulty: RecipeDifficulty.easy,
+        prep_time: 10,
+        cook_time: 15,
+        total_time: 25,
+        servings: 2,
+        source_lang: 'it',
+        translation_status: 'completed',
+        cover_image_url: null,
+        video_url: null,
+        created_at: new Date('2026-01-01T00:00:00Z'),
+        updated_at: new Date('2026-01-01T00:00:00Z'),
+        user: { id: 10, username: 'mario', avatar_url: null },
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: {
+          likes: 7,
+          comments: 2,
+        },
+        likes: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipeWithSocial);
+
+      const result = await service.getRecipeById(1, 'it');
+
+      expect(result.likes_count).toBe(7);
+      expect(result.comments_count).toBe(2);
+      expect(result.is_liked).toBe(false);
     });
   });
 
@@ -762,7 +1156,7 @@ describe('RecipeService', () => {
 
       await expect(
         service.updateRecipe(1, 999, { servings: 4 }),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(HttpException);
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         id: 1,
@@ -770,7 +1164,7 @@ describe('RecipeService', () => {
       });
 
       await expect(service.updateRecipe(1, 1, { servings: 4 })).rejects.toThrow(
-        NotFoundException,
+        HttpException,
       );
     });
 
@@ -786,6 +1180,19 @@ describe('RecipeService', () => {
         course: Course.first_course,
         source_lang: 'it',
       };
+
+      const mockUpdatedDetail = {
+        ...existingRecipe,
+        prep_time: 25,
+        total_time: 35,
+        servings: 6,
+        difficulty: RecipeDifficulty.hard,
+        resolved_lang: 'it',
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(mockUpdatedDetail as any);
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
 
@@ -815,7 +1222,130 @@ describe('RecipeService', () => {
           }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
       expect(result.total_time).toBe(35);
+    });
+
+    it('updates steps, ingredients, and tags when those relations are provided', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        prep_time: 15,
+        cook_time: 10,
+        source_lang: 'it',
+        translations: [],
+        steps: [
+          {
+            id: 10,
+            step_number: 1,
+            translations: [
+              {
+                locale: 'it',
+                title: 'Vecchio titolo',
+                description: 'Vecchia descrizione.',
+              },
+              {
+                locale: 'en',
+                title: 'Old title',
+                description: 'Old description.',
+              },
+            ],
+          },
+        ],
+      };
+      const updateData = {
+        steps: [
+          {
+            step_number: 1,
+            title: 'Nuovo titolo',
+            description: 'Nuova descrizione.',
+            duration: 20,
+          },
+          {
+            step_number: 2,
+            title: 'Secondo titolo',
+            description: 'Seconda descrizione.',
+          },
+        ],
+        ingredients: [
+          {
+            ingredient_id: 2,
+            quantity: 100,
+            unit: UnitOfMeasure.g,
+            notes: 'Tritato',
+          },
+        ],
+        tag_ids: [2, 3],
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.ingredient.findMany.mockResolvedValueOnce([{ id: 2 }]);
+      mockPrisma.tag.findMany.mockResolvedValueOnce([{ id: 2 }, { id: 3 }]);
+      mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
+
+      await service.updateRecipe(1, 1, updateData);
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            recipe_ingredients: {
+              deleteMany: {},
+              create: [
+                {
+                  ingredient_id: 2,
+                  quantity: 100,
+                  unit: UnitOfMeasure.g,
+                  notes: { it: 'Tritato' },
+                },
+              ],
+            },
+            recipe_tags: {
+              deleteMany: {},
+              create: [{ tag_id: 2 }, { tag_id: 3 }],
+            },
+            steps: {
+              deleteMany: {},
+              create: [
+                {
+                  step_number: 1,
+                  duration: 20,
+                  translations: {
+                    create: [
+                      {
+                        locale: 'en',
+                        title: 'Old title',
+                        description: 'Old description.',
+                      },
+                      {
+                        locale: 'it',
+                        title: 'Nuovo titolo',
+                        description: 'Nuova descrizione.',
+                      },
+                    ],
+                  },
+                },
+                {
+                  step_number: 2,
+                  duration: null,
+                  translations: {
+                    create: [
+                      {
+                        locale: 'it',
+                        title: 'Secondo titolo',
+                        description: 'Seconda descrizione.',
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          }),
+        }),
+      );
     });
 
     it('updates RecipeTranslation for a specific locale without touching other locales when retranslate is not specified', async () => {
@@ -837,6 +1367,10 @@ describe('RecipeService', () => {
         ],
         steps: [],
       };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
 
@@ -870,6 +1404,7 @@ describe('RecipeService', () => {
           }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
     });
 
     it('throws BadRequestException when retranslate is true but locale differs from source_lang', async () => {
@@ -926,6 +1461,10 @@ describe('RecipeService', () => {
         steps: [],
       };
 
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
       mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
 
@@ -955,6 +1494,7 @@ describe('RecipeService', () => {
           }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'en', 1);
     });
 
     it('re-translates source text across remaining locales when retranslate is true and updates translation_status', async () => {
@@ -992,6 +1532,10 @@ describe('RecipeService', () => {
           },
         ],
       };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
 
@@ -1031,6 +1575,7 @@ describe('RecipeService', () => {
           data: expect.objectContaining({ translation_status: 'completed' }),
         }),
       );
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
     });
   });
 
@@ -1676,76 +2221,566 @@ describe('RecipeService', () => {
     });
   });
 
-  describe('getRecipeStack', () => {
-    it('throws BadRequestException if page is less than 1 or not provided', async () => {
-      await expect(service.getRecipeStack(0)).rejects.toThrow(
-        BadRequestException,
+  describe('createComment', () => {
+    const commentDto: CreateCommentDto = {
+      content: 'Ottima ricetta!',
+    };
+
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.createComment(999, 1, commentDto)).rejects.toThrow(
+        NotFoundException,
       );
-      await expect(service.getRecipeStack(-1)).rejects.toThrow(
-        BadRequestException,
-      );
     });
 
-    it('returns empty returnPage array without throwing 404 when no recipes exist on page', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce([]);
+    it('throws BadRequestException when parent_id does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
 
-      const result = await service.getRecipeStack(5);
+      await expect(
+        service.createComment(1, 1, { ...commentDto, parent_id: 888 }),
+      ).rejects.toThrow(BadRequestException);
+    });
 
-      expect(result).toEqual({
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: true,
+    it('throws BadRequestException when parent comment belongs to a different recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 2,
+        parent_id: null,
       });
+
+      await expect(
+        service.createComment(1, 1, { ...commentDto, parent_id: 10 }),
+      ).rejects.toThrow(BadRequestException);
     });
 
-    it('returns empty returnPage array with hasPreviousPage false on page 1', async () => {
-      mockPrisma.recipe.findMany.mockResolvedValueOnce([]);
+    it('creates a root comment when parent_id is omitted', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      const createdComment = {
+        id: 100,
+        recipe_id: 1,
+        user_id: 5,
+        parent_id: null,
+        content: 'Ottima ricetta!',
+        is_active: true,
+        created_at: new Date('2026-10-13T10:00:00Z'),
+        user: {
+          id: 5,
+          username: 'mario',
+          avatar_url: 'https://example.com/avatar.jpg',
+        },
+      };
+      mockPrisma.comment.create.mockResolvedValueOnce(createdComment);
 
-      const result = await service.getRecipeStack(1);
+      const result = await service.createComment(1, 5, commentDto);
 
-      expect(result).toEqual({
-        returnPage: [],
-        hasNextPage: false,
-        hasPreviousPage: false,
-      });
-    });
-
-    it('returns paginated items and indicates hasNextPage when more items exist', async () => {
-      const mockRecipes = Array.from({ length: 31 }, (_, i) => ({
-        id: i + 1,
-        title: `Recipe ${i + 1}`,
-        user: { username: `chef${i + 1}` },
-        translations: [],
-      }));
-      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockRecipes);
-
-      const result = await service.getRecipeStack(1);
-
-      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 31,
+      expect(mockPrisma.comment.create).toHaveBeenCalledWith({
+        data: {
+          recipe_id: 1,
+          user_id: 5,
+          content: 'Ottima ricetta!',
+          parent_id: null,
+          is_active: true,
+        },
         include: {
-          translations: true,
           user: {
             select: {
+              id: true,
               username: true,
+              avatar_url: true,
             },
           },
         },
-        orderBy: {
-          id: 'asc',
+      });
+      expect(result).toEqual(createdComment);
+    });
+
+    it('creates a reply and normalizes reply-to-reply when parent comment is already a reply', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 20,
+        recipe_id: 1,
+        parent_id: 10,
+      });
+
+      const createdReply = {
+        id: 30,
+        recipe_id: 1,
+        user_id: 7,
+        parent_id: 10,
+        content: 'Concordo!',
+        is_active: true,
+        created_at: new Date('2026-10-13T10:05:00Z'),
+        user: {
+          id: 7,
+          username: 'luigi',
+          avatar_url: null,
+        },
+      };
+      mockPrisma.comment.create.mockResolvedValueOnce(createdReply);
+
+      const result = await service.createComment(1, 7, {
+        content: 'Concordo!',
+        parent_id: 20,
+      });
+
+      expect(mockPrisma.comment.create).toHaveBeenCalledWith({
+        data: {
+          recipe_id: 1,
+          user_id: 7,
+          content: 'Concordo!',
+          parent_id: 10,
+          is_active: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
         },
       });
-      expect(result.hasNextPage).toBe(true);
-      expect(result.hasPreviousPage).toBe(false);
-      expect(result.returnPage).toHaveLength(30);
-      expect(result.returnPage[0]).toEqual(
-        expect.objectContaining({
+      expect(result).toEqual(createdReply);
+    });
+  });
+
+  describe('getComments', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getComments(999)).rejects.toThrow(NotFoundException);
+    });
+
+    it('returns threaded comments, preserving intermediate deactivated replies and dropping trailing deactivated replies', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+
+      const mockCommentsFromDb = [
+        // Root 1: Active, with 4 replies (active, inactive-intermediate, active, inactive-trailing)
+        {
           id: 1,
-          username: 'chef1',
-        }),
+          recipe_id: 1,
+          user_id: 10,
+          parent_id: null,
+          content: 'Parent comment 1',
+          is_active: true,
+          created_at: new Date('2026-10-13T10:00:00Z'),
+          user: { id: 10, username: 'marco', avatar_url: null },
+          replies: [
+            {
+              id: 2,
+              recipe_id: 1,
+              user_id: 20,
+              parent_id: 1,
+              content: 'Reply 1 (active)',
+              is_active: true,
+              is_edited: false,
+              created_at: new Date('2026-10-13T10:01:00Z'),
+              updated_at: null,
+              user: { id: 20, username: 'lara', avatar_url: null },
+            },
+            {
+              id: 3,
+              recipe_id: 1,
+              user_id: 30,
+              parent_id: 1,
+              content: 'Reply 2 (inactive - intermediate)',
+              is_active: false,
+              is_edited: false,
+              created_at: new Date('2026-10-13T10:02:00Z'),
+              updated_at: null,
+              user: { id: 30, username: 'giovanni', avatar_url: null },
+            },
+            {
+              id: 4,
+              recipe_id: 1,
+              user_id: 40,
+              parent_id: 1,
+              content: 'Reply 3 (active)',
+              is_active: true,
+              is_edited: false,
+              created_at: new Date('2026-10-13T10:03:00Z'),
+              updated_at: null,
+              user: { id: 40, username: 'anna', avatar_url: null },
+            },
+            {
+              id: 5,
+              recipe_id: 1,
+              user_id: 50,
+              parent_id: 1,
+              content: 'Reply 4 (inactive - trailing)',
+              is_active: false,
+              is_edited: false,
+              created_at: new Date('2026-10-13T10:04:00Z'),
+              updated_at: null,
+              user: { id: 50, username: 'paolo', avatar_url: null },
+            },
+          ],
+        },
+        // Root 2: Inactive, with only trailing inactive replies -> omitted completely
+        {
+          id: 6,
+          recipe_id: 1,
+          user_id: 60,
+          parent_id: null,
+          content: 'Parent comment 2 (inactive)',
+          is_active: false,
+          is_edited: false,
+          created_at: new Date('2026-10-13T10:05:00Z'),
+          updated_at: null,
+          user: { id: 60, username: 'luca', avatar_url: null },
+          replies: [
+            {
+              id: 7,
+              recipe_id: 1,
+              user_id: 70,
+              parent_id: 6,
+              content: 'Reply (inactive)',
+              is_active: false,
+              is_edited: false,
+              created_at: new Date('2026-10-13T10:06:00Z'),
+              updated_at: null,
+              user: { id: 70, username: 'sara', avatar_url: null },
+            },
+          ],
+        },
+        // Root 3: Inactive, but has active replies -> kept redacted
+        {
+          id: 8,
+          recipe_id: 1,
+          user_id: 80,
+          parent_id: null,
+          content: 'Parent comment 3 (inactive with active reply)',
+          is_active: false,
+          is_edited: false,
+          created_at: new Date('2026-10-13T10:07:00Z'),
+          updated_at: null,
+          user: { id: 80, username: 'elena', avatar_url: null },
+          replies: [
+            {
+              id: 9,
+              recipe_id: 1,
+              user_id: 90,
+              parent_id: 8,
+              content: 'Reply to deleted root (active)',
+              is_active: true,
+              is_edited: false,
+              created_at: new Date('2026-10-13T10:08:00Z'),
+              updated_at: null,
+              user: { id: 90, username: 'matteo', avatar_url: null },
+            },
+          ],
+        },
+        // Root 4: Active with no replies
+        {
+          id: 10,
+          recipe_id: 1,
+          user_id: 100,
+          parent_id: null,
+          content: 'Parent comment 4 (active, no replies)',
+          is_active: true,
+          is_edited: false,
+          created_at: new Date('2026-10-13T10:09:00Z'),
+          updated_at: null,
+          user: { id: 100, username: 'chiara', avatar_url: null },
+          replies: [],
+        },
+      ];
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce(mockCommentsFromDb);
+
+      const result = await service.getComments(1);
+
+      expect(mockPrisma.recipe.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: { id: true },
+      });
+
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith({
+        where: { recipe_id: 1, parent_id: null },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+          replies: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatar_url: true,
+                },
+              },
+            },
+            orderBy: { created_at: 'asc' },
+          },
+        },
+        orderBy: { created_at: 'asc' },
+      });
+
+      // Assertions on result: Root 2 must be excluded!
+      expect(result).toHaveLength(3);
+
+      // Root 1
+      expect(result[0].id).toBe(1);
+      expect(result[0].content).toBe('Parent comment 1');
+      expect(result[0].is_active).toBe(true);
+      expect(result[0].replies).toHaveLength(3);
+      expect(result[0].replies[0]).toEqual(mockCommentsFromDb[0].replies[0]);
+      // Intermediate inactive reply is redacted
+      expect(result[0].replies[1]).toEqual({
+        id: 3,
+        recipe_id: 1,
+        user_id: null,
+        parent_id: 1,
+        content: null,
+        is_active: false,
+        is_edited: false,
+        created_at: new Date('2026-10-13T10:02:00Z'),
+        updated_at: null,
+        user: null,
+      });
+      // 3rd reply is active
+      expect(result[0].replies[2]).toEqual(mockCommentsFromDb[0].replies[2]);
+
+      // Root 3 (was inactive, but has active reply, so kept redacted)
+      expect(result[1].id).toBe(8);
+      expect(result[1].content).toBeNull();
+      expect(result[1].user).toBeNull();
+      expect(result[1].user_id).toBeNull();
+      expect(result[1].is_active).toBe(false);
+      expect(result[1].replies).toHaveLength(1);
+      expect(result[1].replies[0]).toEqual(mockCommentsFromDb[2].replies[0]);
+
+      // Root 4 (active with no replies)
+      expect(result[2].id).toBe(10);
+      expect(result[2].content).toBe('Parent comment 4 (active, no replies)');
+      expect(result[2].replies).toEqual([]);
+    });
+  });
+
+  describe('deleteComment', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.deleteComment(999, 10, 1)).rejects.toThrow(
+        NotFoundException,
       );
-      expect((result.returnPage[0] as any).user).toBeUndefined();
+    });
+
+    it('throws NotFoundException when comment does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.deleteComment(1, 888, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when comment belongs to a different recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 2,
+        user_id: 1,
+      });
+
+      await expect(service.deleteComment(1, 10, 1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws ForbiddenException when user is neither comment author nor recipe author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+
+      await expect(service.deleteComment(1, 10, 99)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('deactivates comment when user is the comment author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+
+      const result = await service.deleteComment(1, 10, 50);
+
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { is_active: false },
+      });
+      expect(result).toEqual({ message: 'Comment deactivated successfully' });
+    });
+
+    it('deactivates comment when user is the recipe author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+
+      const result = await service.deleteComment(1, 10, 100);
+
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { is_active: false },
+      });
+      expect(result).toEqual({ message: 'Comment deactivated successfully' });
+    });
+  });
+
+  describe('updateComment', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateComment(999, 10, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when comment does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateComment(1, 888, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when comment belongs to a different recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 2,
+        user_id: 1,
+        is_active: true,
+      });
+
+      await expect(
+        service.updateComment(1, 10, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when comment is deactivated', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 1,
+        is_active: false,
+      });
+
+      await expect(
+        service.updateComment(1, 10, 1, { content: 'Updated content' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws ForbiddenException when user is not the comment author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+        is_active: true,
+      });
+
+      await expect(
+        service.updateComment(1, 10, 99, { content: 'Updated content' }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('updates comment content, sets is_edited: true, and returns updated comment with user when user is author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+        is_active: true,
+        content: 'Original content',
+      });
+
+      const updatedComment = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+        parent_id: null,
+        content: 'Updated content',
+        is_active: true,
+        is_edited: true,
+        created_at: new Date('2026-10-14T10:00:00Z'),
+        updated_at: new Date('2026-10-15T11:00:00Z'),
+        user: {
+          id: 50,
+          username: 'chef_mario',
+          avatar_url: '/uploads/avatars/chef_mario.webp',
+        },
+      };
+
+      mockPrisma.comment.update.mockResolvedValueOnce(updatedComment);
+
+      const result = await service.updateComment(1, 10, 50, {
+        content: 'Updated content',
+      });
+
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: {
+          content: 'Updated content',
+          is_edited: true,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(updatedComment);
     });
   });
 });

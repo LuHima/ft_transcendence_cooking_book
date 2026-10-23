@@ -85,6 +85,17 @@ export class TagResponseDto {
     example: 'Vegetariano',
   })
   name: string;
+
+  /**
+   * Resolved locale code used for localized tag name.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized tag name',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  resolved_lang: string;
 }
 
 /**
@@ -131,4 +142,15 @@ export class IngredientResponseDto {
     example: 'Parmigiano Reggiano DOP',
   })
   name: string;
+
+  /**
+   * Resolved locale code used for localized ingredient name.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized ingredient name',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  resolved_lang: string;
 }

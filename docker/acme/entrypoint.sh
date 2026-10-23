@@ -6,6 +6,40 @@ set -e
 SSL_DIR="${SSL_DIR:-/etc/nginx/ssl}"
 DOMAIN="${DOMAIN_NAME:-localhost}"
 
+# Fetch INFOMANIAK_API_TOKEN from Vault, if Vault credentials are provided.
+# Falls back to whatever INFOMANIAK_API_TOKEN is already in the environment
+# (useful for local dev without Vault, or if Vault is unreachable).
+VAULT_ADDR="${VAULT_ADDR:-http://vault:8200}"
+
+if [ "${USE_VAULT:-true}" = "true" ] && [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_SECRET_ID" ]; then
+	echo "=== Authenticating to Vault (acme-role) ==="
+
+	LOGIN_RESPONSE=$(curl -s --fail -X POST \
+		-d "{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}" \
+		"${VAULT_ADDR}/v1/auth/approle/login" 2>/dev/null)
+
+	VAULT_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+
+	if [ -n "$VAULT_TOKEN" ]; then
+		SECRET_RESPONSE=$(curl -s --fail \
+			-H "X-Vault-Token: ${VAULT_TOKEN}" \
+			"${VAULT_ADDR}/v1/secret/data/acme" 2>/dev/null)
+
+		FETCHED_TOKEN=$(echo "$SECRET_RESPONSE" | grep -o '"INFOMANIAK_API_TOKEN":"[^"]*"' | cut -d'"' -f4)
+
+		if [ -n "$FETCHED_TOKEN" ]; then
+			INFOMANIAK_API_TOKEN="$FETCHED_TOKEN"
+			echo "=== INFOMANIAK_API_TOKEN retrieved from Vault ==="
+		else
+			echo "WARNING: Vault reachable but no INFOMANIAK_API_TOKEN found; using existing environment value (if any)."
+		fi
+	else
+		echo "WARNING: Could not authenticate to Vault; using existing environment value (if any)."
+	fi
+else
+	echo "INFO: Vault disabled (USE_VAULT=false) or credentials not set; skipping Vault fetch."
+fi
+
 mkdir -p "$SSL_DIR"
 
 # Determine environment mode: 'true', '1', 'yes', 'on' enable production mode
@@ -141,7 +175,7 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 			--fullchain-file "$SSL_DIR/transcendence.crt" \
 			--reloadcmd "nginx -s reload || true"
 
-		chmod 600 "$SSL_DIR/transcendence.key"
+		chmod 644 "$SSL_DIR/transcendence.key"
 		chmod 644 "$SSL_DIR/transcendence.crt"
 		echo "Let's Encrypt certificate issued and installed successfully."
 	else
@@ -220,7 +254,7 @@ else
 		"/C=IT/ST=Tuscany/L=Florence/O=WeCook/OU=dev/CN=${DOMAIN}/UID=WeCook" \
 		-addext "subjectAltName=DNS:${DOMAIN},IP:127.0.0.1"
 		
-		chmod 600 "$SSL_DIR/transcendence.key"
+		chmod 644 "$SSL_DIR/transcendence.key"
 		chmod 644 "$SSL_DIR/transcendence.crt"
     	echo "SSL certificate generated successfully."
 	else
@@ -242,16 +276,16 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 fi
 
 echo ""
-echo "=== Starting Nginx Web Server ==="
+echo "=== Certificate ready ==="
 if [ "$IS_PRODUCTION" -eq 1 ]; then
 	echo "Environment: PRODUCTION (Let's Encrypt DNS-01)"
 else
 	echo "Environment: DEVELOPMENT (Self-Signed Certificate)"
 fi
-echo "Application URL -> https://${DOMAIN}:8443"
 echo ""
 
-# Execute the command passed as argument to the Dockerfile (CMD). Using 'exec'
-# is ESSENTIAL because exec replaces the shell process with the NGINX process.
-# This way NGINX becomes PID 1 and correctly receives stop signals.
-exec "$@"
+# Keep the container alive so the cron daemon (started above in production
+# mode) keeps running and can renew the certificate periodically. This
+# container's only job is to keep the certificate files up to date; nginx
+# reads them from the shared volume.
+tail -f /dev/null

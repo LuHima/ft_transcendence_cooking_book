@@ -1,11 +1,21 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiInternalServerErrorResponse,
+} from '@nestjs/swagger';
 import { AppService } from './app.service';
+import { ApiInternalServerErrorResponseDto } from './common/dto/api-error-response.dto';
 
 /**
  * Controller for system diagnostic and connectivity testing.
  */
 @ApiTags('System')
+@ApiInternalServerErrorResponse({
+  type: ApiInternalServerErrorResponseDto,
+  description: 'Internal server error',
+})
 @Controller('test')
 export class AppController {
   constructor(private readonly appService: AppService) {}

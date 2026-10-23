@@ -23,7 +23,10 @@ export class LocalizedRecipeStepResponse {
    * Sequence step number (1-based).
    * @example 1
    */
-  @ApiProperty({ description: '1-based sequential step order', example: 1 })
+  @ApiProperty({
+    description: 'Integer representing the sequential step order',
+    example: 1,
+  })
   step_number: number;
 
   /**
@@ -94,7 +97,7 @@ export class LocalizedRecipeIngredientResponse {
 
   /**
    * Ingredient culinary category.
-   * @example IngredientCategory.meat
+   * @example IngredientCategory.meat_poultry
    */
   @ApiProperty({
     enum: IngredientCategory,
@@ -141,6 +144,17 @@ export class LocalizedRecipeIngredientResponse {
     nullable: true,
   })
   notes: string | null;
+
+  /**
+   * Resolved locale code used for localized ingredient name.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized ingredient name',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  resolved_lang: string;
 }
 
 /**
@@ -167,6 +181,17 @@ export class LocalizedRecipeTagResponse {
    */
   @ApiProperty({ description: 'Localized tag label', example: 'Tradizionale' })
   name: string;
+
+  /**
+   * Resolved locale code used for localized tag name.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized tag name',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  resolved_lang: string;
 }
 
 /**
@@ -240,9 +265,10 @@ export class RecipeAuthorSummaryDto {
 }
 
 /**
- * Complete localized recipe detail payload.
+ * Lightweight localized recipe summary card returned in feeds, listings, and paginated searches.
+ * Omits heavy step instructions and ingredient lists to prevent bandwidth bloat.
  */
-export class LocalizedRecipeDetailResponse {
+export class LocalizedRecipeSummaryResponse {
   /**
    * Unique recipe identifier.
    * @example 42
@@ -326,7 +352,7 @@ export class LocalizedRecipeDetailResponse {
    * @example '/uploads/recipes/carbonara_cover.webp'
    */
   @ApiProperty({
-    description: 'Primary hero recipe cover image URL',
+    description: 'Recipe cover image URL',
     example: '/uploads/recipes/carbonara_cover.webp',
     nullable: true,
   })
@@ -396,6 +422,63 @@ export class LocalizedRecipeDetailResponse {
   description: string;
 
   /**
+   * List of localized dietary and culinary tags.
+   */
+  @ApiProperty({
+    type: [LocalizedRecipeTagResponse],
+    description: 'Classification tags attached to the recipe',
+  })
+  tags: LocalizedRecipeTagResponse[];
+
+  /**
+   * Total number of likes received by this recipe.
+   * @example 42
+   */
+  @ApiProperty({
+    description: 'Total number of likes received by this recipe',
+    example: 42,
+  })
+  likes_count: number;
+
+  /**
+   * Total number of active comments on this recipe.
+   * @example 8
+   */
+  @ApiProperty({
+    description: 'Total number of active comments on this recipe',
+    example: 8,
+  })
+  comments_count: number;
+
+  /**
+   * Indicates whether the requesting user has liked this recipe.
+   * Defaults to false for unauthenticated guests.
+   * @example true
+   */
+  @ApiProperty({
+    description:
+      'Whether the requesting authenticated user has liked this recipe (false for guests)',
+    example: true,
+  })
+  is_liked: boolean;
+
+  /**
+   * Resolved locale code used for translation projection.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Resolved locale code used for localized text fields',
+    enum: ['it', 'en', 'fr'],
+    example: 'it',
+  })
+  resolved_lang: string;
+}
+
+/**
+ * Complete localized recipe detail payload including step instructions, ingredients, and media.
+ */
+export class LocalizedRecipeDetailResponse extends LocalizedRecipeSummaryResponse {
+  /**
    * Localized preservation and storage advice.
    * @example 'Si consiglia di consumare al momento. Non congelare.'
    */
@@ -435,15 +518,6 @@ export class LocalizedRecipeDetailResponse {
     description: 'List of ingredients with quantities and localized notes',
   })
   ingredients: LocalizedRecipeIngredientResponse[];
-
-  /**
-   * List of localized dietary and culinary tags.
-   */
-  @ApiProperty({
-    type: [LocalizedRecipeTagResponse],
-    description: 'Classification tags attached to the recipe',
-  })
-  tags: LocalizedRecipeTagResponse[];
 
   /**
    * Supplementary photos in the recipe gallery (up to 3 items).

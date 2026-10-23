@@ -16,9 +16,9 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    let user: ActiveUserData = request.user || null;
+    const user: ActiveUserData = request.user || null;
     if (!user) throw createHttpException(errors.auth.accessDenied);
-    let userAbility = this.casl.createForUser(user) as AppAbility;
+    const userAbility = this.casl.createForUser(user);
     const data = this.reflector.get('action', context.getHandler());
 
     if (!data) {

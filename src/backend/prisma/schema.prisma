@@ -104,12 +104,13 @@ enum NotificationAction {
   update
 }
 
-enum NotificationStatus {
+enum FriendshipStatus {
   pending
   accepted
   rejected
   none
 }
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -320,13 +321,15 @@ model Follow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Comment {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   recipe_id  Int
   user_id    Int?
   parent_id  Int?
   content    String
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
+  is_active  Boolean   @default(true)
+  is_edited  Boolean   @default(false)
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
 
   recipe  Recipe    @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
   user    User?     @relation(fields: [user_id], references: [id])
@@ -361,9 +364,8 @@ model Notification {
   user_id    Int              // destinatario (autore della ricetta)
   actor_id   Int              // chi ha messo like / commentato
 
-  subject	NotificationSubject
-  action	NotificationAction
-  status	NotificationStatus @default(none)
+  subject    NotificationSubject
+  action     NotificationAction
 
   target_id	Int?
 

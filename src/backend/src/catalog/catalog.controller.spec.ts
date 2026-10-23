@@ -12,13 +12,6 @@ describe('CatalogController', () => {
   let controller: CatalogController;
   let service: CatalogService;
 
-  const mockMeta = {
-    courses: Object.values(Course),
-    difficulties: Object.values(RecipeDifficulty),
-    units: Object.values(UnitOfMeasure),
-    categories: Object.values(IngredientCategory),
-  };
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogController],
@@ -26,22 +19,19 @@ describe('CatalogController', () => {
         {
           provide: CatalogService,
           useValue: {
-            getMetadata: jest.fn().mockReturnValue(mockMeta),
             getTags: jest
               .fn()
               .mockResolvedValue([
                 { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
               ]),
-            getIngredients: jest
-              .fn()
-              .mockResolvedValue([
-                {
-                  id: 1,
-                  slug: 'tomato',
-                  category: IngredientCategory.produce,
-                  name: 'Pomodoro',
-                },
-              ]),
+            getIngredients: jest.fn().mockResolvedValue([
+              {
+                id: 1,
+                slug: 'tomato',
+                category: IngredientCategory.produce,
+                name: 'Pomodoro',
+              },
+            ]),
           },
         },
       ],
@@ -51,18 +41,9 @@ describe('CatalogController', () => {
     service = module.get<CatalogService>(CatalogService);
   });
 
-  describe('getMetadata', () => {
-    it('should return catalog metadata from service', () => {
-      const result = controller.getMetadata();
-
-      expect(result).toEqual(mockMeta);
-      expect(service.getMetadata).toHaveBeenCalled();
-    });
-  });
-
   describe('getTags', () => {
     it('should delegate to service.getTags with lang parameter', async () => {
-      const result = await controller.getTags('it');
+      const result = await controller.getTags({ lang: 'it' });
 
       expect(result).toEqual([
         { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
@@ -73,11 +54,11 @@ describe('CatalogController', () => {
 
   describe('getIngredients', () => {
     it('should delegate to service.getIngredients with query parameters', async () => {
-      const result = await controller.getIngredients(
-        'it',
-        IngredientCategory.produce,
-        'pomo',
-      );
+      const result = await controller.getIngredients({
+        lang: 'it',
+        category: IngredientCategory.produce,
+        search: 'pomo',
+      });
 
       expect(result).toEqual([
         {

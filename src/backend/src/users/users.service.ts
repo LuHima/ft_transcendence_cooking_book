@@ -1,12 +1,16 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
+import { PaginatedRecipeResponseDto } from '../recipe/dto/recipe-response.dto';
+import { LocalizedRecipeSummaryResponse } from '../recipe/dto/localized-recipe.response';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import * as fs from 'fs';
 
@@ -42,7 +46,7 @@ export class UsersService {
   }
 
   async findUser(username: string) {
-    const user = await this.prisma.user.findMany({
+    return await this.prisma.user.findMany({
       where: {
         username: {
           contains: username,
@@ -53,8 +57,6 @@ export class UsersService {
         username: true,
       },
     });
-    if (!user) throw new NotFoundException('User not found');
-    return user;
   }
 
   async getUser(id: number) {
@@ -138,10 +140,16 @@ export class UsersService {
       });
       return updatedUser;
     } catch (error: any) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       if (error?.code === 'P2002') {
         throw new ConflictException('Username or email already in use');
       }
-      throw new NotFoundException('User not found');
+      if (error?.code === 'P2025') {
+        throw new NotFoundException('User not found');
+      }
+      throw error;
     }
   }
 
@@ -219,51 +227,259 @@ export class UsersService {
 
   // ---------------------------------------------------------------------------
 
-  async getLikedRecipes(userId: number, lang?: string) {
-    // Retrieve all recipes liked by the user, ordered by most recently liked
-    const likes = await this.prisma.like.findMany({
-      where: { user_id: userId },
-      orderBy: { created_at: 'desc' },
-      include: {
-        recipe: {
-          include: {
-            translations: true,
-            user: {
-              select: {
-                id: true,
-                username: true,
-                avatar_url: true,
+  async getLikedRecipes(
+    userId: number,
+    query: UserCookbookQueryDto = new UserCookbookQueryDto(),
+  ): Promise<PaginatedRecipeResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [likes, total] = await Promise.all([
+      this.prisma.like.findMany({
+        where: { user_id: userId },
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: {
+          recipe: {
+            include: {
+              translations: true,
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatar_url: true,
+                },
+              },
+              recipe_tags: {
+                include: {
+                  tag: {
+                    include: {
+                      translations: true,
+                    },
+                  },
+                },
+              },
+              _count: {
+                select: {
+                  likes: true,
+                  comments: {
+                    where: { is_active: true },
+                  },
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+      this.prisma.like.count({
+        where: { user_id: userId },
+      }),
+    ]);
 
-    const recipes = likes.map((item) => item.recipe);
-
-    // If no language is specified, return raw recipe entities with all translations
-    if (!lang) {
-      return recipes;
-    }
-
-    // When a language is provided, project localized title and description
-    return recipes.map((recipe) => {
-      const targetLocale =
-        lang === 'it' || lang === 'en' || lang === 'fr'
-          ? lang
-          : recipe.source_lang;
-
+    const items: LocalizedRecipeSummaryResponse[] = likes.map((item) => {
+      const recipe = item.recipe;
+      const targetLocale = query.lang;
       const translation =
-        recipe.translations.find((t) => t.locale === targetLocale) ??
+        (targetLocale
+          ? recipe.translations.find((t) => t.locale === targetLocale)
+          : null) ??
         recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+        recipe.translations.find((t) => t.locale === 'en') ??
         recipe.translations[0];
 
+      const resolved_lang = translation?.locale ?? (recipe.source_lang || 'en');
+
+      const tags = (recipe.recipe_tags ?? []).map((rt: any) => {
+        const t = rt.tag ?? rt;
+        const tagTrans =
+          t?.translations?.find(
+            (tr: any) => tr.locale === (query.lang || recipe.source_lang),
+          ) ??
+          t?.translations?.find(
+            (tr: any) => tr.locale === recipe.source_lang,
+          ) ??
+          t?.translations?.find((tr: any) => tr.locale === 'en');
+        return {
+          id: t.id,
+          slug: t.slug,
+          name: tagTrans?.name ?? t.slug,
+          resolved_lang: tagTrans?.locale ?? 'en',
+        };
+      });
+
       return {
-        ...recipe,
-        title: translation?.title ?? null,
-        description: translation?.description ?? null,
+        id: recipe.id,
+        course: recipe.course,
+        difficulty: recipe.difficulty,
+        prep_time: recipe.prep_time,
+        cook_time: recipe.cook_time,
+        total_time: recipe.total_time,
+        servings: recipe.servings,
+        source_lang: recipe.source_lang,
+        translation_status: recipe.translation_status,
+        cover_image_url: recipe.cover_image_url,
+        video_url: recipe.video_url,
+        created_at: recipe.created_at,
+        updated_at: recipe.updated_at,
+        author: recipe.user
+          ? {
+              id: recipe.user.id,
+              username: recipe.user.username,
+              avatar_url: recipe.user.avatar_url,
+            }
+          : null,
+        title: translation?.title ?? '',
+        description: translation?.description ?? '',
+        tags,
+        likes_count: recipe._count?.likes ?? 0,
+        comments_count: recipe._count?.comments ?? 0,
+        is_liked: true,
+        resolved_lang,
       };
     });
+
+    const total_pages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  async getMyRecipes(
+    userId: number,
+    query: UserCookbookQueryDto = new UserCookbookQueryDto(),
+  ): Promise<PaginatedRecipeResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [recipes, total] = await Promise.all([
+      this.prisma.recipe.findMany({
+        where: { user_id: userId },
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: {
+          translations: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+          recipe_tags: {
+            include: {
+              tag: {
+                include: {
+                  translations: true,
+                },
+              },
+            },
+          },
+          likes: {
+            where: { user_id: userId },
+            select: { user_id: true },
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: {
+                where: { is_active: true },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.recipe.count({
+        where: { user_id: userId },
+      }),
+    ]);
+
+    const items: LocalizedRecipeSummaryResponse[] = recipes.map(
+      (recipe: any) => {
+        const targetLocale = query.lang;
+        const translation =
+          (targetLocale
+            ? recipe.translations.find((t) => t.locale === targetLocale)
+            : null) ??
+          recipe.translations.find((t) => t.locale === recipe.source_lang) ??
+          recipe.translations.find((t) => t.locale === 'en') ??
+          recipe.translations[0];
+
+        const resolved_lang =
+          translation?.locale ?? (recipe.source_lang || 'en');
+
+        const tags = (recipe.recipe_tags ?? []).map((rt: any) => {
+          const t = rt.tag ?? rt;
+          const tagTrans =
+            t?.translations?.find(
+              (tr: any) => tr.locale === (query.lang || recipe.source_lang),
+            ) ??
+            t?.translations?.find(
+              (tr: any) => tr.locale === recipe.source_lang,
+            ) ??
+            t?.translations?.find((tr: any) => tr.locale === 'en');
+          return {
+            id: t.id,
+            slug: t.slug,
+            name: tagTrans?.name ?? t.slug,
+            resolved_lang: tagTrans?.locale ?? 'en',
+          };
+        });
+
+        return {
+          id: recipe.id,
+          course: recipe.course,
+          difficulty: recipe.difficulty,
+          prep_time: recipe.prep_time,
+          cook_time: recipe.cook_time,
+          total_time: recipe.total_time,
+          servings: recipe.servings,
+          source_lang: recipe.source_lang,
+          translation_status: recipe.translation_status,
+          cover_image_url: recipe.cover_image_url,
+          video_url: recipe.video_url,
+          created_at: recipe.created_at,
+          updated_at: recipe.updated_at,
+          author: recipe.user
+            ? {
+                id: recipe.user.id,
+                username: recipe.user.username,
+                avatar_url: recipe.user.avatar_url,
+              }
+            : null,
+          title: translation?.title ?? '',
+          description: translation?.description ?? '',
+          tags,
+          likes_count: recipe._count?.likes ?? 0,
+          comments_count: recipe._count?.comments ?? 0,
+          is_liked: Boolean(recipe.likes && recipe.likes.length > 0),
+          resolved_lang,
+        };
+      },
+    );
+
+    const total_pages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
+    };
   }
 }
