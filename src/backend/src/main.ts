@@ -77,6 +77,10 @@ async function bootstrap() {
       'User accounts, public profiles, avatars, and liked recipes',
     )
     .addTag(
+      'Friends',
+      'Bidirectional friendships, friend discovery, and friend request lifecycle management',
+    )
+    .addTag(
       'Recipes',
       'Recipe creation, localized details, pagination, step illustrations, media uploads, and likes',
     )
