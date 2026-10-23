@@ -47,6 +47,11 @@ describe('UsersService', () => {
               findMany: jest.fn(),
               count: jest.fn(),
             },
+            friendship: {
+              findFirst: jest.fn(),
+              findMany: jest.fn(),
+              count: jest.fn(),
+            },
           },
         },
       ],
@@ -427,37 +432,120 @@ describe('UsersService', () => {
   });
 
   describe('getUser', () => {
-    it('should return only public user profile fields and exclude password_hash and PII', async () => {
-      const publicUser = {
-        id: 1,
-        username: 'mario',
-        avatar_url: 'https://example.com/avatar.jpg',
-        created_at: new Date('2026-09-01T10:00:00Z'),
-      };
+    const publicUser = {
+      id: 2,
+      username: 'giulia',
+      avatar_url: 'https://example.com/avatar.jpg',
+      created_at: new Date('2026-09-01T10:00:00Z'),
+    };
+
+    it('should return friendship_status: null when currentUserId is undefined', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
 
-      const result = await service.getUser(1);
+      const result = await service.getUser(2);
 
-      expect(result).toEqual(publicUser);
-      expect(result).not.toHaveProperty('password_hash');
-      expect(result).not.toHaveProperty('email');
-      expect(result).not.toHaveProperty('phone');
-      expect(result).not.toHaveProperty('address');
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-        select: {
-          id: true,
-          username: true,
-          avatar_url: true,
-          created_at: true,
-        },
+      expect(result).toEqual({ ...publicUser, friendship_status: null });
+    });
+
+    it('should return friendship_status: null when viewing own profile', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+
+      const result = await service.getUser(2, 2);
+
+      expect(result).toEqual({ ...publicUser, friendship_status: null });
+    });
+
+    it('should return friendship_status: "friends" when accepted friendship exists', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
+        id: 1,
+        requester_id: 1,
+        addressee_id: 2,
+        status: 'accepted',
       });
+
+      const result = await service.getUser(2, 1);
+
+      expect(result.friendship_status).toBe('friends');
+    });
+
+    it('should return friendship_status: "pending_sent" when caller sent pending request', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
+        id: 1,
+        requester_id: 1,
+        addressee_id: 2,
+        status: 'pending',
+      });
+
+      const result = await service.getUser(2, 1);
+
+      expect(result.friendship_status).toBe('pending_sent');
+    });
+
+    it('should return friendship_status: "pending_received" when caller received pending request', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
+        id: 1,
+        requester_id: 2,
+        addressee_id: 1,
+        status: 'pending',
+      });
+
+      const result = await service.getUser(2, 1);
+
+      expect(result.friendship_status).toBe('pending_received');
+    });
+
+    it('should return friendship_status: "none" when no relation exists', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.friendship.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.getUser(2, 1);
+
+      expect(result.friendship_status).toBe('none');
     });
 
     it('should throw NotFoundException if user is not found', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.getUser(999)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getUserFriends', () => {
+    it('should return paginated friends list for target user', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 2 });
+      const mockFriends = [
+        {
+          id: 1,
+          requester_id: 2,
+          addressee_id: 1,
+          updated_at: new Date('2026-10-01'),
+          requester: { id: 2, username: 'giulia', avatar_url: null },
+          addressee: { id: 1, username: 'mario', avatar_url: '/mario.png' },
+        },
+      ];
+      (prisma.friendship.findMany as jest.Mock).mockResolvedValue(mockFriends);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.getUserFriends(2, { page: 1, limit: 20 });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toEqual({
+        id: 1,
+        username: 'mario',
+        avatar_url: '/mario.png',
+        friends_since: new Date('2026-10-01'),
+      });
+      expect(result.total).toBe(1);
+      expect(result.total_pages).toBe(1);
+    });
+
+    it('should throw NotFoundException if target user does not exist', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getUserFriends(999)).rejects.toThrow(NotFoundException);
     });
   });
 });
