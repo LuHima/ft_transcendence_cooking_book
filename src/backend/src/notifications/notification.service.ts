@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { createHttpException, errors } from 'src/common/config/error.config';
-import { NotificationStatus } from '@prisma/client';
-import { CaslAbilityFactory } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
+import {
+  AppSubject,
+  CaslAbilityFactory,
+} from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
+import { Action } from 'src/auth/casl/action.enum';
+import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 
 @Injectable()
 export class NotificationService {
@@ -11,32 +15,23 @@ export class NotificationService {
     private caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
-  private async check(notificationId: number) {
+  private async checkNotify(notificationId: number) {
     const notification = await this.prisma.notification.findUnique({
       where: { id: notificationId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            role: true,
-            session: true,
-          },
-        },
-      },
     });
     if (!notification) throw createHttpException(errors.notification.NotFound);
-    const ability = this.caslAbilityFactory.createForUser(notification.user);
-    ForbiddenError.from(ability).throwUnlessCan(
-      Action.Update,
-      subject('Recipe', recipe),
-    );
-    throw createHttpException(errors.notification.Forbidden);
     return notification;
   }
 
-  async readNotification(notificationId: number) {
-    await this.check(notificationId);
+  async readNotification(notificationId: number, user: ActiveUserData) {
+    const notify = await this.checkNotify(notificationId);
+
+    this.caslAbilityFactory.check(
+      user,
+      Action.Read,
+      AppSubject.Notification,
+      notify,
+    );
     await this.prisma.notification.update({
       where: { id: notificationId },
       data: {
@@ -45,13 +40,21 @@ export class NotificationService {
     });
   }
 
-  async deleteNotification(notificationId: number) {
-    await this.check(notificationId);
+  async deleteNotification(notificationId: number, user: ActiveUserData) {
+    const notify = await this.checkNotify(notificationId);
+
+    this.caslAbilityFactory.check(
+      user,
+      Action.Delete,
+      AppSubject.Notification,
+      notify,
+    );
     await this.prisma.notification.delete({
       where: { id: notificationId },
     });
   }
-  async getNotification(id: number) {
+
+  async getNotifications(id: number) {
     return await this.prisma.notification.findMany({
       where: {
         user_id: id,

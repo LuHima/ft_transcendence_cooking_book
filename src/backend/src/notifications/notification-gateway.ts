@@ -1,23 +1,17 @@
-import { UseFilters } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
-  ConnectedSocket,
-  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { WsException } from '@nestjs/websockets';
-import { create } from 'domain';
+
 import { Socket, Server } from 'socket.io';
 import {
   AppErrorDefinition,
   createWebSocketException,
   errors,
 } from 'src/common/config/error.config';
-import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'prisma/prisma.service';
 

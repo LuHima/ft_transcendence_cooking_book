@@ -19,7 +19,6 @@ import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { RecipeService } from './recipe.service';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
-import { CaslCheckAbility } from '../auth/casl/casl-checkAbility';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -30,10 +29,6 @@ describe('RecipeService', () => {
 
   const mockProductionConfig = {
     isProduction: jest.fn().mockReturnValue(false),
-  };
-
-  const mockCaslCheckAbility = {
-    canAbility: jest.fn().mockResolvedValue(true),
   };
 
   const mockPrisma = {
@@ -126,7 +121,6 @@ describe('RecipeService', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ProductionConfig, useValue: mockProductionConfig },
-        { provide: CaslCheckAbility, useValue: mockCaslCheckAbility },
       ],
     }).compile();
 

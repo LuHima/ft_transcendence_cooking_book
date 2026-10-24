@@ -5,10 +5,20 @@ import {
   createMongoAbility,
   InferSubjects,
   ForcedSubject,
+  subject,
 } from '@casl/ability'; //MongoAbility non centra niente con MongoDB
 import { Injectable } from '@nestjs/common';
 import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
-import { Recipe, Comment, User, Role, Notification } from '@prisma/client';
+import {
+  Recipe,
+  Comment,
+  User,
+  Role,
+  Notification,
+  Ingredient,
+  Tag,
+} from '@prisma/client';
+import { createHttpException, errors } from 'src/common/config/error.config';
 
 // Definisce i soggetti (come stringhe per Prisma, o 'all')
 export type Subjects =
@@ -16,8 +26,9 @@ export type Subjects =
   | InferSubjects<Comment & ForcedSubject<'Comment'>>
   | InferSubjects<User & ForcedSubject<'User'>>
   | InferSubjects<Notification & ForcedSubject<'Notification'>>
-  | 'all'
-  | AppSubject;
+  | InferSubjects<Tag & ForcedSubject<'Tag'>>
+  | InferSubjects<Ingredient & ForcedSubject<'Ingredient'>>
+  | 'all';
 
 export enum AppSubject {
   Recipe = 'Recipe',
@@ -37,7 +48,7 @@ export type AppAbility = MongoAbility<[Action, Subjects], any>;
 
 @Injectable()
 export class CaslAbilityFactory {
-  createForUser(user: ActiveUserData) {
+  private createForUser(user: ActiveUserData) {
     const { can, cannot, build } = new AbilityBuilder<AppAbility>(
       createMongoAbility,
     );
@@ -110,5 +121,20 @@ export class CaslAbilityFactory {
     can(Action.Refuse, 'Notification', { user_id: user.id });
 
     return build();
+  }
+
+  check(
+    user: ActiveUserData,
+    action: Action,
+    subjectName: string,
+    target?: any,
+  ): void {
+    const ability = this.createForUser(user);
+    const item = target
+      ? subject(subjectName as any, target)
+      : (subjectName as any);
+    if (!ability.can(action, item)) {
+      throw createHttpException(errors.common.forbidden);
+    }
   }
 }

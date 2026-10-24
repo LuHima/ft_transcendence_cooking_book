@@ -1494,16 +1494,6 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -1702,16 +1692,6 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Recipe not found",
             "content": {
@@ -1785,16 +1765,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1874,16 +1844,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1987,16 +1947,6 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Recipe not found",
             "content": {
@@ -2060,16 +2010,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -2183,16 +2123,6 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Recipe or step not found",
             "content": {
@@ -2266,16 +2196,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -2385,16 +2305,6 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Recipe not found",
             "content": {
@@ -2494,16 +2404,6 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
           "404": {
             "description": "Recipe not found",
             "content": {
@@ -2567,16 +2467,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -2656,16 +2546,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -3224,16 +3104,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -3269,16 +3139,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: insufficient permissions for this action on the target resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -5029,37 +4889,6 @@
           "ingredients"
         ]
       },
-      "ApiForbiddenResponseDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "description": "HTTP status code representing insufficient permissions to perform action",
-            "example": 403
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 formatted timestamp of when the error occurred",
-            "example": "2026-10-14T10:00:00.000Z"
-          },
-          "path": {
-            "type": "string",
-            "description": "Requested URL path that produced the error",
-            "example": "/api/recipes/42"
-          },
-          "message": {
-            "type": "string",
-            "description": "Authorization failure message",
-            "example": "Forbidden: insufficient permissions for this action on the target resource"
-          }
-        },
-        "required": [
-          "statusCode",
-          "timestamp",
-          "path",
-          "message"
-        ]
-      },
       "RecipeMessageResponseDto": {
         "type": "object",
         "properties": {
@@ -5438,6 +5267,37 @@
           "updated_at",
           "user",
           "replies"
+        ]
+      },
+      "ApiForbiddenResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing insufficient permissions to perform action",
+            "example": 403
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42"
+          },
+          "message": {
+            "type": "string",
+            "description": "Authorization failure message",
+            "example": "Forbidden: insufficient permissions for this action on the target resource"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
         ]
       },
       "UpdateCommentDto": {

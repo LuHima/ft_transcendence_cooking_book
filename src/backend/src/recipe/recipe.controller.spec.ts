@@ -4,7 +4,6 @@ import { RecipeController } from './recipe.controller';
 import { RecipeService } from './recipe.service';
 import { CatalogService } from '../catalog/catalog.service';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { RolesGuard } from '../common/guards/role.guard';
 import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 import {
   Course,
@@ -98,8 +97,6 @@ describe('RecipeController', () => {
       ],
     })
       .overrideGuard(AuthGuard)
-      .useValue({ canActivate: () => true })
-      .overrideGuard(RolesGuard)
       .useValue({ canActivate: () => true })
       .overrideGuard(OptionalAuthGuard)
       .useValue({ canActivate: () => true })

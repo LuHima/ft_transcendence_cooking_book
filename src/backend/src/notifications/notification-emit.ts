@@ -1,4 +1,3 @@
-import { subject } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationSubject } from '@prisma/client';
@@ -6,7 +5,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { NotifyData } from 'src/common/decorators/notify.decorator';
 import { NotificationStructDto } from 'src/common/dto/notification-struct.dto';
 
-interface targetInfo{
+interface targetInfo {
   idTarget: number;
   subject: string;
 }
@@ -53,17 +52,17 @@ export class NotificationEmit {
   }
   private findTargetTable(
     idTarget: number,
-    subject: NotificationSubject | string
-  ) : number{
+    subject: NotificationSubject | string,
+  ): number {
     let target;
     if (subject == NotificationSubject.recipe) {
       target = this.prisma.recipe.findUnique({
         where: {
           id: idTarget,
         },
-        select :{
+        select: {
           id: true,
-        }
+        },
       });
     }
     if (subject == NotificationSubject.user) {
@@ -71,9 +70,9 @@ export class NotificationEmit {
         where: {
           id: idTarget,
         },
-        select :{
+        select: {
           id: true,
-        }
+        },
       });
     }
     if (subject == NotificationSubject.comment) {
@@ -81,12 +80,12 @@ export class NotificationEmit {
         where: {
           id: idTarget,
         },
-        select :{
+        select: {
           recipe_id: true,
-        }
+        },
       });
     }
-    
+
     return target.id;
   }
   private async fillNotificationTable(
@@ -107,15 +106,14 @@ export class NotificationEmit {
       })),
     });
     const target = {
-      id: await this.findTargetTable(structNotify.id_user ,notifyData.subject),
+      id: await this.findTargetTable(structNotify.id_user, notifyData.subject),
       subject: notifyData.subject,
-    }
+    };
     const msg = await this.notificationString(structNotify.id_user, notifyData);
     for (const f of friends) {
       this.eventEmitter.emit('newNotification', {
         idUser: f.follower_id,
         message: msg,
-        infoTarget: 
       });
     }
   }
