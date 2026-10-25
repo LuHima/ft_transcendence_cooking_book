@@ -1066,7 +1066,7 @@
     },
     "/api/users/{id}": {
       "get": {
-        "description": "Returns public profile information (username, avatar, join date) for the specified user.",
+        "description": "Returns public profile information (username, avatar, join date) for the specified user, including contextual friendship status when requested by an authenticated user.",
         "operationId": "UsersController_getUser",
         "parameters": [
           {
@@ -1123,6 +1123,110 @@
           }
         },
         "summary": "Get public user profile by ID",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/friends": {
+      "get": {
+        "description": "Returns a paginated list of confirmed friends for the specified user ID.",
+        "operationId": "UsersController_getUserFriends",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Target user ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated collection of friends",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedFriendsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user ID format or invalid pagination parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get user confirmed friends",
         "tags": [
           "Users"
         ]
@@ -3078,6 +3182,541 @@
         ]
       }
     },
+    "/api/friends": {
+      "get": {
+        "description": "Returns a paginated list of confirmed bidirectional friends with optional username search.",
+        "operationId": "FriendsController_getFriends",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive username substring filter",
+            "schema": {
+              "example": "giulia",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated collection of friends",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedFriendsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "List confirmed friends",
+        "tags": [
+          "Friends"
+        ]
+      }
+    },
+    "/api/friends/{friendId}": {
+      "delete": {
+        "description": "Silently removes an established friendship without notifying the other user.",
+        "operationId": "FriendsController_removeFriend",
+        "parameters": [
+          {
+            "name": "friendId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user ID of the friend to remove",
+            "schema": {
+              "example": 2,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friendship removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Friendship not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Remove a friend",
+        "tags": [
+          "Friends"
+        ]
+      }
+    },
+    "/api/friends/requests": {
+      "post": {
+        "description": "Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship.",
+        "operationId": "FriendsController_sendFriendRequest",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendFriendRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Friend request sent or auto-accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot send friend request to yourself",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already friends with this user or friend request already sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Send friend request",
+        "tags": [
+          "Friends"
+        ]
+      },
+      "get": {
+        "description": "Returns a paginated list of pending incoming or outgoing friend requests.",
+        "operationId": "FriendsController_getFriendRequests",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter requests: incoming (received) or outgoing (sent)",
+            "schema": {
+              "default": "incoming",
+              "example": "incoming",
+              "type": "string",
+              "enum": [
+                "incoming",
+                "outgoing"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated collection of pending friend requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedFriendRequestsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "List pending friend requests",
+        "tags": [
+          "Friends"
+        ]
+      }
+    },
+    "/api/friends/requests/{userId}/accept": {
+      "post": {
+        "description": "Accepts an incoming pending friend request from the specified user.",
+        "operationId": "FriendsController_acceptFriendRequest",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user ID of the requester",
+            "schema": {
+              "example": 3,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Friend request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Accept incoming friend request",
+        "tags": [
+          "Friends"
+        ]
+      }
+    },
+    "/api/friends/requests/{userId}/reject": {
+      "post": {
+        "description": "Rejects an incoming pending friend request, hard deleting the request and cleaning up inbox notification.",
+        "operationId": "FriendsController_rejectFriendRequest",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user ID of the requester",
+            "schema": {
+              "example": 3,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Friend request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Reject incoming friend request",
+        "tags": [
+          "Friends"
+        ]
+      }
+    },
+    "/api/friends/requests/{userId}": {
+      "delete": {
+        "description": "Cancels a pending friend request sent to the specified user, hard deleting the request and cleaning up recipient inbox notification.",
+        "operationId": "FriendsController_cancelFriendRequest",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user ID of the recipient",
+            "schema": {
+              "example": 4,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Friend request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Cancel outgoing friend request",
+        "tags": [
+          "Friends"
+        ]
+      }
+    },
     "/api/notifications/read/{id}": {
       "patch": {
         "operationId": "NotificationController_readedNotification",
@@ -3198,6 +3837,10 @@
     {
       "name": "Users",
       "description": "User accounts, public profiles, avatars, and liked recipes"
+    },
+    {
+      "name": "Friends",
+      "description": "Bidirectional friendships, friend discovery, and friend request lifecycle management"
     },
     {
       "name": "Recipes",
@@ -4101,6 +4744,18 @@
             "type": "string",
             "description": "Member since date",
             "example": "2026-10-09T18:00:00.000Z"
+          },
+          "friendship_status": {
+            "nullable": true,
+            "description": "Current user friendship status with this profile (friends, pending_sent, pending_received, none, or null for self/guest)",
+            "example": "friends",
+            "enum": [
+              "none",
+              "pending_sent",
+              "pending_received",
+              "friends"
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -4108,6 +4763,90 @@
           "username",
           "avatar_url",
           "created_at"
+        ]
+      },
+      "FriendItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "User identifier",
+            "example": 2
+          },
+          "username": {
+            "type": "string",
+            "description": "Friend username",
+            "example": "giuly_cooks"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Public avatar photo URL",
+            "example": "/uploads/avatars/avatar_2.webp"
+          },
+          "friends_since": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when friendship was established",
+            "example": "2026-10-15T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url",
+          "friends_since"
+        ]
+      },
+      "PaginatedFriendsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of friends",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FriendItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of confirmed friends",
+            "example": 12
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Flag indicating if next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Flag indicating if previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
         ]
       },
       "TagResponseDto": {
@@ -5313,6 +6052,139 @@
         },
         "required": [
           "content"
+        ]
+      },
+      "FriendMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Action outcome confirmation message",
+            "example": "Friend removed successfully"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "SendFriendRequestDto": {
+        "type": "object",
+        "properties": {
+          "recipient_id": {
+            "type": "number",
+            "description": "Target user ID to invite as friend",
+            "example": 3,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "recipient_id"
+        ]
+      },
+      "FriendRequestActionResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Result message describing outcome",
+            "example": "Friend request sent"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "accepted"
+            ],
+            "type": "string",
+            "description": "Resulting relationship status when sending request",
+            "example": "pending"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "FriendRequestItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "User ID of counterparty",
+            "example": 4
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of counterparty",
+            "example": "chef_marco"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar URL of counterparty",
+            "example": "/uploads/avatars/avatar_4.webp"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when request was sent",
+            "example": "2026-10-20T15:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url",
+          "created_at"
+        ]
+      },
+      "PaginatedFriendRequestsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of pending friend requests",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FriendRequestItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of pending requests",
+            "example": 3
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Flag indicating if next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Flag indicating if previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
         ]
       }
     }

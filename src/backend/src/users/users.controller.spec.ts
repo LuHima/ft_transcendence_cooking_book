@@ -32,6 +32,14 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: {
             getMe: jest.fn<() => Promise<any>>().mockResolvedValue(mockUser),
+            updateMe: jest.fn(),
+            updateAvatar: jest.fn(),
+            deleteAvatar: jest.fn(),
+            getLikedRecipes: jest.fn(),
+            getMyRecipes: jest.fn(),
+            findUser: jest.fn(),
+            getUser: jest.fn(),
+            getUserFriends: jest.fn(),
           },
         },
         {
@@ -164,21 +172,45 @@ describe('UsersController', () => {
   });
 
   describe('getUser', () => {
-    it('should delegate to service.getUser with user id', async () => {
+    it('should delegate to service.getUser with user id and currentUserId', async () => {
       const publicUser = {
-        id: 1,
-        username: 'mario',
+        id: 2,
+        username: 'giulia',
         avatar_url: 'https://example.com/avatar.jpg',
         created_at: new Date('2026-09-01T10:00:00Z'),
+        friendship_status: 'friends',
       };
       (service.getUser as jest.Mock<any>) = jest
         .fn<() => Promise<any>>()
         .mockResolvedValue(publicUser);
 
-      const result = await controller.getUser(1);
+      const result = await controller.getUser(2, 1);
 
       expect(result).toEqual(publicUser);
-      expect(service.getUser).toHaveBeenCalledWith(1);
+      expect(service.getUser).toHaveBeenCalledWith(2, 1);
+    });
+  });
+
+  describe('getUserFriends', () => {
+    it('should delegate to service.getUserFriends with target id and query', async () => {
+      const mockFriends = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.getUserFriends as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockFriends);
+
+      const query = { page: 1, limit: 20 };
+      const result = await controller.getUserFriends(2, query);
+
+      expect(result).toEqual(mockFriends);
+      expect(service.getUserFriends).toHaveBeenCalledWith(2, query);
     });
   });
 });

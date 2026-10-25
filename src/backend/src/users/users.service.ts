@@ -12,6 +12,11 @@ import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
 import { PaginatedRecipeResponseDto } from '../recipe/dto/recipe-response.dto';
 import { LocalizedRecipeSummaryResponse } from '../recipe/dto/localized-recipe.response';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import {
+  FriendItemDto,
+  PaginatedFriendsResponseDto,
+} from 'src/friends/dto/friend-response.dto';
 import * as fs from 'fs';
 
 @Injectable()
@@ -59,7 +64,7 @@ export class UsersService {
     });
   }
 
-  async getUser(id: number) {
+  async getUser(id: number, currentUserId?: number) {
     const user = await this.prisma.user.findUnique({
       where: {
         id: id,
@@ -72,7 +77,106 @@ export class UsersService {
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+
+    let friendship_status:
+      | 'none'
+      | 'pending_sent'
+      | 'pending_received'
+      | 'friends'
+      | null = null;
+
+    if (currentUserId && currentUserId !== id) {
+      const friendship = await this.prisma.friendship.findFirst({
+        where: {
+          OR: [
+            { requester_id: currentUserId, addressee_id: id },
+            { requester_id: id, addressee_id: currentUserId },
+          ],
+        },
+      });
+
+      if (!friendship) {
+        friendship_status = 'none';
+      } else if (friendship.status === 'accepted') {
+        friendship_status = 'friends';
+      } else if (friendship.status === 'pending') {
+        if (friendship.requester_id === currentUserId) {
+          friendship_status = 'pending_sent';
+        } else {
+          friendship_status = 'pending_received';
+        }
+      } else {
+        friendship_status = 'none';
+      }
+    }
+
+    return {
+      ...user,
+      friendship_status,
+    };
+  }
+
+  async getUserFriends(
+    targetUserId: number,
+    query: PaginationQueryDto = new PaginationQueryDto(),
+  ): Promise<PaginatedFriendsResponseDto> {
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true },
+    });
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const whereClause: Prisma.FriendshipWhereInput = {
+      status: 'accepted',
+      OR: [{ requester_id: targetUserId }, { addressee_id: targetUserId }],
+    };
+
+    const [friendships, total] = await Promise.all([
+      this.prisma.friendship.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { updated_at: 'desc' },
+        include: {
+          requester: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+          addressee: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+        },
+      }),
+      this.prisma.friendship.count({ where: whereClause }),
+    ]);
+
+    const items: FriendItemDto[] = friendships.map((f) => {
+      const friend =
+        f.requester_id === targetUserId ? f.addressee : f.requester;
+      return {
+        id: friend.id,
+        username: friend.username,
+        avatar_url: friend.avatar_url,
+        friends_since: f.updated_at,
+      };
+    });
+
+    const total_pages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
+    };
   }
 
   async getMe(id: number) {

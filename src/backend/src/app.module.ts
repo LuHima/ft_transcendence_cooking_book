@@ -1,7 +1,6 @@
 // SI IMPORTA IL FILE SPECIFICANDO IL PERCORSO QUI IN CIMA
 // (non si mette .ts alla fine)
 // import { nome della classe nel file scelto } from './percorso del file';
-
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -12,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { TranslationModule } from './translation/translation.module';
+import { FriendsModule } from './friends/friends.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -31,6 +31,7 @@ import { ProductionConfigModule } from './common/config/production-config.module
     CatalogModule,
     RecipeModule,
     TranslationModule,
+    FriendsModule,
     // ScheduleModule cerca in tutti i provider per un @Cron vede quanto
     // manca al tempo stabilito e setta un timer per chiamare quella funzione
     // non appena finisce il sistemma setta in automatico un'altro timer per

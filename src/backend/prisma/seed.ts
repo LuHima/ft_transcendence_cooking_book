@@ -81,7 +81,7 @@ async function main() {
   console.log(
     '🧹 Pulizia dei dati relazionali precedenti (per evitare duplicati)...',
   );
-  await prisma.follow.deleteMany();
+  await prisma.friendship.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.recipeMedia.deleteMany();
   await prisma.mealPlanRecipe.deleteMany();
@@ -2873,91 +2873,53 @@ async function main() {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 5. SOCIAL GRAPH (Amicizie e Seguiti)
+  // 5. SOCIAL GRAPH (Amicizie e Richieste)
   // ─────────────────────────────────────────────────────────────────────────
-  console.log('🤝 Creazione grafo di amicizie e followers...');
-  await prisma.follow.createMany({
+  console.log('🤝 Creazione grafo di amicizie bidirezionali e richieste...');
+  await prisma.friendship.createMany({
     data: [
-      // Amicizie accettate (Mario & Giulia, Marco & Sophie, Elena & Carlos)
+      // Amicizie confermate bidirezionali (Mario & Giulia, Marco & Sophie, Elena & Carlos)
       {
-        sender_id: userMario.id,
-        receiver_id: userGiulia.id,
+        requester_id: userMario.id,
+        addressee_id: userGiulia.id,
         status: FriendshipStatus.accepted,
       },
       {
-        sender_id: userMarco.id,
-        receiver_id: userSophie.id,
+        requester_id: userMarco.id,
+        addressee_id: userSophie.id,
         status: FriendshipStatus.accepted,
       },
       {
-        sender_id: userElena.id,
-        receiver_id: userCarlos.id,
+        requester_id: userElena.id,
+        addressee_id: userCarlos.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        requester_id: adminMarghe.id,
+        addressee_id: userMario.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        requester_id: modSarah.id,
+        addressee_id: userGiulia.id,
         status: FriendshipStatus.accepted,
       },
 
-      // Richieste in sospeso / altre relazioni
+      // Richieste pendenti (per test UI / API)
       {
-        sender_id: userMario.id,
-        receiver_id: userMarco.id,
+        requester_id: userKenji.id,
+        addressee_id: userMario.id,
         status: FriendshipStatus.pending,
       },
       {
-        sender_id: userGiulia.id,
-        receiver_id: userSophie.id,
+        requester_id: userCarlos.id,
+        addressee_id: userMarco.id,
         status: FriendshipStatus.pending,
       },
       {
-        sender_id: userKenji.id,
-        receiver_id: userMarco.id,
-        status: FriendshipStatus.accepted,
-      },
-      {
-        sender_id: userCarlos.id,
-        receiver_id: userMario.id,
-        status: FriendshipStatus.accepted,
-      },
-
-      // Moderatrice e Admin amici degli autori
-      {
-        sender_id: modSarah.id,
-        receiver_id: userMario.id,
-        status: FriendshipStatus.accepted,
-      },
-      {
-        sender_id: modSarah.id,
-        receiver_id: userGiulia.id,
-        status: FriendshipStatus.accepted,
-      },
-      {
-        sender_id: modSarah.id,
-        receiver_id: userMarco.id,
-        status: FriendshipStatus.accepted,
-      },
-
-      {
-        sender_id: adminMarghe.id,
-        receiver_id: userMario.id,
-        status: FriendshipStatus.accepted,
-      },
-      {
-        sender_id: adminMarghe.id,
-        receiver_id: userGiulia.id,
-        status: FriendshipStatus.accepted,
-      },
-      {
-        sender_id: adminMarghe.id,
-        receiver_id: userMarco.id,
-        status: FriendshipStatus.accepted,
-      },
-      {
-        sender_id: adminMarghe.id,
-        receiver_id: userSophie.id,
-        status: FriendshipStatus.accepted,
-      },
-      {
-        sender_id: adminMarghe.id,
-        receiver_id: userElena.id,
-        status: FriendshipStatus.accepted,
+        requester_id: userGiulia.id,
+        addressee_id: userSophie.id,
+        status: FriendshipStatus.pending,
       },
     ],
     skipDuplicates: true,
@@ -3202,6 +3164,74 @@ async function main() {
             planned_date: today,
             meal_type: MealType.breakfast,
           },
+          {
+            recipe_id: carbonara.id,
+            planned_date: today,
+            meal_type: MealType.lunch,
+          },
+          {
+            recipe_id: smoothie.id,
+            planned_date: today,
+            meal_type: MealType.snack,
+          },
+          {
+            recipe_id: salmonDish.id,
+            planned_date: today,
+            meal_type: MealType.dinner,
+          },
+          {
+            recipe_id: bruschetta.id,
+            planned_date: tomorrow,
+            meal_type: MealType.breakfast,
+          },
+          {
+            recipe_id: risotto.id,
+            planned_date: tomorrow,
+            meal_type: MealType.lunch,
+          },
+          {
+            recipe_id: guacamole.id,
+            planned_date: tomorrow,
+            meal_type: MealType.snack,
+          },
+          {
+            recipe_id: boeufBourguignon.id,
+            planned_date: tomorrow,
+            meal_type: MealType.dinner,
+          },
+          {
+            recipe_id: chiaPudding.id,
+            planned_date: dayAfter,
+            meal_type: MealType.breakfast,
+          },
+          {
+            recipe_id: lentilsSoup.id,
+            planned_date: dayAfter,
+            meal_type: MealType.lunch,
+          },
+          {
+            recipe_id: fondant.id,
+            planned_date: dayAfter,
+            meal_type: MealType.snack,
+          },
+          {
+            recipe_id: pizzaPlatform.id,
+            planned_date: dayAfter,
+            meal_type: MealType.dinner,
+          },
+        ],
+      },
+    },
+  });
+
+  // Meal Plan per Giulia
+  await prisma.mealPlan.create({
+    data: {
+      user_id: userGiulia.id,
+      start_date: today,
+      end_date: tomorrow,
+      meal_plan_recipes: {
+        create: [
           {
             recipe_id: carbonara.id,
             planned_date: today,

@@ -6,7 +6,6 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
-
 import { Socket, Server } from 'socket.io';
 import {
   AppErrorDefinition,
@@ -16,13 +15,16 @@ import {
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'prisma/prisma.service';
 
-// Quando si usa WebSocket si aggancia allo stesso server e utilizza la stessa porta
-// (che puo essere anche cambiata per i socket su uno vuole) HTTP di NestJS (porta 3000)
-// ma intercetta le richieste di tipo WebSocket
-// il WebSocketGateway è un punto di ingresso per le connessioni
-// è tipo il controlle delle API, però gestisce connessioni in tempo reale quindi se un utente si connette a quella porte lui gestisce
-// le notifiche (in questo caso) degli utenti collegati su quella porta
-// cors va messo perche è un'altro tipo di conessione  costante
+/*
+ * Quando si usa WebSocket si aggancia allo stesso server e utilizza la stessa
+ * porta (che puo essere anche cambiata per i socket su uno vuole) HTTP di
+ * NestJS (porta 3000) ma intercetta le richieste di tipo WebSocket, ovvero in
+ * questo caso le notifiche  degli utenti collegati su quella porta.
+ * Cors va messo perche è un'altro tipo di conessione costante.
+ * Il WebSocketGateway è un punto di ingresso per le connessioni. È tipo il
+ * controller delle API, però gestisce connessioni in tempo reale quindi se un
+ * utente si connette a quella porte lui gestisce.
+ */
 @WebSocketGateway({
   cors: { origin: 'https://localhost:8443', credentials: true },
 })
@@ -36,7 +38,6 @@ export class NotificationGateway
   @WebSocketServer() server!: Server;
   // il '!' dice a typescript che è stata inizializzata e mi toglie l'errore
 
-  // private isOnlyne <int, boolean>;
   private findToken(cookie: string | undefined): string {
     if (!cookie) return '';
     const accessToken = cookie
@@ -59,32 +60,27 @@ export class NotificationGateway
     return payload;
   }
 
-  /*   private verify(cookie: string) {
-    return this.handleJwtVerification(this.findToken(cookie));
-  } */
   private async findFriend(id: number) {
-    const friends = await this.prisma.follow.findMany({
+    const friendships = await this.prisma.friendship.findMany({
       where: {
-        OR: [{ sender_id: id }, { receiver_id: id }],
         status: 'accepted',
+        OR: [{ requester_id: id }, { addressee_id: id }],
       },
-      select: {
-        sender_id: true,
-        receiver_id: true,
-      },
+      select: { requester_id: true, addressee_id: true },
     });
-    const friendIds: number[] = [];
-    for (const f of friends) {
-      if (f.sender_id === id) {
-        friendIds.push(f.receiver_id);
-      } else {
-        friendIds.push(f.sender_id);
-      }
-    }
-    return friendIds;
+    return friendships.map((f) => {
+      const friendId = f.requester_id === id ? f.addressee_id : f.requester_id;
+      return {
+        friend_id: friendId,
+        follower_id: friendId,
+      };
+    });
   }
+
   private async statusUser(idUser: number, online: boolean) {
-    const numUserRoom = this.server.sockets.adapter.rooms.get('room-' + idUser);
+    const numUserRoom = this.server?.sockets?.adapter?.rooms?.get(
+      'room-' + idUser,
+    );
     // adapter è solo il registro che ha tutte le informazioni del socket
     if (online === true) {
       if (!numUserRoom || numUserRoom.size > 1) return;
@@ -95,13 +91,15 @@ export class NotificationGateway
     const userFriends = await this.findFriend(idUser);
 
     for (const f of userFriends) {
-      if (!this.server.sockets.adapter.rooms.has('room-' + f)) continue;
-      this.server.to('room-' + f).emit('userStatus', {
+      if (!this.server?.sockets?.adapter?.rooms?.has('room-' + f.friend_id))
+        continue;
+      this.server.to('room-' + f.friend_id).emit('userStatus', {
         userId: idUser,
         isOnline: online,
       });
     }
   }
+
   async handleConnection(client: Socket, ...args: any[]) {
     try {
       const cookie = client.handshake.headers.cookie;
@@ -109,7 +107,9 @@ export class NotificationGateway
       const jwt: string = this.findToken(cookie);
       const payload = this.handleJwtVerification(jwt);
       client.data.user = payload;
-      client.join('room-' + payload.id); // creo le stanze in maniere che piu utenti che entrano nello stesso dispositivo ricevano le notifiche
+      client.join('room-' + payload.id);
+      // creo le stanze in maniere che piu utenti che entrano nello stesso
+      // dispositivo ricevano le notifiche
       const notification = await this.prisma.notification.findMany({
         where: { user_id: payload.id, is_read: false },
       });
@@ -133,24 +133,27 @@ export class NotificationGateway
   }
 
   async handleDisconnect(client: Socket) {
-    //console.log('User Disconnected', client.id);
     if (client.data.user?.id) {
       await this.statusUser(client.data.user.id, false);
     }
   }
 
-  //  subscribeMessage aspetta un messaggio che contenga l'evento scritto in subscribe message
+  // subscribeMessage aspetta un messaggio che contenga l'evento scritto in
+  // subscribe message
   @OnEvent('newNotification')
   handleNotificationEvent(userNotification: {
     idUser: number;
     message: string;
+    target: { subject: string; idTarget: number };
   }) {
     this.server
-      .to('room-' + userNotification.idUser)
-      .emit('newNotification', userNotification.message);
+      ?.to('room-' + userNotification.idUser)
+      ?.emit('newNotification', {
+        message: userNotification.message,
+        target: userNotification.target,
+      });
   }
 }
 
 // @SubscribeMessage è tipo socket.on() di javascript
-
-//socket.emit()
+// socket.emit()
