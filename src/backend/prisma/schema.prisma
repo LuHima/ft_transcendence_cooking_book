@@ -304,15 +304,15 @@ model RecipeIngredient {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Follow {
-  follower_id  Int
-  following_id Int
-  created_at   DateTime @default(now())
-
-  follower  User @relation("UserFollowing", fields: [follower_id], references: [id], onDelete: Cascade)
-  following User @relation("UserFollowers", fields: [following_id], references: [id], onDelete: Cascade)
-
-  @@id([follower_id, following_id])
-  @@index([following_id])
+  id          Int              @id @default(autoincrement())
+  sender_id   Int
+  receiver_id Int
+  created_at  DateTime         @default(now())
+  status      FriendshipStatus @default(pending)
+  sender   User @relation("UserFollowing", fields: [sender_id], references: [id], onDelete: Cascade)
+  receiver User @relation("UserFollowers", fields: [receiver_id], references: [id], onDelete: Cascade)
+  @@unique([sender_id, receiver_id])
+  @@index([receiver_id])
   @@map("follows")
 }
 

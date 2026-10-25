@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { NotificationSubject } from '@prisma/client';
+import { NotificationSubject, NotificationAction } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotifyData } from 'src/common/decorators/notify.decorator';
 import { NotificationStructDto } from 'src/common/dto/notification-struct.dto';
@@ -16,6 +16,51 @@ export class NotificationEmit {
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
   ) {}
+
+  private async findFriends(id: number) {
+    const friends = await this.prisma.follow.findMany({
+      where: {
+        OR: [{ sender_id: id }, { receiver_id: id }],
+        status: 'accepted',
+      },
+      select: {
+        sender_id: true,
+        receiver_id: true,
+      },
+    });
+    const friendIds: number[] = [];
+    for (const f of friends) {
+      if (f.sender_id === id) {
+        friendIds.push(f.receiver_id);
+      } else {
+        friendIds.push(f.sender_id);
+      }
+    }
+    return friendIds;
+  }
+
+  private async findUser(id: number) {
+    const friends = await this.prisma.follow.findMany({
+      where: {
+        OR: [{ sender_id: id }, { receiver_id: id }],
+        status: 'accepted',
+      },
+      select: {
+        sender_id: true,
+        receiver_id: true,
+      },
+    });
+    const friendIds: number[] = [];
+    for (const f of friends) {
+      if (f.sender_id === id) {
+        friendIds.push(f.receiver_id);
+      } else {
+        friendIds.push(f.sender_id);
+      }
+    }
+    return friendIds;
+  }
+
   private async notificationString(id_sender: number, notifyData: NotifyData) {
     const sender = await this.prisma.user.findUnique({
       where: { id: id_sender },
@@ -50,13 +95,12 @@ export class NotificationEmit {
         return `New notification from ${senderName}`;
     }
   }
-  private findTargetTable(
+  private async findTargetTable(
     idTarget: number,
     subject: NotificationSubject | string,
-  ): number {
-    let target;
+  ): Promise<number | undefined> {
     if (subject == NotificationSubject.recipe) {
-      target = this.prisma.recipe.findUnique({
+      const target = await this.prisma.recipe.findUnique({
         where: {
           id: idTarget,
         },
@@ -64,9 +108,10 @@ export class NotificationEmit {
           id: true,
         },
       });
+      return target?.id;
     }
     if (subject == NotificationSubject.user) {
-      target = this.prisma.follow.findMany({
+      const target = await this.prisma.follow.findUnique({
         where: {
           id: idTarget,
         },
@@ -74,9 +119,10 @@ export class NotificationEmit {
           id: true,
         },
       });
+      return target?.id;
     }
     if (subject == NotificationSubject.comment) {
-      target = this.prisma.comment.findUnique({
+      const target = await this.prisma.comment.findUnique({
         where: {
           id: idTarget,
         },
@@ -84,21 +130,20 @@ export class NotificationEmit {
           recipe_id: true,
         },
       });
+      return target?.recipe_id;
     }
 
-    return target.id;
+    return undefined;
   }
-  private async fillNotificationTable(
+
+  private async writeToAllFriend(
     structNotify: NotificationStructDto,
     notifyData: NotifyData,
   ) {
-    const friends = await this.prisma.follow.findMany({
-      where: { following_id: structNotify.id_user },
-      select: { follower_id: true },
-    });
+    const friends = await this.findFriends(structNotify.id_user);
     await this.prisma.notification.createMany({
       data: friends.map((f) => ({
-        user_id: f.follower_id,
+        user_id: f,
         actor_id: structNotify.id_user,
         subject: notifyData.subject,
         action: notifyData.action,
@@ -106,16 +151,42 @@ export class NotificationEmit {
       })),
     });
     const target = {
-      id: await this.findTargetTable(structNotify.id_user, notifyData.subject),
+      id: await this.findTargetTable(
+        structNotify.id_target,
+        notifyData.subject,
+      ),
       subject: notifyData.subject,
     };
     const msg = await this.notificationString(structNotify.id_user, notifyData);
     for (const f of friends) {
       this.eventEmitter.emit('newNotification', {
-        idUser: f.follower_id,
+        idUser: f,
         message: msg,
+        target: target,
       });
     }
+  }
+
+  private async writeToASingleUser(
+    structNotify: NotificationStructDto,
+    notifyData: NotifyData,
+  ) {
+    const user = this.findUser
+  }
+  private async fillNotificationTable(
+    structNotify: NotificationStructDto,
+    notifyData: NotifyData,
+  ) {
+    if (
+      notifyData.subject === NotificationSubject.recipe &&
+      (notifyData.action === NotificationAction.post ||
+        notifyData.action === NotificationAction.update ||
+        notifyData.action === NotificationAction.delete)
+    ) {
+      this.writeToAllFriend(structNotify, notifyData);
+      return;
+    }
+    this.writeToASingleUser(structNotify, notifyData);
   }
 
   public async notification(

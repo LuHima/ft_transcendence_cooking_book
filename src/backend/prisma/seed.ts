@@ -16,6 +16,7 @@ import {
   Course,
   NotificationSubject,
   NotificationAction,
+  FriendshipStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -2877,32 +2878,87 @@ async function main() {
   console.log('🤝 Creazione grafo di amicizie e followers...');
   await prisma.follow.createMany({
     data: [
-      // Amicizie reciproche (Mario & Giulia, Marco & Sophie, Elena & Carlos)
-      { follower_id: userMario.id, following_id: userGiulia.id },
-      { follower_id: userGiulia.id, following_id: userMario.id },
+      // Amicizie accettate (Mario & Giulia, Marco & Sophie, Elena & Carlos)
+      {
+        sender_id: userMario.id,
+        receiver_id: userGiulia.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: userMarco.id,
+        receiver_id: userSophie.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: userElena.id,
+        receiver_id: userCarlos.id,
+        status: FriendshipStatus.accepted,
+      },
 
-      { follower_id: userMarco.id, following_id: userSophie.id },
-      { follower_id: userSophie.id, following_id: userMarco.id },
+      // Richieste in sospeso / altre relazioni
+      {
+        sender_id: userMario.id,
+        receiver_id: userMarco.id,
+        status: FriendshipStatus.pending,
+      },
+      {
+        sender_id: userGiulia.id,
+        receiver_id: userSophie.id,
+        status: FriendshipStatus.pending,
+      },
+      {
+        sender_id: userKenji.id,
+        receiver_id: userMarco.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: userCarlos.id,
+        receiver_id: userMario.id,
+        status: FriendshipStatus.accepted,
+      },
 
-      { follower_id: userElena.id, following_id: userCarlos.id },
-      { follower_id: userCarlos.id, following_id: userElena.id },
+      // Moderatrice e Admin amici degli autori
+      {
+        sender_id: modSarah.id,
+        receiver_id: userMario.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: modSarah.id,
+        receiver_id: userGiulia.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: modSarah.id,
+        receiver_id: userMarco.id,
+        status: FriendshipStatus.accepted,
+      },
 
-      // Seguiti a senso unico
-      { follower_id: userMario.id, following_id: userMarco.id },
-      { follower_id: userGiulia.id, following_id: userSophie.id },
-      { follower_id: userKenji.id, following_id: userMarco.id },
-      { follower_id: userCarlos.id, following_id: userMario.id },
-
-      // Moderatrice e Admin seguono gli autori
-      { follower_id: modSarah.id, following_id: userMario.id },
-      { follower_id: modSarah.id, following_id: userGiulia.id },
-      { follower_id: modSarah.id, following_id: userMarco.id },
-
-      { follower_id: adminMarghe.id, following_id: userMario.id },
-      { follower_id: adminMarghe.id, following_id: userGiulia.id },
-      { follower_id: adminMarghe.id, following_id: userMarco.id },
-      { follower_id: adminMarghe.id, following_id: userSophie.id },
-      { follower_id: adminMarghe.id, following_id: userElena.id },
+      {
+        sender_id: adminMarghe.id,
+        receiver_id: userMario.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: adminMarghe.id,
+        receiver_id: userGiulia.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: adminMarghe.id,
+        receiver_id: userMarco.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: adminMarghe.id,
+        receiver_id: userSophie.id,
+        status: FriendshipStatus.accepted,
+      },
+      {
+        sender_id: adminMarghe.id,
+        receiver_id: userElena.id,
+        status: FriendshipStatus.accepted,
+      },
     ],
     skipDuplicates: true,
   });

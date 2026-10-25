@@ -4,6 +4,7 @@ import {
   OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 
 import { Socket, Server } from 'socket.io';
@@ -62,10 +63,25 @@ export class NotificationGateway
     return this.handleJwtVerification(this.findToken(cookie));
   } */
   private async findFriend(id: number) {
-    return this.prisma.follow.findMany({
-      where: { following_id: id },
-      select: { follower_id: true },
-    }); // momentaneo poi da aggiustare
+    const friends = await this.prisma.follow.findMany({
+      where: {
+        OR: [{ sender_id: id }, { receiver_id: id }],
+        status: 'accepted',
+      },
+      select: {
+        sender_id: true,
+        receiver_id: true,
+      },
+    });
+    const friendIds: number[] = [];
+    for (const f of friends) {
+      if (f.sender_id === id) {
+        friendIds.push(f.receiver_id);
+      } else {
+        friendIds.push(f.sender_id);
+      }
+    }
+    return friendIds;
   }
   private async statusUser(idUser: number, online: boolean) {
     const numUserRoom = this.server.sockets.adapter.rooms.get('room-' + idUser);
@@ -79,9 +95,8 @@ export class NotificationGateway
     const userFriends = await this.findFriend(idUser);
 
     for (const f of userFriends) {
-      if (!this.server.sockets.adapter.rooms.has('room-' + f.follower_id))
-        continue;
-      this.server.to('room-' + f.follower_id).emit('userStatus', {
+      if (!this.server.sockets.adapter.rooms.has('room-' + f)) continue;
+      this.server.to('room-' + f).emit('userStatus', {
         userId: idUser,
         isOnline: online,
       });
@@ -103,7 +118,12 @@ export class NotificationGateway
       });
       await this.statusUser(client.data.user.id, true);
     } catch (error: any) {
-      const returnError = error.getError() as AppErrorDefinition;
+      let returnError: AppErrorDefinition;
+      if (error instanceof WsException) {
+        returnError = error.getError() as AppErrorDefinition;
+      } else {
+        returnError = errors.socket.internalError;
+      }
       client.timeout(2000).emit('error', returnError, () => {
         client.disconnect(true);
       });
