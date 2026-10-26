@@ -3793,7 +3793,7 @@
         ]
       }
     },
-    "/api/notifications/get": {
+    "/api/notifications": {
       "get": {
         "operationId": "NotificationController_getNotification",
         "parameters": [],
