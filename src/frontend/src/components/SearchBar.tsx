@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api, asArray } from '../api/client'
-import type { Recipe, UserSummary } from '../types/models'
+import { useTranslation } from 'react-i18next'
+import { api, asArray, qs } from '../api/client'
+import { useLang } from '../lib/useLang'
+import type { Paginated, RecipeSummary, UserSearchResult } from '../types/models'
 
 interface SearchBarProps {
 	className?: string
@@ -15,11 +17,14 @@ const DEBOUNCE_MS = 250
 
 interface Suggestion {
 	kind: 'recipe' | 'user'
-	id: number
+	// gli utenti per ora possono arrivare senza id (GET /users?search= restituisce solo username)
+	id?: number
 	label: string
 }
 
-function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }: SearchBarProps) {
+function SearchBar({ className = '', placeholder }: SearchBarProps) {
+	const { t } = useTranslation()
+	const lang = useLang()
 	const navigate = useNavigate()
 	const [value, setValue] = useState('')
 	const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -40,15 +45,18 @@ function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }
 			const opts = { signal: controller.signal, retryOnUnauthorized: false }
 			// ricette e utenti in parallelo; se una delle due fallisce si mostra comunque l'altra
 			Promise.allSettled([
-				api.get<Pick<Recipe, 'id' | 'title'>[]>(`/recipes/search?value=${encodeURIComponent(trimmed)}`, opts),
-				api.get<UserSummary[]>(`/users/search?value=${encodeURIComponent(trimmed)}`, opts),
+				api.get<Paginated<RecipeSummary>>(
+					`/recipes${qs({ search: trimmed, limit: MAX_RECIPES, lang })}`,
+					opts,
+				),
+				api.get<UserSearchResult[]>(`/users${qs({ search: trimmed })}`, opts),
 			]).then(([recipes, users]) => {
 				if (controller.signal.aborted) return
 				const list: Suggestion[] = [
-					...asArray<Pick<Recipe, 'id' | 'title'>>(recipes.status === 'fulfilled' ? recipes.value : [])
+					...(recipes.status === 'fulfilled' ? (recipes.value?.items ?? []) : [])
 						.slice(0, MAX_RECIPES)
 						.map((r) => ({ kind: 'recipe' as const, id: r.id, label: r.title })),
-					...asArray<UserSummary>(users.status === 'fulfilled' ? users.value : [])
+					...asArray<UserSearchResult>(users.status === 'fulfilled' ? users.value : [])
 						.slice(0, MAX_USERS)
 						.map((u) => ({ kind: 'user' as const, id: u.id, label: u.username })),
 				]
@@ -61,7 +69,7 @@ function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }
 			clearTimeout(timer)
 			controller.abort()
 		}
-	}, [trimmed])
+	}, [trimmed, lang])
 
 	// chiude la lista cliccando fuori dalla barra
 	useEffect(() => {
@@ -83,7 +91,8 @@ function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }
 	}
 
 	function goTo(s: Suggestion) {
-		navigate(s.kind === 'user' ? `/users/${s.id}` : `/recipes/${s.id}`)
+		if (s.id == null) navigate(`/search?q=${encodeURIComponent(s.label)}`)
+		else navigate(s.kind === 'user' ? `/users/${s.id}` : `/recipes/${s.id}`)
 		reset()
 	}
 
@@ -130,8 +139,8 @@ function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }
 				}}
 				onFocus={() => setOpen(true)}
 				onKeyDown={handleKeyDown}
-				placeholder={placeholder}
-				aria-label="Cerca ricette o utenti"
+				placeholder={placeholder ?? t('search.placeholder')}
+				aria-label={t('search.placeholder')}
 				aria-autocomplete="list"
 				aria-expanded={showList}
 				aria-controls="search-suggestions"
@@ -142,7 +151,7 @@ function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }
 				type="submit"
 				className="rounded-r-full border border-l-0 border-[var(--wc-border)] bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] transition-colors hover:bg-[var(--wc-basil-dark)]"
 			>
-				Cerca
+				{t('search.button')}
 			</button>
 
 			{showList && (
@@ -152,7 +161,7 @@ function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }
 					className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg"
 				>
 					{suggestions.map((s, index) => (
-						<li key={`${s.kind}-${s.id}`} role="option" aria-selected={index === activeIndex}>
+						<li key={`${s.kind}-${s.id ?? s.label}`} role="option" aria-selected={index === activeIndex}>
 							<button
 								type="button"
 								onMouseEnter={() => setActiveIndex(index)}
@@ -163,7 +172,7 @@ function SearchBar({ className = '', placeholder = 'Cerca ricette o utenti…' }
 							>
 								<span className="truncate">{s.kind === 'user' ? `@${s.label}` : s.label}</span>
 								<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
-									{s.kind === 'user' ? 'utente' : 'ricetta'}
+									{s.kind === 'user' ? t('search.userLabel') : t('search.recipeLabel')}
 								</span>
 							</button>
 						</li>

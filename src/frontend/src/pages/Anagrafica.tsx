@@ -1,12 +1,17 @@
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
-import { api, ApiError } from '../api/client'
+import { useToast } from '../context/ToastContext'
+import { api, getErrorMessage } from '../api/client'
+import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
 
 function field(value: string | null | undefined) {
 	return value ?? ''
 }
 
 function Anagrafica() {
+	const { t } = useTranslation()
+	const toast = useToast()
 	const { user, refreshUser } = useAuth()
 	const [form, setForm] = useState({
 		first_name: field(user?.first_name),
@@ -17,8 +22,7 @@ function Anagrafica() {
 		city: field(user?.city),
 		postal_code: field(user?.postal_code),
 	})
-	const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-	const [error, setError] = useState<string | null>(null)
+	const [saving, setSaving] = useState(false)
 
 	if (!user) return null
 
@@ -28,101 +32,61 @@ function Anagrafica() {
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
-		setStatus('saving')
-		setError(null)
+		setSaving(true)
 		try {
-			await api.patch('/users/me', form)
+			// una data di nascita vuota non è valida per il backend: si omette
+			const { birth_date, ...rest } = form
+			await api.patch('/users/me', { ...rest, ...(birth_date ? { birth_date } : {}) })
 			await refreshUser()
-			setStatus('saved')
+			toast.success(t('profile.saved'))
 		} catch (err) {
-			setStatus('error')
-			setError(err instanceof ApiError ? err.message : 'Salvataggio non riuscito.')
+			toast.error(getErrorMessage(err, t('form.errors.saveFailed')))
+		} finally {
+			setSaving(false)
 		}
 	}
 
 	return (
 		<div className="mx-auto max-w-xl px-4 py-12">
-			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">Anagrafica</h1>
-			<p className="mt-1 text-sm text-[var(--wc-text-muted)]">
-				Questi dati sono facoltativi e restano visibili solo a te.
-			</p>
+			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('nav.personalData')}</h1>
+			<p className="mt-1 text-sm text-[var(--wc-text-muted)]">{t('personal.intro')}</p>
 
 			<form onSubmit={handleSubmit} className="mt-8 space-y-5">
 				<div className="grid grid-cols-2 gap-4">
 					<div>
-						<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Nome</label>
-						<input
-							value={form.first_name}
-							onChange={(e) => update('first_name', e.target.value)}
-							className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-						/>
+						<label htmlFor="first_name" className={LABEL_CLASS}>{t('personal.firstName')}</label>
+						<input id="first_name" maxLength={100} value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT_CLASS} />
 					</div>
 					<div>
-						<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Cognome</label>
-						<input
-							value={form.last_name}
-							onChange={(e) => update('last_name', e.target.value)}
-							className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-						/>
+						<label htmlFor="last_name" className={LABEL_CLASS}>{t('personal.lastName')}</label>
+						<input id="last_name" maxLength={100} value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT_CLASS} />
 					</div>
 				</div>
-
 				<div>
-					<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Data di nascita</label>
-					<input
-						type="date"
-						value={form.birth_date}
-						onChange={(e) => update('birth_date', e.target.value)}
-						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-					/>
+					<label htmlFor="birth_date" className={LABEL_CLASS}>{t('personal.birthDate')}</label>
+					<input id="birth_date" type="date" value={form.birth_date} onChange={(e) => update('birth_date', e.target.value)} className={INPUT_CLASS} />
 				</div>
-
 				<div>
-					<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Telefono</label>
-					<input
-						value={form.phone}
-						onChange={(e) => update('phone', e.target.value)}
-						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-					/>
+					<label htmlFor="phone" className={LABEL_CLASS}>{t('personal.phone')}</label>
+					<input id="phone" maxLength={30} value={form.phone} onChange={(e) => update('phone', e.target.value)} className={INPUT_CLASS} />
 				</div>
-
 				<div>
-					<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Indirizzo</label>
-					<input
-						value={form.address}
-						onChange={(e) => update('address', e.target.value)}
-						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-					/>
+					<label htmlFor="address" className={LABEL_CLASS}>{t('personal.address')}</label>
+					<input id="address" maxLength={255} value={form.address} onChange={(e) => update('address', e.target.value)} className={INPUT_CLASS} />
 				</div>
-
 				<div className="grid grid-cols-2 gap-4">
 					<div>
-						<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">Città</label>
-						<input
-							value={form.city}
-							onChange={(e) => update('city', e.target.value)}
-							className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-						/>
+						<label htmlFor="city" className={LABEL_CLASS}>{t('personal.city')}</label>
+						<input id="city" maxLength={100} value={form.city} onChange={(e) => update('city', e.target.value)} className={INPUT_CLASS} />
 					</div>
 					<div>
-						<label className="mb-1 block text-sm text-[var(--wc-text-muted)]">CAP</label>
-						<input
-							value={form.postal_code}
-							onChange={(e) => update('postal_code', e.target.value)}
-							className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-						/>
+						<label htmlFor="postal_code" className={LABEL_CLASS}>{t('personal.postalCode')}</label>
+						<input id="postal_code" maxLength={10} value={form.postal_code} onChange={(e) => update('postal_code', e.target.value)} className={INPUT_CLASS} />
 					</div>
 				</div>
 
-				{status === 'error' && <p className="text-sm text-[var(--wc-paprika)]">{error}</p>}
-				{status === 'saved' && <p className="text-sm text-[var(--wc-basil)]">Modifiche salvate.</p>}
-
-				<button
-					type="submit"
-					disabled={status === 'saving'}
-					className="rounded-full bg-[var(--wc-basil)] px-6 py-2.5 font-medium text-[var(--wc-bg)] transition-colors hover:bg-[var(--wc-basil-dark)] disabled:opacity-60"
-				>
-					{status === 'saving' ? 'Salvataggio…' : 'Salva modifiche'}
+				<button type="submit" disabled={saving} className={SUBMIT_CLASS}>
+					{saving ? t('common.saving') : t('form.saveChanges')}
 				</button>
 			</form>
 		</div>

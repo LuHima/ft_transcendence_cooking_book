@@ -1,40 +1,54 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { api, ApiError } from '../api/client'
-import type { Recipe, RecipeDifficulty } from '../types/models'
+import { useTranslation } from 'react-i18next'
+import { api, assetUrl, getErrorMessage, qs } from '../api/client'
+import { useToast } from '../context/ToastContext'
+import { useLang } from '../lib/useLang'
+import Pagination from '../components/Pagination'
+import { ListSkeleton } from '../components/Skeleton'
+import type { Paginated, RecipeSummary } from '../types/models'
 
-const difficultyLabel: Record<RecipeDifficulty, string> = {
-	easy: 'Facile',
-	medium: 'Media',
-	hard: 'Difficile',
-}
+const PAGE_SIZE = 10
 
 function MyRecipes() {
-	const { user } = useAuth()
-	const [recipes, setRecipes] = useState<Recipe[]>([])
+	const { t } = useTranslation()
+	const lang = useLang()
+	const toast = useToast()
+	const [page, setPage] = useState(1)
+	const [data, setData] = useState<Paginated<RecipeSummary> | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [deletingId, setDeletingId] = useState<number | null>(null)
+	const [reload, setReload] = useState(0)
 
-	function load() {
-		// NB: idealmente il backend filtra già per utente loggato (es. GET /api/recipes?mine=true);
-		// finché non è disponibile, qui si filtra lato client sull'elenco completo.
+	useEffect(() => {
+		let cancelled = false
 		api
-			.get<Recipe[]>('/recipes?mine=true')
-			.then((data) => setRecipes(user ? data.filter((r) => r.user_id === user.id) : data))
-			.catch((err) => setError(err instanceof ApiError ? err.message : 'Impossibile caricare le ricette.'))
-	}
-
-	useEffect(load, [user])
+			.get<Paginated<RecipeSummary>>(`/users/me/recipes${qs({ page, limit: PAGE_SIZE, lang })}`)
+			.then((res) => {
+				if (cancelled) return
+				setData(res)
+				setError(null)
+			})
+			.catch((err) => {
+				if (cancelled) return
+				setError(getErrorMessage(err, t('myRecipes.loadError')))
+			})
+		return () => {
+			cancelled = true
+		}
+	}, [page, lang, reload, t])
 
 	async function handleDelete(id: number) {
-		if (!confirm('Eliminare questa ricetta? L\'azione non è reversibile.')) return
+		if (!confirm(t('recipe.confirmDelete'))) return
 		setDeletingId(id)
 		try {
 			await api.delete(`/recipes/${id}`)
-			setRecipes((prev) => prev.filter((r) => r.id !== id))
+			toast.success(t('recipe.deleted'))
+			// se si svuota l'ultima pagina si torna indietro
+			if (data && data.items.length === 1 && page > 1) setPage(page - 1)
+			else setReload((n) => n + 1)
 		} catch (err) {
-			setError(err instanceof ApiError ? err.message : 'Impossibile eliminare la ricetta.')
+			toast.error(getErrorMessage(err, t('recipe.deleteError')))
 		} finally {
 			setDeletingId(null)
 		}
@@ -42,51 +56,71 @@ function MyRecipes() {
 
 	return (
 		<div className="mx-auto max-w-5xl px-4 py-12">
-			<div className="mb-6 flex items-center justify-between">
-				<h1 className="font-display text-3xl text-[var(--wc-saffron)]">Le mie ricette</h1>
+			<div className="mb-6 flex items-center justify-between gap-4">
+				<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('myRecipes.title')}</h1>
 				<Link
 					to="/my-recipes/new"
 					className="rounded-full bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)]"
 				>
-					+ Nuova ricetta
+					+ {t('myRecipes.new')}
 				</Link>
 			</div>
 
 			{error && <p className="mb-4 text-[var(--wc-paprika)]">{error}</p>}
 
-			{recipes.length === 0 && !error && (
-				<p className="text-[var(--wc-text-muted)]">Non hai ancora pubblicato nessuna ricetta.</p>
+			{!data && !error && <ListSkeleton />}
+
+			{data && data.items.length === 0 && !error && (
+				<p className="text-[var(--wc-text-muted)]">{t('myRecipes.empty')}</p>
 			)}
 
-			<div className="divide-y divide-[var(--wc-border)] rounded-2xl border border-[var(--wc-border)]">
-				{recipes.map((recipe) => (
-					<div key={recipe.id} className="flex items-center justify-between gap-4 p-4">
-						<div>
-							<Link to={`/recipes/${recipe.id}`} className="font-display text-lg hover:text-[var(--wc-saffron)]">
-								{recipe.title}
-							</Link>
-							<p className="text-xs text-[var(--wc-text-muted)]">
-								{recipe.difficulty ? difficultyLabel[recipe.difficulty] : ''} · {recipe.prep_time ?? '?'} min
-							</p>
-						</div>
-						<div className="flex shrink-0 items-center gap-2 text-sm">
-							<Link
-								to={`/my-recipes/${recipe.id}/edit`}
-								className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 hover:border-[var(--wc-basil)]"
-							>
-								Modifica
-							</Link>
-							<button
-								onClick={() => handleDelete(recipe.id)}
-								disabled={deletingId === recipe.id}
-								className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
-							>
-								Elimina
-							</button>
-						</div>
-					</div>
-				))}
-			</div>
+			{data && data.items.length > 0 && (
+				<div className="divide-y divide-[var(--wc-border)] rounded-2xl border border-[var(--wc-border)]">
+					{data.items.map((recipe) => {
+						const cover = assetUrl(recipe.cover_image_url)
+						return (
+							<div key={recipe.id} className="flex items-center justify-between gap-4 p-4">
+								<div className="flex min-w-0 items-center gap-3">
+									{cover ? (
+										<img src={cover} alt="" loading="lazy" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+									) : (
+										<div className="h-12 w-12 shrink-0 rounded-lg bg-[var(--wc-surface-raised)]" />
+									)}
+									<div className="min-w-0">
+										<Link
+											to={`/recipes/${recipe.id}`}
+											className="block truncate font-display text-lg hover:text-[var(--wc-saffron)]"
+										>
+											{recipe.title}
+										</Link>
+										<p className="text-xs text-[var(--wc-text-muted)]">
+											{t(`difficulty.${recipe.difficulty}`)} · {t('recipe.minutes', { count: recipe.total_time })} · ♥{' '}
+											{recipe.likes_count}
+										</p>
+									</div>
+								</div>
+								<div className="flex shrink-0 items-center gap-2 text-sm">
+									<Link
+										to={`/my-recipes/${recipe.id}/edit`}
+										className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 hover:border-[var(--wc-basil)]"
+									>
+										{t('common.edit')}
+									</Link>
+									<button
+										onClick={() => handleDelete(recipe.id)}
+										disabled={deletingId === recipe.id}
+										className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
+									>
+										{t('common.delete')}
+									</button>
+								</div>
+							</div>
+						)
+					})}
+				</div>
+			)}
+
+			{data && <Pagination page={data.page} totalPages={data.total_pages} onChange={setPage} />}
 		</div>
 	)
 }

@@ -4,6 +4,31 @@
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
+// le immagini/video caricati arrivano come path relativo (es. "/uploads/recipes/x.webp").
+// Se il backend è su un altro host, impostare VITE_ASSET_BASE_URL (es. "http://localhost:3000").
+const ASSET_BASE = (import.meta.env.VITE_ASSET_BASE_URL as string | undefined) ?? ''
+
+export function assetUrl(path?: string | null): string | undefined {
+	if (!path) return undefined
+	if (/^(https?:)?\/\//.test(path) || path.startsWith('blob:') || path.startsWith('data:')) return path
+	return `${ASSET_BASE}${path}`
+}
+
+// costruisce una query string saltando i valori vuoti: qs({ page: 1, search: '' }) -> "?page=1"
+export function qs(params: Record<string, string | number | boolean | null | undefined>): string {
+	const sp = new URLSearchParams()
+	for (const [key, value] of Object.entries(params)) {
+		if (value === undefined || value === null || value === '') continue
+		sp.set(key, String(value))
+	}
+	const s = sp.toString()
+	return s ? `?${s}` : ''
+}
+
+export function getErrorMessage(err: unknown, fallback: string): string {
+	return err instanceof ApiError && err.message ? err.message : fallback
+}
+
 export class ApiError extends Error {
 	status: number
 	body: unknown
@@ -87,4 +112,30 @@ export const api = {
 // questo helper garantisce sempre un array, così le pagine non vanno in crash
 export function asArray<T>(value: unknown): T[] {
 	return Array.isArray(value) ? (value as T[]) : []
+}
+
+// alcune rotte admin possono rispondere con un array semplice o con { items, total_pages… }:
+// questo helper le riporta sempre alla forma paginata
+export function toPage<T>(data: unknown, fallbackLimit = 20): import('../types/models').Paginated<T> {
+	if (Array.isArray(data)) {
+		return {
+			items: data as T[],
+			total: data.length,
+			page: 1,
+			limit: Math.max(data.length, fallbackLimit),
+			total_pages: 1,
+			has_next_page: false,
+			has_prev_page: false,
+		}
+	}
+	const d = (data ?? {}) as Partial<import('../types/models').Paginated<T>>
+	return {
+		items: d.items ?? [],
+		total: d.total ?? d.items?.length ?? 0,
+		page: d.page ?? 1,
+		limit: d.limit ?? fallbackLimit,
+		total_pages: d.total_pages ?? 1,
+		has_next_page: d.has_next_page ?? false,
+		has_prev_page: d.has_prev_page ?? false,
+	}
 }

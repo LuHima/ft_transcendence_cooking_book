@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -17,13 +18,16 @@ import SearchResults from './pages/SearchResults'
 import Contacts from './pages/Contacts'
 import About from './pages/About'
 import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import UserProfile from './pages/UserProfile'
 import Friends from './pages/Friends'
 import Admin from './pages/admin/Admin'
+import Moderation from './pages/Moderation'
 import NotFound from './pages/NotFound'
 
 function App() {
 	return (
+		<ToastProvider>
 		<AuthProvider>
 			<Routes>
 				<Route element={<Layout />}>
@@ -36,6 +40,7 @@ function App() {
 					<Route path="contacts" element={<Contacts />} />
 					<Route path="about" element={<About />} />
 					<Route path="privacy" element={<Privacy />} />
+					<Route path="terms" element={<Terms />} />
 
 					<Route element={<ProtectedRoute />}>
 						<Route path="profile" element={<Profile />} />
@@ -48,6 +53,10 @@ function App() {
 						<Route path="friends" element={<Friends />} />
 					</Route>
 
+					<Route element={<ProtectedRoute roles={['moderator', 'admin']} />}>
+						<Route path="moderation" element={<Moderation />} />
+					</Route>
+
 					<Route element={<ProtectedRoute roles={['admin']} />}>
 						<Route path="admin" element={<Admin />} />
 					</Route>
@@ -56,6 +65,7 @@ function App() {
 				</Route>
 			</Routes>
 		</AuthProvider>
+		</ToastProvider>
 	)
 }
 
