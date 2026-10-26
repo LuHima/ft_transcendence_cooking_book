@@ -38,24 +38,9 @@ export class NotificationController {
   }
 
   @Auth()
-  @Get('get')
+  @Get()
   async getNotification(@CurrentUser('id') id: number) {
-    const notification = await this.notificationService.getNotifications(
-      id,
-    );
+    const notification = await this.notificationService.getNotifications(id);
     return { notification };
   }
-  /*   @Auth()
-  @Patch('FriendRequest/:id')
-  async AcceptFriendRequest(@Query('id', ParseIntPipe) idNotifi: number) {
-    await this.AcceptFriendRequest(idNotifi);
-    return { message: 'Friend Request accepted' };
-  }
-
-  @Auth()
-  @Delete('FriendRequest/:id')
-  async RefuseFriendRequest(@Query('id', ParseIntPipe) idNotifi: number) {
-    await this.RefuseFriendRequest(idNotifi);
-    return { message: 'Friend Request refused' };
-  } */
 }
