@@ -100,6 +100,8 @@ enum NotificationAction {
   friend_request
   friend_accept
   post
+  delete
+  update
 }
 
 enum FriendshipStatus {

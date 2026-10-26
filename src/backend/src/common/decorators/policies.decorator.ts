@@ -13,7 +13,6 @@ import { AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.fact
 import { Action } from 'src/auth/casl/action.enum';
 import { Subjects } from '../../auth/casl/casl-ability.factory/casl-ability.factory';
 import { AuthGuard } from 'src/common/guards/auth.guard';
-import { RolesGuard } from '../guards/role.guard';
 import {
   ApiUnauthorizedResponseDto,
   ApiForbiddenResponseDto,
@@ -26,28 +25,7 @@ export type HandlerRolePolicy = (ability: AppAbility) => boolean;
  * Enforces JWT accessToken cookie authentication and optional CASL action/subject policy checks.
  * Also attaches OpenAPI security scheme metadata and error response specifications.
  */
-export function Auth(...args: [action: Action, subject: Subjects] | []) {
-  const action = args[0];
-  const subject = args[1];
-
-  if (action && subject) {
-    return applyDecorators(
-      SetMetadata('action', { action, subject }),
-      UseGuards(AuthGuard, RolesGuard),
-      ApiCookieAuth('accessToken'),
-      ApiUnauthorizedResponse({
-        description:
-          'Authentication required: missing or invalid accessToken cookie',
-        type: ApiUnauthorizedResponseDto,
-      }),
-      ApiForbiddenResponse({
-        description:
-          'Forbidden: insufficient permissions for this action on the target resource',
-        type: ApiForbiddenResponseDto,
-      }),
-    );
-  }
-
+export function Auth() {
   return applyDecorators(
     UseGuards(AuthGuard),
     ApiCookieAuth('accessToken'),

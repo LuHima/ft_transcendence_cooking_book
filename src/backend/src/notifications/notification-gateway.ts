@@ -1,22 +1,17 @@
-import { UseFilters } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
-  ConnectedSocket,
-  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
-import { WsException } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import {
   AppErrorDefinition,
   createWebSocketException,
   errors,
 } from 'src/common/config/error.config';
-import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'prisma/prisma.service';
 
@@ -83,7 +78,9 @@ export class NotificationGateway
   }
 
   private async statusUser(idUser: number, online: boolean) {
-    const numUserRoom = this.server?.sockets?.adapter?.rooms?.get('room-' + idUser);
+    const numUserRoom = this.server?.sockets?.adapter?.rooms?.get(
+      'room-' + idUser,
+    );
     // adapter è solo il registro che ha tutte le informazioni del socket
     if (online === true) {
       if (!numUserRoom || numUserRoom.size > 1) return;
@@ -121,7 +118,12 @@ export class NotificationGateway
       });
       await this.statusUser(client.data.user.id, true);
     } catch (error: any) {
-      const returnError = error.getError() as AppErrorDefinition;
+      let returnError: AppErrorDefinition;
+      if (error instanceof WsException) {
+        returnError = error.getError() as AppErrorDefinition;
+      } else {
+        returnError = errors.socket.internalError;
+      }
       client.timeout(2000).emit('error', returnError, () => {
         client.disconnect(true);
       });
@@ -142,10 +144,14 @@ export class NotificationGateway
   handleNotificationEvent(userNotification: {
     idUser: number;
     message: string;
+    target: { subject: string; idTarget: number };
   }) {
     this.server
       ?.to('room-' + userNotification.idUser)
-      ?.emit('newNotification', userNotification.message);
+      ?.emit('newNotification', {
+        message: userNotification.message,
+        target: userNotification.target,
+      });
   }
 }
 

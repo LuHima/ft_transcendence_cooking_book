@@ -11,20 +11,29 @@ import Book from "./Book.tsx";
 import "../styles.css";
 
 import type {
-  fetchedValues,
+  RecipePageResponse,
   Recipe,
   SceneContentProps,
 } from "../interfaces.ts";
 
 import kitchenUrl from "../../assets/kitchen3.1.glb?url";
 
-async function fetchData(url: string): Promise<fetchedValues> {
+async function fetchData(url: string): Promise<RecipePageResponse> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Failed to fetch data");
   }
 
   return response.json();
+}
+
+function mapRecipes(response: RecipePageResponse): Recipe[] {
+  return response.items.map(({ id, title, description, author }) => ({
+    id,
+    title,
+    description,
+    username: author?.username ?? "WeCook",
+  }));
 }
 
 function SceneContent({
@@ -92,11 +101,11 @@ export default function Scene({
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
 
   useEffect(() => {
-    fetchData(`/api/recipes/page?value=${initialApiPage}`)
-      .then((loadedRecipes: fetchedValues) => {
-        setRecipes(loadedRecipes.returnPage);
-        setHasPreviousPage(loadedRecipes.hasPreviousPage);
-        setHasNextPage(loadedRecipes.hasNextPage);
+    fetchData(`/api/recipes?page=${initialApiPage}&limit=30&lang=it`)
+      .then((loadedRecipes) => {
+        setRecipes(mapRecipes(loadedRecipes));
+        setHasPreviousPage(loadedRecipes.has_prev_page);
+        setHasNextPage(loadedRecipes.has_next_page);
       })
       .catch((error) => {
         console.error("Failed to load recipes:", error);
@@ -118,10 +127,12 @@ export default function Scene({
 
     // Fetch the recipes for the specified page
     try {
-      const loadedRecipes = await fetchData(`/api/recipes/page?value=${page}`);
-      setRecipes(loadedRecipes.returnPage);
-      setHasPreviousPage(loadedRecipes.hasPreviousPage);
-      setHasNextPage(loadedRecipes.hasNextPage);
+      const loadedRecipes = await fetchData(
+        `/api/recipes?page=${page}&limit=30&lang=it`,
+      );
+      setRecipes(mapRecipes(loadedRecipes));
+      setHasPreviousPage(loadedRecipes.has_prev_page);
+      setHasNextPage(loadedRecipes.has_next_page);
       setCurrentApiPage(page);
       setPaginationError(null);
     } catch (error) {

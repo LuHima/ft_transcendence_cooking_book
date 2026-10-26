@@ -45,8 +45,8 @@ export class NotificationInterceptor implements NestInterceptor {
                 err,
               );
             });
+          delete response.NotificationStructDto;
         }
-        delete response.NotificationStructDto;
         return response;
       }),
     );
