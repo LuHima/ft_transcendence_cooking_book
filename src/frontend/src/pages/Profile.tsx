@@ -1,120 +1,147 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
-import { api, ApiError } from '../api/client'
+import { useToast } from '../context/ToastContext'
+import { api, getErrorMessage } from '../api/client'
+import { SUPPORTED_LANGS } from '../i18n'
+import { validateImage } from '../lib/files'
+import { useLang } from '../lib/useLang'
+import { useObjectUrl } from '../lib/useObjectUrl'
+import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
+import Avatar from '../components/Avatar'
+import TwoFactorSettings from '../components/TwoFactorSettings'
 
 function Profile() {
+	const { t, i18n } = useTranslation()
+	const lang = useLang()
+	const toast = useToast()
 	const { user, refreshUser } = useAuth()
 	const [username, setUsername] = useState(user?.username ?? '')
 	const [email, setEmail] = useState(user?.email ?? '')
-	const [password, setPassword] = useState('')
 	const [avatarFile, setAvatarFile] = useState<File | null>(null)
-	const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-	const [error, setError] = useState<string | null>(null)
+	const [saving, setSaving] = useState(false)
+	const fileRef = useRef<HTMLInputElement>(null)
+	const preview = useObjectUrl(avatarFile)
 
 	if (!user) return null
 
+	function pickAvatar(file: File | undefined) {
+		if (!file) return
+		const err = validateImage(file, t)
+		if (err) return toast.error(err)
+		setAvatarFile(file)
+	}
+
+	async function removeAvatar() {
+		try {
+			await api.delete('/users/me/avatar')
+			setAvatarFile(null)
+			await refreshUser()
+			toast.success(t('profile.avatarRemoved'))
+		} catch (err) {
+			toast.error(getErrorMessage(err, t('profile.avatarError')))
+		}
+	}
+
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
-		setStatus('saving')
-		setError(null)
+		setSaving(true)
 		try {
+			// POST /users/me/avatar (multipart, campo "file")
 			if (avatarFile) {
 				const formData = new FormData()
-				formData.append('avatar', avatarFile)
-				await api.patch('/users/me/avatar', formData)
+				formData.append('file', avatarFile)
+				await api.post('/users/me/avatar', formData)
+				setAvatarFile(null)
 			}
-			await api.patch('/users/me', {
-				username,
-				email,
-				...(password ? { password } : {}),
-			})
+			// PATCH /users/me: si inviano solo i campi cambiati
+			const patch: Record<string, string> = {}
+			if (username !== user?.username) patch.username = username
+			if (email !== user?.email) patch.email = email
+			if (Object.keys(patch).length > 0) await api.patch('/users/me', patch)
 			await refreshUser()
-			setPassword('')
-			setStatus('saved')
+			toast.success(t('profile.saved'))
 		} catch (err) {
-			setStatus('error')
-			setError(err instanceof ApiError ? err.message : 'Salvataggio non riuscito.')
+			toast.error(getErrorMessage(err, t('form.errors.saveFailed')))
+		} finally {
+			setSaving(false)
 		}
 	}
 
 	return (
 		<div className="mx-auto max-w-xl px-4 py-12">
-			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">Profilo</h1>
-			<p className="mt-1 text-sm text-[var(--wc-text-muted)]">Gestisci le informazioni del tuo account.</p>
+			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('nav.profile')}</h1>
+			<p className="mt-1 text-sm text-[var(--wc-text-muted)]">{t('profile.intro')}</p>
 
 			<form onSubmit={handleSubmit} className="mt-8 space-y-5">
 				<div className="flex items-center gap-4">
-					{user.avatar_url ? (
-						<img src={user.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />
+					{preview ? (
+						<img src={preview} alt="" className="h-16 w-16 rounded-full object-cover" />
 					) : (
-						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--wc-basil)] text-xl font-semibold text-[var(--wc-bg)]">
-							{user.username.charAt(0).toUpperCase()}
-						</div>
+						<Avatar username={user.username} url={user.avatar_url} className="h-16 w-16 text-xl" />
 					)}
-					<div>
-						<label htmlFor="avatar" className="block text-sm text-[var(--wc-text-muted)]">
-							Cambia foto profilo
-						</label>
+					<div className="flex flex-wrap items-center gap-3">
 						<input
-							id="avatar"
+							ref={fileRef}
 							type="file"
-							accept="image/*"
-							onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
-							className="mt-1 text-sm text-[var(--wc-text-muted)]"
+							accept="image/jpeg,image/png,image/webp"
+							aria-label={t('profile.changeAvatar')}
+							className="hidden"
+							onChange={(e) => {
+								pickAvatar(e.target.files?.[0])
+								e.target.value = ''
+							}}
 						/>
+						<button
+							type="button"
+							onClick={() => fileRef.current?.click()}
+							className="rounded-full border border-[var(--wc-border)] px-4 py-2 text-sm hover:border-[var(--wc-basil)]"
+						>
+							{t('profile.changeAvatar')}
+						</button>
+						{user.avatar_url && !avatarFile && (
+							<button type="button" onClick={removeAvatar} className="text-sm text-[var(--wc-paprika)] hover:underline">
+								{t('common.remove')}
+							</button>
+						)}
 					</div>
 				</div>
 
 				<div>
-					<label htmlFor="username" className="mb-1 block text-sm text-[var(--wc-text-muted)]">
+					<label htmlFor="username" className={LABEL_CLASS}>
 						Username
 					</label>
-					<input
-						id="username"
-						value={username}
-						onChange={(e) => setUsername(e.target.value)}
-						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-					/>
+					<input id="username" minLength={3} maxLength={30} value={username} onChange={(e) => setUsername(e.target.value)} className={INPUT_CLASS} />
 				</div>
 
 				<div>
-					<label htmlFor="email" className="mb-1 block text-sm text-[var(--wc-text-muted)]">
+					<label htmlFor="email" className={LABEL_CLASS}>
 						Email
 					</label>
-					<input
-						id="email"
-						type="email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-					/>
+					<input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={INPUT_CLASS} />
 				</div>
 
 				<div>
-					<label htmlFor="password" className="mb-1 block text-sm text-[var(--wc-text-muted)]">
-						Nuova password
+					<label htmlFor="ui-lang" className={LABEL_CLASS}>
+						{t('profile.language')}
 					</label>
-					<input
-						id="password"
-						type="password"
-						placeholder="Lascia vuoto per non modificarla"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)]"
-					/>
+					{/* NB: il modello User non ha ancora un campo `lang`: per ora la preferenza vale solo su questo browser */}
+					<select id="ui-lang" value={lang} onChange={(e) => void i18n.changeLanguage(e.target.value)} className={`${INPUT_CLASS} h-[42px]`}>
+						{SUPPORTED_LANGS.map((l) => (
+							<option key={l} value={l}>
+								{t(`lang.${l}`)}
+							</option>
+						))}
+					</select>
+					<p className="mt-1 text-xs text-[var(--wc-text-muted)]">{t('profile.languageHelp')}</p>
 				</div>
 
-				{status === 'error' && <p className="text-sm text-[var(--wc-paprika)]">{error}</p>}
-				{status === 'saved' && <p className="text-sm text-[var(--wc-basil)]">Modifiche salvate.</p>}
-
-				<button
-					type="submit"
-					disabled={status === 'saving'}
-					className="rounded-full bg-[var(--wc-basil)] px-6 py-2.5 font-medium text-[var(--wc-bg)] transition-colors hover:bg-[var(--wc-basil-dark)] disabled:opacity-60"
-				>
-					{status === 'saving' ? 'Salvataggio…' : 'Salva modifiche'}
+				<button type="submit" disabled={saving} className={SUBMIT_CLASS}>
+					{saving ? t('common.saving') : t('form.saveChanges')}
 				</button>
 			</form>
+
+			<TwoFactorSettings />
 		</div>
 	)
 }
