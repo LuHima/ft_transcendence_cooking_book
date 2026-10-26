@@ -1,0 +1,560 @@
+{
+	"common": {
+		"loading": "Caricamento…",
+		"prev": "Precedente",
+		"next": "Successiva",
+		"pageOf": "Pagina {{page}} di {{total}}",
+		"pagination": "Paginazione",
+		"language": "Lingua",
+		"close": "Chiudi",
+		"cancel": "Annulla",
+		"sending": "Invio…",
+		"saving": "Salvataggio…",
+		"edit": "Modifica",
+		"delete": "Elimina",
+		"save": "Salva",
+		"remove": "Rimuovi",
+		"accessDenied": "Accesso negato",
+		"noPermission": "Non hai i permessi per vedere questa pagina."
+	},
+	"nav": {
+		"home": "Home",
+		"myRecipes": "Le mie ricette",
+		"favorites": "Preferiti",
+		"mealPlan": "Meal plan",
+		"friends": "Amici",
+		"adminPanel": "Pannello amministratore",
+		"contacts": "Contatti",
+		"about": "Chi siamo",
+		"privacy": "Privacy",
+		"profile": "Profilo",
+		"personalData": "Anagrafica",
+		"signOut": "Esci",
+		"signIn": "Accedi",
+		"signUp": "Registrati",
+		"adminBadge": "admin",
+		"moderation": "Moderazione",
+		"moderatorPanel": "Pannello moderatore"
+	},
+	"footer": {
+		"info": "Informazioni",
+		"privacy": "Privacy e diritti",
+		"terms": "Termini di servizio"
+	},
+	"lang": {
+		"it": "Italiano",
+		"en": "English",
+		"fr": "Français"
+	},
+	"difficulty": {
+		"easy": "Facile",
+		"medium": "Media",
+		"hard": "Difficile"
+	},
+	"course": {
+		"appetizer": "Antipasto",
+		"first_course": "Primo",
+		"main_course": "Secondo",
+		"dessert": "Dolce",
+		"side_dish": "Contorno",
+		"drink": "Bevanda",
+		"snack": "Snack"
+	},
+	"unit": {
+		"g": "g",
+		"kg": "kg",
+		"ml": "ml",
+		"cl": "cl",
+		"l": "l",
+		"oz": "oz",
+		"lb": "lb",
+		"fl_oz": "fl oz",
+		"cup": "tazza",
+		"tbsp": "cucchiaio",
+		"tsp": "cucchiaino",
+		"piece": "pz",
+		"pinch": "pizzico"
+	},
+	"ingredientCategory": {
+		"produce": "Frutta e verdura",
+		"dairy_eggs": "Latticini e uova",
+		"meat_poultry": "Carne",
+		"seafood": "Pesce",
+		"bakery_grains": "Pane e cereali",
+		"pantry_spices": "Dispensa e spezie",
+		"legumes_nuts": "Legumi e frutta secca",
+		"beverages_liquids": "Bevande e liquidi",
+		"other": "Altro"
+	},
+	"visibility": {
+		"public": "Pubblica",
+		"publicHelp": "Visibile a tutti",
+		"friends": "Solo amici",
+		"friendsHelp": "Visibile solo ai tuoi amici",
+		"private": "Privata",
+		"privateHelp": "Visibile solo a te"
+	},
+	"recipe": {
+		"noPhoto": "Nessuna foto",
+		"minutes_one": "{{count}} minuto",
+		"minutes_other": "{{count}} min",
+		"likes_one": "{{count}} mi piace",
+		"likes_other": "{{count}} mi piace",
+		"by": "di",
+		"byPlatform": "di WeCook",
+		"notFound": "Ricetta non trovata.",
+		"backToRecipes": "Torna alle ricette",
+		"likeError": "Impossibile aggiornare il like.",
+		"confirmDeleteAdmin": "Rimuovere questa ricetta come amministratore? L'azione non è reversibile.",
+		"confirmDelete": "Eliminare questa ricetta? L'azione non è reversibile.",
+		"deleted": "Ricetta eliminata.",
+		"deleteError": "Impossibile eliminare la ricetta.",
+		"retryTranslationOk": "Traduzione completata.",
+		"retryTranslationError": "Impossibile ritentare la traduzione.",
+		"course": "Portata",
+		"difficulty": "Difficoltà",
+		"servings": "Porzioni",
+		"prepTime": "Preparazione",
+		"cookTime": "Cottura",
+		"publishedBy": "Pubblicata da",
+		"totalTime_one": "Tempo totale: {{count}} minuto",
+		"totalTime_other": "Tempo totale: {{count}} minuti",
+		"writtenIn": "Scritta in {{lang}}",
+		"shownIn": "mostrata in {{lang}}",
+		"translationFailed": "La traduzione automatica non è andata a buon fine: alcune lingue potrebbero mostrare il testo originale.",
+		"retryTranslation": "Riprova traduzione",
+		"edit": "Modifica ricetta",
+		"removeAdmin": "Rimuovi (admin)",
+		"ingredients": "Ingredienti",
+		"noIngredients": "Nessun ingrediente indicato per questa ricetta.",
+		"preparation": "Preparazione",
+		"stepImageAlt": "Foto del passaggio {{n}}",
+		"tips": "Consigli",
+		"preservation": "Conservazione"
+	},
+	"comments": {
+		"title": "Commenti",
+		"loadError": "Impossibile caricare i commenti.",
+		"posted": "Commento pubblicato.",
+		"postError": "Impossibile pubblicare il commento.",
+		"updated": "Commento aggiornato.",
+		"updateError": "Impossibile modificare il commento.",
+		"confirmDelete": "Eliminare questo commento?",
+		"deleted": "Commento eliminato.",
+		"deleteError": "Impossibile eliminare il commento.",
+		"deletedUser": "Utente eliminato",
+		"edited": "modificato",
+		"removed": "Questo commento è stato rimosso.",
+		"reply": "Rispondi",
+		"replyPlaceholder": "Scrivi una risposta…",
+		"editPlaceholder": "Modifica il commento…",
+		"submit": "Commenta",
+		"placeholder": "Scrivi un commento…",
+		"loginLink": "Accedi",
+		"loginToComment": "per lasciare un commento.",
+		"empty": "Ancora nessun commento. Scrivi tu il primo!"
+	},
+	"home": {
+		"loadError": "Non è stato possibile caricare le ricette al momento.",
+		"heroTitle": "La tua cucina, organizzata.",
+		"heroText": "Salva le tue ricette, pianifica la settimana e ritrova subito i tuoi piatti preferiti.",
+		"recent": "Ricette recenti",
+		"seeAll": "Vedi tutte",
+		"empty": "Nessuna ricetta pubblicata ancora."
+	},
+	"myRecipes": {
+		"loadError": "Impossibile caricare le ricette.",
+		"title": "Le mie ricette",
+		"new": "Nuova ricetta",
+		"empty": "Non hai ancora pubblicato nessuna ricetta."
+	},
+	"favorites": {
+		"loadError": "Impossibile caricare i preferiti.",
+		"title": "Le mie ricette preferite",
+		"empty": "Non hai ancora messo like a nessuna ricetta. Esplora le ricette e salva quelle che ti piacciono."
+	},
+	"search": {
+		"error": "Ricerca non riuscita.",
+		"resultsFor": "Risultati per \"{{query}}\"",
+		"allRecipes": "Tutte le ricette",
+		"filters": "Filtri",
+		"any": "Qualsiasi",
+		"maxTime": "Tempo massimo (min)",
+		"clearFilters": "Azzera filtri",
+		"noResults": "Nessun risultato per questa ricerca.",
+		"users": "Utenti",
+		"recipes": "Ricette",
+		"count_one": "{{count}} ricetta trovata",
+		"count_other": "{{count}} ricette trovate",
+		"placeholder": "Cerca ricette o utenti…",
+		"button": "Cerca",
+		"userLabel": "utente",
+		"recipeLabel": "ricetta"
+	},
+	"form": {
+		"newTitle": "Nuova ricetta",
+		"editTitle": "Modifica ricetta",
+		"title": "Titolo",
+		"language": "Lingua della ricetta",
+		"languageHelp": "Scrivi tutto il testo in questa lingua: verrà controllata e tradotta automaticamente nelle altre.",
+		"prepTimeMin": "Preparazione (min)",
+		"cookTimeMin": "Cottura (min)",
+		"description": "Descrizione",
+		"visibility": "Chi può vedere la ricetta",
+		"visibilityNotReady": "La scelta della visibilità sarà attiva appena il server la supporterà: per ora non viene ancora salvata.",
+		"tags": "Tag",
+		"noTags": "Nessun tag disponibile.",
+		"catalogError": "Impossibile caricare il catalogo di ingredienti e tag. Ricarica la pagina.",
+		"addIngredient": "Aggiungi ingrediente",
+		"ingredientPlaceholder": "Cerca ingrediente…",
+		"ingredientName": "Ingrediente",
+		"noIngredientFound": "Nessun ingrediente trovato nel catalogo.",
+		"quantity": "Quantità",
+		"unit": "Unità",
+		"addStep": "Aggiungi passaggio",
+		"stepN": "Passaggio {{n}}",
+		"stepTitle": "Titolo del passaggio (facoltativo)",
+		"stepDescription": "Descrivi il passaggio",
+		"stepDuration": "Durata (min, facoltativa)",
+		"addStepPhoto": "Aggiungi foto",
+		"optional": "Foto",
+		"replaceImage": "Cambia foto",
+		"media": "Foto e video",
+		"mediaHelp": "Immagini JPG, PNG o WEBP fino a {{imageMax}}MB, video MP4 o WEBM fino a {{videoMax}}MB. I file vengono caricati dopo il salvataggio della ricetta.",
+		"cover": "Foto di copertina",
+		"chooseCover": "Scegli copertina",
+		"gallery": "Galleria (fino a {{max}} foto)",
+		"addGallery": "Aggiungi foto",
+		"video": "Video",
+		"chooseVideo": "Scegli video",
+		"replaceVideo": "Cambia video",
+		"videoPresent": "Video caricato",
+		"saveChanges": "Salva modifiche",
+		"publish": "Pubblica ricetta",
+		"uploading": "Caricamento file {{done}}/{{total}}…",
+		"translating": "Controllo lingua e traduzione in corso: può richiedere qualche secondo.",
+		"created": "Ricetta pubblicata!",
+		"updated": "Ricetta aggiornata!",
+		"mediaPartial_one": "Ricetta salvata, ma {{count}} file non è stato caricato. Riprova da \"Modifica\".",
+		"mediaPartial_other": "Ricetta salvata, ma {{count}} file non sono stati caricati. Riprova da \"Modifica\".",
+		"forbiddenTitle": "Non puoi modificare questa ricetta",
+		"forbiddenText": "Solo l'autore o un amministratore possono farlo.",
+		"errors": {
+			"imageType": "{{name}}: formato non supportato. Usa JPG, PNG o WEBP.",
+			"imageSize": "{{name}} supera i {{max}}MB consentiti.",
+			"videoType": "{{name}}: formato non supportato. Usa MP4 o WEBM.",
+			"videoSize": "{{name}} supera i {{max}}MB consentiti.",
+			"galleryMax": "La galleria può contenere al massimo {{max}} foto.",
+			"title": "Il titolo deve avere tra 3 e 255 caratteri.",
+			"description": "La descrizione deve avere almeno 10 caratteri.",
+			"servings": "Inserisci almeno 1 porzione.",
+			"time": "Inserisci un numero di minuti pari o superiore a 0.",
+			"noIngredients": "Aggiungi almeno un ingrediente.",
+			"ingredientCatalog": "Scegli un ingrediente dall'elenco.",
+			"quantity": "Inserisci una quantità maggiore di 0.",
+			"noSteps": "Aggiungi almeno un passaggio.",
+			"stepDescription": "Descrivi il passaggio.",
+			"fixFields": "Controlla i campi evidenziati.",
+			"saveFailed": "Salvataggio non riuscito."
+		},
+		"catalogEmpty": "Il catalogo ingredienti è vuoto: chiedi al backend di caricarlo (seed)."
+	},
+	"notFound": {
+		"text": "Questa pagina non esiste, o la ricetta è stata rimossa.",
+		"home": "Torna alla home"
+	},
+	"about": {
+		"title": "Chi siamo",
+		"p1": "WeCook nasce dall'idea di raccogliere in un unico posto le ricette di tutti i giorni: quelle di famiglia, quelle improvvisate e quelle scoperte per caso. Qui puoi salvare le tue ricette, organizzare la settimana con il meal plan e tenere traccia di quelle che ti sono piaciute di più.",
+		"p2": "Il progetto è sviluppato come esercizio didattico: il codice del frontend e del backend sono gestiti separatamente dal team."
+	},
+	"contacts": {
+		"title": "Contatti",
+		"intro": "Hai domande, suggerimenti o hai trovato un problema? Scrivici, ti rispondiamo il prima possibile.",
+		"office": "Sede",
+		"officeValue": "Firenze, Italia"
+	},
+	"privacy": {
+		"title": "Privacy e diritti",
+		"sections": [
+			{
+				"title": "Dati raccolti",
+				"body": "Per creare un account raccogliamo username, email e password (salvata in forma cifrata). I dati anagrafici (nome, cognome, indirizzo, telefono) sono facoltativi e servono solo a personalizzare il tuo profilo."
+			},
+			{
+				"title": "Uso dei dati",
+				"body": "Le ricette, i preferiti e i meal plan che crei sono visibili solo a te, salvo le ricette che scegli di rendere pubbliche o visibili agli amici."
+			},
+			{
+				"title": "I tuoi diritti",
+				"body": "Puoi in qualsiasi momento aggiornare i tuoi dati dalla pagina Profilo o richiedere la cancellazione dell'account scrivendo a wecook.support@gmail.com"
+			}
+		]
+	},
+	"terms": {
+		"title": "Termini di servizio",
+		"updated": "Ultimo aggiornamento: ottobre 2026",
+		"intro": "Usando WeCook accetti i termini qui sotto. Se non sei d'accordo, ti chiediamo di non usare il servizio.",
+		"sections": [
+			{
+				"title": "Il servizio",
+				"body": "WeCook è una piattaforma per salvare, pubblicare e condividere ricette, pianificare i pasti e interagire con altri utenti. Il servizio è offerto a scopo didattico e può cambiare o essere interrotto in qualsiasi momento."
+			},
+			{
+				"title": "Account",
+				"body": "Per pubblicare, commentare o mettere \"mi piace\" devi registrarti con dati veritieri. Sei responsabile della riservatezza delle tue credenziali e di tutto ciò che accade con il tuo account. Puoi attivare l'autenticazione a due fattori per proteggerlo meglio."
+			},
+			{
+				"title": "Contenuti degli utenti",
+				"body": "Resti titolare delle ricette, delle foto, dei video e dei commenti che pubblichi. Ci concedi il diritto di mostrarli sulla piattaforma secondo la visibilità che scegli (pubblica, solo amici o privata) e di tradurli automaticamente. Pubblica solo contenuti tuoi o che hai il diritto di condividere."
+			},
+			{
+				"title": "Traduzioni automatiche",
+				"body": "Le ricette vengono tradotte in italiano, inglese e francese con strumenti automatici. Le traduzioni possono contenere errori: il testo originale scritto dall'autore resta quello di riferimento."
+			},
+			{
+				"title": "Comportamento consentito",
+				"body": "Non è consentito pubblicare contenuti illegali, offensivi, discriminatori o ingannevoli, né fare spam o impersonare altre persone. I moderatori possono rimuovere contenuti segnalati, inviare avvisi e sospendere o bannare gli account che violano queste regole."
+			},
+			{
+				"title": "Salute e allergeni",
+				"body": "Le ricette sono condivise dagli utenti e non sostituiscono il parere di un medico o di un nutrizionista. Controlla sempre ingredienti, allergeni, cotture e conservazione prima di consumare un piatto."
+			},
+			{
+				"title": "Limitazione di responsabilità",
+				"body": "Il servizio è fornito \"così com'è\", senza garanzie di disponibilità o di assenza di errori. Per quanto consentito dalla legge, WeCook non risponde di danni derivanti dall'uso della piattaforma o dei contenuti pubblicati dagli utenti."
+			},
+			{
+				"title": "Chiusura dell'account",
+				"body": "Puoi chiedere la cancellazione del tuo account in qualsiasi momento scrivendo a wecook.support@gmail.com. Possiamo sospendere o chiudere gli account che violano questi termini."
+			},
+			{
+				"title": "Modifiche ai termini",
+				"body": "Possiamo aggiornare questi termini: la data in alto indica l'ultima revisione. Continuando a usare WeCook dopo una modifica accetti la nuova versione."
+			}
+		]
+	},
+	"role": {
+		"user": "Utente",
+		"moderator": "Moderatore",
+		"admin": "Admin"
+	},
+	"report": {
+		"button": "Segnala",
+		"title": "Segnala un contenuto",
+		"intro": {
+			"recipe": "Aiuta i moderatori a capire cosa non va in questa ricetta.",
+			"comment": "Aiuta i moderatori a capire cosa non va in questo commento.",
+			"user": "Aiuta i moderatori a capire cosa non va con questo utente."
+		},
+		"reason": "Motivo",
+		"reasons": {
+			"spam": "Spam o pubblicità",
+			"offensive": "Contenuto offensivo",
+			"inappropriate": "Contenuto inappropriato",
+			"copyright": "Violazione di copyright",
+			"other": "Altro"
+		},
+		"details": "Dettagli (facoltativi)",
+		"submit": "Invia segnalazione",
+		"sent": "Segnalazione inviata. Grazie!",
+		"error": "Impossibile inviare la segnalazione."
+	},
+	"moderation": {
+		"title": "Moderazione",
+		"subtitle": "Segnalazioni su utenti, commenti e ricette.",
+		"loadError": "Impossibile caricare le segnalazioni.",
+		"status": "Stato",
+		"statuses": {
+			"open": "Aperte",
+			"resolved": "Gestite",
+			"dismissed": "Archiviate"
+		},
+		"type": "Tipo",
+		"allTypes": "Tutti i tipi",
+		"targets": {
+			"recipe": "Ricetta",
+			"comment": "Commento",
+			"user": "Utente"
+		},
+		"empty": "Nessuna segnalazione.",
+		"reportedBy": "segnalato da {{name}}",
+		"owner": "autore:",
+		"handle": "Gestisci",
+		"done": "Segnalazione gestita.",
+		"chooseAction": "Cosa vuoi fare?",
+		"actions": {
+			"dismiss": "Archivia",
+			"warn": "Invia un avviso",
+			"delete_content": "Elimina il contenuto",
+			"ban": "Banna l'utente"
+		},
+		"actionHelp": {
+			"dismiss": "La segnalazione non richiede interventi.",
+			"warn": "L'autore riceve una notifica con il tuo messaggio.",
+			"delete_content": "Ricetta o commento vengono rimossi.",
+			"ban": "L'account dell'autore viene bannato."
+		},
+		"note": "Nota interna (facoltativa)",
+		"warnMessage": "Messaggio per l'utente",
+		"confirm": "Conferma",
+		"confirmBan": "Bannare {{name}}?",
+		"confirmDelete": "Eliminare il contenuto segnalato? L'azione non è reversibile.",
+		"actionError": "Azione non riuscita."
+	},
+	"admin": {
+		"subtitle": "Segnalazioni, utenti, ruoli e contenuti della piattaforma.",
+		"tabs": {
+			"reports": "Segnalazioni",
+			"users": "Utenti",
+			"recipes": "Ricette",
+			"comments": "Commenti"
+		},
+		"users": {
+			"loadError": "Impossibile caricare gli utenti.",
+			"updated": "Utente aggiornato.",
+			"updateError": "Modifica non riuscita.",
+			"confirmDelete": "Eliminare definitivamente l'utente \"{{name}}\"? L'azione non è reversibile.",
+			"deleted": "Utente eliminato.",
+			"deleteError": "Eliminazione non riuscita.",
+			"filter": "Filtra per username o email…",
+			"role": "Ruolo",
+			"allRoles": "Tutti i ruoli",
+			"new": "Nuovo utente",
+			"empty": "Nessun utente trovato.",
+			"user": "Utente",
+			"status": "Stato",
+			"actions": "Azioni",
+			"you": "tu",
+			"roleOf": "Ruolo di {{name}}",
+			"statuses": {
+				"active": "Attivo",
+				"disabled": "Disattivato",
+				"banned": "Bannato"
+			},
+			"disable": "Disattiva",
+			"ban": "Banna",
+			"reactivate": "Riattiva",
+			"confirmBan": "Bannare \"{{name}}\"?",
+			"editTitle": "Modifica {{name}}",
+			"created": "Utente creato.",
+			"passwordKeep": "Lascia vuoto per non modificarla"
+		},
+		"recipes": {
+			"confirmDelete": "Rimuovere la ricetta \"{{title}}\"? L'azione non è reversibile.",
+			"filter": "Cerca ricetta…",
+			"empty": "Nessuna ricetta trovata."
+		},
+		"comments": {
+			"filter": "Filtra per testo o autore…",
+			"empty": "Nessun commento trovato.",
+			"on": "su"
+		}
+	},
+	"friends": {
+		"actionError": "Operazione non riuscita.",
+		"add": "Aggiungi agli amici",
+		"friends": "Amici",
+		"confirmRemove": "Rimuovere {{name}} dagli amici?",
+		"removed": "{{name}} non è più tra i tuoi amici.",
+		"remove": "Rimuovi dagli amici",
+		"accept": "Accetta",
+		"reject": "Rifiuta",
+		"nowFriends": "Ora tu e {{name}} siete amici!",
+		"requestSent": "Richiesta inviata",
+		"cancelRequest": "Annulla richiesta",
+		"requestSentToast": "Richiesta di amicizia inviata a {{name}}.",
+		"loadError": "Impossibile caricare l'elenco.",
+		"intro": "Cerca un utente dalla barra di ricerca e invia una richiesta di amicizia dal suo profilo. Diventate amici quando la accetta.",
+		"tabs": {
+			"friends": "Amici",
+			"received": "Richieste ricevute",
+			"sent": "Richieste inviate"
+		},
+		"empty": {
+			"friends": "Non hai ancora nessun amico.",
+			"received": "Nessuna richiesta in arrivo.",
+			"sent": "Nessuna richiesta in attesa."
+		}
+	},
+	"profile": {
+		"notFound": "Utente non trovato.",
+		"recipesCount_one": "{{count}} ricetta",
+		"recipesCount_other": "{{count}} ricette",
+		"friendsCount_one": "{{count}} amico",
+		"friendsCount_other": "{{count}} amici",
+		"editMine": "Modifica il tuo profilo",
+		"publishedRecipes": "Ricette pubblicate",
+		"noRecipes": "Nessuna ricetta da mostrare.",
+		"avatarRemoved": "Foto profilo rimossa.",
+		"avatarError": "Impossibile rimuovere la foto.",
+		"saved": "Modifiche salvate.",
+		"intro": "Gestisci le informazioni del tuo account.",
+		"changeAvatar": "Cambia foto profilo",
+		"language": "Lingua del profilo",
+		"languageHelp": "Lingua dell'interfaccia e delle ricette mostrate. Per ora è salvata solo su questo browser."
+	},
+	"notifications": {
+		"title": "Notifiche",
+		"unread_one": "Notifiche ({{count}} non letta)",
+		"unread_other": "Notifiche ({{count}} non lette)",
+		"empty": "Nessuna notifica per ora.",
+		"someone": "Qualcuno",
+		"like": "ha messo like alla tua ricetta",
+		"comment": "ha commentato la tua ricetta",
+		"post": "ha pubblicato una nuova ricetta",
+		"friend_request": "ti ha inviato una richiesta di amicizia",
+		"friend_accept": "ha accettato la tua richiesta di amicizia"
+	},
+	"auth": {
+		"loginError": "Accesso non riuscito, riprova.",
+		"welcomeBack": "Bentornato",
+		"loginIntro": "Accedi al tuo account WeCook.",
+		"twoFactorIntro": "Inserisci il codice a 6 cifre della tua app di autenticazione.",
+		"twoFactorCode": "Codice di verifica",
+		"signingIn": "Accesso in corso…",
+		"verify": "Verifica",
+		"noAccount": "Non hai un account?",
+		"registerError": "Registrazione non riuscita, riprova.",
+		"createAccount": "Crea il tuo account",
+		"registerIntro": "Inizia a raccogliere le tue ricette.",
+		"passwordHelp": "Almeno 9 caratteri, con maiuscola, minuscola e un numero o simbolo.",
+		"acceptTermsPrefix": "Ho letto e accetto i",
+		"acceptTermsAnd": "e l'informativa",
+		"creating": "Creazione in corso…",
+		"haveAccount": "Hai già un account?",
+		"showPassword": "Mostra password",
+		"confirmPassword": "Conferma password",
+		"passwordMismatch": "Le password non coincidono."
+	},
+	"personal": {
+		"intro": "Questi dati sono facoltativi e restano visibili solo a te.",
+		"firstName": "Nome",
+		"lastName": "Cognome",
+		"birthDate": "Data di nascita",
+		"phone": "Telefono",
+		"address": "Indirizzo",
+		"city": "Città",
+		"postalCode": "CAP"
+	},
+	"twofa": {
+		"title": "Autenticazione a due fattori",
+		"intro": "Aggiungi un codice monouso dalla tua app di autenticazione per proteggere l'account.",
+		"enable": "Attiva",
+		"disable": "Disattiva",
+		"active": "Attiva sul tuo account",
+		"confirmWithPassword": "Conferma con la tua password",
+		"continue": "Continua",
+		"scan": "Scansiona il QR code con la tua app (Google Authenticator, Authy, 1Password…).",
+		"qrAlt": "QR code per l'app di autenticazione",
+		"manualKey": "Oppure inserisci questa chiave a mano:",
+		"enterCode": "Codice a 6 cifre generato dall'app",
+		"activate": "Attiva 2FA",
+		"enabledToast": "Autenticazione a due fattori attivata.",
+		"disabledToast": "Autenticazione a due fattori disattivata.",
+		"alreadyEnabled": "La 2FA è già attiva sul tuo account.",
+		"alreadyDisabled": "La 2FA è già disattivata.",
+		"passwordError": "Password non corretta.",
+		"codeError": "Codice non valido, riprova."
+	}
+}

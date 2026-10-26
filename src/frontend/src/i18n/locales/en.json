@@ -1,0 +1,560 @@
+{
+	"common": {
+		"loading": "Loading…",
+		"prev": "Previous",
+		"next": "Next",
+		"pageOf": "Page {{page}} of {{total}}",
+		"pagination": "Pagination",
+		"language": "Language",
+		"close": "Close",
+		"cancel": "Cancel",
+		"sending": "Sending…",
+		"saving": "Saving…",
+		"edit": "Edit",
+		"delete": "Delete",
+		"save": "Save",
+		"remove": "Remove",
+		"accessDenied": "Access denied",
+		"noPermission": "You don't have permission to view this page."
+	},
+	"nav": {
+		"home": "Home",
+		"myRecipes": "My recipes",
+		"favorites": "Favorites",
+		"mealPlan": "Meal plan",
+		"friends": "Friends",
+		"adminPanel": "Administrator panel",
+		"contacts": "Contact",
+		"about": "About us",
+		"privacy": "Privacy",
+		"profile": "Profile",
+		"personalData": "Personal data",
+		"signOut": "Sign out",
+		"signIn": "Sign in",
+		"signUp": "Sign up",
+		"adminBadge": "admin",
+		"moderation": "Moderation",
+		"moderatorPanel": "Moderator panel"
+	},
+	"footer": {
+		"info": "Information",
+		"privacy": "Privacy & rights",
+		"terms": "Terms of service"
+	},
+	"lang": {
+		"it": "Italiano",
+		"en": "English",
+		"fr": "Français"
+	},
+	"difficulty": {
+		"easy": "Easy",
+		"medium": "Medium",
+		"hard": "Hard"
+	},
+	"course": {
+		"appetizer": "Appetizer",
+		"first_course": "First course",
+		"main_course": "Main course",
+		"dessert": "Dessert",
+		"side_dish": "Side dish",
+		"drink": "Drink",
+		"snack": "Snack"
+	},
+	"unit": {
+		"g": "g",
+		"kg": "kg",
+		"ml": "ml",
+		"cl": "cl",
+		"l": "l",
+		"oz": "oz",
+		"lb": "lb",
+		"fl_oz": "fl oz",
+		"cup": "cup",
+		"tbsp": "tbsp",
+		"tsp": "tsp",
+		"piece": "pcs",
+		"pinch": "pinch"
+	},
+	"ingredientCategory": {
+		"produce": "Fruit & vegetables",
+		"dairy_eggs": "Dairy & eggs",
+		"meat_poultry": "Meat & poultry",
+		"seafood": "Seafood",
+		"bakery_grains": "Bakery & grains",
+		"pantry_spices": "Pantry & spices",
+		"legumes_nuts": "Legumes & nuts",
+		"beverages_liquids": "Beverages & liquids",
+		"other": "Other"
+	},
+	"visibility": {
+		"public": "Public",
+		"publicHelp": "Visible to everyone",
+		"friends": "Friends only",
+		"friendsHelp": "Visible only to your friends",
+		"private": "Private",
+		"privateHelp": "Visible only to you"
+	},
+	"recipe": {
+		"noPhoto": "No photo",
+		"minutes_one": "{{count}} minute",
+		"minutes_other": "{{count}} min",
+		"likes_one": "{{count}} like",
+		"likes_other": "{{count}} likes",
+		"by": "by",
+		"byPlatform": "by WeCook",
+		"notFound": "Recipe not found.",
+		"backToRecipes": "Back to recipes",
+		"likeError": "Could not update the like.",
+		"confirmDeleteAdmin": "Remove this recipe as an administrator? This cannot be undone.",
+		"confirmDelete": "Delete this recipe? This cannot be undone.",
+		"deleted": "Recipe deleted.",
+		"deleteError": "Could not delete the recipe.",
+		"retryTranslationOk": "Translation completed.",
+		"retryTranslationError": "Could not retry the translation.",
+		"course": "Course",
+		"difficulty": "Difficulty",
+		"servings": "Servings",
+		"prepTime": "Preparation",
+		"cookTime": "Cooking",
+		"publishedBy": "Published by",
+		"totalTime_one": "Total time: {{count}} minute",
+		"totalTime_other": "Total time: {{count}} minutes",
+		"writtenIn": "Written in {{lang}}",
+		"shownIn": "shown in {{lang}}",
+		"translationFailed": "The automatic translation failed: some languages may show the original text.",
+		"retryTranslation": "Retry translation",
+		"edit": "Edit recipe",
+		"removeAdmin": "Remove (admin)",
+		"ingredients": "Ingredients",
+		"noIngredients": "No ingredients listed for this recipe.",
+		"preparation": "Preparation",
+		"stepImageAlt": "Photo of step {{n}}",
+		"tips": "Tips",
+		"preservation": "Storage"
+	},
+	"comments": {
+		"title": "Comments",
+		"loadError": "Could not load comments.",
+		"posted": "Comment posted.",
+		"postError": "Could not post the comment.",
+		"updated": "Comment updated.",
+		"updateError": "Could not edit the comment.",
+		"confirmDelete": "Delete this comment?",
+		"deleted": "Comment deleted.",
+		"deleteError": "Could not delete the comment.",
+		"deletedUser": "Deleted user",
+		"edited": "edited",
+		"removed": "This comment has been removed.",
+		"reply": "Reply",
+		"replyPlaceholder": "Write a reply…",
+		"editPlaceholder": "Edit your comment…",
+		"submit": "Comment",
+		"placeholder": "Write a comment…",
+		"loginLink": "Sign in",
+		"loginToComment": "to leave a comment.",
+		"empty": "No comments yet. Be the first!"
+	},
+	"home": {
+		"loadError": "Recipes could not be loaded right now.",
+		"heroTitle": "Your kitchen, organized.",
+		"heroText": "Save your recipes, plan your week and find your favorite dishes in an instant.",
+		"recent": "Recent recipes",
+		"seeAll": "See all",
+		"empty": "No recipes published yet."
+	},
+	"myRecipes": {
+		"loadError": "Could not load your recipes.",
+		"title": "My recipes",
+		"new": "New recipe",
+		"empty": "You haven't published any recipe yet."
+	},
+	"favorites": {
+		"loadError": "Could not load your favorites.",
+		"title": "My favorite recipes",
+		"empty": "You haven't liked any recipe yet. Explore recipes and save the ones you love."
+	},
+	"search": {
+		"error": "Search failed.",
+		"resultsFor": "Results for \"{{query}}\"",
+		"allRecipes": "All recipes",
+		"filters": "Filters",
+		"any": "Any",
+		"maxTime": "Max time (min)",
+		"clearFilters": "Clear filters",
+		"noResults": "No results for this search.",
+		"users": "Users",
+		"recipes": "Recipes",
+		"count_one": "{{count}} recipe found",
+		"count_other": "{{count}} recipes found",
+		"placeholder": "Search recipes or users…",
+		"button": "Search",
+		"userLabel": "user",
+		"recipeLabel": "recipe"
+	},
+	"form": {
+		"newTitle": "New recipe",
+		"editTitle": "Edit recipe",
+		"title": "Title",
+		"language": "Recipe language",
+		"languageHelp": "Write all the text in this language: it will be checked and automatically translated into the others.",
+		"prepTimeMin": "Preparation (min)",
+		"cookTimeMin": "Cooking (min)",
+		"description": "Description",
+		"visibility": "Who can see this recipe",
+		"visibilityNotReady": "The visibility choice will be active as soon as the server supports it: for now it is not saved yet.",
+		"tags": "Tags",
+		"noTags": "No tags available.",
+		"catalogError": "Could not load the ingredient and tag catalog. Please reload the page.",
+		"addIngredient": "Add ingredient",
+		"ingredientPlaceholder": "Search ingredient…",
+		"ingredientName": "Ingredient",
+		"noIngredientFound": "No ingredient found in the catalog.",
+		"quantity": "Quantity",
+		"unit": "Unit",
+		"addStep": "Add step",
+		"stepN": "Step {{n}}",
+		"stepTitle": "Step title (optional)",
+		"stepDescription": "Describe the step",
+		"stepDuration": "Duration (min, optional)",
+		"addStepPhoto": "Add photo",
+		"optional": "Photo",
+		"replaceImage": "Change photo",
+		"media": "Photos and video",
+		"mediaHelp": "JPG, PNG or WEBP images up to {{imageMax}}MB, MP4 or WEBM video up to {{videoMax}}MB. Files are uploaded after the recipe is saved.",
+		"cover": "Cover photo",
+		"chooseCover": "Choose cover",
+		"gallery": "Gallery (up to {{max}} photos)",
+		"addGallery": "Add photos",
+		"video": "Video",
+		"chooseVideo": "Choose video",
+		"replaceVideo": "Change video",
+		"videoPresent": "Video uploaded",
+		"saveChanges": "Save changes",
+		"publish": "Publish recipe",
+		"uploading": "Uploading file {{done}}/{{total}}…",
+		"translating": "Checking language and translating: this may take a few seconds.",
+		"created": "Recipe published!",
+		"updated": "Recipe updated!",
+		"mediaPartial_one": "Recipe saved, but {{count}} file could not be uploaded. Try again from \"Edit\".",
+		"mediaPartial_other": "Recipe saved, but {{count}} files could not be uploaded. Try again from \"Edit\".",
+		"forbiddenTitle": "You can't edit this recipe",
+		"forbiddenText": "Only the author or an administrator can do that.",
+		"errors": {
+			"imageType": "{{name}}: unsupported format. Use JPG, PNG or WEBP.",
+			"imageSize": "{{name}} is larger than the {{max}}MB limit.",
+			"videoType": "{{name}}: unsupported format. Use MP4 or WEBM.",
+			"videoSize": "{{name}} is larger than the {{max}}MB limit.",
+			"galleryMax": "The gallery can hold at most {{max}} photos.",
+			"title": "The title must be between 3 and 255 characters.",
+			"description": "The description must be at least 10 characters.",
+			"servings": "Enter at least 1 serving.",
+			"time": "Enter a number of minutes equal to or greater than 0.",
+			"noIngredients": "Add at least one ingredient.",
+			"ingredientCatalog": "Pick an ingredient from the list.",
+			"quantity": "Enter a quantity greater than 0.",
+			"noSteps": "Add at least one step.",
+			"stepDescription": "Describe the step.",
+			"fixFields": "Please check the highlighted fields.",
+			"saveFailed": "Could not save the recipe."
+		},
+		"catalogEmpty": "The ingredient catalog is empty: ask the backend team to load it (seed)."
+	},
+	"notFound": {
+		"text": "This page doesn't exist, or the recipe has been removed.",
+		"home": "Back to home"
+	},
+	"about": {
+		"title": "About us",
+		"p1": "WeCook was born from the idea of gathering everyday recipes in one place: family classics, improvised dishes and happy discoveries. Here you can save your recipes, organize your week with the meal plan and keep track of the ones you liked best.",
+		"p2": "The project is developed as a learning exercise: the frontend and backend code are managed separately by the team."
+	},
+	"contacts": {
+		"title": "Contact",
+		"intro": "Do you have questions, suggestions or have you found a problem? Write to us, we'll reply as soon as possible.",
+		"office": "Location",
+		"officeValue": "Florence, Italy"
+	},
+	"privacy": {
+		"title": "Privacy & rights",
+		"sections": [
+			{
+				"title": "Data we collect",
+				"body": "To create an account we collect a username, an email and a password (stored encrypted). Personal details (first name, last name, address, phone) are optional and only used to personalize your profile."
+			},
+			{
+				"title": "How we use your data",
+				"body": "The recipes, favorites and meal plans you create are visible only to you, except for the recipes you choose to make public or visible to friends."
+			},
+			{
+				"title": "Your rights",
+				"body": "You can update your data at any time from the Profile page, or ask for your account to be deleted by writing to wecook.support@gmail.com"
+			}
+		]
+	},
+	"terms": {
+		"title": "Terms of service",
+		"updated": "Last updated: October 2026",
+		"intro": "By using WeCook you agree to the terms below. If you don't agree, please don't use the service.",
+		"sections": [
+			{
+				"title": "The service",
+				"body": "WeCook is a platform to save, publish and share recipes, plan meals and interact with other users. The service is provided for educational purposes and may change or be discontinued at any time."
+			},
+			{
+				"title": "Accounts",
+				"body": "To publish, comment or like you must sign up with truthful information. You are responsible for keeping your credentials confidential and for everything that happens with your account. You can enable two-factor authentication to protect it further."
+			},
+			{
+				"title": "User content",
+				"body": "You remain the owner of the recipes, photos, videos and comments you publish. You grant us the right to display them on the platform according to the visibility you choose (public, friends only or private) and to translate them automatically. Only publish content that is yours or that you have the right to share."
+			},
+			{
+				"title": "Automatic translations",
+				"body": "Recipes are translated into Italian, English and French with automatic tools. Translations may contain mistakes: the original text written by the author remains the reference."
+			},
+			{
+				"title": "Acceptable behavior",
+				"body": "You may not post illegal, offensive, discriminatory or misleading content, send spam or impersonate other people. Moderators may remove reported content, send warnings, and suspend or ban accounts that break these rules."
+			},
+			{
+				"title": "Health and allergens",
+				"body": "Recipes are shared by users and do not replace the advice of a doctor or a nutritionist. Always check ingredients, allergens, cooking and storage before eating a dish."
+			},
+			{
+				"title": "Limitation of liability",
+				"body": "The service is provided \"as is\", without guarantees of availability or of being error-free. To the extent permitted by law, WeCook is not liable for damages arising from the use of the platform or of content published by users."
+			},
+			{
+				"title": "Closing your account",
+				"body": "You can ask for your account to be deleted at any time by writing to wecook.support@gmail.com. We may suspend or close accounts that violate these terms."
+			},
+			{
+				"title": "Changes to the terms",
+				"body": "We may update these terms: the date at the top shows the latest revision. By continuing to use WeCook after a change you accept the new version."
+			}
+		]
+	},
+	"role": {
+		"user": "User",
+		"moderator": "Moderator",
+		"admin": "Admin"
+	},
+	"report": {
+		"button": "Report",
+		"title": "Report content",
+		"intro": {
+			"recipe": "Help moderators understand what is wrong with this recipe.",
+			"comment": "Help moderators understand what is wrong with this comment.",
+			"user": "Help moderators understand what is wrong with this user."
+		},
+		"reason": "Reason",
+		"reasons": {
+			"spam": "Spam or advertising",
+			"offensive": "Offensive content",
+			"inappropriate": "Inappropriate content",
+			"copyright": "Copyright violation",
+			"other": "Other"
+		},
+		"details": "Details (optional)",
+		"submit": "Send report",
+		"sent": "Report sent. Thank you!",
+		"error": "Could not send the report."
+	},
+	"moderation": {
+		"title": "Moderation",
+		"subtitle": "Reports about users, comments and recipes.",
+		"loadError": "Could not load reports.",
+		"status": "Status",
+		"statuses": {
+			"open": "Open",
+			"resolved": "Resolved",
+			"dismissed": "Dismissed"
+		},
+		"type": "Type",
+		"allTypes": "All types",
+		"targets": {
+			"recipe": "Recipe",
+			"comment": "Comment",
+			"user": "User"
+		},
+		"empty": "No reports.",
+		"reportedBy": "reported by {{name}}",
+		"owner": "by",
+		"handle": "Handle",
+		"done": "Report handled.",
+		"chooseAction": "What do you want to do?",
+		"actions": {
+			"dismiss": "Dismiss",
+			"warn": "Send a warning",
+			"delete_content": "Delete the content",
+			"ban": "Ban the user"
+		},
+		"actionHelp": {
+			"dismiss": "The report needs no action.",
+			"warn": "The author gets a notification with your message.",
+			"delete_content": "The recipe or comment is removed.",
+			"ban": "The author's account is banned."
+		},
+		"note": "Internal note (optional)",
+		"warnMessage": "Message for the user",
+		"confirm": "Confirm",
+		"confirmBan": "Ban {{name}}?",
+		"confirmDelete": "Delete the reported content? This cannot be undone.",
+		"actionError": "Action failed."
+	},
+	"admin": {
+		"subtitle": "Reports, users, roles and platform content.",
+		"tabs": {
+			"reports": "Reports",
+			"users": "Users",
+			"recipes": "Recipes",
+			"comments": "Comments"
+		},
+		"users": {
+			"loadError": "Could not load users.",
+			"updated": "User updated.",
+			"updateError": "Update failed.",
+			"confirmDelete": "Permanently delete user \"{{name}}\"? This cannot be undone.",
+			"deleted": "User deleted.",
+			"deleteError": "Deletion failed.",
+			"filter": "Filter by username or email…",
+			"role": "Role",
+			"allRoles": "All roles",
+			"new": "New user",
+			"empty": "No users found.",
+			"user": "User",
+			"status": "Status",
+			"actions": "Actions",
+			"you": "you",
+			"roleOf": "Role of {{name}}",
+			"statuses": {
+				"active": "Active",
+				"disabled": "Disabled",
+				"banned": "Banned"
+			},
+			"disable": "Disable",
+			"ban": "Ban",
+			"reactivate": "Reactivate",
+			"confirmBan": "Ban \"{{name}}\"?",
+			"editTitle": "Edit {{name}}",
+			"created": "User created.",
+			"passwordKeep": "Leave empty to keep it"
+		},
+		"recipes": {
+			"confirmDelete": "Remove the recipe \"{{title}}\"? This cannot be undone.",
+			"filter": "Search recipe…",
+			"empty": "No recipes found."
+		},
+		"comments": {
+			"filter": "Filter by text or author…",
+			"empty": "No comments found.",
+			"on": "on"
+		}
+	},
+	"friends": {
+		"actionError": "Action failed.",
+		"add": "Add friend",
+		"friends": "Friends",
+		"confirmRemove": "Remove {{name}} from your friends?",
+		"removed": "{{name}} is no longer your friend.",
+		"remove": "Remove friend",
+		"accept": "Accept",
+		"reject": "Decline",
+		"nowFriends": "You and {{name}} are now friends!",
+		"requestSent": "Request sent",
+		"cancelRequest": "Cancel request",
+		"requestSentToast": "Friend request sent to {{name}}.",
+		"loadError": "Could not load the list.",
+		"intro": "Find a user with the search bar and send a friend request from their profile. You become friends once they accept.",
+		"tabs": {
+			"friends": "Friends",
+			"received": "Received requests",
+			"sent": "Sent requests"
+		},
+		"empty": {
+			"friends": "You have no friends yet.",
+			"received": "No incoming requests.",
+			"sent": "No pending requests."
+		}
+	},
+	"profile": {
+		"notFound": "User not found.",
+		"recipesCount_one": "{{count}} recipe",
+		"recipesCount_other": "{{count}} recipes",
+		"friendsCount_one": "{{count}} friend",
+		"friendsCount_other": "{{count}} friends",
+		"editMine": "Edit your profile",
+		"publishedRecipes": "Published recipes",
+		"noRecipes": "No recipes to show.",
+		"avatarRemoved": "Profile photo removed.",
+		"avatarError": "Could not remove the photo.",
+		"saved": "Changes saved.",
+		"intro": "Manage your account information.",
+		"changeAvatar": "Change profile photo",
+		"language": "Profile language",
+		"languageHelp": "Language of the interface and of the recipes shown. For now it is only saved on this browser."
+	},
+	"notifications": {
+		"title": "Notifications",
+		"unread_one": "Notifications ({{count}} unread)",
+		"unread_other": "Notifications ({{count}} unread)",
+		"empty": "No notifications yet.",
+		"someone": "Someone",
+		"like": "liked your recipe",
+		"comment": "commented on your recipe",
+		"post": "published a new recipe",
+		"friend_request": "sent you a friend request",
+		"friend_accept": "accepted your friend request"
+	},
+	"auth": {
+		"loginError": "Sign-in failed, please try again.",
+		"welcomeBack": "Welcome back",
+		"loginIntro": "Sign in to your WeCook account.",
+		"twoFactorIntro": "Enter the 6-digit code from your authenticator app.",
+		"twoFactorCode": "Verification code",
+		"signingIn": "Signing in…",
+		"verify": "Verify",
+		"noAccount": "Don't have an account?",
+		"registerError": "Sign-up failed, please try again.",
+		"createAccount": "Create your account",
+		"registerIntro": "Start collecting your recipes.",
+		"passwordHelp": "At least 9 characters, with an uppercase letter, a lowercase letter and a number or symbol.",
+		"acceptTermsPrefix": "I have read and accept the",
+		"acceptTermsAnd": "and the",
+		"creating": "Creating…",
+		"haveAccount": "Already have an account?",
+		"showPassword": "Show password",
+		"confirmPassword": "Confirm password",
+		"passwordMismatch": "The passwords do not match."
+	},
+	"personal": {
+		"intro": "These details are optional and only visible to you.",
+		"firstName": "First name",
+		"lastName": "Last name",
+		"birthDate": "Date of birth",
+		"phone": "Phone",
+		"address": "Address",
+		"city": "City",
+		"postalCode": "Postal code"
+	},
+	"twofa": {
+		"title": "Two-factor authentication",
+		"intro": "Add a one-time code from your authenticator app to protect your account.",
+		"enable": "Enable",
+		"disable": "Disable",
+		"active": "Active on your account",
+		"confirmWithPassword": "Confirm with your password",
+		"continue": "Continue",
+		"scan": "Scan the QR code with your app (Google Authenticator, Authy, 1Password…).",
+		"qrAlt": "QR code for the authenticator app",
+		"manualKey": "Or enter this key manually:",
+		"enterCode": "6-digit code from the app",
+		"activate": "Activate 2FA",
+		"enabledToast": "Two-factor authentication enabled.",
+		"disabledToast": "Two-factor authentication disabled.",
+		"alreadyEnabled": "2FA is already enabled on your account.",
+		"alreadyDisabled": "2FA is already disabled.",
+		"passwordError": "Incorrect password.",
+		"codeError": "Invalid code, please try again."
+	}
+}

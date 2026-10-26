@@ -6,11 +6,15 @@ interface AuthContextValue {
 	user: User | null
 	// true finché non abbiamo ancora controllato se esiste una sessione valida
 	isLoading: boolean
-	signIn: (email: string, password: string) => Promise<void>
+	// con 2FA attiva il backend non apre la sessione ma restituisce un tempToken da completare con il codice a 6 cifre
+	signIn: (email: string, password: string) => Promise<SignInResult>
+	completeTwoFactor: (tempToken: string, code: string) => Promise<void>
 	signUp: (data: { username: string; email: string; password: string }) => Promise<void>
 	signOut: () => Promise<void>
 	refreshUser: () => Promise<void>
 }
+
+export type SignInResult = { twoFactor: false } | { twoFactor: true; tempToken: string }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
@@ -36,8 +40,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [refreshUser])
 
 	const signIn = useCallback(
-		async (email: string, password: string) => {
-			await api.post('/auth/signin', { email, password }, { retryOnUnauthorized: false })
+		async (email: string, password: string): Promise<SignInResult> => {
+			const res = await api.post<{ tempToken?: string; twofAuth?: boolean } | null>(
+				'/auth/signin',
+				{ email, password },
+				{ retryOnUnauthorized: false },
+			)
+			if (res?.twofAuth && res.tempToken) return { twoFactor: true, tempToken: res.tempToken }
+			await refreshUser()
+			return { twoFactor: false }
+		},
+		[refreshUser],
+	)
+
+	const completeTwoFactor = useCallback(
+		async (tempToken: string, code: string) => {
+			await api.post('/auth/twofactor/access', { tempToken, code }, { retryOnUnauthorized: false })
 			await refreshUser()
 		},
 		[refreshUser],
@@ -58,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [])
 
 	return (
-		<AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut, refreshUser }}>
+		<AuthContext.Provider value={{ user, isLoading, signIn, completeTwoFactor, signUp, signOut, refreshUser }}>
 			{children}
 		</AuthContext.Provider>
 	)

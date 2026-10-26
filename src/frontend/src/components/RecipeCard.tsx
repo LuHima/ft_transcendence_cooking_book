@@ -1,22 +1,18 @@
 import { Link } from 'react-router-dom'
-import type { Recipe, RecipeDifficulty } from '../types/models'
-
-const difficultyLabel: Record<RecipeDifficulty, string> = {
-	easy: 'Facile',
-	medium: 'Media',
-	hard: 'Difficile',
-}
+import { useTranslation } from 'react-i18next'
+import { assetUrl } from '../api/client'
+import type { RecipeSummary } from '../types/models'
 
 interface RecipeCardProps {
-	recipe: Recipe
+	recipe: RecipeSummary
 }
 
+const MAX_TAGS = 3
+
 function RecipeCard({ recipe }: RecipeCardProps) {
-	const cover = recipe.recipe_media?.find((m) => m.media_type === 'image')
-	const ingredientNames = recipe.recipe_ingredients?.map((ri) => ri.ingredient.name) ?? []
-	const isPlatform = recipe.owner_type ? recipe.owner_type === 'platform' : recipe.user_id == null
-	const authorId = recipe.user?.id ?? recipe.user_id ?? null
-	const authorName = recipe.user?.username ?? 'utente'
+	const { t } = useTranslation()
+	const cover = assetUrl(recipe.cover_image_url)
+	const author = recipe.author
 
 	// niente <Link> annidati: il titolo copre tutta la card (after:absolute), l'autore sta sopra (z-10)
 	return (
@@ -24,13 +20,14 @@ function RecipeCard({ recipe }: RecipeCardProps) {
 			<div className="aspect-[4/3] w-full overflow-hidden bg-[var(--wc-surface-raised)]">
 				{cover ? (
 					<img
-						src={cover.url}
+						src={cover}
 						alt={recipe.title}
+						loading="lazy"
 						className="h-full w-full object-cover transition-transform group-hover:scale-105"
 					/>
 				) : (
 					<div className="flex h-full items-center justify-center text-sm text-[var(--wc-text-muted)]">
-						Nessuna foto
+						{t('recipe.noPhoto')}
 					</div>
 				)}
 			</div>
@@ -41,28 +38,39 @@ function RecipeCard({ recipe }: RecipeCardProps) {
 					</Link>
 				</h3>
 				<p className="line-clamp-2 text-sm text-[var(--wc-text-muted)]">{recipe.description}</p>
-				{ingredientNames.length > 0 && (
-					<p className="line-clamp-1 text-xs text-[var(--wc-text-muted)]">
-						<span className="text-[var(--wc-text)]">Ingredienti:</span> {ingredientNames.join(', ')}
-					</p>
+
+				{recipe.tags.length > 0 && (
+					<ul className="flex flex-wrap gap-1.5">
+						{recipe.tags.slice(0, MAX_TAGS).map((tag) => (
+							<li
+								key={tag.id}
+								className="rounded-full bg-[var(--wc-surface-raised)] px-2 py-0.5 text-[11px] text-[var(--wc-text-muted)]"
+							>
+								{tag.name}
+							</li>
+						))}
+						{recipe.tags.length > MAX_TAGS && (
+							<li className="px-1 text-[11px] text-[var(--wc-text-muted)]">+{recipe.tags.length - MAX_TAGS}</li>
+						)}
+					</ul>
 				)}
-				<div className="mt-auto flex items-center justify-between gap-2 pt-2 text-xs text-[var(--wc-text-muted)]">
-					{recipe.difficulty && (
-						<span className="rounded-full border border-[var(--wc-border)] px-2 py-0.5">
-							{difficultyLabel[recipe.difficulty]}
-						</span>
-					)}
-					{recipe.prep_time != null && <span>{recipe.prep_time} min</span>}
-					{isPlatform ? (
-					<span className="text-[var(--wc-saffron)]">di WeCook</span>
-				) : authorId != null ? (
-					<span className="relative z-10 truncate">
-						di{' '}
-						<Link to={`/users/${authorId}`} className="hover:text-[var(--wc-saffron)] hover:underline">
-							{authorName}
-						</Link>
+
+				<div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-2 text-xs text-[var(--wc-text-muted)]">
+					<span className="rounded-full border border-[var(--wc-border)] px-2 py-0.5">
+						{t(`difficulty.${recipe.difficulty}`)}
 					</span>
-				) : null}
+					<span>{t('recipe.minutes', { count: recipe.total_time })}</span>
+					<span aria-label={t('recipe.likes', { count: recipe.likes_count })}>♥ {recipe.likes_count}</span>
+					{author ? (
+						<span className="relative z-10 min-w-0 truncate">
+							{t('recipe.by')}{' '}
+							<Link to={`/users/${author.id}`} className="hover:text-[var(--wc-saffron)] hover:underline">
+								{author.username}
+							</Link>
+						</span>
+					) : (
+						<span className="text-[var(--wc-saffron)]">{t('recipe.byPlatform')}</span>
+					)}
 				</div>
 			</div>
 		</div>

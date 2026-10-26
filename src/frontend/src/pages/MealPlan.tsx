@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from '../api/client'
 import RecipeAutocomplete from '../components/RecipeAutocomplete'
-import type { MealPlan as MealPlanType, MealPlanEntry, MealType, Recipe } from '../types/models'
+import type { MealPlan as MealPlanType, MealPlanEntry, MealType, Paginated, Recipe } from '../types/models'
 
 const MEAL_TYPES: { value: MealType; label: string }[] = [
 	{ value: 'breakfast', label: 'Colazione' },
@@ -41,7 +41,11 @@ function MealPlan() {
 	)
 
 	useEffect(() => {
-		api.get<Pick<Recipe, 'id' | 'title'>[]>('/recipes').then(setRecipes).catch(() => setRecipes([]))
+		// GET /recipes è paginato (max 100 per pagina): per ora si carica la prima pagina
+		api
+			.get<Paginated<Pick<Recipe, 'id' | 'title'>>>('/recipes?limit=100')
+			.then((res) => setRecipes(res?.items ?? []))
+			.catch(() => setRecipes([]))
 	}, [])
 
 	useEffect(() => {
