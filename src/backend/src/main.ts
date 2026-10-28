@@ -89,6 +89,10 @@ async function bootstrap() {
       'Curated ingredient catalogs, dietary tags, units of measure, and system metadata',
     )
     .addTag(
+      'Notifications',
+      'User activity notifications, inbox management, and real-time alerts',
+    )
+    .addTag(
       'System',
       'Health check, status probes, and system connectivity testing',
     )

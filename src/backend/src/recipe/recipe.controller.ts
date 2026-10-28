@@ -59,16 +59,13 @@ import {
 import { CatalogMetadataResponseDto } from '../catalog/dto/catalog-response.dto';
 import {
   ApiBadRequestResponseDto,
-  ApiUnauthorizedResponseDto,
   ApiForbiddenResponseDto,
   ApiNotFoundResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AuthGuard } from 'src/common/guards/auth.guard';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
-import { authenticate } from 'passport';
 import { Auth } from 'src/common/decorators/policies.decorator';
 
 /**
@@ -158,7 +155,8 @@ export class RecipeController {
     type: LocalizedRecipeDetailResponse,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid recipe ID format (must be an integer)',
+    description:
+      'Invalid recipe ID format (must be an integer) or invalid language code',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
@@ -338,7 +336,8 @@ export class RecipeController {
     type: CoverImageUploadResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'File missing or invalid file format',
+    description:
+      'Invalid recipe ID format (must be an integer), file missing, or invalid file format',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
@@ -389,7 +388,8 @@ export class RecipeController {
     type: StepImageUploadResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'File missing or invalid image',
+    description:
+      'Invalid recipe ID or step number format (must be integers), file missing, or invalid image format',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
@@ -444,7 +444,8 @@ export class RecipeController {
     type: [RecipeMediaResponse],
   })
   @ApiBadRequestResponse({
-    description: 'Maximum 3 gallery images exceeded or invalid format',
+    description:
+      'Invalid recipe ID format (must be an integer), maximum 3 gallery images exceeded, or invalid format',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
@@ -490,7 +491,8 @@ export class RecipeController {
     type: VideoUploadResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'File missing or invalid video format',
+    description:
+      'Invalid recipe ID format (must be an integer), file missing, or invalid video format',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
@@ -521,6 +523,10 @@ export class RecipeController {
     description: 'Cover image deleted',
     type: RecipeMessageResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Cover image not found or already deleted',
     type: ApiNotFoundResponseDto,
@@ -546,6 +552,10 @@ export class RecipeController {
   @ApiOkResponse({
     description: 'Tutorial video deleted',
     type: RecipeMessageResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe or video not found',
@@ -578,6 +588,10 @@ export class RecipeController {
     description: 'Step image deleted',
     type: RecipeMessageResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID or step number format (must be integers)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe or step not found',
     type: ApiNotFoundResponseDto,
@@ -606,6 +620,10 @@ export class RecipeController {
     description: 'Gallery media photo deleted',
     type: RecipeMessageResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID or media ID format (must be integers)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe or media item not found',
     type: ApiNotFoundResponseDto,
@@ -630,6 +648,10 @@ export class RecipeController {
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({ description: 'Recipe liked', type: RecipeLikeResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
@@ -653,6 +675,10 @@ export class RecipeController {
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({ description: 'Recipe unliked', type: RecipeLikeResponseDto })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
@@ -680,7 +706,8 @@ export class RecipeController {
     type: RecipeCommentResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid input or parent comment not found/mismatched',
+    description:
+      'Invalid input, invalid recipe ID format (must be an integer), or parent comment not found/mismatched',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({

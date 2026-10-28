@@ -741,6 +741,16 @@
               }
             }
           },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -783,6 +793,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
                 }
               }
             }
@@ -1009,36 +1029,76 @@
     },
     "/api/users": {
       "get": {
-        "description": "Searches users by username substring matching (case-insensitive).",
-        "operationId": "UsersController_searchUser",
+        "description": "Returns a paginated list of active community members.\n\n- When search is omitted: returns active members ordered by total published recipes (recipes_count_desc).\n- When search is provided: performs case-insensitive substring matching across username, first_name, and last_name (defaulting to username_asc).\n- When authenticated: caller is excluded from results and receives contextual friendship_status.\n- When unauthenticated: friendship_status is null.\n- Inactive, disabled, banned, and soft-deleted accounts are excluded.",
+        "operationId": "UsersController_findUsers",
         "parameters": [
           {
-            "name": "search",
-            "required": true,
+            "name": "page",
+            "required": false,
             "in": "query",
-            "description": "Username substring search query",
+            "description": "1-based page window index",
             "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search query substring matching username, first_name, or last_name (minimum 2 non-whitespace characters)",
+            "schema": {
+              "minLength": 2,
               "example": "mario",
               "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sorting criteria for member discovery. Contextual default: username_asc if search is specified, recipes_count_desc if omitted.",
+            "schema": {
+              "example": "recipes_count_desc",
+              "type": "string",
+              "enum": [
+                "username_asc",
+                "username_desc",
+                "recipes_count_desc",
+                "newest",
+                "oldest"
+              ]
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "List of matching usernames",
+            "description": "Paginated user search and discovery results",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserSearchResultDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedUsersResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Search parameter is missing or empty",
+            "description": "Invalid query parameters (search query shorter than 2 non-whitespace characters, negative page index, limit exceeding 100, or invalid sort option)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1058,7 +1118,7 @@
             }
           }
         },
-        "summary": "Search users by username",
+        "summary": "Search and discover community members",
         "tags": [
           "Users"
         ]
@@ -1191,7 +1251,7 @@
             }
           },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -1695,7 +1755,7 @@
             }
           },
           "400": {
-            "description": "Invalid recipe ID format (must be an integer)",
+            "description": "Invalid recipe ID format (must be an integer) or invalid language code",
             "content": {
               "application/json": {
                 "schema": {
@@ -2032,7 +2092,7 @@
             }
           },
           "400": {
-            "description": "File missing or invalid file format",
+            "description": "Invalid recipe ID format (must be an integer), file missing, or invalid file format",
             "content": {
               "application/json": {
                 "schema": {
@@ -2104,6 +2164,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -2208,7 +2278,7 @@
             }
           },
           "400": {
-            "description": "File missing or invalid image",
+            "description": "Invalid recipe ID or step number format (must be integers), file missing, or invalid image format",
             "content": {
               "application/json": {
                 "schema": {
@@ -2290,6 +2360,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid recipe ID or step number format (must be integers)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -2390,7 +2470,7 @@
             }
           },
           "400": {
-            "description": "Maximum 3 gallery images exceeded or invalid format",
+            "description": "Invalid recipe ID format (must be an integer), maximum 3 gallery images exceeded, or invalid format",
             "content": {
               "application/json": {
                 "schema": {
@@ -2489,7 +2569,7 @@
             }
           },
           "400": {
-            "description": "File missing or invalid video format",
+            "description": "Invalid recipe ID format (must be an integer), file missing, or invalid video format",
             "content": {
               "application/json": {
                 "schema": {
@@ -2561,6 +2641,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -2644,6 +2734,16 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid recipe ID or media ID format (must be integers)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
@@ -2713,6 +2813,16 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
@@ -2776,6 +2886,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecipeLikeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid recipe ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -2860,7 +2980,7 @@
             }
           },
           "400": {
-            "description": "Invalid input or parent comment not found/mismatched",
+            "description": "Invalid input, invalid recipe ID format (must be an integer), or parent comment not found/mismatched",
             "content": {
               "application/json": {
                 "schema": {
@@ -3234,8 +3354,18 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid pagination query parameters (e.g. non-integer or out-of-range page/limit)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -3323,8 +3453,18 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid friend request query parameters (unsupported type enum or invalid pagination format)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -3383,7 +3523,7 @@
             }
           },
           "400": {
-            "description": "Cannot send friend request to yourself",
+            "description": "Cannot send friend request to yourself or invalid addressee ID format (must be an integer)",
             "content": {
               "application/json": {
                 "schema": {
@@ -3393,7 +3533,7 @@
             }
           },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -3469,8 +3609,18 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid addressee ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -3538,8 +3688,18 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid requester ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -3607,8 +3767,18 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid requester ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -3676,8 +3846,18 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid friend ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required: missing or invalid accessToken cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -3720,20 +3900,40 @@
     },
     "/api/notifications/read/{id}": {
       "patch": {
+        "description": "Marks a specific notification as read. The authenticated user must be the recipient.",
         "operationId": "NotificationController_readedNotification",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Numeric notification ID",
             "schema": {
+              "example": 1,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Notification marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid notification ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
@@ -3744,6 +3944,36 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden: user is not the recipient of the notification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Notification not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3751,27 +3981,48 @@
             "accessToken": []
           }
         ],
+        "summary": "Mark notification as read",
         "tags": [
-          "Notification"
+          "Notifications"
         ]
       }
     },
     "/api/notifications/delete/{id}": {
       "delete": {
+        "description": "Permanently deletes a notification from the inbox. The authenticated user must be the recipient.",
         "operationId": "NotificationController_deleteNotification",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Numeric notification ID",
             "schema": {
+              "example": 1,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Notification deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid notification ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
@@ -3782,6 +4033,36 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Forbidden: user is not the recipient of the notification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Notification not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3789,18 +4070,27 @@
             "accessToken": []
           }
         ],
+        "summary": "Delete notification",
         "tags": [
-          "Notification"
+          "Notifications"
         ]
       }
     },
     "/api/notifications": {
       "get": {
+        "description": "Retrieves all notifications for the authenticated user, ordered by creation date.",
         "operationId": "NotificationController_getNotification",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "List of notifications for the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
@@ -3811,6 +4101,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3818,8 +4118,9 @@
             "accessToken": []
           }
         ],
+        "summary": "Get user notifications",
         "tags": [
-          "Notification"
+          "Notifications"
         ]
       }
     }
@@ -3850,6 +4151,10 @@
     {
       "name": "Catalog",
       "description": "Curated ingredient catalogs, dietary tags, units of measure, and system metadata"
+    },
+    {
+      "name": "Notifications",
+      "description": "User activity notifications, inbox management, and real-time alerts"
     },
     {
       "name": "System",
@@ -4708,17 +5013,120 @@
           "has_prev_page"
         ]
       },
-      "UserSearchResultDto": {
+      "UserSearchItemDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "number",
+            "description": "User identifier",
+            "example": 1
+          },
           "username": {
             "type": "string",
-            "description": "Matching username",
+            "description": "Unique username",
             "example": "mario_rossi"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar image URL",
+            "example": "/uploads/avatars/avatar_1.webp"
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name",
+            "example": "Mario"
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name",
+            "example": "Rossi"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Account registration timestamp",
+            "example": "2026-10-15T12:00:00.000Z"
+          },
+          "recipes_count": {
+            "type": "number",
+            "description": "Total published recipes",
+            "example": 12
+          },
+          "friendship_status": {
+            "nullable": true,
+            "description": "Contextual friendship status relative to the authenticated caller (friends, pending_sent, pending_received, none, or null for guests)",
+            "example": "friends",
+            "enum": [
+              "none",
+              "pending_sent",
+              "pending_received",
+              "friends"
+            ],
+            "type": "string"
           }
         },
         "required": [
-          "username"
+          "id",
+          "username",
+          "avatar_url",
+          "first_name",
+          "last_name",
+          "created_at",
+          "recipes_count"
+        ]
+      },
+      "PaginatedUsersResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Collection of member cards for the current page window",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSearchItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total count of active members matching query",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of available pages",
+            "example": 3
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Whether a next page exists",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
         ]
       },
       "PublicUserResponseDto": {
@@ -6172,6 +6580,104 @@
         },
         "required": [
           "message"
+        ]
+      },
+      "NotificationMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Status message confirming operation",
+            "example": "Read"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "NotificationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique numeric notification ID",
+            "example": 1
+          },
+          "user_id": {
+            "type": "number",
+            "description": "User ID of the recipient",
+            "example": 2
+          },
+          "actor_id": {
+            "type": "number",
+            "description": "User ID of the actor who triggered the notification",
+            "example": 5
+          },
+          "subject": {
+            "enum": [
+              "recipe",
+              "comment",
+              "user"
+            ],
+            "type": "string",
+            "description": "Domain entity subject associated with the notification",
+            "example": "recipe"
+          },
+          "action": {
+            "enum": [
+              "like",
+              "comment",
+              "friend_request",
+              "friend_accept",
+              "post",
+              "delete",
+              "update"
+            ],
+            "type": "string",
+            "description": "Action that triggered the notification",
+            "example": "like"
+          },
+          "target_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Optional ID of the target resource (e.g. recipe ID or comment ID)",
+            "example": 42
+          },
+          "is_read": {
+            "type": "boolean",
+            "description": "Whether the notification has been marked as read",
+            "example": false
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the notification was created",
+            "example": "2026-10-28T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "actor_id",
+          "subject",
+          "action",
+          "is_read",
+          "created_at"
+        ]
+      },
+      "NotificationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "notification": {
+            "description": "List of notifications for the authenticated user",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationItemDto"
+            }
+          }
+        },
+        "required": [
+          "notification"
         ]
       }
     }

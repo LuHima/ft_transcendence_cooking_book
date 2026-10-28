@@ -20,7 +20,6 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
-  ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
   ApiParam,
   ApiQuery,
@@ -49,7 +48,6 @@ import {
   ApiBadRequestResponseDto,
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
-  ApiUnauthorizedResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { SearchUserQueryDto } from './dto/search-user-query.dto';
@@ -149,6 +147,10 @@ export class UsersController {
     description: 'File missing or invalid file format',
     type: ApiBadRequestResponseDto,
   })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
   @Auth()
   @Post('me/avatar')
   @UseInterceptors(FileInterceptor('file', avatarMulterOptions))
@@ -170,6 +172,10 @@ export class UsersController {
   @ApiOkResponse({
     description: 'Avatar successfully deleted',
     type: UserMessageResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Delete('me/avatar')
@@ -316,10 +322,6 @@ export class UsersController {
   @ApiNotFoundResponse({
     description: 'User not found',
     type: ApiNotFoundResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
   })
   @Auth()
   @Get(':id/friends')
