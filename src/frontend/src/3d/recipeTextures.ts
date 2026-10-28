@@ -29,16 +29,16 @@ export function createRecipeTexture(
   ctx.translate(canvas.width - 100, canvas.height / 2);
   ctx.rotate(Math.PI / 2);
 
-  let fontSize = 35;
+  let fontSize = 32;
   ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-  while (ctx.measureText(title).width > canvas.height - 64 && fontSize > 24) {
-    fontSize -= 2;
-    ctx.font = `bold ${fontSize}px serif`;
-  }
-  ctx.fillText(title, 0, 0);
+
+  const titleLines = wrapLongLines(title, 25);
+  titleLines.forEach((line, index) => {
+    ctx.fillText(line, 0, index * 45);
+  })
 
   if (title) {
-    ctx.font = "24px serif";
+    ctx.font = "30px serif";
     ctx.fillStyle = "#5a442b";
     const lines = wrapLongLines(
       description,
