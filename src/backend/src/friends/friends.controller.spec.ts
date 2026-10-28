@@ -75,7 +75,7 @@ describe('FriendsController', () => {
       const mockResponse = { message: 'Friend request sent', status: 'pending' };
       (service.sendFriendRequest as jest.Mock<any>).mockResolvedValue(mockResponse);
 
-      const result = await controller.sendFriendRequest(1, { recipient_id: 2 });
+      const result = await controller.sendFriendRequest(1, 2);
 
       expect(result).toEqual(mockResponse);
       expect(service.sendFriendRequest).toHaveBeenCalledWith(1, 2);

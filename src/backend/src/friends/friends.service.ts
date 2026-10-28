@@ -364,12 +364,12 @@ export class FriendsService {
    */
   async cancelFriendRequest(
     userId: number,
-    recipientId: number,
+    addresseeId: number,
   ): Promise<FriendRequestActionResponseDto> {
     const pendingRequest = await this.prisma.friendship.findFirst({
       where: {
         requester_id: userId,
-        addressee_id: recipientId,
+        addressee_id: addresseeId,
         status: 'pending',
       },
     });
@@ -385,7 +385,7 @@ export class FriendsService {
     // Cascading cleanup of notification in recipient's inbox
     await this.prisma.notification.deleteMany({
       where: {
-        user_id: recipientId,
+        user_id: addresseeId,
         actor_id: userId,
         action: 'friend_request',
       },

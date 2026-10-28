@@ -3266,162 +3266,7 @@
         ]
       }
     },
-    "/api/friends/{friendId}": {
-      "delete": {
-        "description": "Silently removes an established friendship without notifying the other user.",
-        "operationId": "FriendsController_removeFriend",
-        "parameters": [
-          {
-            "name": "friendId",
-            "required": true,
-            "in": "path",
-            "description": "Numeric user ID of the friend to remove",
-            "schema": {
-              "example": 2,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Friendship removed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FriendMessageResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Friendship not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Remove a friend",
-        "tags": [
-          "Friends"
-        ]
-      }
-    },
     "/api/friends/requests": {
-      "post": {
-        "description": "Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship.",
-        "operationId": "FriendsController_sendFriendRequest",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendFriendRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Friend request sent or auto-accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Cannot send friend request to yourself",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Already friends with this user or friend request already sent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Send friend request",
-        "tags": [
-          "Friends"
-        ]
-      },
       "get": {
         "description": "Returns a paginated list of pending incoming or outgoing friend requests.",
         "operationId": "FriendsController_getFriendRequests",
@@ -3510,13 +3355,169 @@
         ]
       }
     },
-    "/api/friends/requests/{userId}/accept": {
+    "/api/friends/requests/{addresseeId}": {
+      "post": {
+        "description": "Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship.",
+        "operationId": "FriendsController_sendFriendRequest",
+        "parameters": [
+          {
+            "name": "addresseeId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user ID of the target of the friend request",
+            "schema": {
+              "example": 3,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request sent or auto-accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot send friend request to yourself",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already friends with this user or friend request already sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Send friend request",
+        "tags": [
+          "Friends"
+        ]
+      },
+      "delete": {
+        "description": "Cancels a pending friend request sent to the specified user, hard deleting the request and cleaning up addressee inbox notification.",
+        "operationId": "FriendsController_cancelFriendRequest",
+        "parameters": [
+          {
+            "name": "addresseeId",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user ID of the addressee",
+            "schema": {
+              "example": 4,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Friend request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Cancel outgoing friend request",
+        "tags": [
+          "Friends"
+        ]
+      }
+    },
+    "/api/friends/requests/{requesterId}/accept": {
       "post": {
         "description": "Accepts an incoming pending friend request from the specified user.",
         "operationId": "FriendsController_acceptFriendRequest",
         "parameters": [
           {
-            "name": "userId",
+            "name": "requesterId",
             "required": true,
             "in": "path",
             "description": "Numeric user ID of the requester",
@@ -3579,13 +3580,13 @@
         ]
       }
     },
-    "/api/friends/requests/{userId}/reject": {
+    "/api/friends/requests/{requesterId}/reject": {
       "post": {
         "description": "Rejects an incoming pending friend request, hard deleting the request and cleaning up inbox notification.",
         "operationId": "FriendsController_rejectFriendRequest",
         "parameters": [
           {
-            "name": "userId",
+            "name": "requesterId",
             "required": true,
             "in": "path",
             "description": "Numeric user ID of the requester",
@@ -3648,29 +3649,29 @@
         ]
       }
     },
-    "/api/friends/requests/{userId}": {
+    "/api/friends/{friendId}": {
       "delete": {
-        "description": "Cancels a pending friend request sent to the specified user, hard deleting the request and cleaning up recipient inbox notification.",
-        "operationId": "FriendsController_cancelFriendRequest",
+        "description": "Silently removes an established friendship without notifying the other user.",
+        "operationId": "FriendsController_removeFriend",
         "parameters": [
           {
-            "name": "userId",
+            "name": "friendId",
             "required": true,
             "in": "path",
-            "description": "Numeric user ID of the recipient",
+            "description": "Numeric user ID of the friend to remove",
             "schema": {
-              "example": 4,
+              "example": 2,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Friend request cancelled",
+            "description": "Friendship removed successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FriendRequestActionResponseDto"
+                  "$ref": "#/components/schemas/FriendMessageResponseDto"
                 }
               }
             }
@@ -3686,7 +3687,7 @@
             }
           },
           "404": {
-            "description": "Friend request not found",
+            "description": "Friendship not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -3711,7 +3712,7 @@
             "accessToken": []
           }
         ],
-        "summary": "Cancel outgoing friend request",
+        "summary": "Remove a friend",
         "tags": [
           "Friends"
         ]
@@ -6054,55 +6055,6 @@
           "content"
         ]
       },
-      "FriendMessageResponseDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "Action outcome confirmation message",
-            "example": "Friend removed successfully"
-          }
-        },
-        "required": [
-          "message"
-        ]
-      },
-      "SendFriendRequestDto": {
-        "type": "object",
-        "properties": {
-          "recipient_id": {
-            "type": "number",
-            "description": "Target user ID to invite as friend",
-            "example": 3,
-            "minimum": 1
-          }
-        },
-        "required": [
-          "recipient_id"
-        ]
-      },
-      "FriendRequestActionResponseDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "Result message describing outcome",
-            "example": "Friend request sent"
-          },
-          "status": {
-            "enum": [
-              "pending",
-              "accepted"
-            ],
-            "type": "string",
-            "description": "Resulting relationship status when sending request",
-            "example": "pending"
-          }
-        },
-        "required": [
-          "message"
-        ]
-      },
       "FriendRequestItemDto": {
         "type": "object",
         "properties": {
@@ -6185,6 +6137,41 @@
           "total_pages",
           "has_next_page",
           "has_prev_page"
+        ]
+      },
+      "FriendRequestActionResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Result message describing outcome",
+            "example": "Friend request sent"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "accepted"
+            ],
+            "type": "string",
+            "description": "Resulting relationship status when sending request",
+            "example": "pending"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "FriendMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Action outcome confirmation message",
+            "example": "Friend removed successfully"
+          }
+        },
+        "required": [
+          "message"
         ]
       }
     }
