@@ -1,18 +1,39 @@
 
 
 export function wrapLongLines(text: string, maxLength = 30): string[] {
-	// Normalizza gli spazi bianchi e rimuove eventuali spazi iniziali o finali
-    // /\s+/g significa "uno o più spazi bianchi" e li sostituisce con un singolo spazio
-	// la g serve per fare la sostituzione globalmente su tutta la stringa
-	// trim() rimuove eventuali spazi bianchi all'inizio e alla fine della stringa
 	const normalizedText = text.replace(/\s+/g, ' ').trim()
-	const lines: string[] = []
+	if (!normalizedText) return []
 
-	// Divide il testo in linee di lunghezza massima maxLength
-	for (let index = 0; index < normalizedText.length; index += maxLength) {
-		const line = normalizedText.slice(index, index + maxLength)
-		lines.push(index + maxLength < normalizedText.length ? `${line}-` : line)
+	const lines: string[] = []
+	let currentLine = ''
+
+	for (const word of normalizedText.split(' ')) {
+		const characters = Array.from(word)
+		if (characters.length > maxLength) {
+			if (currentLine) {
+				lines.push(currentLine)
+				currentLine = ''
+			}
+
+			while (characters.length > maxLength) {
+				lines.push(`${characters.splice(0, maxLength - 1).join('')}-`)
+			}
+		}
+
+		const remainingWord = characters.join('')
+		if (!remainingWord) continue
+
+		if (!currentLine) {
+			currentLine = remainingWord
+		} else if (Array.from(`${currentLine} ${remainingWord}`).length <= maxLength) {
+			currentLine += ` ${remainingWord}`
+		} else {
+			lines.push(currentLine)
+			currentLine = remainingWord
+		}
 	}
+
+	if (currentLine) lines.push(currentLine)
 
 	return lines
 }

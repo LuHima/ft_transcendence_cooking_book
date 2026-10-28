@@ -26,6 +26,7 @@ import {
   logoUrl,
 } from "../kitchenAssets";
 import { createRecipeTexture } from "../recipeTextures";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const BOOK_COVER_SIZE = {
   width: 0.4,
@@ -228,9 +229,11 @@ export default function Book({
   isChangingApiPage,
   onPreviousApiPage,
   onNextApiPage,
-  onDefaultPage,
   currentApiPage,
 }: BookProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // limiti iniziali per la camera quando si ruota intorno alla scena
   const originalLimits = useRef({
     minPolarAngle: Math.PI * 0.35,
@@ -670,7 +673,10 @@ export default function Book({
               {
                 key: "left-inner",
                 y: 0.215,
-                action: () => onDefaultPage?.(),
+                action: () =>
+                  navigate(`/recipes/${recipes[turnedPageCount - 1].id}`, {
+                    state: { backgroundLocation: location },
+                  }),
               },
             ]
           : []),
@@ -679,7 +685,10 @@ export default function Book({
               {
                 key: "right-inner",
                 y: 0.081,
-                action: () => onDefaultPage?.(),
+                action: () =>
+                  navigate(`/recipes/${recipes[turnedPageCount].id}`, {
+                    state: { backgroundLocation: location },
+                  }),
               },
               { key: "right-outer", y: -0.029, action: nextPage },
             ]
