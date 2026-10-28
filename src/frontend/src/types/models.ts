@@ -237,22 +237,6 @@ export interface ThreadedComment extends ApiComment {
 	replies: ApiComment[]
 }
 
-// ─── altro ───
-
-export interface MealPlanEntry {
-	recipe_id: number
-	recipe_title?: string
-	planned_date: string // ISO date (YYYY-MM-DD)
-	meal_type: MealType
-}
-
-export interface MealPlan {
-	id: number
-	start_date: string
-	end_date: string
-	meal_plan_recipes: MealPlanEntry[]
-}
-
 // commento "piatto" usato dalla moderazione admin (blocco 2)
 export interface RecipeComment {
 	id: number

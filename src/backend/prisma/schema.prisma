@@ -137,7 +137,6 @@ model User {
   recipes        Recipe[]
   comments       Comment[]
   likes          Like[]
-  meal_plans     MealPlan[]
 
   notifications_received Notification[] @relation("NotificationRecipient")
   notifications_sent     Notification[] @relation("NotificationActor")
@@ -176,7 +175,6 @@ model Recipe {
   recipe_tags        RecipeTag[]
   comments           Comment[]
   likes              Like[]
-  meal_plan_recipes  MealPlanRecipe[]
   recipe_media       RecipeMedia[]
 
   @@map("recipes")
@@ -376,36 +374,6 @@ model Notification {
 
   @@index([user_id, is_read, created_at])
   @@map("notifications")
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MEAL PLANS
-// ─────────────────────────────────────────────────────────────────────────────
-
-model MealPlan {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  start_date DateTime @db.Date
-  end_date   DateTime @db.Date
-  created_at DateTime @default(now())
-
-  user              User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  meal_plan_recipes MealPlanRecipe[]
-
-  @@map("meal_plans")
-}
-
-model MealPlanRecipe {
-  meal_plan_id Int
-  recipe_id    Int
-  planned_date DateTime @db.Date
-  meal_type    MealType
-
-  meal_plan MealPlan @relation(fields: [meal_plan_id], references: [id], onDelete: Cascade)
-  recipe    Recipe   @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
-
-  @@id([meal_plan_id, recipe_id, planned_date])
-  @@map("meal_plan_recipes")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
