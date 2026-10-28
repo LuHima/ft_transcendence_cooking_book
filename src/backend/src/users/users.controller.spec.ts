@@ -3,6 +3,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { UserSort } from './dto/search-user-query.dto';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -38,6 +39,7 @@ describe('UsersController', () => {
             getLikedRecipes: jest.fn(),
             getMyRecipes: jest.fn(),
             findUser: jest.fn(),
+            findUsers: jest.fn(),
             getUser: jest.fn(),
             getUserFriends: jest.fn(),
           },
@@ -157,17 +159,63 @@ describe('UsersController', () => {
     });
   });
 
-  describe('searchUser', () => {
-    it('should delegate to service.findUser with search query parameter', async () => {
-      const mockResult = [{ username: 'mario' }, { username: 'mario_chef' }];
-      (service.findUser as jest.Mock<any>) = jest
+  describe('findUsers', () => {
+    it('should delegate to service.findUsers with query and currentUserId', async () => {
+      const mockResult = {
+        items: [
+          {
+            id: 2,
+            username: 'giulia',
+            avatar_url: '/uploads/avatars/avatar_2.webp',
+            first_name: 'Giulia',
+            last_name: 'Bianchi',
+            created_at: new Date('2026-09-01T10:00:00Z'),
+            recipes_count: 5,
+            friendship_status: 'friends' as const,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.findUsers as jest.Mock<any>) = jest
         .fn<() => Promise<any>>()
         .mockResolvedValue(mockResult);
 
-      const result = await controller.searchUser({ search: 'mario' });
+      const query = {
+        page: 1,
+        limit: 20,
+        search: 'giulia',
+        sort: UserSort.username_asc,
+      };
+      const result = await controller.findUsers(query, 1);
 
       expect(result).toEqual(mockResult);
-      expect(service.findUser).toHaveBeenCalledWith('mario');
+      expect(service.findUsers).toHaveBeenCalledWith(query, 1);
+    });
+
+    it('should delegate to service.findUsers without currentUserId for unauthenticated visitor', async () => {
+      const mockResult = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.findUsers as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockResult);
+
+      const query = { page: 1, limit: 20 };
+      const result = await controller.findUsers(query, undefined);
+
+      expect(result).toEqual(mockResult);
+      expect(service.findUsers).toHaveBeenCalledWith(query, undefined);
     });
   });
 

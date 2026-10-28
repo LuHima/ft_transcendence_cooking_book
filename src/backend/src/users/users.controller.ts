@@ -42,6 +42,8 @@ import {
   UserSearchResultDto,
   AvatarUploadResponseDto,
   UserMessageResponseDto,
+  UserSearchItemDto,
+  PaginatedUsersResponseDto,
 } from './dto/user-profile-response.dto';
 import {
   ApiBadRequestResponseDto,
@@ -226,24 +228,34 @@ export class UsersController {
   }
 
   /**
-   * Search users by username substring.
+   * Search and discover community members.
    */
   @ApiOperation({
-    summary: 'Search users by username',
+    summary: 'Search and discover community members',
     description:
-      'Searches users by username substring matching (case-insensitive).',
+      'Returns a paginated list of active community members.\n\n' +
+      '- When search is omitted: returns active members ordered by total published recipes (recipes_count_desc).\n' +
+      '- When search is provided: performs case-insensitive substring matching across username, first_name, and last_name (defaulting to username_asc).\n' +
+      '- When authenticated: caller is excluded from results and receives contextual friendship_status.\n' +
+      '- When unauthenticated: friendship_status is null.\n' +
+      '- Inactive, disabled, banned, and soft-deleted accounts are excluded.',
   })
   @ApiOkResponse({
-    description: 'List of matching usernames',
-    type: [UserSearchResultDto],
+    description: 'Paginated user search and discovery results',
+    type: PaginatedUsersResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Search parameter is missing or empty',
+    description:
+      'Invalid query parameters (search query shorter than 2 non-whitespace characters, negative page index, limit exceeding 100, or invalid sort option)',
     type: ApiBadRequestResponseDto,
   })
+  @UseGuards(OptionalAuthGuard)
   @Get()
-  async searchUser(@Query() query: SearchUserQueryDto) {
-    return await this.userService.findUser(query.search);
+  async findUsers(
+    @Query() query: SearchUserQueryDto,
+    @CurrentUser('id') currentUserId?: number,
+  ): Promise<PaginatedUsersResponseDto> {
+    return await this.userService.findUsers(query, currentUserId);
   }
 
   /**

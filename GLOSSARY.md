@@ -82,6 +82,10 @@ _Avoid_: Review, feedback, note, chat message, post reply
 
 ## Social & Friendship Entities
 
+**Community Member**:
+An active, registered user on the platform capable of authoring recipes, engaging in culinary discussions, and establishing friendships.
+_Avoid_: Account, client, visitor, subscriber
+
 **Friendship**:
 A mutual, bidirectional social connection established between two authenticated users upon mutual consent.
 _Avoid_: Follow, connection, contact, subscriber
@@ -89,3 +93,7 @@ _Avoid_: Follow, connection, contact, subscriber
 **Friend Request**:
 An invitation initiated by one user to another seeking to establish a mutual Friendship.
 _Avoid_: Follow request, invitation, ping
+
+**Friendship Status**:
+The contextual relationship classification between a viewing user and a target member (`none`, `pending_sent`, `pending_received`, `friends`).
+_Avoid_: Follow status, relation type, connection state

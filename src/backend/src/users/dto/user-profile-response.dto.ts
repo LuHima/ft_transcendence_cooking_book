@@ -186,7 +186,122 @@ export class PublicUserResponseDto {
 }
 
 /**
- * User search result item.
+ * Member card item returned in user discovery and search results.
+ */
+export class UserSearchItemDto {
+  /**
+   * Unique user identifier.
+   * @example 1
+   */
+  @ApiProperty({ description: 'User identifier', example: 1 })
+  id: number;
+
+  /**
+   * Unique username of the community member.
+   * @example 'mario_rossi'
+   */
+  @ApiProperty({ description: 'Unique username', example: 'mario_rossi' })
+  username: string;
+
+  /**
+   * Public avatar photo URL.
+   * @example '/uploads/avatars/avatar_1.webp'
+   */
+  @ApiProperty({
+    description: 'Avatar image URL',
+    example: '/uploads/avatars/avatar_1.webp',
+    nullable: true,
+  })
+  avatar_url: string | null;
+
+  /**
+   * First name of the member.
+   * @example 'Mario'
+   */
+  @ApiProperty({ description: 'First name', example: 'Mario', nullable: true })
+  first_name: string | null;
+
+  /**
+   * Last name of the member.
+   * @example 'Rossi'
+   */
+  @ApiProperty({ description: 'Last name', example: 'Rossi', nullable: true })
+  last_name: string | null;
+
+  /**
+   * Account registration date.
+   * @example '2026-10-15T12:00:00.000Z'
+   */
+  @ApiProperty({
+    description: 'Account registration timestamp',
+    example: '2026-10-15T12:00:00.000Z',
+  })
+  created_at: Date;
+
+  /**
+   * Total published recipes authored by the member.
+   * @example 12
+   */
+  @ApiProperty({
+    description: 'Total published recipes',
+    example: 12,
+  })
+  recipes_count: number;
+
+  /**
+   * Contextual friendship status relative to the authenticated caller.
+   * Set to null for unauthenticated guests.
+   * @example 'friends'
+   */
+  @ApiPropertyOptional({
+    description:
+      'Contextual friendship status relative to the authenticated caller (friends, pending_sent, pending_received, none, or null for guests)',
+    enum: ['none', 'pending_sent', 'pending_received', 'friends'],
+    nullable: true,
+    example: 'friends',
+  })
+  friendship_status:
+    | 'none'
+    | 'pending_sent'
+    | 'pending_received'
+    | 'friends'
+    | null;
+}
+
+/**
+ * Paginated collection of user discovery and search results.
+ */
+export class PaginatedUsersResponseDto {
+  @ApiProperty({
+    type: [UserSearchItemDto],
+    description: 'Collection of member cards for the current page window',
+  })
+  items: UserSearchItemDto[];
+
+  @ApiProperty({
+    description: 'Total count of active members matching query',
+    example: 42,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Number of items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total number of available pages', example: 3 })
+  total_pages: number;
+
+  @ApiProperty({ description: 'Whether a next page exists', example: true })
+  has_next_page: boolean;
+
+  @ApiProperty({ description: 'Whether a previous page exists', example: false })
+  has_prev_page: boolean;
+}
+
+/**
+ * User search result item (legacy username-only projection).
  */
 export class UserSearchResultDto {
   /**

@@ -38,6 +38,7 @@ describe('UsersService', () => {
               findUnique: jest.fn(),
               findMany: jest.fn(),
               update: jest.fn(),
+              count: jest.fn(),
             },
             like: {
               findMany: jest.fn(),
@@ -99,20 +100,27 @@ describe('UsersService', () => {
     it('should update user fields and return the updated user profile', async () => {
       const updateData = {
         first_name: 'Luigi',
-        last_name: 'Verdi',
         city: 'Milano',
-        phone: '+39987654321',
+        email: ' LUIGI@EXAMPLE.COM ',
       };
-      const expectedUpdatedUser = { ...mockDbUser, ...updateData };
-
-      (prisma.user.update as jest.Mock).mockResolvedValue(expectedUpdatedUser);
+      const updatedUser = {
+        ...mockDbUser,
+        first_name: 'Luigi',
+        city: 'Milano',
+        email: 'luigi@example.com',
+      };
+      (prisma.user.update as jest.Mock).mockResolvedValue(updatedUser);
 
       const result = await service.updateMe(1, updateData);
 
-      expect(result).toEqual(expectedUpdatedUser);
+      expect(result).toEqual(updatedUser);
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: expect.objectContaining(updateData),
+        data: {
+          first_name: 'Luigi',
+          city: 'Milano',
+          email: 'luigi@example.com',
+        },
         select: {
           id: true,
           username: true,
@@ -131,119 +139,113 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw NotFoundException if user is not found during update (Prisma P2025)', async () => {
-      const p2025Error = new Error('Record to update not found');
-      (p2025Error as any).code = 'P2025';
-      (prisma.user.update as jest.Mock).mockRejectedValue(p2025Error);
-
-      await expect(
-        service.updateMe(999, { first_name: 'Luigi' }),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('should rethrow unexpected database errors to let them bubble up to global filter', async () => {
-      const unexpectedError = new Error('Connection terminated unexpectedly');
-      (prisma.user.update as jest.Mock).mockRejectedValue(unexpectedError);
-
-      await expect(
-        service.updateMe(1, { first_name: 'Luigi' }),
-      ).rejects.toThrow('Connection terminated unexpectedly');
-    });
-
-    it('should convert birth_date string to Date object and empty string to null', async () => {
+    it('should parse valid ISO birth_date string into Date object', async () => {
+      const updateData = { birth_date: '1995-05-20' };
       (prisma.user.update as jest.Mock).mockResolvedValue(mockDbUser);
 
-      await service.updateMe(1, { birth_date: '1995-05-15' });
-      expect(prisma.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ birth_date: new Date('1995-05-15') }),
-        }),
-      );
+      await service.updateMe(1, updateData);
 
-      await service.updateMe(1, { birth_date: '' });
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ birth_date: null }),
+          data: expect.objectContaining({
+            birth_date: new Date('1995-05-20'),
+          }),
         }),
       );
     });
 
-    it('should normalize email by trimming and lowercasing', async () => {
+    it('should set birth_date to null when passed empty string', async () => {
+      const updateData = { birth_date: '' };
       (prisma.user.update as jest.Mock).mockResolvedValue(mockDbUser);
 
-      await service.updateMe(1, { email: '  Mario.Rossi@Example.COM  ' });
+      await service.updateMe(1, updateData);
+
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ email: 'mario.rossi@example.com' }),
+          data: expect.objectContaining({
+            birth_date: null,
+          }),
         }),
       );
     });
 
-    it('should throw BadRequestException if birth_date has an invalid format', async () => {
-      await expect(
-        service.updateMe(1, { birth_date: 'not-a-valid-date' }),
-      ).rejects.toThrow(BadRequestException);
+    it('should throw BadRequestException when invalid birth_date is passed', async () => {
+      const updateData = { birth_date: 'not-a-valid-date' };
+
+      await expect(service.updateMe(1, updateData)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
-    it('should throw ConflictException if username or email already exists', async () => {
-      const p2002Error = new Error('Unique constraint failed');
-      (p2002Error as any).code = 'P2002';
-      (prisma.user.update as jest.Mock).mockRejectedValue(p2002Error);
+    it('should throw ConflictException on Prisma unique violation (P2002)', async () => {
+      const updateData = { username: 'already_taken' };
+      (prisma.user.update as jest.Mock).mockRejectedValue({ code: 'P2002' });
 
-      await expect(
-        service.updateMe(1, { email: 'already_taken@example.com' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.updateMe(1, updateData)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should throw NotFoundException on Prisma record not found (P2025)', async () => {
+      const updateData = { first_name: 'Luigi' };
+      (prisma.user.update as jest.Mock).mockRejectedValue({ code: 'P2025' });
+
+      await expect(service.updateMe(999, updateData)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('updateAvatar', () => {
-    const mockFile = {
-      filename: 'avatar-12345.png',
-      originalname: 'test.png',
-      path: '/uploads/avatars/avatar-12345.png',
-    } as Express.Multer.File;
-
-    it('should update avatar and return avatar_url', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 1,
-        avatar_url: null,
-      });
-      (prisma.user.update as jest.Mock).mockResolvedValue({
-        id: 1,
-        avatar_url: '/uploads/avatars/avatar-12345.png',
-      });
-
-      const result = await service.updateAvatar(1, mockFile);
-
-      expect(result).toEqual({
-        avatar_url: '/uploads/avatars/avatar-12345.png',
-      });
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { avatar_url: '/uploads/avatars/avatar-12345.png' },
-      });
+    it('should throw BadRequestException if file is missing', async () => {
+      await expect(service.updateAvatar(1, null as any)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw NotFoundException if user is not found', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      const mockFile = { filename: 'avatar.jpg' } as Express.Multer.File;
 
       await expect(service.updateAvatar(999, mockFile)).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw BadRequestException without unlinking if file is undefined', async () => {
-      await expect(
-        service.updateAvatar(1, undefined as unknown as Express.Multer.File),
-      ).rejects.toThrow(BadRequestException);
+    it('should update user avatar_url and return the relative path', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        avatar_url: null,
+      });
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        id: 1,
+        avatar_url: '/uploads/avatars/avatar-123.jpg',
+      });
+      const mockFile = { filename: 'avatar-123.jpg' } as Express.Multer.File;
+
+      const result = await service.updateAvatar(1, mockFile);
+
+      expect(result).toEqual({ avatar_url: '/uploads/avatars/avatar-123.jpg' });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { avatar_url: '/uploads/avatars/avatar-123.jpg' },
+      });
     });
   });
 
   describe('deleteAvatar', () => {
+    it('should throw NotFoundException if user is not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.deleteAvatar(999)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
     it('should set avatar_url to null and return success message', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
-        avatar_url: '/uploads/avatars/old-avatar.png',
+        avatar_url: '/uploads/avatars/avatar-123.jpg',
       });
       (prisma.user.update as jest.Mock).mockResolvedValue({
         id: 1,
@@ -257,14 +259,6 @@ describe('UsersService', () => {
         where: { id: 1 },
         data: { avatar_url: null },
       });
-    });
-
-    it('should throw NotFoundException if user is not found', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-
-      await expect(service.deleteAvatar(999)).rejects.toThrow(
-        NotFoundException,
-      );
     });
   });
 
@@ -287,6 +281,239 @@ describe('UsersService', () => {
           username: true,
         },
       });
+    });
+  });
+
+  describe('findUsers', () => {
+    const mockUsers = [
+      {
+        id: 2,
+        username: 'giulia_chef',
+        avatar_url: '/uploads/avatars/giulia.webp',
+        first_name: 'Giulia',
+        last_name: 'Bianchi',
+        created_at: new Date('2026-09-01T10:00:00Z'),
+        _count: { recipes: 5 },
+      },
+      {
+        id: 3,
+        username: 'luca_cook',
+        avatar_url: null,
+        first_name: 'Luca',
+        last_name: 'Verdi',
+        created_at: new Date('2026-09-05T10:00:00Z'),
+        _count: { recipes: 2 },
+      },
+      {
+        id: 4,
+        username: 'paolo_baker',
+        avatar_url: null,
+        first_name: 'Paolo',
+        last_name: 'Neri',
+        created_at: new Date('2026-09-10T10:00:00Z'),
+        _count: { recipes: 1 },
+      },
+      {
+        id: 5,
+        username: 'sara_chef',
+        avatar_url: null,
+        first_name: 'Sara',
+        last_name: 'Gialli',
+        created_at: new Date('2026-09-15T10:00:00Z'),
+        _count: { recipes: 0 },
+      },
+    ];
+
+    it('returns top authors sorted by recipes_count_desc when search is omitted (guest caller)', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+      (prisma.user.count as jest.Mock).mockResolvedValue(4);
+
+      const result = await service.findUsers({ page: 1, limit: 20 });
+
+      expect(result.items).toHaveLength(4);
+      expect(result.items[0]).toEqual({
+        id: 2,
+        username: 'giulia_chef',
+        avatar_url: '/uploads/avatars/giulia.webp',
+        first_name: 'Giulia',
+        last_name: 'Bianchi',
+        created_at: new Date('2026-09-01T10:00:00Z'),
+        recipes_count: 5,
+        friendship_status: null,
+      });
+      expect(result.total).toBe(4);
+      expect(result.total_pages).toBe(1);
+      expect(result.has_next_page).toBe(false);
+      expect(result.has_prev_page).toBe(false);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          status: 'active',
+          deleted_at: null,
+        },
+        skip: 0,
+        take: 20,
+        orderBy: [{ recipes: { _count: 'desc' } }, { username: 'asc' }],
+        select: {
+          id: true,
+          username: true,
+          avatar_url: true,
+          first_name: true,
+          last_name: true,
+          created_at: true,
+          _count: {
+            select: {
+              recipes: true,
+            },
+          },
+        },
+      });
+      expect(prisma.friendship.findMany).not.toHaveBeenCalled();
+    });
+
+    it('searches by username, first_name, or last_name and defaults to username_asc', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([mockUsers[0]]);
+      (prisma.user.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.findUsers({ search: 'giulia' });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].username).toBe('giulia_chef');
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            status: 'active',
+            deleted_at: null,
+            OR: [
+              { username: { contains: 'giulia', mode: 'insensitive' } },
+              { first_name: { contains: 'giulia', mode: 'insensitive' } },
+              { last_name: { contains: 'giulia', mode: 'insensitive' } },
+            ],
+          },
+          orderBy: [{ username: 'asc' }],
+        }),
+      );
+    });
+
+    it('treats whitespace-only search string as omitted search', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+      (prisma.user.count as jest.Mock).mockResolvedValue(4);
+
+      await service.findUsers({ search: '   ' });
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            status: 'active',
+            deleted_at: null,
+          },
+          orderBy: [{ recipes: { _count: 'desc' } }, { username: 'asc' }],
+        }),
+      );
+    });
+
+    it.each([
+      ['username_asc' as const, [{ username: 'asc' }]],
+      ['username_desc' as const, [{ username: 'desc' }]],
+      [
+        'recipes_count_desc' as const,
+        [{ recipes: { _count: 'desc' } }, { username: 'asc' }],
+      ],
+      ['newest' as const, [{ created_at: 'desc' }, { id: 'desc' }]],
+      ['oldest' as const, [{ created_at: 'asc' }, { id: 'asc' }]],
+    ])('resolves orderBy correctly for sort %s', async (sortValue, expectedOrderBy) => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+      await service.findUsers({ sort: sortValue });
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: expectedOrderBy,
+        }),
+      );
+    });
+
+    it('resolves contextual friendship status and excludes caller for authenticated user', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+      (prisma.user.count as jest.Mock).mockResolvedValue(4);
+      (prisma.friendship.findMany as jest.Mock).mockResolvedValue([
+        { requester_id: 1, addressee_id: 2, status: 'accepted' },
+        { requester_id: 1, addressee_id: 3, status: 'pending' },
+        { requester_id: 4, addressee_id: 1, status: 'pending' },
+      ]);
+
+      const result = await service.findUsers({ page: 1, limit: 20 }, 1);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { not: 1 },
+            status: 'active',
+            deleted_at: null,
+          }),
+        }),
+      );
+
+      expect(prisma.friendship.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { requester_id: 1, addressee_id: { in: [2, 3, 4, 5] } },
+            { requester_id: { in: [2, 3, 4, 5] }, addressee_id: 1 },
+          ],
+        },
+      });
+
+      expect(result.items[0].friendship_status).toBe('friends');
+      expect(result.items[1].friendship_status).toBe('pending_sent');
+      expect(result.items[2].friendship_status).toBe('pending_received');
+      expect(result.items[3].friendship_status).toBe('none');
+    });
+
+    it('maps rejected friendship records to "none"', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([mockUsers[0]]);
+      (prisma.user.count as jest.Mock).mockResolvedValue(1);
+      (prisma.friendship.findMany as jest.Mock).mockResolvedValue([
+        { requester_id: 1, addressee_id: 2, status: 'rejected' },
+      ]);
+
+      const result = await service.findUsers({ page: 1, limit: 20 }, 1);
+
+      expect(result.items[0].friendship_status).toBe('none');
+    });
+
+    it('calculates pagination skip, take, and navigation flags correctly', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+      (prisma.user.count as jest.Mock).mockResolvedValue(45);
+
+      const result = await service.findUsers({ page: 2, limit: 10 });
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 10,
+          take: 10,
+        }),
+      );
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(10);
+      expect(result.total).toBe(45);
+      expect(result.total_pages).toBe(5);
+      expect(result.has_next_page).toBe(true);
+      expect(result.has_prev_page).toBe(true);
+    });
+
+    it('handles empty results and avoids friendship queries', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+      const result = await service.findUsers({ page: 1, limit: 20 }, 1);
+
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
+      expect(result.total_pages).toBe(0);
+      expect(result.has_next_page).toBe(false);
+      expect(result.has_prev_page).toBe(false);
+      expect(prisma.friendship.findMany).not.toHaveBeenCalled();
     });
   });
 

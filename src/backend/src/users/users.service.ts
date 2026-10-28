@@ -17,6 +17,11 @@ import {
   FriendItemDto,
   PaginatedFriendsResponseDto,
 } from 'src/friends/dto/friend-response.dto';
+import { SearchUserQueryDto, UserSort } from './dto/search-user-query.dto';
+import {
+  UserSearchItemDto,
+  PaginatedUsersResponseDto,
+} from './dto/user-profile-response.dto';
 import * as fs from 'fs';
 
 @Injectable()
@@ -62,6 +67,144 @@ export class UsersService {
         username: true,
       },
     });
+  }
+
+  async findUsers(
+    query: SearchUserQueryDto,
+    currentUserId?: number,
+  ): Promise<PaginatedUsersResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const trimmedSearch =
+      typeof query.search === 'string' ? query.search.trim() : undefined;
+    const search =
+      trimmedSearch && trimmedSearch.length > 0 ? trimmedSearch : undefined;
+
+    let sort = query.sort;
+    if (!sort) {
+      sort = search ? UserSort.username_asc : UserSort.recipes_count_desc;
+    }
+
+    let orderBy: Prisma.UserOrderByWithRelationInput[];
+    switch (sort) {
+      case UserSort.username_asc:
+        orderBy = [{ username: 'asc' }];
+        break;
+      case UserSort.username_desc:
+        orderBy = [{ username: 'desc' }];
+        break;
+      case UserSort.recipes_count_desc:
+        orderBy = [{ recipes: { _count: 'desc' } }, { username: 'asc' }];
+        break;
+      case UserSort.newest:
+        orderBy = [{ created_at: 'desc' }, { id: 'desc' }];
+        break;
+      case UserSort.oldest:
+        orderBy = [{ created_at: 'asc' }, { id: 'asc' }];
+        break;
+      default:
+        orderBy = [{ recipes: { _count: 'desc' } }, { username: 'asc' }];
+        break;
+    }
+
+    const where: Prisma.UserWhereInput = {
+      status: 'active',
+      deleted_at: null,
+      ...(currentUserId ? { id: { not: currentUserId } } : {}),
+      ...(search
+        ? {
+            OR: [
+              { username: { contains: search, mode: 'insensitive' } },
+              { first_name: { contains: search, mode: 'insensitive' } },
+              { last_name: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        select: {
+          id: true,
+          username: true,
+          avatar_url: true,
+          first_name: true,
+          last_name: true,
+          created_at: true,
+          _count: {
+            select: {
+              recipes: true,
+            },
+          },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    const friendshipMap = new Map<
+      number,
+      'none' | 'pending_sent' | 'pending_received' | 'friends'
+    >();
+
+    if (currentUserId && users.length > 0) {
+      const userIds = users.map((u) => u.id);
+      const friendships = await this.prisma.friendship.findMany({
+        where: {
+          OR: [
+            { requester_id: currentUserId, addressee_id: { in: userIds } },
+            { requester_id: { in: userIds }, addressee_id: currentUserId },
+          ],
+        },
+      });
+
+      for (const f of friendships) {
+        const otherUserId =
+          f.requester_id === currentUserId ? f.addressee_id : f.requester_id;
+        if (f.status === 'accepted') {
+          friendshipMap.set(otherUserId, 'friends');
+        } else if (f.status === 'pending') {
+          friendshipMap.set(
+            otherUserId,
+            f.requester_id === currentUserId
+              ? 'pending_sent'
+              : 'pending_received',
+          );
+        } else {
+          friendshipMap.set(otherUserId, 'none');
+        }
+      }
+    }
+
+    const items: UserSearchItemDto[] = users.map((u) => ({
+      id: u.id,
+      username: u.username,
+      avatar_url: u.avatar_url,
+      first_name: u.first_name,
+      last_name: u.last_name,
+      created_at: u.created_at,
+      recipes_count: u._count.recipes,
+      friendship_status: currentUserId
+        ? (friendshipMap.get(u.id) ?? 'none')
+        : null,
+    }));
+
+    const total_pages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
+    };
   }
 
   async getUser(id: number, currentUserId?: number) {
