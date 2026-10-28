@@ -1,5 +1,5 @@
 export enum Action {
-  Manage = 'menage',
+  Manage = 'manage',
   Ban = 'ban',
   Create = 'create',
   Read = 'read',

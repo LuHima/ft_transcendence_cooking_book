@@ -28,7 +28,6 @@ import { ProductionConfig } from '../common/config/production.config';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import * as fs from 'fs';
 import { createHttpException, errors } from 'src/common/config/error.config';
-import { CaslCheckAbility } from 'src/auth/casl/casl-checkAbility';
 
 @Injectable()
 export class RecipeService {
@@ -36,7 +35,6 @@ export class RecipeService {
     private readonly prisma: PrismaService,
     private readonly translationService: TranslationService,
     private readonly productionConfig: ProductionConfig,
-    private readonly caslCheckAbility: CaslCheckAbility,
   ) {}
 
   // ---------------------------------------------------------------------------

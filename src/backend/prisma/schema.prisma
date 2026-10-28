@@ -100,6 +100,8 @@ enum NotificationAction {
   friend_request
   friend_accept
   post
+  delete
+  update
 }
 
 enum FriendshipStatus {
@@ -141,8 +143,8 @@ model User {
   notifications_received Notification[] @relation("NotificationRecipient")
   notifications_sent     Notification[] @relation("NotificationActor")
 
-  following Follow[] @relation("UserFollowing")
-  followers Follow[] @relation("UserFollowers")
+  friendships_sent     Friendship[] @relation("FriendshipRequester")
+  friendships_received Friendship[] @relation("FriendshipAddressee")
 
   @@map("users")
 }
@@ -296,20 +298,24 @@ model RecipeIngredient {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FOLLOW
+// FRIENDSHIPS
 // ─────────────────────────────────────────────────────────────────────────────
 
-model Follow {
-  follower_id  Int
-  following_id Int
-  created_at   DateTime @default(now())
+model Friendship {
+  id           Int              @id @default(autoincrement())
+  requester_id Int
+  addressee_id Int
+  status       FriendshipStatus @default(pending)
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
 
-  follower  User @relation("UserFollowing", fields: [follower_id], references: [id], onDelete: Cascade)
-  following User @relation("UserFollowers", fields: [following_id], references: [id], onDelete: Cascade)
+  requester    User             @relation("FriendshipRequester", fields: [requester_id], references: [id], onDelete: Cascade)
+  addressee    User             @relation("FriendshipAddressee", fields: [addressee_id], references: [id], onDelete: Cascade)
 
-  @@id([follower_id, following_id])
-  @@index([following_id])
-  @@map("follows")
+  @@unique([requester_id, addressee_id])
+  @@index([addressee_id, status])
+  @@index([requester_id, status])
+  @@map("friendships")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

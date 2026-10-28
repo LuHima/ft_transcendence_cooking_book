@@ -10,6 +10,7 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +20,7 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
+  ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
   ApiParam,
   ApiQuery,
@@ -29,6 +31,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginatedFriendsResponseDto } from 'src/friends/dto/friend-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { avatarMulterOptions } from './avatar.multer';
 import {
@@ -42,6 +47,7 @@ import {
   ApiBadRequestResponseDto,
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
+  ApiUnauthorizedResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { SearchUserQueryDto } from './dto/search-user-query.dto';
@@ -246,7 +252,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get public user profile by ID',
     description:
-      'Returns public profile information (username, avatar, join date) for the specified user.',
+      'Returns public profile information (username, avatar, join date) for the specified user, including contextual friendship status when requested by an authenticated user.',
   })
   @ApiParam({
     name: 'id',
@@ -265,8 +271,50 @@ export class UsersController {
     description: 'User not found',
     type: ApiNotFoundResponseDto,
   })
+  @UseGuards(OptionalAuthGuard)
   @Get(':id')
-  async getUser(@Param('id', ParseIntPipe) id: number) {
-    return await this.userService.getUser(id);
+  async getUser(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') currentUserId?: number,
+  ) {
+    return await this.userService.getUser(id, currentUserId);
+  }
+
+  /**
+   * Retrieve confirmed friends for a specific user.
+   */
+  @ApiOperation({
+    summary: 'Get user confirmed friends',
+    description:
+      'Returns a paginated list of confirmed friends for the specified user ID.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Target user ID',
+    example: 1,
+  })
+  @ApiOkResponse({
+    description: 'Paginated collection of friends',
+    type: PaginatedFriendsResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid user ID format or invalid pagination parameter',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication required: missing or invalid accessToken cookie',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @Auth()
+  @Get(':id/friends')
+  async getUserFriends(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return await this.userService.getUserFriends(id, query);
   }
 }

@@ -32,7 +32,8 @@
     "multer": "^2.3.0",
     "sprintf-js": "^1.1.3",
     "argparse": "^2.0.1",
-    "js-yaml": "^5.4.1"
+    "js-yaml": "^5.4.1",
+    "path-to-regexp": "^8.2.0"
   },
   "dependencies": {
     "@casl/ability": "^7.0.1",
@@ -115,18 +116,20 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
+      "^src/(.*)$": "<rootDir>/$1",
+      "^prisma/(.*)$": "<rootDir>/../prisma/$1"
     },
     "transformIgnorePatterns": [
-      "/node_modules/(?!(@nestjs/jwt|otplib|@otplib|@scure|@noble))"
+      "/node_modules/(?!(@nestjs/jwt|@nestjs/event-emitter|otplib|@otplib|@scure|@noble))"
     ]
   },
   "allowScripts": {
     "@parcel/watcher@2.6.0": true,
-    "@prisma/engines@7.10.0": true,
     "bcrypt@5.1.1": true,
     "esbuild@0.28.2": true,
-    "prisma@7.10.0": true,
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "prisma@7.10.1": true,
+    "@prisma/engines@7.10.1": true,
+    "@scarf/scarf@1.4.0": true
   }
 }

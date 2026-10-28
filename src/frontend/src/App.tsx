@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate, type Location } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
@@ -24,11 +24,37 @@ import Admin from './pages/admin/Admin'
 import Moderation from './pages/Moderation'
 import NotFound from './pages/NotFound'
 
+function RecipeDetailOverlay() {
+	const navigate = useNavigate()
+
+	return (
+		<div
+			className="fixed inset-0 z-[100] overflow-y-auto bg-[var(--wc-bg)]"
+			role="dialog"
+			aria-modal="true"
+			aria-label="Recipe detail"
+		>
+			<div className="sticky top-0 z-10 border-b border-[var(--wc-border)] bg-[var(--wc-bg)]/95 px-4 py-3 backdrop-blur">
+				<button
+					type="button"
+					onClick={() => navigate(-1)}
+					className="text-sm text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]"
+				>
+					← Torna alla cucina
+				</button>
+			</div>
+			<RecipeDetail />
+		</div>
+	)
+}
+
 function App() {
+	const location = useLocation()
+	const backgroundLocation = (location.state as { backgroundLocation?: Location } | null)?.backgroundLocation
 	return (
 		<ToastProvider>
 		<AuthProvider>
-			<Routes>
+			<Routes location={backgroundLocation ?? location}>
 				<Route element={<Layout />}>
 					<Route index element={<Home />} />
 					<Route path="login" element={<Login />} />
@@ -62,6 +88,11 @@ function App() {
 					<Route path="*" element={<NotFound />} />
 				</Route>
 			</Routes>
+			{backgroundLocation && (
+				<Routes>
+					<Route path="recipes/:id" element={<RecipeDetailOverlay />} />
+				</Routes>
+			)}
 		</AuthProvider>
 		</ToastProvider>
 	)

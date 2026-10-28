@@ -70,7 +70,6 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
 import { authenticate } from 'passport';
 import { Auth } from 'src/common/decorators/policies.decorator';
-import { Action } from 'src/auth/casl/action.enum';
 
 /**
  * Controller handling recipe lifecycle, search, pagination, multilingual translations, media uploads, and likes.
@@ -197,7 +196,7 @@ export class RecipeController {
       'Validation failed on inputs or referenced catalog items do not exist',
     type: ApiBadRequestResponseDto,
   })
-  @Auth(Action.Create, 'Recipe')
+  @Auth()
   @Post()
   addRecipe(
     @Body(ValidationPipe) createRecipeDto: CreateRecipeDto,
@@ -227,7 +226,7 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Post(':id/translate')
   async retryTranslation(
     @Param('id', ParseIntPipe) recipeId: number,
@@ -264,7 +263,7 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Patch(':id')
   async updateRecipe(
     @Param('id', ParseIntPipe) recipeId: number,
@@ -302,7 +301,7 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Delete, 'Recipe')
+  @Auth()
   @Delete(':id')
   async deleteRecipe(
     @Param('id', ParseIntPipe) recipeId: number,
@@ -346,7 +345,7 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Post(':id/cover')
   @UseInterceptors(FileInterceptor('file', recipeImageMulterOptions))
   async uploadCoverImage(
@@ -397,7 +396,7 @@ export class RecipeController {
     description: 'Recipe or step not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Post(':id/steps/:stepNumber/image')
   @UseInterceptors(FileInterceptor('file', recipeImageMulterOptions))
   async uploadStepImage(
@@ -452,7 +451,7 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Post(':id/gallery')
   @UseInterceptors(FilesInterceptor('files', 3, recipeImageMulterOptions))
   async uploadGalleryMedia(
@@ -498,7 +497,7 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Post(':id/video')
   @UseInterceptors(FileInterceptor('file', recipeVideoMulterOptions))
   async uploadVideo(
@@ -526,7 +525,7 @@ export class RecipeController {
     description: 'Cover image not found or already deleted',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Delete(':id/cover')
   async deleteCoverImage(
     @Param('id', ParseIntPipe) recipeId: number,
@@ -552,7 +551,7 @@ export class RecipeController {
     description: 'Recipe or video not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Delete(':id/video')
   async deleteVideo(
     @Param('id', ParseIntPipe) recipeId: number,
@@ -583,7 +582,7 @@ export class RecipeController {
     description: 'Recipe or step not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Delete(':id/steps/:stepNumber/image')
   async deleteStepImage(
     @Param('id', ParseIntPipe) recipeId: number,
@@ -611,7 +610,7 @@ export class RecipeController {
     description: 'Recipe or media item not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth(Action.Update, 'Recipe')
+  @Auth()
   @Delete(':id/gallery/:mediaId')
   async deleteGalleryMedia(
     @Param('id', ParseIntPipe) recipeId: number,

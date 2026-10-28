@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 /**
@@ -165,6 +165,24 @@ export class PublicUserResponseDto {
     example: '2026-10-09T18:00:00.000Z',
   })
   created_at: Date;
+
+  /**
+   * Current user friendship relation with this profile.
+   * @example 'friends'
+   */
+  @ApiPropertyOptional({
+    description:
+      'Current user friendship status with this profile (friends, pending_sent, pending_received, none, or null for self/guest)',
+    enum: ['none', 'pending_sent', 'pending_received', 'friends'],
+    nullable: true,
+    example: 'friends',
+  })
+  friendship_status?:
+    | 'none'
+    | 'pending_sent'
+    | 'pending_received'
+    | 'friends'
+    | null;
 }
 
 /**

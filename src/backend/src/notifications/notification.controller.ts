@@ -6,11 +6,10 @@ import {
   ParseIntPipe,
   Patch,
 } from '@nestjs/common';
-import { Action } from 'src/auth/casl/action.enum';
-import { CaslCheckAbility } from 'src/auth/casl/casl-checkAbility';
-import { createHttpException, errors } from 'src/common/config/error.config';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { Notify } from 'src/common/decorators/notify.decorator';
+import {
+  ActiveUserData,
+  CurrentUser,
+} from 'src/common/decorators/current-user.decorator';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { NotificationService } from './notification.service';
 
@@ -18,37 +17,30 @@ import { NotificationService } from './notification.service';
 export class NotificationController {
   constructor(private notificationService: NotificationService) {}
 
-  @Auth(Action.Read, 'Notification')
+  @Auth()
   @Patch('read/:id')
-  async readedNotification(@Param('id', ParseIntPipe) idNotifi: number) {
-    await this.notificationService.readNotification(idNotifi);
+  async readedNotification(
+    @Param('id', ParseIntPipe) idNotifi: number,
+    @CurrentUser() user,
+  ) {
+    await this.notificationService.readNotification(idNotifi, user);
     return { message: 'Read' };
   }
 
-  @Auth(Action.Delete, 'Notification')
+  @Auth()
   @Delete('delete/:id')
-  async deleteNotification(@Param('id', ParseIntPipe) idNotifi: number) {
-    await this.notificationService.deleteNotification(idNotifi);
+  async deleteNotification(
+    @Param('id', ParseIntPipe) idNotifi: number,
+    @CurrentUser() user,
+  ) {
+    await this.notificationService.deleteNotification(idNotifi, user);
     return { message: 'Deleted successfully' };
   }
 
   @Auth()
-  @Get('get')
+  @Get()
   async getNotification(@CurrentUser('id') id: number) {
-    const notification = await this.notificationService.getNotification(id);
+    const notification = await this.notificationService.getNotifications(id);
     return { notification };
   }
-  /*   @Auth(Action.Accept, 'Notification')
-  @Patch('FriendRequest/:id')
-  async AcceptFriendRequest(@Query('id', ParseIntPipe) idNotifi: number) {
-    await this.AcceptFriendRequest(idNotifi);
-    return { message: 'Friend Request accepted' };
-  }
-
-  @Auth(Action.Refuse, 'Notification')
-  @Delete('FriendRequest/:id')
-  async RefuseFriendRequest(@Query('id', ParseIntPipe) idNotifi: number) {
-    await this.RefuseFriendRequest(idNotifi);
-    return { message: 'Friend Request refused' };
-  } */
 }

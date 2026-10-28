@@ -3,17 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { api, getErrorMessage } from '../api/client'
-import { SUPPORTED_LANGS } from '../i18n'
 import { validateImage } from '../lib/files'
-import { useLang } from '../lib/useLang'
 import { useObjectUrl } from '../lib/useObjectUrl'
 import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
 import Avatar from '../components/Avatar'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 import TwoFactorSettings from '../components/TwoFactorSettings'
 
 function Profile() {
-	const { t, i18n } = useTranslation()
-	const lang = useLang()
+	const { t } = useTranslation()
 	const toast = useToast()
 	const { user, refreshUser } = useAuth()
 	const [username, setUsername] = useState(user?.username ?? '')
@@ -126,13 +124,7 @@ function Profile() {
 						{t('profile.language')}
 					</label>
 					{/* NB: il modello User non ha ancora un campo `lang`: per ora la preferenza vale solo su questo browser */}
-					<select id="ui-lang" value={lang} onChange={(e) => void i18n.changeLanguage(e.target.value)} className={`${INPUT_CLASS} h-[42px]`}>
-						{SUPPORTED_LANGS.map((l) => (
-							<option key={l} value={l}>
-								{t(`lang.${l}`)}
-							</option>
-						))}
-					</select>
+					<LanguageSwitcher variant="field" id="ui-lang" />
 					<p className="mt-1 text-xs text-[var(--wc-text-muted)]">{t('profile.languageHelp')}</p>
 				</div>
 

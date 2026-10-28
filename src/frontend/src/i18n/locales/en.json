@@ -254,9 +254,14 @@
 			"noSteps": "Add at least one step.",
 			"stepDescription": "Describe the step.",
 			"fixFields": "Please check the highlighted fields.",
-			"saveFailed": "Could not save the recipe."
+			"saveFailed": "Could not save the recipe.",
+			"duplicateIngredient": "\"{{name}}\" is already in the list: each ingredient can appear only once (edit the quantity of the existing row).",
+			"stepDuration": "The step duration must be a whole number of minutes (e.g. 10)."
 		},
-		"catalogEmpty": "The ingredient catalog is empty: ask the backend team to load it (seed)."
+		"catalogEmpty": "The ingredient catalog is empty: ask the backend team to load it (seed).",
+		"editLanguage": "Language of the text to edit",
+		"editLanguageHelp": "The recipe was written in {{lang}}. Changing language edits the translation in that language; unsaved text is replaced.",
+		"localeUnavailable": "The {{lang}} translation is not available yet."
 	},
 	"notFound": {
 		"text": "This page doesn't exist, or the recipe has been removed.",
