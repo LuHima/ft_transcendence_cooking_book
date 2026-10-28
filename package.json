@@ -5,8 +5,5 @@
     "docs:check": "npx --yes fern-api check",
     "docs:dev": "npx --yes fern-api docs dev",
     "docs:generate": "npx --yes fern-api generate --docs"
-  },
-  "dependencies": {
-    "i18next-browser-languagedetector": "^8.2.3"
   }
 }
