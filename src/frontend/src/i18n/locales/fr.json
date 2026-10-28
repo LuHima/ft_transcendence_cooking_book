@@ -21,7 +21,6 @@
 		"home": "Accueil",
 		"myRecipes": "Mes recettes",
 		"favorites": "Favoris",
-		"mealPlan": "Menu de la semaine",
 		"friends": "Amis",
 		"adminPanel": "Panneau administrateur",
 		"contacts": "Contact",
@@ -255,9 +254,14 @@
 			"noSteps": "Ajoutez au moins une étape.",
 			"stepDescription": "Décrivez l'étape.",
 			"fixFields": "Vérifiez les champs en surbrillance.",
-			"saveFailed": "Échec de l'enregistrement."
+			"saveFailed": "Échec de l'enregistrement.",
+			"duplicateIngredient": "« {{name}} » est déjà dans la liste : chaque ingrédient ne peut apparaître qu'une fois (modifiez la quantité de la ligne existante).",
+			"stepDuration": "La durée de l'étape doit être un nombre entier de minutes (ex. 10)."
 		},
-		"catalogEmpty": "Le catalogue d'ingrédients est vide : demandez à l'équipe backend de le charger (seed)."
+		"catalogEmpty": "Le catalogue d'ingrédients est vide : demandez à l'équipe backend de le charger (seed).",
+		"editLanguage": "Langue du texte à modifier",
+		"editLanguageHelp": "La recette a été rédigée en {{lang}}. Changer de langue modifie la traduction dans cette langue ; le texte non enregistré est remplacé.",
+		"localeUnavailable": "La traduction en {{lang}} n'est pas encore disponible."
 	},
 	"notFound": {
 		"text": "Cette page n'existe pas, ou la recette a été supprimée.",

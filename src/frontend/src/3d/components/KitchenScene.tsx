@@ -46,7 +46,6 @@ function SceneContent({
   isChangingApiPage,
   onPreviousApiPage,
   onNextApiPage,
-  onDefaultPage,
   currentApiPage,
 }: SceneContentProps) {
   const { scene } = useGLTF(kitchenUrl);
@@ -63,18 +62,13 @@ function SceneContent({
         isChangingApiPage={isChangingApiPage}
         onPreviousApiPage={onPreviousApiPage}
         onNextApiPage={onNextApiPage}
-        onDefaultPage={onDefaultPage}
         currentApiPage={currentApiPage}
       />
     </>
   );
 }
 
-export default function Scene({
-  onDefaultPage,
-}: {
-  onDefaultPage?: () => void;
-} = {}) {
+export default function Scene() {
   const initialApiPage = 1;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
@@ -245,7 +239,6 @@ export default function Scene({
               isChangingApiPage={isChangingApiPage}
               onPreviousApiPage={goToPreviousApiPage}
               onNextApiPage={goToNextApiPage}
-              onDefaultPage={onDefaultPage}
               currentApiPage={currentApiPage}
             />
             <SceneReady onReady={() => setSceneReady(true)} />

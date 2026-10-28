@@ -9,17 +9,41 @@ import ShowPasswordToggle from './ShowPasswordToggle'
 
 type Step = 'idle' | 'password' | 'verify'
 
+// promemoria locale dello stato 2FA, usato solo se GET /users/me non restituisce is_two_factor_enabled
+const hintKey = (email: string) => `wecook.2fa.${email.toLowerCase()}`
+export function readTwoFactorHint(email?: string): boolean {
+	if (!email) return false
+	try {
+		return localStorage.getItem(hintKey(email)) === '1'
+	} catch {
+		return false
+	}
+}
+export function writeTwoFactorHint(email: string, value: boolean) {
+	try {
+		if (value) localStorage.setItem(hintKey(email), '1')
+		else localStorage.removeItem(hintKey(email))
+	} catch {
+		// localStorage non disponibile: nessun promemoria
+	}
+}
+
 // attivazione / disattivazione dell'autenticazione a due fattori (TOTP):
 //   POST /auth/twofactor/enable  { password }  -> { qrCode (data URI), key (base32) }
 //   POST /auth/twofactor/verify  { code }      -> attiva la 2FA
 //   POST /auth/twofactor/disable { password }
-// NB: GET /users/me non restituisce ancora lo stato della 2FA (campo is_two_factor_enabled del modello User):
-// finché manca, lo stato si ricava dalle risposte 409 ("già attiva" / "già disattivata").
+// Stato: si usa is_two_factor_enabled di GET /users/me; se il backend non lo restituisce si ripiega su un promemoria
+// locale (impostato quando si attiva/disattiva qui o quando il login ha richiesto il codice) e sulle risposte 409.
 function TwoFactorSettings() {
 	const { t } = useTranslation()
 	const toast = useToast()
 	const { user, refreshUser } = useAuth()
-	const [enabled, setEnabled] = useState(Boolean(user?.is_two_factor_enabled))
+	const [localEnabled, setLocalEnabled] = useState<boolean | null>(null)
+	const enabled = user?.is_two_factor_enabled ?? localEnabled ?? readTwoFactorHint(user?.email)
+	function setEnabled(value: boolean) {
+		setLocalEnabled(value)
+		if (user?.email) writeTwoFactorHint(user.email, value)
+	}
 	const [step, setStep] = useState<Step>('idle')
 	const [password, setPassword] = useState('')
 	const [showPassword, setShowPassword] = useState(false)

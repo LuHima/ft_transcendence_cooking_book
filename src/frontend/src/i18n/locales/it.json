@@ -21,7 +21,6 @@
 		"home": "Home",
 		"myRecipes": "Le mie ricette",
 		"favorites": "Preferiti",
-		"mealPlan": "Meal plan",
 		"friends": "Amici",
 		"adminPanel": "Pannello amministratore",
 		"contacts": "Contatti",
@@ -255,9 +254,14 @@
 			"noSteps": "Aggiungi almeno un passaggio.",
 			"stepDescription": "Descrivi il passaggio.",
 			"fixFields": "Controlla i campi evidenziati.",
-			"saveFailed": "Salvataggio non riuscito."
+			"saveFailed": "Salvataggio non riuscito.",
+			"duplicateIngredient": "«{{name}}» è già nella lista: ogni ingrediente può comparire una sola volta (modifica la quantità della riga esistente).",
+			"stepDuration": "La durata del passaggio deve essere un numero intero di minuti (es. 10)."
 		},
-		"catalogEmpty": "Il catalogo ingredienti è vuoto: chiedi al backend di caricarlo (seed)."
+		"catalogEmpty": "Il catalogo ingredienti è vuoto: chiedi al backend di caricarlo (seed).",
+		"editLanguage": "Lingua del testo da modificare",
+		"editLanguageHelp": "La ricetta è stata scritta in {{lang}}. Cambiando lingua modifichi la traduzione in quella lingua; il testo non ancora salvato viene sostituito.",
+		"localeUnavailable": "La traduzione in {{lang}} non è ancora disponibile."
 	},
 	"notFound": {
 		"text": "Questa pagina non esiste, o la ricetta è stata rimossa.",

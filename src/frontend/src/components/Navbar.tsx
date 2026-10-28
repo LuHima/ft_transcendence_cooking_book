@@ -64,7 +64,7 @@ function Navbar() {
 				<div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
 					<LanguageSwitcher />
 					{user && <NotificationBell />}
-					<div ref={menuRef} className="relative shrink-0">
+					<div ref={menuRef} className="shrink-0 md:relative">
 						{user ? (
 							<button
 								onClick={() => setMenuOpen((v) => !v)}
@@ -98,7 +98,7 @@ function Navbar() {
 						{user && menuOpen && (
 							<div
 								role="menu"
-								className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] py-1 shadow-lg"
+								className="absolute inset-x-2 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] py-1 shadow-lg md:inset-x-auto md:right-0 md:top-auto md:mt-2 md:w-56"
 							>
 								{user.role === 'moderator' && (
 									<Link
@@ -128,9 +128,6 @@ function Navbar() {
 								</Link>
 								<Link to="/favorites" role="menuitem" onClick={close} className={itemClass}>
 									{t('nav.favorites')}
-								</Link>
-								<Link to="/meal-plan" role="menuitem" onClick={close} className={itemClass}>
-									{t('nav.mealPlan')}
 								</Link>
 								<Link to="/friends" role="menuitem" onClick={close} className={itemClass}>
 									{t('nav.friends')}

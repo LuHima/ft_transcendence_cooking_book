@@ -178,6 +178,9 @@ function RecipeForm() {
 	const [title, setTitle] = useState('')
 	const [description, setDescription] = useState('')
 	const [sourceLang, setSourceLang] = useState<Lang>(uiLang)
+	// in modifica: lingua del testo che si sta modificando (di default quella originale; il backend la riceve come `locale`)
+	const [editLocale, setEditLocale] = useState<Lang>(uiLang)
+	const [switchingLocale, setSwitchingLocale] = useState(false)
 	const [course, setCourse] = useState<Course>('main_course')
 	const [difficulty, setDifficulty] = useState<RecipeDifficulty>('easy')
 	const [servings, setServings] = useState('4')
@@ -254,6 +257,7 @@ function RecipeForm() {
 			setTitle(recipe.title)
 			setDescription(recipe.description)
 			setSourceLang(recipe.source_lang)
+			setEditLocale(recipe.source_lang)
 			setCourse(recipe.course)
 			setDifficulty(recipe.difficulty)
 			setServings(String(recipe.servings))
@@ -307,6 +311,33 @@ function RecipeForm() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- la ricetta si carica una volta per id/utente (non a ogni cambio lingua)
 	}, [id, user])
 
+	// cambio della lingua di modifica: si ricaricano i soli testi tradotti (titolo, descrizione, passaggi, consigli…)
+	async function switchEditLocale(next: Lang) {
+		if (!id || next === editLocale) return
+		setSwitchingLocale(true)
+		try {
+			const r = await api.get<RecipeDetail>(`/recipes/${id}${qs({ lang: next })}`)
+			if (r.resolved_lang !== next) {
+				toast.info(t('form.localeUnavailable', { lang: t(`lang.${next}`) }))
+				return
+			}
+			setTitle(r.title)
+			setDescription(r.description)
+			setTips(r.tips ?? '')
+			setPreservation(r.preservation ?? '')
+			const translated = [...r.steps].sort((a, b) => a.step_number - b.step_number)
+			setSteps((prev) =>
+				prev.map((row, i) => (translated[i] ? { ...row, title: translated[i].title ?? '', description: translated[i].description } : row)),
+			)
+			setEditLocale(next)
+			setErrors({})
+		} catch (err) {
+			toast.error(getErrorMessage(err, t('form.errors.saveFailed')))
+		} finally {
+			setSwitchingLocale(false)
+		}
+	}
+
 	// ─── helpers di aggiornamento ───
 	const updateIngredient = (key: number, patch: Partial<IngredientRow>) =>
 		setIngredients((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)))
@@ -344,6 +375,17 @@ function RecipeForm() {
 		setRemoveVideo(false)
 	}
 
+	// righe che ripetono un ingrediente già inserito sopra (il backend rifiuta gli ingredienti doppi)
+	const duplicateKeys = new Set<number>()
+	{
+		const seen = new Set<number>()
+		for (const row of ingredients) {
+			if (!row.ingredient) continue
+			if (seen.has(row.ingredient.id)) duplicateKeys.add(row.key)
+			else seen.add(row.ingredient.id)
+		}
+	}
+
 	// ─── validazione ───
 	function validate(): FieldErrors {
 		const e: FieldErrors = {}
@@ -358,13 +400,17 @@ function RecipeForm() {
 		if (ingredients.length === 0) e.ingredients = t('form.errors.noIngredients')
 		ingredients.forEach((row) => {
 			if (!row.ingredient) e[`ing-${row.key}`] = t('form.errors.ingredientCatalog')
+			else if (duplicateKeys.has(row.key))
+				e[`ing-${row.key}`] = t('form.errors.duplicateIngredient', { name: row.ingredient.name })
 			else if (!(num(row.quantity) > 0)) e[`ing-${row.key}`] = t('form.errors.quantity')
 		})
 
 		if (steps.length === 0) e.steps = t('form.errors.noSteps')
 		steps.forEach((row) => {
 			if (!row.description.trim()) e[`step-${row.key}`] = t('form.errors.stepDescription')
-			else if (row.duration.trim() !== '' && !(num(row.duration) >= 0)) e[`step-${row.key}`] = t('form.errors.time')
+			const d = row.duration.trim()
+			if (d !== '' && !/^\d+$/.test(d)) e[`stepdur-${row.key}`] = t('form.errors.stepDuration')
+
 		})
 		return e
 	}
@@ -414,7 +460,7 @@ function RecipeForm() {
 		let saved: RecipeDetail
 		try {
 			saved = isEdit
-				? await api.patch<RecipeDetail>(`/recipes/${id}${qs({ retranslate: true })}`, { ...body, locale: sourceLang })
+				? await api.patch<RecipeDetail>(`/recipes/${id}${editLocale === sourceLang ? qs({ retranslate: true }) : ''}`, { ...body, locale: editLocale })
 				: await api.post<RecipeDetail>('/recipes', body)
 		} catch (err) {
 			// 400 = validazione o lingua del testo non coerente con quella dichiarata (LibreTranslate)
@@ -516,12 +562,12 @@ function RecipeForm() {
 					</Field>
 
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-						<Field label={t('form.language')} htmlFor="rf-lang">
+						<Field label={isEdit ? t('form.editLanguage') : t('form.language')} htmlFor="rf-lang">
 							<select
 								id="rf-lang"
-								value={sourceLang}
-								disabled={isEdit}
-								onChange={(e) => setSourceLang(e.target.value as Lang)}
+								value={isEdit ? editLocale : sourceLang}
+								disabled={switchingLocale}
+								onChange={(e) => (isEdit ? void switchEditLocale(e.target.value as Lang) : setSourceLang(e.target.value as Lang))}
 								className={SELECT}
 							>
 								{SUPPORTED_LANGS.map((l) => (
@@ -567,7 +613,9 @@ function RecipeForm() {
 							/>
 						</Field>
 					</div>
-					<p className="-mt-2 text-xs text-[var(--wc-text-muted)]">{t('form.languageHelp')}</p>
+					<p className="-mt-2 text-xs text-[var(--wc-text-muted)]">
+						{isEdit ? t('form.editLanguageHelp', { lang: t(`lang.${sourceLang}`) }) : t('form.languageHelp')}
+					</p>
 
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 						<Field label={t('form.prepTimeMin')} htmlFor="rf-prep" error={errors.prepTime}>
@@ -672,16 +720,7 @@ function RecipeForm() {
 
 				{/* ─── ingredienti ─── */}
 				<section>
-					<div className="flex items-center justify-between">
-						<h2 className={SECTION_TITLE}>{t('recipe.ingredients')}</h2>
-						<button
-							type="button"
-							onClick={() => setIngredients((prev) => [...prev, newIngredient()])}
-							className="text-sm text-[var(--wc-saffron)] hover:underline"
-						>
-							+ {t('form.addIngredient')}
-						</button>
-					</div>
+					<h2 className={SECTION_TITLE}>{t('recipe.ingredients')}</h2>
 					{catalogError && <p className="mt-2 text-sm text-[var(--wc-paprika)]">{t('form.catalogError')}</p>}
 					{!catalogError && catalog.length === 0 && (
 						<p className="mt-2 text-sm text-[var(--wc-paprika)]">{t('form.catalogEmpty')}</p>
@@ -689,14 +728,17 @@ function RecipeForm() {
 					{errors.ingredients && <p className="mt-1 text-xs text-[var(--wc-paprika)]">{errors.ingredients}</p>}
 					<div className="mt-3 space-y-3">
 						{ingredients.map((row) => {
-							const err = errors[`ing-${row.key}`]
+							const dup = duplicateKeys.has(row.key)
+							const err =
+								errors[`ing-${row.key}`] ??
+								(dup && row.ingredient ? t('form.errors.duplicateIngredient', { name: row.ingredient.name }) : undefined)
 							return (
 								<div key={row.key}>
 									<div className="flex flex-wrap gap-2 sm:flex-nowrap">
 										<IngredientPicker
 											catalog={catalog}
 											value={row.ingredient}
-											invalid={Boolean(err) && !row.ingredient}
+											invalid={Boolean(err) && (!row.ingredient || dup)}
 											onChange={(ingredient) => updateIngredient(row.key, { ingredient })}
 										/>
 										<input
@@ -737,24 +779,21 @@ function RecipeForm() {
 							)
 						})}
 					</div>
+					<button type="button" onClick={() => setIngredients((prev) => [...prev, newIngredient()])} className={`mt-3 ${SECONDARY_BTN}`}>
+						+ {t('form.addIngredient')}
+					</button>
 				</section>
 
 				{/* ─── passaggi ─── */}
 				<section>
-					<div className="flex items-center justify-between">
-						<h2 className={SECTION_TITLE}>{t('recipe.preparation')}</h2>
-						<button
-							type="button"
-							onClick={() => setSteps((prev) => [...prev, newStep()])}
-							className="text-sm text-[var(--wc-saffron)] hover:underline"
-						>
-							+ {t('form.addStep')}
-						</button>
-					</div>
+					<h2 className={SECTION_TITLE}>{t('recipe.preparation')}</h2>
 					{errors.steps && <p className="mt-1 text-xs text-[var(--wc-paprika)]">{errors.steps}</p>}
 					<ol className="mt-3 space-y-4">
 						{steps.map((step, index) => {
 							const err = errors[`step-${step.key}`]
+							const durErr =
+								errors[`stepdur-${step.key}`] ??
+								(step.duration.trim() !== '' && !/^\d+$/.test(step.duration.trim()) ? t('form.errors.stepDuration') : undefined)
 							return (
 								<li key={step.key} className="rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-4">
 									<div className="mb-3 flex items-center justify-between">
@@ -788,16 +827,19 @@ function RecipeForm() {
 										/>
 										{err && <p className="text-xs text-[var(--wc-paprika)]">{err}</p>}
 										<div className="flex flex-wrap items-center gap-4">
-											<input
-												type="number"
-												min={0}
-												step={1}
-												value={step.duration}
-												placeholder={t('form.stepDuration')}
-												aria-label={t('form.stepDuration')}
-												onChange={(e) => updateStep(step.key, { duration: e.target.value })}
-												className={`${FIELD} w-40`}
-											/>
+											<div>
+												<input
+													type="text"
+													inputMode="numeric"
+													value={step.duration}
+													placeholder={t('form.stepDuration')}
+													aria-label={t('form.stepDuration')}
+													aria-invalid={Boolean(durErr)}
+													onChange={(e) => updateStep(step.key, { duration: e.target.value })}
+													className={`${FIELD} w-40`}
+												/>
+												{durErr && <p className="mt-1 text-xs text-[var(--wc-paprika)]">{durErr}</p>}
+											</div>
 											<ImagePicker
 												label={t('form.addStepPhoto')}
 												file={step.imageFile}
@@ -813,6 +855,9 @@ function RecipeForm() {
 							)
 						})}
 					</ol>
+					<button type="button" onClick={() => setSteps((prev) => [...prev, newStep()])} className={`mt-4 ${SECONDARY_BTN}`}>
+						+ {t('form.addStep')}
+					</button>
 				</section>
 
 				{/* ─── consigli e conservazione ─── */}
