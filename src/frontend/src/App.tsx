@@ -10,7 +10,6 @@ import Register from './pages/Register'
 import Profile from './pages/Profile'
 import Anagrafica from './pages/Anagrafica'
 import Favorites from './pages/Favorites'
-import MealPlan from './pages/MealPlan'
 import MyRecipes from './pages/MyRecipes'
 import RecipeForm from './pages/RecipeForm'
 import RecipeDetail from './pages/RecipeDetail'
@@ -46,7 +45,6 @@ function App() {
 						<Route path="profile" element={<Profile />} />
 						<Route path="anagrafica" element={<Anagrafica />} />
 						<Route path="favorites" element={<Favorites />} />
-						<Route path="meal-plan" element={<MealPlan />} />
 						<Route path="my-recipes" element={<MyRecipes />} />
 						<Route path="my-recipes/new" element={<RecipeForm />} />
 						<Route path="my-recipes/:id/edit" element={<RecipeForm />} />

@@ -129,9 +129,6 @@ function Navbar() {
 								<Link to="/favorites" role="menuitem" onClick={close} className={itemClass}>
 									{t('nav.favorites')}
 								</Link>
-								<Link to="/meal-plan" role="menuitem" onClick={close} className={itemClass}>
-									{t('nav.mealPlan')}
-								</Link>
 								<Link to="/friends" role="menuitem" onClick={close} className={itemClass}>
 									{t('nav.friends')}
 								</Link>

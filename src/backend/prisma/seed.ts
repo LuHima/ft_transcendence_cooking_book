@@ -84,8 +84,6 @@ async function main() {
   await prisma.friendship.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.recipeMedia.deleteMany();
-  await prisma.mealPlanRecipe.deleteMany();
-  await prisma.mealPlan.deleteMany();
   await prisma.like.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.recipeTag.deleteMany();
@@ -3091,6 +3089,7 @@ async function main() {
       },
     ],
   });
+<<<<<<< HEAD
 
   // ─────────────────────────────────────────────────────────────────────────
   // 7. MEAL PLANS DIVERSIFICATI
@@ -3260,6 +3259,8 @@ async function main() {
   console.log('✅ Seed completato con successo!');
   console.log(`   Utenti di prova (password: Password123): ${adminMarghe.username} (admin), ${userMario.username}, ${userGiulia.username}`);
   console.log(`   Per test admin: ${userDisabled.username} (disattivato), ${userBanned.username} (bannato)`);
+=======
+>>>>>>> bd6b77d070b1a33fb1397ccfe1dac863befd56b2
 }
 
 main()

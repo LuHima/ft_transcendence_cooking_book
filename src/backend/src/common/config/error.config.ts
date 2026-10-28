@@ -242,27 +242,6 @@ export const errors = {
   },
 
   // ─────────────────────────────────────────────────────────
-  // PIANI PASTI (MEAL PLANS)
-  // ─────────────────────────────────────────────────────────
-  mealPlans: {
-    notFound: {
-      statusCode: HttpStatus.NOT_FOUND,
-      message: 'Meal plan not found',
-      error: 'Not Found',
-    },
-    invalidDateRange: {
-      statusCode: HttpStatus.BAD_REQUEST,
-      message: 'Meal plan end date must be after start date',
-      error: 'Bad Request',
-    },
-    notOwner: {
-      statusCode: HttpStatus.FORBIDDEN,
-      message: 'You do not have permission to modify this meal plan',
-      error: 'Forbidden',
-    },
-  },
-
-  // ─────────────────────────────────────────────────────────
   // DATABASE / PRISMA
   // ─────────────────────────────────────────────────────────
   database: {
