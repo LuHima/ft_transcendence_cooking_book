@@ -909,6 +909,8 @@ export class RecipeService {
           return {
             step_number: step.step_number,
             duration: step.duration ?? null,
+            image_url:
+              (step as any).image_url ?? existingStep?.image_url ?? null,
             translations: { create: translations },
           };
         }),
@@ -1043,6 +1045,9 @@ export class RecipeService {
         updateData.translation_status === 'completed'
       ) {
         updateData.steps.create = recipeUpdate.steps.map((step) => {
+          const existingStep = recipe.steps?.find(
+            (currentStep) => currentStep.step_number === step.step_number,
+          );
           const translations = [
             {
               locale: recipe.source_lang,
@@ -1067,6 +1072,8 @@ export class RecipeService {
           return {
             step_number: step.step_number,
             duration: step.duration ?? null,
+            image_url:
+              (step as any).image_url ?? existingStep?.image_url ?? null,
             translations: { create: translations },
           };
         });
@@ -1160,6 +1167,19 @@ export class RecipeService {
         data: updateData,
       });
     });
+
+    // Safely cleanup physical files for any steps that were removed from the
+    // recipe
+    if (recipeUpdate.steps !== undefined) {
+      const newStepNumbers = new Set(
+        recipeUpdate.steps.map((s) => s.step_number),
+      );
+      for (const oldStep of recipe.steps ?? []) {
+        if (!newStepNumbers.has(oldStep.step_number) && oldStep.image_url) {
+          await this.safeUnlink(oldStep.image_url);
+        }
+      }
+    }
 
     return await this.getRecipeById(recipeId, targetLocale, userId);
   }

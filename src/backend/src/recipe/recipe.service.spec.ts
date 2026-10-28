@@ -352,10 +352,7 @@ describe('RecipeService', () => {
     it('throws BadRequestException when step numbers are duplicated', async () => {
       const recipeWithDuplicateSteps = {
         ...sampleDto,
-        steps: [
-          sampleDto.steps[0],
-          { ...sampleDto.steps[0], step_number: 1 },
-        ],
+        steps: [sampleDto.steps[0], { ...sampleDto.steps[0], step_number: 1 }],
       };
 
       await expect(
@@ -1307,6 +1304,7 @@ describe('RecipeService', () => {
                 {
                   step_number: 1,
                   duration: 20,
+                  image_url: null,
                   translations: {
                     create: [
                       {
@@ -1325,6 +1323,7 @@ describe('RecipeService', () => {
                 {
                   step_number: 2,
                   duration: null,
+                  image_url: null,
                   translations: {
                     create: [
                       {
@@ -1340,6 +1339,78 @@ describe('RecipeService', () => {
           }),
         }),
       );
+    });
+
+    it('preserves existing step image_url and unlinks removed step illustrations when updating steps', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        prep_time: 15,
+        cook_time: 10,
+        source_lang: 'it',
+        translations: [],
+        steps: [
+          {
+            id: 10,
+            step_number: 1,
+            image_url: '/uploads/recipes/step-1.jpg',
+            translations: [
+              { locale: 'it', title: 'Passo 1', description: 'Descrizione 1' },
+            ],
+          },
+          {
+            id: 11,
+            step_number: 2,
+            image_url: '/uploads/recipes/step-2.jpg',
+            translations: [
+              { locale: 'it', title: 'Passo 2', description: 'Descrizione 2' },
+            ],
+          },
+        ],
+      };
+
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
+
+      // Update keeping only step 1 (step 2 is removed)
+      await service.updateRecipe(1, 1, {
+        steps: [
+          {
+            step_number: 1,
+            description: 'Descrizione aggiornata',
+            duration: 15,
+          },
+        ],
+      });
+
+      // Assert step 1 preserved its image_url
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            steps: expect.objectContaining({
+              create: [
+                expect.objectContaining({
+                  step_number: 1,
+                  image_url: '/uploads/recipes/step-1.jpg',
+                }),
+              ],
+            }),
+          }),
+        }),
+      );
+
+      // Assert removed step 2 illustration was unlinked from disk
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        expect.stringContaining('step-2.jpg'),
+      );
+      unlinkSpy.mockRestore();
     });
 
     it('updates RecipeTranslation for a specific locale without touching other locales when retranslate is not specified', async () => {
