@@ -1888,7 +1888,7 @@
         ]
       },
       "delete": {
-        "description": "Permanently deletes the recipe and all its steps, media, translations, and associated likes.",
+        "description": "Permanently deletes the recipe and all its steps, media, translations, and associated likes. Cleans up all orphaned social notifications targeting this recipe.",
         "operationId": "RecipeController_deleteRecipe",
         "parameters": [
           {
@@ -2788,7 +2788,7 @@
     },
     "/api/recipes/{id}/like": {
       "post": {
-        "description": "Registers a like association for the current authenticated user on the recipe (idempotent).",
+        "description": "Registers a like association for the current authenticated user on the recipe (idempotent). Dispatches a social notification to the recipe author if newly liked and not self-liked.",
         "operationId": "RecipeController_likeRecipe",
         "parameters": [
           {
@@ -2865,7 +2865,7 @@
         ]
       },
       "delete": {
-        "description": "Removes the like association for the current user from the recipe (idempotent).",
+        "description": "Removes the like association for the current user from the recipe (idempotent). Prunes any unread like notifications previously sent to the recipe author.",
         "operationId": "RecipeController_unlikeRecipe",
         "parameters": [
           {
@@ -2944,7 +2944,7 @@
     },
     "/api/recipes/{id}/comments": {
       "post": {
-        "description": "Creates a new top-level comment or reply to an existing comment on the recipe. Normalizes nested replies to maintain a 2-level discussion thread structure.",
+        "description": "Creates a new top-level comment or reply to an existing comment on the recipe. Normalizes nested replies to maintain a 2-level discussion thread structure. Dispatches a social notification to the recipe author for root comments, or strictly to the parent comment author for replies (suppressed on self-actions).",
         "operationId": "RecipeController_createComment",
         "parameters": [
           {
@@ -3098,7 +3098,7 @@
     },
     "/api/recipes/{id}/comments/{commentId}": {
       "delete": {
-        "description": "Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author.",
+        "description": "Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author. Prunes any unread reply notifications targeting this comment.",
         "operationId": "RecipeController_deleteComment",
         "parameters": [
           {
@@ -3299,6 +3299,232 @@
         "summary": "Update recipe comment",
         "tags": [
           "Recipes"
+        ]
+      }
+    },
+    "/api/notifications/read/{id}": {
+      "patch": {
+        "description": "Marks a specific notification as read. The authenticated user must be the recipient.",
+        "operationId": "NotificationController_readedNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric notification ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid notification ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: user is not the recipient of the notification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Notification not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Mark notification as read",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notifications/delete/{id}": {
+      "delete": {
+        "description": "Permanently deletes a notification from the inbox. The authenticated user must be the recipient.",
+        "operationId": "NotificationController_deleteNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric notification ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid notification ID format (must be an integer)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: user is not the recipient of the notification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Notification not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete notification",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "description": "Retrieves all notifications for the authenticated user, ordered by creation date.",
+        "operationId": "NotificationController_getNotification",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of notifications for the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get user notifications",
+        "tags": [
+          "Notifications"
         ]
       }
     },
@@ -3895,232 +4121,6 @@
         "summary": "Remove a friend",
         "tags": [
           "Friends"
-        ]
-      }
-    },
-    "/api/notifications/read/{id}": {
-      "patch": {
-        "description": "Marks a specific notification as read. The authenticated user must be the recipient.",
-        "operationId": "NotificationController_readedNotification",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Numeric notification ID",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notification marked as read",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationMessageResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid notification ID format (must be an integer)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: user is not the recipient of the notification",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Notification not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Mark notification as read",
-        "tags": [
-          "Notifications"
-        ]
-      }
-    },
-    "/api/notifications/delete/{id}": {
-      "delete": {
-        "description": "Permanently deletes a notification from the inbox. The authenticated user must be the recipient.",
-        "operationId": "NotificationController_deleteNotification",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Numeric notification ID",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notification deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationMessageResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid notification ID format (must be an integer)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: user is not the recipient of the notification",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Notification not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Delete notification",
-        "tags": [
-          "Notifications"
-        ]
-      }
-    },
-    "/api/notifications": {
-      "get": {
-        "description": "Retrieves all notifications for the authenticated user, ordered by creation date.",
-        "operationId": "NotificationController_getNotification",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of notifications for the authenticated user",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationListResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Get user notifications",
-        "tags": [
-          "Notifications"
         ]
       }
     }
@@ -6463,6 +6463,104 @@
           "content"
         ]
       },
+      "NotificationMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Status message confirming operation",
+            "example": "Read"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "NotificationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique numeric notification ID",
+            "example": 1
+          },
+          "user_id": {
+            "type": "number",
+            "description": "User ID of the recipient",
+            "example": 2
+          },
+          "actor_id": {
+            "type": "number",
+            "description": "User ID of the actor who triggered the notification",
+            "example": 5
+          },
+          "subject": {
+            "enum": [
+              "recipe",
+              "comment",
+              "user"
+            ],
+            "type": "string",
+            "description": "Domain entity subject associated with the notification",
+            "example": "recipe"
+          },
+          "action": {
+            "enum": [
+              "like",
+              "comment",
+              "friend_request",
+              "friend_accept",
+              "post",
+              "delete",
+              "update"
+            ],
+            "type": "string",
+            "description": "Action that triggered the notification",
+            "example": "like"
+          },
+          "target_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Optional ID of the target resource (e.g. recipe ID or comment ID)",
+            "example": 42
+          },
+          "is_read": {
+            "type": "boolean",
+            "description": "Whether the notification has been marked as read",
+            "example": false
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Timestamp when the notification was created",
+            "example": "2026-10-28T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "actor_id",
+          "subject",
+          "action",
+          "is_read",
+          "created_at"
+        ]
+      },
+      "NotificationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "notification": {
+            "description": "List of notifications for the authenticated user",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationItemDto"
+            }
+          }
+        },
+        "required": [
+          "notification"
+        ]
+      },
       "FriendRequestItemDto": {
         "type": "object",
         "properties": {
@@ -6580,104 +6678,6 @@
         },
         "required": [
           "message"
-        ]
-      },
-      "NotificationMessageResponseDto": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "Status message confirming operation",
-            "example": "Read"
-          }
-        },
-        "required": [
-          "message"
-        ]
-      },
-      "NotificationItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique numeric notification ID",
-            "example": 1
-          },
-          "user_id": {
-            "type": "number",
-            "description": "User ID of the recipient",
-            "example": 2
-          },
-          "actor_id": {
-            "type": "number",
-            "description": "User ID of the actor who triggered the notification",
-            "example": 5
-          },
-          "subject": {
-            "enum": [
-              "recipe",
-              "comment",
-              "user"
-            ],
-            "type": "string",
-            "description": "Domain entity subject associated with the notification",
-            "example": "recipe"
-          },
-          "action": {
-            "enum": [
-              "like",
-              "comment",
-              "friend_request",
-              "friend_accept",
-              "post",
-              "delete",
-              "update"
-            ],
-            "type": "string",
-            "description": "Action that triggered the notification",
-            "example": "like"
-          },
-          "target_id": {
-            "type": "number",
-            "nullable": true,
-            "description": "Optional ID of the target resource (e.g. recipe ID or comment ID)",
-            "example": 42
-          },
-          "is_read": {
-            "type": "boolean",
-            "description": "Whether the notification has been marked as read",
-            "example": false
-          },
-          "created_at": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when the notification was created",
-            "example": "2026-10-28T12:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "user_id",
-          "actor_id",
-          "subject",
-          "action",
-          "is_read",
-          "created_at"
-        ]
-      },
-      "NotificationListResponseDto": {
-        "type": "object",
-        "properties": {
-          "notification": {
-            "description": "List of notifications for the authenticated user",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationItemDto"
-            }
-          }
-        },
-        "required": [
-          "notification"
         ]
       }
     }

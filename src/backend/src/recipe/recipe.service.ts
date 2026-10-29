@@ -7,8 +7,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
-import { MediaType, OwnerType, TranslationStatus } from '@prisma/client';
-import type { Prisma, Recipe } from '@prisma/client';
+import {
+  MediaType,
+  OwnerType,
+  TranslationStatus,
+  NotificationSubject,
+  NotificationAction,
+  Prisma,
+} from '@prisma/client';
+import type { Recipe } from '@prisma/client';
+import { NotificationEmit } from 'src/notifications/notification-emit';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
@@ -35,6 +43,7 @@ export class RecipeService {
     private readonly prisma: PrismaService,
     private readonly translationService: TranslationService,
     private readonly productionConfig: ProductionConfig,
+    private readonly notificationEmit: NotificationEmit,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -1250,6 +1259,14 @@ export class RecipeService {
       },
     });
 
+    // Delete all notifications targeting this recipe
+    await this.prisma.notification.deleteMany({
+      where: {
+        subject: NotificationSubject.recipe,
+        target_id: recipeId,
+      },
+    });
+
     // Safely remove physical files from filesystem
     for (const url of mediaUrls) {
       await this.safeUnlink(url);
@@ -1827,30 +1844,42 @@ export class RecipeService {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, user_id: true },
     });
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
     }
 
-    // Check if the like already exists
-    const existingLike = await this.prisma.like.findUnique({
-      where: {
-        user_id_recipe_id: {
-          user_id: userId,
-          recipe_id: recipeId,
-        },
-      },
-    });
-
-    // Create like record if it does not exist yet (idempotent)
-    if (!existingLike) {
+    let newlyCreated = false;
+    try {
       await this.prisma.like.create({
         data: {
           user_id: userId,
           recipe_id: recipeId,
         },
       });
+      newlyCreated = true;
+    } catch (error: any) {
+      if (
+        (error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002') ||
+        error?.code === 'P2002'
+      ) {
+        newlyCreated = false;
+      } else {
+        throw error;
+      }
+    }
+
+    // Dispatch social notification to recipe author (unless self-like)
+    if (newlyCreated && recipe.user_id && recipe.user_id !== userId) {
+      await this.notificationEmit.notification(
+        { id_user: userId, id_target: recipeId },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+        },
+      );
     }
 
     return { message: 'Recipe liked successfully', liked: true };
@@ -1865,30 +1894,41 @@ export class RecipeService {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, user_id: true },
     });
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
     }
 
-    // Check if the like exists
-    const existingLike = await this.prisma.like.findUnique({
-      where: {
-        user_id_recipe_id: {
-          user_id: userId,
-          recipe_id: recipeId,
-        },
-      },
-    });
-
-    // Remove like record if present (idempotent)
-    if (existingLike) {
+    try {
       await this.prisma.like.delete({
         where: {
           user_id_recipe_id: {
             user_id: userId,
             recipe_id: recipeId,
           },
+        },
+      });
+    } catch (error: any) {
+      if (!(
+        (error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2025') ||
+        error?.code === 'P2025'
+      )) {
+        throw error;
+      }
+    }
+
+    // Prune unread like notification targeting the recipe author
+    if (recipe.user_id && recipe.user_id !== userId) {
+      await this.prisma.notification.deleteMany({
+        where: {
+          user_id: recipe.user_id,
+          actor_id: userId,
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+          target_id: recipeId,
+          is_read: false,
         },
       });
     }
@@ -1904,7 +1944,7 @@ export class RecipeService {
   async createComment(recipeId: number, userId: number, dto: CreateCommentDto) {
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, user_id: true },
     });
 
     if (!recipe) {
@@ -1912,10 +1952,17 @@ export class RecipeService {
     }
 
     let parentId: number | null = null;
+    let parentComment: {
+      id: number;
+      user_id: number | null;
+      parent_id: number | null;
+      recipe_id: number;
+    } | null = null;
 
     if (dto.parent_id !== undefined && dto.parent_id !== null) {
       const parent = await this.prisma.comment.findUnique({
         where: { id: dto.parent_id },
+        select: { id: true, user_id: true, parent_id: true, recipe_id: true },
       });
 
       if (!parent) {
@@ -1928,10 +1975,11 @@ export class RecipeService {
 
       // Enforce 2-level hierarchy: if parent is already a reply, normalize to
       // its root parent_id
+      parentComment = parent;
       parentId = parent.parent_id !== null ? parent.parent_id : parent.id;
     }
 
-    return await this.prisma.comment.create({
+    const comment = await this.prisma.comment.create({
       data: {
         recipe_id: recipeId,
         user_id: userId,
@@ -1949,6 +1997,33 @@ export class RecipeService {
         },
       },
     });
+
+    // Notification dispatch
+    if (parentComment) {
+      // Reply: strictly notify the parent comment author (unless self-reply)
+      if (parentComment.user_id && parentComment.user_id !== userId) {
+        await this.notificationEmit.notification(
+          { id_user: userId, id_target: parentComment.id },
+          {
+            subject: NotificationSubject.comment,
+            action: NotificationAction.comment,
+          },
+        );
+      }
+    } else {
+      // Top-level comment: notify recipe author (unless self-comment)
+      if (recipe.user_id && recipe.user_id !== userId) {
+        await this.notificationEmit.notification(
+          { id_user: userId, id_target: recipeId },
+          {
+            subject: NotificationSubject.recipe,
+            action: NotificationAction.comment,
+          },
+        );
+      }
+    }
+
+    return comment;
   }
 
   // ---------------------------------------------------------------------------
@@ -2103,6 +2178,15 @@ export class RecipeService {
     await this.prisma.comment.update({
       where: { id: commentId },
       data: { is_active: false },
+    });
+
+    // Prune unread reply notifications targeting this deactivated comment
+    await this.prisma.notification.deleteMany({
+      where: {
+        subject: NotificationSubject.comment,
+        target_id: commentId,
+        is_read: false,
+      },
     });
 
     return { message: 'Comment deactivated successfully' };
