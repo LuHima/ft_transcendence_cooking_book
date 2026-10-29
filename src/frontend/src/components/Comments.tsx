@@ -86,6 +86,12 @@ function CommentForm({ initial = '', submitLabel, placeholder, autoFocus, onSubm
 	)
 }
 
+// i commenti eliminati non si mostrano: se il principale è eliminato sparisce l'intero thread,
+// se è eliminata una risposta sparisce solo quella
+function pruneThreads(list: ThreadedComment[]): ThreadedComment[] {
+	return list.filter((th) => th.is_active).map((th) => ({ ...th, replies: th.replies.filter((r) => r.is_active) }))
+}
+
 function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	const { t } = useTranslation()
 	const lang = useLang()
@@ -101,7 +107,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 		api
 			.get<ThreadedComment[]>(`/recipes/${recipeId}/comments`)
 			.then((data) => {
-				if (!cancelled) setThreads(Array.isArray(data) ? data : [])
+				if (!cancelled) setThreads(Array.isArray(data) ? pruneThreads(data) : [])
 			})
 			.catch((err) => {
 				if (!cancelled) setLoadError(getErrorMessage(err, t('comments.loadError')))
@@ -154,13 +160,12 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 		try {
 			// eliminazione non distruttiva: il backend imposta is_active = false
 			await api.delete(`/recipes/${recipeId}/comments/${comment.id}`)
-			const deactivate = (c: ApiComment): ApiComment => (c.id === comment.id ? { ...c, is_active: false, content: null } : c)
 			setThreads(
 				(prev) =>
 					prev
-						?.map((th) => ({ ...th, ...deactivate(th), replies: th.replies.map(deactivate) }))
-						// un commento principale disattivato e senza risposte attive non serve più
-						.filter((th) => th.is_active || th.replies.some((r) => r.is_active)) ?? null,
+						// commento principale eliminato → via anche le sue risposte; risposta eliminata → via solo lei
+						?.filter((th) => th.id !== comment.id)
+						.map((th) => ({ ...th, replies: th.replies.filter((r) => r.id !== comment.id) })) ?? null,
 			)
 			toast.success(t('comments.deleted'))
 		} catch (err) {
@@ -220,9 +225,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 					)}
 				</div>
 
-				{!c.is_active ? (
-					<p className="mt-2 text-sm italic text-[var(--wc-text-muted)]">{t('comments.removed')}</p>
-				) : editing === c.id ? (
+				{editing === c.id ? (
 					<div className="mt-3">
 						<CommentForm
 							initial={c.content ?? ''}

@@ -124,7 +124,7 @@
 		"translationFailed": "La traduction automatique a échoué : certaines langues peuvent afficher le texte original.",
 		"retryTranslation": "Relancer la traduction",
 		"edit": "Modifier la recette",
-		"removeAdmin": "Retirer (admin)",
+		"removeAdmin": "Retirer la recette",
 		"ingredients": "Ingrédients",
 		"noIngredients": "Aucun ingrédient indiqué pour cette recette.",
 		"preparation": "Préparation",

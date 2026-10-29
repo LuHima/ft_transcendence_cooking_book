@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { api, getErrorMessage } from '../api/client'
-import type { Friendship } from '../types/models'
+import { api, getErrorMessage, toPage } from '../api/client'
+import type { FriendRequest, Friendship } from '../types/models'
 
 interface FriendButtonProps {
 	userId: number
@@ -53,24 +53,19 @@ function FriendButton({ userId, username, friendship, onChange }: FriendButtonPr
 
 	if (status === 'accepted') {
 		return (
-			<div className="flex items-center gap-2">
-				<span className="rounded-full bg-[var(--wc-basil)] px-3 py-1 text-xs font-medium text-[var(--wc-bg)]">
-					✓ {t('friends.friends')}
-				</span>
-				<button
-					disabled={busy}
-					className={OUTLINE}
-					onClick={() => {
-						if (!confirm(t('friends.confirmRemove', { name: username }))) return
-						void run(async () => {
-							await api.delete(`/friends/${userId}`)
-							return { status: 'none' }
-						}, 'friends.removed')
-					}}
-				>
-					{t('friends.remove')}
-				</button>
-			</div>
+			<button
+				disabled={busy}
+				className={OUTLINE}
+				onClick={() => {
+					if (!confirm(t('friends.confirmRemove', { name: username }))) return
+					void run(async () => {
+						await api.delete(`/friends/${userId}`)
+						return { status: 'none' }
+					}, 'friends.removed')
+				}}
+			>
+				{t('friends.remove')}
+			</button>
 		)
 	}
 
@@ -106,26 +101,27 @@ function FriendButton({ userId, username, friendship, onChange }: FriendButtonPr
 	}
 
 	if (status === 'pending') {
+		// stesso stile di "Rimuovi dagli amici": bianco, rosso al passaggio del mouse
 		return (
-			<div className="flex items-center gap-2">
-				<span className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-xs text-[var(--wc-text-muted)]">
-					{t('friends.requestSent')}
-				</span>
-				{requestId != null && (
-					<button
-						disabled={busy}
-						className={OUTLINE}
-						onClick={() =>
-							void run(async () => {
-								await api.delete(`/friends/requests/${requestId}`)
-								return { status: 'none' }
-							})
+			<button
+				disabled={busy}
+				className={OUTLINE}
+				onClick={() =>
+					void run(async () => {
+						let id = requestId
+						if (id == null) {
+							// il backend non ha restituito l'id: lo si cerca tra le richieste inviate
+							const d = await api.get<unknown>('/friends/requests?type=outgoing')
+							id = toPage<FriendRequest>(d).items.find((r) => r.username === username)?.id
 						}
-					>
-						{t('friends.cancelRequest')}
-					</button>
-				)}
-			</div>
+						if (id == null) throw new Error('request not found')
+						await api.delete(`/friends/requests/${id}`)
+						return { status: 'none' }
+					})
+				}
+			>
+				{t('friends.cancelRequest')}
+			</button>
 		)
 	}
 
@@ -136,12 +132,12 @@ function FriendButton({ userId, username, friendship, onChange }: FriendButtonPr
 			className={PRIMARY}
 			onClick={() =>
 				void run(async () => {
-					const res = await api.post<{ status?: 'pending' | 'accepted' }>(
+					const res = await api.post<{ status?: 'pending' | 'accepted'; id?: number; request_id?: number }>(
 						`/friends/requests/${userId}`,
 					)
-					return res.status === 'accepted'
-						? { status: 'accepted' }
-						: { status: 'pending', direction: 'sent', request_id: userId }
+					if (res?.status === 'accepted') return { status: 'accepted' }
+					// id reale della richiesta (serve per annullarla); se il backend non lo manda, "Annulla" non viene mostrato
+					return { status: 'pending', direction: 'sent', request_id: res?.request_id ?? res?.id }
 				}, 'friends.requestSentToast')
 			}
 		>

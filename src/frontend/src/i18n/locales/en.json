@@ -124,7 +124,7 @@
 		"translationFailed": "The automatic translation failed: some languages may show the original text.",
 		"retryTranslation": "Retry translation",
 		"edit": "Edit recipe",
-		"removeAdmin": "Remove (admin)",
+		"removeAdmin": "Remove recipe",
 		"ingredients": "Ingredients",
 		"noIngredients": "No ingredients listed for this recipe.",
 		"preparation": "Preparation",
