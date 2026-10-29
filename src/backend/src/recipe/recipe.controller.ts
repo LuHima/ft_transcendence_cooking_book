@@ -284,7 +284,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Delete recipe',
     description:
-      'Permanently deletes the recipe and all its steps, media, translations, and associated likes.',
+      'Permanently deletes the recipe and all its steps, media, translations, and associated likes. Cleans up all orphaned social notifications targeting this recipe.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({
@@ -644,7 +644,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Like recipe',
     description:
-      'Registers a like association for the current authenticated user on the recipe (idempotent).',
+      'Registers a like association for the current authenticated user on the recipe (idempotent). Dispatches a social notification to the recipe author if newly liked and not self-liked.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({ description: 'Recipe liked', type: RecipeLikeResponseDto })
@@ -671,7 +671,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Unlike recipe',
     description:
-      'Removes the like association for the current user from the recipe (idempotent).',
+      'Removes the like association for the current user from the recipe (idempotent). Prunes any unread like notifications previously sent to the recipe author.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({ description: 'Recipe unliked', type: RecipeLikeResponseDto })
@@ -698,7 +698,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Post recipe comment or reply',
     description:
-      'Creates a new top-level comment or reply to an existing comment on the recipe. Normalizes nested replies to maintain a 2-level discussion thread structure.',
+      'Creates a new top-level comment or reply to an existing comment on the recipe. Normalizes nested replies to maintain a 2-level discussion thread structure. Dispatches a social notification to the recipe author for root comments, or strictly to the parent comment author for replies (suppressed on self-actions).',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiCreatedResponse({
@@ -760,7 +760,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Deactivate recipe comment',
     description:
-      'Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author.',
+      'Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author. Prunes any unread reply notifications targeting this comment.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiParam({ name: 'commentId', description: 'Comment ID', example: 10 })
