@@ -89,7 +89,7 @@ export class AuthController {
       path: '/', // Valido per tutti i path
     });
     // è normale si vedeno negli header e non siano nascosti però sono protetti da httpOnly che impedisce a script di toccarli o vederli
-    response.cookie('refresh_token', jwts.refreshToken, {
+    response.cookie('refreshToken', jwts.refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
@@ -100,13 +100,13 @@ export class AuthController {
 
   /**
    * Authenticate user with email and password credentials.
-   * If credentials are valid and 2FA is inactive, sets HttpOnly cookies (accessToken and refresh_token).
+   * If credentials are valid and 2FA is inactive, sets HttpOnly cookies (accessToken and refreshToken).
    * If 2FA is active, returns a temporary challenge token instead.
    */
   @ApiOperation({
     summary: 'Sign in with email and password',
     description:
-      'Validates user credentials. On success, sets HttpOnly `accessToken` (10 min) and `refresh_token` (7 days) cookies. ' +
+      'Validates user credentials. On success, sets HttpOnly `accessToken` (10 min) and `refreshToken` (7 days) cookies. ' +
       'If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.',
   })
   @ApiOkResponse({
@@ -181,7 +181,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Sign out and revoke session',
     description:
-      'Revokes the current JWT session from the database and clears `accessToken` and `refresh_token` cookies.',
+      'Revokes the current JWT session from the database and clears `accessToken` and `refreshToken` cookies.',
   })
   @ApiOkResponse({
     description: 'Successfully signed out; session revoked and cookies cleared',
@@ -195,19 +195,19 @@ export class AuthController {
   ) {
     await this.authService.signOut(id);
     res.clearCookie('accessToken', { path: '/' });
-    res.clearCookie('refresh_token', { path: '/api/auth/refresh' });
+    res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     return { message: 'Signed out successfully' };
   }
 
   /**
-   * Refresh expired access token using the refresh_token cookie.
+   * Refresh expired access token using the refreshToken cookie.
    */
   @ApiOperation({
     summary: 'Refresh access token',
     description:
-      'Exchanges a valid HttpOnly `refresh_token` cookie for a new 10-minute `accessToken` cookie.',
+      'Exchanges a valid HttpOnly `refreshToken` cookie for a new 10-minute `accessToken` cookie.',
   })
-  @ApiCookieAuth('refresh_token')
+  @ApiCookieAuth('refreshToken')
   @ApiOkResponse({
     description: 'Token successfully refreshed; new accessToken cookie set',
     type: AuthMessageResponseDto,
@@ -222,7 +222,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = req.cookies?.['refresh_token'];
+    const refreshToken = req.cookies?.['refreshToken'];
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token missing');
     }

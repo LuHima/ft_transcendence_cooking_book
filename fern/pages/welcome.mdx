@@ -22,7 +22,7 @@ All API routes are prefixed with `/api`. Static media files (recipe covers, step
 WeCook uses HttpOnly cookie-based JWT authentication:
 
 - **`accessToken`**: Short-lived (10 minutes) JWT stored in an HttpOnly cookie. Sent automatically by browsers and client agents on protected routes.
-- **`refresh_token`**: Long-lived (7 days) JWT stored in an HttpOnly cookie scoped strictly to `/api/auth/refresh`. Used to issue fresh access tokens without re-entering credentials.
+- **`refreshToken`**: Long-lived (7 days) JWT stored in an HttpOnly cookie scoped strictly to `/api/auth/refresh`. Used to issue fresh access tokens without re-entering credentials.
 - **Two-Factor Authentication (2FA)**: Time-based One-Time Password (TOTP) supported via standard authenticator apps (Google Authenticator, Authy, etc.).
 
 When testing API endpoints directly with tools like cURL or Postman, include the cookies in the `Cookie` header:

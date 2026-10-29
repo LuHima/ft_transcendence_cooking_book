@@ -37,7 +37,7 @@
     },
     "/api/auth/signin": {
       "post": {
-        "description": "Validates user credentials. On success, sets HttpOnly `accessToken` (10 min) and `refresh_token` (7 days) cookies. If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.",
+        "description": "Validates user credentials. On success, sets HttpOnly `accessToken` (10 min) and `refreshToken` (7 days) cookies. If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.",
         "operationId": "AuthController_signIn",
         "parameters": [],
         "requestBody": {
@@ -170,7 +170,7 @@
     },
     "/api/auth/signout": {
       "delete": {
-        "description": "Revokes the current JWT session from the database and clears `accessToken` and `refresh_token` cookies.",
+        "description": "Revokes the current JWT session from the database and clears `accessToken` and `refreshToken` cookies.",
         "operationId": "AuthController_signOut",
         "parameters": [],
         "responses": {
@@ -218,7 +218,7 @@
     },
     "/api/auth/refresh": {
       "post": {
-        "description": "Exchanges a valid HttpOnly `refresh_token` cookie for a new 10-minute `accessToken` cookie.",
+        "description": "Exchanges a valid HttpOnly `refreshToken` cookie for a new 10-minute `accessToken` cookie.",
         "operationId": "AuthController_refresh",
         "parameters": [],
         "responses": {
@@ -255,7 +255,7 @@
         },
         "security": [
           {
-            "refresh_token": []
+            "refreshToken": []
           }
         ],
         "summary": "Refresh access token",
@@ -4127,7 +4127,7 @@
   },
   "info": {
     "title": "WeCook API",
-    "description": "RESTful backend API specification for the WeCook recipe sharing social platform.\n\n### Authentication\nAuthentication is based on secure, HttpOnly JWT cookies:\n- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n- **`refresh_token`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n### Media Storage & Static Assets\nUploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n### Localization & Multilingual Engine\nRecipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.",
+    "description": "RESTful backend API specification for the WeCook recipe sharing social platform.\n\n### Authentication\nAuthentication is based on secure, HttpOnly JWT cookies:\n- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n### Media Storage & Static Assets\nUploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n### Localization & Multilingual Engine\nRecipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.",
     "version": "1.0.0",
     "contact": {}
   },
@@ -4176,8 +4176,8 @@
       "cookie": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "refresh_token",
-        "description": "JWT Refresh Token stored in HttpOnly cookie (`refresh_token`) for the refresh endpoint"
+        "name": "refreshToken",
+        "description": "JWT Refresh Token stored in HttpOnly cookie (`refreshToken`) for the refresh endpoint"
       }
     },
     "schemas": {

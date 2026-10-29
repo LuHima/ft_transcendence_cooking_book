@@ -59,7 +59,7 @@ async function bootstrap() {
         '### Authentication\n' +
         'Authentication is based on secure, HttpOnly JWT cookies:\n' +
         '- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n' +
-        '- **`refresh_token`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n' +
+        '- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n' +
         '### Media Storage & Static Assets\n' +
         'Uploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n' +
         '### Localization & Multilingual Engine\n' +
@@ -102,12 +102,12 @@ async function bootstrap() {
       name: 'accessToken',
       description: 'JWT Access Token stored in HttpOnly cookie (`accessToken`)',
     })
-    .addCookieAuth('refresh_token', {
+    .addCookieAuth('refreshToken', {
       type: 'apiKey',
       in: 'cookie',
-      name: 'refresh_token',
+      name: 'refreshToken',
       description:
-        'JWT Refresh Token stored in HttpOnly cookie (`refresh_token`) for the refresh endpoint',
+        'JWT Refresh Token stored in HttpOnly cookie (`refreshToken`) for the refresh endpoint',
     })
     .build();
 
