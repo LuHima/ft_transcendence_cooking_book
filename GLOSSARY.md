@@ -21,8 +21,8 @@ The localized title and description of an instruction step for a specific locale
 _Avoid_: Localized step, step text
 
 **Course**:
-The dining classification of a recipe within a meal (appetizer, first*course, main_course, dessert, side_dish, drink, snack).
-\_Avoid*: Category, meal type, dish type
+The dining classification of a recipe within a meal (appetizer, first_course, main_course, dessert, side_dish, drink, snack).
+_Avoid_: Category, meal type, dish type
 
 **Cover Image**:
 The primary hero image representing the finished recipe on recipe cards, search results, and 3D book covers.
@@ -80,6 +80,10 @@ _Avoid_: Translated flag, status code
 A public textual remark posted by an authenticated user on a recipe, either as a top-level thought or as a direct reply to an existing comment.
 _Avoid_: Review, feedback, note, chat message, post reply
 
+**Recipe Like**:
+A positive endorsement registered by an authenticated user on a recipe, contributing to its cumulative social count and visibility.
+_Avoid_: Upvote, favorite, bookmark, star
+
 ## Social & Friendship Entities
 
 **Community Member**:
@@ -97,3 +101,7 @@ _Avoid_: Follow request, invitation, ping
 **Friendship Status**:
 The contextual relationship classification between a viewing user and a target member (`none`, `pending_sent`, `pending_received`, `friends`).
 _Avoid_: Follow status, relation type, connection state
+
+**Social Notification**:
+An in-app alert and real-time event notifying a community member of an interaction (e.g. friend request, recipe like, or comment) directed at their content or account.
+_Avoid_: Push message, ping, email, banner
