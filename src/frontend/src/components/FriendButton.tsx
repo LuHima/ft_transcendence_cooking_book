@@ -21,12 +21,6 @@ const OUTLINE = `${BASE} border border-[var(--wc-border)] text-[var(--wc-text)] 
 // pulsante amicizia in stile Facebook:
 //   nessuna relazione → "Aggiungi" → (richiesta inviata) → accettata = amici / rifiutata = non amici
 //   richiesta ricevuta → "Accetta" / "Rifiuta"
-// NB: endpoint da esporre lato backend:
-//   POST   /friends/requests {user_id}        invia la richiesta   → { id }
-//   POST   /friends/requests/:id/accept       accetta
-//   POST   /friends/requests/:id/reject       rifiuta
-//   DELETE /friends/requests/:id              annulla una richiesta inviata
-//   DELETE /friends/:userId                   rimuove dagli amici
 function FriendButton({ userId, username, friendship, onChange }: FriendButtonProps) {
 	const { t } = useTranslation()
 	const { user } = useAuth()
@@ -142,8 +136,12 @@ function FriendButton({ userId, username, friendship, onChange }: FriendButtonPr
 			className={PRIMARY}
 			onClick={() =>
 				void run(async () => {
-					const res = await api.post<{ id?: number } | null>('/friends/requests', { user_id: userId })
-					return { status: 'pending', direction: 'sent', request_id: res?.id }
+					const res = await api.post<{ status?: 'pending' | 'accepted' }>(
+						`/friends/requests/${userId}`,
+					)
+					return res.status === 'accepted'
+						? { status: 'accepted' }
+						: { status: 'pending', direction: 'sent', request_id: userId }
 				}, 'friends.requestSentToast')
 			}
 		>
