@@ -21,6 +21,7 @@
 		"home": "Home",
 		"myRecipes": "Le mie ricette",
 		"favorites": "Preferiti",
+		"mealPlan": "Meal plan",
 		"friends": "Amici",
 		"adminPanel": "Pannello amministratore",
 		"contacts": "Contatti",
@@ -129,7 +130,8 @@
 		"preparation": "Preparazione",
 		"stepImageAlt": "Foto del passaggio {{n}}",
 		"tips": "Consigli",
-		"preservation": "Conservazione"
+		"preservation": "Conservazione",
+		"platformName": "WeCook"
 	},
 	"comments": {
 		"title": "Commenti",
@@ -539,7 +541,14 @@
 		"phone": "Telefono",
 		"address": "Indirizzo",
 		"city": "Città",
-		"postalCode": "CAP"
+		"postalCode": "CAP",
+		"dayPh": "GG",
+		"monthPh": "MM",
+		"yearPh": "AAAA",
+		"day": "Giorno",
+		"month": "Mese",
+		"year": "Anno",
+		"birthInvalid": "Inserisci una data valida (GG/MM/AAAA) oppure lascia vuoto."
 	},
 	"twofa": {
 		"title": "Autenticazione a due fattori",

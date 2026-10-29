@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { api, getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
+import DateInput from '../components/DateInput'
 
 function field(value: string | null | undefined) {
 	return value ?? ''
@@ -23,6 +24,7 @@ function Anagrafica() {
 		postal_code: field(user?.postal_code),
 	})
 	const [saving, setSaving] = useState(false)
+	const [birthValid, setBirthValid] = useState(true)
 
 	if (!user) return null
 
@@ -32,6 +34,7 @@ function Anagrafica() {
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
+		if (!birthValid) return toast.error(t('personal.birthInvalid'))
 		setSaving(true)
 		try {
 			// una data di nascita vuota non è valida per il backend: si omette
@@ -63,8 +66,15 @@ function Anagrafica() {
 					</div>
 				</div>
 				<div>
-					<label htmlFor="birth_date" className={LABEL_CLASS}>{t('personal.birthDate')}</label>
-					<input id="birth_date" type="date" value={form.birth_date} onChange={(e) => update('birth_date', e.target.value)} className={INPUT_CLASS} />
+					<DateInput
+						id="birth_date"
+						label={t('personal.birthDate')}
+						value={form.birth_date}
+						onChange={(iso, valid) => {
+							update('birth_date', iso)
+							setBirthValid(valid)
+						}}
+					/>
 				</div>
 				<div>
 					<label htmlFor="phone" className={LABEL_CLASS}>{t('personal.phone')}</label>

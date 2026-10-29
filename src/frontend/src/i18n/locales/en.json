@@ -21,6 +21,7 @@
 		"home": "Home",
 		"myRecipes": "My recipes",
 		"favorites": "Favorites",
+		"mealPlan": "Meal plan",
 		"friends": "Friends",
 		"adminPanel": "Administrator panel",
 		"contacts": "Contact",
@@ -129,7 +130,8 @@
 		"preparation": "Preparation",
 		"stepImageAlt": "Photo of step {{n}}",
 		"tips": "Tips",
-		"preservation": "Storage"
+		"preservation": "Storage",
+		"platformName": "WeCook"
 	},
 	"comments": {
 		"title": "Comments",
@@ -539,7 +541,14 @@
 		"phone": "Phone",
 		"address": "Address",
 		"city": "City",
-		"postalCode": "Postal code"
+		"postalCode": "Postal code",
+		"dayPh": "DD",
+		"monthPh": "MM",
+		"yearPh": "YYYY",
+		"day": "Day",
+		"month": "Month",
+		"year": "Year",
+		"birthInvalid": "Enter a valid date (DD/MM/YYYY) or leave it empty."
 	},
 	"twofa": {
 		"title": "Two-factor authentication",
