@@ -10,6 +10,7 @@ import {
 } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from 'src/common/guards/auth.guard';
+import { IngredientCategory, Role } from '@prisma/client';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
@@ -46,6 +47,12 @@ describe('CatalogController', () => {
             }),
             deleteTag: jest.fn().mockResolvedValue({
               message: "Tag 'gluten_free' deleted successfully",
+            }),
+            updateIngredient: jest.fn().mockResolvedValue({
+              id: 7,
+              slug: 'bell_pepper',
+              category: IngredientCategory.produce,
+              translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
             }),
           },
         },
@@ -134,6 +141,19 @@ describe('CatalogController', () => {
       expect(result).toEqual({
         message: "Tag 'gluten_free' deleted successfully",
       });
+    });
+  });
+  describe('updateIngredient', () => {
+    it('delegates to service.updateIngredient with user, id and body', async () => {
+      const user = { id: 1, role: Role.admin } as any;
+      const dto = {
+        translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+      };
+
+      const result = await controller.updateIngredient(user, 7, dto);
+
+      expect(service.updateIngredient).toHaveBeenCalledWith(user, 7, dto);
+      expect(result.id).toBe(7);
     });
   });
 });

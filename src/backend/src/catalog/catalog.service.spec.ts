@@ -30,6 +30,7 @@ describe('CatalogService', () => {
               findMany: jest.fn(),
               findUnique: jest.fn(),
               create: jest.fn(),
+              update: jest.fn(),
               delete: jest.fn(),
             },
             tag: {
@@ -311,7 +312,8 @@ describe('CatalogService', () => {
       expect(prisma.ingredient.create).not.toHaveBeenCalled();
     });
   });
-    describe('deleteIngredient', () => {
+  
+  describe('deleteIngredient', () => {
     const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
 
     it('deletes an ingredient that is not used by any recipe', async () => {
@@ -422,6 +424,65 @@ describe('CatalogService', () => {
         status: HttpStatus.FORBIDDEN,
       });
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateIngredient', () => {
+    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+    const dto = {
+      translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+    };
+
+    it('updates the three translations of an existing ingredient', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({ id: 7 });
+      (prisma.ingredient.update as jest.Mock).mockResolvedValue({
+        id: 7,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: [
+          { locale: 'it', name: 'Peperone' },
+          { locale: 'en', name: 'Bell pepper' },
+          { locale: 'fr', name: 'Poivron' },
+        ],
+      });
+
+      const result = await service.updateIngredient(admin, 7, dto);
+
+      expect(casl.check).toHaveBeenCalledWith(
+        admin,
+        Action.Update,
+        'Ingredient',
+      );
+      expect(result).toEqual({
+        id: 7,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+      });
+    });
+
+    it('throws 404 if the ingredient does not exist', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.updateIngredient(admin, 99, dto),
+      ).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+      expect(prisma.ingredient.update).not.toHaveBeenCalled();
+    });
+
+    it('throws 403 if CASL denies the action', async () => {
+      casl.check.mockImplementation(() => {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      });
+
+      await expect(
+        service.updateIngredient(admin, 7, dto),
+      ).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+      });
+      expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
     });
   });
 });

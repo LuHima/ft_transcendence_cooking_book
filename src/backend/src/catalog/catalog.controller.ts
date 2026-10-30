@@ -30,8 +30,8 @@ import {
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { FilterIngredientDto } from './dto/filter-ingredient.dto';
-
 import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { TagDetailResponseDto } from './dto/catalog-response.dto';
 
@@ -248,5 +248,38 @@ export class CatalogController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return await this.catalogService.deleteIngredient(user, id);
+  }
+
+    /**
+   * Update the translations of an existing ingredient (admin only).
+   */
+  @ApiOperation({
+    summary: 'Update a curated ingredient',
+    description:
+      'Updates the Italian, English and French names of an existing ingredient. The slug and category are immutable. Restricted to administrators.',
+  })
+  @ApiOkResponse({
+    description: 'Ingredient updated with all its translations',
+    type: IngredientDetailResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid translations',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can update catalog ingredients',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Ingredient not found',
+  })
+  @Auth()
+  @Patch('ingredients/:id')
+  async updateIngredient(
+    @CurrentUser() user: ActiveUserData,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateIngredientDto,
+  ) {
+    return await this.catalogService.updateIngredient(user, id, dto);
   }
 }

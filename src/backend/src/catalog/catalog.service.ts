@@ -11,7 +11,7 @@ import { Action } from '../auth/casl/action.enum';
 import { ActiveUserData } from '../common/decorators/current-user.decorator';
 import { createHttpException, errors } from '../common/config/error.config';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
-
+import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 
@@ -303,6 +303,88 @@ export class CatalogService {
     });
 
     return this.toTagDetail(updated);
+  }
+
+  /*
+  PATCH /api/ingredients/:id
+  Updates the Italian, English and French names of an existing ingredient
+  (admin only, enforced by CASL). The slug and category are immutable: they
+  are the stable keys used by seeds, filters and references, so they cannot
+  be changed here.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the ingredient to update.
+  @param dto: The new display name in each supported language.
+  */
+  async updateIngredient(
+    user: ActiveUserData,
+    id: number,
+    dto: UpdateIngredientDto,
+  ) {
+    // Only roles allowed to update Ingredients pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Update, 'Ingredient');
+
+    // 404 if the ingredient does not exist
+    const existing = await this.prisma.ingredient.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+
+    // Upserts the three translations in a single nested write, so a missing
+    // translation row (edge case) is created instead of failing the update.
+    const updated = await this.prisma.ingredient.update({
+      where: { id },
+      data: {
+        translations: {
+          upsert: [
+            {
+              where: { ingredient_id_locale: { ingredient_id: id, locale: 'it' } },
+              create: { locale: 'it', name: dto.translations.it },
+              update: { name: dto.translations.it },
+            },
+            {
+              where: { ingredient_id_locale: { ingredient_id: id, locale: 'en' } },
+              create: { locale: 'en', name: dto.translations.en },
+              update: { name: dto.translations.en },
+            },
+            {
+              where: { ingredient_id_locale: { ingredient_id: id, locale: 'fr' } },
+              create: { locale: 'fr', name: dto.translations.fr },
+              update: { name: dto.translations.fr },
+            },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    return this.toIngredientDetail(updated);
+  }
+
+  /*
+  Maps a stored Ingredient (with its translations) to the public response
+  shape { id, slug, category, translations: { it, en, fr } }.
+  */
+  private toIngredientDetail(ingredient: {
+    id: number;
+    slug: string;
+    category: IngredientCategory;
+    translations: { locale: string; name: string }[];
+  }) {
+    const nameOf = (locale: string) =>
+      ingredient.translations.find((t) => t.locale === locale)?.name ?? '';
+    return {
+      id: ingredient.id,
+      slug: ingredient.slug,
+      category: ingredient.category,
+      translations: {
+        it: nameOf('it'),
+        en: nameOf('en'),
+        fr: nameOf('fr'),
+      },
+    };
   }
 
   /*
