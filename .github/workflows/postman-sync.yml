@@ -1,0 +1,72 @@
+name: OpenAPI & Postman Sync
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dario-APIs
+    paths:
+      - 'src/backend/**'
+      - '.github/workflows/postman-sync.yml'
+  push:
+    branches:
+      - main
+      - dario-APIs
+    paths:
+      - 'src/backend/**'
+      - '.github/workflows/postman-sync.yml'
+
+jobs:
+  contract-drift-check:
+    name: API Contract Drift Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'src/backend/package-lock.json'
+
+      - name: Install backend dependencies
+        run: npm --prefix src/backend ci
+
+      - name: Generate OpenAPI specification
+        run: npm --prefix src/backend run openapi:generate
+
+      - name: Assert zero contract drift
+        run: |
+          if ! git diff --exit-code src/backend/openapi.json; then
+            echo "::error::API contract drift detected! Backend controller or DTO changes alter the API specification."
+            echo "::error::Please run 'npm run openapi:generate' locally and commit the updated src/backend/openapi.json."
+            exit 1
+          fi
+
+  postman-sync:
+    name: Sync Postman Collection
+    needs: [contract-drift-check]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'src/backend/package-lock.json'
+
+      - name: Install backend dependencies
+        run: npm --prefix src/backend ci
+
+      - name: Sync Postman specification & collection
+        env:
+          POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+        run: npm run postman:sync

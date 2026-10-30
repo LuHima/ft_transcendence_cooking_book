@@ -57,16 +57,16 @@ A join association linking a Recipe to a catalog Ingredient with an exact quanti
 _Avoid_: Recipe component, ingredient line
 
 **Tag**:
-A predefined classification label representing dietary restrictions, occasions, or cooking styles.
-_Avoid_: Keyword, label, hashtag
+A curated dietary or nutritional attribute assigned to recipes or ingredients (e.g. vegetarian, vegan, gluten_free).
+_Avoid_: Label, badge, category
 
 **TagTranslation**:
 The localized name of a curated tag for a specific locale.
 _Avoid_: Translated tag, tag label
 
 **Unit of Measure**:
-A standardized measurement unit spanning Metric, US Customary, and count systems.
-_Avoid_: Measurement, size
+A standardized culinary measurement unit (g, kg, ml, l, tbsp, tsp, piece, pinch).
+_Avoid_: Quantity type, metric
 
 **Source Language**:
 The original canonical language declared and used by the author when composing the recipe.
@@ -75,6 +75,12 @@ _Avoid_: Default language, primary locale
 **Translation Status**:
 The lifecycle state (`completed` or `failed`) tracking automated machine translation via LibreTranslate.
 _Avoid_: Translated flag, status code
+
+## Social Interactions & Metrics
+
+**Cumulative Likes**:
+The total number of likes received across all recipes authored by a user.
+_Avoid_: Total upvotes, overall score
 
 **Recipe Comment**:
 A public textual remark posted by an authenticated user on a recipe, either as a top-level thought or as a direct reply to an existing comment.
@@ -105,3 +111,21 @@ _Avoid_: Follow status, relation type, connection state
 **Social Notification**:
 An in-app alert and real-time event notifying a community member of an interaction (e.g. friend request, recipe like, or comment) directed at their content or account.
 _Avoid_: Push message, ping, email, banner
+
+## API Governance & Documentation
+
+**API Contract**:
+The formal specification of HTTP endpoints, route parameters, payload schemas, and response status codes exposed by the backend, defined via the OpenAPI 3.0 specification.
+_Avoid_: Endpoint list, API dump, route map
+
+**Contract Drift**:
+A discrepancy where backend controller implementations, validation pipes, or DTOs diverge from the published OpenAPI specification or Postman collections.
+_Avoid_: Out-of-sync, desync, documentation lag
+
+**Spec-to-Collection Synchronization**:
+Postman's non-destructive merge engine that reconciles collection requests, parameters, and response schemas with an API specification without altering user-defined pre-request scripts, authentication hooks, or post-response test assertions.
+_Avoid_: Collection overwrite, collection import, spec replacement
+
+**Headless Spec Generation**:
+The process of compiling and extracting OpenAPI schemas directly from framework metadata and TypeScript reflection without initiating database connections or binding network sockets.
+_Avoid_: App booting, live export, runtime dumping

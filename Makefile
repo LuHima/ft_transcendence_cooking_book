@@ -485,6 +485,21 @@ setup: env-check all ## |Verify .env and launch the stack
 
 
 # **************************************************************************** #
+#    API & POSTMAN SYNCHRONIZATION                                             #
+# **************************************************************************** #
+
+.PHONY: openapi-generate
+openapi-generate: ## |Generate headless OpenAPI 3.0 specification
+	@echo $(YELLOW)"Generating headless OpenAPI specification..."$(RESETCOLOR)
+	@npm run openapi:generate
+
+.PHONY: postman-sync
+postman-sync: openapi-generate ## |Synchronize Postman specification and collection
+	@echo $(YELLOW)"Synchronizing Postman specification and collection..."$(RESETCOLOR)
+	@npm run postman:sync
+
+
+# **************************************************************************** #
 #    HELP MESSAGE                                                              #
 # **************************************************************************** #
 
