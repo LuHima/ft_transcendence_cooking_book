@@ -12,7 +12,7 @@ function resolveApiKey(): string {
     return process.env.POSTMAN_API_KEY.trim();
   }
 
-  const rootDir = path.resolve(__dirname, '..');
+  const rootDir = path.resolve(__dirname, '..', '..');
   const dockerEnvPath = path.join(rootDir, 'docker', '.env');
   if (fs.existsSync(dockerEnvPath)) {
     const envConfig = dotenv.parse(fs.readFileSync(dockerEnvPath));
@@ -153,7 +153,7 @@ async function updateCollectionName(apiKey: string): Promise<void> {
 async function main() {
   try {
     const apiKey = resolveApiKey();
-    const specPath = path.resolve(__dirname, '../src/backend/openapi.json');
+    const specPath = path.resolve(__dirname, 'openapi.json');
     if (!fs.existsSync(specPath)) {
       throw new Error(`Specification file not found at ${specPath}. Run 'npm run openapi:generate' first.`);
     }

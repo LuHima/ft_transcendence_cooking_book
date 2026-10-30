@@ -27,8 +27,8 @@ We decided to decouple OpenAPI specification extraction from runtime database in
 3. **Explicit Decorator Types (Defense-in-Depth)**:
    - For union types (`string | null`, `Date | null`, `number | null`), annotate `@ApiProperty()` with explicit `type: String`, `type: Number`, or `type: String, format: 'date-time'` so that even without AST compiler plugins, TypeScript's `design:type: Object` fallback never degrades the schema into an untyped object.
 
-4. **Non-Destructive Spec-to-Collection Synchronization (`scripts/sync-postman.ts`)**:
-   - Implement a TypeScript CLI synchronization client (`scripts/sync-postman.ts`).
+4. **Non-Destructive Spec-to-Collection Synchronization (`src/backend/sync-postman.ts`)**:
+   - Implement a TypeScript CLI synchronization client (`src/backend/sync-postman.ts`).
    - Resolve `POSTMAN_API_KEY` using a three-tier precedence cascade: (1) `process.env.POSTMAN_API_KEY`, (2) `docker/.env`, (3) `.env`.
    - Upload the updated specification to the Postman API Spec file (`PUT /specs/{specId}/files/{filePath}`).
    - Trigger Postman's native Spec-to-Collection synchronization (`POST /specs/{specId}/collections/{collectionUid}/sync`). Postman's internal diff engine merges route and schema updates while strictly preserving pre-request scripts, environment persistence scripts, and post-response test assertions.
