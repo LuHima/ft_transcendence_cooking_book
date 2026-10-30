@@ -63,8 +63,8 @@ RESETCOLOR =	"\e[0m"
 # **************************************************************************** #
 
 # Allow passing CLI args like: make exec backend-container
-ARG_TARGETS = build rebuild exec inspect logs logsf restart stats db-migrate \
-db-reset db-studio
+ARG_TARGETS = build rebuild down stop exec inspect logs logsf restart stats \
+db-migrate db-reset db-studio
 ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@:)
@@ -142,13 +142,13 @@ up-rebuild: env-check ## |Rebuild images (no-cache) and start containers
 
 # Stops and removes containers and networks, preserving volumes and images
 .PHONY: down
-down: ## |Stop and remove containers (keep volumes/data)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) down
+down: ## [name]|Stop and remove containers (keep volumes/data)
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) down $(ARGS)
 
 # Stops containers without removing them, preserving volumes and images
 .PHONY: stop
-stop: ## |Stop containers without removing them (keep volumes/data)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) stop
+stop: ## [name]|Stop containers without removing them (keep volumes/data)
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) stop $(ARGS)
 
 # Rebuild stack from scratch (fclean + all)
 .PHONY: re
