@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogController } from './catalog.controller';
+import { Role } from '@prisma/client';
 import { CatalogService } from './catalog.service';
 import {
   Course,
@@ -40,6 +41,12 @@ describe('CatalogController', () => {
                 name: 'Pomodoro',
               },
             ]),
+            deleteIngredient: jest.fn().mockResolvedValue({
+              message: "Ingredient 'bell_pepper' deleted successfully",
+            }),
+            deleteTag: jest.fn().mockResolvedValue({
+              message: "Tag 'gluten_free' deleted successfully",
+            }),
           },
         },
         { provide: JwtService, useValue: {}},
@@ -101,6 +108,32 @@ describe('CatalogController', () => {
 
       expect(result).toMatchObject({ id: 9, slug: 'bell_pepper' });
       expect(service.createIngredient).toHaveBeenCalledWith(user, dto);
+    });
+  });
+  
+  describe('deleteIngredient', () => {
+    it('delegates to service.deleteIngredient with user and id', async () => {
+      const user = { id: 1, role: Role.admin } as any;
+
+      const result = await controller.deleteIngredient(user, 1);
+
+      expect(service.deleteIngredient).toHaveBeenCalledWith(user, 1);
+      expect(result).toEqual({
+        message: "Ingredient 'bell_pepper' deleted successfully",
+      });
+    });
+  });
+
+  describe('deleteTag', () => {
+    it('delegates to service.deleteTag with user and id', async () => {
+      const user = { id: 1, role: Role.admin } as any;
+
+      const result = await controller.deleteTag(user, 5);
+
+      expect(service.deleteTag).toHaveBeenCalledWith(user, 5);
+      expect(result).toEqual({
+        message: "Tag 'gluten_free' deleted successfully",
+      });
     });
   });
 });

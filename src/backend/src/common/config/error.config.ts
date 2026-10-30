@@ -218,6 +218,11 @@ export const errors = {
       message: 'Ingredient quantity must be greater than 0',
       error: 'Bad Request',
     },
+    inUse: {
+      statusCode: HttpStatus.CONFLICT,
+      message: 'Ingredient is used in one or more recipes and cannot be deleted',
+      error: 'Conflict',
+    },
   },
 
   // ─────────────────────────────────────────────────────────
@@ -233,6 +238,11 @@ export const errors = {
     alreadyExists: {
       statusCode: HttpStatus.CONFLICT,
       message: 'Tag with this slug already exists',
+      error: 'Conflict',
+    },
+    inUse: {
+      statusCode: HttpStatus.CONFLICT,
+      message: 'Tag is used in one or more recipes and cannot be deleted',
       error: 'Conflict',
     },
   },

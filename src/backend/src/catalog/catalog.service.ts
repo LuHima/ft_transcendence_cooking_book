@@ -327,4 +327,79 @@ export class CatalogService {
     };
   }
 
+    /*
+  DELETE /api/ingredients/:id
+  Deletes a curated ingredient (admin only, enforced by CASL).
+  Refuses with 409 if the ingredient is referenced by at least one recipe,
+  so recipes are never left with dangling ingredient references.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the ingredient to delete.
+  */
+  async deleteIngredient(user: ActiveUserData, id: number) {
+    // Only roles allowed to delete Ingredients pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Delete, 'Ingredient');
+
+    // 404 if the ingredient does not exist
+    const existing = await this.prisma.ingredient.findUnique({
+      where: { id },
+      select: { id: true, slug: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+
+    // 409 if the ingredient is referenced by at least one recipe
+    const usageCount = await this.prisma.recipeIngredient.count({
+      where: { ingredient_id: id },
+    });
+    if (usageCount > 0) {
+      throw createHttpException(
+        errors.ingredients.inUse,
+        `Ingredient '${existing.slug}' is used in ${usageCount} recipe(s) and cannot be deleted`,
+      );
+    }
+
+    // Deletes the ingredient; translations are removed by cascade
+    await this.prisma.ingredient.delete({ where: { id } });
+
+    return { message: `Ingredient '${existing.slug}' deleted successfully` };
+  }
+
+  /*
+  DELETE /api/tags/:id
+  Deletes a curated tag (admin only, enforced by CASL).
+  Refuses with 409 if the tag is referenced by at least one recipe, so
+  recipes are never silently stripped of a tag they use.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the tag to delete.
+  */
+  async deleteTag(user: ActiveUserData, id: number) {
+    // Only roles allowed to delete Tags pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Delete, 'Tag');
+
+    // 404 if the tag does not exist
+    const existing = await this.prisma.tag.findUnique({
+      where: { id },
+      select: { id: true, slug: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.tags.notFound);
+    }
+
+    // 409 if the tag is referenced by at least one recipe
+    const usageCount = await this.prisma.recipeTag.count({
+      where: { tag_id: id },
+    });
+    if (usageCount > 0) {
+      throw createHttpException(
+        errors.tags.inUse,
+        `Tag '${existing.slug}' is used in ${usageCount} recipe(s) and cannot be deleted`,
+      );
+    }
+
+    // Deletes the tag; translations are removed by cascade
+    await this.prisma.tag.delete({ where: { id } });
+
+    return { message: `Tag '${existing.slug}' deleted successfully` };
+  }
 }

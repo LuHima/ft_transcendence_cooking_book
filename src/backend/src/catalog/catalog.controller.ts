@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -186,5 +186,67 @@ export class CatalogController {
     @Body() dto: UpdateTagDto,
   ) {
     return await this.catalogService.updateTag(user, id, dto);
+  }
+
+    /**
+   * Delete a curated tag (admin only). Refused if the tag is used by any recipe.
+   */
+  @ApiOperation({
+    summary: 'Delete a curated tag',
+    description:
+      'Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.',
+  })
+  @ApiOkResponse({
+    description: 'Tag deleted successfully',
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can delete catalog tags',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Tag not found',
+  })
+  @ApiConflictResponse({
+    description: 'Tag is used by one or more recipes and cannot be deleted',
+    type: ApiConflictResponseDto,
+  })
+  @Auth()
+  @Delete('tags/:id')
+  async deleteTag(
+    @CurrentUser() user: ActiveUserData,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.catalogService.deleteTag(user, id);
+  }
+
+  /**
+   * Delete a curated ingredient (admin only). Refused if the ingredient is used by any recipe.
+   */
+  @ApiOperation({
+    summary: 'Delete a curated ingredient',
+    description:
+      'Deletes an ingredient from the catalog. Returns 409 if the ingredient is used by one or more recipes. Restricted to administrators.',
+  })
+  @ApiOkResponse({
+    description: 'Ingredient deleted successfully',
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can delete catalog ingredients',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Ingredient not found',
+  })
+  @ApiConflictResponse({
+    description: 'Ingredient is used by one or more recipes and cannot be deleted',
+    type: ApiConflictResponseDto,
+  })
+  @Auth()
+  @Delete('ingredients/:id')
+  async deleteIngredient(
+    @CurrentUser() user: ActiveUserData,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return await this.catalogService.deleteIngredient(user, id);
   }
 }

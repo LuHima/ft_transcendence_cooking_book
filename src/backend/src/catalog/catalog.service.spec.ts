@@ -3,6 +3,9 @@ import { CatalogService } from './catalog.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-ability.factory';
 import { Action } from '../auth/casl/action.enum';
+import { Role } from '@prisma/client';
+import { ActiveUserData } from '../common/decorators/current-user.decorator';
+import { createHttpException, errors } from '../common/config/error.config';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import {
   Course,
@@ -27,9 +30,18 @@ describe('CatalogService', () => {
               findMany: jest.fn(),
               findUnique: jest.fn(),
               create: jest.fn(),
+              delete: jest.fn(),
             },
             tag: {
               findMany: jest.fn(),
+              findUnique: jest.fn(),
+              delete: jest.fn(),
+            },
+            recipeIngredient: {
+              count: jest.fn(),
+            },
+            recipeTag: {
+              count: jest.fn(),
             },
           },
         },
@@ -297,6 +309,119 @@ describe('CatalogService', () => {
       });
       expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
       expect(prisma.ingredient.create).not.toHaveBeenCalled();
+    });
+  });
+    describe('deleteIngredient', () => {
+    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+
+    it('deletes an ingredient that is not used by any recipe', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        slug: 'bell_pepper',
+      });
+      (prisma.recipeIngredient.count as jest.Mock).mockResolvedValue(0);
+      (prisma.ingredient.delete as jest.Mock).mockResolvedValue({});
+
+      const result = await service.deleteIngredient(admin, 1);
+
+      expect(casl.check).toHaveBeenCalledWith(
+        admin,
+        Action.Delete,
+        'Ingredient',
+      );
+      expect(prisma.ingredient.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+      expect(result).toEqual({
+        message: "Ingredient 'bell_pepper' deleted successfully",
+      });
+    });
+
+    it('throws 404 if the ingredient does not exist', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.deleteIngredient(admin, 99)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+      expect(prisma.ingredient.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws 409 if the ingredient is used by at least one recipe', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        slug: 'bell_pepper',
+      });
+      (prisma.recipeIngredient.count as jest.Mock).mockResolvedValue(3);
+
+      await expect(service.deleteIngredient(admin, 1)).rejects.toMatchObject({
+        status: HttpStatus.CONFLICT,
+      });
+      expect(prisma.ingredient.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws 403 if CASL denies the action', async () => {
+      casl.check.mockImplementation(() => {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      });
+
+      await expect(service.deleteIngredient(admin, 1)).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+      });
+      expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteTag', () => {
+    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+
+    it('deletes a tag that is not used by any recipe', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: 5,
+        slug: 'gluten_free',
+      });
+      (prisma.recipeTag.count as jest.Mock).mockResolvedValue(0);
+      (prisma.tag.delete as jest.Mock).mockResolvedValue({});
+
+      const result = await service.deleteTag(admin, 5);
+
+      expect(casl.check).toHaveBeenCalledWith(admin, Action.Delete, 'Tag');
+      expect(prisma.tag.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+      expect(result).toEqual({
+        message: "Tag 'gluten_free' deleted successfully",
+      });
+    });
+
+    it('throws 404 if the tag does not exist', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.deleteTag(admin, 99)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+      expect(prisma.tag.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws 409 if the tag is used by at least one recipe', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: 5,
+        slug: 'gluten_free',
+      });
+      (prisma.recipeTag.count as jest.Mock).mockResolvedValue(2);
+
+      await expect(service.deleteTag(admin, 5)).rejects.toMatchObject({
+        status: HttpStatus.CONFLICT,
+      });
+      expect(prisma.tag.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws 403 if CASL denies the action', async () => {
+      casl.check.mockImplementation(() => {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      });
+
+      await expect(service.deleteTag(admin, 5)).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+      });
+      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
     });
   });
 });
