@@ -7,6 +7,8 @@ import {
   UnitOfMeasure,
   IngredientCategory,
 } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
@@ -40,8 +42,12 @@ describe('CatalogController', () => {
             ]),
           },
         },
+        { provide: JwtService, useValue: {}},
       ],
-    }).compile();
+    })
+    .overrideGuard(AuthGuard)
+    .useValue({ canActivate: () => true })
+    .compile();
 
     controller = module.get<CatalogController>(CatalogController);
     service = module.get<CatalogService>(CatalogService);

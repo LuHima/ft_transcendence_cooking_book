@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,6 +8,7 @@ import {
   ApiCreatedResponse,
   ApiConflictResponse,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import {
@@ -29,6 +30,10 @@ import {
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { FilterIngredientDto } from './dto/filter-ingredient.dto';
+
+import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateTagDto } from './dto/update-tag.dto';
+import { TagDetailResponseDto } from './dto/catalog-response.dto';
 
 /**
  * Controller providing access to system metadata dictionaries, curated tags, and ingredient catalogs.
@@ -115,5 +120,71 @@ export class CatalogController {
     @Body() dto: CreateIngredientDto,
   ) {
     return await this.catalogService.createIngredient(user, dto);
+  }
+
+  /**
+   * Add a new tag to the curated catalog (admin only).
+   */
+  @ApiOperation({
+    summary: 'Create a curated tag',
+    description:
+      'Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.',
+  })
+  @ApiCreatedResponse({
+    description: 'Tag created with all its translations',
+    type: TagDetailResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid slug or translations',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can create catalog tags',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'A tag with this slug already exists',
+    type: ApiConflictResponseDto,
+  })
+  @Auth()
+  @Post('tags')
+  async createTag(
+    @CurrentUser() user: ActiveUserData,
+    @Body() dto: CreateTagDto,
+  ) {
+    return await this.catalogService.createTag(user, dto);
+  }
+
+  /**
+   * Update the translations of an existing tag (admin only).
+   */
+  @ApiOperation({
+    summary: 'Update a curated tag',
+    description:
+      'Updates the Italian, English and French names of an existing tag. The slug is immutable. Restricted to administrators.',
+  })
+  @ApiOkResponse({
+    description: 'Tag updated with all its translations',
+    type: TagDetailResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid translations',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can update catalog tags',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Tag not found',
+  })
+  @Auth()
+  @Patch('tags/:id')
+  async updateTag(
+    @CurrentUser() user: ActiveUserData,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateTagDto,
+  ) {
+    return await this.catalogService.updateTag(user, id, dto);
   }
 }

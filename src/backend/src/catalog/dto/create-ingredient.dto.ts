@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsString,
   Matches,
+  IsDefined,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -53,6 +54,7 @@ export class CreateIngredientDto {
     type: TranslationDto,
     description: 'Ingredient display name in Italian, English and French',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => TranslationDto)
   translations: TranslationDto;

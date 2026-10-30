@@ -221,6 +221,23 @@ export const errors = {
   },
 
   // ─────────────────────────────────────────────────────────
+  // TAG
+  // ─────────────────────────────────────────────────────────
+  
+  tags: {
+    notFound: {
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Tag not found',
+      error: 'Not Found',
+    },
+    alreadyExists: {
+      statusCode: HttpStatus.CONFLICT,
+      message: 'Tag with this slug already exists',
+      error: 'Conflict',
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
   // COMMENTI
   // ─────────────────────────────────────────────────────────
   comments: {

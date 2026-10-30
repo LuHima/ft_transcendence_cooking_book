@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ValidateNested } from 'class-validator';
+import { IsDefined, ValidateNested } from 'class-validator';
 import { TranslationDto } from '../../common/dto/translation.dto';
 
 /**
@@ -15,6 +15,7 @@ export class UpdateTagDto {
     type: TranslationDto,
     description: 'Tag display name in Italian, English and French',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => TranslationDto)
   translations: TranslationDto;

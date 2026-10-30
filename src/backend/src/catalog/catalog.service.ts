@@ -12,6 +12,9 @@ import { ActiveUserData } from '../common/decorators/current-user.decorator';
 import { createHttpException, errors } from '../common/config/error.config';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 
+import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateTagDto } from './dto/update-tag.dto';
+
 @Injectable()
 export class CatalogService {
   constructor(
@@ -206,4 +209,122 @@ export class CatalogService {
       },
     };
   }
+    /*
+  POST /api/tags
+  Adds a new tag to the curated catalog (admin only, enforced by CASL).
+  The tag row and its three translation rows (it, en, fr) are created in a
+  single nested write, so either everything is saved or nothing is.
+  @param user: Authenticated user performing the request.
+  @param dto: Slug and the display name in each supported language.
+  */
+  async createTag(user: ActiveUserData, dto: CreateTagDto) {
+    // Only roles allowed to create Tags pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Create, 'Tag');
+
+    // Friendly 409 if the slug is already taken. A concurrent request that
+    // slips through is still caught by the DB unique constraint (P2002),
+    // which the global exception filter turns into a 409 as well.
+    const existing = await this.prisma.tag.findUnique({
+      where: { slug: dto.slug },
+      select: { id: true },
+    });
+    if (existing) {
+      throw createHttpException(
+        errors.tags.alreadyExists,
+        `Tag with slug '${dto.slug}' already exists`,
+      );
+    }
+
+    // Creates the tag together with its translations
+    const created = await this.prisma.tag.create({
+      data: {
+        slug: dto.slug,
+        translations: {
+          create: [
+            { locale: 'it', name: dto.translations.it },
+            { locale: 'en', name: dto.translations.en },
+            { locale: 'fr', name: dto.translations.fr },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    return this.toTagDetail(created);
+  }
+  /*
+  PATCH /api/tags/:id
+  Updates the Italian, English and French names of an existing tag
+  (admin only, enforced by CASL). The slug is immutable: it is the stable
+  key used by seeds, filters and references, so it cannot be changed here.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the tag to update.
+  @param dto: The new display name in each supported language.
+  */
+  async updateTag(user: ActiveUserData, id: number, dto: UpdateTagDto) {
+    // Only roles allowed to update Tags pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Update, 'Tag');
+
+    // 404 if the tag does not exist
+    const existing = await this.prisma.tag.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.tags.notFound);
+    }
+
+    // Upserts the three translations in a single nested write, so a missing
+    // translation row (edge case) is created instead of failing the update.
+    const updated = await this.prisma.tag.update({
+      where: { id },
+      data: {
+        translations: {
+          upsert: [
+            {
+              where: { tag_id_locale: { tag_id: id, locale: 'it' } },
+              create: { locale: 'it', name: dto.translations.it },
+              update: { name: dto.translations.it },
+            },
+            {
+              where: { tag_id_locale: { tag_id: id, locale: 'en' } },
+              create: { locale: 'en', name: dto.translations.en },
+              update: { name: dto.translations.en },
+            },
+            {
+              where: { tag_id_locale: { tag_id: id, locale: 'fr' } },
+              create: { locale: 'fr', name: dto.translations.fr },
+              update: { name: dto.translations.fr },
+            },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    return this.toTagDetail(updated);
+  }
+
+  /*
+  Maps a stored Tag (with its translations) to the public response shape
+  { id, slug, translations: { it, en, fr } }.
+  */
+  private toTagDetail(tag: {
+    id: number;
+    slug: string;
+    translations: { locale: string; name: string }[];
+  }) {
+    const nameOf = (locale: string) =>
+      tag.translations.find((t) => t.locale === locale)?.name ?? '';
+    return {
+      id: tag.id,
+      slug: tag.slug,
+      translations: {
+        it: nameOf('it'),
+        en: nameOf('en'),
+        fr: nameOf('fr'),
+      },
+    };
+  }
+
 }

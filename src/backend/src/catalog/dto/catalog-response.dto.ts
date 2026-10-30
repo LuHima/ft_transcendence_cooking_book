@@ -99,6 +99,10 @@ export class TagResponseDto {
   resolved_lang: string;
 }
 
+
+
+
+
 /**
  * Curated ingredient catalog item.
  */
@@ -198,6 +202,35 @@ export class IngredientDetailResponseDto {
   @ApiProperty({
     type: TranslationDto,
     description: 'Ingredient display name in Italian, English and French',
+  })
+  translations: TranslationDto;
+}
+
+/**
+ * Full tag record returned after catalog administration operations,
+ * including the name in every supported language.
+ */
+export class TagDetailResponseDto {
+  /**
+   * Unique tag identifier.
+   * @example 1
+   */
+  @ApiProperty({ description: 'Unique tag identifier', example: 1 })
+  id: number;
+
+  /**
+   * Canonical slug identifier.
+   * @example 'gluten_free'
+   */
+  @ApiProperty({ description: 'Canonical tag slug', example: 'gluten_free' })
+  slug: string;
+
+  /**
+   * Display name in every supported language.
+   */
+  @ApiProperty({
+    type: TranslationDto,
+    description: 'Tag display name in Italian, English and French',
   })
   translations: TranslationDto;
 }

@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsString,
   Matches,
+  IsDefined,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -39,6 +40,7 @@ export class CreateTagDto {
     type: TranslationDto,
     description: 'Tag display name in Italian, English and French',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => TranslationDto)
   translations: TranslationDto;
