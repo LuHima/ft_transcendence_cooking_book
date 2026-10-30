@@ -20,7 +20,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "node prisma/studio.js",
     "prisma:seed": "prisma db seed",
-    "postinstall": "prisma generate || true"
+    "postinstall": "prisma generate || true",
+    "openapi:generate": "ts-node -r tsconfig-paths/register src/generate-spec.ts",
+    "postman:sync": "ts-node -r dotenv/config ../scripts/sync-postman.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

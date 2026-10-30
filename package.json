@@ -4,6 +4,8 @@
     "update:all": "npm --prefix src/backend update && npm --prefix src/frontend update",
     "docs:check": "npx --yes fern-api check",
     "docs:dev": "npx --yes fern-api docs dev",
-    "docs:generate": "npx --yes fern-api generate --docs"
+    "docs:generate": "npx --yes fern-api generate --docs",
+    "openapi:generate": "npm --prefix src/backend run openapi:generate",
+    "postman:sync": "npm --prefix src/backend run postman:sync"
   }
 }

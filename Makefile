@@ -59,436 +59,149 @@ RESETCOLOR =	"\e[0m"
 
 
 # **************************************************************************** #
-#    CLI ARGUMENTS                                                             #
+#    MAIN RULES                                                                #
 # **************************************************************************** #
 
-# Allow passing CLI args like: make exec backend-container
-ARG_TARGETS = build rebuild exec inspect logs logsf restart stats db-migrate \
-db-reset db-studio
-ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
-ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
-$(eval $(ARGS):;@:)
-endif
-# EXPLANATION:
-#
-# MAKECMDGOALS is a built-in Make variable containing what is typed after make.
-# ARG_TARGETS defines which targets are allowed to receive extra words as args.
-#
-# $(firstword $(MAKECMDGOALS)) gets the main target only (first word).
-# Example: for 'make exec nginx-container', the first word is 'exec'.
-# $(filter $(firstword...),$(ARG_TARGETS)) checks if that first target is in
-# the allowed list. If it is, uses it as arg1 for the ifneq(arg1,arg2) block.
-# In GNU Make conditionals, syntax is: ifneq (arg1,arg2).
-# Here arg2 is intentionally empty (after the comma), so we test:
-# "is this expression non-empty?". If yes, the block runs.
-#
-# ARGS := ... takes all words after the first goal and stores them as ARGS.
-# Example: "make exec nginx-container" -> ARGS = nginx-container
-# $(words $(MAKECMDGOALS)) counts how many words there are in MAKECMDGOALS.
-# $(wordlist 2, N, LIST) returns words from position 2 to position N.
-#
-# $(eval $(ARGS):;@:) creates no-op dummy targets (make rules) for ARGS so Make
-# does not fail with: "No rule to make target 'nginx-container'".
-# A no-op command is a command that does nothing and succeeds. The no-op command
-# used here is '@:': ':' is a shell builtin that does nothing (returns success),
-# while '@' hides the command from Make output.
-# $(eval ...) evaluates this generated rule at parse time.
-
-
-# **************************************************************************** #
-#    BUILD AND CLEAN COMMANDS                                                  #
-# **************************************************************************** #
-
-# Start docker-compose without rebuilding images every time
+# Default target: check if Vault needs unsealing, then launch the stack
 .PHONY: all
-all: env-check ## |Start containers (detached mode)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
-	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
-	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
-	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
+all: env-check ## |Launch containers (unsealing Vault automatically if sealed)
+	@if [ "$(USE_VAULT_OFF)" != "yes" ]; then \
+		$(MAKE) vault-unseal; \
+	fi
+	@$(MAKE) up
 
-# Start docker-compose without rebuilding images every time (alias for all)
+# Starts the containers in detached mode using compose file(s)
 .PHONY: up
-up: all ## |Alias for 'make all'
+up: ## |Start containers in detached mode
+	@docker compose -f $(COMPOSE_FILE) up -d
 
-# Build docker-compose images without starting containers
-.PHONY: build
-build: env-check ## [name]|Build images with cache and log to file
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
-		$(ARGS) 2>&1 | tee $(BUILD_LOG)
+# Development mode: combines base compose with dev override (live reload +
+# debug ports 5432 and 5555 + Let's Encrypt staging).
+.PHONY: dev
+dev: env-check ## |Launch stack with live reload, staging TLS, and debug ports
+	@if [ "$(USE_VAULT_OFF)" != "yes" ]; then \
+		$(MAKE) vault-unseal; \
+	fi
+	@COMPOSE_DEV="./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml"; \
+	if [ "$(USE_VAULT_OFF)" = "yes" ]; then \
+		COMPOSE_DEV="$$COMPOSE_DEV -f ./docker/docker-compose.novault.yml"; \
+	fi; \
+	docker compose -f $$COMPOSE_DEV up -d
 
-# Rebuild docker-compose images (cached) and start containers
-.PHONY: up-build
-up-build: env-check ## |Rebuild images (cached) and start containers
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) up --build -d
-	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
-	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
-	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
+# Production mode: launches hardened base compose without dev bind mounts or
+# exposed database ports.
+.PHONY: prod
+prod: env-check ## |Launch hardened production stack
+	@if [ "$(USE_VAULT_OFF)" != "yes" ]; then \
+		$(MAKE) vault-unseal; \
+	fi
+	@docker compose -f ./docker/docker-compose.yml up -d
 
-# Rebuild images without cache and log output to build.log
-.PHONY: rebuild
-rebuild: env-check ## [name]|Rebuild images with no-cache and log to file
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) --progress plain build \
-		$(ARGS) --no-cache 2>&1 | tee $(BUILD_LOG)
-
-# Rebuild docker-compose images (no-cache) and start containers
-.PHONY: up-rebuild
-up-rebuild: env-check ## |Rebuild images (no-cache) and start containers
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) build --no-cache
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
-	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
-	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
-	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
-
-# Stops and removes containers and networks, preserving volumes and images
-.PHONY: down
-down: ## |Stop and remove containers (keep volumes/data)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) down
-
-# Stops containers without removing them, preserving volumes and images
+# Stops the running containers without removing them
 .PHONY: stop
-stop: ## |Stop containers without removing them (keep volumes/data)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) stop
+stop: ## |Stop all running containers
+	@docker compose -f $(COMPOSE_FILE) stop
 
-# Rebuild stack from scratch (fclean + all)
-.PHONY: re
-re: fclean up-rebuild ## |Rebuild stack from scratch (no cache, delete volumes)
+# Stops and removes containers, networks, and images created by up
+.PHONY: down
+down: ## |Stop and remove containers, networks, and images
+	@docker compose -f $(COMPOSE_FILE) down
 
-# Rebuild stack from scratch (clean + all, keep volumes)
-.PHONY: re-v
-re-v: clean up-rebuild ## |Rebuild stack from scratch (no cache, keep volumes)
-
-# Stops and removes containers, networks, and removes project images
-.PHONY: clean
-clean: ## |Stop stack and remove project images (keep volumes and logs)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) down --rmi all --remove-orphans
-
-# Stops and removes containers, project images, volumes, and build logs
-.PHONY: fclean
-fclean: clean ## |Clean + remove project volumes and build logs
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) down -v --remove-orphans
-	@rm -f $(BUILD_LOG)
-
-# Removes only .env file used by this project
-.PHONY: clean-env
-clean-env: ## |Remove .env file for this project
-	@rm -f $(ENV_FILE)
-	@echo "Removed $(ENV_FILE)"
-
-# Full local reset: project resources + .env
-.PHONY: wipe
-wipe: fclean clean-env ## |fclean + remove .env file
-
-# Removes project resources via fclean, then prunes global Docker resources:
-# builder cache, stopped containers, unused networks, images (not volumes)
-.PHONY: clean-cache
-clean-cache: fclean ## |fclean + prune global Docker resources (not volumes)
-	@echo "Pruning Docker builder cache (global, not project-scoped)..."
-	@$(SUDO) docker builder prune -af
-
-# Runs a full project cleanup first via fclean, then prunes unused Docker
-# resources globally on the host: builder cache, stopped containers, unused
-# networks, images, and volumes
-.PHONY: prune
-prune: fclean ## |fclean + prune Docker resources globally on the host
-	@echo "Pruning everything o.o"
-	@$(SUDO) docker system prune -a --volumes -f
-	@$(SUDO) docker volume prune -a -f
-
-
-# **************************************************************************** #
-#    USEFUL DOCKER COMMANDS                                                    #
-# **************************************************************************** #
-
-# Starts a shell in the specified container (default: bash/sh) or run a specific
-# command in container.
-.PHONY: exec
-exec: ## <name> [cmd]|Open shell (default: bash/sh) or run cmd in container
-	@if [ -z "$(ARGS)" ]; then \
-		echo "Usage: make exec <container_name_or_id> [command]"; \
-		echo "Example: make exec nginx-container"; \
-		echo "Example: make exec backend-container bash"; \
-		exit 1; \
-	fi; \
-	if [ "$$(echo $(ARGS) | wc -w)" -eq 1 ]; then \
-		$(SUDO) docker exec -it $(ARGS) bash || \
-		$(SUDO) docker exec -it $(ARGS) sh; \
-	else \
-		$(SUDO) docker exec -it $(ARGS); \
-	fi
-
-# Shows all Docker containers (running and stopped)
-.PHONY: ps
-ps: ## |Show all containers (running and stopped)
-	@$(SUDO) docker ps -a
-
-# Shows the status of Docker containers related to this compose project
-.PHONY: status
-status: ## |Show compose service status
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) ps
-
-# Shows metadata about a running container
-.PHONY: inspect
-inspect: ## <name>|Inspect container metadata
-	@if [ -z "$(ARGS)" ]; then \
-		echo "Usage: make inspect <container_name_or_id>"; \
-		exit 1; \
-	fi
-	@$(SUDO) docker inspect $(ARGS)
-
-# Shows the logs of one or more running containers
-.PHONY: logs
-logs: ## [service]|Show compose logs
-	@if [ -n "$(ARGS)" ]; then \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) logs --tail=100 $(ARGS); \
-	else \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) logs --tail=100; \
-	fi
-
-# Follows containers' logs in real time
-.PHONY: logsf
-logsf: ## [service]|Follow compose logs in real time
-	@if [ -n "$(ARGS)" ]; then \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) logs -f --tail=100 $(ARGS); \
-	else \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) logs -f --tail=100; \
-	fi
-
-# Restarts one or more running containers
+# Full restart: shuts down everything, then brings it back up
 .PHONY: restart
-restart: ## <name> [more...]|Restart one or more containers
-	@if [ -z "$(ARGS)" ]; then \
-		echo "Usage: make restart <container_name_or_id> [more...]"; \
-		exit 1; \
-	fi
-	@$(SUDO) docker restart $(ARGS)
+restart: down all ## |Restart the entire stack
 
-# List local Docker images
-.PHONY: images
-images: ## |List local Docker images
-	@$(SUDO) docker images
+# Rebuilds Docker images and restarts containers in detached mode
+.PHONY: re
+re: down ## |Rebuild all Docker images and restart containers
+	@docker compose -f $(COMPOSE_FILE) up -d --build
 
-# List Docker volumes
-.PHONY: volumes
-volumes: ## |List Docker volumes
-	@$(SUDO) docker volume ls
+# Removes all stopped containers, unused networks, and dangling images
+.PHONY: clean
+clean: ## |Remove stopped containers and dangling images
+	@docker system prune -f
 
-# List Docker networks
-.PHONY: networks
-networks: ## |List Docker networks
-	@$(SUDO) docker network ls
-
-# Shows resolved docker-compose configuration
-.PHONY: config
-config: ## |Print resolved docker-compose configuration
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) config
-
-# Shows resource usage of containers
-.PHONY: stats
-stats: ## [name]|Show one-shot container resource usage
-	@if [ -n "$(ARGS)" ]; then \
-		$(SUDO) docker stats --no-stream $(ARGS); \
-	else \
-		$(SUDO) docker stats --no-stream; \
-	fi
-
-# Shows Docker disk usage
-.PHONY: df
-df: ## |Show Docker disk usage summary
-	@$(SUDO) docker system df
-
+# Complete cleanup: removes all images, volumes, and build cache
+.PHONY: fclean
+fclean: ## |Remove all images, volumes, and persistent data
+	@docker compose -f $(COMPOSE_FILE) down -v --rmi all
+	@docker system prune -a --volumes -f
 
 # **************************************************************************** #
-#    DATABASE COMMANDS                                                         #
+#    VAULT LIFECYCLE                                                           #
 # **************************************************************************** #
 
-# Macro to execute Prisma commands inside backend container.
-# If backend container is running, use 'docker compose exec'.
-# If stopped, use 'docker compose run --rm --entrypoint ""'.
-define run_prisma
-	TTY_OPT=""; \
-	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
-	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
-	-q backend 2>/dev/null)" ]; then \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend \
-		npx prisma $(1); \
-	else \
-		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
-		--entrypoint "" backend npx prisma $(1); \
-	fi
-endef
+# One-time initialization of HashiCorp Vault. Starts the vault container,
+# checks if uninitialized; if so, runs 'vault operator init' with 5 shares
+# and threshold 3, saves keys to $HOME/vault-keys/vault-init.txt (mode 600),
+# unseals temporarily to configure AppRole and secrets, and writes AppRole
+# credentials into docker/.env.
+.PHONY: vault-init
+vault-init: env-check ## |One-time automated Vault bootstrap and AppRole setup
+	@./vault-setup.sh
 
-# Creates or applies database migrations (optionally with migration name)
-.PHONY: db-migrate
-db-migrate: env-check ## [name]|Create or apply database migrations
-	@CMD="migrate dev"; \
-	if [ -n "$(ARGS)" ]; then \
-		CMD="migrate dev --name $(ARGS)"; \
-	fi; \
-	$(call run_prisma,$$CMD)
+# Unseals Vault with 3-tier key resolution:
+#   1. CLI arguments: make vault-unseal k1 k2 k3
+#   2. Environment: VAULT_UNSEAL_KEY_1..3 in docker/.env
+#   3. Interactive prompt: prompts for missing keys with masked input
+# If Vault is already unsealed or not running, exits cleanly (no-op).
+.PHONY: vault-unseal
+vault-unseal: ## [k1 k2 k3]|Unseal Vault via CLI args, .env keys, or interactive prompt
+	@./unseal.sh $(filter-out $@,$(MAKECMDGOALS))
 
-# Resets database schema, drops data, reapplies migrations, and seeds
-.PHONY: db-reset
-db-reset: env-check ## [force]|Reset database and re-seed
-	@CMD="migrate reset"; \
-	if [ "$(ARGS)" = "force" ]; then \
-		CMD="migrate reset --force"; \
-	fi; \
-	$(call run_prisma,$$CMD)
-
-# Runs idempotent seed script (src/backend/prisma/seed.ts)
-.PHONY: db-seed
-db-seed: env-check ## |Seed database with initial data
-	@$(call run_prisma,db seed)
-
-# Regenerates Prisma Client based on schema.prisma
-.PHONY: db-generate
-db-generate: env-check ## |Regenerate Prisma Client
-	@$(call run_prisma,generate)
-
-# Checks migration status and detects schema drift
-.PHONY: db-status
-db-status: env-check ## |Check database migration status
-	@$(call run_prisma,migrate status)
-
-# Launches Prisma Studio GUI on port 5555
-.PHONY: db-studio
-db-studio: env-check ## <start/kill>|Launch/Stop Prisma Studio GUI on port 5555
-	@if [ -z "$(ARGS)" ]; then \
-		echo "Usage: make db-studio <start/kill>"; \
-		echo "Example: make db-studio start -> Start Prisma Studio"; \
-		echo "Example: make db-studio kill  -> Stop Prisma Studio"; \
-		exit 1; \
-	fi
-	@case "$$(printf '%s' "$(ARGS)" | tr '[:upper:]' '[:lower:]')" in \
-		start) \
-			echo "Opening Prisma Studio at: http://localhost:5555"; \
-			echo "Press Ctrl+C to kill."; \
-			TTY_OPT=""; \
-			if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
-			if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status \
-			running -q backend 2>/dev/null)" ]; then \
-				$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT \
-				backend node prisma/studio.js; \
-			else \
-				$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
-				-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
-			fi \
-			;; \
-		kill) \
-			echo "Stopping Prisma Studio"; \
-			$(SUDO) docker compose -f docker/docker-compose.yml exec backend \
-			node -e "const fs = require('fs'); \
-			fs.readdirSync('/proc') \
-			.filter(pid => /^[0-9]+/.test(pid)) \
-			.forEach(pid => { \
-				try { \
-					const path = '/proc/' + pid + '/cmdline'; \
-					const cmd = fs.readFileSync(path, 'utf8'); \
-					if (cmd.includes('studio') && \
-						pid !== String(process.pid)) { \
-						process.kill(Number(pid), 'SIGKILL'); \
-					} \
-				} catch (error) {} \
-			});" \
-			;; \
-		*) \
-			echo "Usage: make db-studio <start/kill>"; \
-			echo "Example: make db-studio start -> Start Prisma Studio"; \
-			echo "Example: make db-studio kill  -> Stop Prisma Studio"; \
-			exit 1 \
-			;; \
-	esac
-
-# Squashes all migrations into a single consolidated 'init' migration
-.PHONY: db-squash
-db-squash: env-check ## |Squash migrations into a single baseline init
-	@echo -n $(YELLOW)"WARNING: This will wipe current migrations, reset ";
-	@echo "the database, and generate a single 'init' migration."$(RESETCOLOR);
-	@printf "Are you sure you want to proceed? [y/N]: "; \
-	read confirm; \
-	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
-		echo "Aborted."; \
-		exit 1; \
-	fi; \
-	TIMESTAMP=$$(date +%Y%m%d%H%M%S); \
-	ARC_DIR="src/backend/prisma/.migrations_archive/migrations_$${TIMESTAMP}"; \
-	if [ -d "src/backend/prisma/migrations" ] && \
-	[ -n "$$(ls -A src/backend/prisma/migrations 2>/dev/null)" ]; then \
-		mkdir -p "$$ARC_DIR" && \
-		cp -r src/backend/prisma/migrations/* "$$ARC_DIR/" && \
-		echo "Backed up existing migrations to $$ARC_DIR"; \
-	fi; \
-	rm -rf src/backend/prisma/migrations 2>/dev/null || \
-	$(SUDO) rm -rf src/backend/prisma/migrations; \
-	mkdir -p "src/backend/prisma/migrations/$${TIMESTAMP}_init"; \
-	echo "Generating consolidated initial migration..."; \
-	$(call run_prisma,migrate diff --from-empty \
-	--to-schema prisma/schema.prisma --script \
-	--output prisma/migrations/$${TIMESTAMP}_init/migration.sql); \
-	echo "Resetting database schema and applying migration..."; \
-	$(call run_prisma,migrate reset --force); \
-	$(call run_prisma,db seed); \
-	$(call run_prisma,generate); \
-	echo -n $(GREEN)"Database successfully squashed into a single 'init' "; \
-	echo "migration!"$(RESETCOLOR)
-
+# Catch-all rule so positional arguments to vault-unseal (e.g. k1 k2 k3)
+# are not treated as missing Makefile targets.
+%:
+	@:
 
 # **************************************************************************** #
-#    SETUP AND CHECK COMMANDS                                                  #
+#    API & POSTMAN SYNCHRONIZATION                                             #
 # **************************************************************************** #
 
-# Checks whether .env exists, prompts to create from .env.example if missing,
-# and validates vars
+.PHONY: openapi-generate
+openapi-generate: ## |Generate headless OpenAPI 3.0 specification
+	@echo $(YELLOW)"Generating headless OpenAPI specification..."$(RESETCOLOR)
+	@npm run openapi:generate
+
+.PHONY: postman-sync
+postman-sync: openapi-generate ## |Synchronize Postman specification and collection
+	@echo $(YELLOW)"Synchronizing Postman specification and collection..."$(RESETCOLOR)
+	@npm run postman:sync
+
+# **************************************************************************** #
+#    INSPECTION & UTILITIES                                                    #
+# **************************************************************************** #
+
+.PHONY: status
+status: ## |Show container status, health, and port mappings
+	@docker compose -f $(COMPOSE_FILE) ps -a
+
+.PHONY: logs
+logs: ## [service]|Follow container logs (optionally for a specific service)
+	@docker compose -f $(COMPOSE_FILE) logs -f $(filter-out $@,$(MAKECMDGOALS))
+
+.PHONY: top
+top: ## |Display running processes across all containers
+	@docker compose -f $(COMPOSE_FILE) top
+
+# **************************************************************************** #
+#    SETUP & VALIDATION                                                        #
+# **************************************************************************** #
+
 .PHONY: env-check
-env-check: ## |Verify .env exists and required vars are present
-	@if [ ! -s "$(ENV_FILE)" ]; then \
-		echo "Missing or empty env file: $(ENV_FILE)"; \
-		echo "Run 'make env-init' to create it from $(ENV_EXAMPLE)."; \
-		exit 1; \
-	fi; \
-	missing=0; \
-	if grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' "$(ENV_FILE)"; then \
-		echo "USE_VAULT=false: Vault disabled, secrets are read from $(ENV_FILE)."; \
-		mode_vars="DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET \
-		TWO_FACTOR_AUTH"; \
-	else \
-		mode_vars="ACME_VAULT_ROLE_ID ACME_VAULT_SECRET_ID \
-		DATABASE_VAULT_ROLE_ID DATABASE_VAULT_SECRET_ID \
-		BACKEND_VAULT_ROLE_ID BACKEND_VAULT_SECRET_ID"; \
-	fi; \
-	for var in PRODUCTION_FLAG ACME_EMAIL ACME_STAGING DOMAIN_NAME \
-	POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB UPLOADS_DIR \
-	$$mode_vars; do \
-		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
-			echo "Missing variable in $(ENV_FILE): $$var"; \
-			missing=1; \
-		fi; \
-	done; \
-	if [ $$missing -ne 0 ]; then \
-		echo -n "Some required variables are missing in $(ENV_FILE)."; \
-		echo " Check $(ENV_EXAMPLE)."; \
+env-check:
+	@if [ ! -f "$(ENV_FILE)" ]; then \
+		echo "Environment file $(ENV_FILE) not found. Create it from $(ENV_EXAMPLE)."; \
 		exit 1; \
 	fi
 
-# Copies .env.example to .env (prompts if .env already exists)
-# TODO!
-.PHONY: env-init
-env-init: ## |Initialize .env from .env.example
-	@echo "This feature is not implemented yet!"; \
-	echo -n "Manually copy the $(ENV_EXAMPLE) file into "; \
-	echo "$(ENV_FILE) and adjust the values."
-
-# Quick project setup rule
 .PHONY: setup
 setup: env-check all ## |Verify .env and launch the stack
-
 
 # **************************************************************************** #
 #    HELP MESSAGE                                                              #
 # **************************************************************************** #
 
-# Shows a help message listing all make commands and their descriptions
 .PHONY: help
 help: ## |Show this help message
 	@echo "Available commands:"
@@ -502,7 +215,4 @@ help: ## |Show this help message
 	}' Makefile
 	@echo ""
 	@echo "Notes:"
-	@echo "  - Docker mode:" \
-	"$(if $(filter 1,$(IS_ROOTLESS)),rootless (no sudo),root (sudo=$(SUDO)))"
-	@echo "  - Run: make exec <name> [cmd], make inspect <name>," \
-	"make logs [service]."
+	@echo "  - Docker mode: $(if $(filter 1,$(IS_ROOTLESS)),rootless (no sudo),root (sudo=$(SUDO)))"
