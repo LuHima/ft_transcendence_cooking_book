@@ -213,6 +213,7 @@ export class RecipeService {
             ? Boolean(recipe.likes && recipe.likes.length > 0)
             : false,
           resolved_lang,
+          available_languages: recipe.translations.map((t: any) => t.locale),
         };
       },
     );
@@ -437,6 +438,7 @@ export class RecipeService {
         ? Boolean(recipe.likes && recipe.likes.length > 0)
         : false,
       resolved_lang: translation?.locale ?? (recipe.source_lang || 'en'),
+      available_languages: recipe.translations.map((t: any) => t.locale),
     };
   }
 
@@ -1840,7 +1842,7 @@ export class RecipeService {
   async likeRecipe(
     recipeId: number,
     userId: number,
-  ): Promise<{ message: string; liked: boolean }> {
+  ): Promise<{ message: string; liked: boolean; likes_count: number }> {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
@@ -1882,7 +1884,15 @@ export class RecipeService {
       );
     }
 
-    return { message: 'Recipe liked successfully', liked: true };
+    const likesCount = await this.prisma.like.count({
+      where: { recipe_id: recipeId },
+    });
+
+    return {
+      message: 'Recipe liked successfully',
+      liked: true,
+      likes_count: likesCount,
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -1890,7 +1900,7 @@ export class RecipeService {
   async unlikeRecipe(
     recipeId: number,
     userId: number,
-  ): Promise<{ message: string; liked: boolean }> {
+  ): Promise<{ message: string; liked: boolean; likes_count: number }> {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
@@ -1933,7 +1943,15 @@ export class RecipeService {
       });
     }
 
-    return { message: 'Recipe unliked successfully', liked: false };
+    const likesCount = await this.prisma.like.count({
+      where: { recipe_id: recipeId },
+    });
+
+    return {
+      message: 'Recipe unliked successfully',
+      liked: false,
+      likes_count: likesCount,
+    };
   }
 
   // ---------------------------------------------------------------------------

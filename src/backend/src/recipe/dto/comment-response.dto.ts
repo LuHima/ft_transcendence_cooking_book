@@ -11,10 +11,11 @@ export class RecipeCommentResponseDto {
   @ApiProperty({ description: 'Recipe ID', example: 42 })
   recipe_id: number;
 
-  @ApiProperty({ description: 'Author user ID', example: 10 })
+  @ApiProperty({ type: Number, description: 'Author user ID', example: 10, nullable: true })
   user_id: number | null;
 
   @ApiProperty({
+    type: Number,
     description:
       'Parent root comment ID if reply, or null for top-level comment',
     example: null,
@@ -23,6 +24,7 @@ export class RecipeCommentResponseDto {
   parent_id: number | null;
 
   @ApiProperty({
+    type: String,
     description:
       'Comment content text, or null if deleted/deactivated with active replies',
     example: 'Ottima ricetta!',
@@ -43,12 +45,16 @@ export class RecipeCommentResponseDto {
   is_edited: boolean;
 
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Creation timestamp',
     example: '2026-10-13T10:00:00.000Z',
   })
   created_at: Date;
 
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Last update timestamp, or null if never edited',
     example: '2026-10-15T11:00:00.000Z',
     nullable: true,

@@ -77,6 +77,7 @@ describe('RecipeService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
     comment: {
       findUnique: jest.fn(),
@@ -244,7 +245,7 @@ describe('RecipeService', () => {
             description: 'Classica',
             tags: [
               {
-                id: 1,
+                tag_id: 1,
                 slug: 'traditional',
                 name: 'Tradizionale',
                 resolved_lang: 'it',
@@ -254,6 +255,7 @@ describe('RecipeService', () => {
             comments_count: 2,
             is_liked: false,
             resolved_lang: 'it',
+            available_languages: ['it', 'en'],
           },
         ],
         total: 1,
@@ -2232,6 +2234,7 @@ describe('RecipeService', () => {
         user_id: 1,
         recipe_id: 10,
       });
+      mockPrisma.like.count.mockResolvedValueOnce(3);
 
       const res = await service.likeRecipe(10, 1);
 
@@ -2245,6 +2248,7 @@ describe('RecipeService', () => {
       expect(res).toEqual({
         message: 'Recipe liked successfully',
         liked: true,
+        likes_count: 3,
       });
     });
 
@@ -2257,6 +2261,7 @@ describe('RecipeService', () => {
         user_id: 1,
         recipe_id: 10,
       });
+      mockPrisma.like.count.mockResolvedValueOnce(1);
 
       const res = await service.likeRecipe(10, 1);
 
@@ -2267,6 +2272,7 @@ describe('RecipeService', () => {
       expect(res).toEqual({
         message: 'Recipe liked successfully',
         liked: true,
+        likes_count: 1,
       });
     });
 
@@ -2276,6 +2282,7 @@ describe('RecipeService', () => {
         user_id: 2,
       });
       mockPrisma.like.create.mockRejectedValueOnce({ code: 'P2002' });
+      mockPrisma.like.count.mockResolvedValueOnce(4);
 
       const res = await service.likeRecipe(10, 1);
 
@@ -2283,6 +2290,7 @@ describe('RecipeService', () => {
       expect(res).toEqual({
         message: 'Recipe liked successfully',
         liked: true,
+        likes_count: 4,
       });
     });
 
@@ -2317,6 +2325,7 @@ describe('RecipeService', () => {
         recipe_id: 10,
       });
       mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 1 });
+      mockPrisma.like.count.mockResolvedValueOnce(2);
 
       const res = await service.unlikeRecipe(10, 1);
 
@@ -2338,6 +2347,7 @@ describe('RecipeService', () => {
       expect(res).toEqual({
         message: 'Recipe unliked successfully',
         liked: false,
+        likes_count: 2,
       });
     });
 
@@ -2347,6 +2357,7 @@ describe('RecipeService', () => {
         user_id: 1,
         recipe_id: 10,
       });
+      mockPrisma.like.count.mockResolvedValueOnce(0);
 
       const res = await service.unlikeRecipe(10, 1);
 
@@ -2359,6 +2370,7 @@ describe('RecipeService', () => {
       expect(res).toEqual({
         message: 'Recipe unliked successfully',
         liked: false,
+        likes_count: 0,
       });
     });
 
@@ -2366,6 +2378,7 @@ describe('RecipeService', () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10, user_id: 2 });
       mockPrisma.like.delete.mockRejectedValueOnce({ code: 'P2025' });
       mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 0 });
+      mockPrisma.like.count.mockResolvedValueOnce(5);
 
       const res = await service.unlikeRecipe(10, 1);
 
@@ -2382,6 +2395,7 @@ describe('RecipeService', () => {
       expect(res).toEqual({
         message: 'Recipe unliked successfully',
         liked: false,
+        likes_count: 5,
       });
     });
 

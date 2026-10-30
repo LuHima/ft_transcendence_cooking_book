@@ -4564,11 +4564,11 @@
             "example": "Rossi"
           },
           "birth_date": {
-            "format": "date-time",
             "type": "string",
             "nullable": true,
             "description": "Date of birth",
-            "example": "1995-05-20T00:00:00.000Z"
+            "example": "1995-05-20T00:00:00.000Z",
+            "format": "date-time"
           },
           "phone": {
             "type": "string",
@@ -4595,10 +4595,10 @@
             "example": "00100"
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
             "description": "Account creation timestamp",
-            "example": "2026-10-09T18:00:00.000Z"
+            "example": "2026-10-09T18:00:00.000Z",
+            "format": "date-time"
           }
         },
         "required": [
@@ -4747,7 +4747,7 @@
             "example": "chef_mario"
           },
           "avatar_url": {
-            "type": "object",
+            "type": "string",
             "description": "Author avatar photo URL",
             "example": "/uploads/avatars/chef_mario.webp",
             "nullable": true
@@ -4764,17 +4764,17 @@
         "properties": {
           "id": {
             "type": "number",
-            "description": "Tag identifier",
+            "description": "Catalog tag identifier",
             "example": 1
           },
           "slug": {
             "type": "string",
-            "description": "Canonical tag slug",
+            "description": "Canonical tag slug identifier",
             "example": "traditional"
           },
           "name": {
             "type": "string",
-            "description": "Localized tag label",
+            "description": "Localized tag display name",
             "example": "Tradizionale"
           },
           "resolved_lang": {
@@ -4862,25 +4862,26 @@
             "example": "completed"
           },
           "cover_image_url": {
-            "type": "object",
+            "type": "string",
             "description": "Recipe cover image URL",
             "example": "/uploads/recipes/carbonara_cover.webp",
             "nullable": true
           },
           "video_url": {
-            "type": "object",
+            "type": "string",
             "description": "Tutorial demonstration video URL",
             "example": "/uploads/recipes/carbonara_tutorial.mp4",
             "nullable": true
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
+            "format": "date-time",
             "description": "Creation timestamp",
             "example": "2026-10-09T18:00:00.000Z"
           },
           "updated_at": {
-            "type": "object",
+            "type": "string",
+            "format": "date-time",
             "description": "Last update timestamp",
             "example": "2026-10-09T18:30:00.000Z",
             "nullable": true
@@ -4936,6 +4937,18 @@
               "fr"
             ],
             "example": "it"
+          },
+          "available_languages": {
+            "description": "List of available locale projections for this recipe",
+            "example": [
+              "it",
+              "en",
+              "fr"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
           }
         },
         "required": [
@@ -4959,7 +4972,8 @@
           "likes_count",
           "comments_count",
           "is_liked",
-          "resolved_lang"
+          "resolved_lang",
+          "available_languages"
         ]
       },
       "PaginatedRecipeResponseDto": {
@@ -5045,10 +5059,10 @@
             "example": "Rossi"
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
             "description": "Account registration timestamp",
-            "example": "2026-10-15T12:00:00.000Z"
+            "example": "2026-10-15T12:00:00.000Z",
+            "format": "date-time"
           },
           "recipes_count": {
             "type": "number",
@@ -5149,10 +5163,10 @@
             "example": "/uploads/avatars/avatar_1.webp"
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
             "description": "Member since date",
-            "example": "2026-10-09T18:00:00.000Z"
+            "example": "2026-10-09T18:00:00.000Z",
+            "format": "date-time"
           },
           "friendship_status": {
             "nullable": true,
@@ -5194,10 +5208,10 @@
             "example": "/uploads/avatars/avatar_2.webp"
           },
           "friends_since": {
-            "format": "date-time",
             "type": "string",
             "description": "Timestamp when friendship was established",
-            "example": "2026-10-15T12:00:00.000Z"
+            "example": "2026-10-15T12:00:00.000Z",
+            "format": "date-time"
           }
         },
         "required": [
@@ -5476,11 +5490,11 @@
           },
           "step_number": {
             "type": "number",
-            "description": "Integer representing the sequential step order",
+            "description": "1-based sequential step ordering index",
             "example": 1
           },
           "title": {
-            "type": "object",
+            "type": "string",
             "description": "Localized title of the step",
             "example": "Preparare il guanciale",
             "nullable": true
@@ -5491,13 +5505,13 @@
             "example": "Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore."
           },
           "duration": {
-            "type": "object",
+            "type": "number",
             "description": "Duration in minutes to complete this step",
             "example": 10,
             "nullable": true
           },
           "image_url": {
-            "type": "object",
+            "type": "string",
             "description": "Static URL path to step illustration photo",
             "example": "/uploads/recipes/step_1_carbonara.webp",
             "nullable": true
@@ -5568,11 +5582,11 @@
               "piece",
               "pinch"
             ],
-            "description": "Standardized measurement unit",
+            "description": "Measurement unit abbreviation (e.g. g, kg, ml, tbsp)",
             "example": "g"
           },
           "notes": {
-            "type": "object",
+            "type": "string",
             "description": "Localized preparation notes or cut advice",
             "example": "tagliato a listarelle spesse",
             "nullable": true
@@ -5604,7 +5618,7 @@
         "properties": {
           "id": {
             "type": "number",
-            "description": "Media item identifier",
+            "description": "Media item unique identifier",
             "example": 1
           },
           "url": {
@@ -5701,25 +5715,26 @@
             "example": "completed"
           },
           "cover_image_url": {
-            "type": "object",
+            "type": "string",
             "description": "Recipe cover image URL",
             "example": "/uploads/recipes/carbonara_cover.webp",
             "nullable": true
           },
           "video_url": {
-            "type": "object",
+            "type": "string",
             "description": "Tutorial demonstration video URL",
             "example": "/uploads/recipes/carbonara_tutorial.mp4",
             "nullable": true
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
+            "format": "date-time",
             "description": "Creation timestamp",
             "example": "2026-10-09T18:00:00.000Z"
           },
           "updated_at": {
-            "type": "object",
+            "type": "string",
+            "format": "date-time",
             "description": "Last update timestamp",
             "example": "2026-10-09T18:30:00.000Z",
             "nullable": true
@@ -5776,14 +5791,26 @@
             ],
             "example": "it"
           },
+          "available_languages": {
+            "description": "List of available locale projections for this recipe",
+            "example": [
+              "it",
+              "en",
+              "fr"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
           "preservation": {
-            "type": "object",
+            "type": "string",
             "description": "Localized storage and preservation notes",
             "example": "Si consiglia di consumare al momento. Non congelare.",
             "nullable": true
           },
           "tips": {
-            "type": "object",
+            "type": "string",
             "description": "Author cooking tricks and culinary tips",
             "example": "Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.",
             "nullable": true
@@ -5832,6 +5859,7 @@
           "comments_count",
           "is_liked",
           "resolved_lang",
+          "available_languages",
           "preservation",
           "tips",
           "steps",
@@ -6225,11 +6253,17 @@
             "type": "boolean",
             "description": "Current like state",
             "example": true
+          },
+          "likes_count": {
+            "type": "number",
+            "description": "Total number of cumulative likes registered for this recipe",
+            "example": 42
           }
         },
         "required": [
           "message",
-          "liked"
+          "liked",
+          "likes_count"
         ]
       },
       "CreateCommentDto": {
@@ -6295,15 +6329,15 @@
             "example": false
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
+            "format": "date-time",
             "description": "Creation timestamp",
             "example": "2026-10-13T10:00:00.000Z"
           },
           "updated_at": {
-            "format": "date-time",
             "type": "string",
             "nullable": true,
+            "format": "date-time",
             "description": "Last update timestamp, or null if never edited",
             "example": "2026-10-15T11:00:00.000Z"
           },
@@ -6373,15 +6407,15 @@
             "example": false
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
+            "format": "date-time",
             "description": "Creation timestamp",
             "example": "2026-10-13T10:00:00.000Z"
           },
           "updated_at": {
-            "format": "date-time",
             "type": "string",
             "nullable": true,
+            "format": "date-time",
             "description": "Last update timestamp, or null if never edited",
             "example": "2026-10-15T11:00:00.000Z"
           },
@@ -6581,10 +6615,10 @@
             "example": "/uploads/avatars/avatar_4.webp"
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
             "description": "Timestamp when request was sent",
-            "example": "2026-10-20T15:30:00.000Z"
+            "example": "2026-10-20T15:30:00.000Z",
+            "format": "date-time"
           }
         },
         "required": [

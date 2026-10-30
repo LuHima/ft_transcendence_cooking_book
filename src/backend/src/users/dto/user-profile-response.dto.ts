@@ -41,6 +41,7 @@ export class UserProfileResponseDto {
    * @example '/uploads/avatars/avatar_1.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Avatar image URL',
     example: '/uploads/avatars/avatar_1.webp',
     nullable: true,
@@ -51,14 +52,14 @@ export class UserProfileResponseDto {
    * User first name.
    * @example 'Mario'
    */
-  @ApiProperty({ description: 'First name', example: 'Mario', nullable: true })
+  @ApiProperty({ type: String, description: 'First name', example: 'Mario', nullable: true })
   first_name: string | null;
 
   /**
    * User last name.
    * @example 'Rossi'
    */
-  @ApiProperty({ description: 'Last name', example: 'Rossi', nullable: true })
+  @ApiProperty({ type: String, description: 'Last name', example: 'Rossi', nullable: true })
   last_name: string | null;
 
   /**
@@ -66,6 +67,8 @@ export class UserProfileResponseDto {
    * @example '1995-05-20T00:00:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Date of birth',
     example: '1995-05-20T00:00:00.000Z',
     nullable: true,
@@ -77,6 +80,7 @@ export class UserProfileResponseDto {
    * @example '+39 06 1234567'
    */
   @ApiProperty({
+    type: String,
     description: 'Phone number',
     example: '+39 06 1234567',
     nullable: true,
@@ -88,6 +92,7 @@ export class UserProfileResponseDto {
    * @example 'Via Roma 123'
    */
   @ApiProperty({
+    type: String,
     description: 'Residential street address',
     example: 'Via Roma 123',
     nullable: true,
@@ -99,6 +104,7 @@ export class UserProfileResponseDto {
    * @example 'Roma'
    */
   @ApiProperty({
+    type: String,
     description: 'City of residence',
     example: 'Roma',
     nullable: true,
@@ -110,6 +116,7 @@ export class UserProfileResponseDto {
    * @example '00100'
    */
   @ApiProperty({
+    type: String,
     description: 'Postal code / ZIP',
     example: '00100',
     nullable: true,
@@ -121,6 +128,8 @@ export class UserProfileResponseDto {
    * @example '2026-10-09T18:00:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Account creation timestamp',
     example: '2026-10-09T18:00:00.000Z',
   })
@@ -150,6 +159,7 @@ export class PublicUserResponseDto {
    * @example '/uploads/avatars/avatar_1.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Public avatar photo URL',
     example: '/uploads/avatars/avatar_1.webp',
     nullable: true,
@@ -161,6 +171,8 @@ export class PublicUserResponseDto {
    * @example '2026-10-09T18:00:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Member since date',
     example: '2026-10-09T18:00:00.000Z',
   })
@@ -208,6 +220,7 @@ export class UserSearchItemDto {
    * @example '/uploads/avatars/avatar_1.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Avatar image URL',
     example: '/uploads/avatars/avatar_1.webp',
     nullable: true,
@@ -218,14 +231,14 @@ export class UserSearchItemDto {
    * First name of the member.
    * @example 'Mario'
    */
-  @ApiProperty({ description: 'First name', example: 'Mario', nullable: true })
+  @ApiProperty({ type: String, description: 'First name', example: 'Mario', nullable: true })
   first_name: string | null;
 
   /**
    * Last name of the member.
    * @example 'Rossi'
    */
-  @ApiProperty({ description: 'Last name', example: 'Rossi', nullable: true })
+  @ApiProperty({ type: String, description: 'Last name', example: 'Rossi', nullable: true })
   last_name: string | null;
 
   /**
@@ -233,6 +246,8 @@ export class UserSearchItemDto {
    * @example '2026-10-15T12:00:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Account registration timestamp',
     example: '2026-10-15T12:00:00.000Z',
   })

@@ -39,6 +39,8 @@ export class SignUpUserDto {
    * @example 'mario.rossi@example.com'
    */
   @ApiProperty({
+    type: String,
+    format: 'email',
     description: 'Valid email address',
     example: 'mario.rossi@example.com',
     maxLength: 255,

@@ -21,8 +21,8 @@
     "prisma:studio": "node prisma/studio.js",
     "prisma:seed": "prisma db seed",
     "postinstall": "prisma generate || true",
-    "openapi:generate": "ts-node -r tsconfig-paths/register src/generate-spec.ts",
-    "postman:sync": "ts-node -r dotenv/config ../scripts/sync-postman.ts"
+    "openapi:generate": "nest build && node dist/src/generate-spec.js",
+    "postman:sync": "npm run openapi:generate && ts-node -r dotenv/config ../scripts/sync-postman.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

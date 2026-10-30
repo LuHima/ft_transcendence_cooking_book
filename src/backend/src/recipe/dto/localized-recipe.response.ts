@@ -24,7 +24,7 @@ export class LocalizedRecipeStepResponse {
    * @example 1
    */
   @ApiProperty({
-    description: 'Integer representing the sequential step order',
+    description: '1-based sequential step ordering index',
     example: 1,
   })
   step_number: number;
@@ -34,6 +34,7 @@ export class LocalizedRecipeStepResponse {
    * @example 'Preparare il guanciale'
    */
   @ApiProperty({
+    type: String,
     description: 'Localized title of the step',
     example: 'Preparare il guanciale',
     nullable: true,
@@ -56,6 +57,7 @@ export class LocalizedRecipeStepResponse {
    * @example 10
    */
   @ApiProperty({
+    type: Number,
     description: 'Duration in minutes to complete this step',
     example: 10,
     nullable: true,
@@ -67,6 +69,7 @@ export class LocalizedRecipeStepResponse {
    * @example '/uploads/recipes/step_1_carbonara.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Static URL path to step illustration photo',
     example: '/uploads/recipes/step_1_carbonara.webp',
     nullable: true,
@@ -129,7 +132,7 @@ export class LocalizedRecipeIngredientResponse {
    */
   @ApiProperty({
     enum: UnitOfMeasure,
-    description: 'Standardized measurement unit',
+    description: 'Measurement unit abbreviation (e.g. g, kg, ml, tbsp)',
     example: UnitOfMeasure.g,
   })
   unit: UnitOfMeasure;
@@ -139,6 +142,7 @@ export class LocalizedRecipeIngredientResponse {
    * @example 'tagliato a listarelle spesse'
    */
   @ApiProperty({
+    type: String,
     description: 'Localized preparation notes or cut advice',
     example: 'tagliato a listarelle spesse',
     nullable: true,
@@ -162,24 +166,24 @@ export class LocalizedRecipeIngredientResponse {
  */
 export class LocalizedRecipeTagResponse {
   /**
-   * Tag identifier.
+   * Catalog tag identifier.
    * @example 1
    */
-  @ApiProperty({ description: 'Tag identifier', example: 1 })
+  @ApiProperty({ description: 'Catalog tag identifier', example: 1 })
   id: number;
 
   /**
    * Canonical tag slug.
    * @example 'traditional'
    */
-  @ApiProperty({ description: 'Canonical tag slug', example: 'traditional' })
+  @ApiProperty({ description: 'Canonical tag slug identifier', example: 'traditional' })
   slug: string;
 
   /**
-   * Localized tag label.
+   * Localized display name of the tag.
    * @example 'Tradizionale'
    */
-  @ApiProperty({ description: 'Localized tag label', example: 'Tradizionale' })
+  @ApiProperty({ description: 'Localized tag display name', example: 'Tradizionale' })
   name: string;
 
   /**
@@ -195,18 +199,18 @@ export class LocalizedRecipeTagResponse {
 }
 
 /**
- * Media asset attached to a recipe gallery.
+ * Gallery photo attached to a recipe showcasing plating or presentation.
  */
 export class RecipeMediaResponse {
   /**
-   * Unique media record ID.
+   * Unique media record identifier.
    * @example 1
    */
-  @ApiProperty({ description: 'Media item identifier', example: 1 })
+  @ApiProperty({ description: 'Media item unique identifier', example: 1 })
   id: number;
 
   /**
-   * Static asset URL path.
+   * Static asset URL path to the uploaded image file.
    * @example '/uploads/recipes/gallery_1_carbonara.webp'
    */
   @ApiProperty({
@@ -257,6 +261,7 @@ export class RecipeAuthorSummaryDto {
    * @example '/uploads/avatars/chef_mario.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Author avatar photo URL',
     example: '/uploads/avatars/chef_mario.webp',
     nullable: true,
@@ -352,6 +357,7 @@ export class LocalizedRecipeSummaryResponse {
    * @example '/uploads/recipes/carbonara_cover.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Recipe cover image URL',
     example: '/uploads/recipes/carbonara_cover.webp',
     nullable: true,
@@ -363,6 +369,7 @@ export class LocalizedRecipeSummaryResponse {
    * @example '/uploads/recipes/carbonara_tutorial.mp4'
    */
   @ApiProperty({
+    type: String,
     description: 'Tutorial demonstration video URL',
     example: '/uploads/recipes/carbonara_tutorial.mp4',
     nullable: true,
@@ -374,6 +381,8 @@ export class LocalizedRecipeSummaryResponse {
    * @example '2026-10-09T18:00:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: "date-time",
     description: 'Creation timestamp',
     example: '2026-10-09T18:00:00.000Z',
   })
@@ -384,6 +393,8 @@ export class LocalizedRecipeSummaryResponse {
    * @example '2026-10-09T18:30:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: "date-time",
     description: 'Last update timestamp',
     example: '2026-10-09T18:30:00.000Z',
     nullable: true,
@@ -472,6 +483,17 @@ export class LocalizedRecipeSummaryResponse {
     example: 'it',
   })
   resolved_lang: string;
+
+  /**
+   * List of available locale translations for this recipe.
+   * @example ['it', 'en', 'fr']
+   */
+  @ApiProperty({
+    description: 'List of available locale projections for this recipe',
+    example: ['it', 'en', 'fr'],
+    isArray: true,
+  })
+  available_languages: string[];
 }
 
 /**
@@ -483,6 +505,7 @@ export class LocalizedRecipeDetailResponse extends LocalizedRecipeSummaryRespons
    * @example 'Si consiglia di consumare al momento. Non congelare.'
    */
   @ApiProperty({
+    type: String,
     description: 'Localized storage and preservation notes',
     example: 'Si consiglia di consumare al momento. Non congelare.',
     nullable: true,
@@ -494,6 +517,7 @@ export class LocalizedRecipeDetailResponse extends LocalizedRecipeSummaryRespons
    * @example 'Utilizzare acqua di cottura per emulsionare i tuorli a bagnomaria fuori dal fuoco.'
    */
   @ApiProperty({
+    type: String,
     description: 'Author cooking tricks and culinary tips',
     example:
       'Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.',

@@ -16,6 +16,8 @@ export class SignInUserDto {
    * @example 'mario.rossi@example.com'
    */
   @ApiProperty({
+    type: String,
+    format: 'email',
     description: 'Registered user email address',
     example: 'mario.rossi@example.com',
     maxLength: 255,
@@ -30,6 +32,7 @@ export class SignInUserDto {
    * @example 'SuperSecret123!'
    */
   @ApiProperty({
+    type: String,
     description: 'User account password (minimum 9 characters)',
     example: 'SuperSecret123!',
     minLength: 9,

@@ -120,7 +120,7 @@ async function bootstrap() {
     },
   });
   // Export openapi.json for Fern, Postman, and AI agent consumers
-  fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2));
+  fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2) + '\n');
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }

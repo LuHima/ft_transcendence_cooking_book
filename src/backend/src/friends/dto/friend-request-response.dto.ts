@@ -23,6 +23,7 @@ export class FriendRequestItemDto {
    * @example '/uploads/avatars/avatar_4.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Avatar URL of counterparty',
     example: '/uploads/avatars/avatar_4.webp',
     nullable: true,
@@ -34,6 +35,8 @@ export class FriendRequestItemDto {
    * @example '2026-10-20T15:30:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Timestamp when request was sent',
     example: '2026-10-20T15:30:00.000Z',
   })

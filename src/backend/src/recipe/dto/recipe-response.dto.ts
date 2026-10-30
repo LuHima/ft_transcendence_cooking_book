@@ -48,6 +48,7 @@ export class RecipeStackItemDto {
   translation_status: TranslationStatus;
 
   @ApiProperty({
+    type: String,
     description: 'Cover image URL path',
     example: '/uploads/recipes/cover.webp',
     nullable: true,
@@ -55,6 +56,7 @@ export class RecipeStackItemDto {
   cover_image_url: string | null;
 
   @ApiProperty({
+    type: String,
     description: 'Tutorial video URL path',
     example: '/uploads/recipes/video.mp4',
     nullable: true,
@@ -62,6 +64,7 @@ export class RecipeStackItemDto {
   video_url: string | null;
 
   @ApiProperty({
+    type: String,
     description: 'Author username',
     example: 'mario_rossi',
     nullable: true,
@@ -69,6 +72,8 @@ export class RecipeStackItemDto {
   username: string | null;
 
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Creation date',
     example: '2026-10-09T18:00:00.000Z',
   })
@@ -262,6 +267,16 @@ export class RecipeLikeResponseDto {
    */
   @ApiProperty({ description: 'Current like state', example: true })
   liked: boolean;
+
+  /**
+   * Total number of likes registered for the recipe.
+   * @example 42
+   */
+  @ApiProperty({
+    description: 'Total number of cumulative likes registered for this recipe',
+    example: 42,
+  })
+  likes_count: number;
 }
 
 /**

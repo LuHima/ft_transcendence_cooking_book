@@ -18,6 +18,7 @@ import { AppModule } from './app.module';
 async function generate() {
   console.log('Compiling NestJS application metadata (headless mode)...');
   const app = await NestFactory.create(AppModule, { logger: false });
+  // Needed to prefix /api to all API routes
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
@@ -82,13 +83,28 @@ async function generate() {
   const document = SwaggerModule.createDocument(app, config);
   const specJson = JSON.stringify(document, null, 2);
 
+  // Compute canonical paths whether running from src/ or dist/src/
+  const isDist = __dirname.includes(path.join('dist', 'src'));
+  const backendDir = isDist
+    ? path.resolve(__dirname, '../../')
+    : path.resolve(__dirname, '../');
+
+  const repoRootDir = path.resolve(backendDir, '../../');
+
+  const backendSpecPath = path.join(backendDir, 'openapi.json');
+  const rootSpecPath = path.join(repoRootDir, 'openapi.json');
+  const fernSpecPath = path.join(
+    repoRootDir,
+    'fern',
+    'openapi',
+    'openapi.json',
+  );
+
   // Target 1: src/backend/openapi.json (canonical)
-  const backendSpecPath = path.resolve(__dirname, '../openapi.json');
   fs.writeFileSync(backendSpecPath, specJson + '\n');
   console.log(`Generated canonical spec at: ${backendSpecPath}`);
 
   // Target 2: Root openapi.json (relative symlink: src/backend/openapi.json)
-  const rootSpecPath = path.resolve(__dirname, '../../../openapi.json');
   try {
     if (
       fs.existsSync(rootSpecPath) ||
@@ -106,10 +122,6 @@ async function generate() {
   }
 
   // Target 3: fern/openapi/openapi.json (relative symlink: ../../src/backend/openapi.json)
-  const fernSpecPath = path.resolve(
-    __dirname,
-    '../../../fern/openapi/openapi.json',
-  );
   try {
     if (
       fs.existsSync(fernSpecPath) ||

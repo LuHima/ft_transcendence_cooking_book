@@ -584,6 +584,7 @@ export class UsersService {
         comments_count: recipe._count?.comments ?? 0,
         is_liked: true,
         resolved_lang,
+        available_languages: recipe.translations.map((t) => t.locale),
       };
     });
 
@@ -713,6 +714,7 @@ export class UsersService {
           comments_count: recipe._count?.comments ?? 0,
           is_liked: Boolean(recipe.likes && recipe.likes.length > 0),
           resolved_lang,
+          available_languages: recipe.translations.map((t: any) => t.locale),
         };
       },
     );
