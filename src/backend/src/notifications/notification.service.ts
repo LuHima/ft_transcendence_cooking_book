@@ -6,7 +6,7 @@ import {
   CaslAbilityFactory,
 } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 import { Action } from 'src/auth/casl/action.enum';
-import { ActiveUserData } from 'src/common/decorators/current-user.decorator';
+import { type ActiveUserData } from 'src/common/decorators/current-user.decorator';
 
 @Injectable()
 export class NotificationService {

@@ -1,20 +1,32 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
+  ApiCreatedResponse,
+  ApiConflictResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import {
+  IngredientDetailResponseDto,
   IngredientResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
 import {
   ApiBadRequestResponseDto,
+  ApiConflictResponseDto,
+  ApiForbiddenResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
+import { Auth } from 'src/common/decorators/policies.decorator';
+import {
+  type ActiveUserData,
+  CurrentUser,
+} from 'src/common/decorators/current-user.decorator';
+import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { FilterIngredientDto } from './dto/filter-ingredient.dto';
 
@@ -70,5 +82,38 @@ export class CatalogController {
   @Get('ingredients')
   async getIngredients(@Query() filterDto: FilterIngredientDto) {
     return await this.catalogService.getIngredients(filterDto);
+  }
+
+  /**
+   * Add a new ingredient to the curated catalog (admin only).
+   */
+  @ApiOperation({
+    summary: 'Create a curated ingredient',
+    description:
+      'Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.',
+  })
+  @ApiCreatedResponse({
+    description: 'Ingredient created with all its translations',
+    type: IngredientDetailResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid slug, category or translations',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can create catalog ingredients',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'An ingredient with this slug already exists',
+    type: ApiConflictResponseDto,
+  })
+  @Auth()
+  @Post('ingredients')
+  async createIngredient(
+    @CurrentUser() user: ActiveUserData,
+    @Body() dto: CreateIngredientDto,
+  ) {
+    return await this.catalogService.createIngredient(user, dto);
   }
 }

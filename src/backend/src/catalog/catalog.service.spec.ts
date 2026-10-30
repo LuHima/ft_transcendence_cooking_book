@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogService } from './catalog.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-ability.factory';
+import { Action } from '../auth/casl/action.enum';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import {
   Course,
   RecipeDifficulty,
@@ -11,6 +14,7 @@ import {
 describe('CatalogService', () => {
   let service: CatalogService;
   let prisma: PrismaService;
+  let casl: { check: jest.Mock };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -21,17 +25,24 @@ describe('CatalogService', () => {
           useValue: {
             ingredient: {
               findMany: jest.fn(),
+              findUnique: jest.fn(),
+              create: jest.fn(),
             },
             tag: {
               findMany: jest.fn(),
             },
           },
         },
+        {
+          provide: CaslAbilityFactory,
+          useValue: { check: jest.fn() },
+        },
       ],
     }).compile();
 
     service = module.get<CatalogService>(CatalogService);
     prisma = module.get<PrismaService>(PrismaService);
+    casl = module.get(CaslAbilityFactory);
   });
 
   describe('getMeta', () => {
@@ -214,6 +225,78 @@ describe('CatalogService', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('createIngredient', () => {
+    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+    const dto = {
+      slug: 'bell_pepper',
+      category: IngredientCategory.produce,
+      translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+    };
+
+    it('creates the ingredient with its three translations', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.ingredient.create as jest.Mock).mockResolvedValue({
+        id: 7,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: [
+          { locale: 'fr', name: 'Poivron' },
+          { locale: 'it', name: 'Peperone' },
+          { locale: 'en', name: 'Bell pepper' },
+        ],
+      });
+
+      const result = await service.createIngredient(admin, dto);
+
+      expect(casl.check).toHaveBeenCalledWith(
+        admin,
+        Action.Create,
+        'Ingredient',
+      );
+      expect(prisma.ingredient.create).toHaveBeenCalledWith({
+        data: {
+          slug: 'bell_pepper',
+          category: IngredientCategory.produce,
+          translations: {
+            create: [
+              { locale: 'it', name: 'Peperone' },
+              { locale: 'en', name: 'Bell pepper' },
+              { locale: 'fr', name: 'Poivron' },
+            ],
+          },
+        },
+        include: { translations: true },
+      });
+      expect(result).toEqual({
+        id: 7,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+      });
+    });
+
+    it('throws 409 when the slug already exists', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({ id: 3 });
+
+      await expect(service.createIngredient(admin, dto)).rejects.toMatchObject({
+        status: HttpStatus.CONFLICT,
+      });
+      expect(prisma.ingredient.create).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the database when CASL denies the action', async () => {
+      casl.check.mockImplementation(() => {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      });
+
+      await expect(service.createIngredient(admin, dto)).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+      });
+      expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
+      expect(prisma.ingredient.create).not.toHaveBeenCalled();
     });
   });
 });

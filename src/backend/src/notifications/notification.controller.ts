@@ -7,7 +7,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import {
-  ActiveUserData,
+  type ActiveUserData,
   CurrentUser,
 } from 'src/common/decorators/current-user.decorator';
 import { Auth } from 'src/common/decorators/policies.decorator';

@@ -6,10 +6,18 @@ import {
   UnitOfMeasure,
   IngredientCategory,
 } from '@prisma/client';
+import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-ability.factory';
+import { Action } from '../auth/casl/action.enum';
+import { ActiveUserData } from '../common/decorators/current-user.decorator';
+import { createHttpException, errors } from '../common/config/error.config';
+import { CreateIngredientDto } from './dto/create-ingredient.dto';
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly caslAbilityFactory: CaslAbilityFactory,
+  ) {}
 
   /*
   GET /api/recipes/metadata
@@ -140,5 +148,62 @@ export class CatalogService {
     });
     // Returns the array of ingredients ordered by name
     return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
+  }
+
+  /*
+  POST /api/ingredients
+  Adds a new ingredient to the curated catalog (admin only, enforced by CASL).
+  The ingredient row and its three translation rows (it, en, fr) are created
+  in a single nested write, so either everything is saved or nothing is.
+  @param user: Authenticated user performing the request.
+  @param dto: Slug, category and the name in each supported language.
+  */
+  async createIngredient(user: ActiveUserData, dto: CreateIngredientDto) {
+    // Only roles allowed to create Ingredients pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Create, 'Ingredient');
+
+    // Friendly 409 if the slug is already taken. A concurrent request that
+    // slips through is still caught by the DB unique constraint (P2002),
+    // which the global exception filter turns into a 409 as well.
+    const existing = await this.prisma.ingredient.findUnique({
+      where: { slug: dto.slug },
+      select: { id: true },
+    });
+    if (existing) {
+      throw createHttpException(
+        errors.ingredients.alreadyExists,
+        `Ingredient with slug '${dto.slug}' already exists`,
+      );
+    }
+
+    // Creates the ingredient together with its translations
+    const created = await this.prisma.ingredient.create({
+      data: {
+        slug: dto.slug,
+        category: dto.category,
+        translations: {
+          create: [
+            { locale: 'it', name: dto.translations.it },
+            { locale: 'en', name: dto.translations.en },
+            { locale: 'fr', name: dto.translations.fr },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    // Maps the stored rows to { id, slug, category, translations: {it,en,fr} }
+    const nameOf = (locale: string) =>
+      created.translations.find((t) => t.locale === locale)?.name ?? '';
+    return {
+      id: created.id,
+      slug: created.slug,
+      category: created.category,
+      translations: {
+        it: nameOf('it'),
+        en: nameOf('en'),
+        fr: nameOf('fr'),
+      },
+    };
   }
 }

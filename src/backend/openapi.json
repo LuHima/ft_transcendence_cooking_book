@@ -1385,6 +1385,92 @@
         "tags": [
           "Catalog"
         ]
+      },
+      "post": {
+        "description": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
+        "operationId": "CatalogController_createIngredient",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIngredientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ingredient created with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid slug, category or translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can create catalog ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An ingredient with this slug already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Create a curated ingredient",
+        "tags": [
+          "Catalog"
+        ]
       }
     },
     "/api/recipes": {
@@ -4939,6 +5025,151 @@
           "resolved_lang"
         ]
       },
+      "TranslationDto": {
+        "type": "object",
+        "properties": {
+          "it": {
+            "type": "string",
+            "description": "Italian display name",
+            "example": "Pomodoro",
+            "maxLength": 100
+          },
+          "en": {
+            "type": "string",
+            "description": "English display name",
+            "example": "Tomato",
+            "maxLength": 100
+          },
+          "fr": {
+            "type": "string",
+            "description": "French display name",
+            "example": "Tomate",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "it",
+          "en",
+          "fr"
+        ]
+      },
+      "CreateIngredientDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Unique canonical slug (lowercase letters, digits, underscores)",
+            "example": "bell_pepper",
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "produce",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "translations": {
+            "description": "Ingredient display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "slug",
+          "category",
+          "translations"
+        ]
+      },
+      "IngredientDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique ingredient catalog identifier",
+            "example": 12
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical ingredient slug",
+            "example": "bell_pepper"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "produce",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "translations": {
+            "description": "Ingredient display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "category",
+          "translations"
+        ]
+      },
+      "ApiForbiddenResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing insufficient permissions to perform action",
+            "example": 403
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42"
+          },
+          "message": {
+            "type": "string",
+            "description": "Authorization failure message",
+            "example": "Forbidden: insufficient permissions for this action on the target resource"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
+      },
       "CatalogMetadataResponseDto": {
         "type": "object",
         "properties": {
@@ -6007,37 +6238,6 @@
           "updated_at",
           "user",
           "replies"
-        ]
-      },
-      "ApiForbiddenResponseDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "description": "HTTP status code representing insufficient permissions to perform action",
-            "example": 403
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 formatted timestamp of when the error occurred",
-            "example": "2026-10-14T10:00:00.000Z"
-          },
-          "path": {
-            "type": "string",
-            "description": "Requested URL path that produced the error",
-            "example": "/api/recipes/42"
-          },
-          "message": {
-            "type": "string",
-            "description": "Authorization failure message",
-            "example": "Forbidden: insufficient permissions for this action on the target resource"
-          }
-        },
-        "required": [
-          "statusCode",
-          "timestamp",
-          "path",
-          "message"
         ]
       },
       "UpdateCommentDto": {

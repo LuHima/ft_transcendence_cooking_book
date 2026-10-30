@@ -24,6 +24,12 @@ describe('CatalogController', () => {
               .mockResolvedValue([
                 { id: 1, slug: 'vegetarian', name: 'Vegetariano' },
               ]),
+            createIngredient: jest.fn().mockResolvedValue({
+              id: 9,
+              slug: 'bell_pepper',
+              category: IngredientCategory.produce,
+              translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+            }),
             getIngredients: jest.fn().mockResolvedValue([
               {
                 id: 1,
@@ -73,6 +79,22 @@ describe('CatalogController', () => {
         category: IngredientCategory.produce,
         search: 'pomo',
       });
+    });
+  });
+
+  describe('createIngredient', () => {
+    it('should delegate to service.createIngredient with user and body', async () => {
+      const user = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+      const dto = {
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+      };
+
+      const result = await controller.createIngredient(user, dto);
+
+      expect(result).toMatchObject({ id: 9, slug: 'bell_pepper' });
+      expect(service.createIngredient).toHaveBeenCalledWith(user, dto);
     });
   });
 });
