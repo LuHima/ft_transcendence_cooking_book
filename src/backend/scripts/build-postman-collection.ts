@@ -209,10 +209,26 @@ export async function buildPostmanCollection(): Promise<void> {
           console.log(`Synthesized baseline status test (${expectedStatus}) for new route: ${method} ${pathStr}`);
         }
 
-        // Stabilize response IDs
+        // Stabilize query parameters for determinism
+        if (item.request.url && Array.isArray(item.request.url.query)) {
+          for (const q of item.request.url.query) {
+            if (q.key === 'lang') {
+              q.value = 'it';
+            }
+          }
+        }
+
+        // Stabilize response IDs and query parameters
         if (Array.isArray(item.response)) {
           item.response.forEach((resp: any, idx: number) => {
             resp.id = deterministicUuid(`response:${method}:${slug}:${resp.name || resp.code || idx}`);
+            if (resp.originalRequest?.url && Array.isArray(resp.originalRequest.url.query)) {
+              for (const q of resp.originalRequest.url.query) {
+                if (q.key === 'lang') {
+                  q.value = 'it';
+                }
+              }
+            }
           });
         }
       } else if (Array.isArray(item.item)) {

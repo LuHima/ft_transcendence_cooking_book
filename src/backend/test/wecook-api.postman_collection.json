@@ -7884,7 +7884,7 @@
                 {
                   "disabled": false,
                   "key": "lang",
-                  "value": "fr",
+                  "value": "it",
                   "description": "Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated. If source_lang is not available, defaults to English (en)."
                 }
               ],
@@ -7924,7 +7924,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "fr"
+                      "value": "it"
                     }
                   ],
                   "variable": [
@@ -7974,7 +7974,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "fr"
+                      "value": "it"
                     }
                   ],
                   "variable": [
@@ -8024,7 +8024,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "fr"
+                      "value": "it"
                     }
                   ],
                   "variable": [
@@ -8074,7 +8074,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "fr"
+                      "value": "it"
                     }
                   ],
                   "variable": [
