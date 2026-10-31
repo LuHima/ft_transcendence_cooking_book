@@ -245,7 +245,7 @@ describe('RecipeService', () => {
             description: 'Classica',
             tags: [
               {
-                tag_id: 1,
+                id: 1,
                 slug: 'traditional',
                 name: 'Tradizionale',
                 resolved_lang: 'it',
