@@ -1,14 +1,14 @@
-# 12. Automated OpenAPI Specification Generation and Postman Collection Synchronization
+# 12. Automated OpenAPI Specification Generation, Local Collection Merging, and Postman Synchronization
 
-We decided to decouple OpenAPI specification extraction from runtime database initialization via a headless NestJS generator that compiles via `nest build` to activate the `@nestjs/swagger` AST compiler plugin (`_OPENAPI_METADATA_FACTORY`), enforce documentation freshness on pull requests via zero-diff git checks, synchronize contract updates non-destructively to the canonical Postman collection (`WeCook API`) using Postman's native spec-to-collection synchronization API with background task polling, and maintain a single canonical specification file (`src/backend/openapi.json`) with relative symbolic links for documentation tools.
+We decided to decouple OpenAPI specification extraction from runtime database initialization via a headless NestJS generator that compiles via `nest build` to activate the `@nestjs/swagger` AST compiler plugin (`_OPENAPI_METADATA_FACTORY`), maintain an authoritative Git-versioned test script overlay structure, compile Postman collection artifacts locally using `openapi-to-postmanv2` with deterministic ID stabilization and fallback status assertions, support offline contract testing with Newman, enforce spec and collection freshness on pull requests via dual-target zero-diff git checks, and synchronize collection updates to the canonical Postman collection (`WeCook API`) using Postman's free collection API (`PUT /collections/{collectionUid}`).
 
 ## Context
 
 1. **Runtime Coupling & Developer Friction**: Previously, generating `openapi.json` required starting the backend application (`main.ts`), which in turn initialized PostgreSQL connections (`PrismaService.$connect()`), required container orchestration, and depended on HashiCorp Vault secrets. As a result, developers rarely regenerated the specification locally when modifying controller endpoints, request DTOs, or validation pipes.
 2. **Compiler AST Plugins & TypeScript Metadata**: NestJS Swagger uses an AST compiler plugin (`@nestjs/swagger/plugin` configured in `nest-cli.json` with `classValidatorShim: true` and `introspectComments: true`). This plugin automatically generates static `_OPENAPI_METADATA_FACTORY()` methods on DTOs, extracting types, comments, `@example` tags, minimum/maximum values, and formats (such as `format: 'email'` from `@IsEmail()`). Running extraction via plain `ts-node` bypassed this AST transformer, degrading union types like `string | null` into `Object` and omitting class-validator constraints.
 3. **Contract Drift**: Without automated verification, the codebase drifted away from published API documentation and Postman collections. Endpoints, parameters, and schemas diverged, degrading the developer experience for frontend engineers and external consumers.
-4. **Destructive Tooling vs. Custom Assertions**: Naive automated conversion approaches (such as `openapi-to-postmanv2` generating an entirely new collection and executing `PUT /collections`) overwrite the remote collection in Postman. This destroys all existing post-response schema test assertions and wipes out pre-request authentication scripts (notably the automatic extraction and persistence of HttpOnly `accessToken` and `refreshToken` session cookies on `/api/auth/signin`).
-5. **Collection Fragmentation**: The Postman workspace previously retained multiple collections (`wecook-backend-api` and `wecook-api-generated`), creating confusion regarding the authoritative collection for integration testing.
+4. **Cloud Diff Paywall vs. Destructive Overwrite**: Postman's cloud-native spec-to-collection synchronization API (`POST /specs/{specId}/collections/{collectionUid}/sync`) is locked behind their commercial Enterprise/Professional subscription tier. Conversely, naive collection generation overwriting the remote collection wipes out all 51 custom response schema test assertions and destroys authentication persistence scripts (notably the HttpOnly `accessToken` and `refreshToken` session cookie extraction on `/api/auth/signin`).
+5. **Collection Fragmentation & Offline Testing**: The Postman workspace previously retained multiple collections (`wecook-backend-api` and `wecook-api-generated`). Additionally, developers lacked a local, version-controlled collection artifact to execute contract tests offline via Newman without cloud dependencies.
 
 ## Decision
 
@@ -27,24 +27,35 @@ We decided to decouple OpenAPI specification extraction from runtime database in
 3. **Explicit Decorator Types (Defense-in-Depth)**:
    - For union types (`string | null`, `Date | null`, `number | null`), annotate `@ApiProperty()` with explicit `type: String`, `type: Number`, or `type: String, format: 'date-time'` so that even without AST compiler plugins, TypeScript's `design:type: Object` fallback never degrades the schema into an untyped object.
 
-4. **Non-Destructive Spec-to-Collection Synchronization (`src/backend/sync-postman.ts`)**:
-   - Implement a TypeScript CLI synchronization client (`src/backend/sync-postman.ts`).
-   - Resolve `POSTMAN_API_KEY` using a three-tier precedence cascade: (1) `process.env.POSTMAN_API_KEY`, (2) `docker/.env`, (3) `.env`.
-   - Upload the updated specification to the Postman API Spec file (`PUT /specs/{specId}/files/{filePath}`).
-   - Trigger Postman's native Spec-to-Collection synchronization (`POST /specs/{specId}/collections/{collectionUid}/sync`). Postman's internal diff engine merges route and schema updates while strictly preserving pre-request scripts, environment persistence scripts, and post-response test assertions.
-   - Poll the returned asynchronous background task (`GET /specs/{specId}/tasks/{taskId}`) every 2 seconds (up to a 30-second timeout), exiting with code `0` on `COMPLETED` and code `1` on failure or timeout.
+4. **In-Git Test Script Overlay (`src/backend/test/postman-scripts/`)**:
+   - Store all 51 endpoint assertion scripts and the authentication session cookie extraction logic as version-controlled `.js` files in Git under `src/backend/test/postman-scripts/<tag>/<METHOD>_<path_slug>.test.js`.
+   - Provide an automated extraction utility (`src/backend/scripts/extract-postman-scripts.ts` / `npm run postman:extract`) to export scripts and environment templates from Postman Cloud.
 
-5. **Dual-Stage CI/CD Pipeline (`.github/workflows/postman-sync.yml`)**:
-   - **Stage 1 (Contract Drift Check on PRs)**: Triggers on pull requests targeting `main` or `dario-APIs` affecting `src/backend/**`. Executes `npm run openapi:generate` and asserts `git diff --exit-code src/backend/openapi.json`. Fails if uncommitted API changes are detected, requiring developers to update the spec before merging. Runs without secrets.
+5. **Local Collection Merger Engine (`src/backend/scripts/build-postman-collection.ts`)**:
+   - Convert `src/backend/openapi.json` locally using `openapi-to-postmanv2` (`folderStrategy: 'Tags'`).
+   - Reconcile collection items against `postman-scripts/` using normalized `METHOD /path` keys, grafting custom test and pre-request scripts onto matching endpoints.
+   - Automatically inject baseline status code test assertions for newly added endpoints that do not yet have explicit overlay scripts.
+   - Stabilize item, response, and event IDs deterministically via SHA-256 hashes of route keys, ensuring zero-jitter git diffs between builds.
+   - Commit the compiled collection artifact to `src/backend/test/wecook-api.postman_collection.json`.
+
+6. **Local Newman Testing & Free-Tier Push Sync (`src/backend/sync-postman.ts`)**:
+   - Provide `npm run postman:test` (and `make postman-test`) to run Newman offline with `--insecure` using the committed collection and `src/backend/test/wecook-development.postman_environment.json`.
+   - Implement `sync-postman.ts` (`npm run postman:sync` / `make postman-sync`) to push the locally merged collection to Postman Cloud using the free-tier `PUT https://api.getpostman.com/collections/{collectionUid}` endpoint.
+   - Resolve `POSTMAN_API_KEY` using three-tier precedence: (1) `process.env.POSTMAN_API_KEY`, (2) `docker/.env`, (3) `.env`.
+   - Expose unified developer ergonomics via `make api` (runs spec generation and collection compilation).
+
+7. **Dual-Stage CI/CD Pipeline (`.github/workflows/postman-sync.yml`)**:
+   - **Stage 1 (Contract & Collection Drift Check on PRs)**: Triggers on pull requests targeting `main` or `dario-APIs` affecting `src/backend/**`. Executes `npm run openapi:generate && npm run postman:build` and asserts `git diff --exit-code` on both `src/backend/openapi.json` and `src/backend/test/wecook-api.postman_collection.json`. Fails if uncommitted API changes are detected. Runs without secrets.
    - **Stage 2 (Postman Synchronization on Push)**: Triggers on push/merge to protected branches (`main`, `dario-APIs`). Executes `npm run postman:sync` using `${{ secrets.POSTMAN_API_KEY }}`.
 
-6. **Postman Workspace Governance**:
-   - Consolidate all endpoints under the canonical collection `6cea2a4e-1dde-4ec2-9aa1-e861f9fee048`, updating its remote display name to `"WeCook API"`.
+8. **Postman Workspace Governance**:
+   - Consolidate all endpoints under canonical collection `6cea2a4e-1dde-4ec2-9aa1-e861f9fee048` (`"WeCook API"`).
    - Clean obsolete `wecook-backend-api` references from `.postman.json` and standardize the collection key as `wecook-api`.
 
 ## Consequences
 
+- **Free-Tier Independence**: Eliminates reliance on Postman's paid-tier cloud diffing engine without sacrificing test script preservation or team workspace synchronization.
 - **Zero Regression on Test Suites**: Automated Postman updates never overwrite or erase existing schema assertions or authentication token persistence logic.
-- **Immediate Drift Detection**: Uncommitted changes to controller routes, DTOs, or parameter pipes immediately fail PR checks in CI with actionable remediation messages.
-- **Offline & Port-Free Generation**: Developers can regenerate OpenAPI specs in seconds without running PostgreSQL, Docker, or Vault.
-- **Full Schema Parity**: Running extraction after `nest build` guarantees that AST compiler transformations (`_OPENAPI_METADATA_FACTORY`) are active, producing 100% schema parity with the running application.
+- **Offline & Port-Free Generation**: Developers can regenerate OpenAPI specs and compiled Postman collections in seconds without running PostgreSQL, Docker, or Vault.
+- **Offline Contract Testing**: Developers can run full Postman test suites locally via Newman without requiring internet access or cloud credentials.
+- **Deterministic CI Parity**: Stabilizing IDs via cryptographic seeds guarantees that identical specs produce identical collection JSON, enabling strict zero-diff CI enforcement.

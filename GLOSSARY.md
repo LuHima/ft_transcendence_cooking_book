@@ -131,8 +131,8 @@ A discrepancy where backend controller implementations, validation pipes, or DTO
 _Avoid_: Out-of-sync, desync, documentation lag
 
 **Spec-to-Collection Synchronization**:
-Postman's non-destructive merge engine that reconciles collection requests, parameters, and response schemas with an API specification without altering user-defined pre-request scripts, authentication hooks, or post-response test assertions.
-_Avoid_: Collection overwrite, collection import, spec replacement
+The deterministic local build and merge process that converts an OpenAPI specification into a Postman Collection v2.1.0 format using `openapi-to-postmanv2`, reconciles endpoint routes and payload schemas, and overlays Git-versioned test scripts and authentication hooks, before optionally updating the remote collection via Postman's free collection update API.
+_Avoid_: Collection overwrite, collection import, spec replacement, Postman paid sync, cloud diff engine
 
 **Headless Spec Generation**:
 The process of compiling and extracting OpenAPI schemas directly from framework metadata and TypeScript reflection without initiating database connections or binding network sockets.
