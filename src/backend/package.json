@@ -22,6 +22,7 @@
     "prisma:seed": "prisma db seed",
     "postinstall": "prisma generate || true",
     "openapi:generate": "nest build && node dist/src/generate-spec.js",
+    "postman:extract": "ts-node -r dotenv/config scripts/extract-postman-scripts.ts",
     "postman:sync": "npm run openapi:generate && ts-node -r dotenv/config sync-postman.ts"
   },
   "prisma": {
