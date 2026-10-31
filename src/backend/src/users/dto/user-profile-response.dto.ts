@@ -49,17 +49,40 @@ export class UserProfileResponseDto {
   avatar_url: string | null;
 
   /**
+   * Culinary biography / cooking philosophy.
+   * @example 'Passionate about authentic Neapolitan pizza and fresh handmade pasta.'
+   */
+  @ApiProperty({
+    type: String,
+    description: 'Culinary biography / cooking philosophy',
+    example:
+      'Passionate about authentic Neapolitan pizza and fresh handmade pasta.',
+    nullable: true,
+  })
+  bio: string | null;
+
+  /**
    * User first name.
    * @example 'Mario'
    */
-  @ApiProperty({ type: String, description: 'First name', example: 'Mario', nullable: true })
+  @ApiProperty({
+    type: String,
+    description: 'First name',
+    example: 'Mario',
+    nullable: true,
+  })
   first_name: string | null;
 
   /**
    * User last name.
    * @example 'Rossi'
    */
-  @ApiProperty({ type: String, description: 'Last name', example: 'Rossi', nullable: true })
+  @ApiProperty({
+    type: String,
+    description: 'Last name',
+    example: 'Rossi',
+    nullable: true,
+  })
   last_name: string | null;
 
   /**
@@ -155,6 +178,30 @@ export class PublicUserResponseDto {
   username: string;
 
   /**
+   * First name of the member.
+   * @example 'Mario'
+   */
+  @ApiProperty({
+    type: String,
+    description: 'First name',
+    example: 'Mario',
+    nullable: true,
+  })
+  first_name: string | null;
+
+  /**
+   * Last name of the member.
+   * @example 'Rossi'
+   */
+  @ApiProperty({
+    type: String,
+    description: 'Last name',
+    example: 'Rossi',
+    nullable: true,
+  })
+  last_name: string | null;
+
+  /**
    * Public avatar photo URL.
    * @example '/uploads/avatars/avatar_1.webp'
    */
@@ -165,6 +212,18 @@ export class PublicUserResponseDto {
     nullable: true,
   })
   avatar_url: string | null;
+
+  /**
+   * Culinary biography / cooking philosophy.
+   * @example 'Passionate about authentic Neapolitan pizza and fresh pasta.'
+   */
+  @ApiProperty({
+    type: String,
+    description: 'Culinary biography / cooking philosophy',
+    example: 'Passionate about authentic Neapolitan pizza and fresh pasta.',
+    nullable: true,
+  })
+  bio: string | null;
 
   /**
    * Member registration date.
@@ -179,6 +238,36 @@ export class PublicUserResponseDto {
   created_at: Date;
 
   /**
+   * Total published recipes.
+   * @example 12
+   */
+  @ApiProperty({
+    description: 'Total published recipes',
+    example: 12,
+  })
+  recipes_count: number;
+
+  /**
+   * Total confirmed friends.
+   * @example 45
+   */
+  @ApiProperty({
+    description: 'Total confirmed friends',
+    example: 45,
+  })
+  friends_count: number;
+
+  /**
+   * Cumulative likes across all authored recipes.
+   * @example 138
+   */
+  @ApiProperty({
+    description: 'Cumulative likes across all authored recipes',
+    example: 138,
+  })
+  total_likes_received: number;
+
+  /**
    * Current user friendship relation with this profile.
    * @example 'friends'
    */
@@ -190,11 +279,7 @@ export class PublicUserResponseDto {
     example: 'friends',
   })
   friendship_status?:
-    | 'none'
-    | 'pending_sent'
-    | 'pending_received'
-    | 'friends'
-    | null;
+    'none' | 'pending_sent' | 'pending_received' | 'friends' | null;
 }
 
 /**
@@ -231,14 +316,24 @@ export class UserSearchItemDto {
    * First name of the member.
    * @example 'Mario'
    */
-  @ApiProperty({ type: String, description: 'First name', example: 'Mario', nullable: true })
+  @ApiProperty({
+    type: String,
+    description: 'First name',
+    example: 'Mario',
+    nullable: true,
+  })
   first_name: string | null;
 
   /**
    * Last name of the member.
    * @example 'Rossi'
    */
-  @ApiProperty({ type: String, description: 'Last name', example: 'Rossi', nullable: true })
+  @ApiProperty({
+    type: String,
+    description: 'Last name',
+    example: 'Rossi',
+    nullable: true,
+  })
   last_name: string | null;
 
   /**
@@ -276,11 +371,7 @@ export class UserSearchItemDto {
     example: 'friends',
   })
   friendship_status:
-    | 'none'
-    | 'pending_sent'
-    | 'pending_received'
-    | 'friends'
-    | null;
+    'none' | 'pending_sent' | 'pending_received' | 'friends' | null;
 }
 
 /**
@@ -311,7 +402,10 @@ export class PaginatedUsersResponseDto {
   @ApiProperty({ description: 'Whether a next page exists', example: true })
   has_next_page: boolean;
 
-  @ApiProperty({ description: 'Whether a previous page exists', example: false })
+  @ApiProperty({
+    description: 'Whether a previous page exists',
+    example: false,
+  })
   has_prev_page: boolean;
 }
 

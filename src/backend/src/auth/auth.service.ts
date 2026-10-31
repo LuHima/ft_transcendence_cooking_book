@@ -164,7 +164,7 @@ export class AuthService {
     if (CheckUserEmail) {
       throw new ConflictException('Email is already used');
     }
-    const CheckUserUser = await this.usersService.getUserByUsername(
+    const CheckUserUser = await this.usersService.findUserByUsername(
       user.username,
     );
     if (CheckUserUser) {

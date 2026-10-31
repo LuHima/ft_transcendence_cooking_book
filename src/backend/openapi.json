@@ -1124,9 +1124,63 @@
         ]
       }
     },
+    "/api/users/by-username/{username}": {
+      "get": {
+        "description": "Returns enriched public profile information (username, bio, names, avatar, join date, recipes count, friends count, total likes received) for the specified username handle, including contextual friendship status when requested by an authenticated user.",
+        "operationId": "UsersController_getUserByUsername",
+        "parameters": [
+          {
+            "name": "username",
+            "required": true,
+            "in": "path",
+            "description": "Target username handle",
+            "schema": {
+              "example": "mario_rossi",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicUserResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get public user profile by username",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
     "/api/users/{id}": {
       "get": {
-        "description": "Returns public profile information (username, avatar, join date) for the specified user, including contextual friendship status when requested by an authenticated user.",
+        "description": "Returns enriched public profile information (username, bio, names, avatar, join date, recipes count, friends count, total likes received) for the specified user ID, including contextual friendship status when requested by an authenticated user.",
         "operationId": "UsersController_getUser",
         "parameters": [
           {
@@ -1183,6 +1237,110 @@
           }
         },
         "summary": "Get public user profile by ID",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/recipes": {
+      "get": {
+        "description": "Returns paginated public recipes authored by the specified user, ordered descending by creation date.",
+        "operationId": "UsersController_getUserPublicRecipes",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Target author user ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated recipes authored by the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRecipeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user ID format or invalid pagination/language query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get public recipes authored by user",
         "tags": [
           "Users"
         ]
@@ -4551,6 +4709,12 @@
             "description": "Avatar image URL",
             "example": "/uploads/avatars/avatar_1.webp"
           },
+          "bio": {
+            "type": "string",
+            "nullable": true,
+            "description": "Culinary biography / cooking philosophy",
+            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta."
+          },
           "first_name": {
             "type": "string",
             "nullable": true,
@@ -4607,6 +4771,7 @@
           "email",
           "role",
           "avatar_url",
+          "bio",
           "first_name",
           "last_name",
           "birth_date",
@@ -4657,6 +4822,12 @@
             "example": "mario_rossi_updated",
             "minLength": 3,
             "maxLength": 30
+          },
+          "bio": {
+            "type": "string",
+            "description": "Culinary biography / cooking philosophy (max 500 characters)",
+            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta.",
+            "maxLength": 500
           },
           "email": {
             "type": "string",
@@ -5156,17 +5327,50 @@
             "description": "Username",
             "example": "mario_rossi"
           },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name",
+            "example": "Mario"
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name",
+            "example": "Rossi"
+          },
           "avatar_url": {
             "type": "string",
             "nullable": true,
             "description": "Public avatar photo URL",
             "example": "/uploads/avatars/avatar_1.webp"
           },
+          "bio": {
+            "type": "string",
+            "nullable": true,
+            "description": "Culinary biography / cooking philosophy",
+            "example": "Passionate about authentic Neapolitan pizza and fresh pasta."
+          },
           "created_at": {
             "type": "string",
             "description": "Member since date",
             "example": "2026-10-09T18:00:00.000Z",
             "format": "date-time"
+          },
+          "recipes_count": {
+            "type": "number",
+            "description": "Total published recipes",
+            "example": 12
+          },
+          "friends_count": {
+            "type": "number",
+            "description": "Total confirmed friends",
+            "example": 45
+          },
+          "total_likes_received": {
+            "type": "number",
+            "description": "Cumulative likes across all authored recipes",
+            "example": 138
           },
           "friendship_status": {
             "nullable": true,
@@ -5184,8 +5388,14 @@
         "required": [
           "id",
           "username",
+          "first_name",
+          "last_name",
           "avatar_url",
-          "created_at"
+          "bio",
+          "created_at",
+          "recipes_count",
+          "friends_count",
+          "total_likes_received"
         ]
       },
       "FriendItemDto": {

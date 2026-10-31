@@ -17,6 +17,7 @@ describe('UsersService', () => {
     email: 'mario@example.com',
     role: 'user',
     avatar_url: 'https://example.com/avatar.jpg',
+    bio: 'Passionate Italian chef and home cook.',
     first_name: 'Mario',
     last_name: 'Rossi',
     birth_date: new Date('1990-01-01'),
@@ -36,6 +37,7 @@ describe('UsersService', () => {
           useValue: {
             user: {
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
               findMany: jest.fn(),
               update: jest.fn(),
               count: jest.fn(),
@@ -77,6 +79,7 @@ describe('UsersService', () => {
           email: true,
           role: true,
           avatar_url: true,
+          bio: true,
           first_name: true,
           last_name: true,
           birth_date: true,
@@ -127,6 +130,7 @@ describe('UsersService', () => {
           email: true,
           role: true,
           avatar_url: true,
+          bio: true,
           first_name: true,
           last_name: true,
           birth_date: true,
@@ -174,6 +178,23 @@ describe('UsersService', () => {
 
       await expect(service.updateMe(1, updateData)).rejects.toThrow(
         BadRequestException,
+      );
+    });
+
+    it('should update bio when bio is provided', async () => {
+      const updateData = { bio: 'New bio content for cook' };
+      const updatedUser = { ...mockDbUser, bio: 'New bio content for cook' };
+      (prisma.user.update as jest.Mock).mockResolvedValue(updatedUser);
+
+      const result = await service.updateMe(1, updateData);
+
+      expect(result.bio).toBe('New bio content for cook');
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            bio: 'New bio content for cook',
+          }),
+        }),
       );
     });
 
@@ -421,18 +442,21 @@ describe('UsersService', () => {
       ],
       ['newest' as const, [{ created_at: 'desc' }, { id: 'desc' }]],
       ['oldest' as const, [{ created_at: 'asc' }, { id: 'asc' }]],
-    ])('resolves orderBy correctly for sort %s', async (sortValue, expectedOrderBy) => {
-      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
-      (prisma.user.count as jest.Mock).mockResolvedValue(0);
+    ])(
+      'resolves orderBy correctly for sort %s',
+      async (sortValue, expectedOrderBy) => {
+        (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.count as jest.Mock).mockResolvedValue(0);
 
-      await service.findUsers({ sort: sortValue });
+        await service.findUsers({ sort: sortValue });
 
-      expect(prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: expectedOrderBy,
-        }),
-      );
-    });
+        expect(prisma.user.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderBy: expectedOrderBy,
+          }),
+        );
+      },
+    );
 
     it('resolves contextual friendship status and excludes caller for authenticated user', async () => {
       (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
@@ -659,31 +683,85 @@ describe('UsersService', () => {
   });
 
   describe('getUser', () => {
-    const publicUser = {
+    const publicUserDb = {
       id: 2,
       username: 'giulia',
+      first_name: 'Giulia',
+      last_name: 'Bianchi',
       avatar_url: 'https://example.com/avatar.jpg',
+      bio: 'Passionate Italian home cook specializing in pasta.',
       created_at: new Date('2026-09-01T10:00:00Z'),
     };
 
-    it('should return friendship_status: null when currentUserId is undefined', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+    it('should return enriched public profile with metrics and friendship_status: null for guest', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(publicUserDb);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(12);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(45);
+      (prisma.like.count as jest.Mock).mockResolvedValue(138);
 
       const result = await service.getUser(2);
 
-      expect(result).toEqual({ ...publicUser, friendship_status: null });
+      expect(result).toEqual({
+        id: 2,
+        username: 'giulia',
+        first_name: 'Giulia',
+        last_name: 'Bianchi',
+        avatar_url: 'https://example.com/avatar.jpg',
+        bio: 'Passionate Italian home cook specializing in pasta.',
+        created_at: new Date('2026-09-01T10:00:00Z'),
+        recipes_count: 12,
+        friends_count: 45,
+        total_likes_received: 138,
+        friendship_status: null,
+      });
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 2,
+          status: 'active',
+          deleted_at: null,
+        },
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          bio: true,
+          created_at: true,
+        },
+      });
+      expect(prisma.recipe.count).toHaveBeenCalledWith({
+        where: { user_id: 2 },
+      });
+      expect(prisma.friendship.count).toHaveBeenCalledWith({
+        where: {
+          status: 'accepted',
+          OR: [{ requester_id: 2 }, { addressee_id: 2 }],
+        },
+      });
+      expect(prisma.like.count).toHaveBeenCalledWith({
+        where: { recipe: { user_id: 2 } },
+      });
     });
 
     it('should return friendship_status: null when viewing own profile', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(publicUserDb);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+      (prisma.like.count as jest.Mock).mockResolvedValue(0);
 
       const result = await service.getUser(2, 2);
 
-      expect(result).toEqual({ ...publicUser, friendship_status: null });
+      expect(result.friendship_status).toBeNull();
+      expect(prisma.friendship.findFirst).not.toHaveBeenCalled();
     });
 
     it('should return friendship_status: "friends" when accepted friendship exists', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(publicUserDb);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(5);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(10);
+      (prisma.like.count as jest.Mock).mockResolvedValue(20);
       (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
         id: 1,
         requester_id: 1,
@@ -697,7 +775,10 @@ describe('UsersService', () => {
     });
 
     it('should return friendship_status: "pending_sent" when caller sent pending request', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(publicUserDb);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+      (prisma.like.count as jest.Mock).mockResolvedValue(0);
       (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
         id: 1,
         requester_id: 1,
@@ -711,7 +792,10 @@ describe('UsersService', () => {
     });
 
     it('should return friendship_status: "pending_received" when caller received pending request', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(publicUserDb);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+      (prisma.like.count as jest.Mock).mockResolvedValue(0);
       (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
         id: 1,
         requester_id: 2,
@@ -725,7 +809,10 @@ describe('UsersService', () => {
     });
 
     it('should return friendship_status: "none" when no relation exists', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(publicUser);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(publicUserDb);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+      (prisma.like.count as jest.Mock).mockResolvedValue(0);
       (prisma.friendship.findFirst as jest.Mock).mockResolvedValue(null);
 
       const result = await service.getUser(2, 1);
@@ -733,16 +820,80 @@ describe('UsersService', () => {
       expect(result.friendship_status).toBe('none');
     });
 
-    it('should throw NotFoundException if user is not found', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    it('should throw NotFoundException if user is not found, banned, or soft-deleted', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
       await expect(service.getUser(999)).rejects.toThrow(NotFoundException);
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 999,
+          status: 'active',
+          deleted_at: null,
+        },
+        select: expect.any(Object),
+      });
+    });
+  });
+
+  describe('getUserByUsername', () => {
+    const publicUserDb = {
+      id: 2,
+      username: 'giulia_chef',
+      first_name: 'Giulia',
+      last_name: 'Bianchi',
+      avatar_url: '/uploads/avatars/giulia.webp',
+      bio: 'Culinary enthusiast',
+      created_at: new Date('2026-09-01T10:00:00Z'),
+    };
+
+    it('should resolve user by case-insensitive handle and delegate to getUser', async () => {
+      (prisma.user.findFirst as jest.Mock)
+        .mockResolvedValueOnce({ id: 2 }) // lookup for getUserByUsername
+        .mockResolvedValueOnce(publicUserDb); // lookup in getUser
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(3);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(7);
+      (prisma.like.count as jest.Mock).mockResolvedValue(15);
+      (prisma.friendship.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.getUserByUsername('GIULIA_CHEF', 1);
+
+      expect(prisma.user.findFirst).toHaveBeenNthCalledWith(1, {
+        where: {
+          username: { equals: 'GIULIA_CHEF', mode: 'insensitive' },
+          status: 'active',
+          deleted_at: null,
+        },
+        select: { id: true },
+      });
+      expect(result.id).toBe(2);
+      expect(result.username).toBe('giulia_chef');
+      expect(result.recipes_count).toBe(3);
+      expect(result.friends_count).toBe(7);
+      expect(result.total_likes_received).toBe(15);
+      expect(result.friendship_status).toBe('none');
+    });
+
+    it('should throw NotFoundException if user with username does not exist or is inactive', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.getUserByUsername('nonexistent_user'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          username: { equals: 'nonexistent_user', mode: 'insensitive' },
+          status: 'active',
+          deleted_at: null,
+        },
+        select: { id: true },
+      });
     });
   });
 
   describe('getUserFriends', () => {
-    it('should return paginated friends list for target user', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 2 });
+    it('should return paginated friends list for active target user', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
       const mockFriends = [
         {
           id: 1,
@@ -767,12 +918,175 @@ describe('UsersService', () => {
       });
       expect(result.total).toBe(1);
       expect(result.total_pages).toBe(1);
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { id: 2, status: 'active', deleted_at: null },
+        select: { id: true },
+      });
     });
 
-    it('should throw NotFoundException if target user does not exist', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    it('should throw NotFoundException if target user does not exist or is inactive', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getUserFriends(999)).rejects.toThrow(NotFoundException);
+      await expect(service.getUserFriends(999)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('getUserPublicRecipes', () => {
+    const mockAuthorRecipes = [
+      {
+        id: 201,
+        user_id: 2,
+        source_lang: 'it',
+        course: 'first_course',
+        difficulty: 'medium',
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
+        translation_status: 'completed',
+        cover_image_url: '/uploads/recipes/cover1.webp',
+        video_url: null,
+        created_at: new Date('2026-10-01T12:00:00Z'),
+        updated_at: null,
+        translations: [
+          { locale: 'it', title: 'Amatriciana', description: 'Tradizionale' },
+          {
+            locale: 'en',
+            title: 'Amatriciana Pasta',
+            description: 'Traditional',
+          },
+        ],
+        user: { id: 2, username: 'giulia', avatar_url: '/avatars/giulia.webp' },
+        recipe_tags: [
+          {
+            tag: {
+              id: 5,
+              slug: 'pasta',
+              translations: [{ locale: 'it', name: 'Pasta' }],
+            },
+          },
+        ],
+        likes: [{ user_id: 1 }],
+        _count: { likes: 18, comments: 6 },
+      },
+      {
+        id: 202,
+        user_id: 2,
+        source_lang: 'it',
+        course: 'dessert',
+        difficulty: 'easy',
+        prep_time: 20,
+        cook_time: 0,
+        total_time: 20,
+        servings: 6,
+        translation_status: 'completed',
+        cover_image_url: null,
+        video_url: null,
+        created_at: new Date('2026-09-15T10:00:00Z'),
+        updated_at: null,
+        translations: [
+          { locale: 'it', title: 'Panna Cotta', description: 'Delicata' },
+        ],
+        user: { id: 2, username: 'giulia', avatar_url: '/avatars/giulia.webp' },
+        recipe_tags: [],
+        likes: [],
+        _count: { likes: 7, comments: 1 },
+      },
+    ];
+
+    it('should return paginated recipes ordered chronologically with accurate is_liked for authenticated viewer', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(
+        mockAuthorRecipes,
+      );
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(2);
+
+      const result = await service.getUserPublicRecipes(
+        2,
+        { page: 1, limit: 10 },
+        1,
+      );
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { id: 2, status: 'active', deleted_at: null },
+        select: { id: true },
+      });
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { user_id: 2 },
+          skip: 0,
+          take: 10,
+          orderBy: { created_at: 'desc' },
+          include: expect.objectContaining({
+            likes: {
+              where: { user_id: 1 },
+              select: { user_id: true },
+            },
+          }),
+        }),
+      );
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].id).toBe(201);
+      expect(result.items[0].title).toBe('Amatriciana');
+      expect(result.items[0].is_liked).toBe(true);
+      expect(result.items[0].tags[0]).toEqual({
+        id: 5,
+        slug: 'pasta',
+        name: 'Pasta',
+        resolved_lang: 'it',
+      });
+      expect(result.items[1].id).toBe(202);
+      expect(result.items[1].is_liked).toBe(false);
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(10);
+      expect(result.total_pages).toBe(1);
+    });
+
+    it('should set is_liked to false for unauthenticated viewer and not query likes', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue([
+        mockAuthorRecipes[0],
+      ]);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.getUserPublicRecipes(
+        2,
+        { page: 1, limit: 20 },
+        undefined,
+      );
+
+      expect(result.items[0].is_liked).toBe(false);
+    });
+
+    it('should project requested language localization when lang parameter is provided', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue([
+        mockAuthorRecipes[0],
+      ]);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.getUserPublicRecipes(
+        2,
+        { page: 1, limit: 20, lang: 'en' },
+        1,
+      );
+
+      expect(result.items[0].title).toBe('Amatriciana Pasta');
+      expect(result.items[0].description).toBe('Traditional');
+      expect(result.items[0].resolved_lang).toBe('en');
+    });
+
+    it('should throw NotFoundException if target author does not exist or is inactive/banned/deleted', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.getUserPublicRecipes(999, { page: 1, limit: 20 }, 1),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prisma.recipe.findMany).not.toHaveBeenCalled();
     });
   });
 });

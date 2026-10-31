@@ -29,6 +29,21 @@ export class UpdateUserDto {
   username?: string;
 
   /**
+   * Culinary biography / cooking philosophy (max 500 characters).
+   * @example 'Passionate about authentic Neapolitan pizza and fresh handmade pasta.'
+   */
+  @ApiPropertyOptional({
+    description: 'Culinary biography / cooking philosophy (max 500 characters)',
+    example:
+      'Passionate about authentic Neapolitan pizza and fresh handmade pasta.',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  bio?: string;
+
+  /**
    * User email address.
    * @example 'mario.updated@example.com'
    */

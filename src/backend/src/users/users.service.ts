@@ -21,6 +21,7 @@ import { SearchUserQueryDto, UserSort } from './dto/search-user-query.dto';
 import {
   UserSearchItemDto,
   PaginatedUsersResponseDto,
+  PublicUserResponseDto,
 } from './dto/user-profile-response.dto';
 import * as fs from 'fs';
 
@@ -37,13 +38,30 @@ export class UsersService {
     return user;
   }
 
-  async getUserByUsername(username: string) {
-    const user = await this.prisma.user.findUnique({
+  async getUserByUsername(
+    username: string,
+    currentUserId?: number,
+  ): Promise<PublicUserResponseDto> {
+    const user = await this.prisma.user.findFirst({
       where: {
-        username: username,
+        username: { equals: username, mode: 'insensitive' },
+        status: 'active',
+        deleted_at: null,
+      },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return await this.getUser(user.id, currentUserId);
+  }
+
+  async findUserByUsername(username: string) {
+    return await this.prisma.user.findFirst({
+      where: {
+        username: { equals: username, mode: 'insensitive' },
       },
     });
-    return user;
   }
 
   async getUserById(id: number) {
@@ -207,26 +225,45 @@ export class UsersService {
     };
   }
 
-  async getUser(id: number, currentUserId?: number) {
-    const user = await this.prisma.user.findUnique({
+  async getUser(
+    id: number,
+    currentUserId?: number,
+  ): Promise<PublicUserResponseDto> {
+    const user = await this.prisma.user.findFirst({
       where: {
         id: id,
+        status: 'active',
+        deleted_at: null,
       },
       select: {
         id: true,
         username: true,
+        first_name: true,
+        last_name: true,
         avatar_url: true,
+        bio: true,
         created_at: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
 
+    const [recipesCount, friendsCount, totalLikesReceived] = await Promise.all([
+      this.prisma.recipe.count({
+        where: { user_id: id },
+      }),
+      this.prisma.friendship.count({
+        where: {
+          status: 'accepted',
+          OR: [{ requester_id: id }, { addressee_id: id }],
+        },
+      }),
+      this.prisma.like.count({
+        where: { recipe: { user_id: id } },
+      }),
+    ]);
+
     let friendship_status:
-      | 'none'
-      | 'pending_sent'
-      | 'pending_received'
-      | 'friends'
-      | null = null;
+      'none' | 'pending_sent' | 'pending_received' | 'friends' | null = null;
 
     if (currentUserId && currentUserId !== id) {
       const friendship = await this.prisma.friendship.findFirst({
@@ -254,7 +291,16 @@ export class UsersService {
     }
 
     return {
-      ...user,
+      id: user.id,
+      username: user.username,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      avatar_url: user.avatar_url,
+      bio: user.bio,
+      created_at: user.created_at,
+      recipes_count: recipesCount,
+      friends_count: friendsCount,
+      total_likes_received: totalLikesReceived,
       friendship_status,
     };
   }
@@ -263,8 +309,8 @@ export class UsersService {
     targetUserId: number,
     query: PaginationQueryDto = new PaginationQueryDto(),
   ): Promise<PaginatedFriendsResponseDto> {
-    const targetUser = await this.prisma.user.findUnique({
-      where: { id: targetUserId },
+    const targetUser = await this.prisma.user.findFirst({
+      where: { id: targetUserId, status: 'active', deleted_at: null },
       select: { id: true },
     });
     if (!targetUser) {
@@ -331,6 +377,7 @@ export class UsersService {
         email: true,
         role: true,
         avatar_url: true,
+        bio: true,
         first_name: true,
         last_name: true,
         birth_date: true,
@@ -375,6 +422,7 @@ export class UsersService {
           email: true,
           role: true,
           avatar_url: true,
+          bio: true,
           first_name: true,
           last_name: true,
           birth_date: true,
@@ -713,6 +761,154 @@ export class UsersService {
           likes_count: recipe._count?.likes ?? 0,
           comments_count: recipe._count?.comments ?? 0,
           is_liked: Boolean(recipe.likes && recipe.likes.length > 0),
+          resolved_lang,
+          available_languages: recipe.translations.map((t: any) => t.locale),
+        };
+      },
+    );
+
+    const total_pages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  async getUserPublicRecipes(
+    targetUserId: number,
+    query: UserCookbookQueryDto = new UserCookbookQueryDto(),
+    currentUserId?: number,
+  ): Promise<PaginatedRecipeResponseDto> {
+    const targetUser = await this.prisma.user.findFirst({
+      where: { id: targetUserId, status: 'active', deleted_at: null },
+      select: { id: true },
+    });
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [recipes, total] = await Promise.all([
+      this.prisma.recipe.findMany({
+        where: { user_id: targetUserId },
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: {
+          translations: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+          recipe_tags: {
+            include: {
+              tag: {
+                include: {
+                  translations: true,
+                },
+              },
+            },
+          },
+          ...(currentUserId
+            ? {
+                likes: {
+                  where: { user_id: currentUserId },
+                  select: { user_id: true },
+                },
+              }
+            : {}),
+          _count: {
+            select: {
+              likes: true,
+              comments: {
+                where: { is_active: true },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.recipe.count({
+        where: { user_id: targetUserId },
+      }),
+    ]);
+
+    const items: LocalizedRecipeSummaryResponse[] = recipes.map(
+      (recipe: any) => {
+        const targetLocale = query.lang;
+        const translation =
+          (targetLocale
+            ? recipe.translations.find((t: any) => t.locale === targetLocale)
+            : null) ??
+          recipe.translations.find(
+            (t: any) => t.locale === recipe.source_lang,
+          ) ??
+          recipe.translations.find((t: any) => t.locale === 'en') ??
+          recipe.translations[0];
+
+        const resolved_lang =
+          translation?.locale ?? (recipe.source_lang || 'en');
+
+        const tags = (recipe.recipe_tags ?? []).map((rt: any) => {
+          const t = rt.tag ?? rt;
+          const tagTrans =
+            t?.translations?.find(
+              (tr: any) => tr.locale === (query.lang || recipe.source_lang),
+            ) ??
+            t?.translations?.find(
+              (tr: any) => tr.locale === recipe.source_lang,
+            ) ??
+            t?.translations?.find((tr: any) => tr.locale === 'en');
+          return {
+            id: t.id,
+            slug: t.slug,
+            name: tagTrans?.name ?? t.slug,
+            resolved_lang: tagTrans?.locale ?? 'en',
+          };
+        });
+
+        return {
+          id: recipe.id,
+          course: recipe.course,
+          difficulty: recipe.difficulty,
+          prep_time: recipe.prep_time,
+          cook_time: recipe.cook_time,
+          total_time: recipe.total_time,
+          servings: recipe.servings,
+          source_lang: recipe.source_lang,
+          translation_status: recipe.translation_status,
+          cover_image_url: recipe.cover_image_url,
+          video_url: recipe.video_url,
+          created_at: recipe.created_at,
+          updated_at: recipe.updated_at,
+          author: recipe.user
+            ? {
+                id: recipe.user.id,
+                username: recipe.user.username,
+                avatar_url: recipe.user.avatar_url,
+              }
+            : null,
+          title: translation?.title ?? '',
+          description: translation?.description ?? '',
+          tags,
+          likes_count: recipe._count?.likes ?? 0,
+          comments_count: recipe._count?.comments ?? 0,
+          is_liked: currentUserId
+            ? Boolean(recipe.likes && recipe.likes.length > 0)
+            : false,
           resolved_lang,
           available_languages: recipe.translations.map((t: any) => t.locale),
         };

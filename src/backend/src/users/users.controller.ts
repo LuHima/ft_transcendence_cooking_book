@@ -265,12 +265,42 @@ export class UsersController {
   }
 
   /**
+   * Retrieve safe public profile by username handle.
+   */
+  @ApiOperation({
+    summary: 'Get public user profile by username',
+    description:
+      'Returns enriched public profile information (username, bio, names, avatar, join date, recipes count, friends count, total likes received) for the specified username handle, including contextual friendship status when requested by an authenticated user.',
+  })
+  @ApiParam({
+    name: 'username',
+    description: 'Target username handle',
+    example: 'mario_rossi',
+  })
+  @ApiOkResponse({
+    description: 'Public user profile',
+    type: PublicUserResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @UseGuards(OptionalAuthGuard)
+  @Get('by-username/:username')
+  async getUserByUsername(
+    @Param('username') username: string,
+    @CurrentUser('id') currentUserId?: number,
+  ) {
+    return await this.userService.getUserByUsername(username, currentUserId);
+  }
+
+  /**
    * Retrieve safe public profile for a specific user ID.
    */
   @ApiOperation({
     summary: 'Get public user profile by ID',
     description:
-      'Returns public profile information (username, avatar, join date) for the specified user, including contextual friendship status when requested by an authenticated user.',
+      'Returns enriched public profile information (username, bio, names, avatar, join date, recipes count, friends count, total likes received) for the specified user ID, including contextual friendship status when requested by an authenticated user.',
   })
   @ApiParam({
     name: 'id',
@@ -296,6 +326,46 @@ export class UsersController {
     @CurrentUser('id') currentUserId?: number,
   ) {
     return await this.userService.getUser(id, currentUserId);
+  }
+
+  /**
+   * Retrieve public recipes authored by a specific user ID.
+   */
+  @ApiOperation({
+    summary: 'Get public recipes authored by user',
+    description:
+      'Returns paginated public recipes authored by the specified user, ordered descending by creation date.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Target author user ID',
+    example: 1,
+  })
+  @ApiOkResponse({
+    description: 'Paginated recipes authored by the user',
+    type: PaginatedRecipeResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid user ID format or invalid pagination/language query parameters',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @UseGuards(OptionalAuthGuard)
+  @Get(':id/recipes')
+  async getUserPublicRecipes(
+    @Param('id', ParseIntPipe) targetUserId: number,
+    @Query() query: UserCookbookQueryDto,
+    @CurrentUser('id') currentUserId?: number,
+  ) {
+    return await this.userService.getUserPublicRecipes(
+      targetUserId,
+      query,
+      currentUserId,
+    );
   }
 
   /**
