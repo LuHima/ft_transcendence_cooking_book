@@ -24,7 +24,8 @@
     "openapi:generate": "nest build && node dist/src/generate-spec.js",
     "postman:extract": "ts-node -r dotenv/config scripts/extract-postman-scripts.ts",
     "postman:build": "ts-node scripts/build-postman-collection.ts",
-    "postman:sync": "npm run openapi:generate && ts-node -r dotenv/config sync-postman.ts"
+    "postman:test": "newman run test/wecook-api.postman_collection.json -e test/wecook-development.postman_environment.json --insecure",
+    "postman:sync": "npm run openapi:generate && npm run postman:build && ts-node -r dotenv/config sync-postman.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -79,6 +80,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.3.0",
+    "@types/newman": "^5.3.6",
     "@types/node": "^24.13.3",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.23.1",
@@ -90,6 +92,7 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^17.0.0",
     "jest": "^30.0.0",
+    "newman": "^6.2.3",
     "openapi-to-postmanv2": "^6.4.2",
     "pg": "^8.23.0",
     "prettier": "^3.4.2",

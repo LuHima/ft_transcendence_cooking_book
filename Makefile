@@ -493,9 +493,23 @@ openapi-generate: ## |Generate headless OpenAPI 3.0 specification
 	@echo $(YELLOW)"Generating headless OpenAPI specification..."$(RESETCOLOR)
 	@npm run openapi:generate
 
+.PHONY: postman-build
+postman-build: ## |Build Postman collection with test script overlay
+	@echo $(YELLOW)"Building local Postman collection..."$(RESETCOLOR)
+	@npm run postman:build
+
+.PHONY: api
+api: openapi-generate postman-build ## |Generate OpenAPI specification and build Postman collection
+	@echo $(GREEN)"API specification and Postman collection built successfully."$(RESETCOLOR)
+
+.PHONY: postman-test
+postman-test: ## |Run local Newman contract test suite
+	@echo $(YELLOW)"Running local Newman tests..."$(RESETCOLOR)
+	@npm run postman:test
+
 .PHONY: postman-sync
-postman-sync: openapi-generate ## |Synchronize Postman specification and collection
-	@echo $(YELLOW)"Synchronizing Postman specification and collection..."$(RESETCOLOR)
+postman-sync: api ## |Build and push collection to Postman Cloud
+	@echo $(YELLOW)"Synchronizing Postman collection to Postman Cloud..."$(RESETCOLOR)
 	@npm run postman:sync
 
 

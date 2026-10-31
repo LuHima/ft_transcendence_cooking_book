@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const Converter = require('openapi-to-postmanv2');
 
@@ -10,6 +11,17 @@ export function normalizePathSlug(pathStr: string): string {
   const normalized = pathStr.replace(/\{([^}]+)\}/g, ':$1');
   const slug = normalized.replace(/:([a-zA-Z0-9_]+)/g, '_$1');
   return slug.replace(/^\/+/, '').replace(/[^a-zA-Z0-9_]+/g, '_');
+}
+
+export function deterministicUuid(seed: string): string {
+  const hash = crypto.createHash('sha256').update(seed).digest('hex');
+  return [
+    hash.substring(0, 8),
+    hash.substring(8, 12),
+    '4' + hash.substring(13, 16),
+    '8' + hash.substring(17, 20),
+    hash.substring(20, 32),
+  ].join('-');
 }
 
 interface OverlayScript {
@@ -134,7 +146,7 @@ export async function buildPostmanCollection(): Promise<void> {
   let overlaidCount = 0;
   let synthesizedCount = 0;
 
-  function attachScripts(items: any[]) {
+  function attachScripts(items: any[], parentFolder = '') {
     for (const item of items) {
       if (item.request) {
         const method = (item.request.method || 'GET').toUpperCase();
@@ -148,6 +160,8 @@ export async function buildPostmanCollection(): Promise<void> {
         const slug = normalizePathSlug(pathStr);
         const key = `${method}_${slug}`;
 
+        item.id = deterministicUuid(`request:${method}:${slug}`);
+
         item.event = item.event || [];
         const existingOverlay = overlayScripts.get(key);
 
@@ -157,6 +171,7 @@ export async function buildPostmanCollection(): Promise<void> {
             item.event.push({
               listen: 'test',
               script: {
+                id: deterministicUuid(`script:test:${method}:${slug}`),
                 type: 'text/javascript',
                 exec: existingOverlay.testCode.split('\n'),
               },
@@ -168,6 +183,7 @@ export async function buildPostmanCollection(): Promise<void> {
             item.event.push({
               listen: 'prerequest',
               script: {
+                id: deterministicUuid(`script:prerequest:${method}:${slug}`),
                 type: 'text/javascript',
                 exec: existingOverlay.prerequestCode.split('\n'),
               },
@@ -180,6 +196,7 @@ export async function buildPostmanCollection(): Promise<void> {
           item.event.push({
             listen: 'test',
             script: {
+              id: deterministicUuid(`script:test:${method}:${slug}`),
               type: 'text/javascript',
               exec: [
                 `pm.test("Status code is ${expectedStatus}", function () {`,
@@ -191,10 +208,16 @@ export async function buildPostmanCollection(): Promise<void> {
           synthesizedCount++;
           console.log(`Synthesized baseline status test (${expectedStatus}) for new route: ${method} ${pathStr}`);
         }
-      }
 
-      if (Array.isArray(item.item)) {
-        attachScripts(item.item);
+        // Stabilize response IDs
+        if (Array.isArray(item.response)) {
+          item.response.forEach((resp: any, idx: number) => {
+            resp.id = deterministicUuid(`response:${method}:${slug}:${resp.name || resp.code || idx}`);
+          });
+        }
+      } else if (Array.isArray(item.item)) {
+        item.id = deterministicUuid(`folder:${parentFolder}/${item.name}`);
+        attachScripts(item.item, `${parentFolder}/${item.name}`);
       }
     }
   }

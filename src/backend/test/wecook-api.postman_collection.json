@@ -1,7 +1,7 @@
 {
   "item": [
     {
-      "id": "f64727bb-c96f-457f-a70b-403fa6f9df23",
+      "id": "08e8ffca-28dd-4652-8cc9-633774433c5a",
       "name": "Auth",
       "description": {
         "content": "User authentication, registration, session management, and two-factor authentication (2FA)",
@@ -9,7 +9,7 @@
       },
       "item": [
         {
-          "id": "4ca33fe6-a9e4-480b-a22d-c328abe06af8",
+          "id": "0fc3633b-16da-49ed-8b8e-b1ffa7dbc6a5",
           "name": "Sign in with email and password",
           "request": {
             "name": "Sign in with email and password",
@@ -53,7 +53,7 @@
           },
           "response": [
             {
-              "id": "3592865a-c4ad-45e0-8429-6f661778fe6c",
+              "id": "05e8b9ca-5035-4152-8cfd-8d5b374b9255",
               "name": "Authentication successful or 2FA challenge triggered",
               "originalRequest": {
                 "url": {
@@ -98,7 +98,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "c5ca49fb-2dbf-4708-92dd-3a341510b82e",
+              "id": "c36d73ad-083b-45ae-845d-dff98dc51ec5",
               "name": "Invalid input format (empty email, invalid email syntax, or short password)",
               "originalRequest": {
                 "url": {
@@ -143,7 +143,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a5525e85-5654-4c24-9966-a952e9b42b0c",
+              "id": "1ad55724-0dbd-4dc9-833c-fb0c3150112d",
               "name": "Invalid credentials or inactive account",
               "originalRequest": {
                 "url": {
@@ -188,7 +188,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b91ca543-d50b-4d8c-8f99-625095f2b880",
+              "id": "030bb6da-5f9c-4413-8983-6770222a6c3a",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -237,6 +237,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "b33b32a1-9b59-4850-8f71-a5daeb700538",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -317,7 +318,7 @@
           }
         },
         {
-          "id": "619d1713-025e-45de-8a88-112514346f2d",
+          "id": "a0c5af6e-185e-4253-8aa3-db5a9c0ce39b",
           "name": "Register a new user account",
           "request": {
             "name": "Register a new user account",
@@ -361,7 +362,7 @@
           },
           "response": [
             {
-              "id": "5dce5bb2-25d6-4e36-bee6-586e5e62aa09",
+              "id": "f9e75e6a-6e90-4c71-82cc-e12ce7a4bf47",
               "name": "User successfully registered",
               "originalRequest": {
                 "url": {
@@ -406,7 +407,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "085684b7-c8fc-4bae-bd4f-9ef67e2de4a8",
+              "id": "899a6289-37f1-4d48-8409-593f4d9da90b",
               "name": "Validation failed on registration fields",
               "originalRequest": {
                 "url": {
@@ -451,7 +452,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "fa1f5d3e-a813-4dbd-a0b5-c84913a93492",
+              "id": "cd4516ef-ae9a-4608-8247-2ee194de2868",
               "name": "Username or email is already taken",
               "originalRequest": {
                 "url": {
@@ -496,7 +497,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "0be7a333-2de2-4a88-b9df-eed196a84e28",
+              "id": "b0883790-5baa-4c5a-84b8-ff2ba4426d37",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -545,6 +546,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "03d7fde8-16c9-4764-8c2e-cd874c08293a",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -568,7 +570,7 @@
           }
         },
         {
-          "id": "693ed6e5-832a-4005-84be-bab6a9756093",
+          "id": "28f0fafc-bfbd-4d7a-8661-fdafd047714f",
           "name": "Sign out and revoke session",
           "request": {
             "name": "Sign out and revoke session",
@@ -598,7 +600,7 @@
           },
           "response": [
             {
-              "id": "a6f76d95-34d3-4078-949d-8af75513f62e",
+              "id": "4d8feb1f-6842-452b-8ca2-fced6769cd1c",
               "name": "Successfully signed out; session revoked and cookies cleared",
               "originalRequest": {
                 "url": {
@@ -635,7 +637,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "6476d7cf-9517-44af-926c-9ff469ac4758",
+              "id": "059d027a-07ba-4c7a-8944-7ca421da8732",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -672,7 +674,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "5ca3ad29-938e-4b0d-bbea-e4e2a7141a55",
+              "id": "0e45322e-2d94-4e4f-8dea-04434f5d4d9a",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -713,6 +715,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "bdfb7ba9-b521-400a-8c8d-0dff3a05d94d",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -732,7 +735,7 @@
           }
         },
         {
-          "id": "ad14593b-aa73-43f2-a2af-e5f4086c214c",
+          "id": "b268bc5f-a5f5-4d10-82ef-d823fbb57008",
           "name": "Refresh access token",
           "request": {
             "name": "Refresh access token",
@@ -762,7 +765,7 @@
           },
           "response": [
             {
-              "id": "a8fec34b-1c84-4b21-b5a6-e6a5d1a4eac8",
+              "id": "b4dc56d6-78c7-43fd-85e2-71198dd3bc6b",
               "name": "Token successfully refreshed; new accessToken cookie set",
               "originalRequest": {
                 "url": {
@@ -799,7 +802,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "00280d5f-1b7d-4cf1-ac14-0db8de8ee12b",
+              "id": "700c84c2-1deb-47be-8c75-7e082b664c1e",
               "name": "Refresh token missing, invalid, or expired",
               "originalRequest": {
                 "url": {
@@ -836,7 +839,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "450ba6bd-4efe-4e9f-bfd3-6e167fafe30a",
+              "id": "073c1e63-c231-46af-8b22-83bb8782f565",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -877,6 +880,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "91b40bfd-e1ab-4551-810b-3c278d3d5c68",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -896,7 +900,7 @@
           }
         },
         {
-          "id": "5bbbbbb3-a1ff-46c6-8b62-9421d3faf247",
+          "id": "cb60cc3b-5e83-4942-8904-72186822515f",
           "name": "Enable two-factor authentication (initiate setup)",
           "request": {
             "name": "Enable two-factor authentication (initiate setup)",
@@ -940,7 +944,7 @@
           },
           "response": [
             {
-              "id": "2bd1f021-b3ed-49ff-8776-7d8e3f42bb53",
+              "id": "40c74dbf-e4e6-4df0-868a-6c94ac4ddf23",
               "name": "TOTP secret generated; returns QR code URI and base32 key",
               "originalRequest": {
                 "url": {
@@ -986,7 +990,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "66bdaa4c-1e0e-4f8a-87b5-c5602de3487a",
+              "id": "b04b8a04-728e-47f3-84ee-b034abe09f92",
               "name": "Password confirmation failed or is missing",
               "originalRequest": {
                 "url": {
@@ -1032,7 +1036,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "ba7c3f0a-e021-41df-8abb-5141c607c476",
+              "id": "9e67a64c-18a3-4dcd-8e4c-a0832793e88f",
               "name": "Authentication required: missing or invalid accessToken cookie\n\nInvalid password provided",
               "originalRequest": {
                 "url": {
@@ -1078,7 +1082,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "0619a692-8fd4-4364-9abd-c33c4e2974d3",
+              "id": "40cadbb9-49b4-413b-84e8-975011b5af4c",
               "name": "Two-factor authentication is already enabled for this account",
               "originalRequest": {
                 "url": {
@@ -1124,7 +1128,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "ba943f21-e661-4b96-837d-e949c25b4e31",
+              "id": "4d2e8eca-dbee-4384-8d0b-bbabd64f7352",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -1174,6 +1178,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "3a0a0261-2ba2-4aeb-86ea-283dbe7edf44",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -1199,7 +1204,7 @@
           }
         },
         {
-          "id": "efe1eb49-81e2-484b-a3f6-fbad52e06908",
+          "id": "55a3243d-c1fd-410a-87b9-3b74a3dc4d22",
           "name": "Complete two-factor sign-in",
           "request": {
             "name": "Complete two-factor sign-in",
@@ -1244,7 +1249,7 @@
           },
           "response": [
             {
-              "id": "b486a3f6-ab2a-4e09-939e-c73093bc81fa",
+              "id": "aab245e6-5714-48bb-8572-30ff076d5672",
               "name": "Two-factor sign-in successful; session cookies issued",
               "originalRequest": {
                 "url": {
@@ -1290,7 +1295,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "7a86798e-0e1f-4cf0-bceb-45e363810918",
+              "id": "4f23748a-f7cc-4521-8ee2-0fdbd9d52e08",
               "name": "Code must be exactly 6 digits; tempToken must be a valid JWT",
               "originalRequest": {
                 "url": {
@@ -1336,7 +1341,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3eb1b7b8-a087-4b5d-8417-62e7a0673c5e",
+              "id": "fe8eabd5-bd19-45ad-82f3-51c8c44c488a",
               "name": "Invalid or expired 2FA code or temporary token",
               "originalRequest": {
                 "url": {
@@ -1382,7 +1387,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "7743fdc8-57c5-45f7-bfd2-b3cb925b4d02",
+              "id": "47585092-d67b-4d6a-8a0c-f9a81d8e5c14",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -1432,6 +1437,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "2ed024ef-91e2-4dda-8049-6fd4f1f671b4",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -1454,7 +1460,7 @@
           }
         },
         {
-          "id": "188d0110-9d68-4560-9a23-abab626f5910",
+          "id": "854aeb53-b125-4d89-8425-464b675f8a71",
           "name": "Verify and activate 2FA setup",
           "request": {
             "name": "Verify and activate 2FA setup",
@@ -1498,7 +1504,7 @@
           },
           "response": [
             {
-              "id": "1bb76174-18af-4d49-989b-35d834367f87",
+              "id": "13987b60-3315-4b88-8b6a-fa1b66e57467",
               "name": "Two-factor authentication successfully activated",
               "originalRequest": {
                 "url": {
@@ -1544,7 +1550,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "55581fec-e3c4-4f86-a7c4-dadde38db15b",
+              "id": "243ece6e-6b9b-4cb6-8072-5e2fbc0c86eb",
               "name": "Code must be exactly 6 numeric digits",
               "originalRequest": {
                 "url": {
@@ -1590,7 +1596,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "687a04e5-bba6-445a-a3b0-867136aa9c16",
+              "id": "b9cd8518-7b56-4315-87ad-a2d81b7a7d84",
               "name": "Authentication required: missing or invalid accessToken cookie\n\nInvalid verification code",
               "originalRequest": {
                 "url": {
@@ -1636,7 +1642,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "88976bfd-e077-44ba-aedb-f378f60a4a87",
+              "id": "1a3fec52-3cb5-49a8-8ae8-c7a04931c638",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -1686,6 +1692,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "27a8ce90-f9c1-4460-8879-3d6942c135f8",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -1708,7 +1715,7 @@
           }
         },
         {
-          "id": "3c2ddc47-6c50-4b5b-becf-7521803c644e",
+          "id": "6c761db9-0370-4dc7-881b-fd93d5b6cfcd",
           "name": "Disable two-factor authentication",
           "request": {
             "name": "Disable two-factor authentication",
@@ -1752,7 +1759,7 @@
           },
           "response": [
             {
-              "id": "d450ec7a-d19d-47b6-975d-a24097697e94",
+              "id": "483e514a-534d-4727-8d6a-93a779e1d3a0",
               "name": "Two-factor authentication successfully disabled",
               "originalRequest": {
                 "url": {
@@ -1798,7 +1805,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "effaaf76-c5a1-4523-b276-7d1470f56c90",
+              "id": "4e34b2d7-091a-4b3f-88fa-36ee9f2d295e",
               "name": "Password confirmation failed or is missing",
               "originalRequest": {
                 "url": {
@@ -1844,7 +1851,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b6f6afa3-8f4f-4f46-a4e3-21550d89b0a0",
+              "id": "2d08ac29-3c7c-4be5-87bb-4ca8bc6fce3a",
               "name": "Authentication required: missing or invalid accessToken cookie\n\nInvalid password",
               "originalRequest": {
                 "url": {
@@ -1890,7 +1897,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "90b1c5d6-87bc-4629-b734-37f12784098a",
+              "id": "d9a1da01-0d5f-4dd3-80c0-f6eae8a3f86d",
               "name": "Two-factor authentication is already disabled",
               "originalRequest": {
                 "url": {
@@ -1936,7 +1943,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "10a64b3b-0bfa-4273-bb51-6fe37ee1d121",
+              "id": "6aa60c24-9454-4303-87a4-1fa5febdea15",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -1986,6 +1993,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "c4574d83-14fd-460d-8bb2-145668ba29d4",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -2011,7 +2019,7 @@
       "event": []
     },
     {
-      "id": "6e013532-848c-4f44-b611-a282afac09df",
+      "id": "4bd36431-ded4-4ec6-84f7-1aa1ba3c3df9",
       "name": "Users",
       "description": {
         "content": "User accounts, public profiles, avatars, and liked recipes",
@@ -2019,7 +2027,7 @@
       },
       "item": [
         {
-          "id": "d0d46083-cacc-486d-aae0-ba17a390a5c5",
+          "id": "abd7c5d2-87c1-4c63-8840-fd4beea32265",
           "name": "Get current user profile",
           "request": {
             "name": "Get current user profile",
@@ -2049,7 +2057,7 @@
           },
           "response": [
             {
-              "id": "70737c77-5de1-47b0-8058-c4d58670d781",
+              "id": "80cdcc26-3988-436e-8aa0-97eff115c8fd",
               "name": "Current user profile information",
               "originalRequest": {
                 "url": {
@@ -2086,7 +2094,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "4c2eb9fe-8927-4735-8c7b-61eaee0deb6c",
+              "id": "d3a73fcc-3924-4b40-8c3e-b3ebe3b42b57",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -2123,7 +2131,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3310d7fe-1796-44ce-a7bd-ebcac2bbe3f0",
+              "id": "f061bdea-bb8c-43b5-87de-a6f638f6d52d",
               "name": "User record not found",
               "originalRequest": {
                 "url": {
@@ -2160,7 +2168,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "ef508de3-4f89-4da5-b220-f473b143fd72",
+              "id": "df372ed2-cce1-46bc-8d1d-c87f7ae7170e",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -2201,6 +2209,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "05f9dd1c-19d8-47e6-8c2a-6aeb7d2daef0",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -2228,7 +2237,7 @@
           }
         },
         {
-          "id": "caae6e41-5e23-4438-aef5-7db4272abb83",
+          "id": "2721d701-c837-49f2-8736-1ff72ae4865d",
           "name": "Update current user profile",
           "request": {
             "name": "Update current user profile",
@@ -2271,7 +2280,7 @@
           },
           "response": [
             {
-              "id": "e7270c80-c9c0-433d-946c-2886ded5785a",
+              "id": "d42b5bc2-8248-4c28-8144-49cb940d5eb4",
               "name": "Updated user profile information",
               "originalRequest": {
                 "url": {
@@ -2316,7 +2325,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a5874bb4-cf73-474d-aff9-57bc90fad00c",
+              "id": "7b43681a-2661-4918-8a94-cc6a1e012322",
               "name": "Validation failed or invalid date format",
               "originalRequest": {
                 "url": {
@@ -2361,7 +2370,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "8588fc4b-ecfa-4965-8aee-9ddbcd542e17",
+              "id": "7b1a58e5-3ab4-4493-84bd-1eb0337e69f6",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -2406,7 +2415,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "f3991a43-4434-4425-8700-092b8d64d0ac",
+              "id": "18b06c8f-1b35-4589-8fe0-d9f11e93eb5d",
               "name": "Username or email is already taken by another account",
               "originalRequest": {
                 "url": {
@@ -2451,7 +2460,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "bbcd2399-c209-41d9-9e86-9e9d326afc88",
+              "id": "9efad23d-690e-4ae9-8448-380094fc14aa",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -2500,6 +2509,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "1ae69a3a-5e83-454f-8052-958d6e67c570",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -2527,7 +2537,7 @@
           }
         },
         {
-          "id": "4295e43a-a399-4509-8ad4-2d2cc58cb532",
+          "id": "45de179b-ed5f-4c79-84f9-ff2d67f25d89",
           "name": "Upload user avatar",
           "request": {
             "name": "Upload user avatar",
@@ -2572,7 +2582,7 @@
           },
           "response": [
             {
-              "id": "4c05872c-0392-4bf3-872f-5b7f6a45438f",
+              "id": "4040fbd8-034e-47ec-8758-4148c40bd812",
               "name": "Avatar successfully uploaded",
               "originalRequest": {
                 "url": {
@@ -2622,7 +2632,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "6fb6bcf7-e19a-4f8c-958f-476f23b1507b",
+              "id": "e5ed8881-223e-4785-8598-1b6b3d4d12b1",
               "name": "File missing or invalid file format",
               "originalRequest": {
                 "url": {
@@ -2672,7 +2682,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d24cf01c-42a9-4476-926d-f9efc8b68c93",
+              "id": "f029058e-0f18-4cb5-8fc0-c155b6ffd26c",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -2722,7 +2732,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "68fed2d0-7637-4c17-bf5b-166039c5c014",
+              "id": "12f7e69b-f070-4568-8618-110355b380ff",
               "name": "User not found",
               "originalRequest": {
                 "url": {
@@ -2772,7 +2782,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "bb757380-6e10-4775-9fdc-da46369c42db",
+              "id": "d6603459-3399-426e-811e-24941d1929a6",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -2826,6 +2836,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "43aff0e8-7b27-4d64-851f-68bf7d05e58a",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -2848,7 +2859,7 @@
           }
         },
         {
-          "id": "11a9c906-3749-4aba-aeea-61b66227e085",
+          "id": "ab0d5567-4b81-44dd-81a7-8e4907398e24",
           "name": "Delete user avatar",
           "request": {
             "name": "Delete user avatar",
@@ -2879,7 +2890,7 @@
           },
           "response": [
             {
-              "id": "dcb9c062-aca6-4fd7-8a7c-2a6840f918c9",
+              "id": "52d1ef46-4310-4b42-8822-9ebda0951bf5",
               "name": "Avatar successfully deleted",
               "originalRequest": {
                 "url": {
@@ -2917,7 +2928,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a13fc247-c9ba-47a8-8f27-186a20ccd1ff",
+              "id": "df662def-cf91-4b18-84b3-37f790caf791",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -2955,7 +2966,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "0991ddb6-fea2-4c7b-85cb-a8c9850a3c3c",
+              "id": "0b3b326d-09b7-45ae-8faf-202f03005a71",
               "name": "User not found",
               "originalRequest": {
                 "url": {
@@ -2993,7 +3004,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "95a08db8-d3b8-4556-9e9f-a3ef886092d2",
+              "id": "b72b4e7e-62f0-41da-84b1-e2a894ada65b",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -3035,6 +3046,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "38b0b0b1-2dac-4091-8d4c-3a99ac93a53d",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -3056,7 +3068,7 @@
           }
         },
         {
-          "id": "dde57100-d253-478f-bec0-b80745ed14ed",
+          "id": "f3ce6de0-00b8-4112-82a2-4b71612fba92",
           "name": "Get liked recipes",
           "request": {
             "name": "Get liked recipes",
@@ -3106,7 +3118,7 @@
           },
           "response": [
             {
-              "id": "0e3863a3-7c48-4930-8552-e8ab471cdcb1",
+              "id": "145e98de-79ed-4a40-89c9-12d98f1b0539",
               "name": "Paginated recipes liked by the user",
               "originalRequest": {
                 "url": {
@@ -3157,7 +3169,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "af0e758c-806a-44a7-b6fd-5897b86387dd",
+              "id": "3804a999-8764-41bb-8832-115eba70400e",
               "name": "Invalid pagination or language parameter",
               "originalRequest": {
                 "url": {
@@ -3208,7 +3220,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "32c29854-e322-4109-a981-5323aad8ac41",
+              "id": "167a6194-4863-48a1-86e7-79b149638a5f",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -3259,7 +3271,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "69f6f084-cb78-4957-bb38-498be51faf6c",
+              "id": "defcd64c-7995-4bb8-8956-c7b1a259badb",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -3314,6 +3326,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "3e72e33e-e4b0-4f69-83a5-256f45a32fd1",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -3340,7 +3353,7 @@
           }
         },
         {
-          "id": "b64d2ecc-62ac-402a-a97f-a800384d6641",
+          "id": "b05a8549-005f-488f-8a3c-aacb8705e297",
           "name": "Get current user authored recipes",
           "request": {
             "name": "Get current user authored recipes",
@@ -3390,7 +3403,7 @@
           },
           "response": [
             {
-              "id": "ec2d4f48-c4e4-402b-a70c-a3e72164463e",
+              "id": "0faa30fb-aba9-4bc3-8b81-558c096f5327",
               "name": "Paginated recipes authored by the user",
               "originalRequest": {
                 "url": {
@@ -3441,7 +3454,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "5e322bc8-28af-49be-ac4b-fc122939305f",
+              "id": "cc2826ab-2914-4cb1-863c-8b52fd5ece8a",
               "name": "Invalid pagination or language parameter",
               "originalRequest": {
                 "url": {
@@ -3492,7 +3505,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "4ba43406-c049-4910-a45e-8deb09ec1c67",
+              "id": "7ae71b9e-297c-4e73-8715-b1e2d14c8224",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -3543,7 +3556,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "4631107e-f3b6-453b-b0df-cf96dcaf06cd",
+              "id": "1e755780-977d-44f6-82e3-77957328bae3",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -3598,6 +3611,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "cb918e44-b448-4c47-8cd5-6b88472c20f1",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -3624,7 +3638,7 @@
           }
         },
         {
-          "id": "f21c9c64-8481-4855-a667-dd53826a1f74",
+          "id": "e630feb8-7cb0-468c-83e0-e1503a62aaf9",
           "name": "Search and discover community members",
           "request": {
             "name": "Search and discover community members",
@@ -3679,7 +3693,7 @@
           },
           "response": [
             {
-              "id": "558aa304-ab1b-4043-91fb-7bdb930806ab",
+              "id": "b1a53a64-e3e8-40a3-8cc0-61ee570406b8",
               "name": "Paginated user search and discovery results",
               "originalRequest": {
                 "url": {
@@ -3732,7 +3746,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3765e22c-4611-4720-93ed-eb43b0c10454",
+              "id": "2bce7e9c-6055-4bb3-8de1-595d72d3463d",
               "name": "Invalid query parameters (search query shorter than 2 non-whitespace characters, negative page index, limit exceeding 100, or invalid sort option)",
               "originalRequest": {
                 "url": {
@@ -3785,7 +3799,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "466de9e6-12ed-42fd-9aa1-5cb9fd5b4568",
+              "id": "a7796f21-975e-49ee-8296-f7f36df12f38",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -3842,6 +3856,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "42343c73-520b-4219-81ce-d43bf1af6d3c",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
@@ -3866,7 +3881,7 @@
           }
         },
         {
-          "id": "455d0898-bf3c-4769-8316-7652b2ff75fc",
+          "id": "4bdcf14b-f761-4f58-87f3-075157c39b5d",
           "name": "Get public user profile by username",
           "request": {
             "name": "Get public user profile by username",
@@ -3906,7 +3921,7 @@
           },
           "response": [
             {
-              "id": "fb0526b5-3e95-46a3-ae67-da06db08230b",
+              "id": "ae7bce45-563e-40f5-8633-f317249ebcc8",
               "name": "Public user profile",
               "originalRequest": {
                 "url": {
@@ -3952,7 +3967,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "e5c68829-b2e5-4803-8d01-b0cb9e5b357e",
+              "id": "7e5a0317-0386-4996-8418-ea182fae7359",
               "name": "User not found",
               "originalRequest": {
                 "url": {
@@ -3998,7 +4013,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "df7d582c-3319-461b-93dc-ab45f31ba451",
+              "id": "9b64b95e-30b7-46ef-8244-44129e78d88f",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -4048,6 +4063,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "809d8ab7-ad98-486f-8de8-da9a39d0e965",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -4062,7 +4078,7 @@
           }
         },
         {
-          "id": "517da3bf-6622-4488-9850-d8cacecbe9e2",
+          "id": "dc94fa36-25b4-4877-8f2f-5e5e3d45c69f",
           "name": "Get public user profile by ID",
           "request": {
             "name": "Get public user profile by ID",
@@ -4101,7 +4117,7 @@
           },
           "response": [
             {
-              "id": "ea562b72-0e00-43ea-ac36-cf717bc96ca0",
+              "id": "d295d638-0435-46f3-844d-35bec55224b6",
               "name": "Public user profile",
               "originalRequest": {
                 "url": {
@@ -4146,7 +4162,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b2143793-4b40-43bb-b4d4-04026a76461e",
+              "id": "5009eced-1d32-4f9b-896c-747c236ffd3b",
               "name": "Invalid user ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -4191,7 +4207,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "8807d16e-b81f-4edd-8f10-cf0e31873271",
+              "id": "f167d916-4928-41cc-85d5-6a9b0d89ca31",
               "name": "User not found",
               "originalRequest": {
                 "url": {
@@ -4236,7 +4252,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "89456b52-de36-42e8-b610-fd0c4836035f",
+              "id": "5bd515f4-1d46-44f2-86d3-f7340b5af4cd",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -4285,6 +4301,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "2dfd5f90-4a27-4560-8983-42837880d62f",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -4311,7 +4328,7 @@
           }
         },
         {
-          "id": "2fbcf3ff-4db8-4d07-83b2-8dcc3b73293c",
+          "id": "6eecacb2-a4f5-4e4b-8060-f10d4f33cf9d",
           "name": "Get public recipes authored by user",
           "request": {
             "name": "Get public recipes authored by user",
@@ -4370,7 +4387,7 @@
           },
           "response": [
             {
-              "id": "4d2af31d-e074-419a-b81c-87526bc2dd8a",
+              "id": "2dab90fd-1eb2-43a2-837b-c754936ea697",
               "name": "Paginated recipes authored by the user",
               "originalRequest": {
                 "url": {
@@ -4429,7 +4446,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "bddd4d4b-1dd6-4eef-98df-4f5626005872",
+              "id": "a93d133e-ef61-49e6-8ac9-ebe7ed149bab",
               "name": "Invalid user ID format or invalid pagination/language query parameters",
               "originalRequest": {
                 "url": {
@@ -4488,7 +4505,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "7411dd8e-3835-438e-8148-fa140caaabcb",
+              "id": "08106700-841a-49e4-8332-d7dcc95ea912",
               "name": "User not found",
               "originalRequest": {
                 "url": {
@@ -4547,7 +4564,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a44180b2-808c-42f9-8912-b927ed376214",
+              "id": "3201a815-fbe5-4829-80ff-92497bf4859b",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -4610,6 +4627,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "bd0245d9-2444-4e4b-8966-f374187e5500",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -4624,7 +4642,7 @@
           }
         },
         {
-          "id": "5cbccbb3-dfb7-4769-82d8-4ba7d2dce683",
+          "id": "401ea8dc-84c6-473a-84db-a4953e224702",
           "name": "Get user confirmed friends",
           "request": {
             "name": "Get user confirmed friends",
@@ -4676,7 +4694,7 @@
           },
           "response": [
             {
-              "id": "fa188def-134c-45f0-87bc-010459979061",
+              "id": "0a56906d-4b74-43a0-81e7-1da82666c7b1",
               "name": "Paginated collection of friends",
               "originalRequest": {
                 "url": {
@@ -4731,7 +4749,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b0fc46de-94ea-4289-8d60-7325847db805",
+              "id": "17338e13-ca99-45f5-8069-955d0d26bfd5",
               "name": "Invalid user ID format or invalid pagination parameter",
               "originalRequest": {
                 "url": {
@@ -4786,7 +4804,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "66280b0b-28bb-429b-8f00-74875d659a1e",
+              "id": "2142c37b-da4f-49a1-85b6-8892b2dd8ab5",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -4841,7 +4859,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "e9e7600d-13eb-409d-aa55-fe6e9e88c25b",
+              "id": "907ed345-503b-4eea-82d8-d8d9269664f9",
               "name": "User not found",
               "originalRequest": {
                 "url": {
@@ -4896,7 +4914,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "567c57dd-a729-4603-a540-b539d995ae7c",
+              "id": "045328ac-1c32-4a5f-8b24-ef92c3ae8984",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -4955,6 +4973,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "ac75937d-ff16-4049-834c-39e3ff1591ba",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -4984,7 +5003,7 @@
       "event": []
     },
     {
-      "id": "05a53351-e40a-45d9-a4fe-5bb939d2a4bb",
+      "id": "839067c3-7a7d-430a-89d2-37350195c2ef",
       "name": "Friends",
       "description": {
         "content": "Bidirectional friendships, friend discovery, and friend request lifecycle management",
@@ -4992,7 +5011,7 @@
       },
       "item": [
         {
-          "id": "2bad9fc8-d5f1-4d49-953d-a9521b755725",
+          "id": "f02ccbdd-c367-4acf-8300-522698dcbf0f",
           "name": "List confirmed friends",
           "request": {
             "name": "List confirmed friends",
@@ -5040,7 +5059,7 @@
           },
           "response": [
             {
-              "id": "a408200c-e275-4787-b149-5176025bf2fe",
+              "id": "4adfe21e-842b-4c2a-8c89-357edbb25f98",
               "name": "Paginated collection of friends",
               "originalRequest": {
                 "url": {
@@ -5089,7 +5108,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "83432f55-14db-4c98-9692-ae1736f08b29",
+              "id": "935501e0-91fa-4d40-8dd8-c9efe4e3faec",
               "name": "Invalid pagination query parameters (e.g. non-integer or out-of-range page/limit)",
               "originalRequest": {
                 "url": {
@@ -5138,7 +5157,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "456cbcdf-541f-4f48-97c6-c68cbc7efcef",
+              "id": "daae64e6-655d-4daf-8945-032241cd2dfc",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -5187,7 +5206,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "05974826-e528-44d2-8266-bfdfb2529d1d",
+              "id": "822a5d41-5134-4ad7-8ee4-2eeeade7596b",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -5240,6 +5259,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "a686b46d-5eca-4efb-8472-de06e1492792",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -5266,7 +5286,7 @@
           }
         },
         {
-          "id": "7469c71c-6559-487c-aed1-81fa9990069b",
+          "id": "d07ccba0-e7e8-4ba2-8282-8d8014203d4b",
           "name": "List pending friend requests",
           "request": {
             "name": "List pending friend requests",
@@ -5315,7 +5335,7 @@
           },
           "response": [
             {
-              "id": "4c8b58b2-162c-46ae-bd53-45fbcbf2a5e0",
+              "id": "42ec2571-0b2c-4899-8f45-fb971fef0d41",
               "name": "Paginated collection of pending friend requests",
               "originalRequest": {
                 "url": {
@@ -5365,7 +5385,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "581fb00c-11a9-45ed-91cf-de38ae490144",
+              "id": "8dc7d95a-62e3-4c7f-8ead-3419838f2b8d",
               "name": "Invalid friend request query parameters (unsupported type enum or invalid pagination format)",
               "originalRequest": {
                 "url": {
@@ -5415,7 +5435,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "9e912ec9-2008-48d4-b5af-99bf2f93527f",
+              "id": "472f7d6a-b358-4489-8ec9-a1d797337580",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -5465,7 +5485,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "07d8766d-c61a-4726-85f9-b12687d0e812",
+              "id": "d5ed3fc6-24c8-4f1c-8110-509d45cd7662",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -5519,6 +5539,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "fe790526-6780-4610-8058-2cc3c5a7fdf5",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -5548,7 +5569,7 @@
           }
         },
         {
-          "id": "e08e4574-a9c2-418a-b58a-86b8db67df94",
+          "id": "f184772d-e4c8-4043-8ee9-6142e02efdc3",
           "name": "Send friend request",
           "request": {
             "name": "Send friend request",
@@ -5587,7 +5608,7 @@
           },
           "response": [
             {
-              "id": "a0abf84f-cdb6-4815-adff-7ab22b7d420c",
+              "id": "4524736b-0873-4be1-8e26-b58a68880d21",
               "name": "Friend request sent or auto-accepted",
               "originalRequest": {
                 "url": {
@@ -5633,7 +5654,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "e136db02-d79e-47a0-8ba9-c43807568498",
+              "id": "323156b2-8ab8-4e59-8286-a9708d8c3ad1",
               "name": "Cannot send friend request to yourself or invalid addressee ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -5679,7 +5700,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "f9ef4d7d-a1e9-4a2a-9309-f2c118ecef5e",
+              "id": "70bfaf57-d827-4c10-8e53-4bebaa9ceecb",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -5725,7 +5746,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d91010fe-c692-4404-9ca4-8d6b0fe71aeb",
+              "id": "02574218-4dc0-4791-861f-2d673dc955ad",
               "name": "User not found",
               "originalRequest": {
                 "url": {
@@ -5771,7 +5792,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "e0ed2f04-b54d-403e-b44d-6d4a482570a3",
+              "id": "29f820e7-51a2-4f0a-813d-7d4c709c3b79",
               "name": "Already friends with this user or friend request already sent",
               "originalRequest": {
                 "url": {
@@ -5817,7 +5838,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "f80f6440-6ec8-47f9-a145-2f8bb59d7ad5",
+              "id": "d9a5c5d1-e5a9-43c5-8761-2e01813965d0",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -5867,6 +5888,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "4a892c4d-cfc6-4fee-8e98-4ada03a2fc18",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200 or 201\", function () {",
@@ -5892,7 +5914,7 @@
           }
         },
         {
-          "id": "b75068a6-0af2-4c8c-b44b-342d6ba7d934",
+          "id": "186afe51-7ef9-43e6-83f2-67e38d2ab295",
           "name": "Cancel outgoing friend request",
           "request": {
             "name": "Cancel outgoing friend request",
@@ -5931,7 +5953,7 @@
           },
           "response": [
             {
-              "id": "76cdec6e-7221-4805-8fc7-41f9b306b9fd",
+              "id": "abdd84ce-fe7c-4a96-8d98-de29394d00ee",
               "name": "Friend request cancelled",
               "originalRequest": {
                 "url": {
@@ -5977,7 +5999,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3c25576c-8a2b-4f29-bbf9-b6384329e23b",
+              "id": "77ae96a8-4f60-472a-8c70-36b06fe2a605",
               "name": "Invalid addressee ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -6023,7 +6045,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "afafc7d1-b907-4999-8aef-6af13886dfa8",
+              "id": "5c1990db-a99f-43d5-80fd-bc4d7935eb00",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -6069,7 +6091,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "5d113723-c9f9-447d-bcb8-e17be9292bdb",
+              "id": "64985753-e5ef-4347-86f2-cb4343bbb0e7",
               "name": "Friend request not found",
               "originalRequest": {
                 "url": {
@@ -6115,7 +6137,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "115893e3-f7de-48c5-91a4-1011fb91582e",
+              "id": "666e8ea7-4e78-4ded-87db-994249d63ea0",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -6165,6 +6187,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "33e66dcf-672f-4aa6-81af-761c62aa96e5",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -6190,7 +6213,7 @@
           }
         },
         {
-          "id": "43c6c303-a8ae-41e0-b048-734781cf794b",
+          "id": "eb9d6329-be38-4dd1-8a29-37f47d2634e5",
           "name": "Accept incoming friend request",
           "request": {
             "name": "Accept incoming friend request",
@@ -6230,7 +6253,7 @@
           },
           "response": [
             {
-              "id": "732ae377-8e8f-4fb0-b8d3-152940aa24b2",
+              "id": "d777fe36-9e76-4c40-87f9-191096af5791",
               "name": "Friend request accepted",
               "originalRequest": {
                 "url": {
@@ -6277,7 +6300,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "653d26b6-ec1d-48be-bbb3-86306237a891",
+              "id": "30631460-73c0-41ad-8270-a130c6b16ed6",
               "name": "Invalid requester ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -6324,7 +6347,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b1696036-5308-4bb5-85c0-d1c8144c22b8",
+              "id": "9db9d909-a183-4049-8042-e6c32b217d23",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -6371,7 +6394,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "2c8db59b-faaa-41ed-abb1-6f7285e257a9",
+              "id": "77d87273-073f-437e-875b-521f510ca2c3",
               "name": "Friend request not found",
               "originalRequest": {
                 "url": {
@@ -6418,7 +6441,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "cb6e8745-234a-4c21-b915-a018e878ecee",
+              "id": "9bdcb47a-20fb-410f-89cd-df69958f88e1",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -6469,6 +6492,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "32a83c0c-f640-4ca9-8452-dae0d0bed2c4",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -6494,7 +6518,7 @@
           }
         },
         {
-          "id": "a8ed3ae0-21d7-4d3f-867b-cb88e2abcffe",
+          "id": "75960fce-bd97-4743-8c2c-c723b9d9c632",
           "name": "Reject incoming friend request",
           "request": {
             "name": "Reject incoming friend request",
@@ -6534,7 +6558,7 @@
           },
           "response": [
             {
-              "id": "07d10785-9848-40ba-af92-a15de9aefc27",
+              "id": "e9de71ea-164b-41ab-89d3-978529e5d31d",
               "name": "Friend request rejected",
               "originalRequest": {
                 "url": {
@@ -6581,7 +6605,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "7a26e635-c338-494e-b1c1-b9d51d0e891d",
+              "id": "4b69f8ce-2d3d-4f5b-8df8-471fedb4d7b1",
               "name": "Invalid requester ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -6628,7 +6652,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "2f360cdf-2413-48f2-acf3-65c35c5dcf24",
+              "id": "7fc957f2-0c29-446d-8048-bf37f6030cda",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -6675,7 +6699,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "fb5e7713-9512-4fcf-a36e-c22d3696d7dc",
+              "id": "5b469e27-a55b-4a5f-8378-3af121a11830",
               "name": "Friend request not found",
               "originalRequest": {
                 "url": {
@@ -6722,7 +6746,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "75c1439a-c615-439d-bf09-b99ab1805373",
+              "id": "36ece8c8-e01a-489d-8988-ae653a5d3441",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -6773,6 +6797,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "5af2f058-0241-4f90-8e77-27fc2c5abf15",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -6798,7 +6823,7 @@
           }
         },
         {
-          "id": "ec149384-22d3-4c4e-9bc9-6bf6fd61a60b",
+          "id": "dddc7223-35f1-4a29-8028-c141fc23545d",
           "name": "Remove a friend",
           "request": {
             "name": "Remove a friend",
@@ -6836,7 +6861,7 @@
           },
           "response": [
             {
-              "id": "3b5b81db-98c1-4194-b269-e90940b300d6",
+              "id": "e9b05e94-ec7e-473a-8fe0-df386900aa67",
               "name": "Friendship removed successfully",
               "originalRequest": {
                 "url": {
@@ -6881,7 +6906,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a504e047-01a1-4f13-b2ba-1e68a9bde98f",
+              "id": "c0bcd88d-72ce-48bb-8a05-822f3174977c",
               "name": "Invalid friend ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -6926,7 +6951,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "131c4cb5-93a5-4a15-8e8f-526cae92891d",
+              "id": "32e650dd-a917-4943-8a43-510fada30e86",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -6971,7 +6996,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "8e251ffa-cc8c-4c2a-9a48-4e9079344eb8",
+              "id": "69be6c84-ed30-40fa-8854-d5e10b27f420",
               "name": "Friendship not found",
               "originalRequest": {
                 "url": {
@@ -7016,7 +7041,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3a6f80c9-b288-4e66-a69d-b272b23d8ddd",
+              "id": "47149dc6-c75a-4c14-8877-224d64a8f8a2",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -7065,6 +7090,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "15d740a7-bae2-4b7b-8ced-f0c650356d54",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -7089,7 +7115,7 @@
       "event": []
     },
     {
-      "id": "1bbacd19-eb5f-457c-a2f6-ba2c4562d084",
+      "id": "19e5a288-6151-484a-8c16-3e473087d072",
       "name": "Recipes",
       "description": {
         "content": "Recipe creation, localized details, pagination, step illustrations, media uploads, and likes",
@@ -7097,7 +7123,7 @@
       },
       "item": [
         {
-          "id": "85a66031-7390-4b26-b75b-634c17a3538c",
+          "id": "2b71b611-92e9-4d25-851b-06b7491275f2",
           "name": "List recipes with filtering and search",
           "request": {
             "name": "List recipes with filtering and search",
@@ -7188,7 +7214,7 @@
           },
           "response": [
             {
-              "id": "3fe8ab61-07c8-4003-9101-c91cfa74ac5e",
+              "id": "2afc012e-76fa-49a0-837c-afbfc7db0f34",
               "name": "Paginated recipe cards with translations matching criteria",
               "originalRequest": {
                 "url": {
@@ -7265,7 +7291,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a2558530-df20-42ba-8645-532ac1a6c8fa",
+              "id": "8417bf82-7124-41fd-8024-ff227e4e92f0",
               "name": "Invalid recipe filter or pagination query parameter, including non-integer tag IDs, negative IDs or times, unsupported enum values, or an invalid language code",
               "originalRequest": {
                 "url": {
@@ -7342,7 +7368,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "4acd35b9-34be-49ce-ae8c-ca2908338a36",
+              "id": "af6f78d5-36a4-4522-81b2-1c3f0a449fcd",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -7423,6 +7449,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "dbff2563-3560-46a8-80d6-231de9be7497",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -7449,7 +7476,7 @@
           }
         },
         {
-          "id": "c81742a5-cc9e-4ff0-a11d-2a78458995a2",
+          "id": "b27c52db-5e74-48e6-87aa-355ead1139a4",
           "name": "Create a new recipe",
           "request": {
             "name": "Create a new recipe",
@@ -7491,7 +7518,7 @@
           },
           "response": [
             {
-              "id": "73a134ff-1dfb-45cb-9bb5-f3613d085762",
+              "id": "7f7a5351-5b7f-42ba-81e5-19014b21273a",
               "name": "Recipe successfully created",
               "originalRequest": {
                 "url": {
@@ -7535,7 +7562,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "67ad8735-72f7-4b56-a9a3-56b03146496f",
+              "id": "d6c0c353-0acd-40e5-80ee-19423cb94a2e",
               "name": "Validation failed on inputs or referenced catalog items do not exist",
               "originalRequest": {
                 "url": {
@@ -7579,7 +7606,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "567f05b1-c59d-43ed-b4e1-a607f70c348e",
+              "id": "71b14dde-7c1a-40c1-804a-74eaa2c340c7",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -7623,7 +7650,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "1152982a-9375-4d17-9155-d1fd47e46d73",
+              "id": "781f00de-381b-4740-8c76-54f7223c4042",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -7671,6 +7698,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "aab70edb-6e34-4188-821c-6ad30ff8a9de",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -7699,7 +7727,7 @@
           }
         },
         {
-          "id": "fd9ad4df-f404-4e3c-9195-ce4d98f481de",
+          "id": "0cc4dac6-0ffc-4339-8490-7c88d8df8515",
           "name": "Get recipe metadata dictionaries",
           "request": {
             "name": "Get recipe metadata dictionaries",
@@ -7730,7 +7758,7 @@
           },
           "response": [
             {
-              "id": "2663ce1f-c182-4034-9568-221a513f962f",
+              "id": "db79fa74-ffae-47ec-8ef0-aa8a9a39e3a0",
               "name": "System metadata enumerations",
               "originalRequest": {
                 "url": {
@@ -7767,7 +7795,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "eb8bc0dd-00f4-429e-8301-d02d7e263754",
+              "id": "e275d3bd-5607-483a-8b02-6cab99ff4914",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -7808,6 +7836,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "92a3c2ec-fdce-4626-8c46-46a40133847a",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -7834,7 +7863,7 @@
           }
         },
         {
-          "id": "a4956243-2271-4ee7-9cb1-490ffaa04bf4",
+          "id": "f1be0a7c-81f9-42ef-86cf-4b31cca58131",
           "name": "Get recipe by ID",
           "request": {
             "name": "Get recipe by ID",
@@ -7855,7 +7884,7 @@
                 {
                   "disabled": false,
                   "key": "lang",
-                  "value": "en",
+                  "value": "fr",
                   "description": "Target localization language (it, en, fr). Defaults to author source_lang if omitted or untranslated. If source_lang is not available, defaults to English (en)."
                 }
               ],
@@ -7880,7 +7909,7 @@
           },
           "response": [
             {
-              "id": "8ba8e1d4-511c-4381-9d40-d4ae6fed28ba",
+              "id": "4128de91-fdb0-427a-8fba-b963ffe7b903",
               "name": "Complete localized recipe specification",
               "originalRequest": {
                 "url": {
@@ -7895,7 +7924,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "en"
+                      "value": "fr"
                     }
                   ],
                   "variable": [
@@ -7930,7 +7959,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d8569feb-83ce-4247-8d03-e3fcef58f463",
+              "id": "12fe2920-64e1-4911-866b-5c4b59fc3eee",
               "name": "Invalid recipe ID format (must be an integer) or invalid language code",
               "originalRequest": {
                 "url": {
@@ -7945,7 +7974,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "en"
+                      "value": "fr"
                     }
                   ],
                   "variable": [
@@ -7980,7 +8009,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "bde63cf8-f006-449d-a2b9-b1b4234561ce",
+              "id": "23810644-2d3a-4b80-8242-d9cfeb81e0e6",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -7995,7 +8024,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "en"
+                      "value": "fr"
                     }
                   ],
                   "variable": [
@@ -8030,7 +8059,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "1ef15429-947f-4632-9b05-cd194712c425",
+              "id": "2a65de39-e884-40e3-8a3b-0c22c3eec19d",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -8045,7 +8074,7 @@
                   "query": [
                     {
                       "key": "lang",
-                      "value": "en"
+                      "value": "fr"
                     }
                   ],
                   "variable": [
@@ -8084,6 +8113,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "3d5b1185-d928-4503-8462-8dddcd664b82",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -8112,7 +8142,7 @@
           }
         },
         {
-          "id": "bc9a5c43-2e82-4c15-bcfa-97716e97e2d9",
+          "id": "a37f75f5-ba09-41b3-8dfe-f47137494f61",
           "name": "Update recipe details",
           "request": {
             "name": "Update recipe details",
@@ -8170,7 +8200,7 @@
           },
           "response": [
             {
-              "id": "866ab19b-b26a-44da-8946-8055a377597d",
+              "id": "12ace6ed-93fc-43c7-843f-cd97674eea76",
               "name": "Recipe updated successfully",
               "originalRequest": {
                 "url": {
@@ -8228,7 +8258,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b29fb958-39d2-4321-8cde-ba83a71bba97",
+              "id": "80c7c2e3-9573-4b70-8d77-294c33a05879",
               "name": "Invalid update payload or parameter format",
               "originalRequest": {
                 "url": {
@@ -8286,7 +8316,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "53f569aa-587f-434a-8b87-6d3b3379e3c8",
+              "id": "90c03f1f-9366-4e0b-835d-b50b1a8dfa97",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -8344,7 +8374,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b770808e-c8e1-426b-ab34-7c1233c2e69a",
+              "id": "2e3b846f-8a80-4b24-899b-19d983c04a94",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -8402,7 +8432,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "52479327-51f0-4abc-ae9a-a51cb80e9e78",
+              "id": "593bb768-34b4-4e69-8075-d26a8d01f76a",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -8464,6 +8494,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "693e9eba-2cee-4327-8a47-fbf5c3b952a7",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -8492,7 +8523,7 @@
           }
         },
         {
-          "id": "5ddc8d3e-c066-4e65-9306-8489b936c016",
+          "id": "1329485e-ab60-4242-8d49-b5f84db3435f",
           "name": "Delete recipe",
           "request": {
             "name": "Delete recipe",
@@ -8530,7 +8561,7 @@
           },
           "response": [
             {
-              "id": "063bb58d-c7f4-47ff-8c3b-3b70aae1c1f5",
+              "id": "9e71f60e-44d4-4d3f-89b6-f97e70458a39",
               "name": "Recipe deleted successfully",
               "originalRequest": {
                 "url": {
@@ -8575,7 +8606,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3a423c9a-f7a9-4159-9a5b-38a3f639c92b",
+              "id": "d1ba573c-130d-4b17-8b21-adf88e538d6b",
               "name": "Invalid recipe ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -8620,7 +8651,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "466df7e9-c81a-4141-bf6d-aa4b8d1c9346",
+              "id": "1b038b68-a262-4260-8db1-7aa9ae321ab3",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -8665,7 +8696,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "01090a51-e504-4c9a-a36b-250a3fbcc612",
+              "id": "ee6ca2a6-3ff3-493a-8c2f-3a0592f08b95",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -8710,7 +8741,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "df7a7acb-53ea-42b3-8f27-3d4a2c5e75c6",
+              "id": "139447e4-4060-422e-8ebf-ae1a86ca120b",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -8759,6 +8790,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "b459b0a2-f32b-4f42-80d9-100fc1ea247d",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -8780,7 +8812,7 @@
           }
         },
         {
-          "id": "325a8bca-dee6-4e91-a63f-6cff50acb6a7",
+          "id": "bd98cd46-2a0d-4ce0-8dfa-f16578ea2408",
           "name": "Retry automated translations",
           "request": {
             "name": "Retry automated translations",
@@ -8819,7 +8851,7 @@
           },
           "response": [
             {
-              "id": "93f4ed64-22c6-4b35-ad5a-d262815517eb",
+              "id": "dd9d2d7f-e8ac-441d-8f15-b8a6963f21c8",
               "name": "Translation retry processed",
               "originalRequest": {
                 "url": {
@@ -8865,7 +8897,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d081c7b5-330e-4d14-86b5-d86425a71365",
+              "id": "9a213fcf-1f01-44fb-889c-496bbcf4a4ac",
               "name": "Invalid recipe ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -8911,7 +8943,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "2da7bfa5-ba6a-4ff3-9eac-b93b03664830",
+              "id": "1b509188-bd31-4651-8b42-7fa43f0771b0",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -8957,7 +8989,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "1b95e7c9-841d-4463-8cdb-82e893283172",
+              "id": "ac5080b5-6156-444b-8fed-060ae9be3ee2",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -9003,7 +9035,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "32cd7594-273b-44af-adbb-7ff0ec37efe9",
+              "id": "551e9394-924f-4d15-821c-c88fdd420b92",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -9053,6 +9085,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "06841e8e-9be8-4617-8f1b-560e5a68ba43",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -9074,7 +9107,7 @@
           }
         },
         {
-          "id": "9e383a35-1270-49ba-9e88-901e3a8ebfd4",
+          "id": "f8ca0f3b-138f-40b0-8b1c-eb9a982d17d8",
           "name": "Upload recipe cover image",
           "request": {
             "name": "Upload recipe cover image",
@@ -9127,7 +9160,7 @@
           },
           "response": [
             {
-              "id": "c1aacff6-c6e2-480d-a142-15fb34c11753",
+              "id": "b973bbde-7186-4cbc-863e-34dbda594df1",
               "name": "Cover image uploaded successfully",
               "originalRequest": {
                 "url": {
@@ -9185,7 +9218,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "5cb67297-0d6c-4960-bcda-101779932ec6",
+              "id": "052c85f2-f56b-4e80-8bbe-a57d671334aa",
               "name": "Invalid recipe ID format (must be an integer), file missing, or invalid file format",
               "originalRequest": {
                 "url": {
@@ -9243,7 +9276,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3294d126-4a3a-4a76-b42e-fe2c55468515",
+              "id": "13bbd7d4-4621-46a6-84e5-3036f6d068f2",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -9301,7 +9334,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3b049614-aa99-4d5c-8834-8f4628f0d37d",
+              "id": "2231d834-04c9-4e99-860e-ce21d24a164d",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -9359,7 +9392,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "14a1b675-db61-4550-9155-b2f16ae3849e",
+              "id": "1f3ec832-9d7a-4c15-8e8d-573db8299881",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -9421,6 +9454,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "3d96ba8c-2e90-4fdf-8b95-35d582394b80",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -9443,7 +9477,7 @@
           }
         },
         {
-          "id": "a7c5132c-0f21-4425-8dda-d4e62f0c1141",
+          "id": "511394d9-4436-4a2d-8cc3-3515bc9de8b7",
           "name": "Delete recipe cover image",
           "request": {
             "name": "Delete recipe cover image",
@@ -9482,7 +9516,7 @@
           },
           "response": [
             {
-              "id": "3473a3ac-2e4f-4b9a-8c84-3c406d0190d7",
+              "id": "aa610128-2991-4cfd-8a7e-36557b4ee4c7",
               "name": "Cover image deleted",
               "originalRequest": {
                 "url": {
@@ -9528,7 +9562,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "af3318d3-da0b-45f2-8618-1161c02c9a2f",
+              "id": "32d50d3d-6d56-47db-8891-8394f8efd145",
               "name": "Invalid recipe ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -9574,7 +9608,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a56b758e-ea53-47f5-bdad-a14402e79775",
+              "id": "1a9f44f4-6ad3-40c4-8ddb-49b6d7d6f47d",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -9620,7 +9654,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "398594d8-bb5a-483f-874b-639ad3221801",
+              "id": "f9663b9b-c9a0-4f7e-89f3-68ab56516cdb",
               "name": "Cover image not found or already deleted",
               "originalRequest": {
                 "url": {
@@ -9666,7 +9700,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "f2fcb4b4-017d-4ba6-9c39-53b6579a3a3e",
+              "id": "facb1dd4-555f-47c6-8f13-1f894c94dc55",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -9716,6 +9750,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "fe1835dd-7ee1-43fc-8225-79d24eb45576",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -9737,7 +9772,7 @@
           }
         },
         {
-          "id": "45c530e4-84c5-420e-a6a7-caa382b48c59",
+          "id": "7d278f1d-4bb3-4461-8804-a4945cca006e",
           "name": "Upload step illustration photo",
           "request": {
             "name": "Upload step illustration photo",
@@ -9799,7 +9834,7 @@
           },
           "response": [
             {
-              "id": "2685d713-ebad-43c7-8736-8ca317a12d89",
+              "id": "e0f9789a-b2db-43f2-8642-ee0cfdf6a677",
               "name": "Step illustration photo uploaded successfully",
               "originalRequest": {
                 "url": {
@@ -9866,7 +9901,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "94eaf06e-43fe-4fc6-af91-bd06fd695d24",
+              "id": "c6cf4201-6b8d-4729-85a0-32c634c5cb34",
               "name": "Invalid recipe ID or step number format (must be integers), file missing, or invalid image format",
               "originalRequest": {
                 "url": {
@@ -9933,7 +9968,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d0de98b2-988c-4d71-90fd-1a0071b4a14e",
+              "id": "ab9e6020-c4b3-4e5e-8489-da0f94dbb150",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -10000,7 +10035,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "4da08efb-63f3-4553-9e22-1b9d43d24085",
+              "id": "f83f6d60-182c-4e42-8977-da658f426616",
               "name": "Recipe or step not found",
               "originalRequest": {
                 "url": {
@@ -10067,7 +10102,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "88de585a-24d2-4ede-967b-7c612b95fb16",
+              "id": "aef6dd89-3add-45ae-87e8-5be9193d6d92",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -10138,6 +10173,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "91d2805f-f831-4058-8f78-b3df1c6e5075",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -10160,7 +10196,7 @@
           }
         },
         {
-          "id": "a77331ff-6212-44f1-84f4-3092b8236896",
+          "id": "44c36093-2010-4ed6-8f28-3fe9f8c04052",
           "name": "Delete step illustration photo",
           "request": {
             "name": "Delete step illustration photo",
@@ -10208,7 +10244,7 @@
           },
           "response": [
             {
-              "id": "36272da3-612b-4099-9e0b-b99ab320f2df",
+              "id": "4b056418-5ec3-464e-8500-b4acc9fc77c8",
               "name": "Step image deleted",
               "originalRequest": {
                 "url": {
@@ -10263,7 +10299,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "dff56c07-781b-4136-90b0-ed1fdf634607",
+              "id": "7a07f976-c286-4ab5-8b68-c756e61c86b6",
               "name": "Invalid recipe ID or step number format (must be integers)",
               "originalRequest": {
                 "url": {
@@ -10318,7 +10354,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b969188f-a5fb-45e7-9f7c-f06bccb0e1a5",
+              "id": "d91f870e-efcf-47f5-89f8-1bae6dec086d",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -10373,7 +10409,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "049c7dba-98da-4408-945b-90e7704f966e",
+              "id": "791a9daa-b530-48bd-8d9d-980e4612840a",
               "name": "Recipe or step not found",
               "originalRequest": {
                 "url": {
@@ -10428,7 +10464,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "202e0152-74f1-4375-901e-22e6e5b995b2",
+              "id": "94f6b7c3-42f8-4ab9-84d0-420bb72ea5fa",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -10487,6 +10523,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "b7414a8e-7586-4c6d-873d-51dbffab8223",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -10508,7 +10545,7 @@
           }
         },
         {
-          "id": "a2225354-75d4-4d8a-9246-7776da9fce2e",
+          "id": "9426cf86-2014-4016-8d93-c4bd67a0d781",
           "name": "Upload recipe gallery photos",
           "request": {
             "name": "Upload recipe gallery photos",
@@ -10562,7 +10599,7 @@
           },
           "response": [
             {
-              "id": "f3fb2e59-e8ab-49db-bba3-f41bcabb0fa5",
+              "id": "85b18b52-93d1-4971-88ef-a63853b651a6",
               "name": "Gallery photos uploaded successfully",
               "originalRequest": {
                 "url": {
@@ -10621,7 +10658,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "bd99c4be-bb08-4a7a-bfce-fdc079b68006",
+              "id": "3e7fd528-0094-4354-8159-15dc629e6eeb",
               "name": "Invalid recipe ID format (must be an integer), maximum 3 gallery images exceeded, or invalid format",
               "originalRequest": {
                 "url": {
@@ -10680,7 +10717,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "46f5588f-52bb-4ee5-8962-6e97adc776ad",
+              "id": "6c3667b7-30be-40da-8083-581fe86bd31d",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -10739,7 +10776,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d3d620cd-1787-410c-a548-a394f4f8d38a",
+              "id": "e21c9429-f0fd-475f-88fa-5125494ec679",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -10798,7 +10835,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "8011cb7d-fc68-4eee-9e36-aed9bb7ed91f",
+              "id": "34eb4ee8-72ac-4868-8177-87a184e9401b",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -10861,6 +10898,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "cf9178f1-04db-440a-8866-3584a851f58a",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -10887,7 +10925,7 @@
           }
         },
         {
-          "id": "75f7d887-69e3-4d1a-aafd-4e4fdd18e7ac",
+          "id": "10766767-da0d-4130-8e30-3c57be6848ef",
           "name": "Upload recipe tutorial video",
           "request": {
             "name": "Upload recipe tutorial video",
@@ -10940,7 +10978,7 @@
           },
           "response": [
             {
-              "id": "01a37cff-693c-4c38-a578-d314a7a89c0c",
+              "id": "6bff267a-d191-46b2-896b-8aa2c6928eea",
               "name": "Tutorial video uploaded successfully",
               "originalRequest": {
                 "url": {
@@ -10998,7 +11036,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "472c04da-d48d-4aeb-a62d-1b5fd8cf8240",
+              "id": "e59520df-6756-4219-8783-af9e1a7c6cc0",
               "name": "Invalid recipe ID format (must be an integer), file missing, or invalid video format",
               "originalRequest": {
                 "url": {
@@ -11056,7 +11094,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d39a196d-9253-46ab-be19-1c607851372e",
+              "id": "529d5000-5573-4365-8c82-742e84f3723f",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -11114,7 +11152,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b906e0be-ead8-4305-a8b6-121b9f222d99",
+              "id": "d6c0d91b-b52b-448b-8baf-7b1286d3a447",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -11172,7 +11210,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "c8aa6461-9b74-415a-8128-081f576d0cf5",
+              "id": "c47d65ff-4490-4bfd-8e43-5715f4126298",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -11234,6 +11272,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "1d59495c-4824-4b1b-894e-c4e83421a67a",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -11256,7 +11295,7 @@
           }
         },
         {
-          "id": "95284698-5730-41ff-b21e-c27f9d3cfafe",
+          "id": "64a93e69-611c-4e17-8c36-bdd075b0f001",
           "name": "Delete recipe tutorial video",
           "request": {
             "name": "Delete recipe tutorial video",
@@ -11295,7 +11334,7 @@
           },
           "response": [
             {
-              "id": "a4940c9e-e78c-4561-85bb-99578e4702ae",
+              "id": "630128d7-aec9-4ff5-8442-5442a8ff8739",
               "name": "Tutorial video deleted",
               "originalRequest": {
                 "url": {
@@ -11341,7 +11380,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "aa33c88f-1435-478c-9f26-e227f20b9647",
+              "id": "02338b37-6248-4957-8f61-951d3c74b8e3",
               "name": "Invalid recipe ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -11387,7 +11426,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b9692363-33c0-4a90-b71a-8ae2a9a11b76",
+              "id": "af1d7afa-7520-4378-8cc2-27aa04a5bc83",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -11433,7 +11472,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "ee3aabf7-6a95-4935-a09e-095a442acc1b",
+              "id": "0c848c76-dc8a-4b5c-883a-ba1a398dd3e4",
               "name": "Recipe or video not found",
               "originalRequest": {
                 "url": {
@@ -11479,7 +11518,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b19c3b86-567d-4eec-9911-0321c10330f6",
+              "id": "e16d91fa-a622-4b80-81d3-dff7a5a965bb",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -11529,6 +11568,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "eaa49db4-44ee-44d9-8635-fa8d8a5e19d9",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -11550,7 +11590,7 @@
           }
         },
         {
-          "id": "b2467f8f-c26d-485f-a657-95da2ff05fab",
+          "id": "bf243147-b87c-49cf-85ef-51e9f40d8b19",
           "name": "Delete gallery photo",
           "request": {
             "name": "Delete gallery photo",
@@ -11597,7 +11637,7 @@
           },
           "response": [
             {
-              "id": "c36841e6-cea3-49f0-a23f-fa77a538d435",
+              "id": "207921b4-6c93-48c0-868c-ae4c4c848d71",
               "name": "Gallery media photo deleted",
               "originalRequest": {
                 "url": {
@@ -11651,7 +11691,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "6f1c1c2a-d8f7-4fa0-b85c-13c0a8ba5698",
+              "id": "81becc90-b35d-478b-8d1f-a3d7e890dabd",
               "name": "Invalid recipe ID or media ID format (must be integers)",
               "originalRequest": {
                 "url": {
@@ -11705,7 +11745,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d1dffb54-8d1d-4e4a-b9eb-5d7828f26773",
+              "id": "c719eab3-85be-4d6f-8eba-26d26c8f9fa6",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -11759,7 +11799,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "0797b4df-60fc-4d60-9346-f53c5d74f43b",
+              "id": "d675a28c-6651-4382-8a7e-3256d365df03",
               "name": "Recipe or media item not found",
               "originalRequest": {
                 "url": {
@@ -11813,7 +11853,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "94878497-8bb4-42ba-8d29-981b0378dde9",
+              "id": "cfa3d042-a643-40e7-8272-244a9559c9e1",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -11871,6 +11911,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "46a397bd-0b1f-4ee6-8465-b8bf81aa9b74",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -11892,7 +11933,7 @@
           }
         },
         {
-          "id": "9dcd9497-ca63-4972-84a9-71003b6b760a",
+          "id": "2a0a299d-2597-4766-8838-9cd0654c146d",
           "name": "Like recipe",
           "request": {
             "name": "Like recipe",
@@ -11931,7 +11972,7 @@
           },
           "response": [
             {
-              "id": "7f0f5317-daf9-4934-a2e5-2602e10ef1f1",
+              "id": "713defad-1bd8-42cb-83f9-b28ac5b31674",
               "name": "Recipe liked",
               "originalRequest": {
                 "url": {
@@ -11977,7 +12018,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "405eefb1-602d-4842-8379-430c192bc6ea",
+              "id": "104a1e59-24e7-4331-83ac-0f2d70a7a1ca",
               "name": "Invalid recipe ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -12023,7 +12064,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "3a655b14-25e8-4130-a99f-835ade55ced3",
+              "id": "d26badf7-6739-47d0-8496-c4ec60b4a453",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -12069,7 +12110,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "421cfc2f-ac0c-4ff8-8fae-c3d8091a23bd",
+              "id": "47ce60c6-eb92-49b6-8cf4-f4472f9d59c9",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -12115,7 +12156,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "91365dd7-1f36-46fa-bbf2-a9269f608763",
+              "id": "3a635df3-9bc2-4e43-83ea-1b115022541a",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -12165,6 +12206,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "04adec3d-cf37-445e-85f9-80c8afe2f068",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -12188,7 +12230,7 @@
           }
         },
         {
-          "id": "b4fe0875-9f0a-4f72-909f-06f66779f039",
+          "id": "94dc84c4-4637-4549-8462-5973a7db682f",
           "name": "Unlike recipe",
           "request": {
             "name": "Unlike recipe",
@@ -12227,7 +12269,7 @@
           },
           "response": [
             {
-              "id": "ee14b4e6-dd9a-4821-8fa4-fb7ab0dc388b",
+              "id": "a52989e0-c6af-4c8b-8874-ecc1dcdbdbea",
               "name": "Recipe unliked",
               "originalRequest": {
                 "url": {
@@ -12273,7 +12315,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "c6d03a0a-804e-420d-bbf7-2928a5e851d6",
+              "id": "90f81a74-1004-4293-8f56-9f7a47ac990b",
               "name": "Invalid recipe ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -12319,7 +12361,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "388eef91-ecb9-4002-8365-f58662390696",
+              "id": "70dcfc5f-0a19-4f2a-8567-e5717f909249",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -12365,7 +12407,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "8e49204a-419e-4c83-95e5-f0dee7fcd8ce",
+              "id": "3e342ced-281e-49bf-8bd5-97e5ddf31500",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -12411,7 +12453,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a996d239-eace-4368-a754-34e46ee41951",
+              "id": "64212402-7838-48dc-81a1-93d965bca6a0",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -12461,6 +12503,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "f4b2b274-1126-4cf4-83aa-4cb204cb6b83",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -12484,7 +12527,7 @@
           }
         },
         {
-          "id": "9f0a081e-e720-4a19-adf3-4976cf9acd5a",
+          "id": "9d974b0b-67f0-4b5d-8b04-731dc63d631b",
           "name": "Post recipe comment or reply",
           "request": {
             "name": "Post recipe comment or reply",
@@ -12536,7 +12579,7 @@
           },
           "response": [
             {
-              "id": "ab8bca25-df4e-4021-884e-b1d8841d3922",
+              "id": "e2e34756-f4ad-4704-841d-0ef868f53f62",
               "name": "Comment created successfully",
               "originalRequest": {
                 "url": {
@@ -12590,7 +12633,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "272629c1-7ebd-4a40-bd38-d4c4700df01a",
+              "id": "8555a862-d90e-4450-8f03-2787755b923a",
               "name": "Invalid input, invalid recipe ID format (must be an integer), or parent comment not found/mismatched",
               "originalRequest": {
                 "url": {
@@ -12644,7 +12687,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "db324961-8ee0-44d3-bb78-ecb7fe37a4d3",
+              "id": "4324fbd3-29ac-4eeb-8a03-869fe8ad9e48",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -12698,7 +12741,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "c6522e47-cc72-4c76-b76a-d61ab5f11807",
+              "id": "3af8a16a-ae77-47ed-8e73-397486ca6ada",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -12752,7 +12795,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d9e9d289-4f73-4a98-8dd3-7fdee601f673",
+              "id": "9135ed6b-ca60-4630-88c7-790e9f9795f7",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -12810,6 +12853,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "0d746944-ab89-4241-825b-8a6e2bffca67",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
@@ -12835,7 +12879,7 @@
           }
         },
         {
-          "id": "c63717de-5b20-4493-95ab-fffd0fad44c5",
+          "id": "577405f1-2e52-4b8e-8f23-8ce680c939e4",
           "name": "Get recipe comments",
           "request": {
             "name": "Get recipe comments",
@@ -12875,7 +12919,7 @@
           },
           "response": [
             {
-              "id": "0ff8c856-f44a-4919-b096-2531a0e00451",
+              "id": "55b0660a-8659-4b9e-8efa-391b9f5969cd",
               "name": "List of threaded comments",
               "originalRequest": {
                 "url": {
@@ -12921,7 +12965,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a29d1611-a55f-4811-be81-eeccf6148691",
+              "id": "d4b29d42-7286-4eb4-8fd1-f052e123ed36",
               "name": "Invalid recipe ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -12967,7 +13011,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "beb915ef-bd5a-4c0f-a4de-4bade4b69797",
+              "id": "f40946e3-ca0a-4deb-88bf-fc90291b988d",
               "name": "Recipe not found",
               "originalRequest": {
                 "url": {
@@ -13013,7 +13057,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a77230bf-df67-427e-bf39-717d61e5826d",
+              "id": "653904c3-dac6-4520-8cbf-435387feb175",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -13063,6 +13107,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "ff7f0dba-c6a1-4183-8382-7cdaabebd2e5",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -13094,7 +13139,7 @@
           }
         },
         {
-          "id": "a7244753-2165-450b-9ab1-65f6caf01adc",
+          "id": "f250e44f-f483-4186-8af8-41cfe44a6eb2",
           "name": "Deactivate recipe comment",
           "request": {
             "name": "Deactivate recipe comment",
@@ -13141,7 +13186,7 @@
           },
           "response": [
             {
-              "id": "f0eb271a-2ca2-4e7d-80ff-1ccf471ce0d2",
+              "id": "b318d451-d9cf-46fa-84c3-0373e373d6e2",
               "name": "Comment deactivated successfully",
               "originalRequest": {
                 "url": {
@@ -13195,7 +13240,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "e64aadf7-9056-44e6-9828-ee4a446a2b64",
+              "id": "b43626db-f492-454b-8dc9-5c05bfc26391",
               "name": "Invalid recipe ID or comment ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -13249,7 +13294,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "220cbb4d-d0eb-494b-a631-a2bd1035edf6",
+              "id": "f89b509f-e642-4044-8a3f-7d12f70ce6b6",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -13303,7 +13348,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "c6c6ae7b-4058-4554-9db7-2f4ae56799ab",
+              "id": "39285da8-9d2f-4d91-8704-6f4b92e1f721",
               "name": "Forbidden: user is neither comment author nor recipe author",
               "originalRequest": {
                 "url": {
@@ -13357,7 +13402,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "9913098f-68ee-4e14-81b3-37f179a66b74",
+              "id": "70edb756-d5d5-4a8e-85ad-a3397489f6e3",
               "name": "Recipe or comment not found",
               "originalRequest": {
                 "url": {
@@ -13411,7 +13456,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "ad38415f-ab38-4be8-ad85-cdcd1044313b",
+              "id": "dabc687b-7aa4-4aa2-8a9a-e4a862970717",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -13469,6 +13514,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "f3315965-695a-4a33-8f4a-45e6bd0aff6b",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -13490,7 +13536,7 @@
           }
         },
         {
-          "id": "2a31de66-3c3a-46ce-ae30-7b51b65cdf8f",
+          "id": "4676d4dd-3515-4717-81d2-95612905ddcf",
           "name": "Update recipe comment",
           "request": {
             "name": "Update recipe comment",
@@ -13550,7 +13596,7 @@
           },
           "response": [
             {
-              "id": "8de81947-1657-43d1-846a-e713bcbca5f5",
+              "id": "5dfd0299-40f3-4ae3-8dfd-33fa26a54f31",
               "name": "Comment successfully updated",
               "originalRequest": {
                 "url": {
@@ -13612,7 +13658,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d2ac92b9-4bd0-4fd8-948d-58367aaf53ca",
+              "id": "9832cad1-a415-46dd-8768-0be93970248d",
               "name": "Invalid input or comment is deactivated",
               "originalRequest": {
                 "url": {
@@ -13674,7 +13720,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "b72cf781-9306-4940-9cce-c5f617c634ca",
+              "id": "08145949-aa38-48b1-8e5e-10439656c709",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -13736,7 +13782,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "1faa44f8-22e9-40ab-99d4-7d6a9d73e1e5",
+              "id": "b126cd23-e235-4eaf-8539-05cfe7ff7a9f",
               "name": "Forbidden: user is not the comment author",
               "originalRequest": {
                 "url": {
@@ -13798,7 +13844,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "9c41cd41-4196-4038-bc83-c266059edf75",
+              "id": "8bbdf457-8b2b-497e-8e8d-74fbf5fdbbff",
               "name": "Recipe or comment not found",
               "originalRequest": {
                 "url": {
@@ -13860,7 +13906,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "9360c4a9-c342-4ce4-b86b-ae1f9d3d290b",
+              "id": "a1a8d4cf-6ee8-4ae4-88b6-fce47894d47e",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -13926,6 +13972,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "46ba698f-c0df-4261-8b12-f0cc7eef1733",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -13954,7 +14001,7 @@
       "event": []
     },
     {
-      "id": "3c515ebe-845d-4c83-978f-8c70e9acd7d7",
+      "id": "362f3525-5fe9-453b-835a-e254e64fc167",
       "name": "Catalog",
       "description": {
         "content": "Curated ingredient catalogs, dietary tags, units of measure, and system metadata",
@@ -13962,7 +14009,7 @@
       },
       "item": [
         {
-          "id": "fa8fcf0a-5122-4722-8a46-a6dfd59e470e",
+          "id": "b4d4e89d-ee3e-4e2f-8b91-ab5e52c960c9",
           "name": "List curated tags",
           "request": {
             "name": "List curated tags",
@@ -13999,7 +14046,7 @@
           },
           "response": [
             {
-              "id": "175e5d35-49c1-44ac-b33a-347c10d7af3b",
+              "id": "177dda91-58c7-4329-8f4c-76e2c56210c4",
               "name": "Alphabetically ordered list of localized tags",
               "originalRequest": {
                 "url": {
@@ -14040,7 +14087,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "1f474a40-3580-4e53-b53f-8e17f15e8a6f",
+              "id": "a24a0740-592d-46b3-8da4-15db77053057",
               "name": "Invalid language parameter (must be one of: it, en, fr)",
               "originalRequest": {
                 "url": {
@@ -14081,7 +14128,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "9b0a51bc-e4b3-47e6-996c-c34de882256b",
+              "id": "9c3e2d4c-31f0-4405-8b44-6304e983ddc0",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -14126,6 +14173,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "5c2fc558-4c11-4f18-842f-93882406a943",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -14152,7 +14200,7 @@
           }
         },
         {
-          "id": "50341b1a-8f7a-4b8b-aba1-db89709c52bd",
+          "id": "a0f02ff3-7dc2-4b1a-8975-649c7b5d2a06",
           "name": "List and search curated ingredients",
           "request": {
             "name": "List and search curated ingredients",
@@ -14201,7 +14249,7 @@
           },
           "response": [
             {
-              "id": "e3a2138b-e37f-4a98-be8c-0a73727afa7d",
+              "id": "20da0733-5a36-4189-8c9a-4a3e8418428a",
               "name": "Alphabetically ordered list of matching curated ingredients",
               "originalRequest": {
                 "url": {
@@ -14250,7 +14298,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "4129f345-b22e-49d3-a66c-4fcf7cd6efb5",
+              "id": "ba2b31d2-9257-495e-80d2-2e578b6eddec",
               "name": "Invalid category or language parameter",
               "originalRequest": {
                 "url": {
@@ -14299,7 +14347,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "444b3f1e-4037-4149-b0e2-64d021df3fd7",
+              "id": "a9b07a2b-757a-4d3d-8f13-f49e84700a04",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -14352,6 +14400,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "937945a5-1888-4ec4-83ee-2b032828be3e",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -14382,7 +14431,7 @@
       "event": []
     },
     {
-      "id": "654c5762-ee27-4886-8064-83921161efcf",
+      "id": "dc5b4957-7932-4e95-822c-96542b6455dc",
       "name": "Notifications",
       "description": {
         "content": "User activity notifications, inbox management, and real-time alerts",
@@ -14390,7 +14439,7 @@
       },
       "item": [
         {
-          "id": "cb295965-1920-44d4-ba0a-b0c7f633c845",
+          "id": "b3aff27b-a40a-4d0e-8e9a-b1e4f75c93bb",
           "name": "Mark notification as read",
           "request": {
             "name": "Mark notification as read",
@@ -14429,7 +14478,7 @@
           },
           "response": [
             {
-              "id": "95b24b30-f332-49b6-81ce-5b2fceca6726",
+              "id": "df79d92d-9168-445c-8ed2-9ea9b901c8a6",
               "name": "Notification marked as read",
               "originalRequest": {
                 "url": {
@@ -14475,7 +14524,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "010879b6-2f2c-47f8-be24-30df57909c93",
+              "id": "5f9e10b8-327d-46b2-86da-de10b11e1871",
               "name": "Invalid notification ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -14521,7 +14570,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "bc604c56-b62d-49b9-9a24-8196378d0b69",
+              "id": "84c8bbd4-cc69-4d22-87ae-1e4dd17b6352",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -14567,7 +14616,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "5b373969-c706-4246-9552-29c49500a132",
+              "id": "26d4d58f-47a1-416b-82bd-73fb1f880fc3",
               "name": "Forbidden: user is not the recipient of the notification",
               "originalRequest": {
                 "url": {
@@ -14613,7 +14662,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "cf809492-0b7b-464f-a6ab-210b08723c7e",
+              "id": "4fcf737d-747c-40ac-8fa2-84210d61b6bf",
               "name": "Notification not found",
               "originalRequest": {
                 "url": {
@@ -14659,7 +14708,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "38868cb3-0433-4fd3-83f4-e0f645ce9045",
+              "id": "9a34daa6-eb40-40e3-8cd0-83b3096161ae",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -14709,6 +14758,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "ffb2eb37-f1bd-405e-8efc-6e17c6c89017",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -14733,7 +14783,7 @@
           }
         },
         {
-          "id": "38eb5bf1-029e-4f23-84ed-ec0fdc2a8d0e",
+          "id": "9dba8a54-d5aa-4de0-8743-932d153abca9",
           "name": "Delete notification",
           "request": {
             "name": "Delete notification",
@@ -14772,7 +14822,7 @@
           },
           "response": [
             {
-              "id": "bd564b46-2e8c-4108-adc9-c50425c30ae6",
+              "id": "0702a1af-e713-45c6-8962-94717308691f",
               "name": "Notification deleted successfully",
               "originalRequest": {
                 "url": {
@@ -14818,7 +14868,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "88f666d5-fe56-404f-9944-43ceaff9c0b9",
+              "id": "bb338913-71a0-4dce-842e-ee889d0df271",
               "name": "Invalid notification ID format (must be an integer)",
               "originalRequest": {
                 "url": {
@@ -14864,7 +14914,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "4a6f6359-08d7-4d08-8a26-4ac85ee9eef1",
+              "id": "9e8a08c0-ed8b-4e66-857e-14733c749b1c",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -14910,7 +14960,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "c68c9274-f0a1-445e-8e57-601d9a75046f",
+              "id": "d15816e8-c668-4abf-86c7-d60d42bdb0c5",
               "name": "Forbidden: user is not the recipient of the notification",
               "originalRequest": {
                 "url": {
@@ -14956,7 +15006,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "7c7b8834-df59-4e95-b133-b5569c8e726b",
+              "id": "ef2d09d0-2dbf-4a51-87ba-ac8a1d87b393",
               "name": "Notification not found",
               "originalRequest": {
                 "url": {
@@ -15002,7 +15052,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "c0d6ea5a-2d4f-4f5e-af86-9f729c9f2f10",
+              "id": "13b51746-6eb8-4a65-8f9b-1e9fe2365926",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -15052,6 +15102,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "6abc070e-9c0b-4838-8b32-e3493e2a76cc",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -15076,7 +15127,7 @@
           }
         },
         {
-          "id": "fe6aec4e-443d-4d50-baef-b00491cf1a49",
+          "id": "fb2a67ba-1e4a-452a-8916-5791802549a2",
           "name": "Get user notifications",
           "request": {
             "name": "Get user notifications",
@@ -15105,7 +15156,7 @@
           },
           "response": [
             {
-              "id": "a44936d1-6df6-4674-b520-3c2ce63f73ae",
+              "id": "5b36f5b1-90b3-4c2a-8eb9-ba2b22808bff",
               "name": "List of notifications for the authenticated user",
               "originalRequest": {
                 "url": {
@@ -15141,7 +15192,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "44161212-1703-4ded-9419-46db84a14550",
+              "id": "8db96fae-55bc-4884-8e2a-9959ced5d9d9",
               "name": "Authentication required: missing or invalid accessToken cookie",
               "originalRequest": {
                 "url": {
@@ -15177,7 +15228,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "9c3d2573-b6e5-4204-8636-0cae1888faea",
+              "id": "870aec7f-69d1-42c0-84a5-682b0bdaf432",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -15217,6 +15268,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "ffe3df6b-f7b2-41b5-83e7-8815ac84ec99",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -15253,7 +15305,7 @@
       "event": []
     },
     {
-      "id": "4125fd77-322e-41b1-9de8-b43afb9450cb",
+      "id": "54eaae9d-4ee9-4c60-839a-5b98bc4e5ecd",
       "name": "System",
       "description": {
         "content": "Health check, status probes, and system connectivity testing",
@@ -15261,7 +15313,7 @@
       },
       "item": [
         {
-          "id": "8c452dbd-e4f0-4574-83ee-914db14b024e",
+          "id": "ea5584b4-3872-4811-804d-fd9109072c2c",
           "name": "System health check probe",
           "request": {
             "name": "System health check probe",
@@ -15291,7 +15343,7 @@
           },
           "response": [
             {
-              "id": "a84e3fe8-0215-4c19-a5b6-4029cad9d31d",
+              "id": "e3c1721d-c5b1-4413-8ed0-71174aab3380",
               "name": "Service greeting message",
               "originalRequest": {
                 "url": {
@@ -15327,7 +15379,7 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "0b1359ad-b459-4b7c-b34e-31c982b4263b",
+              "id": "77c19613-e3ed-4b9a-87b3-62931a0ef87e",
               "name": "Internal server error",
               "originalRequest": {
                 "url": {
@@ -15367,6 +15419,7 @@
             {
               "listen": "test",
               "script": {
+                "id": "978cb5ac-d864-4c37-8f29-0d63276e086d",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
