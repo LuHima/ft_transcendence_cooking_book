@@ -23,6 +23,7 @@
     "postinstall": "prisma generate || true",
     "openapi:generate": "nest build && node dist/src/generate-spec.js",
     "postman:extract": "ts-node -r dotenv/config scripts/extract-postman-scripts.ts",
+    "postman:build": "ts-node scripts/build-postman-collection.ts",
     "postman:sync": "npm run openapi:generate && ts-node -r dotenv/config sync-postman.ts"
   },
   "prisma": {
@@ -89,6 +90,7 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^17.0.0",
     "jest": "^30.0.0",
+    "openapi-to-postmanv2": "^6.4.2",
     "pg": "^8.23.0",
     "prettier": "^3.4.2",
     "prisma": "^7.8.0",

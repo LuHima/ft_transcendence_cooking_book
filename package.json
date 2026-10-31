@@ -6,6 +6,7 @@
     "docs:dev": "npx --yes fern-api docs dev",
     "docs:generate": "npx --yes fern-api generate --docs",
     "openapi:generate": "npm --prefix src/backend run openapi:generate",
+    "postman:build": "npm --prefix src/backend run postman:build",
     "postman:sync": "npm --prefix src/backend run postman:sync"
   }
 }
