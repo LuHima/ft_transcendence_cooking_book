@@ -79,4 +79,5 @@ jobs:
       - name: Sync Postman specification & collection
         env:
           POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+          POSTMAN_COLLECTION_UID: ${{ secrets.POSTMAN_COLLECTION_UID }}
         run: npm run postman:sync

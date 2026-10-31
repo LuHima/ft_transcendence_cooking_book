@@ -42,7 +42,54 @@ function resolveApiKey(): string {
   );
 }
 
-const COLLECTION_UID = '55074297-6cea2a4e-1dde-4ec2-9aa1-e861f9fee048';
+export function resolveCollectionUid(): string {
+  if (process.env.POSTMAN_COLLECTION_UID && process.env.POSTMAN_COLLECTION_UID.trim() !== '') {
+    return process.env.POSTMAN_COLLECTION_UID.trim();
+  }
+  if (process.env.COLLECTION_UID && process.env.COLLECTION_UID.trim() !== '') {
+    return process.env.COLLECTION_UID.trim();
+  }
+
+  const rootDir = findProjectRoot();
+  const dockerEnvPath = path.join(rootDir, 'docker', '.env');
+  if (fs.existsSync(dockerEnvPath)) {
+    const envConfig = dotenv.parse(fs.readFileSync(dockerEnvPath));
+    const uid = envConfig.POSTMAN_COLLECTION_UID || envConfig.COLLECTION_UID;
+    if (uid && uid.trim() !== '') {
+      return uid.trim();
+    }
+  }
+
+  const rootEnvPath = path.join(rootDir, '.env');
+  if (fs.existsSync(rootEnvPath)) {
+    const envConfig = dotenv.parse(fs.readFileSync(rootEnvPath));
+    const uid = envConfig.POSTMAN_COLLECTION_UID || envConfig.COLLECTION_UID;
+    if (uid && uid.trim() !== '') {
+      return uid.trim();
+    }
+  }
+
+  const postmanConfigPath = path.join(rootDir, '.postman.json');
+  if (fs.existsSync(postmanConfigPath)) {
+    try {
+      const config = JSON.parse(fs.readFileSync(postmanConfigPath, 'utf8'));
+      const defaultKey = config.default?.collection || 'wecook-api';
+      const uid = config.collections?.[defaultKey]?.uid;
+      if (uid && uid.trim() !== '') {
+        return uid.trim();
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  throw new Error(
+    'POSTMAN_COLLECTION_UID not found!\n' +
+      'Please export POSTMAN_COLLECTION_UID in your environment, or configure it in docker/.env or .env.\n' +
+      'Example: POSTMAN_COLLECTION_UID=55074297-6cea2a4e-1dde-4ec2-9aa1-e861f9fee048',
+  );
+}
+
 const ENVIRONMENT_UID = '55074297-23f04ddb-80a7-4ea2-bc68-77e88bb3a835';
 const POSTMAN_API_BASE = 'https://api.getpostman.com';
 
@@ -62,11 +109,12 @@ async function formatJs(code: string): Promise<string> {
 
 async function extractScripts() {
   const apiKey = resolveApiKey();
+  const collectionUid = resolveCollectionUid();
   const baseTestDir = path.resolve(__dirname, '..', 'test', 'postman-scripts');
   fs.mkdirSync(baseTestDir, { recursive: true });
 
-  console.log(`Fetching Postman collection (${COLLECTION_UID})...`);
-  const colRes = await fetch(`${POSTMAN_API_BASE}/collections/${COLLECTION_UID}`, {
+  console.log(`Fetching Postman collection (${collectionUid})...`);
+  const colRes = await fetch(`${POSTMAN_API_BASE}/collections/${collectionUid}`, {
     headers: { 'X-Api-Key': apiKey },
   });
   if (!colRes.ok) {
