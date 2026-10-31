@@ -108,6 +108,14 @@ _Avoid_: Follow request, invitation, ping
 The contextual relationship classification between a viewing user and a target member (`none`, `pending_sent`, `pending_received`, `friends`).
 _Avoid_: Follow status, relation type, connection state
 
+**Culinary Profile**:
+The public presentation of a community member showcasing their biographical note, culinary metrics, confirmed friends, and public recipes.
+_Avoid_: Account page, user card, bio sheet
+
+**Culinary Bio**:
+A brief self-written summary (up to 500 characters) describing a community member's cooking background, philosophy, or favorite cuisines.
+_Avoid_: About me, description, user status
+
 **Social Notification**:
 An in-app alert and real-time event notifying a community member of an interaction (e.g. friend request, recipe like, or comment) directed at their content or account.
 _Avoid_: Push message, ping, email, banner
