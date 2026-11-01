@@ -120,6 +120,10 @@ _Avoid_: About me, description, user status
 An in-app alert and real-time event notifying a community member of an interaction (e.g. friend request, recipe like, or comment) directed at their content or account.
 _Avoid_: Push message, ping, email, banner
 
+**Social Feed**:
+A personalized, chronological stream of published recipes authored exclusively by a community member's confirmed friends.
+_Avoid_: Wall, timeline, newsfeed, stream, home discovery
+
 ## API Governance & Documentation
 
 **API Contract**:
