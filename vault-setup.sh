@@ -28,7 +28,7 @@
 
 set -eu
 
-VAULT_CONTAINER="${VAULT_CONTAINER:-vault-container}"
+VAULT_CONTAINER="${VAULT_CONTAINER:-vault}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker/docker-compose.yml}"
 ENV_FILE="${ENV_FILE:-docker/.env}"
 ENV_EXAMPLE="${ENV_EXAMPLE:-docker/.env.example}"
@@ -217,6 +217,16 @@ done
 # ---------------------------------------------------------------------------
 step "Secrets"
 # ---------------------------------------------------------------------------
+
+# Secret per acme (Infomaniak token)
+INFO_TOKEN="$(get_env_var INFOMANIAK_API_TOKEN)"
+if [ -n "$INFO_TOKEN" ]; then
+	vexec kv put secret/acme INFOMANIAK_API_TOKEN="$INFO_TOKEN" >/dev/null
+	log "secret/acme written (INFOMANIAK_API_TOKEN)."
+else
+	vexec kv put secret/acme INFOMANIAK_API_TOKEN="" >/dev/null
+	log "secret/acme written (empty INFOMANIAK_API_TOKEN)."
+fi
 
 # Secret per il database: la password Postgres.
 PG_PASS="$(get_env_var POSTGRES_PASSWORD)"
