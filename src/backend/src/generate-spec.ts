@@ -50,6 +50,10 @@ async function generate() {
       'Bidirectional friendships, friend discovery, and friend request lifecycle management',
     )
     .addTag(
+      'Feed',
+      'Personalized chronological social activity feed of recipes shared by confirmed friends',
+    )
+    .addTag(
       'Recipes',
       'Recipe creation, localized details, pagination, step illustrations, media uploads, and likes',
     )

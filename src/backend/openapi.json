@@ -4281,6 +4281,105 @@
           "Friends"
         ]
       }
+    },
+    "/api/feed": {
+      "get": {
+        "description": "Returns a chronologically ordered (newest first) paginated collection of recipes published exclusively by confirmed friends of the authenticated user.",
+        "operationId": "FeedController_getFeed",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target locale code for projected title and description translations",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated recipes from confirmed friends",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRecipeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination or language parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication token\n\nAuthentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get friends activity feed",
+        "tags": [
+          "Feed"
+        ]
+      }
     }
   },
   "info": {
@@ -4301,6 +4400,10 @@
     {
       "name": "Friends",
       "description": "Bidirectional friendships, friend discovery, and friend request lifecycle management"
+    },
+    {
+      "name": "Feed",
+      "description": "Personalized chronological social activity feed of recipes shared by confirmed friends"
     },
     {
       "name": "Recipes",

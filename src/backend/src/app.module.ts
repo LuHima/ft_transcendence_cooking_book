@@ -12,6 +12,7 @@ import { RecipeModule } from './recipe/recipe.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { TranslationModule } from './translation/translation.module';
 import { FriendsModule } from './friends/friends.module';
+import { FeedModule } from './feed/feed.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -32,6 +33,7 @@ import { ProductionConfigModule } from './common/config/production-config.module
     RecipeModule,
     TranslationModule,
     FriendsModule,
+    FeedModule,
     // ScheduleModule cerca in tutti i provider per un @Cron vede quanto
     // manca al tempo stabilito e setta un timer per chiamare quella funzione
     // non appena finisce il sistemma setta in automatico un'altro timer per

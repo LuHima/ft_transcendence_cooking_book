@@ -7115,6 +7115,280 @@
       "event": []
     },
     {
+      "id": "cdfa157c-c857-4295-80c5-f5b6635236bf",
+      "name": "Feed",
+      "description": {
+        "content": "Personalized chronological social activity feed of recipes shared by confirmed friends",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "47a5106b-d745-466a-8440-4eef564eef97",
+          "name": "Get friends activity feed",
+          "request": {
+            "name": "Get friends activity feed",
+            "description": {
+              "content": "Returns a chronologically ordered (newest first) paginated collection of recipes published exclusively by confirmed friends of the authenticated user.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "feed"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
+                  "key": "lang",
+                  "value": "it",
+                  "description": "Target locale code for projected title and description translations"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "65ed5e35-a2f0-494f-876b-12b9975cf028",
+              "name": "Paginated recipes from confirmed friends",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "feed"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bed66a5a-e2bc-4451-8fe2-40d80cb99068",
+              "name": "Invalid pagination or language parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "feed"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "a6b34546-40d2-4670-808a-79620756795f",
+              "name": "Missing or invalid authentication token\n\nAuthentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "feed"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e892c0ce-dc64-4dfa-850d-c25cfed20898",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "feed"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "9eebf4a3-af53-4580-891c-499c354fe356",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    },
+    {
       "id": "19e5a288-6151-484a-8c16-3e473087d072",
       "name": "Recipes",
       "description": {
