@@ -1,0 +1,28 @@
+services:
+  database:
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ../
+      dockerfile: ./docker/backend/dockerfile
+      target: development
+    ports:
+      - "5555:5555"
+    volumes:
+      - ../src/backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  frontend:
+    build:
+      context: ../
+      dockerfile: ./docker/frontend/dockerfile
+      target: development
+    volumes:
+      - ../src/frontend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  acme:
+    environment:
+      ACME_STAGING: "true"
