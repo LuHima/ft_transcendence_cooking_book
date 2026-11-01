@@ -7,12 +7,8 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { GlobalExceptionFilter } from './common/filters/global.exception.filter';
 import { ContentLanguageInterceptor } from './common/interceptors/content-language.interceptor';
-import {
-  RECIPE_UPLOADS_DIR,
-  AVATAR_UPLOADS_DIR,
-  UPLOADS_DIR,
-} from './common/config/upload-paths';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { RECIPE_UPLOADS_DIR, AVATAR_UPLOADS_DIR, UPLOADS_DIR } from './common/config/upload-paths';
+import { setupSwagger } from './common/config/swagger.config';
 import * as fs from 'fs';
 
 async function bootstrap() {
@@ -51,76 +47,7 @@ async function bootstrap() {
   });
 
   /* OpenAPI documentation */
-  // Build OpenAPI document configuration
-  const config = new DocumentBuilder()
-    .setTitle('WeCook API')
-    .setDescription(
-      'RESTful backend API specification for the WeCook recipe sharing social platform.\n\n' +
-        '### Authentication\n' +
-        'Authentication is based on secure, HttpOnly JWT cookies:\n' +
-        '- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n' +
-        '- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n' +
-        '### Media Storage & Static Assets\n' +
-        'Uploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n' +
-        '### Localization & Multilingual Engine\n' +
-        'Recipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.',
-    )
-    .setVersion('1.0.0')
-    .addServer('http://localhost:3000', 'Local Development Server')
-    .addServer('https://app.we-cook.it:8443', 'Staging / Production Server')
-    .addTag(
-      'Auth',
-      'User authentication, registration, session management, and two-factor authentication (2FA)',
-    )
-    .addTag(
-      'Users',
-      'User accounts, public profiles, avatars, and liked recipes',
-    )
-    .addTag(
-      'Friends',
-      'Bidirectional friendships, friend discovery, and friend request lifecycle management',
-    )
-    .addTag(
-      'Recipes',
-      'Recipe creation, localized details, pagination, step illustrations, media uploads, and likes',
-    )
-    .addTag(
-      'Catalog',
-      'Curated ingredient catalogs, dietary tags, units of measure, and system metadata',
-    )
-    .addTag(
-      'Notifications',
-      'User activity notifications, inbox management, and real-time alerts',
-    )
-    .addTag(
-      'System',
-      'Health check, status probes, and system connectivity testing',
-    )
-    .addCookieAuth('accessToken', {
-      type: 'apiKey',
-      in: 'cookie',
-      name: 'accessToken',
-      description: 'JWT Access Token stored in HttpOnly cookie (`accessToken`)',
-    })
-    .addCookieAuth('refreshToken', {
-      type: 'apiKey',
-      in: 'cookie',
-      name: 'refreshToken',
-      description:
-        'JWT Refresh Token stored in HttpOnly cookie (`refreshToken`) for the refresh endpoint',
-    })
-    .build();
-
-  // Generate OpenAPI Document
-  const document = SwaggerModule.createDocument(app, config);
-  // Mount Swagger UI at http://localhost:3000/api/docs
-  SwaggerModule.setup('api/docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
-  // Export openapi.json for Fern, Postman, and AI agent consumers
-  fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2) + '\n');
+  setupSwagger(app);
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }

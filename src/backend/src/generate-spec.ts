@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
+import { createSwaggerConfig } from './common/config/swagger.config';
 
 // 1. Stub Prisma lifecycle hooks to prevent database connections during headless generation
 PrismaService.prototype.onModuleInit = async () => {};
@@ -21,68 +22,7 @@ async function generate() {
   // Needed to prefix /api to all API routes
   app.setGlobalPrefix('api');
 
-  const config = new DocumentBuilder()
-    .setTitle('WeCook API')
-    .setDescription(
-      'RESTful backend API specification for the WeCook recipe sharing social platform.\n\n' +
-        '### Authentication\n' +
-        'Authentication is based on secure, HttpOnly JWT cookies:\n' +
-        '- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n' +
-        '- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n' +
-        '### Media Storage & Static Assets\n' +
-        'Uploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n' +
-        '### Localization & Multilingual Engine\n' +
-        'Recipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.',
-    )
-    .setVersion('1.0.0')
-    .addServer('http://localhost:3000', 'Local Development Server')
-    .addServer('https://app.we-cook.it:8443', 'Staging / Production Server')
-    .addTag(
-      'Auth',
-      'User authentication, registration, session management, and two-factor authentication (2FA)',
-    )
-    .addTag(
-      'Users',
-      'User accounts, public profiles, avatars, and liked recipes',
-    )
-    .addTag(
-      'Friends',
-      'Bidirectional friendships, friend discovery, and friend request lifecycle management',
-    )
-    .addTag(
-      'Feed',
-      'Personalized chronological social activity feed of recipes shared by confirmed friends',
-    )
-    .addTag(
-      'Recipes',
-      'Recipe creation, localized details, pagination, step illustrations, media uploads, and likes',
-    )
-    .addTag(
-      'Catalog',
-      'Curated ingredient catalogs, dietary tags, units of measure, and system metadata',
-    )
-    .addTag(
-      'Notifications',
-      'User activity notifications, inbox management, and real-time alerts',
-    )
-    .addTag(
-      'System',
-      'Health check, status probes, and system connectivity testing',
-    )
-    .addCookieAuth('accessToken', {
-      type: 'apiKey',
-      in: 'cookie',
-      name: 'accessToken',
-      description: 'JWT Access Token stored in HttpOnly cookie (`accessToken`)',
-    })
-    .addCookieAuth('refreshToken', {
-      type: 'apiKey',
-      in: 'cookie',
-      name: 'refreshToken',
-      description:
-        'JWT Refresh Token stored in HttpOnly cookie (`refreshToken`) for the refresh endpoint',
-    })
-    .build();
+  const config = createSwaggerConfig();
 
   const document = SwaggerModule.createDocument(app, config);
   const specJson = JSON.stringify(document, null, 2);
