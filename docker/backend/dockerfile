@@ -1,5 +1,5 @@
 # Base image: official Node.js 22 image based on Debian slim
-FROM node:22-slim
+FROM node:22-slim AS base
 
 # Set working directory inside the container
 WORKDIR /usr/src/app
@@ -13,6 +13,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
   && rm -rf /var/lib/apt/lists/*
 
+# Copy the entrypoint script and make it executable
+COPY ./docker/backend/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Expose backend NestJS port
+EXPOSE 3000
+
+# Health check: verifies that the NestJS API server is responding.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3000/api/test || exit 1
+
+ENTRYPOINT ["entrypoint.sh"]
+
+# -----------------------------------------------------------------------------
+# Development stage: includes NestJS CLI and devDependencies for live reload
+# -----------------------------------------------------------------------------
+FROM base AS development
+
 # Install NestJS CLI globally for development commands and build tools
 RUN npm install -g @nestjs/cli
 
@@ -22,25 +40,41 @@ COPY ./src/backend/package*.json ./
 # Install project dependencies
 RUN npm install
 
-# Copy the entrypoint script and make it executable
-COPY ./docker/backend/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Expose backend NestJS port
-EXPOSE 3000
-
-# Health check: verifies that the NestJS API server is responding.
-# Flags:
-#   --interval=10s:		check every 10 seconds
-#   --timeout=5s:		fail check if response exceeds 5 seconds
-#   --start-period=30s: grace period allowing Prisma migrations and NestJS dev
-#						build to boot
-#   --retries=3:		mark unhealthy after 3 consecutive failures
-HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:3000/api/test || exit 1
-
-# Define the entrypoint script
-ENTRYPOINT ["entrypoint.sh"]
+# Copy source code and schema
+COPY ./src/backend/ ./
 
 # Default command: start NestJS in watch/dev mode
 CMD ["npm", "run", "start:dev"]
+
+# -----------------------------------------------------------------------------
+# Builder stage: generates Prisma client and builds NestJS distribution
+# -----------------------------------------------------------------------------
+FROM base AS builder
+
+COPY ./src/backend/package*.json ./
+
+RUN npm ci || npm install
+
+COPY ./src/backend/ ./
+
+RUN npx prisma generate
+
+RUN npm run build && ( [ -f dist/main.js ] || echo "require('./src/main.js');" > dist/main.js )
+
+# -----------------------------------------------------------------------------
+# Production stage: stripped runtime container with only production dependencies
+# -----------------------------------------------------------------------------
+FROM base AS production
+
+ENV NODE_ENV=production
+
+COPY ./src/backend/package*.json ./
+
+RUN npm ci --omit=dev || npm install --omit=dev
+
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/prisma ./prisma
+COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
+
+CMD ["node", "dist/main.js"]

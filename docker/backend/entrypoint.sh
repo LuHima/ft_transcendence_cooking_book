@@ -52,19 +52,21 @@ else
   echo "USE_VAULT=false: Vault disabled, using the secrets from the environment (.env)."
 fi
 
-# Generate Prisma client based on current schema
-echo "Generating Prisma Client..."
-#npx prisma generate
-#npx -y prisma@7 generate
-./node_modules/.bin/prisma generate
+# Handle Prisma client generation and database migrations
+if [ -x "./node_modules/.bin/prisma" ]; then
+  echo "Generating Prisma Client..."
+  ./node_modules/.bin/prisma generate
 
-# Apply any pending database migrations
-echo "Applying database migrations..."
-npx prisma migrate deploy
+  # Apply any pending database migrations
+  echo "Applying database migrations..."
+  npx prisma migrate deploy
 
-# Run database seed (idempotent initial data)
-echo "Seeding database..."
-npx prisma db seed
+  # Run database seed (idempotent initial data)
+  echo "Seeding database..."
+  npx prisma db seed
+else
+  echo "Production mode: using pre-built Prisma client."
+fi
 
 echo "Backend initialization complete! Starting application..."
 echo ""
