@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
+import { RecipeProjection } from '../recipe/recipe.projection';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   NotFoundException,
@@ -34,6 +35,7 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
+        RecipeProjection,
         {
           provide: PrismaService,
           useValue: {
