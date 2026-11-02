@@ -104,6 +104,10 @@ _Avoid_: Follow, connection, contact, subscriber
 An invitation initiated by one user to another seeking to establish a mutual Friendship.
 _Avoid_: Follow request, invitation, ping
 
+**Friend Request Cooldown**:
+A mandatory 30-day waiting period enforced after a friend request is rejected, preventing the rejected requester from sending new friend invitations to the same recipient during that interval.
+_Avoid_: Block, ban, timeout, penalty
+
 **Friendship Status**:
 The contextual relationship classification between a viewing user and a target member (`none`, `pending_sent`, `pending_received`, `friends`).
 _Avoid_: Follow status, relation type, connection state
