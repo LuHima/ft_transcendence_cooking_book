@@ -19,6 +19,7 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { RecipeService } from './recipe.service';
+import { RecipeProjection } from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
 import { NotificationEmit } from '../notifications/notification-emit';
@@ -133,6 +134,7 @@ describe('RecipeService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RecipeService,
+        RecipeProjection,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ProductionConfig, useValue: mockProductionConfig },

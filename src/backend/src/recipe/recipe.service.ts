@@ -23,15 +23,13 @@ import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { ThreadedRecipeCommentResponseDto } from './dto/comment-response.dto';
-import {
-  LocalizedRecipeStepResponse,
-  LocalizedRecipeIngredientResponse,
-  LocalizedRecipeTagResponse,
-  RecipeMediaResponse,
-  LocalizedRecipeDetailResponse,
-  LocalizedRecipeSummaryResponse,
-} from './dto/localized-recipe.response';
+import { LocalizedRecipeDetailResponse } from './dto/localized-recipe.response';
 import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
+import {
+  RecipeProjection,
+  RECIPE_SUMMARY_INCLUDE,
+  RECIPE_DETAIL_INCLUDE,
+} from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import * as fs from 'fs';
@@ -44,6 +42,7 @@ export class RecipeService {
     private readonly translationService: TranslationService,
     private readonly productionConfig: ProductionConfig,
     private readonly notificationEmit: NotificationEmit,
+    private readonly recipeProjection: RecipeProjection,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -99,136 +98,25 @@ export class RecipeService {
     }
 
     // Fetch recipes matching filter criteria together with translations and social metrics
-    const includeConfig: any = {
-      translations: true,
-      user: {
-        select: {
-          id: true,
-          username: true,
-          avatar_url: true,
-        },
-      },
-      recipe_tags: {
-        include: {
-          tag: {
-            include: {
-              translations: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: {
-            where: { is_active: true },
-          },
-        },
-      },
-    };
-
-    if (currentUserId) {
-      includeConfig.likes = {
-        where: { user_id: currentUserId },
-        select: { user_id: true },
-      };
-    }
-
     const [recipes, total] = await Promise.all([
       this.prisma.recipe.findMany({
         ...(Object.keys(where).length > 0 ? { where } : {}),
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
-        include: includeConfig,
+        include: RECIPE_SUMMARY_INCLUDE(currentUserId),
       }),
       this.prisma.recipe.count({
         ...(Object.keys(where).length > 0 ? { where } : {}),
       }),
     ]);
 
-    const lang = filterDto.lang;
-    const items: LocalizedRecipeSummaryResponse[] = (recipes as any[]).map(
-      (recipe) => {
-        const targetLocale =
-          lang && (lang === 'it' || lang === 'en' || lang === 'fr')
-            ? lang
-            : recipe.source_lang;
-
-        const translation =
-          recipe.translations.find((t: any) => t.locale === targetLocale) ??
-          recipe.translations.find(
-            (t: any) => t.locale === recipe.source_lang,
-          ) ??
-          recipe.translations.find((t: any) => t.locale === 'en') ??
-          recipe.translations[0];
-
-        const resolved_lang = translation?.locale ?? recipe.source_lang;
-
-        const tags: LocalizedRecipeTagResponse[] = (
-          recipe.recipe_tags ?? []
-        ).map((rt: any) => {
-          const t = rt.tag;
-          const tagTrans =
-            t?.translations?.find((tr: any) => tr.locale === targetLocale) ??
-            t?.translations?.find(
-              (tr: any) => tr.locale === recipe.source_lang,
-            ) ??
-            t?.translations?.find((tr: any) => tr.locale === 'en');
-          return {
-            id: t.id,
-            slug: t.slug,
-            name: tagTrans?.name ?? t.slug,
-            resolved_lang: tagTrans?.locale ?? 'en',
-          };
-        });
-
-        return {
-          id: recipe.id,
-          course: recipe.course,
-          difficulty: recipe.difficulty,
-          prep_time: recipe.prep_time,
-          cook_time: recipe.cook_time,
-          total_time: recipe.total_time,
-          servings: recipe.servings,
-          source_lang: recipe.source_lang,
-          translation_status: recipe.translation_status,
-          cover_image_url: recipe.cover_image_url,
-          video_url: recipe.video_url,
-          created_at: recipe.created_at,
-          updated_at: recipe.updated_at,
-          author: recipe.user
-            ? {
-                id: recipe.user.id,
-                username: recipe.user.username,
-                avatar_url: recipe.user.avatar_url,
-              }
-            : null,
-          title: translation?.title ?? '',
-          description: translation?.description ?? '',
-          tags,
-          likes_count: recipe._count?.likes ?? 0,
-          comments_count: recipe._count?.comments ?? 0,
-          is_liked: currentUserId
-            ? Boolean(recipe.likes && recipe.likes.length > 0)
-            : false,
-          resolved_lang,
-          available_languages: recipe.translations.map((t: any) => t.locale),
-        };
-      },
-    );
-
-    const total_pages = Math.ceil(total / limit);
-
-    return {
-      items,
+    return this.recipeProjection.toPaginatedSummaryResponse(
+      recipes,
       total,
-      page,
-      limit,
-      total_pages,
-      has_next_page: page < total_pages,
-      has_prev_page: page > 1,
-    };
+      { ...filterDto, page, limit },
+      currentUserId,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -241,205 +129,18 @@ export class RecipeService {
     lang?: string,
     currentUserId?: number,
   ): Promise<LocalizedRecipeDetailResponse> {
-    const includeConfig: any = {
-      translations: true,
-      steps: {
-        include: {
-          translations: true,
-        },
-        orderBy: {
-          step_number: 'asc',
-        },
-      },
-      recipe_ingredients: {
-        include: {
-          ingredient: {
-            include: {
-              translations: true,
-            },
-          },
-        },
-      },
-      recipe_tags: {
-        include: {
-          tag: {
-            include: {
-              translations: true,
-            },
-          },
-        },
-      },
-      recipe_media: {
-        orderBy: {
-          order: 'asc',
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          username: true,
-          avatar_url: true,
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: {
-            where: { is_active: true },
-          },
-        },
-      },
-    };
-
-    if (currentUserId) {
-      includeConfig.likes = {
-        where: { user_id: currentUserId },
-        select: { user_id: true },
-      };
-    }
-
     // Fetch the recipe from database, joining it with its translations
     const recipe: any = await this.prisma.recipe.findUnique({
       where: {
         id: id,
       },
-      include: includeConfig,
+      include: RECIPE_DETAIL_INCLUDE(currentUserId),
     });
 
     // If recipe is not found -> throw 404 Not Found
     if (!recipe) throw new NotFoundException('Recipe not found');
 
-    // Define requested language from query.
-    // Falls back to source language if lang is not supported or not defined.
-    const targetLocale =
-      lang === 'it' || lang === 'en' || lang === 'fr'
-        ? lang
-        : recipe.source_lang;
-
-    // Define which translation to send as a response
-    const translation =
-      recipe.translations.find((t) => t.locale === targetLocale) ??
-      recipe.translations.find((t) => t.locale === recipe.source_lang) ??
-      recipe.translations[0];
-
-    // Sort recipe steps by their number
-    const sortedSteps = [...recipe.steps].sort(
-      (a, b) => a.step_number - b.step_number,
-    );
-
-    // Organize sorted steps as an array of LocalizedRecipeStepResponse
-    const steps: LocalizedRecipeStepResponse[] = sortedSteps.map((s) => {
-      const stepTrans =
-        s.translations.find((t) => t.locale === targetLocale) ??
-        s.translations.find((t) => t.locale === recipe.source_lang) ??
-        s.translations[0];
-      return {
-        id: s.id,
-        step_number: s.step_number,
-        title: stepTrans?.title ?? null,
-        description: stepTrans?.description ?? '',
-        duration: s.duration,
-        image_url: s.image_url,
-      };
-    });
-
-    // Organize recipe ingredients as an array of
-    // LocalizedRecipeIngredientResponse
-    const ingredients: LocalizedRecipeIngredientResponse[] =
-      recipe.recipe_ingredients.map((ri) => {
-        const ing = ri.ingredient;
-        const ingTrans =
-          ing.translations.find((t) => t.locale === targetLocale) ??
-          ing.translations.find((t) => t.locale === recipe.source_lang) ??
-          ing.translations.find((t) => t.locale === 'en');
-        let note: string | null = null;
-        if (ri.notes) {
-          if (typeof ri.notes === 'object' && !Array.isArray(ri.notes)) {
-            const notesObj = ri.notes as Record<string, string>;
-            note =
-              notesObj[targetLocale] ??
-              notesObj[recipe.source_lang] ??
-              notesObj['en'] ??
-              null;
-          } else if (typeof ri.notes === 'string') {
-            note = ri.notes;
-          }
-        }
-        return {
-          id: ing.id,
-          slug: ing.slug,
-          category: ing.category,
-          name: ingTrans?.name ?? ing.slug,
-          quantity: Number(ri.quantity),
-          unit: ri.unit,
-          notes: note,
-          resolved_lang: ingTrans?.locale ?? 'en',
-        };
-      });
-
-    // Organize recipe tags as an array of LocalizedRecipeTagResponse
-    const tags: LocalizedRecipeTagResponse[] = recipe.recipe_tags.map((rt) => {
-      const t = rt.tag;
-      const tagTrans =
-        t.translations.find((tr) => tr.locale === targetLocale) ??
-        t.translations.find((tr) => tr.locale === recipe.source_lang) ??
-        t.translations.find((tr) => tr.locale === 'en');
-      return {
-        id: t.id,
-        slug: t.slug,
-        name: tagTrans?.name ?? t.slug,
-        resolved_lang: tagTrans?.locale ?? 'en',
-      };
-    });
-
-    // Organize recipe media as an array of RecipeMediaResponse
-    const media: RecipeMediaResponse[] = (recipe.recipe_media ?? []).map(
-      (m) => ({
-        id: m.id,
-        url: m.url,
-        media_type: m.media_type,
-        order: m.order,
-      }),
-    );
-
-    // Return the recipe as an object of type LocalizedRecipeDetailResponse
-    return {
-      id: recipe.id,
-      course: recipe.course,
-      difficulty: recipe.difficulty,
-      prep_time: recipe.prep_time,
-      cook_time: recipe.cook_time,
-      total_time: recipe.total_time,
-      servings: recipe.servings,
-      source_lang: recipe.source_lang,
-      translation_status: recipe.translation_status,
-      cover_image_url: recipe.cover_image_url,
-      video_url: recipe.video_url,
-      created_at: recipe.created_at,
-      updated_at: recipe.updated_at,
-      author: recipe.user
-        ? {
-            id: recipe.user.id,
-            username: recipe.user.username,
-            avatar_url: recipe.user.avatar_url,
-          }
-        : null,
-      title: translation?.title ?? '',
-      description: translation?.description ?? '',
-      preservation: translation?.preservation ?? null,
-      tips: translation?.tips ?? null,
-      steps,
-      ingredients,
-      tags,
-      media,
-      likes_count: recipe._count?.likes ?? 0,
-      comments_count: recipe._count?.comments ?? 0,
-      is_liked: currentUserId
-        ? Boolean(recipe.likes && recipe.likes.length > 0)
-        : false,
-      resolved_lang: translation?.locale ?? (recipe.source_lang || 'en'),
-      available_languages: recipe.translations.map((t: any) => t.locale),
-    };
+    return this.recipeProjection.toLocalizedDetail(recipe, lang, currentUserId);
   }
 
   // ---------------------------------------------------------------------------
