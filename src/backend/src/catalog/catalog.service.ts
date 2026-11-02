@@ -195,21 +195,9 @@ export class CatalogService {
       include: { translations: true },
     });
 
-    // Maps the stored rows to { id, slug, category, translations: {it,en,fr} }
-    const nameOf = (locale: string) =>
-      created.translations.find((t) => t.locale === locale)?.name ?? '';
-    return {
-      id: created.id,
-      slug: created.slug,
-      category: created.category,
-      translations: {
-        it: nameOf('it'),
-        en: nameOf('en'),
-        fr: nameOf('fr'),
-      },
-    };
+    return this.toIngredientDetail(created);
   }
-    /*
+  /*
   POST /api/tags
   Adds a new tag to the curated catalog (admin only, enforced by CASL).
   The tag row and its three translation rows (it, en, fr) are created in a
@@ -340,17 +328,23 @@ export class CatalogService {
         translations: {
           upsert: [
             {
-              where: { ingredient_id_locale: { ingredient_id: id, locale: 'it' } },
+              where: {
+                ingredient_id_locale: { ingredient_id: id, locale: 'it' },
+              },
               create: { locale: 'it', name: dto.translations.it },
               update: { name: dto.translations.it },
             },
             {
-              where: { ingredient_id_locale: { ingredient_id: id, locale: 'en' } },
+              where: {
+                ingredient_id_locale: { ingredient_id: id, locale: 'en' },
+              },
               create: { locale: 'en', name: dto.translations.en },
               update: { name: dto.translations.en },
             },
             {
-              where: { ingredient_id_locale: { ingredient_id: id, locale: 'fr' } },
+              where: {
+                ingredient_id_locale: { ingredient_id: id, locale: 'fr' },
+              },
               create: { locale: 'fr', name: dto.translations.fr },
               update: { name: dto.translations.fr },
             },
@@ -409,7 +403,7 @@ export class CatalogService {
     };
   }
 
-    /*
+  /*
   DELETE /api/ingredients/:id
   Deletes a curated ingredient (admin only, enforced by CASL).
   Refuses with 409 if the ingredient is referenced by at least one recipe,

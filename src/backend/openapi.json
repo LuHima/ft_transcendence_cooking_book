@@ -2083,7 +2083,14 @@
             }
           },
           "404": {
-            "description": "Tag not found"
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
           },
           "500": {
             "description": "Internal server error",
@@ -2102,6 +2109,259 @@
           }
         ],
         "summary": "Update a curated tag",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.",
+        "operationId": "CatalogController_deleteTag",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag deleted successfully"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can delete catalog tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Tag is used by one or more recipes and cannot be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete a curated tag",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/ingredients/{id}": {
+      "delete": {
+        "description": "Deletes an ingredient from the catalog. Returns 409 if the ingredient is used by one or more recipes. Restricted to administrators.",
+        "operationId": "CatalogController_deleteIngredient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ingredient deleted successfully"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can delete catalog ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ingredient not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ingredient is used by one or more recipes and cannot be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete a curated ingredient",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "patch": {
+        "description": "Updates the Italian, English and French names of an existing ingredient. The slug and category are immutable. Restricted to administrators.",
+        "operationId": "CatalogController_updateIngredient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIngredientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ingredient updated with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can update catalog ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ingredient not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Update a curated ingredient",
         "tags": [
           "Catalog"
         ]
@@ -6859,6 +7119,22 @@
         "properties": {
           "translations": {
             "description": "Tag display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "translations"
+        ]
+      },
+      "UpdateIngredientDto": {
+        "type": "object",
+        "properties": {
+          "translations": {
+            "description": "Ingredient display name in Italian, English and French",
             "allOf": [
               {
                 "$ref": "#/components/schemas/TranslationDto"

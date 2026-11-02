@@ -36,6 +36,8 @@ describe('CatalogService', () => {
             tag: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
               delete: jest.fn(),
             },
             recipeIngredient: {
@@ -242,7 +244,12 @@ describe('CatalogService', () => {
   });
 
   describe('createIngredient', () => {
-    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+    const admin = {
+      id: 1,
+      username: 'admin',
+      role: 'admin',
+      session: 1,
+    } as any;
     const dto = {
       slug: 'bell_pepper',
       category: IngredientCategory.produce,
@@ -312,9 +319,14 @@ describe('CatalogService', () => {
       expect(prisma.ingredient.create).not.toHaveBeenCalled();
     });
   });
-  
+
   describe('deleteIngredient', () => {
-    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+    const admin = {
+      id: 1,
+      username: 'admin',
+      role: 'admin',
+      session: 1,
+    } as any;
 
     it('deletes an ingredient that is not used by any recipe', async () => {
       (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
@@ -374,7 +386,12 @@ describe('CatalogService', () => {
   });
 
   describe('deleteTag', () => {
-    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+    const admin = {
+      id: 1,
+      username: 'admin',
+      role: 'admin',
+      session: 1,
+    } as any;
 
     it('deletes a tag that is not used by any recipe', async () => {
       (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
@@ -428,7 +445,12 @@ describe('CatalogService', () => {
   });
 
   describe('updateIngredient', () => {
-    const admin = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+    const admin = {
+      id: 1,
+      username: 'admin',
+      role: 'admin',
+      session: 1,
+    } as any;
     const dto = {
       translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
     };
@@ -483,6 +505,170 @@ describe('CatalogService', () => {
         status: HttpStatus.FORBIDDEN,
       });
       expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createTag', () => {
+    const admin = {
+      id: 1,
+      username: 'admin',
+      role: 'admin',
+      session: 1,
+    } as any;
+    const dto = {
+      slug: 'gluten_free',
+      translations: {
+        it: 'Senza glutine',
+        en: 'Gluten free',
+        fr: 'Sans gluten',
+      },
+    };
+
+    it('creates the tag with its three translations', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.tag.create as jest.Mock).mockResolvedValue({
+        id: 5,
+        slug: 'gluten_free',
+        translations: [
+          { locale: 'it', name: 'Senza glutine' },
+          { locale: 'en', name: 'Gluten free' },
+          { locale: 'fr', name: 'Sans gluten' },
+        ],
+      });
+
+      const result = await service.createTag(admin, dto);
+
+      expect(casl.check).toHaveBeenCalledWith(admin, Action.Create, 'Tag');
+      expect(prisma.tag.create).toHaveBeenCalledWith({
+        data: {
+          slug: 'gluten_free',
+          translations: {
+            create: [
+              { locale: 'it', name: 'Senza glutine' },
+              { locale: 'en', name: 'Gluten free' },
+              { locale: 'fr', name: 'Sans gluten' },
+            ],
+          },
+        },
+        include: { translations: true },
+      });
+      expect(result).toEqual({
+        id: 5,
+        slug: 'gluten_free',
+        translations: {
+          it: 'Senza glutine',
+          en: 'Gluten free',
+          fr: 'Sans gluten',
+        },
+      });
+    });
+
+    it('throws 409 when the slug already exists', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({ id: 5 });
+
+      await expect(service.createTag(admin, dto)).rejects.toMatchObject({
+        status: HttpStatus.CONFLICT,
+      });
+      expect(prisma.tag.create).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the database when CASL denies the action', async () => {
+      casl.check.mockImplementation(() => {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      });
+
+      await expect(service.createTag(admin, dto)).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+      });
+      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
+      expect(prisma.tag.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateTag', () => {
+    const admin = {
+      id: 1,
+      username: 'admin',
+      role: 'admin',
+      session: 1,
+    } as any;
+    const dto = {
+      translations: {
+        it: 'Senza glutine',
+        en: 'Gluten free',
+        fr: 'Sans gluten',
+      },
+    };
+
+    it('updates the three translations of an existing tag', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({ id: 5 });
+      (prisma.tag.update as jest.Mock).mockResolvedValue({
+        id: 5,
+        slug: 'gluten_free',
+        translations: [
+          { locale: 'it', name: 'Senza glutine' },
+          { locale: 'en', name: 'Gluten free' },
+          { locale: 'fr', name: 'Sans gluten' },
+        ],
+      });
+
+      const result = await service.updateTag(admin, 5, dto);
+
+      expect(casl.check).toHaveBeenCalledWith(admin, Action.Update, 'Tag');
+      expect(prisma.tag.update).toHaveBeenCalledWith({
+        where: { id: 5 },
+        data: {
+          translations: {
+            upsert: [
+              {
+                where: { tag_id_locale: { tag_id: 5, locale: 'it' } },
+                create: { locale: 'it', name: dto.translations.it },
+                update: { name: dto.translations.it },
+              },
+              {
+                where: { tag_id_locale: { tag_id: 5, locale: 'en' } },
+                create: { locale: 'en', name: dto.translations.en },
+                update: { name: dto.translations.en },
+              },
+              {
+                where: { tag_id_locale: { tag_id: 5, locale: 'fr' } },
+                create: { locale: 'fr', name: dto.translations.fr },
+                update: { name: dto.translations.fr },
+              },
+            ],
+          },
+        },
+        include: { translations: true },
+      });
+      expect(result).toEqual({
+        id: 5,
+        slug: 'gluten_free',
+        translations: {
+          it: 'Senza glutine',
+          en: 'Gluten free',
+          fr: 'Sans gluten',
+        },
+      });
+    });
+
+    it('throws 404 if the tag does not exist', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.updateTag(admin, 99, dto)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+      expect(prisma.tag.update).not.toHaveBeenCalled();
+    });
+
+    it('throws 403 if CASL denies the action', async () => {
+      casl.check.mockImplementation(() => {
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      });
+
+      await expect(service.updateTag(admin, 5, dto)).rejects.toMatchObject({
+        status: HttpStatus.FORBIDDEN,
+      });
+      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
     });
   });
 });

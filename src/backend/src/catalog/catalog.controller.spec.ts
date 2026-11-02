@@ -1,16 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogController } from './catalog.controller';
-import { Role } from '@prisma/client';
 import { CatalogService } from './catalog.service';
 import {
   Course,
   RecipeDifficulty,
   UnitOfMeasure,
   IngredientCategory,
+  Role,
 } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from 'src/common/guards/auth.guard';
-import { IngredientCategory, Role } from '@prisma/client';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
@@ -32,7 +31,11 @@ describe('CatalogController', () => {
               id: 9,
               slug: 'bell_pepper',
               category: IngredientCategory.produce,
-              translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+              translations: {
+                it: 'Peperone',
+                en: 'Bell pepper',
+                fr: 'Poivron',
+              },
             }),
             getIngredients: jest.fn().mockResolvedValue([
               {
@@ -48,20 +51,42 @@ describe('CatalogController', () => {
             deleteTag: jest.fn().mockResolvedValue({
               message: "Tag 'gluten_free' deleted successfully",
             }),
+            createTag: jest.fn().mockResolvedValue({
+              id: 5,
+              slug: 'gluten_free',
+              translations: {
+                it: 'Senza glutine',
+                en: 'Gluten free',
+                fr: 'Sans gluten',
+              },
+            }),
+            updateTag: jest.fn().mockResolvedValue({
+              id: 5,
+              slug: 'gluten_free',
+              translations: {
+                it: 'Senza glutine',
+                en: 'Gluten free',
+                fr: 'Sans gluten',
+              },
+            }),
             updateIngredient: jest.fn().mockResolvedValue({
               id: 7,
               slug: 'bell_pepper',
               category: IngredientCategory.produce,
-              translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
+              translations: {
+                it: 'Peperone',
+                en: 'Bell pepper',
+                fr: 'Poivron',
+              },
             }),
           },
         },
-        { provide: JwtService, useValue: {}},
+        { provide: JwtService, useValue: {} },
       ],
     })
-    .overrideGuard(AuthGuard)
-    .useValue({ canActivate: () => true })
-    .compile();
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<CatalogController>(CatalogController);
     service = module.get<CatalogService>(CatalogService);
@@ -104,7 +129,12 @@ describe('CatalogController', () => {
 
   describe('createIngredient', () => {
     it('should delegate to service.createIngredient with user and body', async () => {
-      const user = { id: 1, username: 'admin', role: 'admin', session: 1 } as any;
+      const user = {
+        id: 1,
+        username: 'admin',
+        role: 'admin',
+        session: 1,
+      } as any;
       const dto = {
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -117,7 +147,7 @@ describe('CatalogController', () => {
       expect(service.createIngredient).toHaveBeenCalledWith(user, dto);
     });
   });
-  
+
   describe('deleteIngredient', () => {
     it('delegates to service.deleteIngredient with user and id', async () => {
       const user = { id: 1, role: Role.admin } as any;
@@ -143,6 +173,43 @@ describe('CatalogController', () => {
       });
     });
   });
+  describe('createTag', () => {
+    it('delegates to service.createTag with user and body', async () => {
+      const user = { id: 1, role: Role.admin } as any;
+      const dto = {
+        slug: 'gluten_free',
+        translations: {
+          it: 'Senza glutine',
+          en: 'Gluten free',
+          fr: 'Sans gluten',
+        },
+      };
+
+      const result = await controller.createTag(user, dto);
+
+      expect(service.createTag).toHaveBeenCalledWith(user, dto);
+      expect(result.id).toBe(5);
+    });
+  });
+
+  describe('updateTag', () => {
+    it('delegates to service.updateTag with user, id and body', async () => {
+      const user = { id: 1, role: Role.admin } as any;
+      const dto = {
+        translations: {
+          it: 'Senza glutine',
+          en: 'Gluten free',
+          fr: 'Sans gluten',
+        },
+      };
+
+      const result = await controller.updateTag(user, 5, dto);
+
+      expect(service.updateTag).toHaveBeenCalledWith(user, 5, dto);
+      expect(result.id).toBe(5);
+    });
+  });
+
   describe('updateIngredient', () => {
     it('delegates to service.updateIngredient with user, id and body', async () => {
       const user = { id: 1, role: Role.admin } as any;

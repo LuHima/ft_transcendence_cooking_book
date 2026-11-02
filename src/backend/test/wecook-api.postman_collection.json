@@ -15301,6 +15301,331 @@
           }
         },
         {
+          "id": "ac6aece4-5634-49a7-8a76-17884904757c",
+          "name": "Create a curated tag",
+          "request": {
+            "name": "Create a curated tag",
+            "description": {
+              "content": "Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "tags"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "7e091eb2-2112-4c07-88f3-30cb82115f26",
+              "name": "Tag created with all its translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c5373edf-aef1-4cf0-88de-784189e7d39a",
+              "name": "Invalid slug or translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2682794e-35e0-4945-89c4-65242411a3d0",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4fdee706-872c-4671-8db8-1e6d67d1c020",
+              "name": "Only administrators can create catalog tags",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "14e6be32-cf53-406d-88fe-bbd8dbf74e2c",
+              "name": "A tag with this slug already exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "380e8ec1-3cc5-4141-811c-1d59e2d105ef",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "ccc51186-e814-453a-870a-3e9023e49e60",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
           "id": "a0f02ff3-7dc2-4b1a-8975-649c7b5d2a06",
           "name": "List and search curated ingredients",
           "request": {
@@ -15519,6 +15844,1780 @@
                   "    pm.expect(item).to.have.property(\"category\").that.is.a(\"string\");",
                   "  }",
                   "});",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "9a6748b9-6302-49dc-8488-178e22c75620",
+          "name": "Create a curated ingredient",
+          "request": {
+            "name": "Create a curated ingredient",
+            "description": {
+              "content": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "ingredients"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "8e6d8931-dc68-48f2-8463-c83665099c8b",
+              "name": "Ingredient created with all its translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 12,\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "fcf999f6-8e56-4254-80b1-1164b2815229",
+              "name": "Invalid slug, category or translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7bf5f9bd-dc47-4b86-8fab-16212b4d991e",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5826103f-5565-4b3a-841a-923e030edce8",
+              "name": "Only administrators can create catalog ingredients",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5f839586-0ad8-4ce3-8d94-4693e16e778d",
+              "name": "An ingredient with this slug already exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0f51603b-6c99-48fd-8a5d-a78f06805561",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "020185ed-1d4a-4f30-853e-cf7cb5454753",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "8259f436-d807-4c48-8a13-615dd8b61af7",
+          "name": "Update a curated tag",
+          "request": {
+            "name": "Update a curated tag",
+            "description": {
+              "content": "Updates the Italian, English and French names of an existing tag. The slug is immutable. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "tags",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "6928.3229847806115",
+                  "key": "id",
+                  "description": "(Required) "
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "4ea7ae45-e8dc-4c66-8d9b-ae29006a1eed",
+              "name": "Tag updated with all its translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0589f9c2-3716-4da2-8f01-da63867e8bca",
+              "name": "Invalid translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ccade9a4-2653-4b6f-88ef-38082f32a78a",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3b183971-dbaf-404b-8c72-bb646e0b7973",
+              "name": "Only administrators can update catalog tags",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8fba27c9-c93a-4e16-8e1b-d98607d5572d",
+              "name": "Tag not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "081d6006-5b08-4f55-8dfe-b6071bb3d861",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "cebe31e2-68e7-4e1b-830a-147d34ca31ab",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(",
+                  "  \"Response adheres to TagDetailResponseDto schema\",",
+                  "  function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"object\");",
+                  "    pm.expect(jsonData).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(jsonData).to.have.property(\"slug\").that.is.a(\"string\");",
+                  "    pm.expect(jsonData).to.have.property(\"translations\").that.is.an(\"object\");",
+                  "    pm.expect(jsonData.translations).to.have.property(\"it\").that.is.a(\"string\");",
+                  "    pm.expect(jsonData.translations).to.have.property(\"en\").that.is.a(\"string\");",
+                  "    pm.expect(jsonData.translations).to.have.property(\"fr\").that.is.a(\"string\");",
+                  "  },",
+                  ");",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "17c64cb4-1786-413a-8cf1-fdc19a79abef",
+          "name": "Delete a curated tag",
+          "request": {
+            "name": "Delete a curated tag",
+            "description": {
+              "content": "Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "tags",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "6928.3229847806115",
+                  "key": "id",
+                  "description": "(Required) "
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE"
+          },
+          "response": [
+            {
+              "id": "8d0d0b22-e776-4b1d-8292-b038e7042df1",
+              "name": "Tag deleted successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "bd0f11c2-cdba-4ec7-84e8-caf7402fa95a",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1eea4874-0a9b-4bf0-8814-7c2f5c8e3511",
+              "name": "Only administrators can delete catalog tags",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6466d161-c5ea-4167-82f8-b519fcdc512e",
+              "name": "Tag not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "88726447-f5af-49a9-85fd-5aba0570fc96",
+              "name": "Tag is used by one or more recipes and cannot be deleted",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b992df1f-9d56-4d8e-8c22-13be863ace58",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "tags",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "356cb189-c6a2-471d-80cc-10a894ea3bdc",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "49d6e8ff-0610-41ac-8145-2e30cc7e0024",
+          "name": "Delete a curated ingredient",
+          "request": {
+            "name": "Delete a curated ingredient",
+            "description": {
+              "content": "Deletes an ingredient from the catalog. Returns 409 if the ingredient is used by one or more recipes. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "ingredients",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "6928.3229847806115",
+                  "key": "id",
+                  "description": "(Required) "
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE"
+          },
+          "response": [
+            {
+              "id": "bd60a09e-bd41-4a1f-8d1e-09e75f938be0",
+              "name": "Ingredient deleted successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "2f76300e-17c3-4ea7-881c-10694a9d82bb",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "426d30bb-d3ad-444c-87fe-011e0002355e",
+              "name": "Only administrators can delete catalog ingredients",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "85941887-4928-46c5-8f1b-d216d38b8086",
+              "name": "Ingredient not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9e004bde-cd0e-4e6f-838a-127af16ffe4b",
+              "name": "Ingredient is used by one or more recipes and cannot be deleted",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d6240a10-4eb4-4956-840a-7b2aaf62c403",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "06fad585-e4e0-4a58-8c6b-82973a6838d2",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "d9636eaf-1179-4c63-893d-2833b4a7c914",
+          "name": "Update a curated ingredient",
+          "request": {
+            "name": "Update a curated ingredient",
+            "description": {
+              "content": "Updates the Italian, English and French names of an existing ingredient. The slug and category are immutable. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "ingredients",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "6928.3229847806115",
+                  "key": "id",
+                  "description": "(Required) "
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "a2813239-c575-4974-883c-b5a3c9315fbb",
+              "name": "Ingredient updated with all its translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 12,\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "85a33ab4-d26c-400c-8050-4bb742d7cada",
+              "name": "Invalid translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "550b67d9-69e9-4ca6-8c1c-339bd3122ccf",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "02190032-1023-48da-82f9-46a50798c3b7",
+              "name": "Only administrators can update catalog ingredients",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "81d43dfe-158b-4b10-8585-33deb01c66ea",
+              "name": "Ingredient not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bcc4fb0e-e720-466e-8ac0-ec1c3685afc5",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "ingredients",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "6928.3229847806115",
+                      "key": "id",
+                      "description": "(Required) "
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "c5b516d4-e628-4213-835f-1107e1b9babb",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(",
+                  "  \"Response adheres to IngredientDetailResponseDto schema\",",
+                  "  function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"object\");",
+                  "    pm.expect(jsonData).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(jsonData).to.have.property(\"slug\").that.is.a(\"string\");",
+                  "    pm.expect(jsonData).to.have.property(\"category\").that.is.a(\"string\");",
+                  "    pm.expect(jsonData).to.have.property(\"translations\").that.is.an(\"object\");",
+                  "    pm.expect(jsonData.translations).to.have.property(\"it\").that.is.a(\"string\");",
+                  "    pm.expect(jsonData.translations).to.have.property(\"en\").that.is.a(\"string\");",
+                  "    pm.expect(jsonData.translations).to.have.property(\"fr\").that.is.a(\"string\");",
+                  "  },",
+                  ");",
                   ""
                 ]
               }
@@ -17156,13 +19255,13 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "action_taken",
+                  "value": "dismissed",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "user",
+                  "value": "comment",
                   "description": "Filter reports by target entity type"
                 }
               ],

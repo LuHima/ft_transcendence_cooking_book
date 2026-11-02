@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -21,6 +31,7 @@ import {
   ApiConflictResponseDto,
   ApiForbiddenResponseDto,
   ApiInternalServerErrorResponseDto,
+  ApiNotFoundResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import {
@@ -177,6 +188,7 @@ export class CatalogController {
   })
   @ApiNotFoundResponse({
     description: 'Tag not found',
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Patch('tags/:id')
@@ -188,7 +200,7 @@ export class CatalogController {
     return await this.catalogService.updateTag(user, id, dto);
   }
 
-    /**
+  /**
    * Delete a curated tag (admin only). Refused if the tag is used by any recipe.
    */
   @ApiOperation({
@@ -205,6 +217,7 @@ export class CatalogController {
   })
   @ApiNotFoundResponse({
     description: 'Tag not found',
+    type: ApiNotFoundResponseDto,
   })
   @ApiConflictResponse({
     description: 'Tag is used by one or more recipes and cannot be deleted',
@@ -236,9 +249,11 @@ export class CatalogController {
   })
   @ApiNotFoundResponse({
     description: 'Ingredient not found',
+    type: ApiNotFoundResponseDto,
   })
   @ApiConflictResponse({
-    description: 'Ingredient is used by one or more recipes and cannot be deleted',
+    description:
+      'Ingredient is used by one or more recipes and cannot be deleted',
     type: ApiConflictResponseDto,
   })
   @Auth()
@@ -250,7 +265,7 @@ export class CatalogController {
     return await this.catalogService.deleteIngredient(user, id);
   }
 
-    /**
+  /**
    * Update the translations of an existing ingredient (admin only).
    */
   @ApiOperation({
@@ -272,6 +287,7 @@ export class CatalogController {
   })
   @ApiNotFoundResponse({
     description: 'Ingredient not found',
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Patch('ingredients/:id')
