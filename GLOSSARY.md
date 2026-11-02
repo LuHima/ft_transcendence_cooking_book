@@ -132,6 +132,18 @@ _Avoid_: Population, expanding, joining, embedding
 A personalized, chronological stream of published recipes authored exclusively by a community member's confirmed friends.
 _Avoid_: Wall, timeline, newsfeed, stream, home discovery
 
+**User Block**:
+A unilateral self-defense action initiated by a community member to enforce complete mutual invisibility and sever all social interactions with another account.
+_Avoid_: Ban, blacklist, mute, restriction
+
+**Content Report**:
+A formal moderation flag submitted by an authenticated member against an offensive, abusive, or copyright-violating recipe, comment, or user.
+_Avoid_: Flag, complaint, ticket, strike
+
+**Moderation Queue**:
+An administrative triage interface allowing platform moderators and administrators to inspect, review, and act upon pending content reports.
+_Avoid_: Admin inbox, complaint list, report table
+
 ## API Governance & Documentation
 
 **API Contract**:
