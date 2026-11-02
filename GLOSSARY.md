@@ -76,6 +76,10 @@ _Avoid_: Default language, primary locale
 The lifecycle state (`completed` or `failed`) tracking automated machine translation via LibreTranslate.
 _Avoid_: Translated flag, status code
 
+**Recipe Projection**:
+The dedicated process and module responsible for transforming raw relational recipe records and their localized translation tables into standardized, user-contextualized DTO projections (lightweight summary cards or comprehensive detail views) based on requested locale, author fallback rules, and viewer authentication state.
+_Avoid_: Recipe mapper, DTO serializer, view builder, response formatter
+
 ## Social Interactions & Metrics
 
 **Cumulative Likes**:
@@ -161,3 +165,7 @@ _Avoid_: Collection overwrite, collection import, spec replacement, Postman paid
 **Headless Spec Generation**:
 The process of compiling and extracting OpenAPI schemas directly from framework metadata and TypeScript reflection without initiating database connections or binding network sockets.
 _Avoid_: App booting, live export, runtime dumping
+
+**Query-Projection Decoupling**:
+An architectural pattern where domain services retain control over database query criteria and relation selection, while delegating localization, formatting, and DTO shaping to a dedicated projection module.
+_Avoid_: God repository, query mapper, fat service

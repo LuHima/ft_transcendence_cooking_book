@@ -114,7 +114,7 @@ export class RecipeProjection {
   /**
    * Executes four-tier cascade: targetLocale -> source_lang -> 'en' -> translations[0].
    */
-  resolveTranslation<T extends { locale: string }>(
+  resolveTranslation<T extends { locale: string } = any>(
     translations: T[],
     targetLocale: string,
     sourceLang: string,
@@ -188,7 +188,7 @@ export class RecipeProjection {
     currentUserId?: number,
   ): LocalizedRecipeSummaryResponse {
     const targetLocale = this.resolveLocale(lang, recipe.source_lang);
-    const translation = this.resolveTranslation(
+    const translation: any = this.resolveTranslation(
       recipe.translations ?? [],
       targetLocale,
       recipe.source_lang,
@@ -284,7 +284,7 @@ export class RecipeProjection {
     currentUserId?: number,
   ): LocalizedRecipeDetailResponse {
     const targetLocale = this.resolveLocale(lang, recipe.source_lang);
-    const translation = this.resolveTranslation(
+    const translation: any = this.resolveTranslation(
       recipe.translations ?? [],
       targetLocale,
       recipe.source_lang,
@@ -301,7 +301,7 @@ export class RecipeProjection {
     );
 
     const steps: LocalizedRecipeStepResponse[] = sortedSteps.map((s: any) => {
-      const stepTrans = this.resolveTranslation(
+      const stepTrans: any = this.resolveTranslation(
         s.translations ?? [],
         targetLocale,
         recipe.source_lang,
@@ -320,7 +320,7 @@ export class RecipeProjection {
       recipe.recipe_ingredients ?? []
     ).map((ri: any) => {
       const ing = ri.ingredient ?? ri;
-      const ingTrans = this.resolveTranslation(
+      const ingTrans: any = this.resolveTranslation(
         ing.translations ?? [],
         targetLocale,
         recipe.source_lang,
