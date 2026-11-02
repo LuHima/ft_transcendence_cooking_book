@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { FeedService } from './feed.service';
+import { RecipeProjection } from '../recipe/recipe.projection';
 import { PrismaService } from 'prisma/prisma.service';
 import { Course, RecipeDifficulty, TranslationStatus } from '@prisma/client';
 
@@ -14,6 +15,7 @@ describe('FeedService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FeedService,
+        RecipeProjection,
         {
           provide: PrismaService,
           useValue: {
