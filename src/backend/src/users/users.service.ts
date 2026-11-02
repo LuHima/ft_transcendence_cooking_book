@@ -193,6 +193,8 @@ export class UsersService {
               ? 'pending_sent'
               : 'pending_received',
           );
+        } else if (f.status === 'rejected') {
+          friendshipMap.set(otherUserId, 'none');
         } else {
           friendshipMap.set(otherUserId, 'none');
         }
@@ -285,6 +287,8 @@ export class UsersService {
         } else {
           friendship_status = 'pending_received';
         }
+      } else if (friendship.status === 'rejected') {
+        friendship_status = 'none';
       } else {
         friendship_status = 'none';
       }

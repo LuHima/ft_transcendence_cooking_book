@@ -3881,7 +3881,7 @@
     },
     "/api/friends/requests/{addresseeId}": {
       "post": {
-        "description": "Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship.",
+        "description": "Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship and prunes the pending notification. Enforces a 30-day anti-harassment cooldown if caller was previously rejected by recipient. Idempotently handles concurrent duplicate requests.",
         "operationId": "FriendsController_sendFriendRequest",
         "parameters": [
           {
@@ -3937,7 +3937,7 @@
             }
           },
           "409": {
-            "description": "Already friends with this user or friend request already sent",
+            "description": "Already friends with this user, friend request already sent, or 30-day rejection cooldown active",
             "content": {
               "application/json": {
                 "schema": {
@@ -4047,7 +4047,7 @@
     },
     "/api/friends/requests/{requesterId}/accept": {
       "post": {
-        "description": "Accepts an incoming pending friend request from the specified user.",
+        "description": "Accepts an incoming pending friend request from the specified user, establishes friendship, emits acceptance notification, and deletes incoming request notification from recipient inbox.",
         "operationId": "FriendsController_acceptFriendRequest",
         "parameters": [
           {
@@ -4126,7 +4126,7 @@
     },
     "/api/friends/requests/{requesterId}/reject": {
       "post": {
-        "description": "Rejects an incoming pending friend request, hard deleting the request and cleaning up inbox notification.",
+        "description": "Rejects an incoming pending friend request, updating relationship status to rejected to enforce a 30-day anti-harassment cooldown, and deletes incoming notification from recipient inbox.",
         "operationId": "FriendsController_rejectFriendRequest",
         "parameters": [
           {
@@ -4205,7 +4205,7 @@
     },
     "/api/friends/{friendId}": {
       "delete": {
-        "description": "Silently removes an established friendship without notifying the other user.",
+        "description": "Silently removes an established friendship without notifying the other user and prunes unread friend notifications between both parties.",
         "operationId": "FriendsController_removeFriend",
         "parameters": [
           {

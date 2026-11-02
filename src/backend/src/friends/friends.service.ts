@@ -110,7 +110,7 @@ export class FriendsService {
   }
 
   /**
-   * Silently remove an established friendship.
+   * Silently remove an established friendship and prune unread notifications.
    */
   async removeFriend(
     userId: number,
@@ -134,6 +134,22 @@ export class FriendsService {
       where: { id: friendship.id },
     });
 
+    await this.prisma.notification.deleteMany({
+      where: {
+        OR: [
+          { user_id: userId, actor_id: friendId },
+          { user_id: friendId, actor_id: userId },
+        ],
+        action: {
+          in: [
+            NotificationAction.friend_request,
+            NotificationAction.friend_accept,
+          ],
+        },
+        is_read: false,
+      },
+    });
+
     return { message: 'Friend removed successfully' };
   }
 
@@ -148,8 +164,12 @@ export class FriendsService {
       throw new BadRequestException('Cannot send friend request to yourself');
     }
 
-    const recipient = await this.prisma.user.findUnique({
-      where: { id: recipientId },
+    const recipient = await this.prisma.user.findFirst({
+      where: {
+        id: recipientId,
+        status: 'active',
+        deleted_at: null,
+      },
       select: { id: true },
     });
     if (!recipient) {
@@ -180,6 +200,69 @@ export class FriendsService {
       throw new ConflictException('Friend request already sent');
     }
 
+    // Check Rejection Cooldown:
+    // If outgoing request was previously rejected, enforce 30-day cooldown
+    const existingRejected = await this.prisma.friendship.findFirst({
+      where: {
+        requester_id: requesterId,
+        addressee_id: recipientId,
+        status: 'rejected',
+      },
+    });
+    if (existingRejected) {
+      const COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+      const elapsed = Date.now() - existingRejected.updated_at.getTime();
+      if (elapsed < COOLDOWN_MS) {
+        throw new ConflictException(
+          'Friend request cannot be sent to this user',
+        );
+      }
+      await this.prisma.friendship.update({
+        where: { id: existingRejected.id },
+        data: {
+          status: 'pending',
+          updated_at: new Date(),
+        },
+      });
+      await this.notificationEmit.notification(
+        { id_user: requesterId, id_target: recipientId },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.friend_request,
+        },
+      );
+      return { message: 'Friend request sent', status: 'pending' };
+    }
+
+    // If reverse request was rejected (the rejecter now initiates a request to the rejected member),
+    // allow the request without cooldown, flipping requester/addressee and transitioning to pending.
+    const reverseRejected = await this.prisma.friendship.findFirst({
+      where: {
+        requester_id: recipientId,
+        addressee_id: requesterId,
+        status: 'rejected',
+      },
+    });
+    if (reverseRejected) {
+      await this.prisma.friendship.update({
+        where: { id: reverseRejected.id },
+        data: {
+          requester_id: requesterId,
+          addressee_id: recipientId,
+          status: 'pending',
+          updated_at: new Date(),
+        },
+      });
+      await this.notificationEmit.notification(
+        { id_user: requesterId, id_target: recipientId },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.friend_request,
+        },
+      );
+      return { message: 'Friend request sent', status: 'pending' };
+    }
+
     // Cross-request auto-accept
     const incomingPending = await this.prisma.friendship.findFirst({
       where: {
@@ -192,7 +275,19 @@ export class FriendsService {
     if (incomingPending) {
       await this.prisma.friendship.update({
         where: { id: incomingPending.id },
-        data: { status: 'accepted' },
+        data: {
+          status: 'accepted',
+          updated_at: new Date(),
+        },
+      });
+
+      // Prune caller's incoming request notification
+      await this.prisma.notification.deleteMany({
+        where: {
+          user_id: requesterId,
+          actor_id: recipientId,
+          action: NotificationAction.friend_request,
+        },
       });
 
       await this.notificationEmit.notification(
@@ -209,21 +304,32 @@ export class FriendsService {
       };
     }
 
-    await this.prisma.friendship.create({
-      data: {
-        requester_id: requesterId,
-        addressee_id: recipientId,
-        status: 'pending',
-      },
-    });
+    try {
+      await this.prisma.friendship.create({
+        data: {
+          requester_id: requesterId,
+          addressee_id: recipientId,
+          status: 'pending',
+        },
+      });
 
-    await this.notificationEmit.notification(
-      { id_user: requesterId, id_target: recipientId },
-      {
-        subject: NotificationSubject.user,
-        action: NotificationAction.friend_request,
-      },
-    );
+      await this.notificationEmit.notification(
+        { id_user: requesterId, id_target: recipientId },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.friend_request,
+        },
+      );
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // Idempotent double-click success
+        return { message: 'Friend request sent', status: 'pending' };
+      }
+      throw error;
+    }
 
     return {
       message: 'Friend request sent',
@@ -310,7 +416,19 @@ export class FriendsService {
 
     await this.prisma.friendship.update({
       where: { id: pendingRequest.id },
-      data: { status: 'accepted' },
+      data: {
+        status: 'accepted',
+        updated_at: new Date(),
+      },
+    });
+
+    // Permanently delete incoming friend_request notification from recipient's inbox
+    await this.prisma.notification.deleteMany({
+      where: {
+        user_id: userId,
+        actor_id: requesterId,
+        action: NotificationAction.friend_request,
+      },
     });
 
     await this.notificationEmit.notification(
@@ -325,7 +443,8 @@ export class FriendsService {
   }
 
   /**
-   * Reject an incoming pending friend request, hard delete row and clean notifications.
+   * Reject an incoming pending friend request, update row to rejected (enforcing 30-day cooldown),
+   * and clean up notifications.
    */
   async rejectFriendRequest(
     userId: number,
@@ -343,8 +462,12 @@ export class FriendsService {
       throw new NotFoundException('Friend request not found');
     }
 
-    await this.prisma.friendship.delete({
+    await this.prisma.friendship.update({
       where: { id: pendingRequest.id },
+      data: {
+        status: 'rejected',
+        updated_at: new Date(),
+      },
     });
 
     // Cascading cleanup of notification in current user's inbox
@@ -352,7 +475,7 @@ export class FriendsService {
       where: {
         user_id: userId,
         actor_id: requesterId,
-        action: 'friend_request',
+        action: NotificationAction.friend_request,
       },
     });
 

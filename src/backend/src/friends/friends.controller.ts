@@ -108,7 +108,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Send friend request',
     description:
-      'Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship.',
+      'Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship and prunes the pending notification. Enforces a 30-day anti-harassment cooldown if caller was previously rejected by recipient. Idempotently handles concurrent duplicate requests.',
   })
   @ApiParam({
     name: 'addresseeId',
@@ -131,7 +131,7 @@ export class FriendsController {
   })
   @ApiConflictResponse({
     description:
-      'Already friends with this user or friend request already sent',
+      'Already friends with this user, friend request already sent, or 30-day rejection cooldown active',
     type: ApiConflictResponseDto,
   })
   @Auth()
@@ -149,7 +149,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Accept incoming friend request',
     description:
-      'Accepts an incoming pending friend request from the specified user.',
+      'Accepts an incoming pending friend request from the specified user, establishes friendship, emits acceptance notification, and deletes incoming request notification from recipient inbox.',
   })
   @ApiParam({
     name: 'requesterId',
@@ -184,7 +184,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Reject incoming friend request',
     description:
-      'Rejects an incoming pending friend request, hard deleting the request and cleaning up inbox notification.',
+      'Rejects an incoming pending friend request, updating relationship status to rejected to enforce a 30-day anti-harassment cooldown, and deletes incoming notification from recipient inbox.',
   })
   @ApiParam({
     name: 'requesterId',
@@ -254,7 +254,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Remove a friend',
     description:
-      'Silently removes an established friendship without notifying the other user.',
+      'Silently removes an established friendship without notifying the other user and prunes unread friend notifications between both parties.',
   })
   @ApiParam({
     name: 'friendId',

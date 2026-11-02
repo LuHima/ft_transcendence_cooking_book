@@ -5574,7 +5574,7 @@
           "request": {
             "name": "Send friend request",
             "description": {
-              "content": "Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship.",
+              "content": "Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship and prunes the pending notification. Enforces a 30-day anti-harassment cooldown if caller was previously rejected by recipient. Idempotently handles concurrent duplicate requests.",
               "type": "text/plain"
             },
             "url": {
@@ -5792,8 +5792,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "29f820e7-51a2-4f0a-813d-7d4c709c3b79",
-              "name": "Already friends with this user or friend request already sent",
+              "id": "edf632ff-f4fb-4296-803f-9c83694a2304",
+              "name": "Already friends with this user, friend request already sent, or 30-day rejection cooldown active",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -6218,7 +6218,7 @@
           "request": {
             "name": "Accept incoming friend request",
             "description": {
-              "content": "Accepts an incoming pending friend request from the specified user.",
+              "content": "Accepts an incoming pending friend request from the specified user, establishes friendship, emits acceptance notification, and deletes incoming request notification from recipient inbox.",
               "type": "text/plain"
             },
             "url": {
@@ -6523,7 +6523,7 @@
           "request": {
             "name": "Reject incoming friend request",
             "description": {
-              "content": "Rejects an incoming pending friend request, hard deleting the request and cleaning up inbox notification.",
+              "content": "Rejects an incoming pending friend request, updating relationship status to rejected to enforce a 30-day anti-harassment cooldown, and deletes incoming notification from recipient inbox.",
               "type": "text/plain"
             },
             "url": {
@@ -6828,7 +6828,7 @@
           "request": {
             "name": "Remove a friend",
             "description": {
-              "content": "Silently removes an established friendship without notifying the other user.",
+              "content": "Silently removes an established friendship without notifying the other user and prunes unread friend notifications between both parties.",
               "type": "text/plain"
             },
             "url": {

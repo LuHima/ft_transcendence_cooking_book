@@ -820,6 +820,23 @@ describe('UsersService', () => {
       expect(result.friendship_status).toBe('none');
     });
 
+    it('should return friendship_status: "none" when rejected friendship exists', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(publicUserDb);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+      (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+      (prisma.like.count as jest.Mock).mockResolvedValue(0);
+      (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
+        id: 1,
+        requester_id: 1,
+        addressee_id: 2,
+        status: 'rejected',
+      });
+
+      const result = await service.getUser(2, 1);
+
+      expect(result.friendship_status).toBe('none');
+    });
+
     it('should throw NotFoundException if user is not found, banned, or soft-deleted', async () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
