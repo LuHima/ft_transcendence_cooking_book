@@ -7,13 +7,66 @@ import { NotificationAction, NotificationSubject } from '@prisma/client';
 export class NotificationMessageResponseDto {
   @ApiProperty({
     description: 'Status message confirming operation',
-    example: 'Read',
+    example: 'All notifications marked as read',
   })
   message: string;
 }
 
 /**
- * Notification item entity payload.
+ * Actor profile card representing the user who triggered the notification.
+ */
+export class NotificationActorDto {
+  @ApiProperty({
+    description: 'Numeric user ID of the actor',
+    example: 5,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Username of the actor',
+    example: 'mario_rossi',
+  })
+  username: string;
+
+  @ApiProperty({
+    description: 'Avatar image URL of the actor',
+    example: '/uploads/avatars/avatar_5.webp',
+    nullable: true,
+    type: String,
+  })
+  avatar_url: string | null;
+}
+
+/**
+ * Target resource summary associated with the notification.
+ */
+export class NotificationTargetDto {
+  @ApiProperty({
+    description: 'Numeric resource ID of the target resource',
+    example: 42,
+    nullable: true,
+    type: Number,
+  })
+  id: number | null;
+
+  @ApiProperty({
+    description: 'Domain entity subject associated with the target',
+    enum: NotificationSubject,
+    example: NotificationSubject.recipe,
+  })
+  subject: NotificationSubject;
+
+  @ApiPropertyOptional({
+    description: 'Localized title of recipe or text snippet of comment',
+    example: 'Lasagna alla Bolognese',
+    nullable: true,
+    type: String,
+  })
+  title_or_snippet?: string | null;
+}
+
+/**
+ * Hydrated notification item payload with actor profile and target summaries.
  */
 export class NotificationItemDto {
   @ApiProperty({
@@ -29,10 +82,10 @@ export class NotificationItemDto {
   user_id: number;
 
   @ApiProperty({
-    description: 'User ID of the actor who triggered the notification',
-    example: 5,
+    description: 'Actor profile card who triggered the notification',
+    type: () => NotificationActorDto,
   })
-  actor_id: number;
+  actor: NotificationActorDto;
 
   @ApiProperty({
     description: 'Domain entity subject associated with the notification',
@@ -48,13 +101,18 @@ export class NotificationItemDto {
   })
   action: NotificationAction;
 
-  @ApiPropertyOptional({
-    description:
-      'Optional ID of the target resource (e.g. recipe ID or comment ID)',
-    nullable: true,
-    example: 42,
+  @ApiProperty({
+    description: 'Target resource metadata associated with the notification',
+    type: () => NotificationTargetDto,
   })
-  target_id: number | null;
+  target: NotificationTargetDto;
+
+  @ApiProperty({
+    description: 'Human-readable localized notification message',
+    example:
+      "Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'",
+  })
+  message: string;
 
   @ApiProperty({
     description: 'Whether the notification has been marked as read',
@@ -65,17 +123,66 @@ export class NotificationItemDto {
   @ApiProperty({
     description: 'Timestamp when the notification was created',
     example: '2026-10-28T12:00:00.000Z',
+    type: String,
+    format: 'date-time',
   })
   created_at: Date;
 }
 
 /**
- * Response payload containing the list of user notifications.
+ * Bounded paginated collection wrapper for user notifications including inbox unread count.
  */
-export class NotificationListResponseDto {
+export class PaginatedNotificationResponseDto {
   @ApiProperty({
-    type: [NotificationItemDto],
+    type: () => [NotificationItemDto],
     description: 'List of notifications for the authenticated user',
   })
-  notification: NotificationItemDto[];
+  items: NotificationItemDto[];
+
+  @ApiProperty({
+    description: 'Total number of notifications matching filter',
+    example: 10,
+  })
+  total: number;
+
+  @ApiProperty({
+    description: 'Current page window index',
+    example: 1,
+  })
+  page: number;
+
+  @ApiProperty({
+    description: 'Number of items per page window',
+    example: 20,
+  })
+  limit: number;
+
+  @ApiProperty({
+    description: 'Total number of available pages',
+    example: 1,
+  })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Flag indicating if next page exists',
+    example: false,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Flag indicating if previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
+
+  @ApiProperty({
+    description: 'Total number of unread notifications in inbox',
+    example: 4,
+  })
+  unread_count: number;
 }
+
+/**
+ * Compatibility alias for PaginatedNotificationResponseDto.
+ */
+export { PaginatedNotificationResponseDto as NotificationListResponseDto };

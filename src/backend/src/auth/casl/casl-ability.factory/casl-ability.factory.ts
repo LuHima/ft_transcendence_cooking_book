@@ -115,9 +115,13 @@ export class CaslAbilityFactory {
       can(Action.Report, 'User');
     }
 
+    cannot(Action.Read, 'Notification');
     can(Action.Read, 'Notification', { user_id: user.id });
+    cannot(Action.Delete, 'Notification');
     can(Action.Delete, 'Notification', { user_id: user.id });
+    cannot(Action.Accept, 'Notification');
     can(Action.Accept, 'Notification', { user_id: user.id });
+    cannot(Action.Refuse, 'Notification');
     can(Action.Refuse, 'Notification', { user_id: user.id });
 
     return build();

@@ -14713,700 +14713,12 @@
       },
       "item": [
         {
-          "id": "b3aff27b-a40a-4d0e-8e9a-b1e4f75c93bb",
-          "name": "Mark notification as read",
-          "request": {
-            "name": "Mark notification as read",
-            "description": {
-              "content": "Marks a specific notification as read. The authenticated user must be the recipient.",
-              "type": "text/plain"
-            },
-            "url": {
-              "path": [
-                "api",
-                "notifications",
-                "read",
-                ":id"
-              ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": [
-                {
-                  "disabled": false,
-                  "type": "any",
-                  "value": "1",
-                  "key": "id",
-                  "description": "(Required) Numeric notification ID"
-                }
-              ]
-            },
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "PATCH"
-          },
-          "response": [
-            {
-              "id": "df79d92d-9168-445c-8ed2-9ea9b901c8a6",
-              "name": "Notification marked as read",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "read",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PATCH",
-                "body": {}
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"message\": \"Read\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "5f9e10b8-327d-46b2-86da-de10b11e1871",
-              "name": "Invalid notification ID format (must be an integer)",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "read",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PATCH",
-                "body": {}
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "84c8bbd4-cc69-4d22-87ae-1e4dd17b6352",
-              "name": "Authentication required: missing or invalid accessToken cookie",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "read",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PATCH",
-                "body": {}
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "26d4d58f-47a1-416b-82bd-73fb1f880fc3",
-              "name": "Forbidden: user is not the recipient of the notification",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "read",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PATCH",
-                "body": {}
-              },
-              "status": "Forbidden",
-              "code": 403,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "4fcf737d-747c-40ac-8fa2-84210d61b6bf",
-              "name": "Notification not found",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "read",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PATCH",
-                "body": {}
-              },
-              "status": "Not Found",
-              "code": 404,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "9a34daa6-eb40-40e3-8cd0-83b3096161ae",
-              "name": "Internal server error",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "read",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PATCH",
-                "body": {}
-              },
-              "status": "Internal Server Error",
-              "code": 500,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "ffb2eb37-f1bd-405e-8efc-6e17c6c89017",
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(",
-                  "  \"Response adheres to NotificationMessageResponseDto schema\",",
-                  "  function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an(\"object\");",
-                  "    pm.expect(jsonData).to.have.property(\"message\").that.is.a(\"string\");",
-                  "  },",
-                  ");",
-                  ""
-                ]
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "id": "9dba8a54-d5aa-4de0-8743-932d153abca9",
-          "name": "Delete notification",
-          "request": {
-            "name": "Delete notification",
-            "description": {
-              "content": "Permanently deletes a notification from the inbox. The authenticated user must be the recipient.",
-              "type": "text/plain"
-            },
-            "url": {
-              "path": [
-                "api",
-                "notifications",
-                "delete",
-                ":id"
-              ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": [
-                {
-                  "disabled": false,
-                  "type": "any",
-                  "value": "1",
-                  "key": "id",
-                  "description": "(Required) Numeric notification ID"
-                }
-              ]
-            },
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "DELETE"
-          },
-          "response": [
-            {
-              "id": "0702a1af-e713-45c6-8962-94717308691f",
-              "name": "Notification deleted successfully",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "delete",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "DELETE",
-                "body": {}
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"message\": \"Read\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "bb338913-71a0-4dce-842e-ee889d0df271",
-              "name": "Invalid notification ID format (must be an integer)",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "delete",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "DELETE",
-                "body": {}
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "9e8a08c0-ed8b-4e66-857e-14733c749b1c",
-              "name": "Authentication required: missing or invalid accessToken cookie",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "delete",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "DELETE",
-                "body": {}
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "d15816e8-c668-4abf-86c7-d60d42bdb0c5",
-              "name": "Forbidden: user is not the recipient of the notification",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "delete",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "DELETE",
-                "body": {}
-              },
-              "status": "Forbidden",
-              "code": 403,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "ef2d09d0-2dbf-4a51-87ba-ac8a1d87b393",
-              "name": "Notification not found",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "delete",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "DELETE",
-                "body": {}
-              },
-              "status": "Not Found",
-              "code": 404,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "13b51746-6eb8-4a65-8f9b-1e9fe2365926",
-              "name": "Internal server error",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "notifications",
-                    "delete",
-                    ":id"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": [
-                    {
-                      "disabled": false,
-                      "type": "any",
-                      "value": "1",
-                      "key": "id",
-                      "description": "(Required) Numeric notification ID"
-                    }
-                  ]
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "DELETE",
-                "body": {}
-              },
-              "status": "Internal Server Error",
-              "code": 500,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "6abc070e-9c0b-4838-8b32-e3493e2a76cc",
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(",
-                  "  \"Response adheres to NotificationMessageResponseDto schema\",",
-                  "  function () {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an(\"object\");",
-                  "    pm.expect(jsonData).to.have.property(\"message\").that.is.a(\"string\");",
-                  "  },",
-                  ");",
-                  ""
-                ]
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
           "id": "fb2a67ba-1e4a-452a-8916-5791802549a2",
           "name": "Get user notifications",
           "request": {
             "name": "Get user notifications",
             "description": {
-              "content": "Retrieves all notifications for the authenticated user, ordered by creation date.",
+              "content": "Retrieves paginated, sorted, and hydrated notifications for the authenticated user.",
               "type": "text/plain"
             },
             "url": {
@@ -15417,7 +14729,32 @@
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
+                  "key": "unread_only",
+                  "value": "false",
+                  "description": "Filter to retrieve only unread notifications (is_read: false)"
+                },
+                {
+                  "disabled": false,
+                  "key": "lang",
+                  "value": "it",
+                  "description": "Target language code for human-readable notification messages and localized recipe titles"
+                }
+              ],
               "variable": []
             },
             "header": [
@@ -15430,8 +14767,8 @@
           },
           "response": [
             {
-              "id": "5b36f5b1-90b3-4c2a-8eb9-ba2b22808bff",
-              "name": "List of notifications for the authenticated user",
+              "id": "2a471c11-5427-45aa-807c-97ef02e74c5b",
+              "name": "Paginated notifications with actor and target metadata",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -15441,7 +14778,24 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "unread_only",
+                      "value": "false"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
                   "variable": []
                 },
                 "header": [
@@ -15461,7 +14815,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"notification\": [\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor_id\": 5,\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\",\n      \"target_id\": 42\n    },\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor_id\": 5,\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\",\n      \"target_id\": 42\n    }\n  ]\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\"\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\"\n    },\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\"\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\"\n    }\n  ],\n  \"total\": 10,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false,\n  \"unread_count\": 4\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -15477,7 +14831,24 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "unread_only",
+                      "value": "false"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
                   "variable": []
                 },
                 "header": [
@@ -15513,7 +14884,24 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "unread_only",
+                      "value": "false"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
                   "variable": []
                 },
                 "header": [
@@ -15549,23 +14937,883 @@
                   "  pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Response adheres to NotificationListResponseDto schema\", function () {",
+                  "pm.test(\"Response adheres to PaginatedNotificationResponseDto schema\", function () {",
                   "  const jsonData = pm.response.json();",
                   "  pm.expect(jsonData).to.be.an(\"object\");",
-                  "  pm.expect(jsonData).to.have.property(\"data\").that.is.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"items\").that.is.an(\"array\");",
                   "  pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
                   "  pm.expect(jsonData).to.have.property(\"unread_count\").that.is.a(\"number\");",
-                  "  if (jsonData.data.length > 0) {",
-                  "    const item = jsonData.data[0];",
+                  "  if (jsonData.items.length > 0) {",
+                  "    const item = jsonData.items[0];",
                   "    pm.expect(item).to.have.property(\"id\").that.is.a(\"number\");",
                   "    pm.expect(item).to.have.property(\"user_id\").that.is.a(\"number\");",
-                  "    pm.expect(item).to.have.property(\"actor_id\").that.is.a(\"number\");",
+                  "    pm.expect(item).to.have.property(\"actor\").that.is.an(\"object\");",
+                  "    pm.expect(item.actor).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(item.actor).to.have.property(\"username\").that.is.a(\"string\");",
                   "    pm.expect(item).to.have.property(\"subject\").that.is.a(\"string\");",
                   "    pm.expect(item).to.have.property(\"action\").that.is.a(\"string\");",
+                  "    pm.expect(item).to.have.property(\"target\").that.is.an(\"object\");",
+                  "    pm.expect(item).to.have.property(\"message\").that.is.a(\"string\");",
                   "    pm.expect(item).to.have.property(\"is_read\").that.is.a(\"boolean\");",
                   "    pm.expect(item).to.have.property(\"created_at\").that.is.a(\"string\");",
                   "  }",
                   "});",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "4a9a3572-9bfc-4b68-8125-facd82fbb59f",
+          "name": "Mark all notifications as read",
+          "request": {
+            "name": "Mark all notifications as read",
+            "description": {
+              "content": "Marks all unread notifications for the authenticated user as read in a single operation.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH"
+          },
+          "response": [
+            {
+              "id": "d7fd458b-c0be-488e-86ee-f733d3c46235",
+              "name": "All notifications marked as read",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    "read-all"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"All notifications marked as read\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3b425409-3622-42fa-850f-e09f778756d3",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    "read-all"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "63054537-36d8-4f71-81cc-19be8f532c72",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    "read-all"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "100bf8ea-0308-4917-83e9-07c014f26dc8",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(",
+                  "  \"Response adheres to NotificationMessageResponseDto schema\",",
+                  "  function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"object\");",
+                  "    pm.expect(jsonData).to.have.property(\"message\").that.is.a(\"string\");",
+                  "  },",
+                  ");",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "8b61b98e-7d9f-4a11-8f3a-69a319e0c3b6",
+          "name": "Mark notification as read",
+          "request": {
+            "name": "Mark notification as read",
+            "description": {
+              "content": "Marks a specific notification as read. The authenticated user must be the recipient.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "notifications",
+                ":id",
+                "read"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "1",
+                  "key": "id",
+                  "description": "(Required) Numeric notification ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH"
+          },
+          "response": [
+            {
+              "id": "7c2f8680-234d-447d-80fc-b22d0342e504",
+              "name": "Notification marked as read",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id",
+                    "read"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"All notifications marked as read\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9c46c42e-68a2-4595-81fa-a5063be86cfc",
+              "name": "Invalid notification ID format (must be an integer)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id",
+                    "read"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f1eaab88-2447-4f92-8225-46ca2db07d5f",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id",
+                    "read"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b30da436-4c2b-47b2-825f-310837a48f8c",
+              "name": "Forbidden: user is not the recipient of the notification",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id",
+                    "read"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "49cd3473-4129-4cc0-8b89-ed283fd7b1b6",
+              "name": "Notification not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id",
+                    "read"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2ea57a40-bec9-4744-8163-4fa35115c804",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id",
+                    "read"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "8cc3e83d-1f29-4c2e-8cda-779748381e62",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(",
+                  "  \"Response adheres to NotificationMessageResponseDto schema\",",
+                  "  function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"object\");",
+                  "    pm.expect(jsonData).to.have.property(\"message\").that.is.a(\"string\");",
+                  "  },",
+                  ");",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "9acd436d-012b-4e4e-85c9-c5c29faf0c7f",
+          "name": "Delete notification",
+          "request": {
+            "name": "Delete notification",
+            "description": {
+              "content": "Permanently deletes a notification from the inbox. The authenticated user must be the recipient.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "notifications",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "1",
+                  "key": "id",
+                  "description": "(Required) Numeric notification ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "DELETE"
+          },
+          "response": [
+            {
+              "id": "5f57bb64-566b-4ef9-885f-3bb6a6290c36",
+              "name": "Notification deleted successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"All notifications marked as read\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "7aafc2f6-25a2-4ed3-8482-cdb6fc19587e",
+              "name": "Invalid notification ID format (must be an integer)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "937a8557-783d-4776-8bf2-bdff070b5506",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e2bc8b9f-0ab8-4949-872c-0bfbc40fd8a8",
+              "name": "Forbidden: user is not the recipient of the notification",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0a573591-4e7d-4b0c-85e6-89d8437195f1",
+              "name": "Notification not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b588b444-dd4b-43b6-8143-a23c6860b0f7",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "notifications",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric notification ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "4e623b06-685a-40be-8a00-4070abb89d49",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(",
+                  "  \"Response adheres to NotificationMessageResponseDto schema\",",
+                  "  function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"object\");",
+                  "    pm.expect(jsonData).to.have.property(\"message\").that.is.a(\"string\");",
+                  "  },",
+                  ");",
                   ""
                 ]
               }

@@ -3460,10 +3460,158 @@
         ]
       }
     },
-    "/api/notifications/read/{id}": {
+    "/api/notifications": {
+      "get": {
+        "description": "Retrieves paginated, sorted, and hydrated notifications for the authenticated user.",
+        "operationId": "NotificationController_getNotifications",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "unread_only",
+            "required": false,
+            "in": "query",
+            "description": "Filter to retrieve only unread notifications (is_read: false)",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target language code for human-readable notification messages and localized recipe titles",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated notifications with actor and target metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedNotificationResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get user notifications",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notifications/read-all": {
+      "patch": {
+        "description": "Marks all unread notifications for the authenticated user as read in a single operation.",
+        "operationId": "NotificationController_markAllAsRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "All notifications marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Mark all notifications as read",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/notifications/{id}/read": {
       "patch": {
         "description": "Marks a specific notification as read. The authenticated user must be the recipient.",
-        "operationId": "NotificationController_readedNotification",
+        "operationId": "NotificationController_readNotification",
         "parameters": [
           {
             "name": "id",
@@ -3549,7 +3697,7 @@
         ]
       }
     },
-    "/api/notifications/delete/{id}": {
+    "/api/notifications/{id}": {
       "delete": {
         "description": "Permanently deletes a notification from the inbox. The authenticated user must be the recipient.",
         "operationId": "NotificationController_deleteNotification",
@@ -3633,54 +3781,6 @@
           }
         ],
         "summary": "Delete notification",
-        "tags": [
-          "Notifications"
-        ]
-      }
-    },
-    "/api/notifications": {
-      "get": {
-        "description": "Retrieves all notifications for the authenticated user, ordered by creation date.",
-        "operationId": "NotificationController_getNotification",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of notifications for the authenticated user",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationListResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Get user notifications",
         "tags": [
           "Notifications"
         ]
@@ -6810,17 +6910,61 @@
           "content"
         ]
       },
-      "NotificationMessageResponseDto": {
+      "NotificationActorDto": {
         "type": "object",
         "properties": {
-          "message": {
+          "id": {
+            "type": "number",
+            "description": "Numeric user ID of the actor",
+            "example": 5
+          },
+          "username": {
             "type": "string",
-            "description": "Status message confirming operation",
-            "example": "Read"
+            "description": "Username of the actor",
+            "example": "mario_rossi"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar image URL of the actor",
+            "example": "/uploads/avatars/avatar_5.webp"
           }
         },
         "required": [
-          "message"
+          "id",
+          "username",
+          "avatar_url"
+        ]
+      },
+      "NotificationTargetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric resource ID of the target resource",
+            "example": 42
+          },
+          "subject": {
+            "enum": [
+              "recipe",
+              "comment",
+              "user"
+            ],
+            "type": "string",
+            "description": "Domain entity subject associated with the target",
+            "example": "recipe"
+          },
+          "title_or_snippet": {
+            "type": "string",
+            "nullable": true,
+            "description": "Localized title of recipe or text snippet of comment",
+            "example": "Lasagna alla Bolognese"
+          }
+        },
+        "required": [
+          "id",
+          "subject"
         ]
       },
       "NotificationItemDto": {
@@ -6836,10 +6980,13 @@
             "description": "User ID of the recipient",
             "example": 2
           },
-          "actor_id": {
-            "type": "number",
-            "description": "User ID of the actor who triggered the notification",
-            "example": 5
+          "actor": {
+            "description": "Actor profile card who triggered the notification",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationActorDto"
+              }
+            ]
           },
           "subject": {
             "enum": [
@@ -6865,11 +7012,18 @@
             "description": "Action that triggered the notification",
             "example": "like"
           },
-          "target_id": {
-            "type": "number",
-            "nullable": true,
-            "description": "Optional ID of the target resource (e.g. recipe ID or comment ID)",
-            "example": 42
+          "target": {
+            "description": "Target resource metadata associated with the notification",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationTargetDto"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable localized notification message",
+            "example": "Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'"
           },
           "is_read": {
             "type": "boolean",
@@ -6877,35 +7031,92 @@
             "example": false
           },
           "created_at": {
-            "format": "date-time",
             "type": "string",
             "description": "Timestamp when the notification was created",
-            "example": "2026-10-28T12:00:00.000Z"
+            "example": "2026-10-28T12:00:00.000Z",
+            "format": "date-time"
           }
         },
         "required": [
           "id",
           "user_id",
-          "actor_id",
+          "actor",
           "subject",
           "action",
+          "target",
+          "message",
           "is_read",
           "created_at"
         ]
       },
-      "NotificationListResponseDto": {
+      "PaginatedNotificationResponseDto": {
         "type": "object",
         "properties": {
-          "notification": {
+          "items": {
             "description": "List of notifications for the authenticated user",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/NotificationItemDto"
             }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of notifications matching filter",
+            "example": 10
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page window index",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page window",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Flag indicating if next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Flag indicating if previous page exists",
+            "example": false
+          },
+          "unread_count": {
+            "type": "number",
+            "description": "Total number of unread notifications in inbox",
+            "example": 4
           }
         },
         "required": [
-          "notification"
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page",
+          "unread_count"
+        ]
+      },
+      "NotificationMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Status message confirming operation",
+            "example": "All notifications marked as read"
+          }
+        },
+        "required": [
+          "message"
         ]
       },
       "FriendRequestItemDto": {

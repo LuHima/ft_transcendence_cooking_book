@@ -5,6 +5,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,9 +21,10 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { NotificationService } from './notification.service';
+import { NotificationQueryDto } from './dto/notification-query.dto';
 import {
-  NotificationListResponseDto,
   NotificationMessageResponseDto,
+  PaginatedNotificationResponseDto,
 } from './dto/notification-response.dto';
 import {
   ApiBadRequestResponseDto,
@@ -44,7 +46,48 @@ export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   /**
-   * Mark a notification as read.
+   * Retrieve paginated, sorted, and hydrated notifications for the authenticated user.
+   */
+  @ApiOperation({
+    summary: 'Get user notifications',
+    description:
+      'Retrieves paginated, sorted, and hydrated notifications for the authenticated user.',
+  })
+  @ApiOkResponse({
+    description: 'Paginated notifications with actor and target metadata',
+    type: PaginatedNotificationResponseDto,
+  })
+  @Auth()
+  @Get()
+  async getNotifications(
+    @CurrentUser('id') userId: number,
+    @Query() query: NotificationQueryDto,
+  ): Promise<PaginatedNotificationResponseDto> {
+    return await this.notificationService.getNotifications(userId, query);
+  }
+
+  /**
+   * Mark all notifications as read in bulk.
+   */
+  @ApiOperation({
+    summary: 'Mark all notifications as read',
+    description:
+      'Marks all unread notifications for the authenticated user as read in a single operation.',
+  })
+  @ApiOkResponse({
+    description: 'All notifications marked as read',
+    type: NotificationMessageResponseDto,
+  })
+  @Auth()
+  @Patch('read-all')
+  async markAllAsRead(
+    @CurrentUser('id') userId: number,
+  ): Promise<NotificationMessageResponseDto> {
+    return await this.notificationService.markAllAsRead(userId);
+  }
+
+  /**
+   * Mark a single notification as read.
    */
   @ApiOperation({
     summary: 'Mark notification as read',
@@ -74,17 +117,16 @@ export class NotificationController {
     type: ApiNotFoundResponseDto,
   })
   @Auth()
-  @Patch('read/:id')
-  async readedNotification(
-    @Param('id', ParseIntPipe) idNotifi: number,
+  @Patch(':id/read')
+  async readNotification(
+    @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: ActiveUserData,
-  ) {
-    await this.notificationService.readNotification(idNotifi, user);
-    return { message: 'Read' };
+  ): Promise<NotificationMessageResponseDto> {
+    return await this.notificationService.readNotification(id, user);
   }
 
   /**
-   * Delete a notification.
+   * Permanently delete a notification.
    */
   @ApiOperation({
     summary: 'Delete notification',
@@ -114,31 +156,11 @@ export class NotificationController {
     type: ApiNotFoundResponseDto,
   })
   @Auth()
-  @Delete('delete/:id')
+  @Delete(':id')
   async deleteNotification(
-    @Param('id', ParseIntPipe) idNotifi: number,
+    @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: ActiveUserData,
-  ) {
-    await this.notificationService.deleteNotification(idNotifi, user);
-    return { message: 'Deleted successfully' };
-  }
-
-  /**
-   * Retrieve all notifications for the authenticated user.
-   */
-  @ApiOperation({
-    summary: 'Get user notifications',
-    description:
-      'Retrieves all notifications for the authenticated user, ordered by creation date.',
-  })
-  @ApiOkResponse({
-    description: 'List of notifications for the authenticated user',
-    type: NotificationListResponseDto,
-  })
-  @Auth()
-  @Get()
-  async getNotification(@CurrentUser('id') id: number) {
-    const notification = await this.notificationService.getNotifications(id);
-    return { notification };
+  ): Promise<NotificationMessageResponseDto> {
+    return await this.notificationService.deleteNotification(id, user);
   }
 }
