@@ -8,7 +8,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('FriendsService', () => {
   let service: FriendsService;
@@ -47,9 +46,7 @@ describe('FriendsService', () => {
         {
           provide: NotificationEmit,
           useValue: {
-            notification: jest
-              .fn<() => Promise<any>>()
-              .mockResolvedValue(undefined),
+            notification: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

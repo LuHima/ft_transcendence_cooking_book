@@ -7,7 +7,11 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { GlobalExceptionFilter } from './common/filters/global.exception.filter';
 import { ContentLanguageInterceptor } from './common/interceptors/content-language.interceptor';
-import { RECIPE_UPLOADS_DIR, AVATAR_UPLOADS_DIR, UPLOADS_DIR } from './common/config/upload-paths';
+import {
+  RECIPE_UPLOADS_DIR,
+  AVATAR_UPLOADS_DIR,
+  UPLOADS_DIR,
+} from './common/config/upload-paths';
 import { setupSwagger } from './common/config/swagger.config';
 import * as fs from 'fs';
 

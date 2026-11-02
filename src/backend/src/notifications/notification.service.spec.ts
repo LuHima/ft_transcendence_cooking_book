@@ -28,7 +28,8 @@ describe('NotificationService', () => {
   const currentUser: ActiveUserData = {
     id: 1,
     role: Role.user,
-    email: 'user1@example.com',
+    username: 'user1',
+    session: 1,
   };
 
   beforeEach(async () => {

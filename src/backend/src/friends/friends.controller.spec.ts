@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FriendsController } from './friends.controller';
 import { FriendsService } from './friends.service';
 import { JwtService } from '@nestjs/jwt';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('FriendsController', () => {
   let controller: FriendsController;
@@ -72,8 +71,13 @@ describe('FriendsController', () => {
 
   describe('sendFriendRequest', () => {
     it('should delegate to service.sendFriendRequest', async () => {
-      const mockResponse = { message: 'Friend request sent', status: 'pending' };
-      (service.sendFriendRequest as jest.Mock<any>).mockResolvedValue(mockResponse);
+      const mockResponse = {
+        message: 'Friend request sent',
+        status: 'pending',
+      };
+      (service.sendFriendRequest as jest.Mock<any>).mockResolvedValue(
+        mockResponse,
+      );
 
       const result = await controller.sendFriendRequest(1, 2);
 
@@ -93,7 +97,9 @@ describe('FriendsController', () => {
         has_next_page: false,
         has_prev_page: false,
       };
-      (service.getFriendRequests as jest.Mock<any>).mockResolvedValue(mockResponse);
+      (service.getFriendRequests as jest.Mock<any>).mockResolvedValue(
+        mockResponse,
+      );
 
       const query = { type: 'incoming' as const, page: 1, limit: 20 };
       const result = await controller.getFriendRequests(1, query);
@@ -106,7 +112,9 @@ describe('FriendsController', () => {
   describe('acceptFriendRequest', () => {
     it('should delegate to service.acceptFriendRequest', async () => {
       const mockResponse = { message: 'Friend request accepted' };
-      (service.acceptFriendRequest as jest.Mock<any>).mockResolvedValue(mockResponse);
+      (service.acceptFriendRequest as jest.Mock<any>).mockResolvedValue(
+        mockResponse,
+      );
 
       const result = await controller.acceptFriendRequest(1, 2);
 
@@ -118,7 +126,9 @@ describe('FriendsController', () => {
   describe('rejectFriendRequest', () => {
     it('should delegate to service.rejectFriendRequest', async () => {
       const mockResponse = { message: 'Friend request rejected' };
-      (service.rejectFriendRequest as jest.Mock<any>).mockResolvedValue(mockResponse);
+      (service.rejectFriendRequest as jest.Mock<any>).mockResolvedValue(
+        mockResponse,
+      );
 
       const result = await controller.rejectFriendRequest(1, 2);
 
@@ -130,7 +140,9 @@ describe('FriendsController', () => {
   describe('cancelFriendRequest', () => {
     it('should delegate to service.cancelFriendRequest', async () => {
       const mockResponse = { message: 'Friend request cancelled' };
-      (service.cancelFriendRequest as jest.Mock<any>).mockResolvedValue(mockResponse);
+      (service.cancelFriendRequest as jest.Mock<any>).mockResolvedValue(
+        mockResponse,
+      );
 
       const result = await controller.cancelFriendRequest(1, 2);
 

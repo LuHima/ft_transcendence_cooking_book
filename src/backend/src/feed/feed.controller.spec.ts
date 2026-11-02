@@ -9,14 +9,6 @@ import { FeedService } from './feed.service';
 import { JwtService } from '@nestjs/jwt';
 import { FeedQueryDto } from './dto/feed-query.dto';
 import { PaginatedRecipeResponseDto } from '../recipe/dto/recipe-response.dto';
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  jest,
-} from '@jest/globals';
 
 describe('FeedController', () => {
   let controller: FeedController;

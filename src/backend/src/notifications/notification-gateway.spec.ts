@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotificationGateway } from './notification-gateway';
@@ -91,4 +90,3 @@ describe('NotificationGateway', () => {
     });
   });
 });
-

@@ -99,10 +99,6 @@ export class TagResponseDto {
   resolved_lang: string;
 }
 
-
-
-
-
 /**
  * Curated ingredient catalog item.
  */

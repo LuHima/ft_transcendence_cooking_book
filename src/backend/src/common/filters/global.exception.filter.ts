@@ -112,16 +112,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const client = host.switchToWs().getClient<{
       emit: (event: string, payload: unknown, callback?: () => void) => void;
       timeout: (milliseconds: number) => {
-        emit: (
-          event: string,
-          payload: unknown,
-          callback?: () => void,
-        ) => void;
+        emit: (event: string, payload: unknown, callback?: () => void) => void;
       };
       disconnect: (close?: boolean) => void;
     }>();
 
-    const error = exception instanceof WsException ? exception.getError() : null;
+    const error =
+      exception instanceof WsException ? exception.getError() : null;
     const errorDef =
       error && typeof error === 'object'
         ? (error as Partial<typeof errors.socket.unauthorized>)

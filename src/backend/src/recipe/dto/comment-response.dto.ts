@@ -11,7 +11,12 @@ export class RecipeCommentResponseDto {
   @ApiProperty({ description: 'Recipe ID', example: 42 })
   recipe_id: number;
 
-  @ApiProperty({ type: Number, description: 'Author user ID', example: 10, nullable: true })
+  @ApiProperty({
+    type: Number,
+    description: 'Author user ID',
+    example: 10,
+    nullable: true,
+  })
   user_id: number | null;
 
   @ApiProperty({

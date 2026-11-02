@@ -220,7 +220,8 @@ export const errors = {
     },
     inUse: {
       statusCode: HttpStatus.CONFLICT,
-      message: 'Ingredient is used in one or more recipes and cannot be deleted',
+      message:
+        'Ingredient is used in one or more recipes and cannot be deleted',
       error: 'Conflict',
     },
   },
@@ -228,7 +229,7 @@ export const errors = {
   // ─────────────────────────────────────────────────────────
   // TAG
   // ─────────────────────────────────────────────────────────
-  
+
   tags: {
     notFound: {
       statusCode: HttpStatus.NOT_FOUND,

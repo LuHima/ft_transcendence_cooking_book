@@ -1,4 +1,8 @@
-import { resolveApiKey, resolveCollectionUid, uploadCollection } from '../../../sync-postman';
+import {
+  resolveApiKey,
+  resolveCollectionUid,
+  uploadCollection,
+} from '../../../sync-postman';
 
 describe('Postman Synchronization Configuration & Resolution', () => {
   const originalEnv = process.env;
@@ -62,12 +66,17 @@ describe('Postman Synchronization Configuration & Resolution', () => {
         info: {
           _postman_id: 'original-id-to-remove',
           name: 'WeCook API',
-          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+          schema:
+            'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
         },
         item: [],
       };
 
-      await uploadCollection('fake-key', 'target-collection-uid', sampleCollection);
+      await uploadCollection(
+        'fake-key',
+        'target-collection-uid',
+        sampleCollection,
+      );
 
       expect(global.fetch).toHaveBeenCalledWith(
         'https://api.getpostman.com/collections/target-collection-uid',

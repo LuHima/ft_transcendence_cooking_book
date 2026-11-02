@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FeedService } from './feed.service';
 import { PrismaService } from 'prisma/prisma.service';
 import { Course, RecipeDifficulty, TranslationStatus } from '@prisma/client';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('FeedService', () => {
   let service: FeedService;

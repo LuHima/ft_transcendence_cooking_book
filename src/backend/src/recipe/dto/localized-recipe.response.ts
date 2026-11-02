@@ -176,14 +176,20 @@ export class LocalizedRecipeTagResponse {
    * Canonical tag slug.
    * @example 'traditional'
    */
-  @ApiProperty({ description: 'Canonical tag slug identifier', example: 'traditional' })
+  @ApiProperty({
+    description: 'Canonical tag slug identifier',
+    example: 'traditional',
+  })
   slug: string;
 
   /**
    * Localized display name of the tag.
    * @example 'Tradizionale'
    */
-  @ApiProperty({ description: 'Localized tag display name', example: 'Tradizionale' })
+  @ApiProperty({
+    description: 'Localized tag display name',
+    example: 'Tradizionale',
+  })
   name: string;
 
   /**
@@ -382,7 +388,7 @@ export class LocalizedRecipeSummaryResponse {
    */
   @ApiProperty({
     type: String,
-    format: "date-time",
+    format: 'date-time',
     description: 'Creation timestamp',
     example: '2026-10-09T18:00:00.000Z',
   })
@@ -394,7 +400,7 @@ export class LocalizedRecipeSummaryResponse {
    */
   @ApiProperty({
     type: String,
-    format: "date-time",
+    format: 'date-time',
     description: 'Last update timestamp',
     example: '2026-10-09T18:30:00.000Z',
     nullable: true,

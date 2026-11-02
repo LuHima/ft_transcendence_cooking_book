@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { UserSort } from './dto/search-user-query.dto';
 
 describe('UsersController', () => {
@@ -32,7 +31,7 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: {
-            getMe: jest.fn<() => Promise<any>>().mockResolvedValue(mockUser),
+            getMe: jest.fn().mockResolvedValue(mockUser),
             updateMe: jest.fn(),
             updateAvatar: jest.fn(),
             deleteAvatar: jest.fn(),
@@ -76,7 +75,7 @@ describe('UsersController', () => {
       };
       const updatedUser = { ...mockUser, ...updateDto };
       (service.updateMe as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(updatedUser);
 
       const result = await controller.updateMe(1, updateDto);
@@ -91,7 +90,7 @@ describe('UsersController', () => {
       const mockFile = { filename: 'avatar-123.jpg' } as Express.Multer.File;
       const mockResponse = { avatar_url: '/uploads/avatars/avatar-123.jpg' };
       (service.updateAvatar as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResponse);
 
       const result = await controller.updateAvatar(1, mockFile);
@@ -105,7 +104,7 @@ describe('UsersController', () => {
     it('should delete avatar and return success message', async () => {
       const mockResponse = { message: 'Avatar deleted successfully' };
       (service.deleteAvatar as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResponse);
 
       const result = await controller.deleteAvatar(1);
@@ -127,7 +126,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getLikedRecipes as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockRecipes);
 
       const query = { page: 1, limit: 20, lang: 'it' as const };
@@ -150,7 +149,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getMyRecipes as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockRecipes);
 
       const query = { page: 1, limit: 20, lang: 'it' as const };
@@ -184,7 +183,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.findUsers as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResult);
 
       const query = {
@@ -210,7 +209,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.findUsers as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResult);
 
       const query = { page: 1, limit: 20 };
@@ -237,7 +236,7 @@ describe('UsersController', () => {
         friendship_status: 'friends',
       };
       (service.getUserByUsername as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(publicUser);
 
       const result = await controller.getUserByUsername('giulia', 1);
@@ -261,7 +260,7 @@ describe('UsersController', () => {
         friendship_status: null,
       };
       (service.getUserByUsername as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(publicUser);
 
       const result = await controller.getUserByUsername('giulia', undefined);
@@ -290,7 +289,7 @@ describe('UsersController', () => {
         friendship_status: 'friends',
       };
       (service.getUser as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(publicUser);
 
       const result = await controller.getUser(2, 1);
@@ -318,7 +317,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getUserPublicRecipes as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResult);
 
       const query = { page: 1, limit: 20, lang: 'it' as const };
@@ -339,7 +338,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getUserPublicRecipes as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResult);
 
       const query = { page: 1, limit: 20 };
@@ -366,7 +365,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getUserFriends as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockFriends);
 
       const query = { page: 1, limit: 20 };
@@ -389,7 +388,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getBlockedUsers as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockEnvelope);
 
       const query = { page: 1, limit: 20 };
@@ -403,7 +402,7 @@ describe('UsersController', () => {
   describe('blockUser', () => {
     it('should delegate to service.blockUser with blockerId and targetId', async () => {
       (service.blockUser as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue({ message: 'User blocked successfully' });
 
       const result = await controller.blockUser(1, 42);
@@ -416,7 +415,7 @@ describe('UsersController', () => {
   describe('unblockUser', () => {
     it('should delegate to service.unblockUser with blockerId and targetId', async () => {
       (service.unblockUser as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue({ message: 'User unblocked successfully' });
 
       const result = await controller.unblockUser(1, 42);

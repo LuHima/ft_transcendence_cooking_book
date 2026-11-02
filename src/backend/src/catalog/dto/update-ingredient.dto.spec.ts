@@ -1,4 +1,4 @@
-import { UpdateIngredientDto } from './update-ingredient.dto'
+import { UpdateIngredientDto } from './update-ingredient.dto';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 

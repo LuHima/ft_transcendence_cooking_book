@@ -7,6 +7,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { UserSort } from './dto/search-user-query.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -447,14 +448,14 @@ describe('UsersService', () => {
     });
 
     it.each([
-      ['username_asc' as const, [{ username: 'asc' }]],
-      ['username_desc' as const, [{ username: 'desc' }]],
+      [UserSort.username_asc, [{ username: 'asc' }]],
+      [UserSort.username_desc, [{ username: 'desc' }]],
       [
-        'recipes_count_desc' as const,
+        UserSort.recipes_count_desc,
         [{ recipes: { _count: 'desc' } }, { username: 'asc' }],
       ],
-      ['newest' as const, [{ created_at: 'desc' }, { id: 'desc' }]],
-      ['oldest' as const, [{ created_at: 'asc' }, { id: 'asc' }]],
+      [UserSort.newest, [{ created_at: 'desc' }, { id: 'desc' }]],
+      [UserSort.oldest, [{ created_at: 'asc' }, { id: 'asc' }]],
     ])(
       'resolves orderBy correctly for sort %s',
       async (sortValue, expectedOrderBy) => {

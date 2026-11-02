@@ -9,7 +9,9 @@ describe('SwaggerConfig', () => {
     it('should define general document metadata (title, version, description)', () => {
       expect(config.info.title).toBe('WeCook API');
       expect(config.info.version).toBe('1.0.0');
-      expect(config.info.description).toContain('RESTful backend API specification for the WeCook recipe sharing social platform.');
+      expect(config.info.description).toContain(
+        'RESTful backend API specification for the WeCook recipe sharing social platform.',
+      );
       expect(config.info.description).toContain('accessToken');
       expect(config.info.description).toContain('refreshToken');
       expect(config.info.description).toContain('/uploads/');
@@ -90,8 +92,12 @@ describe('SwaggerConfig', () => {
       expect(schemes.cookie.description).toContain('refreshToken');
 
       // Verify that description documents both tokens
-      expect(config.info.description).toContain('- **`accessToken`**: Short-lived (10 minutes) JWT');
-      expect(config.info.description).toContain('- **`refreshToken`**: Long-lived (7 days) JWT');
+      expect(config.info.description).toContain(
+        '- **`accessToken`**: Short-lived (10 minutes) JWT',
+      );
+      expect(config.info.description).toContain(
+        '- **`refreshToken`**: Long-lived (7 days) JWT',
+      );
     });
   });
 
@@ -116,16 +122,11 @@ describe('SwaggerConfig', () => {
       );
 
       expect(setupSpy).toHaveBeenCalledTimes(1);
-      expect(setupSpy).toHaveBeenCalledWith(
-        'api/docs',
-        mockApp,
-        mockDocument,
-        {
-          swaggerOptions: {
-            persistAuthorization: true,
-          },
+      expect(setupSpy).toHaveBeenCalledWith('api/docs', mockApp, mockDocument, {
+        swaggerOptions: {
+          persistAuthorization: true,
         },
-      );
+      });
 
       expect(result).toBe(mockDocument);
 
