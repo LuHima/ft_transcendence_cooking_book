@@ -124,6 +124,10 @@ _Avoid_: About me, description, user status
 An in-app alert and real-time event notifying a community member of an interaction (e.g. friend request, recipe like, or comment) directed at their content or account.
 _Avoid_: Push message, ping, email, banner
 
+**Notification Hydration**:
+The process of augmenting notification entity records with rich actor profiles (username, avatar) and target summary metadata (recipe title, snippet) during retrieval to eliminate N+1 client queries.
+_Avoid_: Population, expanding, joining, embedding
+
 **Social Feed**:
 A personalized, chronological stream of published recipes authored exclusively by a community member's confirmed friends.
 _Avoid_: Wall, timeline, newsfeed, stream, home discovery
