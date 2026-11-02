@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api, asArray, getErrorMessage, toPage } from '../api/client'
+import { api, getErrorMessage, toPage } from '../api/client'
 import { useToast } from '../context/ToastContext'
 import Avatar from '../components/Avatar'
 import { ListSkeleton } from '../components/Skeleton'
 import type { FriendRequest, PublicUser } from '../types/models'
 
-// NB: endpoint da esporre lato backend:
-//   GET /friends                                 -> amici (array o Paginated<PublicUser>)
-//   GET /friends/requests?direction=received|sent -> FriendRequest[]  { id, user, created_at }
-//   POST /friends/requests/:id/accept | /reject, DELETE /friends/requests/:id (annulla), DELETE /friends/:userId
 type Tab = 'friends' | 'received' | 'sent'
 const TABS: Tab[] = ['friends', 'received', 'sent']
 
@@ -27,8 +23,8 @@ function Friends() {
 	// le richieste ricevute si caricano subito per mostrare il numero sulla scheda
 	useEffect(() => {
 		api
-			.get<unknown>('/friends/requests?direction=received')
-			.then((d) => setReceivedCount(asArray<FriendRequest>(d).length))
+			.get<unknown>('/friends/requests?type=incoming')
+			.then((data) => setReceivedCount(toPage<FriendRequest>(data).total))
 			.catch(() => setReceivedCount(0))
 	}, [])
 
@@ -39,8 +35,8 @@ function Friends() {
 				? api.get<unknown>('/friends').then((d) => {
 						if (!cancelled) setFriends(toPage<PublicUser>(d).items)
 					})
-				: api.get<unknown>(`/friends/requests?direction=${tab}`).then((d) => {
-						if (!cancelled) setRequests(asArray<FriendRequest>(d))
+				: api.get<unknown>(`/friends/requests?type=${tab === 'received' ? 'incoming' : 'outgoing'}`).then((d) => {
+						if (!cancelled) setRequests(toPage<FriendRequest>(d).items)
 					})
 		request
 			.then(() => {
@@ -65,7 +61,7 @@ function Friends() {
 				else await api.post(`/friends/requests/${req.id}/${action}`)
 				setRequests((prev) => prev?.filter((r) => r.id !== req.id) ?? null)
 				if (action !== 'cancel') setReceivedCount((n) => Math.max(0, n - 1))
-				if (action === 'accept') toast.success(t('friends.nowFriends', { name: req.user.username }))
+				if (action === 'accept') toast.success(t('friends.nowFriends', { name: req.username }))
 			} catch (err) {
 				toast.error(getErrorMessage(err, t('friends.actionError')))
 			} finally {
@@ -141,9 +137,9 @@ function Friends() {
 				<ul className="mt-6 divide-y divide-[var(--wc-border)] rounded-2xl border border-[var(--wc-border)]">
 					{requests.map((r) => (
 						<li key={r.id} className="flex items-center justify-between gap-3 p-4">
-							<Link to={`/users/${r.user.id}`} className="flex min-w-0 items-center gap-3 hover:text-[var(--wc-saffron)]">
-								<Avatar username={r.user.username} url={r.user.avatar_url} className="h-10 w-10 text-base" />
-								<span className="truncate font-medium">{r.user.username}</span>
+							<Link to={`/users/${r.id}`} className="flex min-w-0 items-center gap-3 hover:text-[var(--wc-saffron)]">
+								<Avatar username={r.username} url={r.avatar_url} className="h-10 w-10 text-base" />
+								<span className="truncate font-medium">{r.username}</span>
 							</Link>
 							<div className="flex shrink-0 gap-2">
 								{tab === 'received' ? (

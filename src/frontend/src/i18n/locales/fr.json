@@ -21,6 +21,7 @@
 		"home": "Accueil",
 		"myRecipes": "Mes recettes",
 		"favorites": "Favoris",
+		"mealPlan": "Menu de la semaine",
 		"friends": "Amis",
 		"adminPanel": "Panneau administrateur",
 		"contacts": "Contact",
@@ -123,13 +124,14 @@
 		"translationFailed": "La traduction automatique a échoué : certaines langues peuvent afficher le texte original.",
 		"retryTranslation": "Relancer la traduction",
 		"edit": "Modifier la recette",
-		"removeAdmin": "Retirer (admin)",
+		"removeAdmin": "Retirer la recette",
 		"ingredients": "Ingrédients",
 		"noIngredients": "Aucun ingrédient indiqué pour cette recette.",
 		"preparation": "Préparation",
 		"stepImageAlt": "Photo de l'étape {{n}}",
 		"tips": "Conseils",
-		"preservation": "Conservation"
+		"preservation": "Conservation",
+		"platformName": "WeCook"
 	},
 	"comments": {
 		"title": "Commentaires",
@@ -539,7 +541,14 @@
 		"phone": "Téléphone",
 		"address": "Adresse",
 		"city": "Ville",
-		"postalCode": "Code postal"
+		"postalCode": "Code postal",
+		"dayPh": "JJ",
+		"monthPh": "MM",
+		"yearPh": "AAAA",
+		"day": "Jour",
+		"month": "Mois",
+		"year": "Année",
+		"birthInvalid": "Saisissez une date valide (JJ/MM/AAAA) ou laissez vide."
 	},
 	"twofa": {
 		"title": "Authentification à deux facteurs",

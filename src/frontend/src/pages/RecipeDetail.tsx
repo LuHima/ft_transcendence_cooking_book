@@ -202,7 +202,7 @@ function RecipeDetail() {
 							<span className="truncate">{author.username}</span>
 						</Link>
 					) : (
-						<span className="text-[var(--wc-saffron)]">{t('recipe.byPlatform')}</span>
+						<span>{t('recipe.platformName')}</span>
 					)}
 				</InfoBox>
 			</div>

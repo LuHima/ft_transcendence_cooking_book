@@ -5,6 +5,7 @@ import {
   UnitOfMeasure,
   IngredientCategory,
 } from '@prisma/client';
+import { TranslationDto } from '../../common/dto/translation.dto';
 
 /**
  * Static metadata dictionaries providing all system enumeration values.
@@ -98,6 +99,10 @@ export class TagResponseDto {
   resolved_lang: string;
 }
 
+
+
+
+
 /**
  * Curated ingredient catalog item.
  */
@@ -153,4 +158,79 @@ export class IngredientResponseDto {
     example: 'it',
   })
   resolved_lang: string;
+}
+
+/**
+ * Full ingredient record returned after catalog administration operations,
+ * including the name in every supported language.
+ */
+export class IngredientDetailResponseDto {
+  /**
+   * Unique ingredient catalog identifier.
+   * @example 12
+   */
+  @ApiProperty({
+    description: 'Unique ingredient catalog identifier',
+    example: 12,
+  })
+  id: number;
+
+  /**
+   * Canonical slug identifier.
+   * @example 'bell_pepper'
+   */
+  @ApiProperty({
+    description: 'Canonical ingredient slug',
+    example: 'bell_pepper',
+  })
+  slug: string;
+
+  /**
+   * Ingredient food category.
+   * @example IngredientCategory.produce
+   */
+  @ApiProperty({
+    enum: IngredientCategory,
+    description: 'Ingredient culinary category',
+    example: IngredientCategory.produce,
+  })
+  category: IngredientCategory;
+
+  /**
+   * Display name in every supported language.
+   */
+  @ApiProperty({
+    type: TranslationDto,
+    description: 'Ingredient display name in Italian, English and French',
+  })
+  translations: TranslationDto;
+}
+
+/**
+ * Full tag record returned after catalog administration operations,
+ * including the name in every supported language.
+ */
+export class TagDetailResponseDto {
+  /**
+   * Unique tag identifier.
+   * @example 1
+   */
+  @ApiProperty({ description: 'Unique tag identifier', example: 1 })
+  id: number;
+
+  /**
+   * Canonical slug identifier.
+   * @example 'gluten_free'
+   */
+  @ApiProperty({ description: 'Canonical tag slug', example: 'gluten_free' })
+  slug: string;
+
+  /**
+   * Display name in every supported language.
+   */
+  @ApiProperty({
+    type: TranslationDto,
+    description: 'Tag display name in Italian, English and French',
+  })
+  translations: TranslationDto;
 }

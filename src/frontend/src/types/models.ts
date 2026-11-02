@@ -79,7 +79,8 @@ export interface PublicUser {
 
 export interface FriendRequest {
 	id: number
-	user: Pick<PublicUser, 'id' | 'username' | 'avatar_url'>
+	username: string
+	avatar_url: string | null
 	created_at: string
 }
 

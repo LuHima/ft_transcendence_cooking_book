@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api, toPage } from '../api/client'
+import { api } from '../api/client'
 import { useLang } from '../lib/useLang'
+import { io } from 'socket.io-client'
 import type { AppNotification } from '../types/models'
 
 const POLL_INTERVAL_MS = 60_000
@@ -41,11 +42,11 @@ function NotificationBell() {
 	const [open, setOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
 
-	// GET /api/notifications/get (già pronta)
+	// GET /api/notifications
 	const load = useCallback(() => {
 		api
-			.get<unknown>('/notifications/get')
-			.then((d) => setItems(toPage<AppNotification>(d, 50).items))
+			.get<{ notification: AppNotification[] }>('/notifications')
+			.then((data) => setItems(data.notification))
 			.catch(() => {
 				// le notifiche sono un extra: se falliscono non si mostra nessun errore
 			})
@@ -58,6 +59,23 @@ function NotificationBell() {
 			if (!document.hidden) load()
 		}, POLL_INTERVAL_MS)
 		return () => clearInterval(timer)
+	}, [load])
+
+	useEffect(() => {
+		const socket = io(window.location.origin, { withCredentials: true })
+		const onNewNotification = () => load()
+		const onConnectError = (error: Error) => {
+			console.error('Connection Socket.IO failed:', error)
+		}
+
+		socket.on('newNotification', onNewNotification)
+		socket.on('connect_error', onConnectError)
+
+		return () => {
+			socket.off('newNotification', onNewNotification)
+			socket.off('connect_error', onConnectError)
+			socket.disconnect()
+		}
 	}, [load])
 
 	const unreadCount = items.filter((n) => !n.is_read).length

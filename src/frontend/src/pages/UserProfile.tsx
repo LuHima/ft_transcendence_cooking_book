@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
-import { api, ApiError, getErrorMessage, qs } from '../api/client'
+import { api, ApiError, getErrorMessage, qs, toPage } from '../api/client'
 import { useLang } from '../lib/useLang'
 import Avatar from '../components/Avatar'
 import FriendButton from '../components/FriendButton'
@@ -15,8 +15,7 @@ import type { Friendship, Paginated, PublicUser, RecipeSummary } from '../types/
 const PAGE_SIZE = 9
 
 // profilo pubblico di un altro utente: solo username, avatar, ricette pubblicate e tasto amicizia.
-// GET /users/:id (già pronta) + GET /recipes?author_id=:id (già pronta).
-// NB: per l'amicizia GET /users/:id deve includere `friendship: { status, direction?, request_id? }`
+// per l'amicizia GET /users/:id deve includere `friendship: { status, direction?, request_id? }`
 // (calcolata rispetto all'utente loggato), più `recipes_count` e `friends_count`.
 // wrapper: key={id} rimonta il componente al cambio utente, così lo stato riparte pulito
 function UserProfile() {
@@ -50,6 +49,26 @@ function UserProfileView({ id }: { id?: string }) {
 			cancelled = true
 		}
 	}, [id, t])
+
+	// se GET /users/:id non include `friendship`, si ricava "già amici" dall'elenco amici
+	const profileId = profile?.id
+	const needsFriendship = Boolean(me && profile && profile.friendship === undefined && me.id !== profile.id)
+	useEffect(() => {
+		if (!needsFriendship || profileId == null) return
+		let cancelled = false
+		api
+			.get<unknown>('/friends')
+			.then((d) => {
+				if (cancelled) return
+				if (toPage<PublicUser>(d).items.some((f) => f.id === profileId)) {
+					setProfile((prev) => (prev && prev.friendship === undefined ? { ...prev, friendship: { status: 'accepted' } } : prev))
+				}
+			})
+			.catch(() => {})
+		return () => {
+			cancelled = true
+		}
+	}, [needsFriendship, profileId])
 
 	useEffect(() => {
 		let cancelled = false
