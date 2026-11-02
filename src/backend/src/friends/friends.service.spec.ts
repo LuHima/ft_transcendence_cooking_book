@@ -39,6 +39,9 @@ describe('FriendsService', () => {
             notification: {
               deleteMany: jest.fn(),
             },
+            userBlock: {
+              findFirst: jest.fn(),
+            },
           },
         },
         {
@@ -190,6 +193,19 @@ describe('FriendsService', () => {
 
       await expect(service.sendFriendRequest(1, 99)).rejects.toThrow(
         NotFoundException,
+      );
+    });
+
+    it('should throw NotFoundException when either user has blocked the other', async () => {
+      (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
+      (prisma.userBlock.findFirst as jest.Mock<any>).mockResolvedValueOnce({
+        id: 1,
+        blocker_id: 2,
+        blocked_id: 1,
+      });
+
+      await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(
+        new NotFoundException('User not found'),
       );
     });
 

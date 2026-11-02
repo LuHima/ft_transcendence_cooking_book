@@ -6,6 +6,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -54,6 +55,18 @@ describe('UsersService', () => {
               findFirst: jest.fn(),
               findMany: jest.fn(),
               count: jest.fn(),
+              deleteMany: jest.fn(),
+            },
+            userBlock: {
+              findUnique: jest.fn(),
+              findFirst: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]),
+              create: jest.fn(),
+              delete: jest.fn(),
+              count: jest.fn(),
+            },
+            notification: {
+              deleteMany: jest.fn(),
             },
           },
         },
@@ -1104,6 +1117,194 @@ describe('UsersService', () => {
       ).rejects.toThrow(NotFoundException);
 
       expect(prisma.recipe.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if caller is mutually blocked with target author', async () => {
+      (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([
+        { blocker_id: 1, blocked_id: 2 },
+      ]);
+
+      await expect(
+        service.getUserPublicRecipes(2, { page: 1, limit: 20 }, 1),
+      ).rejects.toThrow(new NotFoundException('User not found'));
+    });
+  });
+
+  describe('blockUser', () => {
+    it('throws BadRequestException when user attempts to block themselves', async () => {
+      await expect(service.blockUser(1, 1)).rejects.toThrow(
+        new BadRequestException('Cannot block yourself'),
+      );
+    });
+
+    it('throws NotFoundException when target user does not exist or is inactive', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValueOnce(null);
+
+      await expect(service.blockUser(1, 999)).rejects.toThrow(
+        new NotFoundException('User not found'),
+      );
+    });
+
+    it('creates UserBlock and cascades cleanup for friendships and unread notifications', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValueOnce({ id: 2 });
+      (prisma.userBlock.create as jest.Mock).mockResolvedValueOnce({
+        id: 1,
+        blocker_id: 1,
+        blocked_id: 2,
+      });
+      (prisma.friendship.deleteMany as jest.Mock).mockResolvedValueOnce({
+        count: 1,
+      });
+      (prisma.notification.deleteMany as jest.Mock).mockResolvedValueOnce({
+        count: 2,
+      });
+
+      const result = await service.blockUser(1, 2);
+
+      expect(prisma.userBlock.create).toHaveBeenCalledWith({
+        data: {
+          blocker_id: 1,
+          blocked_id: 2,
+        },
+      });
+      expect(prisma.friendship.deleteMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { requester_id: 1, addressee_id: 2 },
+            { requester_id: 2, addressee_id: 1 },
+          ],
+        },
+      });
+      expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          is_read: false,
+          OR: [
+            { user_id: 1, actor_id: 2 },
+            { user_id: 2, actor_id: 1 },
+          ],
+        },
+      });
+      expect(result).toEqual({ message: 'User blocked successfully' });
+    });
+
+    it('is idempotent when user block already exists (P2002 error)', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValueOnce({ id: 2 });
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint violation',
+        {
+          code: 'P2002',
+          clientVersion: '7.8.0',
+        },
+      );
+      (prisma.userBlock.create as jest.Mock).mockRejectedValueOnce(p2002Error);
+      (prisma.friendship.deleteMany as jest.Mock).mockResolvedValueOnce({
+        count: 0,
+      });
+      (prisma.notification.deleteMany as jest.Mock).mockResolvedValueOnce({
+        count: 0,
+      });
+
+      const result = await service.blockUser(1, 2);
+
+      expect(result).toEqual({ message: 'User blocked successfully' });
+    });
+  });
+
+  describe('unblockUser', () => {
+    it('throws NotFoundException when user block is not found', async () => {
+      (prisma.userBlock.findUnique as jest.Mock).mockResolvedValueOnce(null);
+
+      await expect(service.unblockUser(1, 2)).rejects.toThrow(
+        new NotFoundException('User block not found'),
+      );
+    });
+
+    it('deletes UserBlock record and confirms unblock', async () => {
+      (prisma.userBlock.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: 1,
+        blocker_id: 1,
+        blocked_id: 2,
+      });
+      (prisma.userBlock.delete as jest.Mock).mockResolvedValueOnce({
+        id: 1,
+      });
+
+      const result = await service.unblockUser(1, 2);
+
+      expect(prisma.userBlock.delete).toHaveBeenCalledWith({
+        where: {
+          blocker_id_blocked_id: {
+            blocker_id: 1,
+            blocked_id: 2,
+          },
+        },
+      });
+      expect(result).toEqual({ message: 'User unblocked successfully' });
+    });
+  });
+
+  describe('getBlockedUsers', () => {
+    it('returns paginated blocked user accounts', async () => {
+      const mockBlocks = [
+        {
+          id: 1,
+          blocker_id: 1,
+          blocked_id: 2,
+          created_at: new Date('2026-11-01T10:00:00Z'),
+          blocked: {
+            id: 2,
+            username: 'toxic_user',
+            avatar_url: '/uploads/avatars/avatar_2.webp',
+          },
+        },
+      ];
+      (prisma.userBlock.findMany as jest.Mock).mockResolvedValueOnce(
+        mockBlocks,
+      );
+      (prisma.userBlock.count as jest.Mock).mockResolvedValueOnce(1);
+
+      const result = await service.getBlockedUsers(1, { page: 1, limit: 20 });
+
+      expect(result.items).toEqual([
+        {
+          id: 2,
+          username: 'toxic_user',
+          avatar_url: '/uploads/avatars/avatar_2.webp',
+          blocked_at: new Date('2026-11-01T10:00:00Z'),
+        },
+      ]);
+      expect(result.total).toBe(1);
+      expect(result.total_pages).toBe(1);
+    });
+  });
+
+  describe('mutual invisibility', () => {
+    it('findUsers excludes mutually blocked users from search results', async () => {
+      (prisma.userBlock.findMany as jest.Mock).mockResolvedValueOnce([
+        { blocker_id: 1, blocked_id: 3 },
+      ]);
+      (prisma.user.findMany as jest.Mock).mockResolvedValueOnce([]);
+      (prisma.user.count as jest.Mock).mockResolvedValueOnce(0);
+
+      await service.findUsers({ page: 1, limit: 20 }, 1);
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { notIn: [1, 3] },
+          }),
+        }),
+      );
+    });
+
+    it('getUser throws NotFoundException when caller and target are mutually blocked', async () => {
+      (prisma.userBlock.findMany as jest.Mock).mockResolvedValueOnce([
+        { blocker_id: 2, blocked_id: 1 },
+      ]);
+
+      await expect(service.getUser(2, 1)).rejects.toThrow(
+        new NotFoundException('User not found'),
+      );
     });
   });
 });

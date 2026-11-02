@@ -53,6 +53,7 @@ import {
 import { SearchUserQueryDto } from './dto/search-user-query.dto';
 import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
 import { PaginatedRecipeResponseDto } from 'src/recipe/dto/recipe-response.dto';
+import { PaginatedBlockedUsersResponseDto } from './dto/blocked-user.dto';
 
 /**
  * Controller handling user profiles, account preferences, avatar uploads, and social interactions.
@@ -234,6 +235,31 @@ export class UsersController {
   }
 
   /**
+   * Retrieve list of users currently blocked by the authenticated caller.
+   */
+  @ApiOperation({
+    summary: 'List blocked users',
+    description:
+      'Returns a paginated list of accounts currently blocked by the authenticated user.',
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of blocked user accounts',
+    type: PaginatedBlockedUsersResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination query parameters',
+    type: ApiBadRequestResponseDto,
+  })
+  @Auth()
+  @Get('me/blocks')
+  async getBlockedUsers(
+    @CurrentUser('id') id: number,
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedBlockedUsersResponseDto> {
+    return await this.userService.getBlockedUsers(id, query);
+  }
+
+  /**
    * Search and discover community members.
    */
   @ApiOperation({
@@ -400,5 +426,73 @@ export class UsersController {
     @Query() query: PaginationQueryDto,
   ) {
     return await this.userService.getUserFriends(id, query);
+  }
+
+  /**
+   * Block target user account.
+   */
+  @ApiOperation({
+    summary: 'Block user',
+    description:
+      'Blocks specified user ID, dissolving any friendship and establishing mutual invisibility.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Target user ID to block',
+    example: 42,
+  })
+  @ApiOkResponse({
+    description: 'User blocked successfully',
+    type: UserMessageResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Cannot block yourself or invalid user ID',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Auth()
+  @Post(':id/block')
+  async blockUser(
+    @CurrentUser('id') blockerId: number,
+    @Param('id', ParseIntPipe) targetId: number,
+  ): Promise<UserMessageResponseDto> {
+    return await this.userService.blockUser(blockerId, targetId);
+  }
+
+  /**
+   * Unblock target user account.
+   */
+  @ApiOperation({
+    summary: 'Unblock user',
+    description:
+      'Removes user block, restoring profile visibility and searchability without restoring previous friendship.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Target user ID to unblock',
+    example: 42,
+  })
+  @ApiOkResponse({
+    description: 'User unblocked successfully',
+    type: UserMessageResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid user ID format',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User block not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Auth()
+  @Delete(':id/block')
+  async unblockUser(
+    @CurrentUser('id') blockerId: number,
+    @Param('id', ParseIntPipe) targetId: number,
+  ): Promise<UserMessageResponseDto> {
+    return await this.userService.unblockUser(blockerId, targetId);
   }
 }

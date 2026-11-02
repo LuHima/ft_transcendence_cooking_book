@@ -77,8 +77,23 @@ export class FeedService {
       f.requester_id === userId ? f.addressee_id : f.requester_id,
     );
 
+    let activeFriendIds = friendIds;
+    if (this.prisma.userBlock) {
+      const userBlocks = await this.prisma.userBlock.findMany({
+        where: {
+          OR: [{ blocker_id: userId }, { blocked_id: userId }],
+        },
+        select: { blocker_id: true, blocked_id: true },
+      });
+      const blockedIds = new Set<number>();
+      for (const b of userBlocks) {
+        blockedIds.add(b.blocker_id === userId ? b.blocked_id : b.blocker_id);
+      }
+      activeFriendIds = friendIds.filter((id) => !blockedIds.has(id));
+    }
+
     // Zero-Cost Short Circuit
-    if (friendIds.length === 0) {
+    if (activeFriendIds.length === 0) {
       return {
         items: [],
         total: 0,
@@ -92,7 +107,7 @@ export class FeedService {
 
     // Step 2: Friend Recipes Query
     const where = {
-      user_id: { in: friendIds },
+      user_id: { in: activeFriendIds },
       user: {
         status: UserStatus.active,
         deleted_at: null,

@@ -90,6 +90,9 @@ describe('RecipeService', () => {
       create: jest.fn(),
       deleteMany: jest.fn(),
     },
+    userBlock: {
+      findFirst: jest.fn(),
+    },
   };
 
   const mockTranslationService = {
@@ -2243,7 +2246,10 @@ describe('RecipeService', () => {
       });
       expect(mockNotificationEmit.notification).toHaveBeenCalledWith(
         { id_user: 1, id_target: 10 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.like },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+        },
       );
       expect(res).toEqual({
         message: 'Recipe liked successfully',
@@ -2307,6 +2313,22 @@ describe('RecipeService', () => {
         'Database unavailable',
       );
     });
+
+    it('throws NotFoundException when caller and recipe author are mutually blocked', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 2,
+      });
+      mockPrisma.userBlock.findFirst.mockResolvedValueOnce({
+        id: 1,
+        blocker_id: 2,
+        blocked_id: 1,
+      });
+
+      await expect(service.likeRecipe(10, 1)).rejects.toThrow(
+        new NotFoundException('Recipe not found'),
+      );
+    });
   });
 
   describe('unlikeRecipe', () => {
@@ -2319,7 +2341,10 @@ describe('RecipeService', () => {
     });
 
     it('deletes like atomically and prunes unread notifications', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10, user_id: 2 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 2,
+      });
       mockPrisma.like.delete.mockResolvedValueOnce({
         user_id: 1,
         recipe_id: 10,
@@ -2352,7 +2377,10 @@ describe('RecipeService', () => {
     });
 
     it('deletes like but skips notification pruning when unliked by recipe author', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10, user_id: 1 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 1,
+      });
       mockPrisma.like.delete.mockResolvedValueOnce({
         user_id: 1,
         recipe_id: 10,
@@ -2375,7 +2403,10 @@ describe('RecipeService', () => {
     });
 
     it('handles concurrent missing like (P2025) idempotently', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10, user_id: 2 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 2,
+      });
       mockPrisma.like.delete.mockRejectedValueOnce({ code: 'P2025' });
       mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 0 });
       mockPrisma.like.count.mockResolvedValueOnce(5);
@@ -2400,7 +2431,10 @@ describe('RecipeService', () => {
     });
 
     it('rethrows unexpected prisma errors during unlike', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 10, user_id: 2 });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 2,
+      });
       mockPrisma.like.delete.mockRejectedValueOnce(
         new Error('Connection failure'),
       );
@@ -2421,6 +2455,19 @@ describe('RecipeService', () => {
 
       await expect(service.createComment(999, 1, commentDto)).rejects.toThrow(
         NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when commenter and recipe author are mutually blocked', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1, user_id: 2 });
+      mockPrisma.userBlock.findFirst.mockResolvedValueOnce({
+        id: 1,
+        blocker_id: 1,
+        blocked_id: 2,
+      });
+
+      await expect(service.createComment(1, 1, commentDto)).rejects.toThrow(
+        new NotFoundException('Recipe not found'),
       );
     });
 
@@ -2486,7 +2533,10 @@ describe('RecipeService', () => {
       });
       expect(mockNotificationEmit.notification).toHaveBeenCalledWith(
         { id_user: 5, id_target: 1 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.comment },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.comment,
+        },
       );
       expect(result).toEqual(createdComment);
     });
@@ -2566,7 +2616,10 @@ describe('RecipeService', () => {
       expect(mockNotificationEmit.notification).toHaveBeenCalledTimes(1);
       expect(mockNotificationEmit.notification).toHaveBeenCalledWith(
         { id_user: 7, id_target: 20 },
-        { subject: NotificationSubject.comment, action: NotificationAction.comment },
+        {
+          subject: NotificationSubject.comment,
+          action: NotificationAction.comment,
+        },
       );
       expect(result).toEqual(createdReply);
     });

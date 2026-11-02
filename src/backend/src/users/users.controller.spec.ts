@@ -376,4 +376,53 @@ describe('UsersController', () => {
       expect(service.getUserFriends).toHaveBeenCalledWith(2, query);
     });
   });
+
+  describe('getBlockedUsers', () => {
+    it('should delegate to service.getBlockedUsers with current user id and query', async () => {
+      const mockEnvelope = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.getBlockedUsers as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue(mockEnvelope);
+
+      const query = { page: 1, limit: 20 };
+      const result = await controller.getBlockedUsers(1, query);
+
+      expect(result).toEqual(mockEnvelope);
+      expect(service.getBlockedUsers).toHaveBeenCalledWith(1, query);
+    });
+  });
+
+  describe('blockUser', () => {
+    it('should delegate to service.blockUser with blockerId and targetId', async () => {
+      (service.blockUser as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue({ message: 'User blocked successfully' });
+
+      const result = await controller.blockUser(1, 42);
+
+      expect(service.blockUser).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual({ message: 'User blocked successfully' });
+    });
+  });
+
+  describe('unblockUser', () => {
+    it('should delegate to service.unblockUser with blockerId and targetId', async () => {
+      (service.unblockUser as jest.Mock<any>) = jest
+        .fn<() => Promise<any>>()
+        .mockResolvedValue({ message: 'User unblocked successfully' });
+
+      const result = await controller.unblockUser(1, 42);
+
+      expect(service.unblockUser).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual({ message: 'User unblocked successfully' });
+    });
+  });
 });

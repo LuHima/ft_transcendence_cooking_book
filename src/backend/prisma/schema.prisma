@@ -111,6 +111,28 @@ enum FriendshipStatus {
   none
 }
 
+enum ReportSubject {
+  recipe
+  comment
+  user
+}
+
+enum ReportReason {
+  spam
+  harassment
+  inappropriate_content
+  hate_speech
+  copyright
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  dismissed
+  action_taken
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,6 +168,10 @@ model User {
 
   friendships_sent     Friendship[] @relation("FriendshipRequester")
   friendships_received Friendship[] @relation("FriendshipAddressee")
+
+  blocks_sent          UserBlock[]  @relation("BlocksSent")
+  blocks_received      UserBlock[]  @relation("BlocksReceived")
+  reports_submitted    Report[]     @relation("ReportsSubmitted")
 
   @@map("users")
 }
@@ -414,3 +440,46 @@ model JwtSession {
 
   @@map("jwt_sessions")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER BLOCKS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model UserBlock {
+  id         Int      @id @default(autoincrement())
+  blocker_id Int
+  blocked_id Int
+  created_at DateTime @default(now())
+
+  blocker    User     @relation("BlocksSent", fields: [blocker_id], references: [id], onDelete: Cascade)
+  blocked    User     @relation("BlocksReceived", fields: [blocked_id], references: [id], onDelete: Cascade)
+
+  @@unique([blocker_id, blocked_id])
+  @@index([blocker_id])
+  @@index([blocked_id])
+  @@map("user_blocks")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REPORTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Report {
+  id               Int           @id @default(autoincrement())
+  reporter_id      Int
+  subject          ReportSubject
+  target_id        Int
+  reason           ReportReason
+  description      String?       @db.VarChar(1000)
+  status           ReportStatus  @default(pending)
+  resolution_notes String?       @db.VarChar(1000)
+  created_at       DateTime      @default(now())
+  updated_at       DateTime      @updatedAt
+
+  reporter         User          @relation("ReportsSubmitted", fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@index([status, created_at])
+  @@index([subject, target_id])
+  @@map("reports")
+}
+

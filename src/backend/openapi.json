@@ -1027,6 +1027,90 @@
         ]
       }
     },
+    "/api/users/me/blocks": {
+      "get": {
+        "description": "Returns a paginated list of accounts currently blocked by the authenticated user.",
+        "operationId": "UsersController_getBlockedUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of blocked user accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedBlockedUsersResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "List blocked users",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
     "/api/users": {
       "get": {
         "description": "Returns a paginated list of active community members.\n\n- When search is omitted: returns active members ordered by total published recipes (recipes_count_desc).\n- When search is provided: performs case-insensitive substring matching across username, first_name, and last_name (defaulting to username_asc).\n- When authenticated: caller is excluded from results and receives contextual friendship_status.\n- When unauthenticated: friendship_status is null.\n- Inactive, disabled, banned, and soft-deleted accounts are excluded.",
@@ -1445,6 +1529,162 @@
           }
         ],
         "summary": "Get user confirmed friends",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/users/{id}/block": {
+      "post": {
+        "description": "Blocks specified user ID, dissolving any friendship and establishing mutual invisibility.",
+        "operationId": "UsersController_blockUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Target user ID to block",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User blocked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot block yourself or invalid user ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Block user",
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "description": "Removes user block, restoring profile visibility and searchability without restoring previous friendship.",
+        "operationId": "UsersController_unblockUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Target user ID to unblock",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User unblocked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user ID format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User block not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Unblock user",
         "tags": [
           "Users"
         ]
@@ -4480,6 +4720,303 @@
           "Feed"
         ]
       }
+    },
+    "/api/reports": {
+      "post": {
+        "description": "Reports an offensive recipe, comment, or user profile for moderation review.",
+        "operationId": "ReportsController_createReport",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Report successfully submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A pending report already exists for this item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Submit content report",
+        "tags": [
+          "Reports"
+        ]
+      },
+      "get": {
+        "description": "Retrieves a paginated list of content reports with optional filtering by status and subject.",
+        "operationId": "ReportsController_getReports",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter reports by current review status",
+            "schema": {
+              "$ref": "#/components/schemas/ReportStatus"
+            }
+          },
+          {
+            "name": "subject",
+            "required": false,
+            "in": "query",
+            "description": "Filter reports by target entity type",
+            "schema": {
+              "$ref": "#/components/schemas/ReportSubject"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated moderation queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedReportsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Insufficient privileges to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "List reports queue (Admin/Moderator only)",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/reports/{id}": {
+      "patch": {
+        "description": "Updates status and optional resolution notes of a content report.",
+        "operationId": "ReportsController_updateReport",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric report identifier",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or ID format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Insufficient privileges to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Report not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Resolve report (Admin/Moderator only)",
+        "tags": [
+          "Reports"
+        ]
+      }
     }
   },
   "info": {
@@ -5388,6 +5925,90 @@
           "has_prev_page": {
             "type": "boolean",
             "description": "Indicates if an earlier page precedes current page",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
+      "BlockedUserItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Blocked user identifier",
+            "example": 42
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the blocked user",
+            "example": "toxic_user"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Public avatar photo URL of the blocked user",
+            "example": "/uploads/avatars/avatar_42.webp"
+          },
+          "blocked_at": {
+            "type": "string",
+            "description": "Timestamp when the user was blocked",
+            "example": "2026-11-01T10:00:00.000Z",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url",
+          "blocked_at"
+        ]
+      },
+      "PaginatedBlockedUsersResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of blocked users",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlockedUserItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of blocked users",
+            "example": 1
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Flag indicating if next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Flag indicating if previous page exists",
             "example": false
           }
         },
@@ -7236,6 +7857,234 @@
         },
         "required": [
           "message"
+        ]
+      },
+      "ReportSubject": {
+        "type": "string",
+        "enum": [
+          "recipe",
+          "comment",
+          "user"
+        ],
+        "description": "Type of entity being reported (recipe, comment, user)"
+      },
+      "ReportReason": {
+        "type": "string",
+        "enum": [
+          "spam",
+          "harassment",
+          "inappropriate_content",
+          "hate_speech",
+          "copyright",
+          "other"
+        ],
+        "description": "Reason category for the report"
+      },
+      "CreateReportDto": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "description": "Type of entity being reported (recipe, comment, user)",
+            "example": "recipe",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportSubject"
+              }
+            ]
+          },
+          "target_id": {
+            "type": "number",
+            "description": "Primary key identifier of the reported item",
+            "example": 42,
+            "minimum": 1
+          },
+          "reason": {
+            "description": "Reason category for the report",
+            "example": "spam",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed explanation of the violation (maximum 1000 characters)",
+            "example": "This post contains repetitive promotional links.",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "subject",
+          "target_id",
+          "reason"
+        ]
+      },
+      "ReportStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "reviewed",
+          "dismissed",
+          "action_taken"
+        ],
+        "description": "Current moderation triage status"
+      },
+      "ReportItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique report identifier",
+            "example": 1
+          },
+          "reporter_id": {
+            "type": "number",
+            "description": "User ID of the member who submitted the report",
+            "example": 5
+          },
+          "subject": {
+            "description": "Target subject entity type",
+            "example": "recipe",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportSubject"
+              }
+            ]
+          },
+          "target_id": {
+            "type": "number",
+            "description": "Target entity ID",
+            "example": 42
+          },
+          "reason": {
+            "description": "Justification reason",
+            "example": "spam",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description provided by reporter",
+            "example": "Repeated advertising links"
+          },
+          "status": {
+            "description": "Current moderation triage status",
+            "example": "pending",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportStatus"
+              }
+            ]
+          },
+          "resolution_notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Resolution notes recorded by moderator or admin",
+            "example": null
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when report was submitted",
+            "example": "2026-11-02T12:00:00.000Z",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Timestamp when report was last modified",
+            "example": "2026-11-02T12:00:00.000Z",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "reporter_id",
+          "subject",
+          "target_id",
+          "reason",
+          "description",
+          "status",
+          "resolution_notes",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "PaginatedReportsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of reports",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of reports",
+            "example": 1
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Flag indicating if next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Flag indicating if previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
+      "UpdateReportDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "description": "Updated report triage status",
+            "example": "reviewed",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportStatus"
+              }
+            ]
+          },
+          "resolution_notes": {
+            "type": "string",
+            "description": "Internal staff notes documenting findings or action taken",
+            "example": "Content reviewed and removed; user warned.",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "status"
         ]
       }
     }

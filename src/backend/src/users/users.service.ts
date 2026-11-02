@@ -22,7 +22,12 @@ import {
   UserSearchItemDto,
   PaginatedUsersResponseDto,
   PublicUserResponseDto,
+  UserMessageResponseDto,
 } from './dto/user-profile-response.dto';
+import {
+  BlockedUserItemDto,
+  PaginatedBlockedUsersResponseDto,
+} from './dto/blocked-user.dto';
 import * as fs from 'fs';
 
 @Injectable()
@@ -127,10 +132,22 @@ export class UsersService {
         break;
     }
 
+    const blockedIds = currentUserId
+      ? await this.getBlockedUserIds(currentUserId)
+      : [];
+    let idFilter: Prisma.IntFilter | undefined = undefined;
+    if (currentUserId) {
+      if (blockedIds.length > 0) {
+        idFilter = { notIn: [currentUserId, ...blockedIds] };
+      } else {
+        idFilter = { not: currentUserId };
+      }
+    }
+
     const where: Prisma.UserWhereInput = {
       status: 'active',
       deleted_at: null,
-      ...(currentUserId ? { id: { not: currentUserId } } : {}),
+      ...(idFilter ? { id: idFilter } : {}),
       ...(search
         ? {
             OR: [
@@ -231,6 +248,13 @@ export class UsersService {
     id: number,
     currentUserId?: number,
   ): Promise<PublicUserResponseDto> {
+    if (currentUserId) {
+      const blockedIds = await this.getBlockedUserIds(currentUserId);
+      if (blockedIds.includes(id)) {
+        throw new NotFoundException('User not found');
+      }
+    }
+
     const user = await this.prisma.user.findFirst({
       where: {
         id: id,
@@ -791,6 +815,13 @@ export class UsersService {
     query: UserCookbookQueryDto = new UserCookbookQueryDto(),
     currentUserId?: number,
   ): Promise<PaginatedRecipeResponseDto> {
+    if (currentUserId) {
+      const blockedIds = await this.getBlockedUserIds(currentUserId);
+      if (blockedIds.includes(targetUserId)) {
+        throw new NotFoundException('User not found');
+      }
+    }
+
     const targetUser = await this.prisma.user.findFirst({
       where: { id: targetUserId, status: 'active', deleted_at: null },
       select: { id: true },
@@ -918,6 +949,186 @@ export class UsersService {
         };
       },
     );
+
+    const total_pages = Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
+    };
+  }
+
+  /**
+   * Block another user account, dissolving any friendship and establishing mutual invisibility.
+   */
+  async blockUser(
+    blockerId: number,
+    targetId: number,
+  ): Promise<UserMessageResponseDto> {
+    if (blockerId === targetId) {
+      throw new BadRequestException('Cannot block yourself');
+    }
+
+    const targetUser = await this.prisma.user.findFirst({
+      where: {
+        id: targetId,
+        status: 'active',
+        deleted_at: null,
+      },
+      select: { id: true },
+    });
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    try {
+      await this.prisma.userBlock.create({
+        data: {
+          blocker_id: blockerId,
+          blocked_id: targetId,
+        },
+      });
+    } catch (error: any) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // Idempotent block - record already exists
+      } else {
+        throw error;
+      }
+    }
+
+    // Cascade Cleanup:
+    // 1. Dissolve any Friendship record between the two users
+    // 2. Delete any unread notifications exchanged between them
+    await Promise.all([
+      this.prisma.friendship.deleteMany({
+        where: {
+          OR: [
+            { requester_id: blockerId, addressee_id: targetId },
+            { requester_id: targetId, addressee_id: blockerId },
+          ],
+        },
+      }),
+      this.prisma.notification.deleteMany({
+        where: {
+          is_read: false,
+          OR: [
+            { user_id: blockerId, actor_id: targetId },
+            { user_id: targetId, actor_id: blockerId },
+          ],
+        },
+      }),
+    ]);
+
+    return { message: 'User blocked successfully' };
+  }
+
+  /**
+   * Remove a block on a user account.
+   */
+  async unblockUser(
+    blockerId: number,
+    targetId: number,
+  ): Promise<UserMessageResponseDto> {
+    const block = await this.prisma.userBlock.findUnique({
+      where: {
+        blocker_id_blocked_id: {
+          blocker_id: blockerId,
+          blocked_id: targetId,
+        },
+      },
+    });
+    if (!block) {
+      throw new NotFoundException('User block not found');
+    }
+
+    await this.prisma.userBlock.delete({
+      where: {
+        blocker_id_blocked_id: {
+          blocker_id: blockerId,
+          blocked_id: targetId,
+        },
+      },
+    });
+
+    return { message: 'User unblocked successfully' };
+  }
+
+  /**
+   * Retrieve all user IDs mutually blocked with the specified user.
+   */
+  async getBlockedUserIds(userId: number): Promise<number[]> {
+    if (!this.prisma.userBlock) {
+      return [];
+    }
+    const blocks = await this.prisma.userBlock.findMany({
+      where: {
+        OR: [{ blocker_id: userId }, { blocked_id: userId }],
+      },
+      select: {
+        blocker_id: true,
+        blocked_id: true,
+      },
+    });
+
+    if (!blocks || !Array.isArray(blocks)) {
+      return [];
+    }
+
+    const ids = new Set<number>();
+    for (const b of blocks) {
+      ids.add(b.blocker_id === userId ? b.blocked_id : b.blocker_id);
+    }
+    return Array.from(ids);
+  }
+
+  /**
+   * Retrieve paginated list of accounts currently blocked by the specified user.
+   */
+  async getBlockedUsers(
+    userId: number,
+    query: PaginationQueryDto = new PaginationQueryDto(),
+  ): Promise<PaginatedBlockedUsersResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.UserBlockWhereInput = {
+      blocker_id: userId,
+    };
+
+    const [blocks, total] = await Promise.all([
+      this.prisma.userBlock.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: {
+          blocked: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      }),
+      this.prisma.userBlock.count({ where }),
+    ]);
+
+    const items: BlockedUserItemDto[] = blocks.map((b) => ({
+      id: b.blocked.id,
+      username: b.blocked.username,
+      avatar_url: b.blocked.avatar_url,
+      blocked_at: b.created_at,
+    }));
 
     const total_pages = Math.ceil(total / limit);
 

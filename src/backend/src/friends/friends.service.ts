@@ -176,6 +176,20 @@ export class FriendsService {
       throw new NotFoundException('User not found');
     }
 
+    if (this.prisma.userBlock) {
+      const isBlocked = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: requesterId, blocked_id: recipientId },
+            { blocker_id: recipientId, blocked_id: requesterId },
+          ],
+        },
+      });
+      if (isBlocked) {
+        throw new NotFoundException('User not found');
+      }
+    }
+
     const existingFriendship = await this.prisma.friendship.findFirst({
       where: {
         status: 'accepted',

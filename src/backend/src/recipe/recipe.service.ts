@@ -1852,6 +1852,20 @@ export class RecipeService {
       throw new NotFoundException('Recipe not found');
     }
 
+    if (recipe.user_id && this.prisma.userBlock) {
+      const isBlocked = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: userId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: userId },
+          ],
+        },
+      });
+      if (isBlocked) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
+
     let newlyCreated = false;
     try {
       await this.prisma.like.create({
@@ -1908,6 +1922,20 @@ export class RecipeService {
     });
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
+    }
+
+    if (recipe.user_id && this.prisma.userBlock) {
+      const isBlocked = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: userId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: userId },
+          ],
+        },
+      });
+      if (isBlocked) {
+        throw new NotFoundException('Recipe not found');
+      }
     }
 
     try {
@@ -1967,6 +1995,20 @@ export class RecipeService {
 
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
+    }
+
+    if (recipe.user_id && this.prisma.userBlock) {
+      const isBlocked = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: userId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: userId },
+          ],
+        },
+      });
+      if (isBlocked) {
+        throw new NotFoundException('Recipe not found');
+      }
     }
 
     let parentId: number | null = null;
