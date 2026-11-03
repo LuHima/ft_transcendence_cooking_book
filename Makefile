@@ -7,6 +7,7 @@ NAME =			WeCook
 
 # Explicit shell definition for cross-platform bash features (e.g. read -s)
 SHELL := /bin/bash
+MAKEFLAGS += --no-print-directory
 
 # Docker compose file and environment configuration paths
 ENV_FILE =		./docker/.env
@@ -579,7 +580,7 @@ vault-check-auto-unseal:
 	SEALED=$$(echo "$$STATUS_OUT" | awk '$$1=="Sealed" {print $$2}'); \
 	if [ "$$SEALED" = "true" ]; then \
 		echo "Vault is sealed. Running unseal..."; \
-		$(MAKE) vault-unseal; \
+		$(MAKE) --no-print-directory vault-unseal; \
 	fi
 
 
@@ -598,7 +599,7 @@ env-check: ## |Verify .env exists and required vars are present
 	fi; \
 	missing=0; \
 	if grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' "$(ENV_FILE)"; then \
-		echo "USE_VAULT=false: Vault disabled, secrets are read from $(ENV_FILE)."; \
+		echo "Vault disabled, secrets are read from $(ENV_FILE)."; \
 		mode_vars="DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET \
 		TWO_FACTOR_AUTH"; \
 	else \
