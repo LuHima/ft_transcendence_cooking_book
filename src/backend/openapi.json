@@ -5539,6 +5539,604 @@
           "Reports"
         ]
       }
+    },
+    "/api/admin/users": {
+      "get": {
+        "description": "Returns paginated accounts matching optional role, lifecycle status, search, and sorting criteria. Includes inactive, disabled, and banned accounts.",
+        "operationId": "AdminController_getUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search query substring matching username, first_name, or last_name (minimum 2 non-whitespace characters)",
+            "schema": {
+              "minLength": 2,
+              "example": "mario",
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Filter accounts by system role (admin, moderator, user)",
+            "schema": {
+              "example": "user",
+              "type": "string",
+              "enum": [
+                "admin",
+                "moderator",
+                "user"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter accounts by lifecycle status (active, disabled, banned)",
+            "schema": {
+              "example": "active",
+              "type": "string",
+              "enum": [
+                "active",
+                "disabled",
+                "banned"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sorting criteria for administrative directory. Defaults to newest, or username_asc when search is provided.",
+            "schema": {
+              "example": "newest",
+              "type": "string",
+              "enum": [
+                "username_asc",
+                "username_desc",
+                "recipes_count_desc",
+                "newest",
+                "oldest"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated platform user directory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAdminUsersResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "List platform users (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      },
+      "post": {
+        "description": "Creates a new user account with specified credentials and role. Hashes password with bcrypt and validates optional profile and avatar attributes.",
+        "operationId": "AdminController_createUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdminUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully provisioned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or invalid input format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Username or email already in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Provision user account (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      }
+    },
+    "/api/admin/users/{id}": {
+      "patch": {
+        "description": "Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling status mutations. Atomically restores platform-custody content on reactivation to active status.",
+        "operationId": "AdminController_updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user identifier",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or attempt to demote/disable own account (anti-self-sabotage)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target user not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Last administrator safeguard conflict or unique username/email collision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update user account or status (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      },
+      "delete": {
+        "description": "By default performs soft deletion: disables account, purges active JWT sessions, transfers public recipes to platform custody, and deactivates authored comments. With ?hard=true, disassociates recipes and permanently deletes user row.",
+        "operationId": "AdminController_deleteUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user identifier",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          },
+          {
+            "name": "hard",
+            "required": false,
+            "in": "query",
+            "description": "When true, permanently purges the user row and disassociates recipes. Defaults to false (soft deactivation).",
+            "schema": {
+              "example": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User successfully deactivated or deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Attempt to delete own account (anti-self-sabotage)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target user not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Attempt to delete the sole remaining platform administrator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Deactivate or delete user (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      }
+    },
+    "/api/admin/users/{id}/avatar": {
+      "post": {
+        "description": "Processes and transcodes uploaded image to 512x512 WebP with EXIF metadata stripped, updating the target user avatar.",
+        "operationId": "AdminController_uploadUserAvatar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user identifier",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Avatar image file (JPEG, PNG, or WebP; maximum 5MB)"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Avatar successfully uploaded and transcoded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvatarUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File missing or invalid file format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Upload user avatar (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      },
+      "delete": {
+        "description": "Removes avatar file from disk and nullifies the database reference for the target user.",
+        "operationId": "AdminController_deleteUserAvatar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user identifier",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Avatar successfully deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMessageResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Delete user avatar (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      }
     }
   },
   "info": {
@@ -8806,6 +9404,387 @@
         "required": [
           "status"
         ]
+      },
+      "AdminUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "User identifier",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique username",
+            "example": "mario_rossi"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "example": "mario.rossi@example.com"
+          },
+          "role": {
+            "description": "User role",
+            "example": "admin",
+            "enum": [
+              "admin",
+              "moderator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "Lifecycle status",
+            "example": "active",
+            "enum": [
+              "active",
+              "disabled",
+              "banned"
+            ],
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar image URL",
+            "example": "/uploads/avatars/avatar_1.webp"
+          },
+          "bio": {
+            "type": "string",
+            "nullable": true,
+            "description": "Biography / user description",
+            "example": "Italian chef passionate about sourdough and pasta."
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name",
+            "example": "Mario"
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name",
+            "example": "Rossi"
+          },
+          "birth_date": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date of birth",
+            "example": "1990-01-01T00:00:00.000Z",
+            "format": "date-time"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number",
+            "example": "+39 06 1234567"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Street address",
+            "example": "Via Roma 1"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "description": "City",
+            "example": "Roma"
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Postal code / ZIP",
+            "example": "00100"
+          },
+          "recipes_count": {
+            "type": "number",
+            "description": "Total published recipes authored by the user",
+            "example": 5
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Account registration timestamp",
+            "example": "2026-10-01T12:00:00.000Z",
+            "format": "date-time"
+          },
+          "deleted_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "Account soft-deletion timestamp",
+            "format": "date-time",
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "role",
+          "status",
+          "avatar_url",
+          "bio",
+          "first_name",
+          "last_name",
+          "birth_date",
+          "phone",
+          "address",
+          "city",
+          "postal_code",
+          "recipes_count",
+          "created_at",
+          "deleted_at"
+        ]
+      },
+      "PaginatedAdminUsersResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "User items matching the administrative search query",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of users matching query",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 3
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
+      "CreateAdminUserDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Unique username (3-30 characters)",
+            "example": "moderator_chef",
+            "minLength": 3,
+            "maxLength": 30
+          },
+          "email": {
+            "type": "string",
+            "description": "User email address",
+            "example": "moderator@wecook.com",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "description": "Initial plaintext password (minimum 8 characters)",
+            "example": "SecurePassword123!",
+            "minLength": 8
+          },
+          "role": {
+            "description": "Assigned platform role",
+            "example": "moderator",
+            "enum": [
+              "admin",
+              "moderator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "Initial account lifecycle status (defaults to active)",
+            "example": "active",
+            "enum": [
+              "active",
+              "disabled",
+              "banned"
+            ],
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "Avatar image URL (local path /uploads/avatars/* or trusted HTTPS domain)",
+            "example": "/uploads/avatars/default.webp"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Culinary biography / description (maximum 500 characters)",
+            "example": "Staff moderator specializing in Mediterranean culinary techniques.",
+            "maxLength": 500
+          },
+          "first_name": {
+            "type": "string",
+            "description": "First name",
+            "example": "Luca",
+            "maxLength": 100
+          },
+          "last_name": {
+            "type": "string",
+            "description": "Last name",
+            "example": "Bianchi",
+            "maxLength": 100
+          },
+          "birth_date": {
+            "type": "object",
+            "description": "Date of birth (ISO 8601 date string)",
+            "example": "1990-05-15"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "+39 02 1234567",
+            "maxLength": 30
+          },
+          "address": {
+            "type": "string",
+            "description": "Residential address",
+            "example": "Corso Buenos Aires 45",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "description": "City of residence",
+            "example": "Milano",
+            "maxLength": 100
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Postal code / ZIP",
+            "example": "20124",
+            "maxLength": 10
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "password",
+          "role"
+        ]
+      },
+      "UpdateAdminUserDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Updated username (3-30 characters)",
+            "example": "moderator_chef_updated",
+            "minLength": 3,
+            "maxLength": 30
+          },
+          "email": {
+            "type": "string",
+            "description": "Updated email address",
+            "example": "new.moderator@wecook.com",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "description": "Reset password (minimum 8 characters). Purges active user sessions.",
+            "example": "NewSecurePassword456!",
+            "minLength": 8
+          },
+          "role": {
+            "description": "Reassigned role. Demotions or changes immediately purge active sessions.",
+            "example": "admin",
+            "enum": [
+              "admin",
+              "moderator",
+              "user"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "Account lifecycle status (active, disabled, banned)",
+            "example": "active",
+            "enum": [
+              "active",
+              "disabled",
+              "banned"
+            ],
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string",
+            "description": "Avatar image URL (local path /uploads/avatars/* or trusted HTTPS domain)",
+            "example": "/uploads/avatars/chef.webp"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Culinary biography / description (maximum 500 characters)",
+            "example": "Senior community moderator and culinary instructor.",
+            "maxLength": 500
+          },
+          "first_name": {
+            "type": "string",
+            "description": "First name",
+            "example": "Luca",
+            "maxLength": 100
+          },
+          "last_name": {
+            "type": "string",
+            "description": "Last name",
+            "example": "Bianchi",
+            "maxLength": 100
+          },
+          "birth_date": {
+            "type": "object",
+            "description": "Date of birth (ISO 8601 date string)",
+            "example": "1990-05-15"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "+39 02 1234567",
+            "maxLength": 30
+          },
+          "address": {
+            "type": "string",
+            "description": "Residential address",
+            "example": "Corso Buenos Aires 45",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "description": "City of residence",
+            "example": "Milano",
+            "maxLength": 100
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Postal code / ZIP",
+            "example": "20124",
+            "maxLength": 10
+          }
+        }
       }
     }
   }

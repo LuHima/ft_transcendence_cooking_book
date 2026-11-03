@@ -4,8 +4,9 @@ import {
   HttpException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { OwnerType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
@@ -15,11 +16,11 @@ import {
   RECIPE_SUMMARY_INCLUDE,
 } from '../recipe/recipe.projection';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import {
   FriendItemDto,
   PaginatedFriendsResponseDto,
-} from 'src/friends/dto/friend-response.dto';
+} from '../friends/dto/friend-response.dto';
 import { SearchUserQueryDto, UserSort } from './dto/search-user-query.dto';
 import {
   UserSearchItemDto,
@@ -31,6 +32,7 @@ import {
   BlockedUserItemDto,
   PaginatedBlockedUsersResponseDto,
 } from './dto/blocked-user.dto';
+import { ImageProcessingService } from '../common/services/image-processing.service';
 import * as fs from 'fs';
 
 @Injectable()
@@ -38,6 +40,8 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private readonly recipeProjection: RecipeProjection,
+    @Optional()
+    private readonly imageProcessingService?: ImageProcessingService,
   ) {}
 
   async getUserByEmail(email: string) {
@@ -516,10 +520,18 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    // Process avatar image through Sharp WebP pipeline
+    let avatarUrl: string;
+    if (this.imageProcessingService) {
+      const processed =
+        await this.imageProcessingService.processAvatarFile(file);
+      avatarUrl = processed.relativePath;
+    } else {
+      avatarUrl = `/uploads/avatars/${file.filename || file.originalname}`;
+    }
+
     // Delete previously uploaded avatar file from disk if present
     await this.safeUnlink(user.avatar_url);
-
-    const avatarUrl = `/uploads/avatars/${file.filename || file.originalname}`;
 
     // Persist the new avatar path
     await this.prisma.user.update({
@@ -653,14 +665,14 @@ export class UsersService {
 
     const [recipes, total] = await Promise.all([
       this.prisma.recipe.findMany({
-        where: { user_id: targetUserId },
+        where: { user_id: targetUserId, owner_type: OwnerType.user },
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
         include: RECIPE_SUMMARY_INCLUDE(currentUserId),
       }),
       this.prisma.recipe.count({
-        where: { user_id: targetUserId },
+        where: { user_id: targetUserId, owner_type: OwnerType.user },
       }),
     ]);
 

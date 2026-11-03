@@ -7,7 +7,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { OwnerType, Prisma } from '@prisma/client';
 import { UserSort } from './dto/search-user-query.dto';
 
 describe('UsersService', () => {
@@ -1048,7 +1048,7 @@ describe('UsersService', () => {
       });
       expect(prisma.recipe.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { user_id: 2 },
+          where: { user_id: 2, owner_type: OwnerType.user },
           skip: 0,
           take: 10,
           orderBy: { created_at: 'desc' },

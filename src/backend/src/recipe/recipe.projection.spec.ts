@@ -8,6 +8,7 @@ import {
   Course,
   IngredientCategory,
   MediaType,
+  OwnerType,
   RecipeDifficulty,
   TranslationStatus,
   UnitOfMeasure,
@@ -233,9 +234,9 @@ describe('RecipeProjection', () => {
     });
 
     it('handles string notes directly', () => {
-      expect(
-        projection.resolveIngredientNotes('q.b.', 'it', 'it'),
-      ).toBe('q.b.');
+      expect(projection.resolveIngredientNotes('q.b.', 'it', 'it')).toBe(
+        'q.b.',
+      );
     });
 
     it('returns null for null, undefined, or empty notes', () => {
@@ -317,6 +318,19 @@ describe('RecipeProjection', () => {
       const summary = projection.toLocalizedSummary(preLiked, 'it', undefined);
       expect(summary.is_liked).toBe(true);
     });
+
+    it('nullifies author when recipe is under platform custody (owner_type: platform)', () => {
+      const platformRecipe = {
+        ...rawRecipe,
+        owner_type: OwnerType.platform,
+      };
+      const summary = projection.toLocalizedSummary(
+        platformRecipe,
+        'it',
+        undefined,
+      );
+      expect(summary.author).toBeNull();
+    });
   });
 
   describe('toPaginatedSummaryResponse', () => {
@@ -335,7 +349,9 @@ describe('RecipeProjection', () => {
       created_at: new Date('2026-10-01T00:00:00Z'),
       updated_at: null,
       user: null,
-      translations: [{ locale: 'en', title: 'Fruit Bowl', description: 'Fresh' }],
+      translations: [
+        { locale: 'en', title: 'Fruit Bowl', description: 'Fresh' },
+      ],
       recipe_tags: [],
       _count: { likes: 0, comments: 0 },
       likes: [],
@@ -438,7 +454,11 @@ describe('RecipeProjection', () => {
           duration: 5,
           image_url: '/uploads/step1.webp',
           translations: [
-            { locale: 'it', title: 'Tostatura', description: 'Tostare il riso' },
+            {
+              locale: 'it',
+              title: 'Tostatura',
+              description: 'Tostare il riso',
+            },
             { locale: 'en', title: 'Toast', description: 'Toast the rice' },
           ],
         },
@@ -533,6 +553,19 @@ describe('RecipeProjection', () => {
           order: 0,
         },
       ]);
+    });
+
+    it('nullifies author when detail recipe is under platform custody', () => {
+      const platformDetailRecipe = {
+        ...rawDetailRecipe,
+        owner_type: OwnerType.platform,
+      };
+      const detail = projection.toLocalizedDetail(
+        platformDetailRecipe,
+        'en',
+        undefined,
+      );
+      expect(detail.author).toBeNull();
     });
   });
 });

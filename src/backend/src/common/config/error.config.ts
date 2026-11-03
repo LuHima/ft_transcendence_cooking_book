@@ -159,6 +159,24 @@ export const errors = {
   },
 
   // ─────────────────────────────────────────────────────────
+  // AMMINISTRAZIONE UTENTI (ADMIN)
+  // ─────────────────────────────────────────────────────────
+  admin: {
+    cannotModifySelf: {
+      statusCode: HttpStatus.BAD_REQUEST,
+      message:
+        'Administrators cannot demote, disable, or delete their own account',
+      error: 'Bad Request',
+    },
+    lastAdminRequired: {
+      statusCode: HttpStatus.CONFLICT,
+      message:
+        'Cannot demote, disable, or delete the last remaining active administrator',
+      error: 'Conflict',
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
   // RICETTE
   // ─────────────────────────────────────────────────────────
   recipes: {

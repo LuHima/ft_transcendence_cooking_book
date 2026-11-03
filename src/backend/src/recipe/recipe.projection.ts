@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { OwnerType } from '@prisma/client';
 import {
   LocalizedRecipeDetailResponse,
   LocalizedRecipeIngredientResponse,
@@ -167,10 +168,7 @@ export class RecipeProjection {
     if (typeof notes === 'object' && !Array.isArray(notes)) {
       const notesObj = notes as Record<string, string>;
       return (
-        notesObj[targetLocale] ??
-        notesObj[sourceLang] ??
-        notesObj['en'] ??
-        null
+        notesObj[targetLocale] ?? notesObj[sourceLang] ?? notesObj['en'] ?? null
       );
     }
     if (typeof notes === 'string') {
@@ -206,11 +204,11 @@ export class RecipeProjection {
         : currentUserId
           ? Boolean(
               recipe.likes &&
-                recipe.likes.length > 0 &&
-                recipe.likes.some(
-                  (l: any) =>
-                    l.user_id === undefined || l.user_id === currentUserId,
-                ),
+              recipe.likes.length > 0 &&
+              recipe.likes.some(
+                (l: any) =>
+                  l.user_id === undefined || l.user_id === currentUserId,
+              ),
             )
           : false;
 
@@ -228,13 +226,14 @@ export class RecipeProjection {
       video_url: recipe.video_url ?? null,
       created_at: recipe.created_at,
       updated_at: recipe.updated_at ?? null,
-      author: recipe.user
-        ? {
-            id: recipe.user.id,
-            username: recipe.user.username,
-            avatar_url: recipe.user.avatar_url ?? null,
-          }
-        : null,
+      author:
+        recipe.owner_type === OwnerType.platform || !recipe.user
+          ? null
+          : {
+              id: recipe.user.id,
+              username: recipe.user.username,
+              avatar_url: recipe.user.avatar_url ?? null,
+            },
       title: translation?.title ?? '',
       description: translation?.description ?? '',
       tags,
@@ -357,11 +356,11 @@ export class RecipeProjection {
         : currentUserId
           ? Boolean(
               recipe.likes &&
-                recipe.likes.length > 0 &&
-                recipe.likes.some(
-                  (l: any) =>
-                    l.user_id === undefined || l.user_id === currentUserId,
-                ),
+              recipe.likes.length > 0 &&
+              recipe.likes.some(
+                (l: any) =>
+                  l.user_id === undefined || l.user_id === currentUserId,
+              ),
             )
           : false;
 
@@ -379,13 +378,14 @@ export class RecipeProjection {
       video_url: recipe.video_url ?? null,
       created_at: recipe.created_at,
       updated_at: recipe.updated_at ?? null,
-      author: recipe.user
-        ? {
-            id: recipe.user.id,
-            username: recipe.user.username,
-            avatar_url: recipe.user.avatar_url ?? null,
-          }
-        : null,
+      author:
+        recipe.owner_type === OwnerType.platform || !recipe.user
+          ? null
+          : {
+              id: recipe.user.id,
+              username: recipe.user.username,
+              avatar_url: recipe.user.avatar_url ?? null,
+            },
       title: translation?.title ?? '',
       description: translation?.description ?? '',
       preservation: translation?.preservation ?? null,
