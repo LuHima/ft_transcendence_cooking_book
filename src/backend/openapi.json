@@ -35,17 +35,17 @@
         ]
       }
     },
-    "/api/auth/signin": {
+    "/api/auth/signin/google": {
       "post": {
         "description": "Validates user credentials. On success, sets HttpOnly `accessToken` (10 min) and `refresh_token` (7 days) cookies. If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.",
-        "operationId": "AuthController_signIn",
+        "operationId": "AuthController_signInGoogle",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SignInUserDto"
+                "$ref": "#/components/schemas/GoogleAuthDto"
               }
             }
           }
@@ -100,6 +100,47 @@
           }
         },
         "summary": "Sign in with email and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/signin": {
+      "post": {
+        "operationId": "AuthController_signIn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
         "tags": [
           "Auth"
         ]
@@ -3938,26 +3979,15 @@
           "twofAuth"
         ]
       },
-      "SignInUserDto": {
+      "GoogleAuthDto": {
         "type": "object",
         "properties": {
-          "email": {
-            "type": "string",
-            "description": "Registered user email address",
-            "example": "mario.rossi@example.com",
-            "maxLength": 255,
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "description": "User account password (minimum 9 characters)",
-            "example": "SuperSecret123!",
-            "minLength": 9
+          "idToken": {
+            "type": "string"
           }
         },
         "required": [
-          "email",
-          "password"
+          "idToken"
         ]
       },
       "ApiBadRequestResponseDto": {
@@ -4033,6 +4063,28 @@
           "timestamp",
           "path",
           "message"
+        ]
+      },
+      "SignInUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Registered user email address",
+            "example": "mario.rossi@example.com",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "description": "User account password (minimum 9 characters)",
+            "example": "SuperSecret123!",
+            "minLength": 9
+          }
+        },
+        "required": [
+          "email",
+          "password"
         ]
       },
       "SignUpUserDto": {
