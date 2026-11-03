@@ -148,6 +148,10 @@ _Avoid_: Flag, complaint, ticket, strike
 An administrative triage interface allowing platform moderators and administrators to inspect, review, and act upon pending content reports.
 _Avoid_: Admin inbox, complaint list, report table
 
+**Report Resolution**:
+The formal triage decision (`dismiss`, `warn`, `delete_content`, `ban`) applied to a content report by a platform moderator or administrator, recording audit metadata and triggering corresponding safety enforcement.
+_Avoid_: Report close, ticket solve, complaint resolution
+
 ## Platform Governance, Privacy & Security
 
 **Recipe Privacy**:
