@@ -166,6 +166,10 @@ _Avoid_: Static file serving, image gate, asset security
 An administrative sanction applied to a community member's account, either temporary (capped at 90 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
 _Avoid_: Account freeze, lockout, strike, kick
 
+**Comment Audit Queue**:
+A centralized, flat chronological administrative stream allowing platform staff (administrators and moderators) to inspect, filter, and moderate comments and replies across all platform recipes.
+_Avoid_: Comment feed, admin comment wall, message log
+
 ## API Governance & Documentation
 
 **API Contract**:
