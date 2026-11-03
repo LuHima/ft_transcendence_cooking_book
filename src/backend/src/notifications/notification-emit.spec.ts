@@ -18,7 +18,9 @@ describe('NotificationEmit', () => {
           provide: PrismaService,
           useValue: {
             user: {
-              findUnique: jest.fn<() => Promise<any>>().mockResolvedValue({ username: 'Mario' }),
+              findUnique: jest
+                .fn<() => Promise<any>>()
+                .mockResolvedValue({ username: 'Mario' }),
             },
             recipe: {
               findUnique: jest.fn(),
@@ -30,8 +32,12 @@ describe('NotificationEmit', () => {
               findMany: jest.fn(),
             },
             notification: {
-              create: jest.fn<() => Promise<any>>().mockResolvedValue({ id: 1 }),
-              createMany: jest.fn<() => Promise<any>>().mockResolvedValue({ count: 2 }),
+              create: jest
+                .fn<() => Promise<any>>()
+                .mockResolvedValue({ id: 1 }),
+              createMany: jest
+                .fn<() => Promise<any>>()
+                .mockResolvedValue({ count: 2 }),
             },
           },
         },
@@ -58,7 +64,10 @@ describe('NotificationEmit', () => {
 
       await service.notification(
         { id_user: 1, id_target: 100 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.post },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.post,
+        },
       );
 
       expect(prisma.friendship.findMany).toHaveBeenCalledWith({
@@ -111,7 +120,10 @@ describe('NotificationEmit', () => {
 
       await service.notification(
         { id_user: 1, id_target: 50 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.update },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.update,
+        },
       );
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
@@ -126,7 +138,10 @@ describe('NotificationEmit', () => {
 
       await service.notification(
         { id_user: 1, id_target: 100 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.post },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.post,
+        },
       );
 
       expect(prisma.notification.createMany).not.toHaveBeenCalled();
@@ -143,7 +158,10 @@ describe('NotificationEmit', () => {
 
       await service.notification(
         { id_user: 1, id_target: 10 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.like },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+        },
       );
 
       expect(prisma.recipe.findUnique).toHaveBeenCalledWith({
@@ -176,7 +194,10 @@ describe('NotificationEmit', () => {
 
       await service.notification(
         { id_user: 1, id_target: 25 },
-        { subject: NotificationSubject.comment, action: NotificationAction.comment },
+        {
+          subject: NotificationSubject.comment,
+          action: NotificationAction.comment,
+        },
       );
 
       expect(prisma.comment.findUnique).toHaveBeenCalledWith({
@@ -194,7 +215,10 @@ describe('NotificationEmit', () => {
     it('should notify target user directly for friend requests', async () => {
       await service.notification(
         { id_user: 1, id_target: 42 },
-        { subject: NotificationSubject.user, action: NotificationAction.friend_request },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.friend_request,
+        },
       );
 
       expect(prisma.notification.create).toHaveBeenCalledWith({
@@ -222,7 +246,10 @@ describe('NotificationEmit', () => {
 
       await service.notification(
         { id_user: 1, id_target: 10 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.like },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+        },
       );
 
       expect(prisma.notification.create).not.toHaveBeenCalled();
@@ -234,7 +261,10 @@ describe('NotificationEmit', () => {
 
       await service.notification(
         { id_user: 1, id_target: 999 },
-        { subject: NotificationSubject.recipe, action: NotificationAction.like },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+        },
       );
 
       expect(prisma.notification.create).not.toHaveBeenCalled();
@@ -242,4 +272,3 @@ describe('NotificationEmit', () => {
     });
   });
 });
-

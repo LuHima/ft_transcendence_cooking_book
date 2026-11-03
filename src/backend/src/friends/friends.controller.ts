@@ -67,7 +67,8 @@ export class FriendsController {
     type: PaginatedFriendsResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()
@@ -102,7 +103,8 @@ export class FriendsController {
     type: ApiNotFoundResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()
@@ -135,11 +137,13 @@ export class FriendsController {
     type: ApiNotFoundResponseDto,
   })
   @ApiConflictResponse({
-    description: 'Already friends with this user or friend request already sent',
+    description:
+      'Already friends with this user or friend request already sent',
     type: ApiConflictResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()
@@ -167,7 +171,8 @@ export class FriendsController {
     type: PaginatedFriendRequestsResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()
@@ -202,7 +207,8 @@ export class FriendsController {
     type: ApiNotFoundResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()
@@ -237,7 +243,8 @@ export class FriendsController {
     type: ApiNotFoundResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()
@@ -272,7 +279,8 @@ export class FriendsController {
     type: ApiNotFoundResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()

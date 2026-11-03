@@ -352,10 +352,7 @@ describe('RecipeService', () => {
     it('throws BadRequestException when step numbers are duplicated', async () => {
       const recipeWithDuplicateSteps = {
         ...sampleDto,
-        steps: [
-          sampleDto.steps[0],
-          { ...sampleDto.steps[0], step_number: 1 },
-        ],
+        steps: [sampleDto.steps[0], { ...sampleDto.steps[0], step_number: 1 }],
       };
 
       await expect(

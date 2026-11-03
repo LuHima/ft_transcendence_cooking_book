@@ -178,11 +178,7 @@ export class PublicUserResponseDto {
     example: 'friends',
   })
   friendship_status?:
-    | 'none'
-    | 'pending_sent'
-    | 'pending_received'
-    | 'friends'
-    | null;
+    'none' | 'pending_sent' | 'pending_received' | 'friends' | null;
 }
 
 /**
