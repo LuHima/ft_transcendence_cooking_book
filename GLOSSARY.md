@@ -174,6 +174,10 @@ _Avoid_: Account freeze, lockout, strike, kick
 A centralized, flat chronological administrative stream allowing platform staff (administrators and moderators) to inspect, filter, and moderate comments and replies across all platform recipes.
 _Avoid_: Comment feed, admin comment wall, message log
 
+**Platform Custody Transfer**:
+The administrative governance process of adopting public recipes into platform ownership (`owner_type: 'platform'`) upon user soft deletion to preserve valuable community content without attribution (`author: null`), while preserving the relational `user_id` to enable atomic, full content restoration upon account reactivation.
+_Avoid_: Recipe confiscation, ghost author, deletion cascade
+
 ## API Governance & Documentation
 
 **API Contract**:
