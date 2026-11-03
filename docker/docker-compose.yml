@@ -140,6 +140,8 @@ services:
       LIBRETRANSLATE_URL: ${LIBRETRANSLATE_URL}
       UPLOADS_DIR: ${UPLOADS_DIR}
       PORT: ${PORT:-3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLI_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLI_SECRET_KEY}
     # Mount backend source code for live development and protect container
     # node_modules
     volumes:
@@ -183,7 +185,7 @@ services:
     # Runtime configuration
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLI_ID}
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLI_ID}
     # Mount frontend source code for live development and protect container
     # node_modules
     volumes:
