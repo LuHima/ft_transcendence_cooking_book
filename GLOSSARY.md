@@ -148,6 +148,24 @@ _Avoid_: Flag, complaint, ticket, strike
 An administrative triage interface allowing platform moderators and administrators to inspect, review, and act upon pending content reports.
 _Avoid_: Admin inbox, complaint list, report table
 
+## Platform Governance, Privacy & Security
+
+**Recipe Privacy**:
+The visibility classification of a culinary recipe (`public`, `friends_only`, `private`), dictating its appearance in global discovery, friend feeds, and author-only personal collections.
+_Avoid_: Visibility flag, secret recipe, recipe access level
+
+**Profile Privacy**:
+The visibility classification of a community member's personal culinary profile (`public`, `friends_only`, `private`), controlling access to culinary bio, personal statistics, authored recipe archives, and friendship networks while preserving basic identity discovery.
+_Avoid_: Account privacy, stealth mode, hidden user
+
+**Media Access Control**:
+The authorization mechanism that gates binary media assets (cover images, step illustrations, gallery photos, tutorial videos, and recipe PDF sheets) against recipe privacy settings and mutual user block invariants.
+_Avoid_: Static file serving, image gate, asset security
+
+**Account Ban**:
+An administrative sanction applied to a community member's account, either temporary (capped at 90 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
+_Avoid_: Account freeze, lockout, strike, kick
+
 ## API Governance & Documentation
 
 **API Contract**:
