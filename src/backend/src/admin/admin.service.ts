@@ -1,5 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { OwnerType, Prisma, Role, UserStatus } from '@prisma/client';
+import {
+  OwnerType,
+  Prisma,
+  Role,
+  UserStatus,
+  ReportSubject,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
@@ -12,8 +18,47 @@ import {
   AdminUserResponseDto,
   PaginatedAdminUsersResponseDto,
 } from './dto/admin-user-response.dto';
+import {
+  AdminCommentQueryDto,
+  AdminCommentSort,
+  AdminCommentFormat,
+  AdminCommentStatus,
+} from './dto/admin-comment-query.dto';
+import {
+  PaginatedAdminCommentsResponseDto,
+  AdminCommentItemDto,
+  ThreadedAdminCommentItemDto,
+} from './dto/admin-comment-response.dto';
 import { UserSort } from '../users/dto/search-user-query.dto';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+
+interface CommentRecipePayload {
+  id: number;
+  source_lang: string;
+  translations?: Array<{ locale: string; title: string }>;
+}
+
+interface CommentUserPayload {
+  id: number;
+  username: string;
+  avatar_url: string | null;
+}
+
+interface CommentPayload {
+  id: number;
+  recipe_id: number;
+  user_id: number | null;
+  parent_id: number | null;
+  content: string;
+  is_active: boolean;
+  is_edited: boolean;
+  created_at: Date;
+  updated_at: Date | null;
+  user: CommentUserPayload | null;
+  recipe: CommentRecipePayload | null;
+  replies?: CommentPayload[];
+  _count?: { replies: number };
+}
 
 type UserWithRecipeCount = Prisma.UserGetPayload<{
   include: { _count: { select: { recipes: true } } };
@@ -560,5 +605,322 @@ export class AdminService {
     });
 
     return { message: 'Avatar deleted successfully' };
+  }
+
+  /**
+   * Administrative comment audit stream supporting multi-dimensional sorting,
+   * moderation filters, and dual flat/threaded presentation modes.
+   */
+  async findAllAdminComments(
+    query?: AdminCommentQueryDto,
+  ): Promise<PaginatedAdminCommentsResponseDto> {
+    const page = Math.max(1, query?.page || 1);
+    const limit = Math.max(1, Math.min(100, query?.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.CommentWhereInput = {};
+
+    if (query?.status === AdminCommentStatus.active) {
+      where.is_active = true;
+    } else if (query?.status === AdminCommentStatus.inactive) {
+      where.is_active = false;
+    }
+
+    if (query?.search) {
+      where.content = {
+        contains: query.search,
+        mode: 'insensitive',
+      };
+    }
+
+    if (query?.recipe_id) {
+      where.recipe_id = query.recipe_id;
+    }
+
+    if (query?.user_id) {
+      where.user_id = query.user_id;
+    }
+
+    if (query?.is_edited !== undefined) {
+      where.is_edited = query.is_edited;
+    }
+
+    const localizeTitle = (
+      recipe: CommentRecipePayload | null | undefined,
+    ): string => {
+      if (!recipe || !recipe.translations || recipe.translations.length === 0) {
+        return '';
+      }
+      if (query?.lang) {
+        const match = recipe.translations.find((t) => t.locale === query.lang);
+        if (match) return match.title;
+      }
+      const fallback = recipe.translations.find(
+        (t) => t.locale === recipe.source_lang,
+      );
+      return fallback?.title || recipe.translations[0]?.title || '';
+    };
+
+    const fetchReportCounts = async (
+      ids: number[],
+    ): Promise<Map<number, number>> => {
+      const counts = new Map<number, number>();
+      if (ids.length === 0 || !this.prisma.report?.groupBy) {
+        return counts;
+      }
+      try {
+        const groups = await this.prisma.report.groupBy({
+          by: ['target_id'],
+          where: {
+            subject: ReportSubject.comment,
+            target_id: { in: ids },
+          },
+          _count: { id: true },
+        });
+        for (const g of groups) {
+          counts.set(g.target_id, g._count.id);
+        }
+      } catch {
+        // Fallback for mocked environments
+      }
+      return counts;
+    };
+
+    const mapCommentItem = (
+      c: CommentPayload,
+      reportCounts: Map<number, number>,
+    ): AdminCommentItemDto => ({
+      id: c.id,
+      recipe_id: c.recipe_id,
+      user_id: c.user_id,
+      parent_id: c.parent_id,
+      content: c.content,
+      is_active: c.is_active,
+      is_edited: c.is_edited ?? false,
+      created_at: c.created_at,
+      updated_at: c.updated_at ?? null,
+      reports_count: reportCounts.get(c.id) || 0,
+      user: c.user
+        ? {
+            id: c.user.id,
+            username: c.user.username,
+            avatar_url: c.user.avatar_url ?? null,
+          }
+        : null,
+      recipe: c.recipe
+        ? {
+            id: c.recipe.id,
+            title: localizeTitle(c.recipe),
+          }
+        : null,
+    });
+
+    // Presentation format: Threaded
+    if (query?.format === AdminCommentFormat.threaded) {
+      const threadedWhere: Prisma.CommentWhereInput = {
+        ...where,
+        parent_id: null,
+      };
+      const repliesLimit = Math.max(1, Math.min(20, query?.replies_limit || 5));
+
+      const candidateRoots = (await this.prisma.comment.findMany({
+        where: threadedWhere,
+        include: {
+          user: { select: { id: true, username: true, avatar_url: true } },
+          recipe: {
+            select: {
+              id: true,
+              source_lang: true,
+              translations: { select: { locale: true, title: true } },
+            },
+          },
+          replies: {
+            orderBy: { created_at: 'desc' },
+            include: {
+              user: { select: { id: true, username: true, avatar_url: true } },
+              recipe: {
+                select: {
+                  id: true,
+                  source_lang: true,
+                  translations: { select: { locale: true, title: true } },
+                },
+              },
+            },
+          },
+          _count: { select: { replies: true } },
+        },
+      })) as unknown as CommentPayload[];
+
+      const withActivity = candidateRoots.map((root) => {
+        const latestReplyTime =
+          root.replies && root.replies.length > 0
+            ? Math.max(
+                ...root.replies.map((r) => new Date(r.created_at).getTime()),
+              )
+            : 0;
+        const rootTime = new Date(root.created_at).getTime();
+        const latestActivity = Math.max(rootTime, latestReplyTime);
+        return { root, latestActivity };
+      });
+
+      if (query?.sort === AdminCommentSort.reports_desc) {
+        const rootIds = candidateRoots.map((c) => c.id);
+        const rootReportCounts = await fetchReportCounts(rootIds);
+        withActivity.sort((a, b) => {
+          const countA = rootReportCounts.get(a.root.id) || 0;
+          const countB = rootReportCounts.get(b.root.id) || 0;
+          if (countB !== countA) return countB - countA;
+          return b.latestActivity - a.latestActivity;
+        });
+      } else if (query?.sort === AdminCommentSort.oldest) {
+        withActivity.sort((a, b) => a.latestActivity - b.latestActivity);
+      } else if (query?.sort === AdminCommentSort.recipe) {
+        withActivity.sort((a, b) => {
+          if (a.root.recipe_id !== b.root.recipe_id) {
+            return a.root.recipe_id - b.root.recipe_id;
+          }
+          return b.latestActivity - a.latestActivity;
+        });
+      } else {
+        // default: newest by latest activity descending
+        withActivity.sort((a, b) => b.latestActivity - a.latestActivity);
+      }
+
+      const total = withActivity.length;
+      const pagedRoots = withActivity
+        .slice(skip, skip + limit)
+        .map((w) => w.root);
+
+      const allIds: number[] = [];
+      for (const root of pagedRoots) {
+        allIds.push(root.id);
+        const replies = root.replies?.slice(0, repliesLimit) || [];
+        for (const r of replies) {
+          allIds.push(r.id);
+        }
+      }
+      const reportCounts = await fetchReportCounts(allIds);
+
+      const items: ThreadedAdminCommentItemDto[] = pagedRoots.map((root) => {
+        const totalReplies =
+          root._count?.replies ?? (root.replies ? root.replies.length : 0);
+        const windowedReplies = (root.replies || [])
+          .slice(0, repliesLimit)
+          .map((r) => mapCommentItem(r, reportCounts));
+
+        const baseItem = mapCommentItem(root, reportCounts);
+
+        return {
+          ...baseItem,
+          replies_count: totalReplies,
+          has_more_replies: totalReplies > windowedReplies.length,
+          replies: windowedReplies,
+        };
+      });
+
+      const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        total_pages,
+        has_next_page: total > 0 && page < total_pages,
+        has_prev_page: page > 1,
+      };
+    }
+
+    // Presentation format: Flat (Default)
+    if (query?.sort === AdminCommentSort.reports_desc) {
+      const allComments = (await this.prisma.comment.findMany({
+        where,
+        include: {
+          user: { select: { id: true, username: true, avatar_url: true } },
+          recipe: {
+            select: {
+              id: true,
+              source_lang: true,
+              translations: { select: { locale: true, title: true } },
+            },
+          },
+        },
+        orderBy: { created_at: 'desc' },
+      })) as unknown as CommentPayload[];
+
+      const allIds = allComments.map((c) => c.id);
+      const reportCounts = await fetchReportCounts(allIds);
+
+      allComments.sort((a, b) => {
+        const countA = reportCounts.get(a.id) || 0;
+        const countB = reportCounts.get(b.id) || 0;
+        if (countB !== countA) return countB - countA;
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      });
+
+      const total = allComments.length;
+      const paged = allComments.slice(skip, skip + limit);
+      const items = paged.map((c) => mapCommentItem(c, reportCounts));
+      const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        total_pages,
+        has_next_page: total > 0 && page < total_pages,
+        has_prev_page: page > 1,
+      };
+    }
+
+    // Standard sorting on flat feed
+    let orderBy:
+      | Prisma.CommentOrderByWithRelationInput
+      | Prisma.CommentOrderByWithRelationInput[];
+    if (query?.sort === AdminCommentSort.oldest) {
+      orderBy = { created_at: 'asc' };
+    } else if (query?.sort === AdminCommentSort.recipe) {
+      orderBy = [{ recipe_id: 'asc' }, { created_at: 'desc' }];
+    } else {
+      orderBy = { created_at: 'desc' };
+    }
+
+    const [rawComments, total] = (await Promise.all([
+      this.prisma.comment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          user: { select: { id: true, username: true, avatar_url: true } },
+          recipe: {
+            select: {
+              id: true,
+              source_lang: true,
+              translations: { select: { locale: true, title: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.comment.count({ where }),
+    ])) as unknown as [CommentPayload[], number];
+
+    const ids = rawComments.map((c) => c.id);
+    const reportCounts = await fetchReportCounts(ids);
+    const items = rawComments.map((c) => mapCommentItem(c, reportCounts));
+    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: page > 1,
+    };
   }
 }

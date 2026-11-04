@@ -3339,9 +3339,108 @@
         ]
       }
     },
+    "/api/recipes/{id}/comments/{commentId}/replies": {
+      "get": {
+        "description": "Retrieves paginated replies for a target parent comment. Deactivated replies are sanitized with null content and author details for public callers while preserving staff inspection context.",
+        "operationId": "RecipeController_getCommentReplies",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Recipe ID",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          },
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "description": "Parent Comment ID",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of comment replies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRecipeCommentRepliesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid recipe ID or comment ID format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe or comment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get paginated replies for recipe comment",
+        "tags": [
+          "Recipes"
+        ]
+      }
+    },
     "/api/recipes/{id}/comments/{commentId}": {
       "delete": {
-        "description": "Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author. Prunes any unread reply notifications targeting this comment.",
+        "description": "By default performs soft deletion (is_active = false) adhering to role hierarchy (Admin can deactivate any comment; Moderator can deactivate user/moderator comments, receiving 403 on admin comments; User can deactivate self or comments on authored recipes). With ?hard=true (Admin only), permanently purges comment; returns 409 Conflict if child replies exist unless prune_replies=true is explicitly provided.",
         "operationId": "RecipeController_deleteComment",
         "parameters": [
           {
@@ -3363,11 +3462,33 @@
               "example": 10,
               "type": "number"
             }
+          },
+          {
+            "name": "hard",
+            "required": false,
+            "in": "query",
+            "description": "Permanent hard deletion flag (restricted to administrators)",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "prune_replies",
+            "required": false,
+            "in": "query",
+            "description": "Explicit cascade child replies pruning flag for hard deletion",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Comment deactivated successfully",
+            "description": "Comment deactivated or deleted successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -3397,7 +3518,7 @@
             }
           },
           "403": {
-            "description": "Forbidden: user is neither comment author nor recipe author",
+            "description": "Forbidden: Insufficient privileges to deactivate or hard-delete this comment",
             "content": {
               "application/json": {
                 "schema": {
@@ -3412,6 +3533,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: Comment has child replies and prune_replies was not passed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
                 }
               }
             }
@@ -3432,7 +3563,7 @@
             "accessToken": []
           }
         ],
-        "summary": "Deactivate recipe comment",
+        "summary": "Deactivate or delete recipe comment",
         "tags": [
           "Recipes"
         ]
@@ -6137,6 +6268,204 @@
           "Admin Users"
         ]
       }
+    },
+    "/api/admin/comments": {
+      "get": {
+        "description": "Provides an administrative comment audit feed supporting multi-dimensional sorting (newest, oldest, recipe, reports_desc), status filtering (active, inactive, all), modified comments triage (is_edited), search, and dual presentation formats (flat stream or threaded view with windowed replies).",
+        "operationId": "AdminCommentsController_findAllAdminComments",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring search in comment content",
+            "schema": {
+              "example": "recipe",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter comments by lifecycle status (active, inactive, all)",
+            "schema": {
+              "default": "all",
+              "example": "all",
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "recipe_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter comments targeting a specific recipe ID",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          },
+          {
+            "name": "user_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter comments authored by a specific user ID",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "is_edited",
+            "required": false,
+            "in": "query",
+            "description": "Filter comments modified after initial publication",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sorting criteria: newest (default), oldest, recipe (grouped by recipe), reports_desc (highest reports first)",
+            "schema": {
+              "default": "newest",
+              "example": "newest",
+              "type": "string",
+              "enum": [
+                "newest",
+                "oldest",
+                "recipe",
+                "reports_desc"
+              ]
+            }
+          },
+          {
+            "name": "format",
+            "required": false,
+            "in": "query",
+            "description": "Structural presentation format: flat (default atomic stream) or threaded (paginated root comments with windowed reply previews)",
+            "schema": {
+              "default": "flat",
+              "example": "flat",
+              "type": "string",
+              "enum": [
+                "flat",
+                "threaded"
+              ]
+            }
+          },
+          {
+            "name": "replies_limit",
+            "required": false,
+            "in": "query",
+            "description": "Max number of nested child replies to embed per root comment when format=threaded (1 to 20)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 20,
+              "default": 5,
+              "example": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Preferred language locale for recipe title hydration",
+            "schema": {
+              "example": "it",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated comment audit records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAdminCommentsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed on query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Insufficient privileges (requires admin or moderator role)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Comment audit stream (Admin and Moderator)",
+        "tags": [
+          "Admin Comments"
+        ]
+      }
     }
   },
   "info": {
@@ -8516,6 +8845,57 @@
           "replies"
         ]
       },
+      "PaginatedRecipeCommentRepliesResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Paginated list of replies to the specified comment",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeCommentResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of replies matching query",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 3
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
       "ApiForbiddenResponseDto": {
         "type": "object",
         "properties": {
@@ -9785,6 +10165,170 @@
             "maxLength": 10
           }
         }
+      },
+      "AdminCommentRecipeSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Recipe ID",
+            "example": 42
+          },
+          "title": {
+            "type": "string",
+            "description": "Localized or source recipe title",
+            "example": "Spaghetti alla Carbonara"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
+      "AdminCommentItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique comment ID",
+            "example": 1
+          },
+          "recipe_id": {
+            "type": "number",
+            "description": "Recipe ID",
+            "example": 42
+          },
+          "user_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Author user ID, or null if deleted/deactivated",
+            "example": 10
+          },
+          "parent_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Parent root comment ID if reply, or null for top-level root comment",
+            "example": null
+          },
+          "content": {
+            "type": "string",
+            "description": "Comment content text in authentic author-composed language",
+            "example": "Ottima ricetta!"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the comment is active or deactivated",
+            "example": true
+          },
+          "is_edited": {
+            "type": "boolean",
+            "description": "Whether the comment was edited after posting",
+            "example": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-10-13T10:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Last update timestamp, or null if never edited",
+            "example": "2026-10-15T11:00:00.000Z"
+          },
+          "reports_count": {
+            "type": "number",
+            "description": "Total number of moderation reports filed against this comment",
+            "example": 3
+          },
+          "user": {
+            "nullable": true,
+            "description": "Author profile summary",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          },
+          "recipe": {
+            "nullable": true,
+            "description": "Recipe summary metadata",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminCommentRecipeSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "recipe_id",
+          "user_id",
+          "parent_id",
+          "content",
+          "is_active",
+          "is_edited",
+          "created_at",
+          "updated_at",
+          "reports_count",
+          "user",
+          "recipe"
+        ]
+      },
+      "PaginatedAdminCommentsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Comment items (flat comment records or threaded root comments with windowed replies)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCommentItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of matching comments (or root threads)",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 3
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
       }
     }
   }

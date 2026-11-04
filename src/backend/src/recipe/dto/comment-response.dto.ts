@@ -84,3 +84,41 @@ export class ThreadedRecipeCommentResponseDto extends RecipeCommentResponseDto {
   })
   replies: RecipeCommentResponseDto[];
 }
+
+/**
+ * Paginated collection envelope for dedicated comment replies endpoint.
+ */
+export class PaginatedRecipeCommentRepliesResponseDto {
+  @ApiProperty({
+    type: [RecipeCommentResponseDto],
+    description: 'Paginated list of replies to the specified comment',
+  })
+  items: RecipeCommentResponseDto[];
+
+  @ApiProperty({
+    description: 'Total number of replies matching query',
+    example: 42,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total available pages', example: 3 })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Indicates whether a next page exists',
+    example: true,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Indicates whether a previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
+}

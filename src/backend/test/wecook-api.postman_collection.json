@@ -14240,12 +14240,349 @@
           }
         },
         {
-          "id": "f250e44f-f483-4186-8af8-41cfe44a6eb2",
-          "name": "Deactivate recipe comment",
+          "id": "ab045bb6-4bcf-418f-8089-190a621b4ea6",
+          "name": "Get paginated replies for recipe comment",
           "request": {
-            "name": "Deactivate recipe comment",
+            "name": "Get paginated replies for recipe comment",
             "description": {
-              "content": "Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author. Prunes any unread reply notifications targeting this comment.",
+              "content": "Retrieves paginated replies for a target parent comment. Deactivated replies are sanitized with null content and author details for public callers while preserving staff inspection context.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes",
+                ":id",
+                "comments",
+                ":commentId",
+                "replies"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                }
+              ],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "42",
+                  "key": "id",
+                  "description": "(Required) Recipe ID"
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "10",
+                  "key": "commentId",
+                  "description": "(Required) Parent Comment ID"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "4eceacfe-1815-4a0a-855b-a317116cd765",
+              "name": "Paginated list of comment replies",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id",
+                    "comments",
+                    ":commentId",
+                    "replies"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Recipe ID"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "10",
+                      "key": "commentId",
+                      "description": "(Required) Parent Comment ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d30a3e55-70c2-4aeb-81c6-3210ae015ceb",
+              "name": "Invalid recipe ID or comment ID format",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id",
+                    "comments",
+                    ":commentId",
+                    "replies"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Recipe ID"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "10",
+                      "key": "commentId",
+                      "description": "(Required) Parent Comment ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6c4a680e-7116-4e8d-8f12-996ea55ae504",
+              "name": "Recipe or comment not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id",
+                    "comments",
+                    ":commentId",
+                    "replies"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Recipe ID"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "10",
+                      "key": "commentId",
+                      "description": "(Required) Parent Comment ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "0c23c25e-4303-489a-8ef3-72ada3a60b62",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id",
+                    "comments",
+                    ":commentId",
+                    "replies"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Recipe ID"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "10",
+                      "key": "commentId",
+                      "description": "(Required) Parent Comment ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "dea2d4b5-10f8-4624-81a5-cd3566cf3bd1",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "f250e44f-f483-4186-8af8-41cfe44a6eb2",
+          "name": "Deactivate or delete recipe comment",
+          "request": {
+            "name": "Deactivate or delete recipe comment",
+            "description": {
+              "content": "By default performs soft deletion (is_active = false) adhering to role hierarchy (Admin can deactivate any comment; Moderator can deactivate user/moderator comments, receiving 403 on admin comments; User can deactivate self or comments on authored recipes). With ?hard=true (Admin only), permanently purges comment; returns 409 Conflict if child replies exist unless prune_replies=true is explicitly provided.",
               "type": "text/plain"
             },
             "url": {
@@ -14259,7 +14596,20 @@
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "hard",
+                  "value": "false",
+                  "description": "Permanent hard deletion flag (restricted to administrators)"
+                },
+                {
+                  "disabled": false,
+                  "key": "prune_replies",
+                  "value": "false",
+                  "description": "Explicit cascade child replies pruning flag for hard deletion"
+                }
+              ],
               "variable": [
                 {
                   "disabled": false,
@@ -14287,8 +14637,8 @@
           },
           "response": [
             {
-              "id": "b318d451-d9cf-46fa-84c3-0373e373d6e2",
-              "name": "Comment deactivated successfully",
+              "id": "87753a1e-eef8-4b2b-8ece-877befaef22d",
+              "name": "Comment deactivated or deleted successfully",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -14301,7 +14651,16 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    },
+                    {
+                      "key": "prune_replies",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -14355,7 +14714,16 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    },
+                    {
+                      "key": "prune_replies",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -14409,7 +14777,16 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    },
+                    {
+                      "key": "prune_replies",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -14449,8 +14826,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "39285da8-9d2f-4d91-8704-6f4b92e1f721",
-              "name": "Forbidden: user is neither comment author nor recipe author",
+              "id": "ab04a860-8685-4ecc-81e9-408684a0f9f1",
+              "name": "Forbidden: Insufficient privileges to deactivate or hard-delete this comment",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -14463,7 +14840,16 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    },
+                    {
+                      "key": "prune_replies",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -14517,7 +14903,16 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    },
+                    {
+                      "key": "prune_replies",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -14557,6 +14952,69 @@
               "_postman_previewlanguage": "json"
             },
             {
+              "id": "42b9af60-4dde-494f-800d-2ac93b85dc06",
+              "name": "Conflict: Comment has child replies and prune_replies was not passed",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id",
+                    "comments",
+                    ":commentId"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    },
+                    {
+                      "key": "prune_replies",
+                      "value": "false"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Recipe ID"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "10",
+                      "key": "commentId",
+                      "description": "(Required) Comment ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
               "id": "dabc687b-7aa4-4aa2-8a9a-e4a862970717",
               "name": "Internal server error",
               "originalRequest": {
@@ -14571,7 +15029,16 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    },
+                    {
+                      "key": "prune_replies",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -16201,7 +16668,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9625.071059489615",
+                  "value": "4094.07076169359",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -16247,7 +16714,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16300,7 +16767,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16353,7 +16820,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16406,7 +16873,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16459,7 +16926,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16512,7 +16979,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16604,7 +17071,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9625.071059489615",
+                  "value": "4094.07076169359",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -16637,7 +17104,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16676,7 +17143,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16721,7 +17188,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16766,7 +17233,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16811,7 +17278,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16856,7 +17323,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16925,7 +17392,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9625.071059489615",
+                  "value": "4094.07076169359",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -16958,7 +17425,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16997,7 +17464,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17042,7 +17509,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17087,7 +17554,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17132,7 +17599,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17177,7 +17644,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17246,7 +17713,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9625.071059489615",
+                  "value": "4094.07076169359",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17292,7 +17759,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17345,7 +17812,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17398,7 +17865,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17451,7 +17918,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17504,7 +17971,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17557,7 +18024,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9625.071059489615",
+                      "value": "4094.07076169359",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19255,7 +19722,7 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "reviewed",
+                  "value": "action_taken",
                   "description": "Filter reports by current review status"
                 },
                 {
@@ -21948,6 +22415,461 @@
               "listen": "test",
               "script": {
                 "id": "10db6631-20a9-4f3c-8a29-64d74d841372",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    },
+    {
+      "id": "14b3644e-f419-4c76-80eb-9c809e8fbd48",
+      "name": "Admin Comments",
+      "description": {
+        "content": "",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "17af2a17-3ce0-4fae-85d2-72d4f76b3154",
+          "name": "Comment audit stream (Admin and Moderator)",
+          "request": {
+            "name": "Comment audit stream (Admin and Moderator)",
+            "description": {
+              "content": "Provides an administrative comment audit feed supporting multi-dimensional sorting (newest, oldest, recipe, reports_desc), status filtering (active, inactive, all), modified comments triage (is_edited), search, and dual presentation formats (flat stream or threaded view with windowed replies).",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "admin",
+                "comments"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
+                  "key": "search",
+                  "value": "recipe",
+                  "description": "Case-insensitive substring search in comment content"
+                },
+                {
+                  "disabled": false,
+                  "key": "status",
+                  "value": "all",
+                  "description": "Filter comments by lifecycle status (active, inactive, all)"
+                },
+                {
+                  "disabled": false,
+                  "key": "recipe_id",
+                  "value": "42",
+                  "description": "Filter comments targeting a specific recipe ID"
+                },
+                {
+                  "disabled": false,
+                  "key": "user_id",
+                  "value": "10",
+                  "description": "Filter comments authored by a specific user ID"
+                },
+                {
+                  "disabled": false,
+                  "key": "is_edited",
+                  "value": "true",
+                  "description": "Filter comments modified after initial publication"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort",
+                  "value": "newest",
+                  "description": "Sorting criteria: newest (default), oldest, recipe (grouped by recipe), reports_desc (highest reports first)"
+                },
+                {
+                  "disabled": false,
+                  "key": "format",
+                  "value": "flat",
+                  "description": "Structural presentation format: flat (default atomic stream) or threaded (paginated root comments with windowed reply previews)"
+                },
+                {
+                  "disabled": false,
+                  "key": "replies_limit",
+                  "value": "5",
+                  "description": "Max number of nested child replies to embed per root comment when format=threaded (1 to 20)"
+                },
+                {
+                  "disabled": false,
+                  "key": "lang",
+                  "value": "it",
+                  "description": "Preferred language locale for recipe title hydration"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "7af75552-e264-4b50-838c-8f8d84fa7f34",
+              "name": "Paginated comment audit records",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "comments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "recipe"
+                    },
+                    {
+                      "key": "status",
+                      "value": "all"
+                    },
+                    {
+                      "key": "recipe_id",
+                      "value": "42"
+                    },
+                    {
+                      "key": "user_id",
+                      "value": "10"
+                    },
+                    {
+                      "key": "is_edited",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "newest"
+                    },
+                    {
+                      "key": "format",
+                      "value": "flat"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ee272009-9910-4880-8baf-46af38c742ae",
+              "name": "Validation failed on query parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "comments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "recipe"
+                    },
+                    {
+                      "key": "status",
+                      "value": "all"
+                    },
+                    {
+                      "key": "recipe_id",
+                      "value": "42"
+                    },
+                    {
+                      "key": "user_id",
+                      "value": "10"
+                    },
+                    {
+                      "key": "is_edited",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "newest"
+                    },
+                    {
+                      "key": "format",
+                      "value": "flat"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "a6fc8062-a7e3-4e9c-8cb9-ec967a6ddb57",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "comments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "recipe"
+                    },
+                    {
+                      "key": "status",
+                      "value": "all"
+                    },
+                    {
+                      "key": "recipe_id",
+                      "value": "42"
+                    },
+                    {
+                      "key": "user_id",
+                      "value": "10"
+                    },
+                    {
+                      "key": "is_edited",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "newest"
+                    },
+                    {
+                      "key": "format",
+                      "value": "flat"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "9fdf1b45-592e-4b33-85d7-0dfe4110bcbf",
+              "name": "Forbidden: Insufficient privileges (requires admin or moderator role)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "comments"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "recipe"
+                    },
+                    {
+                      "key": "status",
+                      "value": "all"
+                    },
+                    {
+                      "key": "recipe_id",
+                      "value": "42"
+                    },
+                    {
+                      "key": "user_id",
+                      "value": "10"
+                    },
+                    {
+                      "key": "is_edited",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "newest"
+                    },
+                    {
+                      "key": "format",
+                      "value": "flat"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "4331fee3-5283-42c5-8916-9895f9bec5b1",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",

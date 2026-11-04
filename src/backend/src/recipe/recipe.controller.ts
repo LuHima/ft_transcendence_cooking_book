@@ -22,6 +22,7 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiForbiddenResponse,
+  ApiConflictResponse,
   ApiInternalServerErrorResponse,
   ApiParam,
   ApiQuery,
@@ -40,9 +41,11 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { DeleteCommentQueryDto } from './dto/delete-comment-query.dto';
 import {
   RecipeCommentResponseDto,
   ThreadedRecipeCommentResponseDto,
+  PaginatedRecipeCommentRepliesResponseDto,
 } from './dto/comment-response.dto';
 import {
   LocalizedRecipeDetailResponse,
@@ -61,10 +64,13 @@ import {
   ApiBadRequestResponseDto,
   ApiForbiddenResponseDto,
   ApiNotFoundResponseDto,
+  ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
 import { Auth } from 'src/common/decorators/policies.decorator';
 
@@ -755,17 +761,72 @@ export class RecipeController {
   }
 
   /**
-   * Deactivate a recipe comment non-destructively.
+   * Get paginated replies for a specific recipe comment.
    */
   @ApiOperation({
-    summary: 'Deactivate recipe comment',
+    summary: 'Get paginated replies for recipe comment',
     description:
-      'Deactivates a comment non-destructively (is_active = false). Authorized only for the comment author or the recipe author. Prunes any unread reply notifications targeting this comment.',
+      'Retrieves paginated replies for a target parent comment. Deactivated replies are sanitized with null content and author details for public callers while preserving staff inspection context.',
+  })
+  @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
+  @ApiParam({
+    name: 'commentId',
+    description: 'Parent Comment ID',
+    example: 10,
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of comment replies',
+    type: PaginatedRecipeCommentRepliesResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid recipe ID or comment ID format',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Recipe or comment not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @UseGuards(OptionalAuthGuard)
+  @Get(':id/comments/:commentId/replies')
+  async getCommentReplies(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query() query: PaginationQueryDto,
+    @CurrentUser() currentUser?: ActiveUserData,
+  ) {
+    return await this.recipeService.getCommentReplies(
+      recipeId,
+      commentId,
+      query,
+      currentUser,
+    );
+  }
+
+  /**
+   * Deactivate or delete a recipe comment.
+   */
+  @ApiOperation({
+    summary: 'Deactivate or delete recipe comment',
+    description:
+      'By default performs soft deletion (is_active = false) adhering to role hierarchy (Admin can deactivate any comment; Moderator can deactivate user/moderator comments, receiving 403 on admin comments; User can deactivate self or comments on authored recipes). With ?hard=true (Admin only), permanently purges comment; returns 409 Conflict if child replies exist unless prune_replies=true is explicitly provided.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiParam({ name: 'commentId', description: 'Comment ID', example: 10 })
+  @ApiQuery({
+    name: 'hard',
+    required: false,
+    type: Boolean,
+    description: 'Permanent hard deletion flag (restricted to administrators)',
+  })
+  @ApiQuery({
+    name: 'prune_replies',
+    required: false,
+    type: Boolean,
+    description:
+      'Explicit cascade child replies pruning flag for hard deletion',
+  })
   @ApiOkResponse({
-    description: 'Comment deactivated successfully',
+    description: 'Comment deactivated or deleted successfully',
     type: RecipeMessageResponseDto,
   })
   @ApiBadRequestResponse({
@@ -773,21 +834,36 @@ export class RecipeController {
     type: ApiBadRequestResponseDto,
   })
   @ApiForbiddenResponse({
-    description: 'Forbidden: user is neither comment author nor recipe author',
+    description:
+      'Forbidden: Insufficient privileges to deactivate or hard-delete this comment',
     type: ApiForbiddenResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe or comment not found',
     type: ApiNotFoundResponseDto,
   })
+  @ApiConflictResponse({
+    description:
+      'Conflict: Comment has child replies and prune_replies was not passed',
+    type: ApiConflictResponseDto,
+  })
   @Auth()
   @Delete(':id/comments/:commentId')
   async deleteComment(
     @Param('id', ParseIntPipe) recipeId: number,
     @Param('commentId', ParseIntPipe) commentId: number,
-    @CurrentUser('id') userId: number,
+    @CurrentUser() user: ActiveUserData,
+    @Query() query?: DeleteCommentQueryDto,
   ) {
-    return await this.recipeService.deleteComment(recipeId, commentId, userId);
+    if (query && Object.keys(query).length > 0) {
+      return await this.recipeService.deleteComment(
+        recipeId,
+        commentId,
+        user,
+        query,
+      );
+    }
+    return await this.recipeService.deleteComment(recipeId, commentId, user);
   }
 
   /**

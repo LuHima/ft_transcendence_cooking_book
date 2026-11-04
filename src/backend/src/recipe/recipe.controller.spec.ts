@@ -43,6 +43,7 @@ describe('RecipeController', () => {
     unlikeRecipe: jest.fn(),
     createComment: jest.fn(),
     getComments: jest.fn(),
+    getCommentReplies: jest.fn(),
     deleteComment: jest.fn(),
     updateComment: jest.fn(),
   };
@@ -450,14 +451,65 @@ describe('RecipeController', () => {
     });
   });
 
+  describe('getCommentReplies', () => {
+    it('delegates to service.getCommentReplies with recipeId, commentId, query, and user', async () => {
+      const mockResult = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      mockRecipeService.getCommentReplies.mockResolvedValueOnce(mockResult);
+
+      const query = { page: 1, limit: 20 };
+      const user = {
+        id: 42,
+        username: 'test',
+        role: 'user' as any,
+        session: 1,
+      };
+      const result = await controller.getCommentReplies(1, 10, query, user);
+
+      expect(service.getCommentReplies).toHaveBeenCalledWith(
+        1,
+        10,
+        query,
+        user,
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
   describe('deleteComment', () => {
     it('delegates to service.deleteComment with recipeId, commentId, and userId', async () => {
       const mockResult = { message: 'Comment deactivated successfully' };
       mockRecipeService.deleteComment.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.deleteComment(1, 10, 42);
+      const result = await controller.deleteComment(1, 10, 42 as any);
 
       expect(service.deleteComment).toHaveBeenCalledWith(1, 10, 42);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('delegates to service.deleteComment with recipeId, commentId, user, and query when query provided', async () => {
+      const mockResult = {
+        message: 'Comment permanently deleted with replies',
+      };
+      mockRecipeService.deleteComment.mockResolvedValueOnce(mockResult);
+
+      const user = {
+        id: 1,
+        username: 'admin',
+        role: 'admin' as any,
+        session: 1,
+      };
+      const query = { hard: true, prune_replies: true };
+      const result = await controller.deleteComment(1, 10, user, query);
+
+      expect(service.deleteComment).toHaveBeenCalledWith(1, 10, user, query);
       expect(result).toEqual(mockResult);
     });
   });

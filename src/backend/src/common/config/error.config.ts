@@ -1,7 +1,5 @@
-import { ForbiddenError } from '@casl/ability';
 import { HttpStatus, HttpException } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { NotFoundError } from 'rxjs';
 
 export interface AppErrorDefinition {
   statusCode: HttpStatus; // numero dell'errore
@@ -37,6 +35,11 @@ export const errors = {
     forbidden: {
       statusCode: HttpStatus.FORBIDDEN,
       message: 'You do not have permission to perform this action',
+      error: 'Forbidden',
+    },
+    adminOnly: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'This action is restricted to administrators',
       error: 'Forbidden',
     },
     notFound: {
@@ -284,6 +287,35 @@ export const errors = {
       statusCode: HttpStatus.FORBIDDEN,
       message: 'You can only edit or delete your own comments',
       error: 'Forbidden',
+    },
+    hasReplies: {
+      statusCode: HttpStatus.CONFLICT,
+      message:
+        'Comment has replies. Use soft-delete (default) or pass prune_replies=true to cascade deletion.',
+      error: 'Conflict',
+    },
+  },
+  comment: {
+    notFound: {
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Comment not found',
+      error: 'Not Found',
+    },
+    parentNotFound: {
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Parent comment not found',
+      error: 'Not Found',
+    },
+    notOwner: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'You can only edit or delete your own comments',
+      error: 'Forbidden',
+    },
+    hasReplies: {
+      statusCode: HttpStatus.CONFLICT,
+      message:
+        'Comment has replies. Use soft-delete (default) or pass prune_replies=true to cascade deletion.',
+      error: 'Conflict',
     },
   },
 

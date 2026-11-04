@@ -362,7 +362,7 @@ model Comment {
 
   recipe  Recipe    @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
   user    User?     @relation(fields: [user_id], references: [id])
-  parent  Comment?  @relation("CommentReplies", fields: [parent_id], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
   replies Comment[] @relation("CommentReplies")
 
   @@map("comments")

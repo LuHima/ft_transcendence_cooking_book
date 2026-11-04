@@ -13,6 +13,7 @@ import {
   TranslationStatus,
   NotificationSubject,
   NotificationAction,
+  Role,
   Prisma,
 } from '@prisma/client';
 import type { Recipe } from '@prisma/client';
@@ -22,7 +23,12 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { ThreadedRecipeCommentResponseDto } from './dto/comment-response.dto';
+import { DeleteCommentQueryDto } from './dto/delete-comment-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import {
+  ThreadedRecipeCommentResponseDto,
+  PaginatedRecipeCommentRepliesResponseDto,
+} from './dto/comment-response.dto';
 import { LocalizedRecipeDetailResponse } from './dto/localized-recipe.response';
 import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
 import {
@@ -1909,10 +1915,135 @@ export class RecipeService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Deactivate a comment non-destructively (is_active = false).
-   * Authorized only for the comment author or the recipe author.
+   * Retrieve paginated replies for a specific parent comment.
+   * Public callers receive masked deactivated replies (content and user set to null).
+   * Staff callers (admin and moderator) retain authentic inspection context.
    */
-  async deleteComment(recipeId: number, commentId: number, userId: number) {
+  async getCommentReplies(
+    recipeId: number,
+    commentId: number,
+    query?: PaginationQueryDto,
+    currentUser?: { id?: number; role?: string },
+  ): Promise<PaginatedRecipeCommentRepliesResponseDto> {
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    const parentComment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!parentComment || parentComment.recipe_id !== recipeId) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    const page = Math.max(1, query?.page || 1);
+    const limit = Math.max(1, Math.min(100, query?.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const [rawReplies, total] = await Promise.all([
+      this.prisma.comment.findMany({
+        where: {
+          recipe_id: recipeId,
+          parent_id: commentId,
+        },
+        skip,
+        take: limit,
+        orderBy: { created_at: 'asc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      }),
+      this.prisma.comment.count({
+        where: {
+          recipe_id: recipeId,
+          parent_id: commentId,
+        },
+      }),
+    ]);
+
+    const isStaff =
+      currentUser?.role === Role.admin || currentUser?.role === Role.moderator;
+
+    const items = rawReplies.map((r) => {
+      if (isStaff || r.is_active) {
+        return {
+          id: r.id,
+          recipe_id: r.recipe_id,
+          user_id: r.user_id,
+          parent_id: r.parent_id,
+          content: r.content,
+          is_active: r.is_active,
+          is_edited: r.is_edited ?? false,
+          created_at: r.created_at,
+          updated_at: r.updated_at ?? null,
+          user: r.user,
+        };
+      }
+
+      return {
+        id: r.id,
+        recipe_id: r.recipe_id,
+        user_id: null,
+        parent_id: r.parent_id,
+        content: null,
+        is_active: false,
+        is_edited: false,
+        created_at: r.created_at,
+        updated_at: null,
+        user: null,
+      };
+    });
+
+    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: page > 1,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Delete or deactivate a recipe comment.
+   * By default performs soft deletion (is_active = false) following role hierarchy:
+   * - admin: can deactivate any comment on any recipe.
+   * - moderator: can deactivate comments authored by users and moderators (403 on admin comments).
+   * - user: can deactivate own comments or comments on authored recipes.
+   *
+   * With hard = true (admin only):
+   * - requires prune_replies = true if comment has child replies (409 Conflict otherwise).
+   * - permanently purges comment (and child replies if prune_replies = true).
+   */
+  async deleteComment(
+    recipeId: number,
+    commentId: number,
+    userOrId: number | { id: number; role?: string },
+    query?: DeleteCommentQueryDto,
+  ): Promise<{ message: string }> {
+    const userId = typeof userOrId === 'number' ? userOrId : userOrId.id;
+    let userRole =
+      typeof userOrId === 'object' && userOrId.role
+        ? (userOrId.role as Role)
+        : undefined;
+
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true, user_id: true },
@@ -1930,10 +2061,113 @@ export class RecipeService {
       throw new NotFoundException('Comment not found');
     }
 
-    if (comment.user_id !== userId && recipe.user_id !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to deactivate this comment',
-      );
+    // Hard deletion path (Admin only)
+    if (query?.hard) {
+      if (!userRole && this.prisma.user?.findUnique) {
+        const caller = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { role: true },
+        });
+        userRole = caller?.role;
+      }
+
+      if (userRole !== Role.admin) {
+        throw createHttpException(errors.common.adminOnly);
+      }
+
+      const childCount = await this.prisma.comment.count({
+        where: { parent_id: commentId },
+      });
+
+      if (childCount > 0 && !query.prune_replies) {
+        throw createHttpException(errors.comment.hasReplies);
+      }
+
+      if (childCount > 0 && query.prune_replies) {
+        const childReplies = await this.prisma.comment.findMany({
+          where: { parent_id: commentId },
+          select: { id: true },
+        });
+        const childIds = childReplies.map((c) => c.id);
+
+        await this.prisma.notification.deleteMany({
+          where: {
+            subject: NotificationSubject.comment,
+            target_id: { in: [commentId, ...childIds] },
+          },
+        });
+
+        await this.prisma.comment.deleteMany({
+          where: { parent_id: commentId },
+        });
+        await this.prisma.comment.delete({
+          where: { id: commentId },
+        });
+
+        return { message: 'Comment permanently deleted with replies' };
+      }
+
+      await this.prisma.notification.deleteMany({
+        where: {
+          subject: NotificationSubject.comment,
+          target_id: commentId,
+        },
+      });
+      await this.prisma.comment.delete({
+        where: { id: commentId },
+      });
+
+      return { message: 'Comment permanently deleted successfully' };
+    }
+
+    // Soft deletion path (Default)
+    // Role hierarchy authorization check
+    if (userRole === Role.admin) {
+      // Admin is authorized to deactivate any comment
+    } else if (userRole === Role.moderator) {
+      // Moderator cannot deactivate comments authored by administrators
+      if (comment.user_id && this.prisma.user?.findUnique) {
+        const author = await this.prisma.user.findUnique({
+          where: { id: comment.user_id },
+          select: { role: true },
+        });
+        if (author?.role === Role.admin) {
+          throw createHttpException(errors.common.forbidden);
+        }
+      }
+    } else {
+      // Check if user is comment author or recipe author
+      if (comment.user_id !== userId && recipe.user_id !== userId) {
+        if (!userRole && this.prisma.user?.findUnique) {
+          const caller = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true },
+          });
+          userRole = caller?.role;
+
+          if (userRole === Role.admin) {
+            // Admin permitted
+          } else if (userRole === Role.moderator) {
+            if (comment.user_id) {
+              const author = await this.prisma.user.findUnique({
+                where: { id: comment.user_id },
+                select: { role: true },
+              });
+              if (author?.role === Role.admin) {
+                throw createHttpException(errors.common.forbidden);
+              }
+            }
+          } else {
+            throw new ForbiddenException(
+              'You do not have permission to deactivate this comment',
+            );
+          }
+        } else {
+          throw new ForbiddenException(
+            'You do not have permission to deactivate this comment',
+          );
+        }
+      }
     }
 
     await this.prisma.comment.update({

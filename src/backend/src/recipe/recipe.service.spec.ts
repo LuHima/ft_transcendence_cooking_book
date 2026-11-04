@@ -11,6 +11,7 @@ import {
   NotificationSubject,
   TranslationStatus,
   UnitOfMeasure,
+  Role,
 } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -86,6 +87,9 @@ describe('RecipeService', () => {
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
+      deleteMany: jest.fn(),
+      count: jest.fn(),
     },
     notification: {
       create: jest.fn(),
@@ -93,6 +97,9 @@ describe('RecipeService', () => {
     },
     userBlock: {
       findFirst: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
     },
   };
 
@@ -3085,6 +3092,329 @@ describe('RecipeService', () => {
         },
       });
       expect(result).toEqual({ message: 'Comment deactivated successfully' });
+    });
+
+    it('allows admin to soft-deactivate any comment', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+      mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await service.deleteComment(1, 10, {
+        id: 999,
+        role: Role.admin,
+      });
+
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { is_active: false },
+      });
+      expect(result).toEqual({ message: 'Comment deactivated successfully' });
+    });
+
+    it('allows moderator to soft-deactivate a comment by a regular user', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 50,
+        role: Role.user,
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+      mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await service.deleteComment(1, 10, {
+        id: 200,
+        role: Role.moderator,
+      });
+
+      expect(result).toEqual({ message: 'Comment deactivated successfully' });
+    });
+
+    it('forbids moderator from soft-deactivating an administrator comment', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 1,
+      });
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 1,
+        role: Role.admin,
+      });
+
+      await expect(
+        service.deleteComment(1, 10, { id: 200, role: Role.moderator }),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('rejects hard deletion by non-administrator with 403 Forbidden', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+
+      await expect(
+        service.deleteComment(
+          1,
+          10,
+          { id: 200, role: Role.moderator },
+          { hard: true },
+        ),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('rejects hard deletion on comment with replies when prune_replies is omitted (409 Conflict)', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.count.mockResolvedValueOnce(3);
+
+      await expect(
+        service.deleteComment(
+          1,
+          10,
+          { id: 1, role: Role.admin },
+          { hard: true, prune_replies: false },
+        ),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('allows admin to hard delete a comment with no replies', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.count.mockResolvedValueOnce(0);
+      mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 1 });
+      mockPrisma.comment.delete.mockResolvedValueOnce({ id: 10 });
+
+      const result = await service.deleteComment(
+        1,
+        10,
+        { id: 1, role: Role.admin },
+        { hard: true },
+      );
+
+      expect(mockPrisma.comment.delete).toHaveBeenCalledWith({
+        where: { id: 10 },
+      });
+      expect(result).toEqual({
+        message: 'Comment permanently deleted successfully',
+      });
+    });
+
+    it('allows admin to hard delete a comment with replies when prune_replies=true', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 100,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+        user_id: 50,
+      });
+      mockPrisma.comment.count.mockResolvedValueOnce(2);
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        { id: 101 },
+        { id: 102 },
+      ]);
+      mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 2 });
+      mockPrisma.comment.deleteMany.mockResolvedValueOnce({ count: 2 });
+      mockPrisma.comment.delete.mockResolvedValueOnce({ id: 10 });
+
+      const result = await service.deleteComment(
+        1,
+        10,
+        { id: 1, role: Role.admin },
+        { hard: true, prune_replies: true },
+      );
+
+      expect(mockPrisma.comment.deleteMany).toHaveBeenCalledWith({
+        where: { parent_id: 10 },
+      });
+      expect(mockPrisma.comment.delete).toHaveBeenCalledWith({
+        where: { id: 10 },
+      });
+      expect(result).toEqual({
+        message: 'Comment permanently deleted with replies',
+      });
+    });
+  });
+
+  describe('getCommentReplies', () => {
+    it('throws NotFoundException when recipe does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getCommentReplies(999, 10)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when parent comment does not exist', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getCommentReplies(1, 888)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when parent comment belongs to a different recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 99,
+      });
+
+      await expect(service.getCommentReplies(1, 10)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('returns paginated replies with pagination envelope (>20 replies)', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+      });
+
+      const sampleReplies = Array.from({ length: 20 }, (_, i) => ({
+        id: 100 + i,
+        recipe_id: 1,
+        user_id: 5,
+        parent_id: 10,
+        content: `Reply ${i + 1}`,
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-02-01'),
+        updated_at: null,
+        user: { id: 5, username: 'testuser', avatar_url: null },
+      }));
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce(sampleReplies);
+      mockPrisma.comment.count.mockResolvedValueOnce(45);
+
+      const result = await service.getCommentReplies(1, 10, {
+        page: 1,
+        limit: 20,
+      });
+
+      expect(result.items).toHaveLength(20);
+      expect(result.total).toBe(45);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.total_pages).toBe(3);
+      expect(result.has_next_page).toBe(true);
+      expect(result.has_prev_page).toBe(false);
+    });
+
+    it('sanitizes deactivated replies for public callers while preserving staff context', async () => {
+      const mixedReplies = [
+        {
+          id: 101,
+          recipe_id: 1,
+          user_id: 5,
+          parent_id: 10,
+          content: 'Active reply',
+          is_active: true,
+          is_edited: false,
+          created_at: new Date('2026-02-01'),
+          updated_at: null,
+          user: { id: 5, username: 'user5', avatar_url: null },
+        },
+        {
+          id: 102,
+          recipe_id: 1,
+          user_id: 6,
+          parent_id: 10,
+          content: 'Secret deactivated reply',
+          is_active: false,
+          is_edited: false,
+          created_at: new Date('2026-02-02'),
+          updated_at: null,
+          user: { id: 6, username: 'user6', avatar_url: null },
+        },
+      ];
+
+      // Call as public/regular user
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+      });
+      mockPrisma.comment.findMany.mockResolvedValueOnce(mixedReplies);
+      mockPrisma.comment.count.mockResolvedValueOnce(2);
+
+      const publicResult = await service.getCommentReplies(
+        1,
+        10,
+        { page: 1, limit: 10 },
+        { id: 20, role: Role.user },
+      );
+
+      expect(publicResult.items[0].content).toBe('Active reply');
+      expect(publicResult.items[1].content).toBeNull();
+      expect(publicResult.items[1].user).toBeNull();
+      expect(publicResult.items[1].is_active).toBe(false);
+
+      // Call as moderator staff
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 10,
+        recipe_id: 1,
+      });
+      mockPrisma.comment.findMany.mockResolvedValueOnce(mixedReplies);
+      mockPrisma.comment.count.mockResolvedValueOnce(2);
+
+      const staffResult = await service.getCommentReplies(
+        1,
+        10,
+        { page: 1, limit: 10 },
+        { id: 99, role: Role.moderator },
+      );
+
+      expect(staffResult.items[1].content).toBe('Secret deactivated reply');
+      expect(staffResult.items[1].user?.username).toBe('user6');
+      expect(staffResult.items[1].is_active).toBe(false);
     });
   });
 
