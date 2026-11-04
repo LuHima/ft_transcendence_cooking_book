@@ -215,7 +215,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get current user authored recipes',
     description:
-      'Returns recipes authored by the authenticated user, ordered by creation date.',
+      'Returns recipes authored by the authenticated user, supporting multi-metric sorting.',
   })
   @ApiOkResponse({
     description: 'Paginated recipes authored by the user',

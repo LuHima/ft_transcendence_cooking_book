@@ -883,6 +883,38 @@
                 "fr"
               ]
             }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort recipes by (defaults to \"created_at\")",
+            "schema": {
+              "default": "created_at",
+              "example": "created_at",
+              "type": "string",
+              "enum": [
+                "created_at",
+                "total_time",
+                "difficulty",
+                "likes_count",
+                "title"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
           }
         ],
         "responses": {
@@ -940,7 +972,7 @@
     },
     "/api/users/me/recipes": {
       "get": {
-        "description": "Returns recipes authored by the authenticated user, ordered by creation date.",
+        "description": "Returns recipes authored by the authenticated user, supporting multi-metric sorting.",
         "operationId": "UsersController_getMyRecipes",
         "parameters": [
           {
@@ -980,6 +1012,38 @@
                 "it",
                 "en",
                 "fr"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort recipes by (defaults to \"created_at\")",
+            "schema": {
+              "default": "created_at",
+              "example": "created_at",
+              "type": "string",
+              "enum": [
+                "created_at",
+                "total_time",
+                "difficulty",
+                "likes_count",
+                "title"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           }
@@ -1163,19 +1227,31 @@
             }
           },
           {
-            "name": "sort",
+            "name": "sort_by",
             "required": false,
             "in": "query",
-            "description": "Sorting criteria for member discovery. Contextual default: username_asc if search is specified, recipes_count_desc if omitted.",
+            "description": "Field to sort users by. Contextual default: username if search is specified, recipes_count if omitted.",
             "schema": {
-              "example": "recipes_count_desc",
+              "example": "recipes_count",
               "type": "string",
               "enum": [
-                "username_asc",
-                "username_desc",
-                "recipes_count_desc",
-                "newest",
-                "oldest"
+                "username",
+                "recipes_count",
+                "created_at"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to desc for recipes_count and created_at, asc for username.",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           }
@@ -1388,6 +1464,38 @@
                 "it",
                 "en",
                 "fr"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort recipes by (defaults to \"created_at\")",
+            "schema": {
+              "default": "created_at",
+              "example": "created_at",
+              "type": "string",
+              "enum": [
+                "created_at",
+                "total_time",
+                "difficulty",
+                "likes_count",
+                "title"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           }
@@ -5924,19 +6032,31 @@
             }
           },
           {
-            "name": "sort",
+            "name": "sort_by",
             "required": false,
             "in": "query",
-            "description": "Sorting criteria for administrative directory. Defaults to newest, or username_asc when search is provided.",
+            "description": "Field to sort users by. Contextual default: username if search is specified, created_at if omitted.",
             "schema": {
-              "example": "newest",
+              "example": "created_at",
               "type": "string",
               "enum": [
-                "username_asc",
-                "username_desc",
-                "recipes_count_desc",
-                "newest",
-                "oldest"
+                "username",
+                "recipes_count",
+                "created_at"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to desc for created_at and recipes_count, asc for username.",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           }
@@ -6682,19 +6802,32 @@
             }
           },
           {
-            "name": "sort",
+            "name": "sort_by",
             "required": false,
             "in": "query",
-            "description": "Sorting criteria: newest (default), oldest, recipe (grouped by recipe), reports_desc (highest reports first)",
+            "description": "Field to sort comments by: created_at (default), recipe, reports_count",
             "schema": {
-              "default": "newest",
-              "example": "newest",
+              "default": "created_at",
+              "example": "created_at",
               "type": "string",
               "enum": [
-                "newest",
-                "oldest",
+                "created_at",
                 "recipe",
-                "reports_desc"
+                "reports_count"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to desc for created_at and reports_count, asc for recipe.",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           },
