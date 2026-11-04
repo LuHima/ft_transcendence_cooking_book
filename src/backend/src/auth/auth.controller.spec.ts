@@ -9,6 +9,8 @@ describe('AuthController', () => {
   let controller: AuthController;
   let authService: {
     signIn: jest.Mock;
+    signInGoogle?: jest.Mock;
+    googleSignIn: jest.Mock;
     signUp: jest.Mock;
     signOut: jest.Mock;
     refreshToken: jest.Mock;
@@ -28,6 +30,7 @@ describe('AuthController', () => {
   beforeEach(async () => {
     authService = {
       signIn: jest.fn(),
+      googleSignIn: jest.fn(),
       signUp: jest.fn(),
       signOut: jest.fn(),
       refreshToken: jest.fn(),
@@ -50,6 +53,78 @@ describe('AuthController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('signInGoogle', () => {
+    it('sets authentication cookies and returns success message when 2FA is inactive', async () => {
+      const res = createMockResponse();
+      const mockTokens = {
+        accessToken: 'mock-google-access-token',
+        refreshToken: 'mock-google-refresh-token',
+      };
+      authService.googleSignIn.mockResolvedValue(mockTokens);
+
+      const result = await controller.signInGoogle(
+        { idToken: 'valid-google-id-token' },
+        res,
+      );
+
+      expect(authService.googleSignIn).toHaveBeenCalledWith(
+        'valid-google-id-token',
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        'accessToken',
+        'mock-google-access-token',
+        expect.objectContaining({
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          path: '/',
+        }),
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        'refreshToken',
+        'mock-google-refresh-token',
+        expect.objectContaining({
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          path: '/api/auth/refresh',
+        }),
+      );
+      expect(result).toEqual({ message: 'Authentication was successful' });
+    });
+
+    it('returns challenge tempToken without setting cookies when 2FA is enabled', async () => {
+      const res = createMockResponse();
+      const challengeResult = {
+        tempToken: 'temp-google-jwt-token',
+        twofAuth: true as const,
+      };
+      authService.googleSignIn.mockResolvedValue(challengeResult);
+
+      const result = await controller.signInGoogle(
+        { idToken: 'valid-google-id-token' },
+        res,
+      );
+
+      expect(authService.googleSignIn).toHaveBeenCalledWith(
+        'valid-google-id-token',
+      );
+      expect(res.cookie).not.toHaveBeenCalled();
+      expect(result).toEqual(challengeResult);
+    });
+
+    it('propagates exception when googleSignIn fails', async () => {
+      const res = createMockResponse();
+      authService.googleSignIn.mockRejectedValue(
+        new UnauthorizedException('Invalid or expired Google token'),
+      );
+
+      await expect(
+        controller.signInGoogle({ idToken: 'invalid-token' }, res),
+      ).rejects.toThrow(UnauthorizedException);
+    });
   });
 
   describe('signIn', () => {

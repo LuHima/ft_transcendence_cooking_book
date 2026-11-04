@@ -126,7 +126,7 @@ export class CaslAbilityFactory {
   check(
     user: ActiveUserData,
     action: Action,
-    subjectName: AppSubject,
+    subjectName: AppSubject | `${AppSubject}`,
     target?: any,
   ): void {
     const ability = this.createForUser(user);

@@ -102,6 +102,57 @@ export class AuthController {
   }
 
   /**
+   * Authenticate or register a user using a Google OAuth ID token.
+   * If credentials are valid and 2FA is inactive, sets HttpOnly cookies (accessToken and refreshToken).
+   * If 2FA is active, returns a temporary challenge token instead.
+   */
+  @ApiOperation({
+    summary: 'Sign in with Google OAuth',
+    description:
+      'Validates a Google OpenID Connect ID token. If the user account does not exist, a new profile is automatically created. ' +
+      'On success, sets HttpOnly `accessToken` (10 min) and `refreshToken` (7 days) cookies. ' +
+      'If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.',
+  })
+  @ApiOkResponse({
+    description: 'Authentication successful or 2FA challenge triggered',
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(AuthMessageResponseDto) },
+        { $ref: getSchemaPath(TwoFactorChallengeResponseDto) },
+      ],
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid input format (empty or non-string idToken)',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      'Invalid or expired Google token, unverified email address, or inactive user account',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: Account suspended (banned)',
+    type: AccountBannedResponseDto,
+  })
+  @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+  @Post('signin/google')
+  async signInGoogle(
+    @Body() signInGoogle: GoogleAuthDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result: jwts | twofactor = await this.authService.googleSignIn(
+      signInGoogle.idToken,
+    );
+
+    if ('tempToken' in result) return result;
+    else this.setAuthCookie(response, result);
+    return {
+      message: 'Authentication was successful',
+    };
+  }
+
+  /**
    * Authenticate user with email and password credentials.
    * If credentials are valid and 2FA is inactive, sets HttpOnly cookies (accessToken and refreshToken).
    * If 2FA is active, returns a temporary challenge token instead.
@@ -134,22 +185,6 @@ export class AuthController {
     description: 'Forbidden: Account suspended (banned)',
     type: AccountBannedResponseDto,
   })
-  @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
-  @Post('signin/google')
-  async signInGoogle(
-    @Body() signInGoogle: GoogleAuthDto,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const result: jwts | twofactor = await this.authService.googleSignIn(
-      signInGoogle.idToken,
-    );
-
-    if ('tempToken' in result) return result;
-    else this.setAuthCookie(response, result);
-    return {
-      message: 'Authentication was successful',
-    };
-  }
   @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
   @Post('signin')
   async signIn(

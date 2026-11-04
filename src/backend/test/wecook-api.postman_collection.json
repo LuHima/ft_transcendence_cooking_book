@@ -9,6 +9,366 @@
       },
       "item": [
         {
+          "id": "ee3fc6d9-8843-4afe-8271-59e4e41b60eb",
+          "name": "Sign in with Google OAuth",
+          "request": {
+            "name": "Sign in with Google OAuth",
+            "description": {
+              "content": "Validates a Google OpenID Connect ID token. If the user account does not exist, a new profile is automatically created. On success, sets HttpOnly `accessToken` (10 min) and `refreshToken` (7 days) cookies. If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "auth",
+                "signin",
+                "google"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": null,
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "c233295a-5055-4d7f-878c-9b49e1b8d5b1",
+              "name": "Authentication successful or 2FA challenge triggered",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "signin",
+                    "google"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Authentication append with success\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "fe072f3c-fb30-438d-8164-90e3f2fa9b50",
+              "name": "Invalid input format (empty or non-string idToken)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "signin",
+                    "google"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5bb223ad-5191-4a12-8437-3a8cd11ade4d",
+              "name": "Invalid or expired Google token, unverified email address, or inactive user account",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "signin",
+                    "google"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c125941c-4524-4c0f-80d0-faf66178f111",
+              "name": "Forbidden: Account suspended (banned)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "signin",
+                    "google"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"error\": \"Forbidden\",\n  \"code\": \"ACCOUNT_BANNED\",\n  \"message\": \"Your account has been suspended for violating community guidelines.\",\n  \"details\": {\n    \"reason\": \"harassment_bullying\",\n    \"is_permanent\": false,\n    \"description\": \"Your account was suspended due to repeated abusive comments on community recipes.\",\n    \"banned_until\": \"2026-12-04T12:00:00.000Z\"\n  },\n  \"timestamp\": \"2026-11-04T12:00:00.000Z\",\n  \"path\": \"/api/auth/signin\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ed85939e-c4ea-45c4-8ffd-9d49f84e3772",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "signin",
+                    "google"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "55c760da-2ee4-4dd6-8be5-310862476e01",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(",
+                  "  \"Response adheres to AuthMessageResponseDto or TwoFactorChallengeResponseDto schema\",",
+                  "  function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"object\");",
+                  "    pm.expect(jsonData).to.have.property(\"message\").that.is.a(\"string\");",
+                  "    if (jsonData.tempToken) {",
+                  "      pm.expect(jsonData.tempToken).to.be.a(\"string\");",
+                  "    }",
+                  "  },",
+                  ");",
+                  "",
+                  "// Extract accessToken from cookie, Set-Cookie header, or body",
+                  "let accessToken = pm.cookies.get(\"accessToken\");",
+                  "if (!accessToken) {",
+                  "  const setCookieHeaders = pm.response.headers",
+                  "    .all()",
+                  "    .filter((h) => h.key.toLowerCase() === \"set-cookie\");",
+                  "  for (const h of setCookieHeaders) {",
+                  "    const match = h.value.match(/accessToken=([^;]+)/);",
+                  "    if (match) {",
+                  "      accessToken = match[1];",
+                  "      break;",
+                  "    }",
+                  "  }",
+                  "}",
+                  "if (!accessToken) {",
+                  "  try {",
+                  "    const data = pm.response.json();",
+                  "    accessToken = data.accessToken || data.access_token;",
+                  "  } catch (e) {}",
+                  "}",
+                  "if (accessToken) {",
+                  "  pm.environment.set(\"accessToken\", accessToken);",
+                  "  console.log(\"accessToken successfully set in environment\");",
+                  "}",
+                  "",
+                  "// Extract refreshToken from cookie (refresh_token or refreshToken), Set-Cookie header, or body",
+                  "let refreshToken =",
+                  "  pm.cookies.get(\"refresh_token\") || pm.cookies.get(\"refreshToken\");",
+                  "if (!refreshToken) {",
+                  "  const setCookieHeaders = pm.response.headers",
+                  "    .all()",
+                  "    .filter((h) => h.key.toLowerCase() === \"set-cookie\");",
+                  "  for (const h of setCookieHeaders) {",
+                  "    const match =",
+                  "      h.value.match(/refresh_token=([^;]+)/) ||",
+                  "      h.value.match(/refreshToken=([^;]+)/);",
+                  "    if (match) {",
+                  "      refreshToken = match[1];",
+                  "      break;",
+                  "    }",
+                  "  }",
+                  "}",
+                  "if (!refreshToken) {",
+                  "  try {",
+                  "    const data = pm.response.json();",
+                  "    refreshToken = data.refreshToken || data.refresh_token;",
+                  "  } catch (e) {}",
+                  "}",
+                  "if (refreshToken) {",
+                  "  pm.environment.set(\"refreshToken\", refreshToken);",
+                  "  console.log(\"refreshToken successfully set in environment\");",
+                  "}",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
           "id": "0fc3633b-16da-49ed-8b8e-b1ffa7dbc6a5",
           "name": "Sign in with email and password",
           "request": {
@@ -17770,7 +18130,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9741.738316889023",
+                  "value": "5882.820384746143",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17816,7 +18176,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17869,7 +18229,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17922,7 +18282,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17975,7 +18335,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18028,7 +18388,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18081,7 +18441,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18173,7 +18533,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9741.738316889023",
+                  "value": "5882.820384746143",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18206,7 +18566,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18245,7 +18605,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18290,7 +18650,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18335,7 +18695,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18380,7 +18740,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18425,7 +18785,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18494,7 +18854,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9741.738316889023",
+                  "value": "5882.820384746143",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18527,7 +18887,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18566,7 +18926,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18611,7 +18971,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18656,7 +19016,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18701,7 +19061,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18746,7 +19106,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18815,7 +19175,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "9741.738316889023",
+                  "value": "5882.820384746143",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18861,7 +19221,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18914,7 +19274,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18967,7 +19327,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19020,7 +19380,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19073,7 +19433,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19126,7 +19486,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "9741.738316889023",
+                      "value": "5882.820384746143",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -20548,7 +20908,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"violence_threats\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -20824,13 +21184,13 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "dismissed",
+                  "value": "pending",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "comment",
+                  "value": "user",
                   "description": "Filter reports by target entity type"
                 }
               ],
@@ -20894,7 +21254,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"other\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"sexual_content\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },

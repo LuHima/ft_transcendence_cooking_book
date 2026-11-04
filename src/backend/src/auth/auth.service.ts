@@ -37,13 +37,20 @@ export class AuthService {
     private encryptionService: EncryptionService,
     private banHistoryService: BanHistoryService,
   ) {}
+
   private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  // creo il verificatore per google
-  // da notare che non uso GOOGLE_CLIENT_SECRET visto che il token che mi passa l'utente è gia un jwt
-  // firmato da google, quindi non devo scambiarlo/generarlo io e quindi verifico solo che la firma sia autentica
-  // tramite i certificati pubblici di google e il nostro GOOGLE_CLIENT_ID
-  // potrei toglierla ma la lascio perche è una cosa carina carina visto che serviva poi per contattare google per 
-  // pigliare le informazioni dell'utente, perche un'altro metodo per farla è usare un buono momentaneo passato dall'utente
+  /* 
+   * Creo il verificatore per google
+   * da notare che non uso GOOGLE_CLIENT_SECRET visto che il token che mi passa
+   * l'utente è gia un jwt firmato da google, quindi non devo scambiarlo/
+   * generarlo io e quindi verifico solo che la firma sia autentica
+   * tramite i certificati pubblici di google e il nostro GOOGLE_CLIENT_ID.
+   * Potrei toglierla ma la lascio perche è una cosa carina carina visto che
+   * serviva poi per contattare google per pigliare le informazioni
+   * dell'utente, perche un'altro metodo per farla è usare un buono momentaneo
+   * passato dall'utente
+   */
+
   private async jwtSessionSignin(user: User) {
     let expiredDate: Date;
     let hashedToken: string;
@@ -105,149 +112,7 @@ export class AuthService {
     };
   }
 
-  private async generateUniqueUsername(payload: {
-    given_name?: string;
-    family_name?: string;
-    email: string;
-  }): Promise<string> {
-    // creo un username automatico cosi ce l'ha per ferforza
-
-    // Prendo nome e cognome (o l'email come alternativa se non ci sono)
-    const rawName =
-      payload.given_name && payload.family_name
-        ? `${payload.given_name}_${payload.family_name}`
-        : payload.given_name || payload.email.split('@')[0];
-
-    const cleanName = rawName
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // rimuovo gli accenti coopera con normalize('NFD') per rimuovere completamente l'accento
-      .replace(/[^a-zA-Z0-9_-]/g, '_') // trasformo spazi e simboli in "_"
-      .toLowerCase()
-      .slice(0, 20);
-
-    // Aggiungiungo 3 numeri casuali alal fine
-    let uniqueUsername = `${cleanName}_${Math.floor(100 + Math.random() * 900)}`;
-
-    // faccio un while cosi evito duplicati al 100% (Spero), rigenero solo i 3 numberi in fondo
-    while (
-      await this.prisma.user.findUnique({
-        where: { username: uniqueUsername },
-      })
-    ) {
-      uniqueUsername = `${cleanName}_${Math.floor(1000 + Math.random() * 9000)}`;
-    }
-    return uniqueUsername;
-  }
-
-  async twoFactorSignin(authTwoFactor: TwoFactorAuth) {
-    const code = authTwoFactor.code;
-    const tempToken = authTwoFactor.tempToken;
-    let payloads;
-    try {
-      payloads = await this.jwtService.verifyAsync(tempToken);
-    } catch {
-      throw createHttpException(errors.auth.accessDenied, 'expired temp token');
-    }
-    if (!payloads.is2FaPending)
-      throw createHttpException(errors.auth.accessDenied);
-    const user = await this.prisma.user.findUnique({
-      where: { id: payloads.userId },
-    });
-    if (!user || user.status !== 'active' || user.deleted_at)
-      throw createHttpException(errors.auth.accessDenied);
-    // decrypto la password nel database
-    const twoFactorCodeDecrypted = this.encryptionService.decrypting(
-      user.two_factor,
-    );
-    const isValid = await verify({
-      token: code,
-      secret: twoFactorCodeDecrypted,
-    });
-    if (!isValid.valid) throw createHttpException(errors.auth.accessDenied);
-    return this.jwtSessionSignin(user);
-  }
-
-  async googleSignIn(
-    token: string,
-  ): Promise<
-    | { accessToken: string; refreshToken: string }
-    | { tempToken: string; twofAuth: true }
-  > {
-    let ticket;
-    try {
-      ticket = await this.googleClient.verifyIdToken({
-        idToken: token,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-    } catch {
-      throw createHttpException(
-        errors.auth.accessDenied,
-        'Invalid or expired Google token',
-      );
-    }
-    const payload = ticket.getPayload(); // questo ticket contiene tutte le finormazioni dell'utente(è un json), le salvo in un payload per comodita
-    if (!payload || !payload.email) {
-      throw createHttpException(
-        errors.auth.accessDenied,
-        'Invalid Google token payload',
-      );
-    }
-    let user = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { id_google: payload.sub },
-          { email: payload.email.trim().toLowerCase() },
-        ],
-      },
-    });
-
-    if (!user) {
-      const username = await this.generateUniqueUsername(payload);
-      user = await this.prisma.user.create({
-        data: {
-          id_google: payload.sub,
-          email: payload.email.trim().toLowerCase(),
-          username: username,
-          first_name: payload.given_name ?? null,
-          last_name: payload.family_name ?? null,
-          avatar_url: payload.picture ?? null,
-        },
-      });
-    }
-    if (user && !user.id_google) {
-      user = await this.prisma.user.update({
-        where: { id: user.id },
-        data: { id_google: payload.sub },
-      });
-    }
-    if (user.status !== 'active' || user.deleted_at) {
-      throw createHttpException(errors.users.inactive);
-    }
-    if (user.is_two_factor_enabled === true) {
-      const tempToken = await this.jwtService.signAsync(
-        { userId: user.id, is2FaPending: true, type: 'twofactAuth' },
-        { expiresIn: '5m' },
-      );
-      return {
-        tempToken: tempToken,
-        twofAuth: true,
-      };
-    }
-    return await this.jwtSessionSignin(user);
-  }
-  async signIn(
-    email: string,
-    pass: string,
-  ): Promise<
-    | { accessToken: string; refreshToken: string }
-    | { tempToken: string; twofAuth: true }
-  > {
-    const user = await this.usersService.getUserByEmail(
-      email.trim().toLowerCase(),
-    );
-    if (!user) {
-      throw new UnauthorizedException('invalid password or email');
-    }
+  private async checkUserBanAndStatus(user: User): Promise<void> {
     if (user.deleted_at) {
       throw createHttpException(errors.users.inactive);
     }
@@ -290,6 +155,222 @@ export class AuthService {
     } else if (user.status !== UserStatus.active) {
       throw createHttpException(errors.users.inactive);
     }
+  }
+
+  private async generateUniqueUsername(payload: {
+    given_name?: string;
+    family_name?: string;
+    email: string;
+  }): Promise<string> {
+    // Creo un username in automatico cosi ce l'ha perfforza
+    // Prendo nome e cognome (o l'email come alternativa se non ci sono)
+    const rawName =
+      payload.given_name && payload.family_name
+        ? `${payload.given_name}_${payload.family_name}`
+        : payload.given_name || payload.email.split('@')[0];
+
+    const cleanName = rawName
+      .normalize('NFD')
+      // rimuovo gli accenti coopera con normalize('NFD') per rimuovere
+      // completamente l'accento
+      .replace(/[\u0300-\u036f]/g, '')
+      // trasformo spazi e simboli in "_"
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .toLowerCase()
+      .slice(0, 20);
+
+    // Names with non-Latin scripts (e.g. Arabic, Cyrillic, CJK, or emojis)
+    // could be stripped down to empty strings; those fall back to 'user'.
+    const baseName = cleanName.length >= 2 ? cleanName : 'user';
+
+    // Aggiungiungo 3 numeri casuali alla fine
+    let uniqueUsername = `${baseName}_${Math.floor(100 + Math.random() * 900)}`;
+    let attempts = 0;
+
+    while (
+      attempts < 10 &&
+      (await this.prisma.user.findUnique({
+        where: { username: uniqueUsername },
+      }))
+    ) {
+      attempts++;
+      uniqueUsername = `${baseName}_${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    if (attempts >= 10) {
+      uniqueUsername = `${baseName.slice(0, 15)}_${Date.now().toString().slice(-8)}`;
+    }
+
+    // Usernames longer than 30 chars are truncated to respect DB constrains
+    return uniqueUsername.slice(0, 30);
+  }
+
+  async twoFactorSignin(authTwoFactor: TwoFactorAuth) {
+    const code = authTwoFactor.code;
+    const tempToken = authTwoFactor.tempToken;
+    let payloads;
+    try {
+      payloads = await this.jwtService.verifyAsync(tempToken);
+    } catch {
+      throw createHttpException(errors.auth.accessDenied, 'expired temp token');
+    }
+    if (!payloads.is2FaPending)
+      throw createHttpException(errors.auth.accessDenied);
+    const user = await this.prisma.user.findUnique({
+      where: { id: payloads.userId },
+    });
+    if (!user || user.status !== 'active' || user.deleted_at)
+      throw createHttpException(errors.auth.accessDenied);
+    // decrypto la password nel database
+    const twoFactorCodeDecrypted = this.encryptionService.decrypting(
+      user.two_factor,
+    );
+    const isValid = await verify({
+      token: code,
+      secret: twoFactorCodeDecrypted,
+    });
+    if (!isValid.valid) throw createHttpException(errors.auth.accessDenied);
+    return this.jwtSessionSignin(user);
+  }
+
+  async googleSignIn(
+    token: string,
+  ): Promise<
+    | { accessToken: string; refreshToken: string }
+    | { tempToken: string; twofAuth: true }
+  > {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    /* 
+     * AuthService is initialized as:
+     * new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+     * and passed audience: process.env.GOOGLE_CLIENT_ID.
+     * If GOOGLE_CLIENT_ID was unset or empty, google-auth-library treats
+     * audience as undefined and skips audience verification—allowing an
+     * attacker to present a valid Google ID token issued for any third-party
+     * app in the world.
+     */
+    if (!clientId) {
+      throw createHttpException(
+        errors.common.internalServerError,
+        'Google OAuth client ID is not configured on the server',
+      );
+    }
+
+    let ticket;
+    try {
+      ticket = await this.googleClient.verifyIdToken({
+        idToken: token,
+        audience: clientId,
+      });
+    } catch {
+      throw createHttpException(
+        errors.auth.accessDenied,
+        'Invalid or expired Google token',
+      );
+    }
+
+    // Questo ticket contiene tutte le finormazioni dell'utente (è un json), le
+    // salvo in un payload per comodita
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email || !payload.sub) {
+      throw createHttpException(
+        errors.auth.accessDenied,
+        'Invalid Google token payload',
+      );
+    }
+
+    /* 
+     * Without this check, the login would work also if a Google account 
+     * had an unverified email.
+     * This is a problem because an attacker could register an unverified 
+     * Google account with a victim's email and hijack an existing WeCook 
+     * profile upon login.
+     */
+    if (payload.email_verified !== true) {
+      throw createHttpException(
+        errors.auth.accessDenied,
+        'Google account email is not verified',
+      );
+    }
+
+    const normalizedEmail = payload.email.trim().toLowerCase();
+
+    // 1. Try to find user by unique Google ID (sub)
+    let user = await this.prisma.user.findUnique({
+      where: { id_google: payload.sub },
+    });
+
+    // 2. If not found by Google ID, lookup by verified email
+    if (!user) {
+      const existingUserByEmail = await this.prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (existingUserByEmail) {
+        if (
+          existingUserByEmail.id_google &&
+          existingUserByEmail.id_google !== payload.sub
+        ) {
+          throw createHttpException(
+            errors.auth.accessDenied,
+            'This email is already associated with a different Google account',
+          );
+        }
+        user = await this.prisma.user.update({
+          where: { id: existingUserByEmail.id },
+          data: { id_google: payload.sub },
+        });
+      }
+    }
+
+    // 3. If still not found, provision a new user
+    if (!user) {
+      const username = await this.generateUniqueUsername(payload);
+      user = await this.prisma.user.create({
+        data: {
+          id_google: payload.sub,
+          email: normalizedEmail,
+          username: username,
+          first_name: payload.given_name ?? null,
+          last_name: payload.family_name ?? null,
+          avatar_url: payload.picture ?? null,
+        },
+      });
+    }
+
+    // 4. Enforce ban and status invariants
+    await this.checkUserBanAndStatus(user);
+
+    // 5. Handle Two-Factor Authentication
+    if (user.is_two_factor_enabled === true) {
+      const tempToken = await this.jwtService.signAsync(
+        { userId: user.id, is2FaPending: true, type: 'twofactAuth' },
+        { expiresIn: '5m' },
+      );
+      return {
+        tempToken: tempToken,
+        twofAuth: true,
+      };
+    }
+
+    return await this.jwtSessionSignin(user);
+  }
+  async signIn(
+    email: string,
+    pass: string,
+  ): Promise<
+    | { accessToken: string; refreshToken: string }
+    | { tempToken: string; twofAuth: true }
+  > {
+    const user = await this.usersService.getUserByEmail(
+      email.trim().toLowerCase(),
+    );
+    if (!user) {
+      throw new UnauthorizedException('invalid password or email');
+    }
+    await this.checkUserBanAndStatus(user);
     if (!user.password_hash) {
       throw createHttpException(
         errors.auth.invalidCredentials,

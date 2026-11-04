@@ -59,6 +59,9 @@ describe('AuthService', () => {
     encrypting: jest.Mock;
     decrypting: jest.Mock;
   };
+  let mockGoogleClient: {
+    verifyIdToken: jest.Mock;
+  };
 
   const mockUser: any = {
     id: 1,
@@ -128,6 +131,11 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
+    process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
+    mockGoogleClient = {
+      verifyIdToken: jest.fn(),
+    };
+    (service as any).googleClient = mockGoogleClient;
     jest.clearAllMocks();
   });
 
@@ -332,6 +340,17 @@ describe('AuthService', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
       });
+    });
+
+    it('throws HttpException if user has no password_hash (registered via Google)', async () => {
+      usersService.getUserByEmail.mockResolvedValue({
+        ...mockUser,
+        password_hash: null,
+      });
+
+      await expect(
+        service.signIn('mario@example.com', 'Password123!'),
+      ).rejects.toThrow(HttpException);
     });
 
     it('throws UnauthorizedException if password comparison fails', async () => {
@@ -782,6 +801,290 @@ describe('AuthService', () => {
       await expect(
         service.twoFactorAuthDisable(1, 'Password123!'),
       ).rejects.toThrow(HttpException);
+    });
+  });
+
+  describe('googleSignIn', () => {
+    const validGooglePayload = {
+      sub: 'google-sub-12345',
+      email: 'mario@example.com',
+      email_verified: true,
+      given_name: 'Mario',
+      family_name: 'Rossi',
+      picture: 'https://lh3.googleusercontent.com/avatar.jpg',
+    };
+
+    it('throws internal server error if GOOGLE_CLIENT_ID is not configured', async () => {
+      delete process.env.GOOGLE_CLIENT_ID;
+
+      await expect(service.googleSignIn('any-token')).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('throws HttpException if Google token verification fails', async () => {
+      mockGoogleClient.verifyIdToken.mockRejectedValue(
+        new Error('Token verification failed'),
+      );
+
+      await expect(service.googleSignIn('invalid-token')).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('throws HttpException if Google payload is missing or missing sub/email', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({ email: null, sub: null }),
+      });
+
+      await expect(service.googleSignIn('token')).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('throws HttpException if Google account email is not verified', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          ...validGooglePayload,
+          email_verified: false,
+        }),
+      });
+
+      await expect(service.googleSignIn('token')).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('successfully authenticates existing user matching Google ID', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => validGooglePayload,
+      });
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: 'google-sub-12345',
+      });
+      prisma.jwtSession.findMany.mockResolvedValue([]);
+      prisma.jwtSession.create.mockResolvedValue({ id_session: 1 });
+      jwtService.signAsync
+        .mockResolvedValueOnce('refresh-token')
+        .mockResolvedValueOnce('access-token');
+      jwtService.decode.mockReturnValue({ exp: 1700000000 });
+      prisma.jwtSession.update.mockResolvedValue({});
+
+      const result = await service.googleSignIn('valid-token');
+
+      expect(mockGoogleClient.verifyIdToken).toHaveBeenCalledWith({
+        idToken: 'valid-token',
+        audience: 'test-google-client-id',
+      });
+      expect(result).toEqual({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
+    });
+
+    it('successfully links Google ID to existing user found by verified email', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => validGooglePayload,
+      });
+      // 1. Not found by id_google
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      // 2. Found by email with id_google: null
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: null,
+      });
+      // 3. Updated user with id_google
+      prisma.user.update.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: 'google-sub-12345',
+      });
+      prisma.jwtSession.findMany.mockResolvedValue([]);
+      prisma.jwtSession.create.mockResolvedValue({ id_session: 1 });
+      jwtService.signAsync
+        .mockResolvedValueOnce('refresh-token')
+        .mockResolvedValueOnce('access-token');
+      jwtService.decode.mockReturnValue({ exp: 1700000000 });
+      prisma.jwtSession.update.mockResolvedValue({});
+
+      const result = await service.googleSignIn('valid-token');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+        data: { id_google: 'google-sub-12345' },
+      });
+      expect(result).toEqual({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
+    });
+
+    it('throws HttpException if existing user found by email is already bound to a different Google ID', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => validGooglePayload,
+      });
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: 'other-google-sub',
+      });
+
+      await expect(service.googleSignIn('valid-token')).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('successfully provisions new user when neither Google ID nor email exists', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          sub: 'new-google-sub',
+          email: 'newbie@example.com',
+          email_verified: true,
+          given_name: 'Luigi',
+          family_name: 'Verdi',
+          picture: 'https://lh3.googleusercontent.com/pic.jpg',
+        }),
+      });
+      // 1. lookup by id_google
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      // 2. lookup by email
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      // 3. username collision check in generateUniqueUsername
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+
+      const newUser = {
+        id: 2,
+        id_google: 'new-google-sub',
+        email: 'newbie@example.com',
+        username: 'luigi_verdi_123',
+        status: UserStatus.active,
+        deleted_at: null,
+        is_two_factor_enabled: false,
+      };
+      prisma.user.create.mockResolvedValueOnce(newUser);
+      prisma.jwtSession.findMany.mockResolvedValue([]);
+      prisma.jwtSession.create.mockResolvedValue({ id_session: 2 });
+      jwtService.signAsync
+        .mockResolvedValueOnce('refresh-token')
+        .mockResolvedValueOnce('access-token');
+      jwtService.decode.mockReturnValue({ exp: 1700000000 });
+      prisma.jwtSession.update.mockResolvedValue({});
+
+      const result = await service.googleSignIn('valid-token');
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            id_google: 'new-google-sub',
+            email: 'newbie@example.com',
+            first_name: 'Luigi',
+            last_name: 'Verdi',
+            avatar_url: 'https://lh3.googleusercontent.com/pic.jpg',
+          }),
+        }),
+      );
+      expect(result).toEqual({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
+    });
+
+    it('returns temporary 2FA challenge token when user has 2FA enabled', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => validGooglePayload,
+      });
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: 'google-sub-12345',
+        is_two_factor_enabled: true,
+      });
+      jwtService.signAsync.mockResolvedValue('temp-2fa-token');
+
+      const result = await service.googleSignIn('valid-token');
+
+      expect(jwtService.signAsync).toHaveBeenCalledWith(
+        { userId: mockUser.id, is2FaPending: true, type: 'twofactAuth' },
+        { expiresIn: '5m' },
+      );
+      expect(result).toEqual({
+        tempToken: 'temp-2fa-token',
+        twofAuth: true,
+      });
+    });
+
+    it('throws HttpException when user account is inactive or soft-deleted', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => validGooglePayload,
+      });
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: 'google-sub-12345',
+        status: 'suspended',
+      });
+
+      await expect(service.googleSignIn('valid-token')).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('throws AccountBannedException when user has an active ban', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => validGooglePayload,
+      });
+      const bannedUntil = new Date(Date.now() + 10 * 86400000);
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: 'google-sub-12345',
+        status: UserStatus.banned,
+        banned_until: bannedUntil,
+      });
+      banHistoryService.getLatestActiveBan.mockResolvedValue({
+        reason: ReportReason.harassment_bullying,
+        description: 'Banned for harassment',
+        is_permanent: false,
+      });
+
+      await expect(service.googleSignIn('valid-token')).rejects.toThrow(
+        AccountBannedException,
+      );
+    });
+
+    it('automatically reactivates expired temporary ban and authenticates user', async () => {
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => validGooglePayload,
+      });
+      const pastDate = new Date(Date.now() - 5000);
+      prisma.user.findUnique.mockResolvedValueOnce({
+        ...mockUser,
+        id_google: 'google-sub-12345',
+        status: UserStatus.banned,
+        banned_until: pastDate,
+      });
+      prisma.user.update.mockResolvedValue({});
+      banHistoryService.recordUnban.mockResolvedValue({});
+      prisma.jwtSession.findMany.mockResolvedValue([]);
+      prisma.jwtSession.create.mockResolvedValue({ id_session: 1 });
+      jwtService.signAsync
+        .mockResolvedValueOnce('refresh-token')
+        .mockResolvedValueOnce('access-token');
+      jwtService.decode.mockReturnValue({ exp: 1700000000 });
+      prisma.jwtSession.update.mockResolvedValue({});
+
+      const result = await service.googleSignIn('valid-token');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+        data: { status: UserStatus.active, banned_until: null },
+      });
+      expect(banHistoryService.recordUnban).toHaveBeenCalledWith(
+        mockUser.id,
+        null,
+        'Automated expiration upon login',
+      );
+      expect(result).toEqual({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
     });
   });
 });

@@ -37,6 +37,86 @@
     },
     "/api/auth/signin/google": {
       "post": {
+        "description": "Validates a Google OpenID Connect ID token. If the user account does not exist, a new profile is automatically created. On success, sets HttpOnly `accessToken` (10 min) and `refreshToken` (7 days) cookies. If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.",
+        "operationId": "AuthController_signInGoogle",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleAuthDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful or 2FA challenge triggered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/AuthMessageResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TwoFactorChallengeResponseDto"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input format (empty or non-string idToken)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired Google token, unverified email address, or inactive user account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Account suspended (banned)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountBannedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Sign in with Google OAuth",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/signin": {
+      "post": {
         "description": "Validates user credentials. On success, sets HttpOnly `accessToken` (10 min) and `refreshToken` (7 days) cookies. If 2FA is enabled on the account, returns a temporary challenge token (`tempToken`) instead of setting session cookies.",
         "operationId": "AuthController_signIn",
         "parameters": [],
@@ -45,7 +125,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GoogleAuthDto"
+                "$ref": "#/components/schemas/SignInUserDto"
               }
             }
           }
@@ -110,47 +190,6 @@
           }
         },
         "summary": "Sign in with email and password",
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/auth/signin": {
-      "post": {
-        "operationId": "AuthController_signIn",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SignInUserDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
         "tags": [
           "Auth"
         ]
@@ -7095,7 +7134,9 @@
         "type": "object",
         "properties": {
           "idToken": {
-            "type": "string"
+            "type": "string",
+            "description": "Google OAuth2 OpenID Connect ID token (JWT) issued by Google Identity Services",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature"
           }
         },
         "required": [
@@ -7276,6 +7317,28 @@
           "code",
           "message",
           "details"
+        ]
+      },
+      "SignInUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Registered user email address",
+            "example": "mario.rossi@example.com",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "description": "User account password (minimum 9 characters)",
+            "example": "SuperSecret123!",
+            "minLength": 9
+          }
+        },
+        "required": [
+          "email",
+          "password"
         ]
       },
       "SignUpUserDto": {
