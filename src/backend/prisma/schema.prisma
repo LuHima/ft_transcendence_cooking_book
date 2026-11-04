@@ -38,6 +38,12 @@ enum TranslationStatus {
   failed
 }
 
+enum TranslationSource {
+  author_original
+  machine
+  manual
+}
+
 enum Course {
   appetizer
   first_course
@@ -210,12 +216,13 @@ model Recipe {
 }
 
 model RecipeTranslation {
-  recipe_id    Int
-  locale       String  @db.VarChar(5)
-  title        String  @db.VarChar(255)
-  description  String
-  preservation String?
-  tips         String?
+  recipe_id          Int
+  locale             String            @db.VarChar(5)
+  title              String            @db.VarChar(255)
+  description        String
+  preservation       String?
+  tips               String?
+  translation_source TranslationSource @default(machine)
 
   recipe       Recipe  @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
 
