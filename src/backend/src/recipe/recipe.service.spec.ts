@@ -19,7 +19,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { FilterRecipeDto } from './dto/filter-recipe.dto';
+import {
+  FilterRecipeDto,
+  RecipeSortBy,
+  RecipeSortOrder,
+} from './dto/filter-recipe.dto';
 import { RecipeService } from './recipe.service';
 import { RecipeProjection } from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
@@ -43,6 +47,7 @@ describe('RecipeService', () => {
 
   const mockPrisma = {
     $transaction: jest.fn(),
+    $queryRaw: jest.fn(),
     recipe: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -319,7 +324,7 @@ describe('RecipeService', () => {
       expect(result.items[0].resolved_lang).toBe('en');
     });
 
-    it('filters recipes by course, difficulty, author_id, max_time, tag_ids, and search keyword', async () => {
+    it('filters recipes by course, difficulty, author_id, max_time, tag_ids (default all), and search keyword', async () => {
       mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
       mockPrisma.recipe.count.mockResolvedValueOnce(1);
 
@@ -340,19 +345,20 @@ describe('RecipeService', () => {
         difficulty: RecipeDifficulty.easy,
         user_id: 5,
         total_time: { lte: 45 },
-        recipe_tags: {
-          some: {
-            tag_id: { in: [1, 2] },
+        AND: [
+          { recipe_tags: { some: { tag_id: 1 } } },
+          { recipe_tags: { some: { tag_id: 2 } } },
+          {
+            translations: {
+              some: {
+                OR: [
+                  { title: { contains: 'pasta', mode: 'insensitive' } },
+                  { description: { contains: 'pasta', mode: 'insensitive' } },
+                ],
+              },
+            },
           },
-        },
-        translations: {
-          some: {
-            OR: [
-              { title: { contains: 'pasta', mode: 'insensitive' } },
-              { description: { contains: 'pasta', mode: 'insensitive' } },
-            ],
-          },
-        },
+        ],
       };
 
       expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
@@ -364,6 +370,207 @@ describe('RecipeService', () => {
         where: expectedWhere,
       });
       expect(result.total).toBe(1);
+    });
+
+    it('filters recipes with tag_mode=any and exclude_tag_ids', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      await service.getAllRecipe({
+        tag_ids: [1, 2],
+        tag_mode: 'any',
+        exclude_tag_ids: [3, 4],
+      });
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            is_active: true,
+            AND: [
+              { recipe_tags: { some: { tag_id: { in: [1, 2] } } } },
+              { recipe_tags: { none: { tag_id: { in: [3, 4] } } } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('filters recipes with min_time, max_time, and max_prep_time', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      await service.getAllRecipe({
+        min_time: 20,
+        max_time: 50,
+        max_prep_time: 15,
+      });
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            is_active: true,
+            total_time: { gte: 20, lte: 50 },
+            prep_time: { lte: 15 },
+          },
+        }),
+      );
+    });
+
+    it('filters recipes by source_lang and curated_only for requested lang', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      await service.getAllRecipe({
+        source_lang: 'it',
+        curated_only: true,
+        lang: 'fr',
+      });
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            is_active: true,
+            source_lang: 'it',
+            AND: [
+              {
+                translations: {
+                  some: {
+                    locale: 'fr',
+                    translation_source: {
+                      in: [
+                        TranslationSource.author_original,
+                        TranslationSource.manual,
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('filters recipes by ingredient_ids with all (default) and exclude_ingredient_ids', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      await service.getAllRecipe({
+        ingredient_ids: [10, 20],
+        exclude_ingredient_ids: [30],
+      });
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            is_active: true,
+            AND: [
+              { recipe_ingredients: { some: { ingredient_id: 10 } } },
+              { recipe_ingredients: { some: { ingredient_id: 20 } } },
+              {
+                recipe_ingredients: {
+                  none: { ingredient_id: { in: [30] } },
+                },
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('filters recipes by ingredient_ids with ingredient_mode=any', async () => {
+      mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+      mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+      await service.getAllRecipe({
+        ingredient_ids: [10, 20],
+        ingredient_mode: 'any',
+      });
+
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            is_active: true,
+            AND: [
+              {
+                recipe_ingredients: {
+                  some: { ingredient_id: { in: [10, 20] } },
+                },
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it.each([
+      [RecipeSortBy.created_at, undefined, { created_at: 'desc' }],
+      [RecipeSortBy.created_at, RecipeSortOrder.asc, { created_at: 'asc' }],
+      [RecipeSortBy.likes_count, undefined, { likes: { _count: 'desc' } }],
+      [
+        RecipeSortBy.likes_count,
+        RecipeSortOrder.asc,
+        { likes: { _count: 'asc' } },
+      ],
+      [RecipeSortBy.total_time, undefined, { total_time: 'asc' }],
+      [RecipeSortBy.total_time, RecipeSortOrder.desc, { total_time: 'desc' }],
+      [RecipeSortBy.difficulty, undefined, { difficulty: 'asc' }],
+      [RecipeSortBy.difficulty, RecipeSortOrder.desc, { difficulty: 'desc' }],
+    ])(
+      'maps sort_by=%s and sort_order=%s to direct prisma orderBy %j',
+      async (sortBy, sortOrder, expectedOrderBy) => {
+        mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+        mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+        await service.getAllRecipe({ sort_by: sortBy, sort_order: sortOrder });
+
+        expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderBy: expectedOrderBy,
+          }),
+        );
+      },
+    );
+
+    it('executes two-step query resolution when sort_by=title, preserving order', async () => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([{ id: 2 }, { id: 1 }]);
+      mockPrisma.recipe.count.mockResolvedValueOnce(2);
+      mockPrisma.recipe.findMany.mockResolvedValueOnce([
+        { ...mockDbRecipes[0], id: 1 },
+        { ...mockDbRecipes[0], id: 2, title: 'Apple Pie' },
+      ]);
+
+      const result = await service.getAllRecipe({
+        sort_by: RecipeSortBy.title,
+        sort_order: RecipeSortOrder.asc,
+        lang: 'en',
+      });
+
+      expect(mockPrisma.$queryRaw).toHaveBeenCalled();
+      expect(mockPrisma.recipe.count).toHaveBeenCalledWith({
+        where: { is_active: true },
+      });
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: { in: [2, 1] } },
+        }),
+      );
+      expect(result.items[0].id).toBe(2);
+      expect(result.items[1].id).toBe(1);
+      expect(result.total).toBe(2);
+    });
+
+    it('handles empty queryRaw results gracefully when sort_by=title', async () => {
+      mockPrisma.$queryRaw.mockResolvedValueOnce([]);
+      mockPrisma.recipe.count.mockResolvedValueOnce(0);
+
+      const result = await service.getAllRecipe({
+        sort_by: RecipeSortBy.title,
+      });
+
+      expect(mockPrisma.recipe.findMany).not.toHaveBeenCalled();
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('populates is_liked=true when currentUserId has liked the recipe', async () => {

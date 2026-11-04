@@ -19,7 +19,11 @@ import {
 import { NotificationEmit } from 'src/notifications/notification-emit';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
-import { FilterRecipeDto } from './dto/filter-recipe.dto';
+import {
+  FilterRecipeDto,
+  RecipeSortBy,
+  RecipeSortOrder,
+} from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { DeleteCommentQueryDto } from './dto/delete-comment-query.dto';
@@ -53,21 +57,12 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
-  public async getAllRecipe(
-    filters?: FilterRecipeDto | string,
-    currentUserId?: number,
-  ): Promise<PaginatedRecipeResponseDto> {
-    const filterDto: FilterRecipeDto =
-      typeof filters === 'string' ? { lang: filters as any } : filters || {};
-
-    const page = Number(filterDto.page) > 0 ? Number(filterDto.page) : 1;
-    const limit =
-      Number(filterDto.limit) > 0 ? Math.min(Number(filterDto.limit), 100) : 20;
-    const skip = (page - 1) * limit;
-
+  private buildRecipeWhere(filterDto: FilterRecipeDto): Prisma.RecipeWhereInput {
     const where: Prisma.RecipeWhereInput = {
       is_active: true,
     };
+
+    const andConditions: Prisma.RecipeWhereInput[] = [];
 
     if (filterDto.course) {
       where.course = filterDto.course;
@@ -81,43 +76,365 @@ export class RecipeService {
       where.user_id = filterDto.author_id;
     }
 
-    if (filterDto.max_time !== undefined) {
-      where.total_time = { lte: filterDto.max_time };
+    if (filterDto.min_time !== undefined || filterDto.max_time !== undefined) {
+      where.total_time = {
+        ...(filterDto.min_time !== undefined
+          ? { gte: filterDto.min_time }
+          : {}),
+        ...(filterDto.max_time !== undefined
+          ? { lte: filterDto.max_time }
+          : {}),
+      };
+    }
+
+    if (filterDto.max_prep_time !== undefined) {
+      where.prep_time = { lte: filterDto.max_prep_time };
+    }
+
+    if (filterDto.source_lang) {
+      where.source_lang = filterDto.source_lang;
+    }
+
+    if (filterDto.curated_only && filterDto.lang) {
+      andConditions.push({
+        translations: {
+          some: {
+            locale: filterDto.lang,
+            translation_source: {
+              in: [TranslationSource.author_original, TranslationSource.manual],
+            },
+          },
+        },
+      });
     }
 
     if (filterDto.tag_ids && filterDto.tag_ids.length > 0) {
-      where.recipe_tags = {
-        some: {
-          tag_id: { in: filterDto.tag_ids },
+      const mode = filterDto.tag_mode || 'all';
+      if (mode === 'any') {
+        andConditions.push({
+          recipe_tags: {
+            some: {
+              tag_id: { in: filterDto.tag_ids },
+            },
+          },
+        });
+      } else {
+        for (const tagId of filterDto.tag_ids) {
+          andConditions.push({
+            recipe_tags: {
+              some: {
+                tag_id: tagId,
+              },
+            },
+          });
+        }
+      }
+    }
+
+    if (filterDto.exclude_tag_ids && filterDto.exclude_tag_ids.length > 0) {
+      andConditions.push({
+        recipe_tags: {
+          none: {
+            tag_id: { in: filterDto.exclude_tag_ids },
+          },
         },
-      };
+      });
+    }
+
+    if (filterDto.ingredient_ids && filterDto.ingredient_ids.length > 0) {
+      const mode = filterDto.ingredient_mode || 'all';
+      if (mode === 'any') {
+        andConditions.push({
+          recipe_ingredients: {
+            some: {
+              ingredient_id: { in: filterDto.ingredient_ids },
+            },
+          },
+        });
+      } else {
+        for (const ingredientId of filterDto.ingredient_ids) {
+          andConditions.push({
+            recipe_ingredients: {
+              some: {
+                ingredient_id: ingredientId,
+              },
+            },
+          });
+        }
+      }
+    }
+
+    if (
+      filterDto.exclude_ingredient_ids &&
+      filterDto.exclude_ingredient_ids.length > 0
+    ) {
+      andConditions.push({
+        recipe_ingredients: {
+          none: {
+            ingredient_id: { in: filterDto.exclude_ingredient_ids },
+          },
+        },
+      });
     }
 
     if (filterDto.search && filterDto.search.trim() !== '') {
       const keyword = filterDto.search.trim();
-      where.translations = {
-        some: {
-          OR: [
-            { title: { contains: keyword, mode: 'insensitive' } },
-            { description: { contains: keyword, mode: 'insensitive' } },
-          ],
+      andConditions.push({
+        translations: {
+          some: {
+            OR: [
+              { title: { contains: keyword, mode: 'insensitive' } },
+              { description: { contains: keyword, mode: 'insensitive' } },
+            ],
+          },
         },
-      };
+      });
     }
 
-    // Fetch recipes matching filter criteria together with translations and social metrics
-    const [recipes, total] = await Promise.all([
-      this.prisma.recipe.findMany({
-        ...(Object.keys(where).length > 0 ? { where } : {}),
-        skip,
-        take: limit,
-        orderBy: { created_at: 'desc' },
-        include: RECIPE_SUMMARY_INCLUDE(currentUserId),
-      }),
-      this.prisma.recipe.count({
-        ...(Object.keys(where).length > 0 ? { where } : {}),
-      }),
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
+    return where;
+  }
+
+  private resolveRecipeOrderBy(
+    sortBy: RecipeSortBy = RecipeSortBy.created_at,
+    sortOrder?: RecipeSortOrder,
+  ): Prisma.RecipeOrderByWithRelationInput {
+    let order: Prisma.SortOrder;
+    if (sortOrder) {
+      order = sortOrder as Prisma.SortOrder;
+    } else {
+      order =
+        sortBy === RecipeSortBy.created_at || sortBy === RecipeSortBy.likes_count
+          ? 'desc'
+          : 'asc';
+    }
+
+    switch (sortBy) {
+      case RecipeSortBy.total_time:
+        return { total_time: order };
+      case RecipeSortBy.difficulty:
+        return { difficulty: order };
+      case RecipeSortBy.likes_count:
+        return { likes: { _count: order } };
+      case RecipeSortBy.created_at:
+      default:
+        return { created_at: order };
+    }
+  }
+
+  private async resolveRecipesSortedByTitle(
+    filterDto: FilterRecipeDto,
+    where: Prisma.RecipeWhereInput,
+    skip: number,
+    limit: number,
+    currentUserId?: number,
+  ): Promise<{ recipes: any[]; total: number }> {
+    const targetLocale = filterDto.lang || null;
+    const sortOrder =
+      filterDto.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
+    const orderSql =
+      sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+
+    const sqlConditions: Prisma.Sql[] = [Prisma.sql`r.is_active = true`];
+
+    if (filterDto.course) {
+      sqlConditions.push(
+        Prisma.sql`r.course = ${filterDto.course}::"Course"`,
+      );
+    }
+
+    if (filterDto.difficulty) {
+      sqlConditions.push(
+        Prisma.sql`r.difficulty = ${filterDto.difficulty}::"RecipeDifficulty"`,
+      );
+    }
+
+    if (filterDto.author_id) {
+      sqlConditions.push(Prisma.sql`r.user_id = ${filterDto.author_id}`);
+    }
+
+    if (filterDto.min_time !== undefined) {
+      sqlConditions.push(Prisma.sql`r.total_time >= ${filterDto.min_time}`);
+    }
+
+    if (filterDto.max_time !== undefined) {
+      sqlConditions.push(Prisma.sql`r.total_time <= ${filterDto.max_time}`);
+    }
+
+    if (filterDto.max_prep_time !== undefined) {
+      sqlConditions.push(
+        Prisma.sql`r.prep_time <= ${filterDto.max_prep_time}`,
+      );
+    }
+
+    if (filterDto.source_lang) {
+      sqlConditions.push(Prisma.sql`r.source_lang = ${filterDto.source_lang}`);
+    }
+
+    if (filterDto.curated_only && filterDto.lang) {
+      sqlConditions.push(
+        Prisma.sql`EXISTS (
+          SELECT 1 FROM recipe_translations rt_curated
+          WHERE rt_curated.recipe_id = r.id
+            AND rt_curated.locale = ${filterDto.lang}
+            AND rt_curated.translation_source IN ('author_original', 'manual')
+        )`,
+      );
+    }
+
+    if (filterDto.tag_ids && filterDto.tag_ids.length > 0) {
+      const mode = filterDto.tag_mode || 'all';
+      if (mode === 'any') {
+        sqlConditions.push(
+          Prisma.sql`EXISTS (
+            SELECT 1 FROM recipe_tags rt
+            WHERE rt.recipe_id = r.id AND rt.tag_id IN (${Prisma.join(filterDto.tag_ids)})
+          )`,
+        );
+      } else {
+        for (const tagId of filterDto.tag_ids) {
+          sqlConditions.push(
+            Prisma.sql`EXISTS (
+              SELECT 1 FROM recipe_tags rt
+              WHERE rt.recipe_id = r.id AND rt.tag_id = ${tagId}
+            )`,
+          );
+        }
+      }
+    }
+
+    if (filterDto.exclude_tag_ids && filterDto.exclude_tag_ids.length > 0) {
+      sqlConditions.push(
+        Prisma.sql`NOT EXISTS (
+          SELECT 1 FROM recipe_tags rt
+          WHERE rt.recipe_id = r.id AND rt.tag_id IN (${Prisma.join(filterDto.exclude_tag_ids)})
+        )`,
+      );
+    }
+
+    if (filterDto.ingredient_ids && filterDto.ingredient_ids.length > 0) {
+      const mode = filterDto.ingredient_mode || 'all';
+      if (mode === 'any') {
+        sqlConditions.push(
+          Prisma.sql`EXISTS (
+            SELECT 1 FROM recipe_ingredients ri
+            WHERE ri.recipe_id = r.id AND ri.ingredient_id IN (${Prisma.join(filterDto.ingredient_ids)})
+          )`,
+        );
+      } else {
+        for (const ingredientId of filterDto.ingredient_ids) {
+          sqlConditions.push(
+            Prisma.sql`EXISTS (
+              SELECT 1 FROM recipe_ingredients ri
+              WHERE ri.recipe_id = r.id AND ri.ingredient_id = ${ingredientId}
+            )`,
+          );
+        }
+      }
+    }
+
+    if (
+      filterDto.exclude_ingredient_ids &&
+      filterDto.exclude_ingredient_ids.length > 0
+    ) {
+      sqlConditions.push(
+        Prisma.sql`NOT EXISTS (
+          SELECT 1 FROM recipe_ingredients ri
+          WHERE ri.recipe_id = r.id AND ri.ingredient_id IN (${Prisma.join(filterDto.exclude_ingredient_ids)})
+        )`,
+      );
+    }
+
+    if (filterDto.search && filterDto.search.trim() !== '') {
+      const pattern = `%${filterDto.search.trim()}%`;
+      sqlConditions.push(
+        Prisma.sql`EXISTS (
+          SELECT 1 FROM recipe_translations rt_search
+          WHERE rt_search.recipe_id = r.id
+            AND (rt_search.title ILIKE ${pattern} OR rt_search.description ILIKE ${pattern})
+        )`,
+      );
+    }
+
+    const whereSql = Prisma.join(sqlConditions, ' AND ');
+
+    const [rawRows, total] = await Promise.all([
+      this.prisma.$queryRaw<{ id: number }[]>`
+        SELECT r.id
+        FROM recipes r
+        LEFT JOIN recipe_translations t_target ON (t_target.recipe_id = r.id AND t_target.locale = ${targetLocale})
+        LEFT JOIN recipe_translations t_source ON (t_source.recipe_id = r.id AND t_source.locale = r.source_lang)
+        LEFT JOIN recipe_translations t_en ON (t_en.recipe_id = r.id AND t_en.locale = 'en')
+        WHERE ${whereSql}
+        ORDER BY LOWER(COALESCE(t_target.title, t_source.title, t_en.title)) ${orderSql}, r.id ${orderSql}
+        LIMIT ${limit} OFFSET ${skip}
+      `,
+      this.prisma.recipe.count({ where }),
     ]);
+
+    const ids = rawRows.map((row) => row.id);
+    let recipes: any[] = [];
+    if (ids.length > 0) {
+      const hydrated = await this.prisma.recipe.findMany({
+        where: { id: { in: ids } },
+        include: RECIPE_SUMMARY_INCLUDE(currentUserId),
+      });
+      const recipeMap = new Map(hydrated.map((r) => [r.id, r]));
+      recipes = ids.map((id) => recipeMap.get(id)).filter(Boolean);
+    }
+
+    return { recipes, total };
+  }
+
+  public async getAllRecipe(
+    filters?: FilterRecipeDto | string,
+    currentUserId?: number,
+  ): Promise<PaginatedRecipeResponseDto> {
+    const filterDto: FilterRecipeDto =
+      typeof filters === 'string' ? { lang: filters as any } : filters || {};
+
+    const page = Number(filterDto.page) > 0 ? Number(filterDto.page) : 1;
+    const limit =
+      Number(filterDto.limit) > 0 ? Math.min(Number(filterDto.limit), 100) : 20;
+    const skip = (page - 1) * limit;
+
+    const where = this.buildRecipeWhere(filterDto);
+
+    let recipes: any[];
+    let total: number;
+
+    if (filterDto.sort_by === RecipeSortBy.title) {
+      const titleResult = await this.resolveRecipesSortedByTitle(
+        filterDto,
+        where,
+        skip,
+        limit,
+        currentUserId,
+      );
+      recipes = titleResult.recipes;
+      total = titleResult.total;
+    } else {
+      const orderBy = this.resolveRecipeOrderBy(
+        filterDto.sort_by,
+        filterDto.sort_order,
+      );
+
+      [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: RECIPE_SUMMARY_INCLUDE(currentUserId),
+        }),
+        this.prisma.recipe.count({
+          where,
+        }),
+      ]);
+    }
 
     return this.recipeProjection.toPaginatedSummaryResponse(
       recipes,
