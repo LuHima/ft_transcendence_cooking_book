@@ -178,6 +178,18 @@ _Avoid_: Comment feed, admin comment wall, message log
 The administrative governance process of adopting public recipes into platform ownership (`owner_type: 'platform'`) upon user soft deletion to preserve valuable community content without attribution (`author: null`), while preserving the relational `user_id` to enable atomic, full content restoration upon account reactivation.
 _Avoid_: Recipe confiscation, ghost author, deletion cascade
 
+**Recipe Suspension**:
+The non-destructive administrative or moderator deactivation of a culinary recipe (`is_active: false`), instantly hiding it from public discovery, search, author archives, and friend feeds while preserving its relational steps, ingredients, and media files for audit and appeal.
+_Avoid_: Recipe takedown, hidden recipe, delete recipe
+
+**Windowed Reply Preview**:
+The pagination and presentation pattern where threaded comment listings return a truncated subset of child replies (e.g. 5 most recent) alongside total reply counts and pagination signals (`has_more_replies`), preventing payload bloat while maintaining discussion context.
+_Avoid_: Child truncation, lazy comments, reply snippet
+
+**Translation Provenance**:
+The lifecycle classification of a localized recipe projection (`author_original`, `machine`, `manual`), explicitly identifying whether text was authored in the source language, synthesized by automated translation, or curated through human intervention.
+_Avoid_: Translation author, translation tag, origin flag
+
 ## API Governance & Documentation
 
 **API Contract**:
