@@ -64,7 +64,9 @@ export class RecipeService {
       Number(filterDto.limit) > 0 ? Math.min(Number(filterDto.limit), 100) : 20;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.RecipeWhereInput = {};
+    const where: Prisma.RecipeWhereInput = {
+      is_active: true,
+    };
 
     if (filterDto.course) {
       where.course = filterDto.course;
@@ -132,8 +134,19 @@ export class RecipeService {
   async getRecipeById(
     id: number,
     lang?: string,
-    currentUserId?: number,
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
   ): Promise<LocalizedRecipeDetailResponse> {
+    const currentUserId =
+      typeof currentUserOrId === 'number'
+        ? currentUserOrId
+        : currentUserOrId?.id;
+    let currentUserRole =
+      roleOverride ??
+      (typeof currentUserOrId === 'object'
+        ? currentUserOrId?.role
+        : undefined);
+
     // Fetch the recipe from database, joining it with its translations
     const recipe: any = await this.prisma.recipe.findUnique({
       where: {
@@ -144,6 +157,28 @@ export class RecipeService {
 
     // If recipe is not found -> throw 404 Not Found
     if (!recipe) throw new NotFoundException('Recipe not found');
+
+    if (recipe.is_active === false) {
+      const isAuthor =
+        currentUserId !== undefined &&
+        recipe.user_id !== null &&
+        recipe.user_id === currentUserId;
+
+      if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+        const caller = await this.prisma.user.findUnique({
+          where: { id: currentUserId },
+          select: { role: true },
+        });
+        currentUserRole = caller?.role;
+      }
+
+      const isStaff =
+        currentUserRole === Role.admin || currentUserRole === Role.moderator;
+
+      if (!isAuthor && !isStaff) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
 
     return this.recipeProjection.toLocalizedDetail(recipe, lang, currentUserId);
   }

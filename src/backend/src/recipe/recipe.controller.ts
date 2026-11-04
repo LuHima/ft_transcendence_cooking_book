@@ -174,12 +174,12 @@ export class RecipeController {
   async getRecipeById(
     @Param('id', ParseIntPipe) id: number,
     @Query() localeDto: LocaleQueryDto,
-    @CurrentUser('id') currentUserId?: number,
+    @CurrentUser() currentUser?: ActiveUserData,
   ) {
     return await this.recipeService.getRecipeById(
       Number(id),
       localeDto?.lang,
-      currentUserId,
+      currentUser,
     );
   }
 

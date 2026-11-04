@@ -78,6 +78,7 @@ export class FeedService {
     // Step 2: Friend Recipes Query
     const where = {
       user_id: { in: activeFriendIds },
+      is_active: true,
       user: {
         status: UserStatus.active,
         deleted_at: null,

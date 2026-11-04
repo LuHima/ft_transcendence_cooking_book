@@ -291,6 +291,7 @@ describe('RecipeProjection', () => {
       expect(summary.title).toBe('Pasta al Pomodoro');
       expect(summary.description).toBe('Semplice');
       expect(summary.resolved_lang).toBe('it');
+      expect(summary.is_active).toBe(true);
       expect(summary.is_liked).toBe(true);
       expect(summary.likes_count).toBe(10);
       expect(summary.comments_count).toBe(3);
@@ -517,6 +518,7 @@ describe('RecipeProjection', () => {
       expect(detail.tips).toBe('Stir vigorously off heat');
       expect(detail.resolved_lang).toBe('en');
       expect(detail.is_liked).toBe(true);
+      expect(detail.is_active).toBe(true);
 
       // Verify steps ordering (step 1 then step 2)
       expect(detail.steps).toHaveLength(2);

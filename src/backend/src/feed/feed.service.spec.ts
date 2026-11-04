@@ -81,6 +81,7 @@ describe('FeedService', () => {
         expect.objectContaining({
           where: {
             user_id: { in: [2, 3] },
+            is_active: true,
             user: {
               status: 'active',
               deleted_at: null,
@@ -94,6 +95,7 @@ describe('FeedService', () => {
       expect(prisma.recipe.count).toHaveBeenCalledWith({
         where: {
           user_id: { in: [2, 3] },
+          is_active: true,
           user: {
             status: 'active',
             deleted_at: null,

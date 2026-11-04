@@ -190,6 +190,7 @@ model Recipe {
   id                 Int                @id @default(autoincrement())
   user_id            Int?
   owner_type         OwnerType          @default(user)
+  is_active          Boolean            @default(true)
   course             Course             @default(main_course)
   difficulty         RecipeDifficulty   @default(easy)
   prep_time          Int                @default(0)

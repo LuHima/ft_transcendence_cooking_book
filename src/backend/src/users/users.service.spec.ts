@@ -1048,7 +1048,7 @@ describe('UsersService', () => {
       });
       expect(prisma.recipe.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { user_id: 2, owner_type: OwnerType.user },
+          where: { user_id: 2, owner_type: OwnerType.user, is_active: true },
           skip: 0,
           take: 10,
           orderBy: { created_at: 'desc' },

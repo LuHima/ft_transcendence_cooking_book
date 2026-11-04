@@ -214,6 +214,7 @@ export class RecipeProjection {
 
     return {
       id: recipe.id,
+      is_active: recipe.is_active ?? true,
       course: recipe.course,
       difficulty: recipe.difficulty,
       prep_time: recipe.prep_time,
@@ -366,6 +367,7 @@ export class RecipeProjection {
 
     return {
       id: recipe.id,
+      is_active: recipe.is_active ?? true,
       course: recipe.course,
       difficulty: recipe.difficulty,
       prep_time: recipe.prep_time,

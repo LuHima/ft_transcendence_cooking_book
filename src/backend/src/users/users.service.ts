@@ -665,14 +665,22 @@ export class UsersService {
 
     const [recipes, total] = await Promise.all([
       this.prisma.recipe.findMany({
-        where: { user_id: targetUserId, owner_type: OwnerType.user },
+        where: {
+          user_id: targetUserId,
+          owner_type: OwnerType.user,
+          is_active: true,
+        },
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
         include: RECIPE_SUMMARY_INCLUDE(currentUserId),
       }),
       this.prisma.recipe.count({
-        where: { user_id: targetUserId, owner_type: OwnerType.user },
+        where: {
+          user_id: targetUserId,
+          owner_type: OwnerType.user,
+          is_active: true,
+        },
       }),
     ]);
 

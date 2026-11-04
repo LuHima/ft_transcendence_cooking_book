@@ -219,6 +219,7 @@ describe('RecipeService', () => {
       const result = await service.getAllRecipe();
 
       expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
+        where: { is_active: true },
         skip: 0,
         take: 20,
         orderBy: { created_at: 'desc' },
@@ -231,12 +232,15 @@ describe('RecipeService', () => {
           _count: expect.any(Object),
         }),
       });
-      expect(mockPrisma.recipe.count).toHaveBeenCalledWith({});
+      expect(mockPrisma.recipe.count).toHaveBeenCalledWith({
+        where: { is_active: true },
+      });
 
       expect(result).toEqual({
         items: [
           {
             id: 1,
+            is_active: true,
             course: Course.first_course,
             difficulty: RecipeDifficulty.medium,
             prep_time: 15,
@@ -331,6 +335,7 @@ describe('RecipeService', () => {
       const result = await service.getAllRecipe(filters);
 
       const expectedWhere = {
+        is_active: true,
         course: Course.main_course,
         difficulty: RecipeDifficulty.easy,
         user_id: 5,
@@ -1001,6 +1006,136 @@ describe('RecipeService', () => {
       expect(result.likes_count).toBe(7);
       expect(result.comments_count).toBe(2);
       expect(result.is_liked).toBe(false);
+    });
+
+    it('throws NotFoundException when recipe is suspended (is_active: false) and caller is unauthenticated guest', async () => {
+      const mockSuspendedRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: { likes: 0, comments: 0 },
+        likes: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockSuspendedRecipe);
+
+      await expect(service.getRecipeById(1, 'it')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when recipe is suspended (is_active: false) and caller is non-author regular user', async () => {
+      const mockSuspendedRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: { likes: 0, comments: 0 },
+        likes: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockSuspendedRecipe);
+      if (!mockPrisma.user) {
+        (mockPrisma as any).user = { findUnique: jest.fn() };
+      }
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+        role: Role.user,
+      });
+
+      await expect(
+        service.getRecipeById(1, 'it', { id: 99, role: Role.user }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('allows author to view their own suspended recipe', async () => {
+      const mockSuspendedRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: { likes: 0, comments: 0 },
+        likes: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockSuspendedRecipe);
+
+      const result = await service.getRecipeById(1, 'it', {
+        id: 10,
+        role: Role.user,
+      });
+      expect(result.id).toBe(1);
+      expect(result.is_active).toBe(false);
+    });
+
+    it('allows moderator to view suspended recipe', async () => {
+      const mockSuspendedRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: { likes: 0, comments: 0 },
+        likes: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockSuspendedRecipe);
+
+      const result = await service.getRecipeById(1, 'it', {
+        id: 77,
+        role: Role.moderator,
+      });
+      expect(result.id).toBe(1);
+      expect(result.is_active).toBe(false);
+    });
+
+    it('allows administrator to view suspended recipe', async () => {
+      const mockSuspendedRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        translations: [
+          { locale: 'it', title: 'Carbonara', description: 'Buona' },
+        ],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: { likes: 0, comments: 0 },
+        likes: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockSuspendedRecipe);
+
+      const result = await service.getRecipeById(1, 'it', {
+        id: 88,
+        role: Role.admin,
+      });
+      expect(result.id).toBe(1);
+      expect(result.is_active).toBe(false);
     });
   });
 

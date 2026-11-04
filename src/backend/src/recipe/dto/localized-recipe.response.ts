@@ -315,6 +315,17 @@ export class LocalizedRecipeSummaryResponse {
   id: number;
 
   /**
+   * Whether the recipe is actively published and visible to the public.
+   * @example true
+   */
+  @ApiProperty({
+    description:
+      'Whether the recipe is actively published and visible to the public',
+    example: true,
+  })
+  is_active: boolean;
+
+  /**
    * Course classification in a meal.
    * @example Course.first_course
    */
@@ -606,4 +617,7 @@ export class LocalizedRecipeDetailResponse extends LocalizedRecipeSummaryRespons
   media: RecipeMediaResponse[];
 }
 
-export { LocalizedRecipeDetailResponse as RecipeDetailDto };
+export {
+  LocalizedRecipeSummaryResponse as RecipeSummaryDto,
+  LocalizedRecipeDetailResponse as RecipeDetailDto,
+};
