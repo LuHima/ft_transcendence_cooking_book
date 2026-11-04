@@ -90,6 +90,31 @@ export class ReportItemDto {
   resolution_notes: string | null;
 
   /**
+   * User identifier of staff member who resolved the report.
+   * @example 2
+   */
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Staff member who resolved the report',
+    example: null,
+  })
+  resolved_by_id?: number | null;
+
+  /**
+   * Timestamp when report was resolved.
+   * @example '2026-11-04T12:00:00.000Z'
+   */
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    description: 'Timestamp when report was resolved',
+    example: null,
+  })
+  resolved_at?: Date | null;
+
+  /**
    * Creation timestamp.
    * @example '2026-11-02T12:00:00.000Z'
    */

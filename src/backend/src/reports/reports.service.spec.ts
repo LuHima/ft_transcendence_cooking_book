@@ -1,8 +1,9 @@
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsService } from './reports.service';
 import { PrismaService } from 'prisma/prisma.service';
-import { ReportReason, ReportStatus, ReportSubject } from '@prisma/client';
+import { RecipeService } from '../recipe/recipe.service';
+import { ReportReason, ReportStatus, ReportSubject, Role, UserStatus } from '@prisma/client';
 
 describe('ReportsService', () => {
   let service: ReportsService;
@@ -10,12 +11,14 @@ describe('ReportsService', () => {
   const mockPrisma = {
     recipe: {
       findUnique: jest.fn(),
+      updateMany: jest.fn(),
     },
     comment: {
       findUnique: jest.fn(),
     },
     user: {
       findFirst: jest.fn(),
+      update: jest.fn(),
     },
     report: {
       findFirst: jest.fn(),
@@ -25,6 +28,13 @@ describe('ReportsService', () => {
       count: jest.fn(),
       update: jest.fn(),
     },
+    jwtSession: {
+      deleteMany: jest.fn(),
+    },
+  };
+
+  const mockRecipeService = {
+    deactivateRecipe: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -34,6 +44,10 @@ describe('ReportsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: RecipeService,
+          useValue: mockRecipeService,
         },
       ],
     }).compile();
@@ -269,6 +283,146 @@ describe('ReportsService', () => {
           resolution_notes: 'Recipe removed and author issued warning',
         },
       });
+    });
+
+    it('resolves report with delete_content and suspends target recipe', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+      mockRecipeService.deactivateRecipe.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+      const updated = {
+        id: 1,
+        status: ReportStatus.action_taken,
+        resolution_notes: 'Recipe suspended',
+        resolved_by_id: 2,
+        resolved_at: new Date(),
+      };
+      mockPrisma.report.update.mockResolvedValueOnce(updated);
+
+      const caller = { id: 2, role: Role.moderator };
+      const result = await service.updateReport(
+        1,
+        {
+          status: ReportStatus.action_taken,
+          resolution: 'delete_content',
+          resolution_notes: 'Recipe suspended',
+        },
+        caller,
+      );
+
+      expect(mockRecipeService.deactivateRecipe).toHaveBeenCalledWith(10, caller);
+      expect(mockPrisma.report.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: expect.objectContaining({
+          status: ReportStatus.action_taken,
+          resolution_notes: 'Recipe suspended',
+          resolved_by_id: 2,
+        }),
+      });
+      expect(result).toEqual(updated);
+    });
+
+    it('throws ForbiddenException when moderator resolves report against admin recipe with delete_content', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+      mockRecipeService.deactivateRecipe.mockRejectedValueOnce(
+        new ForbiddenException('Moderators cannot moderate or delete administrator recipes'),
+      );
+
+      const caller = { id: 2, role: Role.moderator };
+      await expect(
+        service.updateReport(
+          1,
+          {
+            status: ReportStatus.action_taken,
+            resolution: 'delete_content',
+          },
+          caller,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException when moderator resolves report against admin author with ban', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 99,
+        user: { id: 99, role: Role.admin },
+      });
+
+      const caller = { id: 2, role: Role.moderator };
+      await expect(
+        service.updateReport(
+          1,
+          {
+            status: ReportStatus.action_taken,
+            action: 'ban',
+          },
+          caller,
+        ),
+      ).rejects.toThrow('Moderators cannot moderate or delete administrator content');
+    });
+
+    it('resolves report with ban: bans author and deactivates all active recipes', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 50,
+        user: { id: 50, role: Role.user },
+      });
+      mockPrisma.user.update.mockResolvedValueOnce({ id: 50, status: UserStatus.banned });
+      mockPrisma.recipe.updateMany.mockResolvedValueOnce({ count: 3 });
+      mockPrisma.jwtSession.deleteMany.mockResolvedValueOnce({ count: 1 });
+      const updated = {
+        id: 1,
+        status: ReportStatus.action_taken,
+        resolved_by_id: 1,
+      };
+      mockPrisma.report.update.mockResolvedValueOnce(updated);
+
+      const caller = { id: 1, role: Role.admin };
+      const result = await service.updateReport(
+        1,
+        {
+          status: ReportStatus.action_taken,
+          action: 'ban',
+          resolution_notes: 'Banned author',
+        },
+        caller,
+      );
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 50 },
+        data: { status: UserStatus.banned },
+      });
+      expect(mockPrisma.recipe.updateMany).toHaveBeenCalledWith({
+        where: { user_id: 50, is_active: true },
+        data: { is_active: false },
+      });
+      expect(mockPrisma.jwtSession.deleteMany).toHaveBeenCalledWith({
+        where: { id_user: 50 },
+      });
+      expect(result).toEqual(updated);
     });
   });
 });

@@ -89,6 +89,7 @@ describe('ReportsController', () => {
         status: ReportStatus.reviewed,
         resolution_notes: 'Reviewed and closed',
       };
+      const caller = { id: 2, role: 'moderator' as any };
       const expectedResult = {
         id: 1,
         reporter_id: 5,
@@ -103,9 +104,9 @@ describe('ReportsController', () => {
       };
       mockReportsService.updateReport.mockResolvedValueOnce(expectedResult);
 
-      const result = await controller.updateReport(1, dto);
+      const result = await controller.updateReport(1, dto, caller);
 
-      expect(mockReportsService.updateReport).toHaveBeenCalledWith(1, dto);
+      expect(mockReportsService.updateReport).toHaveBeenCalledWith(1, dto, caller);
       expect(result).toEqual(expectedResult);
     });
   });

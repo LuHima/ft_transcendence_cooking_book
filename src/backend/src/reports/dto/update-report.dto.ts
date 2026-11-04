@@ -32,4 +32,33 @@ export class UpdateReportDto {
   @IsString()
   @MaxLength(1000)
   resolution_notes?: string;
+
+  /**
+   * Specific resolution action applied when resolving report with action_taken.
+   * Supports 'delete_content', 'ban', 'warn', 'dismiss'.
+   * @example 'delete_content'
+   */
+  @ApiPropertyOptional({
+    description:
+      'Specific moderation action executed when resolving the report with action_taken (delete_content, ban, warn, dismiss)',
+    enum: ['delete_content', 'ban', 'warn', 'dismiss'],
+    example: 'delete_content',
+  })
+  @IsOptional()
+  @IsString()
+  resolution?: string;
+
+  /**
+   * Alternative alias for resolution action (ADR 0021 compatibility).
+   * @example 'delete_content'
+   */
+  @ApiPropertyOptional({
+    description:
+      'Alternative alias for resolution action (delete_content, ban, warn, dismiss)',
+    enum: ['delete_content', 'ban', 'warn', 'dismiss'],
+    example: 'delete_content',
+  })
+  @IsOptional()
+  @IsString()
+  action?: string;
 }

@@ -481,6 +481,8 @@ model Report {
   description      String?       @db.VarChar(1000)
   status           ReportStatus  @default(pending)
   resolution_notes String?       @db.VarChar(1000)
+  resolved_by_id   Int?
+  resolved_at      DateTime?
   created_at       DateTime      @default(now())
   updated_at       DateTime      @updatedAt
 

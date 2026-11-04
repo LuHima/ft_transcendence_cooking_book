@@ -14,6 +14,7 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
@@ -22,6 +23,7 @@ import {
 import { ReportsService } from './reports.service';
 import { Auth } from '../common/decorators/policies.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { ActiveUserData } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -32,6 +34,7 @@ import {
 } from './dto/report-response.dto';
 import {
   ApiBadRequestResponseDto,
+  ApiForbiddenResponseDto,
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
@@ -125,6 +128,11 @@ export class ReportsController {
     description: 'Invalid input or ID format',
     type: ApiBadRequestResponseDto,
   })
+  @ApiForbiddenResponse({
+    description:
+      'Forbidden: Moderator cannot resolve report against administrator content with takedown/ban',
+    type: ApiForbiddenResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Report not found',
     type: ApiNotFoundResponseDto,
@@ -135,7 +143,8 @@ export class ReportsController {
   async updateReport(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateReportDto,
+    @CurrentUser() caller?: ActiveUserData,
   ): Promise<ReportItemDto> {
-    return await this.reportsService.updateReport(id, dto);
+    return await this.reportsService.updateReport(id, dto, caller);
   }
 }

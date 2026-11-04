@@ -2,8 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
+import { RecipeService } from '../recipe/recipe.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
@@ -11,11 +13,17 @@ import {
   ReportItemDto,
   PaginatedReportsResponseDto,
 } from './dto/report-response.dto';
-import { Prisma, ReportStatus, ReportSubject } from '@prisma/client';
+import { Prisma, ReportStatus, ReportSubject, Role, UserStatus } from '@prisma/client';
+import { createHttpException, errors } from '../common/config/error.config';
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ReportsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly recipeService: RecipeService,
+  ) {}
 
   /**
    * Submit a content report against a recipe, comment, or user profile.
@@ -117,11 +125,13 @@ export class ReportsService {
   }
 
   /**
-   * Update report status and record moderation resolution notes.
+   * Update report status, apply recipe suspension or user ban sanctions,
+   * emit audit logs, and record moderation resolution details.
    */
   async updateReport(
     reportId: number,
     dto: UpdateReportDto,
+    caller?: number | { id: number; role?: Role | string },
   ): Promise<ReportItemDto> {
     const report = await this.prisma.report.findUnique({
       where: { id: reportId },
@@ -130,12 +140,84 @@ export class ReportsService {
       throw new NotFoundException('Report not found');
     }
 
+    const resolutionAction = dto.resolution || dto.action;
+
+    // Content Report Resolution Integration for Recipes (Ticket #106)
+    if (
+      report.subject === ReportSubject.recipe &&
+      dto.status === ReportStatus.action_taken
+    ) {
+      if (resolutionAction === 'delete_content') {
+        // Enforces role hierarchy (throws 403 Forbidden if moderator resolves against admin recipe)
+        await this.recipeService.deactivateRecipe(
+          report.target_id,
+          caller ?? { id: 0, role: Role.admin },
+        );
+
+        this.logger.log(
+          `Audit: Report #${reportId} resolved with delete_content. Recipe #${report.target_id} suspended.`,
+        );
+      } else if (resolutionAction === 'ban') {
+        const recipe = await this.prisma.recipe.findUnique({
+          where: { id: report.target_id },
+          include: {
+            user: { select: { id: true, role: true } },
+          },
+        });
+
+        if (recipe && recipe.user_id) {
+          const callerRole =
+            typeof caller === 'object' ? caller.role : undefined;
+          if (
+            callerRole === Role.moderator &&
+            recipe.user?.role === Role.admin
+          ) {
+            throw createHttpException(
+              errors.common.forbidden,
+              'Moderators cannot moderate or delete administrator content',
+            );
+          }
+
+          // Transition user status to banned
+          await this.prisma.user.update({
+            where: { id: recipe.user_id },
+            data: { status: UserStatus.banned },
+          });
+
+          // Automatically suspend all active recipes authored by the banned user
+          await this.prisma.recipe.updateMany({
+            where: { user_id: recipe.user_id, is_active: true },
+            data: { is_active: false },
+          });
+
+          // Evict active JWT sessions
+          if ((this.prisma as any).jwtSession) {
+            await (this.prisma as any).jwtSession.deleteMany({
+              where: { id_user: recipe.user_id },
+            });
+          }
+
+          this.logger.log(
+            `Audit: Report #${reportId} resolved with ban. User #${recipe.user_id} banned and authored recipes suspended.`,
+          );
+        }
+      }
+    }
+
+    const callerId = typeof caller === 'number' ? caller : caller?.id;
+
     return await this.prisma.report.update({
       where: { id: reportId },
       data: {
         status: dto.status,
         ...(dto.resolution_notes !== undefined
           ? { resolution_notes: dto.resolution_notes.trim() || null }
+          : {}),
+        ...(callerId
+          ? {
+              resolved_by_id: callerId,
+              resolved_at: new Date(),
+            }
           : {}),
       },
     });
