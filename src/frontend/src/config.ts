@@ -5,6 +5,10 @@ export const FEATURES = {
 	recipeVisibility: false,
 }
 
+// Client ID OAuth di Google (pubblico, non è un segreto). Va impostato anche lato backend come GOOGLE_CLIENT_ID.
+// Se manca, il pulsante "Continua con Google" non viene mostrato.
+export const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) || undefined
+
 // Limiti upload, allineati alla documentazione OpenAPI
 export const UPLOAD_LIMITS = {
 	imageMaxMb: 5,

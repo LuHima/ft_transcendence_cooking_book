@@ -1,5 +1,6 @@
 {
 	"common": {
+		"networkError": "Network error",
 		"loading": "Loading…",
 		"prev": "Previous",
 		"next": "Next",
@@ -16,6 +17,11 @@
 		"remove": "Remove",
 		"accessDenied": "Access denied",
 		"noPermission": "You don't have permission to view this page."
+	},
+	"errorBoundary": {
+		"title": "Something went wrong",
+		"text": "This page could not be displayed. Try again or go back to the home page.",
+		"home": "Back to home"
 	},
 	"nav": {
 		"home": "Home",
@@ -95,6 +101,7 @@
 		"privateHelp": "Visible only to you"
 	},
 	"recipe": {
+		"detailDialog": "Recipe detail",
 		"noPhoto": "No photo",
 		"minutes_one": "{{count}} minute",
 		"minutes_other": "{{count}} min",
@@ -158,7 +165,7 @@
 	"home": {
 		"loadError": "Recipes could not be loaded right now.",
 		"heroTitle": "Your kitchen, organized.",
-		"heroText": "Save your recipes, plan your week and find your favorite dishes in an instant.",
+		"heroText": "Save your recipes and find your favorite dishes in an instant.",
 		"recent": "Recent recipes",
 		"seeAll": "See all",
 		"empty": "No recipes published yet."
@@ -175,6 +182,16 @@
 		"empty": "You haven't liked any recipe yet. Explore recipes and save the ones you love."
 	},
 	"search": {
+		"sortBy": "Sort by",
+		"sort": {
+			"newest": "Newest",
+			"oldest": "Oldest",
+			"quickest": "Quickest",
+			"longest": "Longest",
+			"mostLiked": "Most liked",
+			"easiest": "Easiest",
+			"hardest": "Hardest"
+		},
 		"error": "Search failed.",
 		"resultsFor": "Results for \"{{query}}\"",
 		"allRecipes": "All recipes",
@@ -289,7 +306,7 @@
 			},
 			{
 				"title": "How we use your data",
-				"body": "The recipes, favorites and meal plans you create are visible only to you, except for the recipes you choose to make public or visible to friends."
+				"body": "The recipes and favorites you create are visible only to you, except for the recipes you choose to make public or visible to friends."
 			},
 			{
 				"title": "Your rights",
@@ -458,6 +475,8 @@
 		}
 	},
 	"friends": {
+		"online": "Online",
+		"offline": "Offline",
 		"actionError": "Action failed.",
 		"add": "Add friend",
 		"friends": "Friends",
@@ -513,6 +532,9 @@
 		"friend_accept": "accepted your friend request"
 	},
 	"auth": {
+		"or": "or",
+		"googleError": "Google sign-in failed, please try again.",
+		"acceptTermsFirst": "Accept the terms and privacy policy to continue with Google.",
 		"loginError": "Sign-in failed, please try again.",
 		"welcomeBack": "Welcome back",
 		"loginIntro": "Sign in to your WeCook account.",

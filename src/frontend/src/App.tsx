@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation, useNavigate, type Location } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
@@ -25,6 +26,7 @@ import Moderation from './pages/Moderation'
 import NotFound from './pages/NotFound'
 
 function RecipeDetailOverlay() {
+	const { t } = useTranslation()
 	const navigate = useNavigate()
 
 	return (
@@ -32,7 +34,7 @@ function RecipeDetailOverlay() {
 			className="fixed inset-0 z-[100] overflow-y-auto bg-[var(--wc-bg)]"
 			role="dialog"
 			aria-modal="true"
-			aria-label="Recipe detail"
+			aria-label={t('recipe.detailDialog')}
 		>
 			<div className="sticky top-0 z-10 border-b border-[var(--wc-border)] bg-[var(--wc-bg)]/95 px-4 py-3 backdrop-blur">
 				<button

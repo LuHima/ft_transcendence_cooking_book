@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import { useLang } from '../lib/useLang'
-import { io } from 'socket.io-client'
+import { acquireSocket, releaseSocket } from '../lib/socket'
 import type { AppNotification } from '../types/models'
 
 const POLL_INTERVAL_MS = 60_000
@@ -62,7 +62,7 @@ function NotificationBell() {
 	}, [load])
 
 	useEffect(() => {
-		const socket = io(window.location.origin, { withCredentials: true })
+		const socket = acquireSocket()
 		const onNewNotification = () => load()
 		const onConnectError = (error: Error) => {
 			console.error('Connection Socket.IO failed:', error)
@@ -74,7 +74,7 @@ function NotificationBell() {
 		return () => {
 			socket.off('newNotification', onNewNotification)
 			socket.off('connect_error', onConnectError)
-			socket.disconnect()
+			releaseSocket()
 		}
 	}, [load])
 

@@ -6,10 +6,12 @@ import { getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import ShowPasswordToggle from '../components/ShowPasswordToggle'
+import GoogleSignInButton from '../components/GoogleSignInButton'
+import { GOOGLE_CLIENT_ID } from '../config'
 
 function Register() {
 	const { t } = useTranslation()
-	const { signUp, signIn } = useAuth()
+	const { signUp, signIn, signInWithGoogle } = useAuth()
 	const navigate = useNavigate()
 
 	const [username, setUsername] = useState('')
@@ -41,6 +43,26 @@ function Register() {
 			setError(getErrorMessage(err, t('auth.registerError')))
 		} finally {
 			setSubmitting(false)
+		}
+	}
+
+	// registrazione/accesso con Google: serve comunque aver accettato termini e privacy
+	async function handleGoogle(idToken: string) {
+		setError(null)
+		if (!accepted) {
+			setError(t('auth.acceptTermsFirst'))
+			return
+		}
+		try {
+			const result = await signInWithGoogle(idToken)
+			if (result.twoFactor) {
+				// la 2FA si completa nella pagina di login
+				navigate('/login', { state: { tempToken: result.tempToken } })
+				return
+			}
+			navigate('/', { replace: true })
+		} catch (err) {
+			setError(getErrorMessage(err, t('auth.googleError')))
 		}
 	}
 
@@ -122,6 +144,17 @@ function Register() {
 					{submitting ? t('auth.creating') : t('nav.signUp')}
 				</button>
 			</form>
+
+			{GOOGLE_CLIENT_ID && (
+				<div className="mt-6 space-y-4">
+					<div className="flex items-center gap-3 text-xs uppercase text-[var(--wc-text-muted)]">
+						<span className="h-px flex-1 bg-[var(--wc-border)]" />
+						{t('auth.or')}
+						<span className="h-px flex-1 bg-[var(--wc-border)]" />
+					</div>
+					<GoogleSignInButton onCredential={handleGoogle} />
+				</div>
+			)}
 
 			<p className="mt-6 text-sm text-[var(--wc-text-muted)]">
 				{t('auth.haveAccount')}{' '}

@@ -1,5 +1,6 @@
 {
 	"common": {
+		"networkError": "Errore di rete",
 		"loading": "Caricamento…",
 		"prev": "Precedente",
 		"next": "Successiva",
@@ -16,6 +17,11 @@
 		"remove": "Rimuovi",
 		"accessDenied": "Accesso negato",
 		"noPermission": "Non hai i permessi per vedere questa pagina."
+	},
+	"errorBoundary": {
+		"title": "Qualcosa è andato storto",
+		"text": "Non è stato possibile mostrare questa pagina. Riprova o torna alla home.",
+		"home": "Torna alla home"
 	},
 	"nav": {
 		"home": "Home",
@@ -95,6 +101,7 @@
 		"privateHelp": "Visibile solo a te"
 	},
 	"recipe": {
+		"detailDialog": "Dettaglio ricetta",
 		"noPhoto": "Nessuna foto",
 		"minutes_one": "{{count}} minuto",
 		"minutes_other": "{{count}} min",
@@ -158,7 +165,7 @@
 	"home": {
 		"loadError": "Non è stato possibile caricare le ricette al momento.",
 		"heroTitle": "La tua cucina, organizzata.",
-		"heroText": "Salva le tue ricette, pianifica la settimana e ritrova subito i tuoi piatti preferiti.",
+		"heroText": "Salva le tue ricette e ritrova subito i tuoi piatti preferiti.",
 		"recent": "Ricette recenti",
 		"seeAll": "Vedi tutte",
 		"empty": "Nessuna ricetta pubblicata ancora."
@@ -175,6 +182,16 @@
 		"empty": "Non hai ancora messo like a nessuna ricetta. Esplora le ricette e salva quelle che ti piacciono."
 	},
 	"search": {
+		"sortBy": "Ordina per",
+		"sort": {
+			"newest": "Più recenti",
+			"oldest": "Meno recenti",
+			"quickest": "Più veloci",
+			"longest": "Più lunghe",
+			"mostLiked": "Più apprezzate",
+			"easiest": "Più facili",
+			"hardest": "Più difficili"
+		},
 		"error": "Ricerca non riuscita.",
 		"resultsFor": "Risultati per \"{{query}}\"",
 		"allRecipes": "Tutte le ricette",
@@ -289,7 +306,7 @@
 			},
 			{
 				"title": "Uso dei dati",
-				"body": "Le ricette, i preferiti e i meal plan che crei sono visibili solo a te, salvo le ricette che scegli di rendere pubbliche o visibili agli amici."
+				"body": "Le ricette e i preferiti che crei sono visibili solo a te, salvo le ricette che scegli di rendere pubbliche o visibili agli amici."
 			},
 			{
 				"title": "I tuoi diritti",
@@ -458,6 +475,8 @@
 		}
 	},
 	"friends": {
+		"online": "Online",
+		"offline": "Offline",
 		"actionError": "Operazione non riuscita.",
 		"add": "Aggiungi agli amici",
 		"friends": "Amici",
@@ -513,6 +532,9 @@
 		"friend_accept": "ha accettato la tua richiesta di amicizia"
 	},
 	"auth": {
+		"or": "oppure",
+		"googleError": "Accesso con Google non riuscito, riprova.",
+		"acceptTermsFirst": "Accetta i termini e l'informativa per continuare con Google.",
 		"loginError": "Accesso non riuscito, riprova.",
 		"welcomeBack": "Bentornato",
 		"loginIntro": "Accedi al tuo account WeCook.",

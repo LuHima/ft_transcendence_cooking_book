@@ -6,18 +6,22 @@ import { getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import ShowPasswordToggle from '../components/ShowPasswordToggle'
+import GoogleSignInButton from '../components/GoogleSignInButton'
+import { GOOGLE_CLIENT_ID } from '../config'
 
 function Login() {
 	const { t } = useTranslation()
-	const { signIn, completeTwoFactor } = useAuth()
+	const { signIn, signInWithGoogle, completeTwoFactor } = useAuth()
 	const navigate = useNavigate()
 	const location = useLocation()
-	const from = (location.state as { from?: Location })?.from?.pathname ?? '/'
+	const locationState = location.state as { from?: Location; tempToken?: string } | null
+	const from = locationState?.from?.pathname ?? '/'
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	// se la 2FA è attiva il backend restituisce un token temporaneo da completare con il codice a 6 cifre
-	const [tempToken, setTempToken] = useState<string | null>(null)
+	// (può arrivare già dalla pagina di registrazione, se l'accesso con Google richiede la 2FA)
+	const [tempToken, setTempToken] = useState<string | null>(locationState?.tempToken ?? null)
 	const [showPassword, setShowPassword] = useState(false)
 	const [code, setCode] = useState('')
 	const [error, setError] = useState<string | null>(null)
@@ -51,6 +55,20 @@ function Login() {
 			}
 		} finally {
 			setSubmitting(false)
+		}
+	}
+
+	async function handleGoogle(idToken: string) {
+		setError(null)
+		try {
+			const result = await signInWithGoogle(idToken)
+			if (result.twoFactor) {
+				setTempToken(result.tempToken)
+				return
+			}
+			navigate(from, { replace: true })
+		} catch (err) {
+			setError(getErrorMessage(err, t('auth.googleError')))
 		}
 	}
 
@@ -126,6 +144,17 @@ function Login() {
 					</button>
 				)}
 			</form>
+
+			{GOOGLE_CLIENT_ID && !tempToken && (
+				<div className="mt-6 space-y-4">
+					<div className="flex items-center gap-3 text-xs uppercase text-[var(--wc-text-muted)]">
+						<span className="h-px flex-1 bg-[var(--wc-border)]" />
+						{t('auth.or')}
+						<span className="h-px flex-1 bg-[var(--wc-border)]" />
+					</div>
+					<GoogleSignInButton onCredential={handleGoogle} />
+				</div>
+			)}
 
 			<p className="mt-6 text-sm text-[var(--wc-text-muted)]">
 				{t('auth.noAccount')}{' '}

@@ -1,5 +1,6 @@
 {
 	"common": {
+		"networkError": "Erreur réseau",
 		"loading": "Chargement…",
 		"prev": "Précédent",
 		"next": "Suivant",
@@ -16,6 +17,11 @@
 		"remove": "Retirer",
 		"accessDenied": "Accès refusé",
 		"noPermission": "Vous n'avez pas l'autorisation de voir cette page."
+	},
+	"errorBoundary": {
+		"title": "Une erreur est survenue",
+		"text": "Impossible d'afficher cette page. Réessayez ou retournez à l'accueil.",
+		"home": "Retour à l'accueil"
 	},
 	"nav": {
 		"home": "Accueil",
@@ -95,6 +101,7 @@
 		"privateHelp": "Visible uniquement par vous"
 	},
 	"recipe": {
+		"detailDialog": "Détail de la recette",
 		"noPhoto": "Pas de photo",
 		"minutes_one": "{{count}} minute",
 		"minutes_other": "{{count}} min",
@@ -158,7 +165,7 @@
 	"home": {
 		"loadError": "Impossible de charger les recettes pour le moment.",
 		"heroTitle": "Votre cuisine, organisée.",
-		"heroText": "Enregistrez vos recettes, planifiez la semaine et retrouvez vite vos plats préférés.",
+		"heroText": "Enregistrez vos recettes et retrouvez vite vos plats préférés.",
 		"recent": "Recettes récentes",
 		"seeAll": "Tout voir",
 		"empty": "Aucune recette publiée pour le moment."
@@ -175,6 +182,16 @@
 		"empty": "Vous n'avez encore aimé aucune recette. Explorez les recettes et gardez celles que vous aimez."
 	},
 	"search": {
+		"sortBy": "Trier par",
+		"sort": {
+			"newest": "Plus récentes",
+			"oldest": "Plus anciennes",
+			"quickest": "Plus rapides",
+			"longest": "Plus longues",
+			"mostLiked": "Plus aimées",
+			"easiest": "Plus faciles",
+			"hardest": "Plus difficiles"
+		},
 		"error": "La recherche a échoué.",
 		"resultsFor": "Résultats pour « {{query}} »",
 		"allRecipes": "Toutes les recettes",
@@ -289,7 +306,7 @@
 			},
 			{
 				"title": "Utilisation des données",
-				"body": "Les recettes, favoris et menus que vous créez ne sont visibles que par vous, sauf les recettes que vous choisissez de rendre publiques ou visibles par vos amis."
+				"body": "Les recettes et favoris que vous créez ne sont visibles que par vous, sauf les recettes que vous choisissez de rendre publiques ou visibles par vos amis."
 			},
 			{
 				"title": "Vos droits",
@@ -458,6 +475,8 @@
 		}
 	},
 	"friends": {
+		"online": "En ligne",
+		"offline": "Hors ligne",
 		"actionError": "Échec de l'action.",
 		"add": "Ajouter en ami",
 		"friends": "Amis",
@@ -513,6 +532,9 @@
 		"friend_accept": "a accepté votre demande d'ami"
 	},
 	"auth": {
+		"or": "ou",
+		"googleError": "La connexion avec Google a échoué, réessayez.",
+		"acceptTermsFirst": "Acceptez les conditions et la politique de confidentialité pour continuer avec Google.",
 		"loginError": "Échec de la connexion, réessayez.",
 		"welcomeBack": "Bon retour",
 		"loginIntro": "Connectez-vous à votre compte WeCook.",
