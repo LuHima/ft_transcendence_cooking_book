@@ -167,8 +167,20 @@ The authorization mechanism that gates binary media assets (cover images, step i
 _Avoid_: Static file serving, image gate, asset security
 
 **Account Ban**:
-An administrative sanction applied to a community member's account, either temporary (capped at 90 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
+An administrative sanction applied to a community member's account, either temporary (capped at 180 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
 _Avoid_: Account freeze, lockout, strike, kick
+
+**Ban History**:
+The immutable historical ledger recording all account suspensions, duration intervals, policy violation categories, user-facing explanations, and issuing staff identifiers for a community member, informing progressive discipline for repeat offenders.
+_Avoid_: Ban log, strike history, black mark list
+
+**Composite Resolution Action**:
+A moderation triage decision that applies multiple disciplinary operations (such as simultaneously deactivating offending content and suspending the author's account) atomically in a single request.
+_Avoid_: Multi-action, bulk resolution, double sanction
+
+**Resolution Description**:
+The user-facing textual explanation communicated to a penalized community member detailing the specific policy infraction (e.g. offensive imagery in recipe gallery) and providing the basis for account suspension or content deactivation.
+_Avoid_: Ban reason, penalty note, warning text
 
 **Comment Audit Queue**:
 A centralized, flat chronological administrative stream allowing platform staff (administrators and moderators) to inspect, filter, and moderate comments and replies across all platform recipes.
