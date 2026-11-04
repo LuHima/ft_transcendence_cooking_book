@@ -197,7 +197,7 @@ model Recipe {
   cook_time          Int                @default(0)
   total_time         Int                @default(0)
   servings           Int                @default(1)
-  source_lang        String             @default("it") @db.VarChar(5)
+  source_lang        String             @default("en") @db.VarChar(5)
   translation_status TranslationStatus  @default(completed)
   cover_image_url    String?            @db.VarChar(500)
   video_url          String?            @db.VarChar(500)
