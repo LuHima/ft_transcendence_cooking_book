@@ -64,6 +64,8 @@ interface ExistingGalleryItem {
 
 type FieldErrors = Record<string, string>
 
+const DESCRIPTION_MAX_LENGTH = 1000
+
 function Field({ label, htmlFor, error, children }: { label: string; htmlFor?: string; error?: string; children: ReactNode }) {
 	return (
 		<div>
@@ -393,6 +395,8 @@ function RecipeForm() {
 
 		if (title.trim().length < 3 || title.trim().length > 255) e.title = t('form.errors.title')
 		if (description.trim().length < 10) e.description = t('form.errors.description')
+		else if (description.trim().length > DESCRIPTION_MAX_LENGTH)
+			e.description = t('form.errors.descriptionMax', { max: DESCRIPTION_MAX_LENGTH })
 		if (!(num(servings) >= 1)) e.servings = t('form.errors.servings')
 		if (!(num(prepTime) >= 0)) e.prepTime = t('form.errors.time')
 		if (!(num(cookTime) >= 0)) e.cookTime = t('form.errors.time')
@@ -650,10 +654,14 @@ function RecipeForm() {
 							id="rf-desc"
 							rows={3}
 							value={description}
+							maxLength={DESCRIPTION_MAX_LENGTH}
 							aria-invalid={Boolean(errors.description)}
 							onChange={(e) => setDescription(e.target.value)}
 							className={FIELD}
 						/>
+						<p className="mt-1 text-right text-xs text-[var(--wc-text-muted)]">
+							{description.length}/{DESCRIPTION_MAX_LENGTH}
+						</p>
 					</Field>
 				</section>
 
