@@ -15,7 +15,10 @@ export class FriendRequestItemDto {
    * Username of the counterparty.
    * @example 'chef_marco'
    */
-  @ApiProperty({ description: 'Username of counterparty', example: 'chef_marco' })
+  @ApiProperty({
+    description: 'Username of counterparty',
+    example: 'chef_marco',
+  })
   username: string;
 
   /**
@@ -62,10 +65,16 @@ export class PaginatedFriendRequestsResponseDto {
   @ApiProperty({ description: 'Total number of available pages', example: 1 })
   total_pages: number;
 
-  @ApiProperty({ description: 'Flag indicating if next page exists', example: false })
+  @ApiProperty({
+    description: 'Flag indicating if next page exists',
+    example: false,
+  })
   has_next_page: boolean;
 
-  @ApiProperty({ description: 'Flag indicating if previous page exists', example: false })
+  @ApiProperty({
+    description: 'Flag indicating if previous page exists',
+    example: false,
+  })
   has_prev_page: boolean;
 }
 

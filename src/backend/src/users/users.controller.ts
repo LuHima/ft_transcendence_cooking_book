@@ -306,7 +306,8 @@ export class UsersController {
     type: ApiNotFoundResponseDto,
   })
   @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
+    description:
+      'Authentication required: missing or invalid accessToken cookie',
     type: ApiUnauthorizedResponseDto,
   })
   @Auth()

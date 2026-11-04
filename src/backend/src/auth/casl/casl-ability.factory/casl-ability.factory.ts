@@ -62,6 +62,7 @@ export class CaslAbilityFactory {
       can([Action.Update, Action.Delete], 'Recipe', { user_id: user.id });
       can(Action.Create, 'Comment');
       can([Action.Update, Action.Delete], 'Comment', { user_id: user.id });
+      can(Action.Delete, 'Comment', { 'recipe.user_id': user.id });
 
       can(Action.Report, 'Recipe');
       can(Action.Report, 'Comment');
@@ -90,12 +91,6 @@ export class CaslAbilityFactory {
 
       // can(Action.Report, 'Comment'); se è cosi faccio solo un controllo sull'abilita di fare quella azione non gli passo nessun oggetto nel ability.can()
 
-      cannot(Action.Update, 'Recipe', { 'user.role': Role.admin });
-      cannot(Action.Update, 'Recipe', { 'user.role': Role.moderator });
-
-      cannot(Action.Update, 'Recipe', { 'user.role': Role.admin });
-      cannot(Action.Update, 'Recipe', { 'user.role': Role.moderator });
-
       cannot(Action.Ban, 'Comment', { 'user.role': Role.admin });
       cannot(Action.Ban, 'Comment', { 'user.role': Role.moderator });
       cannot(Action.Ban, 'Comment', { user_id: user.id });
@@ -109,6 +104,7 @@ export class CaslAbilityFactory {
       can(Action.Create, 'Comment');
       can(Action.Update, 'Comment', { user_id: user.id });
       can(Action.Delete, 'Comment', { user_id: user.id });
+      can(Action.Delete, 'Comment', { 'recipe.user_id': user.id });
 
       can(Action.Report, 'Recipe');
       can(Action.Report, 'Comment');
@@ -126,7 +122,7 @@ export class CaslAbilityFactory {
   check(
     user: ActiveUserData,
     action: Action,
-    subjectName: string,
+    subjectName: AppSubject,
     target?: any,
   ): void {
     const ability = this.createForUser(user);
