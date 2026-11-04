@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const signInWithGoogle = useCallback(
 		async (idToken: string): Promise<SignInResult> => {
 			const res = await api.post<{ tempToken?: string; twofAuth?: boolean } | null>(
-				'/auth/google',
+				'/auth/signin/google',
 				{ idToken },
 				{ retryOnUnauthorized: false },
 			)

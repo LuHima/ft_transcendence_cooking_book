@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { GOOGLE_CLIENT_ID } from '../config'
 
 // Google Identity Services: lo script di Google mostra il pulsante e, dopo il consenso,
-// restituisce un ID token (JWT firmato da Google) che passiamo al backend (POST /api/auth/google).
+// restituisce un ID token (JWT firmato da Google) che passiamo al backend /auth/signin/google.
 interface GoogleIdApi {
 	initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void
 	renderButton: (parent: HTMLElement, options: Record<string, string | number>) => void
