@@ -7,7 +7,7 @@ let socket: Socket | null = null
 let users = 0
 
 export function acquireSocket(): Socket {
-	if (!socket) socket = io(window.location.origin, { withCredentials: true })
+	if (!socket) socket = io(window.location.origin, { withCredentials: true, transports: ['websocket'] })
 	users += 1
 	return socket
 }
