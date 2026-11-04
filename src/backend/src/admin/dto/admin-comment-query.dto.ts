@@ -9,12 +9,12 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { SortOrder } from '../../common/dto/sort-order.enum';
 
-export enum AdminCommentSort {
-  newest = 'newest',
-  oldest = 'oldest',
+export enum AdminCommentSortBy {
+  created_at = 'created_at',
   recipe = 'recipe',
-  reports_desc = 'reports_desc',
+  reports_count = 'reports_count',
 }
 
 export enum AdminCommentFormat {
@@ -135,18 +135,33 @@ export class AdminCommentQueryDto {
   is_edited?: boolean;
 
   /**
-   * Sorting mode for the comment audit stream.
-   * @example 'newest'
+   * Field to sort comments by.
+   * @example AdminCommentSortBy.created_at
    */
   @ApiPropertyOptional({
-    enum: AdminCommentSort,
+    enum: AdminCommentSortBy,
     description:
-      'Sorting criteria: newest (default), oldest, recipe (grouped by recipe), reports_desc (highest reports first)',
-    default: AdminCommentSort.newest,
+      'Field to sort comments by: created_at (default), recipe, reports_count',
+    default: AdminCommentSortBy.created_at,
+    example: AdminCommentSortBy.created_at,
   })
   @IsOptional()
-  @IsEnum(AdminCommentSort)
-  sort?: AdminCommentSort = AdminCommentSort.newest;
+  @IsEnum(AdminCommentSortBy)
+  sort_by?: AdminCommentSortBy = AdminCommentSortBy.created_at;
+
+  /**
+   * Sort direction. Defaults contextually to desc for created_at and reports_count, asc for recipe.
+   * @example SortOrder.desc
+   */
+  @ApiPropertyOptional({
+    enum: SortOrder,
+    description:
+      'Sort direction. Defaults to desc for created_at and reports_count, asc for recipe.',
+    example: SortOrder.desc,
+  })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sort_order?: SortOrder;
 
   /**
    * Presentation structural format.

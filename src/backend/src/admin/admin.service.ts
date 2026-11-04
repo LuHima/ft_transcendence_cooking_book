@@ -20,7 +20,7 @@ import {
 } from './dto/admin-user-response.dto';
 import {
   AdminCommentQueryDto,
-  AdminCommentSort,
+  AdminCommentSortBy,
   AdminCommentFormat,
   AdminCommentStatus,
 } from './dto/admin-comment-query.dto';
@@ -845,27 +845,40 @@ export class AdminService {
         return { root, latestActivity };
       });
 
-      if (query?.sort === AdminCommentSort.reports_desc) {
+      const sortBy = query?.sort_by ?? AdminCommentSortBy.created_at;
+      const sortOrder =
+        query?.sort_order ??
+        (sortBy === AdminCommentSortBy.recipe ? SortOrder.asc : SortOrder.desc);
+
+      if (sortBy === AdminCommentSortBy.reports_count) {
         const rootIds = candidateRoots.map((c) => c.id);
         const rootReportCounts = await fetchReportCounts(rootIds);
         withActivity.sort((a, b) => {
           const countA = rootReportCounts.get(a.root.id) || 0;
           const countB = rootReportCounts.get(b.root.id) || 0;
-          if (countB !== countA) return countB - countA;
+          if (countB !== countA) {
+            return sortOrder === SortOrder.asc
+              ? countA - countB
+              : countB - countA;
+          }
           return b.latestActivity - a.latestActivity;
         });
-      } else if (query?.sort === AdminCommentSort.oldest) {
-        withActivity.sort((a, b) => a.latestActivity - b.latestActivity);
-      } else if (query?.sort === AdminCommentSort.recipe) {
+      } else if (sortBy === AdminCommentSortBy.recipe) {
         withActivity.sort((a, b) => {
           if (a.root.recipe_id !== b.root.recipe_id) {
-            return a.root.recipe_id - b.root.recipe_id;
+            return sortOrder === SortOrder.desc
+              ? b.root.recipe_id - a.root.recipe_id
+              : a.root.recipe_id - b.root.recipe_id;
           }
           return b.latestActivity - a.latestActivity;
         });
       } else {
-        // default: newest by latest activity descending
-        withActivity.sort((a, b) => b.latestActivity - a.latestActivity);
+        // created_at (or default)
+        withActivity.sort((a, b) => {
+          return sortOrder === SortOrder.asc
+            ? a.latestActivity - b.latestActivity
+            : b.latestActivity - a.latestActivity;
+        });
       }
 
       const total = withActivity.length;
@@ -913,8 +926,13 @@ export class AdminService {
       };
     }
 
+    const sortBy = query?.sort_by ?? AdminCommentSortBy.created_at;
+    const sortOrder =
+      query?.sort_order ??
+      (sortBy === AdminCommentSortBy.recipe ? SortOrder.asc : SortOrder.desc);
+
     // Presentation format: Flat (Default)
-    if (query?.sort === AdminCommentSort.reports_desc) {
+    if (sortBy === AdminCommentSortBy.reports_count) {
       const allComments = (await this.prisma.comment.findMany({
         where,
         include: {
@@ -936,7 +954,11 @@ export class AdminService {
       allComments.sort((a, b) => {
         const countA = reportCounts.get(a.id) || 0;
         const countB = reportCounts.get(b.id) || 0;
-        if (countB !== countA) return countB - countA;
+        if (countB !== countA) {
+          return sortOrder === SortOrder.asc
+            ? countA - countB
+            : countB - countA;
+        }
         return (
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
@@ -962,12 +984,10 @@ export class AdminService {
     let orderBy:
       | Prisma.CommentOrderByWithRelationInput
       | Prisma.CommentOrderByWithRelationInput[];
-    if (query?.sort === AdminCommentSort.oldest) {
-      orderBy = { created_at: 'asc' };
-    } else if (query?.sort === AdminCommentSort.recipe) {
-      orderBy = [{ recipe_id: 'asc' }, { created_at: 'desc' }];
+    if (sortBy === AdminCommentSortBy.recipe) {
+      orderBy = [{ recipe_id: sortOrder }, { created_at: 'desc' }];
     } else {
-      orderBy = { created_at: 'desc' };
+      orderBy = { created_at: sortOrder };
     }
 
     const [rawComments, total] = (await Promise.all([

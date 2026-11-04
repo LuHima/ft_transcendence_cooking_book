@@ -6,10 +6,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { BanHistoryService } from '../reports/ban-history.service';
 import {
-  AdminCommentSort,
+  AdminCommentSortBy,
   AdminCommentFormat,
   AdminCommentStatus,
 } from './dto/admin-comment-query.dto';
+import { SortOrder } from '../common/dto/sort-order.enum';
 
 describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
   let controller: AdminCommentsController;
@@ -80,7 +81,12 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
         .spyOn(service, 'findAllAdminComments')
         .mockResolvedValueOnce(mockResult);
 
-      const query = { page: 1, limit: 20, sort: AdminCommentSort.newest };
+      const query = {
+        page: 1,
+        limit: 20,
+        sort_by: AdminCommentSortBy.created_at,
+        sort_order: SortOrder.desc,
+      };
       const result = await controller.findAllAdminComments(query);
 
       expect(service.findAllAdminComments).toHaveBeenCalledWith(query);
@@ -151,11 +157,11 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       );
     });
 
-    it('sorts by recipe: groups comments by recipe ID asc, then created_at desc', async () => {
+    it('sorts by recipe: groups comments by recipe ID asc, then created_at desc by default', async () => {
       mockPrisma.comment.findMany.mockResolvedValueOnce([]);
       mockPrisma.comment.count.mockResolvedValueOnce(0);
 
-      await service.findAllAdminComments({ sort: AdminCommentSort.recipe });
+      await service.findAllAdminComments({ sort_by: AdminCommentSortBy.recipe });
 
       expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -164,11 +170,45 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       );
     });
 
-    it('sorts by oldest: orders comments by created_at asc', async () => {
+    it('sorts by recipe with explicit sort_order desc', async () => {
       mockPrisma.comment.findMany.mockResolvedValueOnce([]);
       mockPrisma.comment.count.mockResolvedValueOnce(0);
 
-      await service.findAllAdminComments({ sort: AdminCommentSort.oldest });
+      await service.findAllAdminComments({
+        sort_by: AdminCommentSortBy.recipe,
+        sort_order: SortOrder.desc,
+      });
+
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ recipe_id: 'desc' }, { created_at: 'desc' }],
+        }),
+      );
+    });
+
+    it('sorts by created_at: orders comments by created_at desc by default', async () => {
+      mockPrisma.comment.findMany.mockResolvedValueOnce([]);
+      mockPrisma.comment.count.mockResolvedValueOnce(0);
+
+      await service.findAllAdminComments({
+        sort_by: AdminCommentSortBy.created_at,
+      });
+
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { created_at: 'desc' },
+        }),
+      );
+    });
+
+    it('sorts by created_at with explicit sort_order asc', async () => {
+      mockPrisma.comment.findMany.mockResolvedValueOnce([]);
+      mockPrisma.comment.count.mockResolvedValueOnce(0);
+
+      await service.findAllAdminComments({
+        sort_by: AdminCommentSortBy.created_at,
+        sort_order: SortOrder.asc,
+      });
 
       expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -177,7 +217,7 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       );
     });
 
-    it('sorts by reports_desc: orders comments by highest report frequency descending', async () => {
+    it('sorts by reports_count: orders comments by highest report frequency descending by default', async () => {
       const commentA = {
         id: 1,
         recipe_id: 10,
@@ -235,7 +275,7 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       ]);
 
       const result = await service.findAllAdminComments({
-        sort: AdminCommentSort.reports_desc,
+        sort_by: AdminCommentSortBy.reports_count,
       });
 
       expect(result.items).toHaveLength(3);
@@ -248,6 +288,80 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       // Comment C (0 reports) should be third
       expect(result.items[2].id).toBe(3);
       expect(result.items[2].reports_count).toBe(0);
+    });
+
+    it('sorts by reports_count with explicit sort_order asc: orders comments by lowest report frequency ascending', async () => {
+      const commentA = {
+        id: 1,
+        recipe_id: 10,
+        user_id: 100,
+        content: 'Reported once',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-03-01'),
+        user: { id: 100, username: 'user1', avatar_url: null },
+        recipe: {
+          id: 10,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pizza' }],
+        },
+      };
+      const commentB = {
+        id: 2,
+        recipe_id: 10,
+        user_id: 101,
+        content: 'Reported 5 times',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-03-02'),
+        user: { id: 101, username: 'user2', avatar_url: null },
+        recipe: {
+          id: 10,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pizza' }],
+        },
+      };
+      const commentC = {
+        id: 3,
+        recipe_id: 11,
+        user_id: 102,
+        content: 'No reports',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-03-03'),
+        user: { id: 102, username: 'user3', avatar_url: null },
+        recipe: {
+          id: 11,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pasta' }],
+        },
+      };
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        commentA,
+        commentB,
+        commentC,
+      ]);
+      mockPrisma.report.groupBy.mockResolvedValueOnce([
+        { target_id: 2, _count: { id: 5 } },
+        { target_id: 1, _count: { id: 1 } },
+      ]);
+
+      const result = await service.findAllAdminComments({
+        sort_by: AdminCommentSortBy.reports_count,
+        sort_order: SortOrder.asc,
+      });
+
+      expect(result.items).toHaveLength(3);
+      // Comment C (0 reports) should be first
+      expect(result.items[0].id).toBe(3);
+      expect(result.items[0].reports_count).toBe(0);
+      // Comment A (1 report) should be second
+      expect(result.items[1].id).toBe(1);
+      expect(result.items[1].reports_count).toBe(1);
+      // Comment B (5 reports) should be third
+      expect(result.items[2].id).toBe(2);
+      expect(result.items[2].reports_count).toBe(5);
     });
 
     it('hydrates recipe title using requested locale with fallback to source_lang', async () => {
