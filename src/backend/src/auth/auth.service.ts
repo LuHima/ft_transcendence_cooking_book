@@ -17,6 +17,7 @@ import { Prisma, User } from '@prisma/client';
 import { isNumber } from 'class-validator';
 import { TwoFactorCode } from './auth.controller';
 import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
+import { OAuth2Client } from 'google-auth-library';
 
 interface PayLoadInterface {
   id: number;
@@ -33,7 +34,13 @@ export class AuthService {
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
   ) {}
-
+  private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  // creo il verificatore per google
+  // da notare che non uso GOOGLE_CLIENT_SECRET visto che il token che mi passa l'utente è gia un jwt
+  // firmato da google, quindi non devo scambiarlo/generarlo io e quindi verifico solo che la firma sia autentica
+  // tramite i certificati pubblici di google e il nostro GOOGLE_CLIENT_ID
+  // potrei toglierla ma la lascio perche è una cosa carina carina visto che serviva poi per contattare google per 
+  // pigliare le informazioni dell'utente, perche un'altro metodo per farla è usare un buono momentaneo passato dall'utente
   private async jwtSessionSignin(user: User) {
     let expiredDate: Date;
     let hashedToken: string;
@@ -94,6 +101,41 @@ export class AuthService {
       refreshToken: refreshToken,
     };
   }
+
+  private async generateUniqueUsername(payload: {
+    given_name?: string;
+    family_name?: string;
+    email: string;
+  }): Promise<string> {
+    // creo un username automatico cosi ce l'ha per ferforza
+
+    // Prendo nome e cognome (o l'email come alternativa se non ci sono)
+    const rawName =
+      payload.given_name && payload.family_name
+        ? `${payload.given_name}_${payload.family_name}`
+        : payload.given_name || payload.email.split('@')[0];
+
+    const cleanName = rawName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // rimuovo gli accenti coopera con normalize('NFD') per rimuovere completamente l'accento
+      .replace(/[^a-zA-Z0-9_-]/g, '_') // trasformo spazi e simboli in "_"
+      .toLowerCase()
+      .slice(0, 20);
+
+    // Aggiungiungo 3 numeri casuali alal fine
+    let uniqueUsername = `${cleanName}_${Math.floor(100 + Math.random() * 900)}`;
+
+    // faccio un while cosi evito duplicati al 100% (Spero), rigenero solo i 3 numberi in fondo
+    while (
+      await this.prisma.user.findUnique({
+        where: { username: uniqueUsername },
+      })
+    ) {
+      uniqueUsername = `${cleanName}_${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+    return uniqueUsername;
+  }
+
   async twoFactorSignin(authTwoFactor: TwoFactorAuth) {
     const code = authTwoFactor.code;
     const tempToken = authTwoFactor.tempToken;
@@ -122,6 +164,74 @@ export class AuthService {
     return this.jwtSessionSignin(user);
   }
 
+  async googleSignIn(
+    token: string,
+  ): Promise<
+    | { accessToken: string; refreshToken: string }
+    | { tempToken: string; twofAuth: true }
+  > {
+    let ticket;
+    try {
+      ticket = await this.googleClient.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch {
+      throw createHttpException(
+        errors.auth.accessDenied,
+        'Invalid or expired Google token',
+      );
+    }
+    const payload = ticket.getPayload(); // questo ticket contiene tutte le finormazioni dell'utente(è un json), le salvo in un payload per comodita
+    if (!payload || !payload.email) {
+      throw createHttpException(
+        errors.auth.accessDenied,
+        'Invalid Google token payload',
+      );
+    }
+    let user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { id_google: payload.sub },
+          { email: payload.email.trim().toLowerCase() },
+        ],
+      },
+    });
+
+    if (!user) {
+      const username = await this.generateUniqueUsername(payload);
+      user = await this.prisma.user.create({
+        data: {
+          id_google: payload.sub,
+          email: payload.email.trim().toLowerCase(),
+          username: username,
+          first_name: payload.given_name ?? null,
+          last_name: payload.family_name ?? null,
+          avatar_url: payload.picture ?? null,
+        },
+      });
+    }
+    if (user && !user.id_google) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { id_google: payload.sub },
+      });
+    }
+    if (user.status !== 'active' || user.deleted_at) {
+      throw createHttpException(errors.users.inactive);
+    }
+    if (user.is_two_factor_enabled === true) {
+      const tempToken = await this.jwtService.signAsync(
+        { userId: user.id, is2FaPending: true, type: 'twofactAuth' },
+        { expiresIn: '5m' },
+      );
+      return {
+        tempToken: tempToken,
+        twofAuth: true,
+      };
+    }
+    return await this.jwtSessionSignin(user);
+  }
   async signIn(
     email: string,
     pass: string,
@@ -134,6 +244,12 @@ export class AuthService {
     );
     if (!user) {
       throw new UnauthorizedException('invalid password or email');
+    }
+    if (!user.password_hash) {
+      throw createHttpException(
+        errors.auth.invalidCredentials,
+        'this user is authenticated with google',
+      );
     }
     if (user.status !== 'active' || user.deleted_at) {
       throw createHttpException(errors.users.inactive);
