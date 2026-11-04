@@ -342,7 +342,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('throws HttpException if user has no password_hash (registered via Google)', async () => {
+    it('throws UnauthorizedException with generic message if user has no password_hash (preventing user enumeration)', async () => {
       usersService.getUserByEmail.mockResolvedValue({
         ...mockUser,
         password_hash: null,
@@ -350,7 +350,7 @@ describe('AuthService', () => {
 
       await expect(
         service.signIn('mario@example.com', 'Password123!'),
-      ).rejects.toThrow(HttpException);
+      ).rejects.toThrow(new UnauthorizedException('invalid password or email'));
     });
 
     it('throws UnauthorizedException if password comparison fails', async () => {

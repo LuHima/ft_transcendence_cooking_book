@@ -372,10 +372,7 @@ export class AuthService {
     }
     await this.checkUserBanAndStatus(user);
     if (!user.password_hash) {
-      throw createHttpException(
-        errors.auth.invalidCredentials,
-        'This user is authenticated with google',
-      );
+      throw new UnauthorizedException('invalid password or email');
     }
     if (!(await bcrypt.compare(pass, user.password_hash))) {
       throw new UnauthorizedException('invalid password or email');
