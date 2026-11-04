@@ -2131,7 +2131,7 @@
         ]
       },
       "delete": {
-        "description": "Permanently deletes the recipe and all its steps, media, translations, and associated likes. Cleans up all orphaned social notifications targeting this recipe.",
+        "description": "Suspends (soft-deactivates) or permanently purges a recipe following role hierarchy rules. Standard users can soft-delete their own recipes; moderators can suspend recipes of users and moderators (forbidden on admin recipes); administrators can suspend any recipe or permanently purge it with ?hard=true.",
         "operationId": "RecipeController_deleteRecipe",
         "parameters": [
           {
@@ -2143,18 +2143,22 @@
               "example": 42,
               "type": "number"
             }
+          },
+          {
+            "name": "hard",
+            "required": false,
+            "in": "query",
+            "description": "Permanent hard deletion flag. Restricted strictly to platform administrators. Defaults to false (soft suspension).",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Recipe deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
-                }
-              }
-            }
+            "description": "Recipe deleted or suspended successfully"
           },
           "400": {
             "description": "Invalid recipe ID format (must be an integer)",
@@ -2172,6 +2176,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Moderator cannot suspend admin recipe, non-author cannot delete recipe, or non-admin requested hard deletion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -2202,7 +2216,7 @@
             "accessToken": []
           }
         ],
-        "summary": "Delete recipe",
+        "summary": "Delete or suspend recipe",
         "tags": [
           "Recipes"
         ]
@@ -5630,7 +5644,7 @@
             }
           },
           "403": {
-            "description": "Forbidden: Insufficient privileges to access this resource",
+            "description": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Moderator cannot resolve report against administrator content with takedown/ban",
             "content": {
               "application/json": {
                 "schema": {
@@ -7163,6 +7177,11 @@
             "description": "Unique recipe identifier",
             "example": 42
           },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the recipe is actively published and visible to the public",
+            "example": true
+          },
           "course": {
             "type": "string",
             "enum": [
@@ -7313,6 +7332,7 @@
         },
         "required": [
           "id",
+          "is_active",
           "course",
           "difficulty",
           "prep_time",
@@ -8074,6 +8094,11 @@
             "description": "Unique recipe identifier",
             "example": 42
           },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the recipe is actively published and visible to the public",
+            "example": true
+          },
           "course": {
             "type": "string",
             "enum": [
@@ -8267,6 +8292,7 @@
         },
         "required": [
           "id",
+          "is_active",
           "course",
           "difficulty",
           "prep_time",
@@ -8613,6 +8639,11 @@
               "minimum": 1
             }
           },
+          "is_active": {
+            "type": "boolean",
+            "description": "Publication state of the recipe (active or suspended)",
+            "example": true
+          },
           "locale": {
             "type": "string",
             "description": "Target locale of modified localized fields (it, en, fr)",
@@ -8624,6 +8655,37 @@
             ]
           }
         }
+      },
+      "ApiForbiddenResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing insufficient permissions to perform action",
+            "example": 403
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42"
+          },
+          "message": {
+            "type": "string",
+            "description": "Authorization failure message",
+            "example": "Forbidden: insufficient permissions for this action on the target resource"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
       },
       "CoverImageUploadResponseDto": {
         "type": "object",
@@ -8929,37 +8991,6 @@
           "total_pages",
           "has_next_page",
           "has_prev_page"
-        ]
-      },
-      "ApiForbiddenResponseDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "description": "HTTP status code representing insufficient permissions to perform action",
-            "example": 403
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 formatted timestamp of when the error occurred",
-            "example": "2026-10-14T10:00:00.000Z"
-          },
-          "path": {
-            "type": "string",
-            "description": "Requested URL path that produced the error",
-            "example": "/api/recipes/42"
-          },
-          "message": {
-            "type": "string",
-            "description": "Authorization failure message",
-            "example": "Forbidden: insufficient permissions for this action on the target resource"
-          }
-        },
-        "required": [
-          "statusCode",
-          "timestamp",
-          "path",
-          "message"
         ]
       },
       "UpdateCommentDto": {
@@ -9720,6 +9751,19 @@
             "description": "Resolution notes recorded by moderator or admin",
             "example": null
           },
+          "resolved_by_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Staff member who resolved the report",
+            "example": null
+          },
+          "resolved_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "Timestamp when report was resolved",
+            "example": null,
+            "format": "date-time"
+          },
           "created_at": {
             "type": "string",
             "description": "Timestamp when report was submitted",
@@ -9814,6 +9858,28 @@
             "description": "Internal staff notes documenting findings or action taken",
             "example": "Content reviewed and removed; user warned.",
             "maxLength": 1000
+          },
+          "resolution": {
+            "type": "string",
+            "description": "Specific moderation action executed when resolving the report with action_taken (delete_content, ban, warn, dismiss)",
+            "example": "delete_content",
+            "enum": [
+              "delete_content",
+              "ban",
+              "warn",
+              "dismiss"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "description": "Alternative alias for resolution action (delete_content, ban, warn, dismiss)",
+            "example": "delete_content",
+            "enum": [
+              "delete_content",
+              "ban",
+              "warn",
+              "dismiss"
+            ]
           }
         },
         "required": [

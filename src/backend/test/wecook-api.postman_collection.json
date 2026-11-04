@@ -3164,7 +3164,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -3449,7 +3449,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -4692,7 +4692,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -8042,7 +8042,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -8387,7 +8387,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -8658,7 +8658,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9055,7 +9055,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9291,7 +9291,7 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"locale\": \"it\"\n}",
+              "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -9338,7 +9338,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9354,7 +9354,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9396,7 +9396,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9454,7 +9454,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9512,7 +9512,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9570,7 +9570,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9625,11 +9625,11 @@
         },
         {
           "id": "1329485e-ab60-4242-8d49-b5f84db3435f",
-          "name": "Delete recipe",
+          "name": "Delete or suspend recipe",
           "request": {
-            "name": "Delete recipe",
+            "name": "Delete or suspend recipe",
             "description": {
-              "content": "Permanently deletes the recipe and all its steps, media, translations, and associated likes. Cleans up all orphaned social notifications targeting this recipe.",
+              "content": "Suspends (soft-deactivates) or permanently purges a recipe following role hierarchy rules. Standard users can soft-delete their own recipes; moderators can suspend recipes of users and moderators (forbidden on admin recipes); administrators can suspend any recipe or permanently purge it with ?hard=true.",
               "type": "text/plain"
             },
             "url": {
@@ -9641,7 +9641,14 @@
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "hard",
+                  "value": "false",
+                  "description": "Permanent hard deletion flag. Restricted strictly to platform administrators. Defaults to false (soft suspension)."
+                }
+              ],
               "variable": [
                 {
                   "disabled": false,
@@ -9662,8 +9669,8 @@
           },
           "response": [
             {
-              "id": "9e71f60e-44d4-4d3f-89b6-f97e70458a39",
-              "name": "Recipe deleted successfully",
+              "id": "5dbfb4fd-4d89-4f20-8733-209e21003849",
+              "name": "Recipe deleted or suspended successfully",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -9674,7 +9681,12 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -9685,12 +9697,6 @@
                     }
                   ]
                 },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
                 "method": "DELETE",
                 "body": {}
               },
@@ -9699,12 +9705,12 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "application/json"
+                  "value": "text/plain"
                 }
               ],
-              "body": "{\n  \"message\": \"Recipe deleted successfully\"\n}",
+              "body": "",
               "cookie": [],
-              "_postman_previewlanguage": "json"
+              "_postman_previewlanguage": "text"
             },
             {
               "id": "d1ba573c-130d-4b17-8b21-adf88e538d6b",
@@ -9719,7 +9725,12 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -9764,7 +9775,12 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -9797,6 +9813,56 @@
               "_postman_previewlanguage": "json"
             },
             {
+              "id": "27a89144-7832-46ea-85b1-ef8328e4daa0",
+              "name": "Forbidden: Moderator cannot suspend admin recipe, non-author cannot delete recipe, or non-admin requested hard deletion",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Recipe ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
               "id": "ee6ca2a6-3ff3-493a-8c2f-3a0592f08b95",
               "name": "Recipe not found",
               "originalRequest": {
@@ -9809,7 +9875,12 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -9854,7 +9925,12 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "hard",
+                      "value": "false"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -16668,7 +16744,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "8063.218368123036",
+                  "value": "3477.6807699131127",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -16714,7 +16790,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16767,7 +16843,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16820,7 +16896,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16873,7 +16949,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16926,7 +17002,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16979,7 +17055,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17071,7 +17147,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "8063.218368123036",
+                  "value": "3477.6807699131127",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17104,7 +17180,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17143,7 +17219,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17188,7 +17264,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17233,7 +17309,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17278,7 +17354,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17323,7 +17399,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17392,7 +17468,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "8063.218368123036",
+                  "value": "3477.6807699131127",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17425,7 +17501,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17464,7 +17540,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17509,7 +17585,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17554,7 +17630,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17599,7 +17675,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17644,7 +17720,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17713,7 +17789,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "8063.218368123036",
+                  "value": "3477.6807699131127",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17759,7 +17835,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17812,7 +17888,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17865,7 +17941,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17918,7 +17994,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17971,7 +18047,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18024,7 +18100,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "8063.218368123036",
+                      "value": "3477.6807699131127",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19446,7 +19522,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -19722,7 +19798,7 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "reviewed",
+                  "value": "pending",
                   "description": "Filter reports by current review status"
                 },
                 {
@@ -19792,7 +19868,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\"\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\"\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -20069,7 +20145,7 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\"\n}",
+              "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\",\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -20111,7 +20187,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\"\n}",
+                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\",\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -20127,7 +20203,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -20164,7 +20240,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\"\n}",
+                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\",\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -20217,7 +20293,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\"\n}",
+                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\",\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -20238,8 +20314,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "5dc66155-e10c-4071-8718-ed0ca670fda9",
-              "name": "Forbidden: Insufficient privileges to access this resource",
+              "id": "24fdd5cf-6b2c-4c4b-87b5-f04a931cc12d",
+              "name": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Moderator cannot resolve report against administrator content with takedown/ban",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -20270,7 +20346,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\"\n}",
+                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\",\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -20323,7 +20399,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\"\n}",
+                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\",\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -20376,7 +20452,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\"\n}",
+                  "raw": "{\n  \"status\": \"reviewed\",\n  \"resolution_notes\": \"Content reviewed and removed; user warned.\",\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
