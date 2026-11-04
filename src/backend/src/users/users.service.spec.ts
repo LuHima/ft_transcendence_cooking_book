@@ -9,6 +9,10 @@ import {
 } from '@nestjs/common';
 import { OwnerType, Prisma } from '@prisma/client';
 import { UserSortBy, SortOrder } from './dto/search-user-query.dto';
+import {
+  RecipeSortBy,
+  RecipeSortOrder,
+} from './dto/user-cookbook-query.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -71,6 +75,7 @@ describe('UsersService', () => {
             notification: {
               deleteMany: jest.fn(),
             },
+            $queryRaw: jest.fn(),
           },
         },
       ],
@@ -680,6 +685,54 @@ describe('UsersService', () => {
       expect(result.items[0].description).toBe('Classic');
       expect(result.items[0].resolved_lang).toBe('en');
     });
+
+    it('should sort liked recipes by likes_count with contextual default sort_order desc', async () => {
+      (prisma.like.findMany as jest.Mock).mockResolvedValue(mockLikes);
+      (prisma.like.count as jest.Mock).mockResolvedValue(1);
+
+      await service.getLikedRecipes(1, {
+        sort_by: RecipeSortBy.likes_count,
+      });
+
+      expect(prisma.like.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { recipe: { likes: { _count: 'desc' } } },
+        }),
+      );
+    });
+
+    it('should sort liked recipes by total_time with explicit sort_order asc', async () => {
+      (prisma.like.findMany as jest.Mock).mockResolvedValue(mockLikes);
+      (prisma.like.count as jest.Mock).mockResolvedValue(1);
+
+      await service.getLikedRecipes(1, {
+        sort_by: RecipeSortBy.total_time,
+        sort_order: RecipeSortOrder.asc,
+      });
+
+      expect(prisma.like.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { recipe: { total_time: 'asc' } },
+        }),
+      );
+    });
+
+    it('should sort liked recipes by localized title using two-step query', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ id: 10 }]);
+      (prisma.like.count as jest.Mock).mockResolvedValue(1);
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue([mockLikes[0].recipe]);
+
+      const result = await service.getLikedRecipes(1, {
+        sort_by: RecipeSortBy.title,
+        sort_order: RecipeSortOrder.asc,
+        lang: 'it',
+      });
+
+      expect(prisma.$queryRaw).toHaveBeenCalled();
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(10);
+      expect(result.items[0].is_liked).toBe(true);
+    });
   });
 
   describe('getMyRecipes', () => {
@@ -748,6 +801,69 @@ describe('UsersService', () => {
       expect(result.items[0].title).toBe('Tiramisu');
       expect(result.items[0].description).toBe('Classic dessert');
       expect(result.items[0].resolved_lang).toBe('en');
+    });
+
+    it('should sort authored recipes by total_time with contextual default sort_order asc', async () => {
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+
+      await service.getMyRecipes(1, {
+        sort_by: RecipeSortBy.total_time,
+      });
+
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { total_time: 'asc' },
+        }),
+      );
+    });
+
+    it('should sort authored recipes by difficulty with explicit sort_order desc', async () => {
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+
+      await service.getMyRecipes(1, {
+        sort_by: RecipeSortBy.difficulty,
+        sort_order: RecipeSortOrder.desc,
+      });
+
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { difficulty: 'desc' },
+        }),
+      );
+    });
+
+    it('should sort authored recipes by title using two-step query', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ id: 101 }]);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+
+      const result = await service.getMyRecipes(1, {
+        sort_by: RecipeSortBy.title,
+        sort_order: RecipeSortOrder.asc,
+      });
+
+      expect(prisma.$queryRaw).toHaveBeenCalled();
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(101);
+    });
+
+    it('getAuthoredRecipes delegates to getMyRecipes', async () => {
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockRecipes);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.getAuthoredRecipes(1, {
+        sort_by: RecipeSortBy.likes_count,
+        sort_order: RecipeSortOrder.desc,
+      });
+
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { likes: { _count: 'desc' } },
+        }),
+      );
+      expect(result.items).toHaveLength(1);
     });
   });
 
@@ -1163,6 +1279,55 @@ describe('UsersService', () => {
       expect(result.items[0].title).toBe('Amatriciana Pasta');
       expect(result.items[0].description).toBe('Traditional');
       expect(result.items[0].resolved_lang).toBe('en');
+    });
+
+    it('should sort public recipes by likes_count with contextual default sort_order desc', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockAuthorRecipes);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(2);
+
+      await service.getUserPublicRecipes(2, {
+        sort_by: RecipeSortBy.likes_count,
+      });
+
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { likes: { _count: 'desc' } },
+        }),
+      );
+    });
+
+    it('should sort public recipes by total_time with explicit sort_order desc', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue(mockAuthorRecipes);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(2);
+
+      await service.getUserPublicRecipes(2, {
+        sort_by: RecipeSortBy.total_time,
+        sort_order: RecipeSortOrder.desc,
+      });
+
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { total_time: 'desc' },
+        }),
+      );
+    });
+
+    it('should sort public recipes by title using two-step query', async () => {
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
+      (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ id: 201 }]);
+      (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+      (prisma.recipe.findMany as jest.Mock).mockResolvedValue([mockAuthorRecipes[0]]);
+
+      const result = await service.getUserPublicRecipes(2, {
+        sort_by: RecipeSortBy.title,
+        sort_order: RecipeSortOrder.asc,
+      });
+
+      expect(prisma.$queryRaw).toHaveBeenCalled();
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe(201);
     });
 
     it('should throw NotFoundException if target author does not exist or is inactive/banned/deleted', async () => {

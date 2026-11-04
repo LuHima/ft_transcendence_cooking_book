@@ -9,7 +9,11 @@ import {
 import { OwnerType, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
+import {
+  UserCookbookQueryDto,
+  RecipeSortBy,
+  RecipeSortOrder,
+} from './dto/user-cookbook-query.dto';
 import { PaginatedRecipeResponseDto } from '../recipe/dto/recipe-response.dto';
 import {
   RecipeProjection,
@@ -572,6 +576,121 @@ export class UsersService {
 
   // ---------------------------------------------------------------------------
 
+  private resolveRecipeOrderBy(
+    sortBy: RecipeSortBy = RecipeSortBy.created_at,
+    sortOrder?: RecipeSortOrder,
+  ): Prisma.RecipeOrderByWithRelationInput {
+    let order: Prisma.SortOrder;
+    if (sortOrder) {
+      order = sortOrder as Prisma.SortOrder;
+    } else {
+      order =
+        sortBy === RecipeSortBy.created_at ||
+        sortBy === RecipeSortBy.likes_count
+          ? 'desc'
+          : 'asc';
+    }
+
+    switch (sortBy) {
+      case RecipeSortBy.total_time:
+        return { total_time: order };
+      case RecipeSortBy.difficulty:
+        return { difficulty: order };
+      case RecipeSortBy.likes_count:
+        return { likes: { _count: order } };
+      case RecipeSortBy.created_at:
+      default:
+        return { created_at: order };
+    }
+  }
+
+  private async resolveCookbookRecipesSortedByTitle(
+    whereSql: Prisma.Sql,
+    whereInput: Prisma.RecipeWhereInput,
+    query: UserCookbookQueryDto,
+    skip: number,
+    limit: number,
+    viewerId?: number,
+  ): Promise<{ recipes: any[]; total: number }> {
+    const targetLocale = query.lang || null;
+    const sortOrder =
+      query.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
+    const orderSql =
+      sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+
+    const [rawRows, total] = await Promise.all([
+      this.prisma.$queryRaw<{ id: number }[]>`
+        SELECT r.id
+        FROM recipes r
+        LEFT JOIN recipe_translations t_target ON (t_target.recipe_id = r.id AND t_target.locale = ${targetLocale})
+        LEFT JOIN recipe_translations t_source ON (t_source.recipe_id = r.id AND t_source.locale = r.source_lang)
+        LEFT JOIN recipe_translations t_en ON (t_en.recipe_id = r.id AND t_en.locale = 'en')
+        WHERE ${whereSql}
+        ORDER BY LOWER(COALESCE(t_target.title, t_source.title, t_en.title)) ${orderSql}, r.id ${orderSql}
+        LIMIT ${limit} OFFSET ${skip}
+      `,
+      this.prisma.recipe.count({ where: whereInput }),
+    ]);
+
+    const ids = rawRows.map((row) => row.id);
+    let recipes: any[] = [];
+    if (ids.length > 0) {
+      const hydrated = await this.prisma.recipe.findMany({
+        where: { id: { in: ids } },
+        include: RECIPE_SUMMARY_INCLUDE(viewerId),
+      });
+      const recipeMap = new Map(hydrated.map((r) => [r.id, r]));
+      recipes = ids.map((id) => recipeMap.get(id)).filter(Boolean);
+    }
+
+    return { recipes, total };
+  }
+
+  private async resolveLikedRecipesSortedByTitle(
+    userId: number,
+    query: UserCookbookQueryDto,
+    skip: number,
+    limit: number,
+  ): Promise<{ recipes: any[]; total: number }> {
+    const targetLocale = query.lang || null;
+    const sortOrder =
+      query.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
+    const orderSql =
+      sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+
+    const [rawRows, total] = await Promise.all([
+      this.prisma.$queryRaw<{ id: number }[]>`
+        SELECT r.id
+        FROM recipes r
+        JOIN likes l ON (l.recipe_id = r.id AND l.user_id = ${userId})
+        LEFT JOIN recipe_translations t_target ON (t_target.recipe_id = r.id AND t_target.locale = ${targetLocale})
+        LEFT JOIN recipe_translations t_source ON (t_source.recipe_id = r.id AND t_source.locale = r.source_lang)
+        LEFT JOIN recipe_translations t_en ON (t_en.recipe_id = r.id AND t_en.locale = 'en')
+        ORDER BY LOWER(COALESCE(t_target.title, t_source.title, t_en.title)) ${orderSql}, r.id ${orderSql}
+        LIMIT ${limit} OFFSET ${skip}
+      `,
+      this.prisma.like.count({ where: { user_id: userId } }),
+    ]);
+
+    const ids = rawRows.map((row) => row.id);
+    let recipes: any[] = [];
+    if (ids.length > 0) {
+      const hydrated = await this.prisma.recipe.findMany({
+        where: { id: { in: ids } },
+        include: RECIPE_SUMMARY_INCLUDE(userId),
+      });
+      const recipeMap = new Map(hydrated.map((r) => [r.id, r]));
+      recipes = ids
+        .map((id) => {
+          const item = recipeMap.get(id);
+          return item ? { ...item, is_liked: true } : undefined;
+        })
+        .filter(Boolean);
+    }
+
+    return { recipes, total };
+  }
+
   async getLikedRecipes(
     userId: number,
     query: UserCookbookQueryDto = new UserCookbookQueryDto(),
@@ -580,27 +699,51 @@ export class UsersService {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const [likes, total] = await Promise.all([
-      this.prisma.like.findMany({
-        where: { user_id: userId },
-        skip,
-        take: limit,
-        orderBy: { created_at: 'desc' },
-        include: {
-          recipe: {
-            include: RECIPE_SUMMARY_INCLUDE(userId),
-          },
-        },
-      }),
-      this.prisma.like.count({
-        where: { user_id: userId },
-      }),
-    ]);
+    let recipes: any[];
+    let total: number;
 
-    const recipes = likes.map((item) => ({
-      ...item.recipe,
-      is_liked: true,
-    }));
+    if (query.sort_by === RecipeSortBy.title) {
+      const titleResult = await this.resolveLikedRecipesSortedByTitle(
+        userId,
+        query,
+        skip,
+        limit,
+      );
+      recipes = titleResult.recipes;
+      total = titleResult.total;
+    } else {
+      let orderBy: Prisma.LikeOrderByWithRelationInput;
+      if (query.sort_by) {
+        orderBy = {
+          recipe: this.resolveRecipeOrderBy(query.sort_by, query.sort_order),
+        };
+      } else {
+        orderBy = { created_at: 'desc' };
+      }
+
+      const [likes, count] = await Promise.all([
+        this.prisma.like.findMany({
+          where: { user_id: userId },
+          skip,
+          take: limit,
+          orderBy,
+          include: {
+            recipe: {
+              include: RECIPE_SUMMARY_INCLUDE(userId),
+            },
+          },
+        }),
+        this.prisma.like.count({
+          where: { user_id: userId },
+        }),
+      ]);
+
+      recipes = likes.map((item) => ({
+        ...item.recipe,
+        is_liked: true,
+      }));
+      total = count;
+    }
 
     return this.recipeProjection.toPaginatedSummaryResponse(
       recipes,
@@ -620,18 +763,40 @@ export class UsersService {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const [recipes, total] = await Promise.all([
-      this.prisma.recipe.findMany({
-        where: { user_id: userId },
+    const where: Prisma.RecipeWhereInput = { user_id: userId };
+
+    let recipes: any[];
+    let total: number;
+
+    if (query.sort_by === RecipeSortBy.title) {
+      const titleResult = await this.resolveCookbookRecipesSortedByTitle(
+        Prisma.sql`r.user_id = ${userId}`,
+        where,
+        query,
         skip,
-        take: limit,
-        orderBy: { created_at: 'desc' },
-        include: RECIPE_SUMMARY_INCLUDE(userId),
-      }),
-      this.prisma.recipe.count({
-        where: { user_id: userId },
-      }),
-    ]);
+        limit,
+        userId,
+      );
+      recipes = titleResult.recipes;
+      total = titleResult.total;
+    } else {
+      const orderBy = this.resolveRecipeOrderBy(
+        query.sort_by,
+        query.sort_order,
+      );
+      [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: RECIPE_SUMMARY_INCLUDE(userId),
+        }),
+        this.prisma.recipe.count({
+          where,
+        }),
+      ]);
+    }
 
     return this.recipeProjection.toPaginatedSummaryResponse(
       recipes,
@@ -639,6 +804,13 @@ export class UsersService {
       query,
       userId,
     );
+  }
+
+  async getAuthoredRecipes(
+    userId: number,
+    query: UserCookbookQueryDto = new UserCookbookQueryDto(),
+  ): Promise<PaginatedRecipeResponseDto> {
+    return this.getMyRecipes(userId, query);
   }
 
   // ---------------------------------------------------------------------------
@@ -667,26 +839,44 @@ export class UsersService {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const [recipes, total] = await Promise.all([
-      this.prisma.recipe.findMany({
-        where: {
-          user_id: targetUserId,
-          owner_type: OwnerType.user,
-          is_active: true,
-        },
+    const where: Prisma.RecipeWhereInput = {
+      user_id: targetUserId,
+      owner_type: OwnerType.user,
+      is_active: true,
+    };
+
+    let recipes: any[];
+    let total: number;
+
+    if (query.sort_by === RecipeSortBy.title) {
+      const titleResult = await this.resolveCookbookRecipesSortedByTitle(
+        Prisma.sql`r.user_id = ${targetUserId} AND r.owner_type = 'user'::"OwnerType" AND r.is_active = true`,
+        where,
+        query,
         skip,
-        take: limit,
-        orderBy: { created_at: 'desc' },
-        include: RECIPE_SUMMARY_INCLUDE(currentUserId),
-      }),
-      this.prisma.recipe.count({
-        where: {
-          user_id: targetUserId,
-          owner_type: OwnerType.user,
-          is_active: true,
-        },
-      }),
-    ]);
+        limit,
+        currentUserId,
+      );
+      recipes = titleResult.recipes;
+      total = titleResult.total;
+    } else {
+      const orderBy = this.resolveRecipeOrderBy(
+        query.sort_by,
+        query.sort_order,
+      );
+      [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: RECIPE_SUMMARY_INCLUDE(currentUserId),
+        }),
+        this.prisma.recipe.count({
+          where,
+        }),
+      ]);
+    }
 
     return this.recipeProjection.toPaginatedSummaryResponse(
       recipes,
