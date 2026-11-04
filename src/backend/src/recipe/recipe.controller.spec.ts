@@ -9,6 +9,7 @@ import {
   Course,
   RecipeDifficulty,
   TranslationStatus,
+  TranslationSource,
   UnitOfMeasure,
 } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
@@ -237,6 +238,14 @@ describe('RecipeController', () => {
         likes_count: 10,
         comments_count: 3,
         is_liked: true,
+        translation_source: TranslationSource.author_original,
+        available_languages: [
+          {
+            locale: 'it',
+            translation_source: TranslationSource.author_original,
+          },
+          { locale: 'en', translation_source: TranslationSource.machine },
+        ],
       };
       mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
 
@@ -244,6 +253,10 @@ describe('RecipeController', () => {
 
       expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 42);
       expect(result).toEqual(mockResult);
+      expect((result as any).translation_source).toBe(
+        TranslationSource.author_original,
+      );
+      expect((result as any).available_languages).toHaveLength(2);
     });
   });
 

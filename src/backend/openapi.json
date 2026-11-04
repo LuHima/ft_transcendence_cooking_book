@@ -7874,6 +7874,30 @@
           "categories"
         ]
       },
+      "AvailableLanguageResponse": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": "string",
+            "description": "Locale code",
+            "example": "it"
+          },
+          "translation_source": {
+            "type": "string",
+            "enum": [
+              "author_original",
+              "machine",
+              "manual"
+            ],
+            "description": "Provenance classification of this translation",
+            "example": "author_original"
+          }
+        },
+        "required": [
+          "locale",
+          "translation_source"
+        ]
+      },
       "LocalizedRecipeStepResponse": {
         "type": "object",
         "properties": {
@@ -8186,7 +8210,7 @@
             "example": "it"
           },
           "available_languages": {
-            "description": "List of available locale projections for this recipe",
+            "description": "List of available locale projections and provenance classification for this recipe",
             "example": [
               "it",
               "en",
@@ -8194,8 +8218,18 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "$ref": "#/components/schemas/AvailableLanguageResponse"
             }
+          },
+          "translation_source": {
+            "type": "string",
+            "enum": [
+              "author_original",
+              "machine",
+              "manual"
+            ],
+            "description": "Provenance of the resolved translation",
+            "example": "author_original"
           },
           "preservation": {
             "type": "string",
@@ -8254,6 +8288,7 @@
           "is_liked",
           "resolved_lang",
           "available_languages",
+          "translation_source",
           "preservation",
           "tips",
           "steps",

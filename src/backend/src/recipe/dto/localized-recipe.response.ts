@@ -5,6 +5,7 @@ import {
   MediaType,
   RecipeDifficulty,
   TranslationStatus,
+  TranslationSource,
   UnitOfMeasure,
 } from '@prisma/client';
 
@@ -276,6 +277,32 @@ export class RecipeAuthorSummaryDto {
 }
 
 /**
+ * Localized language availability metadata and provenance classification.
+ */
+export class AvailableLanguageResponse {
+  /**
+   * Locale code.
+   * @example 'it'
+   */
+  @ApiProperty({
+    description: 'Locale code',
+    example: 'it',
+  })
+  locale: string;
+
+  /**
+   * Provenance classification of this translation.
+   * @example TranslationSource.author_original
+   */
+  @ApiProperty({
+    enum: TranslationSource,
+    description: 'Provenance classification of this translation',
+    example: TranslationSource.author_original,
+  })
+  translation_source: TranslationSource;
+}
+
+/**
  * Lightweight localized recipe summary card returned in feeds, listings, and paginated searches.
  * Omits heavy step instructions and ingredient lists to prevent bandwidth bloat.
  */
@@ -499,13 +526,33 @@ export class LocalizedRecipeSummaryResponse {
     example: ['it', 'en', 'fr'],
     isArray: true,
   })
-  available_languages: string[];
+  available_languages: string[] | AvailableLanguageResponse[];
 }
 
 /**
  * Complete localized recipe detail payload including step instructions, ingredients, and media.
  */
 export class LocalizedRecipeDetailResponse extends LocalizedRecipeSummaryResponse {
+  /**
+   * Provenance of the resolved active translation.
+   * @example TranslationSource.author_original
+   */
+  @ApiProperty({
+    enum: TranslationSource,
+    description: 'Provenance of the resolved translation',
+    example: TranslationSource.author_original,
+  })
+  translation_source: TranslationSource;
+
+  /**
+   * List of available locale translations and their provenance classification for this recipe.
+   */
+  @ApiProperty({
+    type: [AvailableLanguageResponse],
+    description:
+      'List of available locale projections and provenance classification for this recipe',
+  })
+  override available_languages: AvailableLanguageResponse[] = [];
   /**
    * Localized preservation and storage advice.
    * @example 'Si consiglia di consumare al momento. Non congelare.'
@@ -558,3 +605,5 @@ export class LocalizedRecipeDetailResponse extends LocalizedRecipeSummaryRespons
   })
   media: RecipeMediaResponse[];
 }
+
+export { LocalizedRecipeDetailResponse as RecipeDetailDto };

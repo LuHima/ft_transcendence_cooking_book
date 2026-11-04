@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OwnerType } from '@prisma/client';
+import { OwnerType, TranslationSource } from '@prisma/client';
 import {
   LocalizedRecipeDetailResponse,
   LocalizedRecipeIngredientResponse,
@@ -390,6 +390,8 @@ export class RecipeProjection {
       description: translation?.description ?? '',
       preservation: translation?.preservation ?? null,
       tips: translation?.tips ?? null,
+      translation_source:
+        translation?.translation_source ?? TranslationSource.machine,
       steps,
       ingredients,
       tags,
@@ -398,9 +400,10 @@ export class RecipeProjection {
       comments_count: recipe._count?.comments ?? 0,
       is_liked,
       resolved_lang,
-      available_languages: (recipe.translations ?? []).map(
-        (t: any) => t.locale,
-      ),
+      available_languages: (recipe.translations ?? []).map((t: any) => ({
+        locale: t.locale,
+        translation_source: t.translation_source ?? TranslationSource.machine,
+      })),
     };
   }
 }

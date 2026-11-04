@@ -11,6 +11,7 @@ import {
   OwnerType,
   RecipeDifficulty,
   TranslationStatus,
+  TranslationSource,
   UnitOfMeasure,
 } from '@prisma/client';
 
@@ -474,7 +475,7 @@ describe('RecipeProjection', () => {
           ingredient: {
             id: 50,
             slug: 'rice',
-            category: IngredientCategory.cereal_grain,
+            category: IngredientCategory.bakery_grains,
             translations: [
               { locale: 'it', name: 'Riso' },
               { locale: 'en', name: 'Rice' },
@@ -566,6 +567,90 @@ describe('RecipeProjection', () => {
         undefined,
       );
       expect(detail.author).toBeNull();
+    });
+
+    it('projects translation_source: author_original when requested in source language and maps available_languages with provenance', () => {
+      const recipeWithProvenance = {
+        ...rawDetailRecipe,
+        source_lang: 'it',
+        translations: [
+          {
+            locale: 'it',
+            title: 'Risotto ai Funghi',
+            description: 'Cremoso',
+            translation_source: TranslationSource.author_original,
+          },
+          {
+            locale: 'en',
+            title: 'Mushroom Risotto',
+            description: 'Creamy',
+            translation_source: TranslationSource.machine,
+          },
+        ],
+      };
+
+      const detail = projection.toLocalizedDetail(recipeWithProvenance, 'it');
+      expect(detail.resolved_lang).toBe('it');
+      expect(detail.translation_source).toBe(TranslationSource.author_original);
+      expect(detail.available_languages).toEqual([
+        { locale: 'it', translation_source: TranslationSource.author_original },
+        { locale: 'en', translation_source: TranslationSource.machine },
+      ]);
+    });
+
+    it('projects translation_source: machine for unedited translations and manual for human-edited translations', () => {
+      const recipeWithMachine = {
+        ...rawDetailRecipe,
+        source_lang: 'it',
+        translations: [
+          {
+            locale: 'it',
+            title: 'Risotto ai Funghi',
+            description: 'Cremoso',
+            translation_source: TranslationSource.author_original,
+          },
+          {
+            locale: 'en',
+            title: 'Mushroom Risotto',
+            description: 'Creamy',
+            translation_source: TranslationSource.machine,
+          },
+        ],
+      };
+
+      const machineDetail = projection.toLocalizedDetail(
+        recipeWithMachine,
+        'en',
+      );
+      expect(machineDetail.resolved_lang).toBe('en');
+      expect(machineDetail.translation_source).toBe(TranslationSource.machine);
+
+      const recipeWithManual = {
+        ...rawDetailRecipe,
+        source_lang: 'it',
+        translations: [
+          {
+            locale: 'it',
+            title: 'Risotto ai Funghi',
+            description: 'Cremoso',
+            translation_source: TranslationSource.author_original,
+          },
+          {
+            locale: 'en',
+            title: 'Artisanal Mushroom Risotto',
+            description: 'Hand-crafted description',
+            translation_source: TranslationSource.manual,
+          },
+        ],
+      };
+
+      const manualDetail = projection.toLocalizedDetail(recipeWithManual, 'en');
+      expect(manualDetail.resolved_lang).toBe('en');
+      expect(manualDetail.translation_source).toBe(TranslationSource.manual);
+      expect(manualDetail.available_languages).toEqual([
+        { locale: 'it', translation_source: TranslationSource.author_original },
+        { locale: 'en', translation_source: TranslationSource.manual },
+      ]);
     });
   });
 });
