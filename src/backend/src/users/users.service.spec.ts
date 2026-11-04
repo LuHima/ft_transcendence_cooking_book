@@ -8,7 +8,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { OwnerType, Prisma } from '@prisma/client';
-import { UserSort } from './dto/search-user-query.dto';
+import { UserSortBy, SortOrder } from './dto/search-user-query.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -450,21 +450,35 @@ describe('UsersService', () => {
     });
 
     it.each([
-      [UserSort.username_asc, [{ username: 'asc' }]],
-      [UserSort.username_desc, [{ username: 'desc' }]],
+      [UserSortBy.username, SortOrder.asc, [{ username: 'asc' }]],
+      [UserSortBy.username, SortOrder.desc, [{ username: 'desc' }]],
       [
-        UserSort.recipes_count_desc,
+        UserSortBy.recipes_count,
+        SortOrder.desc,
         [{ recipes: { _count: 'desc' } }, { username: 'asc' }],
       ],
-      [UserSort.newest, [{ created_at: 'desc' }, { id: 'desc' }]],
-      [UserSort.oldest, [{ created_at: 'asc' }, { id: 'asc' }]],
+      [
+        UserSortBy.recipes_count,
+        SortOrder.asc,
+        [{ recipes: { _count: 'asc' } }, { username: 'asc' }],
+      ],
+      [
+        UserSortBy.created_at,
+        SortOrder.desc,
+        [{ created_at: 'desc' }, { id: 'desc' }],
+      ],
+      [
+        UserSortBy.created_at,
+        SortOrder.asc,
+        [{ created_at: 'asc' }, { id: 'asc' }],
+      ],
     ])(
-      'resolves orderBy correctly for sort %s',
-      async (sortValue, expectedOrderBy) => {
+      'resolves orderBy correctly for sort_by=%s sort_order=%s',
+      async (sortBy, sortOrder, expectedOrderBy) => {
         (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.user.count as jest.Mock).mockResolvedValue(0);
 
-        await service.findUsers({ sort: sortValue });
+        await service.findUsers({ sort_by: sortBy, sort_order: sortOrder });
 
         expect(prisma.user.findMany).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -473,6 +487,45 @@ describe('UsersService', () => {
         );
       },
     );
+
+    it('applies contextual default sort_order=desc when sort_by=created_at without sort_order', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+      await service.findUsers({ sort_by: UserSortBy.created_at });
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+        }),
+      );
+    });
+
+    it('applies contextual default sort_order=asc when sort_by=username without sort_order', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+      await service.findUsers({ sort_by: UserSortBy.username });
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ username: 'asc' }],
+        }),
+      );
+    });
+
+    it('applies contextual default sort_order=desc when sort_by=recipes_count without sort_order', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.user.count as jest.Mock).mockResolvedValue(0);
+
+      await service.findUsers({ sort_by: UserSortBy.recipes_count });
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: [{ recipes: { _count: 'desc' } }, { username: 'asc' }],
+        }),
+      );
+    });
 
     it('resolves contextual friendship status and excludes caller for authenticated user', async () => {
       (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);

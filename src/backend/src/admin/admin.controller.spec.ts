@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { Role, UserStatus } from '@prisma/client';
-import { UserSort } from '../users/dto/search-user-query.dto';
+import { UserSortBy, SortOrder } from '../users/dto/search-user-query.dto';
 import { JwtService } from '@nestjs/jwt';
 
 describe('AdminController', () => {
@@ -74,7 +74,12 @@ describe('AdminController', () => {
       };
       (service.getUsers as jest.Mock).mockResolvedValue(mockResult);
 
-      const query = { page: 1, limit: 10, sort: UserSort.newest };
+      const query = {
+        page: 1,
+        limit: 10,
+        sort_by: UserSortBy.created_at,
+        sort_order: SortOrder.desc,
+      };
       const result = await controller.getUsers(query);
 
       expect(service.getUsers).toHaveBeenCalledWith(query);

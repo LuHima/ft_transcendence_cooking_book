@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { Role, UserStatus } from '@prisma/client';
-import { UserSort } from '../../users/dto/search-user-query.dto';
+import { UserSortBy, SortOrder } from '../../users/dto/search-user-query.dto';
 
 /**
  * Query parameter DTO for administrative member directory and user auditing.
@@ -59,17 +59,31 @@ export class AdminSearchUserQueryDto extends PaginationQueryDto {
   status?: UserStatus;
 
   /**
-   * Administrative sorting criteria.
-   * Default: newest (created_at DESC) when sort is omitted; username_asc when search is provided.
-   * @example UserSort.newest
+   * Field to sort users by.
+   * Contextual default: username if search is specified, created_at if omitted.
+   * @example UserSortBy.created_at
    */
   @ApiPropertyOptional({
-    enum: UserSort,
+    enum: UserSortBy,
     description:
-      'Sorting criteria for administrative directory. Defaults to newest, or username_asc when search is provided.',
-    example: UserSort.newest,
+      'Field to sort users by. Contextual default: username if search is specified, created_at if omitted.',
+    example: UserSortBy.created_at,
   })
   @IsOptional()
-  @IsEnum(UserSort)
-  sort?: UserSort;
+  @IsEnum(UserSortBy)
+  sort_by?: UserSortBy;
+
+  /**
+   * Sort direction. Defaults to desc for created_at and recipes_count, asc for username.
+   * @example SortOrder.desc
+   */
+  @ApiPropertyOptional({
+    enum: SortOrder,
+    description:
+      'Sort direction. Defaults to desc for created_at and recipes_count, asc for username.',
+    example: SortOrder.desc,
+  })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sort_order?: SortOrder;
 }

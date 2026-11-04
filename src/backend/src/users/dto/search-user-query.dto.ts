@@ -2,16 +2,17 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { SortOrder } from '../../common/dto/sort-order.enum';
+
+export { SortOrder };
 
 /**
- * Sorting options for community member discovery and search.
+ * Sorting field options for community member discovery and search.
  */
-export enum UserSort {
-  username_asc = 'username_asc',
-  username_desc = 'username_desc',
-  recipes_count_desc = 'recipes_count_desc',
-  newest = 'newest',
-  oldest = 'oldest',
+export enum UserSortBy {
+  username = 'username',
+  recipes_count = 'recipes_count',
+  created_at = 'created_at',
 }
 
 /**
@@ -42,17 +43,31 @@ export class SearchUserQueryDto extends PaginationQueryDto {
   search?: string;
 
   /**
-   * Sorting criteria for member discovery.
-   * Contextual default: username_asc if search is specified, recipes_count_desc if omitted.
-   * @example UserSort.recipes_count_desc
+   * Field to sort users by.
+   * Contextual default: username if search is specified, recipes_count if omitted.
+   * @example UserSortBy.recipes_count
    */
   @ApiPropertyOptional({
-    enum: UserSort,
+    enum: UserSortBy,
     description:
-      'Sorting criteria for member discovery. Contextual default: username_asc if search is specified, recipes_count_desc if omitted.',
-    example: UserSort.recipes_count_desc,
+      'Field to sort users by. Contextual default: username if search is specified, recipes_count if omitted.',
+    example: UserSortBy.recipes_count,
   })
   @IsOptional()
-  @IsEnum(UserSort)
-  sort?: UserSort;
+  @IsEnum(UserSortBy)
+  sort_by?: UserSortBy;
+
+  /**
+   * Sort direction. Defaults contextually to desc for recipes_count and created_at, asc for username.
+   * @example SortOrder.desc
+   */
+  @ApiPropertyOptional({
+    enum: SortOrder,
+    description:
+      'Sort direction. Defaults to desc for recipes_count and created_at, asc for username.',
+    example: SortOrder.desc,
+  })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sort_order?: SortOrder;
 }

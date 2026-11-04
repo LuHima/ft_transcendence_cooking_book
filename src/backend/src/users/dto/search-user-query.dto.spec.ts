@@ -1,6 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { SearchUserQueryDto, UserSort } from './search-user-query.dto';
+import {
+  SearchUserQueryDto,
+  UserSortBy,
+  SortOrder,
+} from './search-user-query.dto';
 
 describe('SearchUserQueryDto', () => {
   it('accepts empty object and provides defaults', async () => {
@@ -8,7 +12,8 @@ describe('SearchUserQueryDto', () => {
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
     expect(dto.search).toBeUndefined();
-    expect(dto.sort).toBeUndefined();
+    expect(dto.sort_by).toBeUndefined();
+    expect(dto.sort_order).toBeUndefined();
     expect(dto.page).toBe(1);
     expect(dto.limit).toBe(20);
   });
@@ -55,23 +60,44 @@ describe('SearchUserQueryDto', () => {
   });
 
   it.each([
-    UserSort.username_asc,
-    UserSort.username_desc,
-    UserSort.recipes_count_desc,
-    UserSort.newest,
-    UserSort.oldest,
-  ])('accepts valid sort enum value %s', async (sortValue) => {
-    const dto = plainToInstance(SearchUserQueryDto, { sort: sortValue });
+    UserSortBy.username,
+    UserSortBy.recipes_count,
+    UserSortBy.created_at,
+  ])('accepts valid sort_by enum value %s', async (sortByValue) => {
+    const dto = plainToInstance(SearchUserQueryDto, { sort_by: sortByValue });
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
-    expect(dto.sort).toBe(sortValue);
+    expect(dto.sort_by).toBe(sortByValue);
   });
 
-  it('rejects invalid sort enum value', async () => {
-    const dto = plainToInstance(SearchUserQueryDto, { sort: 'invalid_sort' });
+  it.each([SortOrder.asc, SortOrder.desc])(
+    'accepts valid sort_order enum value %s',
+    async (sortOrderValue) => {
+      const dto = plainToInstance(SearchUserQueryDto, {
+        sort_order: sortOrderValue,
+      });
+      const errors = await validate(dto);
+      expect(errors.length).toBe(0);
+      expect(dto.sort_order).toBe(sortOrderValue);
+    },
+  );
+
+  it('rejects invalid sort_by enum value', async () => {
+    const dto = plainToInstance(SearchUserQueryDto, {
+      sort_by: 'invalid_sort_by',
+    });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('sort');
+    expect(errors[0].property).toBe('sort_by');
+  });
+
+  it('rejects invalid sort_order enum value', async () => {
+    const dto = plainToInstance(SearchUserQueryDto, {
+      sort_order: 'invalid_sort_order',
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].property).toBe('sort_order');
   });
 
   it('rejects page less than 1', async () => {

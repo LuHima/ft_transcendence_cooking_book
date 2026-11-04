@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserSort } from './dto/search-user-query.dto';
+import { UserSortBy, SortOrder } from './dto/search-user-query.dto';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -190,7 +190,8 @@ describe('UsersController', () => {
         page: 1,
         limit: 20,
         search: 'giulia',
-        sort: UserSort.username_asc,
+        sort_by: UserSortBy.username,
+        sort_order: SortOrder.asc,
       };
       const result = await controller.findUsers(query, 1);
 

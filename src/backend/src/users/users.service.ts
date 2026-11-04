@@ -21,7 +21,11 @@ import {
   FriendItemDto,
   PaginatedFriendsResponseDto,
 } from '../friends/dto/friend-response.dto';
-import { SearchUserQueryDto, UserSort } from './dto/search-user-query.dto';
+import {
+  SearchUserQueryDto,
+  UserSortBy,
+  SortOrder,
+} from './dto/search-user-query.dto';
 import {
   UserSearchItemDto,
   PaginatedUsersResponseDto,
@@ -115,30 +119,30 @@ export class UsersService {
     const search =
       trimmedSearch && trimmedSearch.length > 0 ? trimmedSearch : undefined;
 
-    let sort = query.sort;
-    if (!sort) {
-      sort = search ? UserSort.username_asc : UserSort.recipes_count_desc;
-    }
+    const sortBy =
+      query.sort_by ??
+      (search ? UserSortBy.username : UserSortBy.recipes_count);
+
+    const sortOrder =
+      query.sort_order ??
+      (sortBy === UserSortBy.username ? SortOrder.asc : SortOrder.desc);
 
     let orderBy: Prisma.UserOrderByWithRelationInput[];
-    switch (sort) {
-      case UserSort.username_asc:
-        orderBy = [{ username: 'asc' }];
+    switch (sortBy) {
+      case UserSortBy.username:
+        orderBy = [{ username: sortOrder }];
         break;
-      case UserSort.username_desc:
-        orderBy = [{ username: 'desc' }];
+      case UserSortBy.recipes_count:
+        orderBy = [
+          { recipes: { _count: sortOrder } },
+          { username: 'asc' },
+        ];
         break;
-      case UserSort.recipes_count_desc:
-        orderBy = [{ recipes: { _count: 'desc' } }, { username: 'asc' }];
-        break;
-      case UserSort.newest:
-        orderBy = [{ created_at: 'desc' }, { id: 'desc' }];
-        break;
-      case UserSort.oldest:
-        orderBy = [{ created_at: 'asc' }, { id: 'asc' }];
-        break;
-      default:
-        orderBy = [{ recipes: { _count: 'desc' } }, { username: 'asc' }];
+      case UserSortBy.created_at:
+        orderBy = [
+          { created_at: sortOrder },
+          { id: sortOrder },
+        ];
         break;
     }
 
