@@ -41,6 +41,7 @@ import {
   AdminUserResponseDto,
   PaginatedAdminUsersResponseDto,
 } from './dto/admin-user-response.dto';
+import { BanHistoryItemDto } from '../reports/dto/ban-history.dto';
 import { avatarMulterOptions } from '../users/avatar.multer';
 import {
   ApiBadRequestResponseDto,
@@ -91,6 +92,78 @@ export class AdminController {
     @Query() query: AdminSearchUserQueryDto,
   ): Promise<PaginatedAdminUsersResponseDto> {
     return await this.adminService.getUsers(query);
+  }
+
+  /**
+   * Retrieve full chronological sanction audit trail for a user (Admin only).
+   */
+  @ApiOperation({
+    summary: 'Get user ban history (Admin only)',
+    description:
+      'Returns chronological sanction audit records for repeat offender investigation.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Numeric user identifier',
+    example: 42,
+  })
+  @ApiOkResponse({
+    description: 'List of historical ban events',
+    type: [BanHistoryItemDto],
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or expired authentication token',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: Requires administrator privileges',
+    type: ApiForbiddenResponseDto,
+  })
+  @Get(':id/ban-history')
+  async getUserBanHistory(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<BanHistoryItemDto[]> {
+    return await this.adminService.getUserBanHistory(id);
+  }
+
+  /**
+   * Retrieve detailed administrative user profile including repeat offender ban count (Admin only).
+   */
+  @ApiOperation({
+    summary: 'Get user details (Admin only)',
+    description:
+      'Retrieves administrative view of a user profile including repeat offender ban counts.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Numeric user identifier',
+    example: 42,
+  })
+  @ApiOkResponse({
+    description: 'User details',
+    type: AdminUserResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or expired authentication token',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: Requires administrator privileges',
+    type: ApiForbiddenResponseDto,
+  })
+  @Get(':id')
+  async getUser(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<AdminUserResponseDto> {
+    return await this.adminService.getUserById(id);
   }
 
   /**

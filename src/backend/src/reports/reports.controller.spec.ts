@@ -41,7 +41,7 @@ describe('ReportsController', () => {
       const dto = {
         subject: ReportSubject.recipe,
         target_id: 10,
-        reason: ReportReason.harassment,
+        reason: ReportReason.harassment_bullying,
         description: 'Abusive content',
       };
       const expectedResult = {
@@ -95,7 +95,7 @@ describe('ReportsController', () => {
         reporter_id: 5,
         subject: ReportSubject.recipe,
         target_id: 10,
-        reason: ReportReason.harassment,
+        reason: ReportReason.harassment_bullying,
         description: null,
         status: ReportStatus.reviewed,
         resolution_notes: 'Reviewed and closed',
@@ -106,7 +106,11 @@ describe('ReportsController', () => {
 
       const result = await controller.updateReport(1, dto, caller);
 
-      expect(mockReportsService.updateReport).toHaveBeenCalledWith(1, dto, caller);
+      expect(mockReportsService.updateReport).toHaveBeenCalledWith(
+        1,
+        dto,
+        caller,
+      );
       expect(result).toEqual(expectedResult);
     });
   });

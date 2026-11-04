@@ -3,6 +3,7 @@ import { AdminService } from './admin.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
+import { BanHistoryService } from '../reports/ban-history.service';
 import {
   Course,
   OwnerType,
@@ -139,12 +140,20 @@ describe('Admin User Governance & Content Lifecycle Integration Suite', () => {
       processAvatarFile: jest.fn(),
     };
 
+    const mockBanHistoryService = {
+      recordBan: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      getPreviousBansCount: jest.fn().mockResolvedValue(0),
+      getUserBanHistory: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
         RecipeProjection,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ImageProcessingService, useValue: mockImageProcessing },
+        { provide: BanHistoryService, useValue: mockBanHistoryService },
       ],
     }).compile();
 

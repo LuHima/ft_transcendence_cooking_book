@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+import { BanHistoryService } from '../reports/ban-history.service';
 import { OwnerType, Role, UserStatus } from '@prisma/client';
 import {
   BadRequestException,
@@ -16,6 +17,7 @@ describe('AdminService', () => {
   let service: AdminService;
   let prisma: PrismaService;
   let imageProcessingService: ImageProcessingService;
+  let mockBanHistoryService: any;
 
   const mockAdminUser = {
     id: 1,
@@ -90,11 +92,19 @@ describe('AdminService', () => {
       }),
     };
 
+    mockBanHistoryService = {
+      recordBan: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      getPreviousBansCount: jest.fn().mockResolvedValue(0),
+      getUserBanHistory: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ImageProcessingService, useValue: mockImageProcessing },
+        { provide: BanHistoryService, useValue: mockBanHistoryService },
       ],
     }).compile();
 
@@ -120,7 +130,7 @@ describe('AdminService', () => {
         orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
         skip: 0,
         take: 10,
-        include: { _count: { select: { recipes: true } } },
+        include: { _count: { select: { recipes: true, ban_history: true } } },
       });
       expect(result.items).toHaveLength(2);
       expect(result.total).toBe(2);
@@ -146,7 +156,7 @@ describe('AdminService', () => {
         orderBy: [{ username: 'asc' }],
         skip: 0,
         take: 20,
-        include: { _count: { select: { recipes: true } } },
+        include: { _count: { select: { recipes: true, ban_history: true } } },
       });
     });
 
@@ -167,7 +177,7 @@ describe('AdminService', () => {
         orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
         skip: 0,
         take: 20,
-        include: { _count: { select: { recipes: true } } },
+        include: { _count: { select: { recipes: true, ban_history: true } } },
       });
     });
 
@@ -188,6 +198,65 @@ describe('AdminService', () => {
           orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
         }),
       );
+    });
+  });
+
+  describe('getUserById', () => {
+    it('returns administrative user details including previous_bans_count', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        _count: { recipes: 12, ban_history: 2 },
+      });
+
+      const result = await service.getUserById(2);
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 2 },
+        include: { _count: { select: { recipes: true, ban_history: true } } },
+      });
+      expect(result.id).toBe(2);
+      expect(result.previous_bans_count).toBe(2);
+    });
+
+    it('throws HttpException with 404 when user is not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getUserById(999)).rejects.toThrow();
+    });
+  });
+
+  describe('getUserBanHistory', () => {
+    it('delegates lookup to banHistoryService when user exists', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 2 });
+      const mockHistory = [
+        {
+          id: 'ban-1',
+          user_id: 2,
+          banned_by_id: 1,
+          reason: 'spam_scam',
+          duration_days: 7,
+          is_permanent: false,
+          banned_at: new Date(),
+        },
+      ];
+      (mockBanHistoryService.getUserBanHistory as jest.Mock).mockResolvedValue(
+        mockHistory,
+      );
+
+      const result = await service.getUserBanHistory(2);
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 2 },
+        select: { id: true },
+      });
+      expect(mockBanHistoryService.getUserBanHistory).toHaveBeenCalledWith(2);
+      expect(result).toEqual(mockHistory);
+    });
+
+    it('throws HttpException with 404 when target user is not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getUserBanHistory(999)).rejects.toThrow();
     });
   });
 

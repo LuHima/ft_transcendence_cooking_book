@@ -7,14 +7,26 @@ import {
 import { PrismaService } from 'prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
 import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
+import { UpdateReportDto, ReportAction } from './dto/update-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
 import {
   ReportItemDto,
   PaginatedReportsResponseDto,
 } from './dto/report-response.dto';
-import { Prisma, ReportStatus, ReportSubject, Role, UserStatus } from '@prisma/client';
+import {
+  Prisma,
+  ReportReason,
+  ReportStatus,
+  ReportSubject,
+  Role,
+  UserStatus,
+} from '@prisma/client';
 import { createHttpException, errors } from '../common/config/error.config';
+import { BanHistoryService } from './ban-history.service';
+import {
+  getDefaultBanDuration,
+  MAX_MODERATOR_BAN_DAYS,
+} from './constants/ban-duration-policy.constant';
 
 @Injectable()
 export class ReportsService {
@@ -23,6 +35,7 @@ export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly recipeService: RecipeService,
+    private readonly banHistoryService: BanHistoryService,
   ) {}
 
   /**
@@ -75,7 +88,7 @@ export class ReportsService {
     }
 
     // 3. Create report
-    return await this.prisma.report.create({
+    const created = await this.prisma.report.create({
       data: {
         reporter_id: reporterId,
         subject: dto.subject,
@@ -84,10 +97,16 @@ export class ReportsService {
         description: dto.description?.trim() || null,
       },
     });
+
+    return {
+      ...created,
+      previous_bans_count: 0,
+    };
   }
 
   /**
-   * Retrieve paginated content reports with optional status and subject filtering.
+   * Retrieve paginated content reports with optional status and subject filtering,
+   * hydrated with previous_bans_count for repeat offender tracking.
    */
   async getReports(
     query: ReportQueryDto,
@@ -111,10 +130,41 @@ export class ReportsService {
       this.prisma.report.count({ where }),
     ]);
 
-    const total_pages = Math.ceil(total / limit);
+    // Hydrate previous_bans_count for each report item
+    const hydratedItems: ReportItemDto[] = await Promise.all(
+      items.map(async (report) => {
+        let targetUserId: number | null = null;
+        if (report.subject === ReportSubject.user) {
+          targetUserId = report.target_id;
+        } else if (report.subject === ReportSubject.recipe) {
+          const r = await this.prisma.recipe.findUnique({
+            where: { id: report.target_id },
+            select: { user_id: true },
+          });
+          targetUserId = r?.user_id ?? null;
+        } else if (report.subject === ReportSubject.comment) {
+          const c = await this.prisma.comment.findUnique({
+            where: { id: report.target_id },
+            select: { user_id: true },
+          });
+          targetUserId = c?.user_id ?? null;
+        }
+
+        const count = targetUserId
+          ? await this.banHistoryService.getPreviousBansCount(targetUserId)
+          : 0;
+
+        return {
+          ...report,
+          previous_bans_count: count,
+        };
+      }),
+    );
+
+    const total_pages = Math.ceil(total / limit) || 1;
 
     return {
-      items,
+      items: hydratedItems,
       total,
       page,
       limit,
@@ -125,8 +175,9 @@ export class ReportsService {
   }
 
   /**
-   * Update report status, apply recipe suspension or user ban sanctions,
-   * emit audit logs, and record moderation resolution details.
+   * Update report status, execute composite resolution actions atomically,
+   * apply content takedown or user bans, evict active sessions, record ban history,
+   * and store dual rationale (user-facing explanation vs internal audit notes).
    */
   async updateReport(
     reportId: number,
@@ -140,86 +191,223 @@ export class ReportsService {
       throw new NotFoundException('Report not found');
     }
 
-    const resolutionAction = dto.resolution || dto.action;
+    const callerRole = typeof caller === 'object' ? caller.role : undefined;
+    const callerId = typeof caller === 'number' ? caller : caller?.id;
 
-    // Content Report Resolution Integration for Recipes (Ticket #106)
-    if (
-      report.subject === ReportSubject.recipe &&
-      dto.status === ReportStatus.action_taken
-    ) {
-      if (resolutionAction === 'delete_content') {
-        // Enforces role hierarchy (throws 403 Forbidden if moderator resolves against admin recipe)
-        await this.recipeService.deactivateRecipe(
-          report.target_id,
-          caller ?? { id: 0, role: Role.admin },
-        );
+    // Normalize resolution actions: supports actions array as well as legacy resolution/action string
+    let actions: ReportAction[] = [];
+    if (dto.actions && dto.actions.length > 0) {
+      actions = [...dto.actions];
+    } else if (dto.resolution || dto.action) {
+      const legacy = (dto.resolution || dto.action) as ReportAction;
+      if (Object.values(ReportAction).includes(legacy)) {
+        actions = [legacy];
+      }
+    }
 
-        this.logger.log(
-          `Audit: Report #${reportId} resolved with delete_content. Recipe #${report.target_id} suspended.`,
-        );
-      } else if (resolutionAction === 'ban') {
-        const recipe = await this.prisma.recipe.findUnique({
-          where: { id: report.target_id },
-          include: {
-            user: { select: { id: true, role: true } },
-          },
-        });
+    // Automatically resolve status if not explicitly passed
+    let targetStatus = dto.status;
+    if (!targetStatus) {
+      if (actions.includes(ReportAction.dismiss)) {
+        targetStatus = ReportStatus.dismissed;
+      } else if (actions.length > 0) {
+        targetStatus = ReportStatus.action_taken;
+      } else {
+        targetStatus = report.status;
+      }
+    }
 
-        if (recipe && recipe.user_id) {
-          const callerRole =
-            typeof caller === 'object' ? caller.role : undefined;
-          if (
-            callerRole === Role.moderator &&
-            recipe.user?.role === Role.admin
-          ) {
+    const effectiveReason = dto.resolution_reason ?? report.reason;
+
+    return await this.prisma.$transaction(async (tx) => {
+      let resolvedTargetUserId: number | null = null;
+
+      // Handle actions that require target author / content resolution
+      if (
+        actions.includes(ReportAction.delete_content) ||
+        actions.includes(ReportAction.ban)
+      ) {
+        let targetAuthorRole: Role | undefined;
+
+        if (report.subject === ReportSubject.recipe) {
+          const recipe = await tx.recipe.findUnique({
+            where: { id: report.target_id },
+            include: { user: { select: { id: true, role: true } } },
+          });
+          if (!recipe) {
+            throw new NotFoundException('Target recipe not found');
+          }
+          resolvedTargetUserId = recipe.user_id;
+          targetAuthorRole = recipe.user?.role;
+        } else if (report.subject === ReportSubject.comment) {
+          const comment = await tx.comment.findUnique({
+            where: { id: report.target_id },
+            include: { user: { select: { id: true, role: true } } },
+          });
+          if (!comment) {
+            throw new NotFoundException('Target comment not found');
+          }
+          resolvedTargetUserId = comment.user_id;
+          targetAuthorRole = comment.user?.role;
+        } else if (report.subject === ReportSubject.user) {
+          const user = await tx.user.findFirst({
+            where: { id: report.target_id, deleted_at: null },
+            select: { id: true, role: true },
+          });
+          if (!user) {
+            throw new NotFoundException('Target user not found');
+          }
+          resolvedTargetUserId = user.id;
+          targetAuthorRole = user.role;
+        }
+
+        // Role hierarchy safeguard: Moderator cannot moderate or ban Administrator
+        if (callerRole === Role.moderator && targetAuthorRole === Role.admin) {
+          if (actions.includes(ReportAction.delete_content)) {
             throw createHttpException(
               errors.common.forbidden,
               'Moderators cannot moderate or delete administrator content',
             );
           }
+          if (actions.includes(ReportAction.ban)) {
+            throw createHttpException(
+              errors.moderation.cannotBanAdmin,
+              'Moderators cannot moderate or ban administrator',
+            );
+          }
+        }
 
-          // Transition user status to banned
-          await this.prisma.user.update({
-            where: { id: recipe.user_id },
-            data: { status: UserStatus.banned },
-          });
-
-          // Automatically suspend all active recipes authored by the banned user
-          await this.prisma.recipe.updateMany({
-            where: { user_id: recipe.user_id, is_active: true },
-            data: { is_active: false },
-          });
-
-          // Evict active JWT sessions
-          if ((this.prisma as any).jwtSession) {
-            await (this.prisma as any).jwtSession.deleteMany({
-              where: { id_user: recipe.user_id },
+        // Content Deactivation Action
+        if (actions.includes(ReportAction.delete_content)) {
+          if (report.subject === ReportSubject.recipe) {
+            await tx.recipe.update({
+              where: { id: report.target_id },
+              data: { is_active: false },
             });
+            this.logger.log(
+              `Audit: Report #${reportId} resolved with delete_content. Recipe #${report.target_id} suspended.`,
+            );
+          } else if (report.subject === ReportSubject.comment) {
+            await tx.comment.update({
+              where: { id: report.target_id },
+              data: {
+                is_active: false,
+                content: '[Comment removed by moderation]',
+              },
+            });
+            this.logger.log(
+              `Audit: Report #${reportId} resolved with delete_content. Comment #${report.target_id} deactivated.`,
+            );
+          }
+        }
+
+        // Account Ban Action
+        if (actions.includes(ReportAction.ban)) {
+          const isPermanent = Boolean(dto.is_permanent);
+
+          // Moderator Cap Enforcement: maximum 180 days, no permanent bans
+          if (callerRole === Role.moderator) {
+            if (isPermanent) {
+              throw createHttpException(
+                errors.moderation.banCapExceeded,
+                'Moderators cannot issue permanent bans',
+              );
+            }
+            if (
+              dto.ban_duration_days &&
+              dto.ban_duration_days > MAX_MODERATOR_BAN_DAYS
+            ) {
+              throw createHttpException(
+                errors.moderation.banCapExceeded,
+                'Ban duration cannot exceed 180 days for moderators',
+              );
+            }
           }
 
-          this.logger.log(
-            `Audit: Report #${reportId} resolved with ban. User #${recipe.user_id} banned and authored recipes suspended.`,
-          );
+          // Calculate duration and expiration
+          let durationDays: number | null = null;
+          let bannedUntil: Date | null = null;
+
+          if (!isPermanent) {
+            durationDays =
+              dto.ban_duration_days ?? getDefaultBanDuration(effectiveReason);
+            bannedUntil = new Date(Date.now() + durationDays * 86400000);
+          }
+
+          if (resolvedTargetUserId) {
+            // Update user status and expiration
+            await tx.user.update({
+              where: { id: resolvedTargetUserId },
+              data: {
+                status: UserStatus.banned,
+                banned_until: bannedUntil,
+              },
+            });
+
+            // Suspend all active recipes authored by the banned user
+            await tx.recipe.updateMany({
+              where: { user_id: resolvedTargetUserId, is_active: true },
+              data: { is_active: false },
+            });
+
+            // Evict active JWT sessions
+            await tx.jwtSession.deleteMany({
+              where: { id_user: resolvedTargetUserId },
+            });
+
+            // Record in immutable BanHistory ledger
+            await this.banHistoryService.recordBan(
+              {
+                userId: resolvedTargetUserId,
+                bannedById: callerId ?? 0,
+                reason: effectiveReason,
+                description: dto.resolution_description ?? null,
+                durationDays,
+                isPermanent,
+                reportId: report.id,
+                expiresAt: bannedUntil,
+              },
+              tx,
+            );
+
+            this.logger.log(
+              `Audit: Report #${reportId} resolved with ban. User #${resolvedTargetUserId} banned (duration: ${durationDays ?? 'permanent'} days).`,
+            );
+          }
         }
       }
-    }
 
-    const callerId = typeof caller === 'number' ? caller : caller?.id;
+      // Update report record
+      const updatedReport = await tx.report.update({
+        where: { id: reportId },
+        data: {
+          status: targetStatus,
+          resolution_reason: effectiveReason,
+          resolution_description: dto.resolution_description?.trim() || null,
+          resolution_notes:
+            dto.resolution_notes !== undefined
+              ? dto.resolution_notes.trim() || null
+              : undefined,
+          ...(callerId
+            ? {
+                resolved_by_id: callerId,
+                resolved_at: new Date(),
+              }
+            : {}),
+        },
+      });
 
-    return await this.prisma.report.update({
-      where: { id: reportId },
-      data: {
-        status: dto.status,
-        ...(dto.resolution_notes !== undefined
-          ? { resolution_notes: dto.resolution_notes.trim() || null }
-          : {}),
-        ...(callerId
-          ? {
-              resolved_by_id: callerId,
-              resolved_at: new Date(),
-            }
-          : {}),
-      },
+      const previousBansCount = resolvedTargetUserId
+        ? await this.banHistoryService.getPreviousBansCount(
+            resolvedTargetUserId,
+            tx,
+          )
+        : 0;
+
+      return {
+        ...updatedReport,
+        previous_bans_count: previousBansCount,
+      };
     });
   }
 }

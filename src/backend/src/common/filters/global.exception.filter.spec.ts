@@ -4,6 +4,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
+  HttpException,
   ArgumentsHost,
 } from '@nestjs/common';
 
@@ -183,6 +184,42 @@ describe('GlobalExceptionFilter (Centralized Dispatcher)', () => {
         timestamp: expect.any(String),
         path: '/api/recipes/42',
         message: ['title should not be empty', 'prep_time must be positive'],
+      });
+    });
+
+    it('preserves code and details envelope for AccountBannedException', () => {
+      const exception = new HttpException(
+        {
+          statusCode: 403,
+          code: 'ACCOUNT_BANNED',
+          message:
+            'Your account has been suspended for violating community guidelines.',
+          details: {
+            reason: 'harassment_bullying',
+            description: 'Abusive language',
+            banned_until: '2026-12-04T12:00:00.000Z',
+            is_permanent: false,
+          },
+        },
+        403,
+      );
+
+      filter.catch(exception, mockHost);
+
+      expect(mockStatus).toHaveBeenCalledWith(403);
+      expect(mockJson).toHaveBeenCalledWith({
+        statusCode: 403,
+        timestamp: expect.any(String),
+        path: '/api/recipes/42',
+        message:
+          'Your account has been suspended for violating community guidelines.',
+        code: 'ACCOUNT_BANNED',
+        details: {
+          reason: 'harassment_bullying',
+          description: 'Abusive language',
+          banned_until: '2026-12-04T12:00:00.000Z',
+          is_permanent: false,
+        },
       });
     });
 

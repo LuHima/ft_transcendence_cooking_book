@@ -4,9 +4,10 @@ import { AdminCommentsController } from './admin-comments.controller';
 import { AdminService } from './admin.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+import { ReportsModule } from '../reports/reports.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ReportsModule],
   controllers: [AdminController, AdminCommentsController],
   providers: [AdminService, ImageProcessingService],
   exports: [AdminService],

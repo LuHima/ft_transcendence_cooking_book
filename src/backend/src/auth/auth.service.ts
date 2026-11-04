@@ -13,10 +13,12 @@ import * as qrcode from 'qrcode';
 import { generateSecret, generateURI, verify } from 'otplib';
 import { createHttpException, errors } from 'src/common/config/error.config';
 import { EncryptionService } from './encryption.service';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, ReportReason, User, UserStatus } from '@prisma/client';
 import { isNumber } from 'class-validator';
 import { TwoFactorCode } from './auth.controller';
 import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
+import { BanHistoryService } from '../reports/ban-history.service';
+import { AccountBannedException } from './exceptions/account-banned.exception';
 
 interface PayLoadInterface {
   id: number;
@@ -32,6 +34,7 @@ export class AuthService {
     private jwtService: JwtService,
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
+    private banHistoryService: BanHistoryService,
   ) {}
 
   private async jwtSessionSignin(user: User) {
@@ -135,7 +138,46 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('invalid password or email');
     }
-    if (user.status !== 'active' || user.deleted_at) {
+    if (user.deleted_at) {
+      throw createHttpException(errors.users.inactive);
+    }
+    if (user.status === UserStatus.banned) {
+      const isTemporary =
+        (user as any).banned_until !== null &&
+        (user as any).banned_until !== undefined;
+      const isExpired =
+        isTemporary && new Date((user as any).banned_until) < new Date();
+
+      if (isExpired) {
+        // Automatically reactivate expired temporary ban
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            status: UserStatus.active,
+            banned_until: null,
+          },
+        });
+        await this.banHistoryService.recordUnban(
+          user.id,
+          null,
+          'Automated expiration upon login',
+        );
+        user.status = UserStatus.active;
+      } else {
+        const latestBan = await this.banHistoryService.getLatestActiveBan(
+          user.id,
+        );
+        throw new AccountBannedException({
+          reason: latestBan?.reason ?? ReportReason.other,
+          description: latestBan?.description ?? null,
+          banned_until: (user as any).banned_until ?? null,
+          is_permanent:
+            latestBan?.is_permanent ??
+            ((user as any).banned_until === null ||
+              (user as any).banned_until === undefined),
+        });
+      }
+    } else if (user.status !== UserStatus.active) {
       throw createHttpException(errors.users.inactive);
     }
     if (!(await bcrypt.compare(pass, user.password_hash))) {

@@ -179,6 +179,30 @@ export class AdminUserResponseDto {
   created_at: Date;
 
   /**
+   * Active ban expiration timestamp (null if permanent or not banned).
+   * @example null
+   */
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description:
+      'Active ban expiration timestamp (null if permanent or not banned)',
+    example: null,
+    nullable: true,
+  })
+  banned_until?: Date | null;
+
+  /**
+   * Total number of prior sanctions/bans recorded for this user.
+   * @example 0
+   */
+  @ApiProperty({
+    description: 'Total number of prior sanctions/bans recorded for this user',
+    example: 0,
+  })
+  previous_bans_count?: number;
+
+  /**
    * Deletion timestamp if soft deleted.
    * @example null
    */

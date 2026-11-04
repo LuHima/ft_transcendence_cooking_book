@@ -88,6 +88,16 @@
               }
             }
           },
+          "403": {
+            "description": "Forbidden: Account suspended (banned)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountBannedResponseDto"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -4850,6 +4860,303 @@
         ]
       }
     },
+    "/api/reports": {
+      "post": {
+        "description": "Reports an offensive recipe, comment, or user profile for moderation review.",
+        "operationId": "ReportsController_createReport",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Report successfully submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Target item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A pending report already exists for this item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Submit content report",
+        "tags": [
+          "Reports"
+        ]
+      },
+      "get": {
+        "description": "Retrieves a paginated list of content reports with optional filtering by status and subject.",
+        "operationId": "ReportsController_getReports",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter reports by current review status",
+            "schema": {
+              "$ref": "#/components/schemas/ReportStatus"
+            }
+          },
+          {
+            "name": "subject",
+            "required": false,
+            "in": "query",
+            "description": "Filter reports by target entity type",
+            "schema": {
+              "$ref": "#/components/schemas/ReportSubject"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated moderation queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedReportsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Insufficient privileges to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "List reports queue (Admin/Moderator only)",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/reports/{id}": {
+      "patch": {
+        "description": "Resolves a content report with atomic composite actions (e.g. content suspension and author account ban), enforcing moderator disciplinary caps and storing dual-purpose rationale (public explanation vs internal staff notes).",
+        "operationId": "ReportsController_updateReport",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric report identifier",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or ID format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Moderator cannot resolve report against administrator content with takedown/ban",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Report not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Resolve report with composite actions (Admin/Moderator only)",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
     "/api/friends": {
       "get": {
         "description": "Returns a paginated list of confirmed bidirectional friends with optional username search.",
@@ -5545,303 +5852,6 @@
         ]
       }
     },
-    "/api/reports": {
-      "post": {
-        "description": "Reports an offensive recipe, comment, or user profile for moderation review.",
-        "operationId": "ReportsController_createReport",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateReportDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Report successfully submitted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportItemDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or validation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Target item not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "A pending report already exists for this item",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Submit content report",
-        "tags": [
-          "Reports"
-        ]
-      },
-      "get": {
-        "description": "Retrieves a paginated list of content reports with optional filtering by status and subject.",
-        "operationId": "ReportsController_getReports",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "description": "1-based page window index",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "example": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of items per page window (1 to 100)",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20,
-              "example": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "description": "Filter reports by current review status",
-            "schema": {
-              "$ref": "#/components/schemas/ReportStatus"
-            }
-          },
-          {
-            "name": "subject",
-            "required": false,
-            "in": "query",
-            "description": "Filter reports by target entity type",
-            "schema": {
-              "$ref": "#/components/schemas/ReportSubject"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated moderation queue",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedReportsResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid query parameters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: Insufficient privileges to access this resource",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "List reports queue (Admin/Moderator only)",
-        "tags": [
-          "Reports"
-        ]
-      }
-    },
-    "/api/reports/{id}": {
-      "patch": {
-        "description": "Updates status and optional resolution notes of a content report.",
-        "operationId": "ReportsController_updateReport",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Numeric report identifier",
-            "schema": {
-              "example": 1,
-              "type": "number"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateReportDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Report successfully updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportItemDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or ID format",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Moderator cannot resolve report against administrator content with takedown/ban",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Report not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Resolve report (Admin/Moderator only)",
-        "tags": [
-          "Reports"
-        ]
-      }
-    },
     "/api/admin/users": {
       "get": {
         "description": "Returns paginated accounts matching optional role, lifecycle status, search, and sorting criteria. Includes inactive, disabled, and banned accounts.",
@@ -6066,7 +6076,152 @@
         ]
       }
     },
+    "/api/admin/users/{id}/ban-history": {
+      "get": {
+        "description": "Returns chronological sanction audit records for repeat offender investigation.",
+        "operationId": "AdminController_getUserBanHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user identifier",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of historical ban events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BanHistoryItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get user ban history (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      }
+    },
     "/api/admin/users/{id}": {
+      "get": {
+        "description": "Retrieves administrative view of a user profile including repeat offender ban counts.",
+        "operationId": "AdminController_getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric user identifier",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or expired authentication token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Requires administrator privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get user details (Admin only)",
+        "tags": [
+          "Admin Users"
+        ]
+      },
       "patch": {
         "description": "Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling status mutations. Atomically restores platform-custody content on reactivation to active status.",
         "operationId": "AdminController_updateUser",
@@ -6857,6 +7012,107 @@
           "timestamp",
           "path",
           "message"
+        ]
+      },
+      "ReportReason": {
+        "type": "string",
+        "enum": [
+          "spam_scam",
+          "harassment_bullying",
+          "hate_speech",
+          "sexual_content",
+          "violence_threats",
+          "copyright_infringement",
+          "impersonation_misinformation",
+          "other"
+        ],
+        "description": "Policy violation reason category"
+      },
+      "BannedDetailsDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "description": "Policy violation reason category",
+            "example": "harassment_bullying",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "User-facing explanation of the infraction",
+            "example": "Your account was suspended due to repeated abusive comments on community recipes."
+          },
+          "banned_until": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Scheduled ban expiration timestamp (null if permanent)",
+            "example": "2026-12-04T12:00:00.000Z"
+          },
+          "is_permanent": {
+            "type": "boolean",
+            "description": "Indicates whether the disciplinary ban is permanent",
+            "example": false
+          }
+        },
+        "required": [
+          "reason",
+          "is_permanent"
+        ]
+      },
+      "AccountBannedResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403,
+            "description": "HTTP status code"
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden",
+            "description": "HTTP error category"
+          },
+          "code": {
+            "type": "string",
+            "example": "ACCOUNT_BANNED",
+            "description": "Machine-readable ban error code"
+          },
+          "message": {
+            "type": "string",
+            "example": "Your account has been suspended for violating community guidelines.",
+            "description": "User-facing suspension message"
+          },
+          "details": {
+            "description": "Structured details of the disciplinary sanction",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BannedDetailsDto"
+              }
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-04T12:00:00.000Z",
+            "description": "Timestamp when the response was generated"
+          },
+          "path": {
+            "type": "string",
+            "example": "/api/auth/signin",
+            "description": "Request path"
+          }
+        },
+        "required": [
+          "statusCode",
+          "error",
+          "code",
+          "message",
+          "details"
         ]
       },
       "SignUpUserDto": {
@@ -9661,6 +9917,319 @@
           "message"
         ]
       },
+      "ReportSubject": {
+        "type": "string",
+        "enum": [
+          "recipe",
+          "comment",
+          "user"
+        ],
+        "description": "Type of entity being reported (recipe, comment, user)"
+      },
+      "CreateReportDto": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "description": "Type of entity being reported (recipe, comment, user)",
+            "example": "recipe",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportSubject"
+              }
+            ]
+          },
+          "target_id": {
+            "type": "number",
+            "description": "Primary key identifier of the reported item",
+            "example": 42,
+            "minimum": 1
+          },
+          "reason": {
+            "description": "Reason category for the report",
+            "example": "spam_scam",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed explanation of the violation (maximum 1000 characters)",
+            "example": "This post contains repetitive promotional links.",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "subject",
+          "target_id",
+          "reason"
+        ]
+      },
+      "ReportStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "reviewed",
+          "dismissed",
+          "action_taken"
+        ],
+        "description": "Current moderation triage status"
+      },
+      "ReportItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique report identifier",
+            "example": 1
+          },
+          "reporter_id": {
+            "type": "number",
+            "description": "User ID of the member who submitted the report",
+            "example": 5
+          },
+          "subject": {
+            "description": "Target subject entity type",
+            "example": "recipe",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportSubject"
+              }
+            ]
+          },
+          "target_id": {
+            "type": "number",
+            "description": "Target entity ID",
+            "example": 42
+          },
+          "reason": {
+            "description": "Justification reason",
+            "example": "spam_scam",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description provided by reporter",
+            "example": "Repeated advertising links"
+          },
+          "status": {
+            "description": "Current moderation triage status",
+            "example": "pending",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportStatus"
+              }
+            ]
+          },
+          "resolution_notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Resolution notes recorded by moderator or admin",
+            "example": null
+          },
+          "resolution_reason": {
+            "nullable": true,
+            "description": "Formal policy violation category resolved",
+            "example": null,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "resolution_description": {
+            "type": "string",
+            "nullable": true,
+            "description": "User-facing explanation of the disciplinary action",
+            "example": null
+          },
+          "previous_bans_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Previous sanctions count for recidivism tracking",
+            "example": 0
+          },
+          "resolved_by_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Staff member who resolved the report",
+            "example": null
+          },
+          "resolved_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "Timestamp when report was resolved",
+            "example": null,
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when report was submitted",
+            "example": "2026-11-02T12:00:00.000Z",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Timestamp when report was last modified",
+            "example": "2026-11-02T12:00:00.000Z",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "reporter_id",
+          "subject",
+          "target_id",
+          "reason",
+          "description",
+          "status",
+          "resolution_notes",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "PaginatedReportsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of reports",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of reports",
+            "example": 1
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Number of items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total number of available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Flag indicating if next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Flag indicating if previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
+      "UpdateReportDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "description": "Updated report triage status",
+            "example": "action_taken",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportStatus"
+              }
+            ]
+          },
+          "actions": {
+            "description": "Composite moderation actions (delete_content, ban, warn, dismiss)",
+            "example": [
+              "delete_content",
+              "ban"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "delete_content",
+                "ban",
+                "warn",
+                "dismiss"
+              ]
+            }
+          },
+          "resolution_reason": {
+            "description": "Formal policy violation category for resolution",
+            "example": "harassment_bullying",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "resolution_description": {
+            "type": "string",
+            "description": "User-facing explanation delivered to the penalized community member",
+            "example": "Your content was removed for violating community safety policies.",
+            "maxLength": 1000
+          },
+          "resolution_notes": {
+            "type": "string",
+            "description": "Internal staff notes documenting findings or action taken (confidential)",
+            "example": "Content reviewed and removed; user account banned.",
+            "maxLength": 1000
+          },
+          "ban_duration_days": {
+            "type": "number",
+            "description": "Custom ban duration in days (capped at 180 days for moderators)",
+            "example": 30,
+            "minimum": 1
+          },
+          "is_permanent": {
+            "type": "boolean",
+            "description": "Permanent ban flag (restricted to administrators, rejected for moderators)",
+            "example": false
+          },
+          "resolution": {
+            "type": "string",
+            "description": "Specific moderation action executed when resolving the report with action_taken (delete_content, ban, warn, dismiss)",
+            "example": "delete_content",
+            "enum": [
+              "delete_content",
+              "ban",
+              "warn",
+              "dismiss"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "description": "Alternative alias for resolution action (delete_content, ban, warn, dismiss)",
+            "example": "delete_content",
+            "enum": [
+              "delete_content",
+              "ban",
+              "warn",
+              "dismiss"
+            ]
+          }
+        }
+      },
       "FriendRequestItemDto": {
         "type": "object",
         "properties": {
@@ -9780,269 +10349,6 @@
           "message"
         ]
       },
-      "ReportSubject": {
-        "type": "string",
-        "enum": [
-          "recipe",
-          "comment",
-          "user"
-        ],
-        "description": "Type of entity being reported (recipe, comment, user)"
-      },
-      "ReportReason": {
-        "type": "string",
-        "enum": [
-          "spam",
-          "harassment",
-          "inappropriate_content",
-          "hate_speech",
-          "copyright",
-          "other"
-        ],
-        "description": "Reason category for the report"
-      },
-      "CreateReportDto": {
-        "type": "object",
-        "properties": {
-          "subject": {
-            "description": "Type of entity being reported (recipe, comment, user)",
-            "example": "recipe",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReportSubject"
-              }
-            ]
-          },
-          "target_id": {
-            "type": "number",
-            "description": "Primary key identifier of the reported item",
-            "example": 42,
-            "minimum": 1
-          },
-          "reason": {
-            "description": "Reason category for the report",
-            "example": "spam",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReportReason"
-              }
-            ]
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed explanation of the violation (maximum 1000 characters)",
-            "example": "This post contains repetitive promotional links.",
-            "maxLength": 1000
-          }
-        },
-        "required": [
-          "subject",
-          "target_id",
-          "reason"
-        ]
-      },
-      "ReportStatus": {
-        "type": "string",
-        "enum": [
-          "pending",
-          "reviewed",
-          "dismissed",
-          "action_taken"
-        ],
-        "description": "Current moderation triage status"
-      },
-      "ReportItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique report identifier",
-            "example": 1
-          },
-          "reporter_id": {
-            "type": "number",
-            "description": "User ID of the member who submitted the report",
-            "example": 5
-          },
-          "subject": {
-            "description": "Target subject entity type",
-            "example": "recipe",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReportSubject"
-              }
-            ]
-          },
-          "target_id": {
-            "type": "number",
-            "description": "Target entity ID",
-            "example": 42
-          },
-          "reason": {
-            "description": "Justification reason",
-            "example": "spam",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReportReason"
-              }
-            ]
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "description": "Description provided by reporter",
-            "example": "Repeated advertising links"
-          },
-          "status": {
-            "description": "Current moderation triage status",
-            "example": "pending",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReportStatus"
-              }
-            ]
-          },
-          "resolution_notes": {
-            "type": "string",
-            "nullable": true,
-            "description": "Resolution notes recorded by moderator or admin",
-            "example": null
-          },
-          "resolved_by_id": {
-            "type": "number",
-            "nullable": true,
-            "description": "Staff member who resolved the report",
-            "example": null
-          },
-          "resolved_at": {
-            "type": "string",
-            "nullable": true,
-            "description": "Timestamp when report was resolved",
-            "example": null,
-            "format": "date-time"
-          },
-          "created_at": {
-            "type": "string",
-            "description": "Timestamp when report was submitted",
-            "example": "2026-11-02T12:00:00.000Z",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "description": "Timestamp when report was last modified",
-            "example": "2026-11-02T12:00:00.000Z",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "reporter_id",
-          "subject",
-          "target_id",
-          "reason",
-          "description",
-          "status",
-          "resolution_notes",
-          "created_at",
-          "updated_at"
-        ]
-      },
-      "PaginatedReportsResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "description": "List of reports",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReportItemDto"
-            }
-          },
-          "total": {
-            "type": "number",
-            "description": "Total number of reports",
-            "example": 1
-          },
-          "page": {
-            "type": "number",
-            "description": "Current page number",
-            "example": 1
-          },
-          "limit": {
-            "type": "number",
-            "description": "Number of items per page",
-            "example": 20
-          },
-          "total_pages": {
-            "type": "number",
-            "description": "Total number of available pages",
-            "example": 1
-          },
-          "has_next_page": {
-            "type": "boolean",
-            "description": "Flag indicating if next page exists",
-            "example": false
-          },
-          "has_prev_page": {
-            "type": "boolean",
-            "description": "Flag indicating if previous page exists",
-            "example": false
-          }
-        },
-        "required": [
-          "items",
-          "total",
-          "page",
-          "limit",
-          "total_pages",
-          "has_next_page",
-          "has_prev_page"
-        ]
-      },
-      "UpdateReportDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "description": "Updated report triage status",
-            "example": "reviewed",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ReportStatus"
-              }
-            ]
-          },
-          "resolution_notes": {
-            "type": "string",
-            "description": "Internal staff notes documenting findings or action taken",
-            "example": "Content reviewed and removed; user warned.",
-            "maxLength": 1000
-          },
-          "resolution": {
-            "type": "string",
-            "description": "Specific moderation action executed when resolving the report with action_taken (delete_content, ban, warn, dismiss)",
-            "example": "delete_content",
-            "enum": [
-              "delete_content",
-              "ban",
-              "warn",
-              "dismiss"
-            ]
-          },
-          "action": {
-            "type": "string",
-            "description": "Alternative alias for resolution action (delete_content, ban, warn, dismiss)",
-            "example": "delete_content",
-            "enum": [
-              "delete_content",
-              "ban",
-              "warn",
-              "dismiss"
-            ]
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
       "AdminUserResponseDto": {
         "type": "object",
         "properties": {
@@ -10147,6 +10453,18 @@
             "example": "2026-10-01T12:00:00.000Z",
             "format": "date-time"
           },
+          "banned_until": {
+            "type": "string",
+            "nullable": true,
+            "description": "Active ban expiration timestamp (null if permanent or not banned)",
+            "format": "date-time",
+            "example": null
+          },
+          "previous_bans_count": {
+            "type": "number",
+            "description": "Total number of prior sanctions/bans recorded for this user",
+            "example": 0
+          },
           "deleted_at": {
             "type": "string",
             "nullable": true,
@@ -10224,6 +10542,98 @@
           "total_pages",
           "has_next_page",
           "has_prev_page"
+        ]
+      },
+      "BanHistoryItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique ban event identifier (UUID)",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "user_id": {
+            "type": "number",
+            "description": "Target sanctioned user ID",
+            "example": 42
+          },
+          "banned_by_id": {
+            "type": "number",
+            "description": "Staff user ID who issued the ban",
+            "example": 1
+          },
+          "report_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Originating report ID if ban was issued via report resolution",
+            "example": 10
+          },
+          "reason": {
+            "description": "Policy violation reason",
+            "example": "harassment_bullying",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "User-facing explanation of the sanction",
+            "example": "Harassment in recipe comments"
+          },
+          "duration_days": {
+            "type": "number",
+            "nullable": true,
+            "description": "Ban duration in days (null if permanent)",
+            "example": 30
+          },
+          "is_permanent": {
+            "type": "boolean",
+            "description": "Whether the ban is permanent",
+            "example": false
+          },
+          "banned_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the ban was enacted",
+            "example": "2026-11-04T12:00:00.000Z"
+          },
+          "expires_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Scheduled ban expiration timestamp (null if permanent)",
+            "example": "2026-12-04T12:00:00.000Z"
+          },
+          "unbanned_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Timestamp when the ban was lifted",
+            "example": null
+          },
+          "unbanned_by_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Staff user ID who lifted the ban",
+            "example": null
+          },
+          "unban_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for unbanning",
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "banned_by_id",
+          "reason",
+          "is_permanent",
+          "banned_at"
         ]
       },
       "CreateAdminUserDto": {
@@ -10369,6 +10779,38 @@
               "banned"
             ],
             "type": "string"
+          },
+          "ban_reason": {
+            "description": "Violation category when transitioning status to banned",
+            "example": "harassment_bullying",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReason"
+              }
+            ]
+          },
+          "ban_description": {
+            "type": "string",
+            "description": "User-facing explanation for the ban",
+            "example": "Repeated violations of community conduct policies.",
+            "maxLength": 1000
+          },
+          "ban_duration_days": {
+            "type": "number",
+            "description": "Ban duration in days",
+            "example": 30,
+            "minimum": 1
+          },
+          "is_permanent": {
+            "type": "boolean",
+            "description": "Permanent ban flag",
+            "example": false
+          },
+          "unban_reason": {
+            "type": "string",
+            "description": "Reason for lifting account ban upon reactivation",
+            "example": "Ban appeal reviewed and granted by trust & safety staff.",
+            "maxLength": 1000
           },
           "avatar_url": {
             "type": "string",

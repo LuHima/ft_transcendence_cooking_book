@@ -9,6 +9,9 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EncryptionService } from './encryption.service';
+import { BanHistoryService } from '../reports/ban-history.service';
+import { AccountBannedException } from './exceptions/account-banned.exception';
+import { ReportReason, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import * as otplib from 'otplib';
@@ -44,6 +47,13 @@ describe('AuthService', () => {
       findUnique: jest.Mock;
       update: jest.Mock;
     };
+  };
+  let banHistoryService: {
+    recordBan: jest.Mock;
+    recordUnban: jest.Mock;
+    getPreviousBansCount: jest.Mock;
+    getUserBanHistory: jest.Mock;
+    getLatestActiveBan: jest.Mock;
   };
   let encryptionService: {
     encrypting: jest.Mock;
@@ -98,6 +108,14 @@ describe('AuthService', () => {
       decrypting: jest.fn(),
     };
 
+    banHistoryService = {
+      recordBan: jest.fn(),
+      recordUnban: jest.fn(),
+      getPreviousBansCount: jest.fn(),
+      getUserBanHistory: jest.fn(),
+      getLatestActiveBan: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -105,6 +123,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: jwtService },
         { provide: PrismaService, useValue: prisma },
         { provide: EncryptionService, useValue: encryptionService },
+        { provide: BanHistoryService, useValue: banHistoryService },
       ],
     }).compile();
 
@@ -224,6 +243,95 @@ describe('AuthService', () => {
       await expect(
         service.signIn('mario@example.com', 'Password123!'),
       ).rejects.toThrow(HttpException);
+    });
+
+    it('throws AccountBannedException with structured details when active ban exists', async () => {
+      const bannedUntil = new Date(Date.now() + 10 * 86400000);
+      usersService.getUserByEmail.mockResolvedValue({
+        ...mockUser,
+        status: UserStatus.banned,
+        banned_until: bannedUntil,
+      });
+      banHistoryService.getLatestActiveBan.mockResolvedValue({
+        reason: ReportReason.harassment_bullying,
+        description: 'Abusive language',
+        is_permanent: false,
+      });
+
+      try {
+        await service.signIn('mario@example.com', 'Password123!');
+        fail('Expected AccountBannedException');
+      } catch (err: any) {
+        expect(err).toBeInstanceOf(AccountBannedException);
+        const response = err.getResponse();
+        expect(response.code).toBe('ACCOUNT_BANNED');
+        expect(response.statusCode).toBe(403);
+        expect(response.details).toEqual({
+          reason: ReportReason.harassment_bullying,
+          description: 'Abusive language',
+          banned_until: bannedUntil.toISOString(),
+          is_permanent: false,
+        });
+      }
+    });
+
+    it('throws AccountBannedException for permanent ban with is_permanent=true', async () => {
+      usersService.getUserByEmail.mockResolvedValue({
+        ...mockUser,
+        status: UserStatus.banned,
+        banned_until: null,
+      });
+      banHistoryService.getLatestActiveBan.mockResolvedValue({
+        reason: ReportReason.hate_speech,
+        description: 'Permanent exclusion',
+        is_permanent: true,
+      });
+
+      try {
+        await service.signIn('mario@example.com', 'Password123!');
+        fail('Expected AccountBannedException');
+      } catch (err: any) {
+        expect(err).toBeInstanceOf(AccountBannedException);
+        const response = err.getResponse();
+        expect(response.code).toBe('ACCOUNT_BANNED');
+        expect(response.details.is_permanent).toBe(true);
+        expect(response.details.banned_until).toBeNull();
+      }
+    });
+
+    it('automatically reactivates expired temporary ban upon login and authenticates user', async () => {
+      const pastDate = new Date(Date.now() - 5000);
+      usersService.getUserByEmail.mockResolvedValue({
+        ...mockUser,
+        status: UserStatus.banned,
+        banned_until: pastDate,
+      });
+      prisma.user.update.mockResolvedValue({});
+      banHistoryService.recordUnban.mockResolvedValue({});
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      prisma.jwtSession.findMany.mockResolvedValue([]);
+      prisma.jwtSession.create.mockResolvedValue({ id_session: 1 });
+      jwtService.signAsync
+        .mockResolvedValueOnce('refresh-token')
+        .mockResolvedValueOnce('access-token');
+      jwtService.decode.mockReturnValue({ exp: 1700000000 });
+      prisma.jwtSession.update.mockResolvedValue({});
+
+      const result = await service.signIn('mario@example.com', 'Password123!');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { status: UserStatus.active, banned_until: null },
+      });
+      expect(banHistoryService.recordUnban).toHaveBeenCalledWith(
+        1,
+        null,
+        'Automated expiration upon login',
+      );
+      expect(result).toEqual({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
     });
 
     it('throws UnauthorizedException if password comparison fails', async () => {

@@ -1,14 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { Role, UserStatus } from '@prisma/client';
+import { ReportReason, Role, UserStatus } from '@prisma/client';
 import { IsTrustedAvatarUrl } from '../validators/trusted-avatar-url.validator';
 
 /**
@@ -91,6 +94,74 @@ export class UpdateAdminUserDto {
   @IsOptional()
   @IsEnum(UserStatus)
   status?: UserStatus;
+
+  /**
+   * Violation category when transitioning account status to banned.
+   * @example ReportReason.harassment_bullying
+   */
+  @ApiPropertyOptional({
+    enum: ReportReason,
+    enumName: 'ReportReason',
+    description: 'Violation category when transitioning status to banned',
+    example: ReportReason.harassment_bullying,
+  })
+  @IsOptional()
+  @IsEnum(ReportReason)
+  ban_reason?: ReportReason;
+
+  /**
+   * User-facing explanation for the ban.
+   * @example 'Repeated violations of community conduct policies.'
+   */
+  @ApiPropertyOptional({
+    description: 'User-facing explanation for the ban',
+    maxLength: 1000,
+    example: 'Repeated violations of community conduct policies.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  ban_description?: string;
+
+  /**
+   * Explicit ban duration in days (defaults to policy matrix baseline if omitted).
+   * @example 30
+   */
+  @ApiPropertyOptional({
+    description: 'Ban duration in days',
+    example: 30,
+    minimum: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  ban_duration_days?: number;
+
+  /**
+   * Whether the ban is permanent (Admin only).
+   * @example false
+   */
+  @ApiPropertyOptional({
+    description: 'Permanent ban flag',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  is_permanent?: boolean;
+
+  /**
+   * Staff audit note explaining why an account was reactivated from banned status.
+   * @example 'Ban appeal reviewed and granted by trust & safety staff.'
+   */
+  @ApiPropertyOptional({
+    description: 'Reason for lifting account ban upon reactivation',
+    maxLength: 1000,
+    example: 'Ban appeal reviewed and granted by trust & safety staff.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  unban_reason?: string;
 
   /**
    * Updated avatar URL (must be a local upload path or trusted HTTPS domain).

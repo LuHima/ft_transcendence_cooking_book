@@ -108,12 +108,12 @@ export class ReportsController {
   }
 
   /**
-   * Update report status and record moderation resolution notes (Admin/Moderator only).
+   * Update report status, execute composite resolution actions, and record dual rationale (Admin/Moderator only).
    */
   @ApiOperation({
-    summary: 'Resolve report (Admin/Moderator only)',
+    summary: 'Resolve report with composite actions (Admin/Moderator only)',
     description:
-      'Updates status and optional resolution notes of a content report.',
+      'Resolves a content report with atomic composite actions (e.g. content suspension and author account ban), enforcing moderator disciplinary caps and storing dual-purpose rationale (public explanation vs internal staff notes).',
   })
   @ApiParam({
     name: 'id',

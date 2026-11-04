@@ -49,7 +49,7 @@ export class ReportItemDto {
     enum: ReportReason,
     enumName: 'ReportReason',
     description: 'Justification reason',
-    example: ReportReason.spam,
+    example: ReportReason.spam_scam,
   })
   reason: ReportReason;
 
@@ -88,6 +88,43 @@ export class ReportItemDto {
     example: null,
   })
   resolution_notes: string | null;
+
+  /**
+   * Formal violation reason applied when resolving the report.
+   * @example ReportReason.harassment_bullying
+   */
+  @ApiProperty({
+    enum: ReportReason,
+    enumName: 'ReportReason',
+    nullable: true,
+    description: 'Formal policy violation category resolved',
+    example: null,
+  })
+  resolution_reason?: ReportReason | null;
+
+  /**
+   * User-facing explanation delivered to the penalized member.
+   * @example null
+   */
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'User-facing explanation of the disciplinary action',
+    example: null,
+  })
+  resolution_description?: string | null;
+
+  /**
+   * Total number of historical bans issued to the reported user or author.
+   * @example 0
+   */
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Previous sanctions count for recidivism tracking',
+    example: 0,
+  })
+  previous_bans_count?: number | null;
 
   /**
    * User identifier of staff member who resolved the report.

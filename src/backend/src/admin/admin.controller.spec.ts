@@ -32,6 +32,8 @@ describe('AdminController', () => {
   beforeEach(async () => {
     const mockAdminService = {
       getUsers: jest.fn(),
+      getUserById: jest.fn(),
+      getUserBanHistory: jest.fn(),
       createUser: jest.fn(),
       updateUser: jest.fn(),
       deleteUser: jest.fn(),
@@ -159,6 +161,43 @@ describe('AdminController', () => {
 
       expect(service.deleteUserAvatar).toHaveBeenCalledWith(2);
       expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('getUser', () => {
+    it('delegates user retrieval to service.getUserById', async () => {
+      (service.getUserById as jest.Mock).mockResolvedValue(
+        mockAdminUserResponse,
+      );
+
+      const result = await controller.getUser(1);
+
+      expect(service.getUserById).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockAdminUserResponse);
+    });
+  });
+
+  describe('getUserBanHistory', () => {
+    it('delegates ban history lookup to service.getUserBanHistory', async () => {
+      const mockBanHistory = [
+        {
+          id: 'ban-1',
+          user_id: 1,
+          banned_by_id: 2,
+          reason: 'spam_scam',
+          duration_days: 7,
+          is_permanent: false,
+          banned_at: new Date(),
+        },
+      ];
+      (service.getUserBanHistory as jest.Mock).mockResolvedValue(
+        mockBanHistory,
+      );
+
+      const result = await controller.getUserBanHistory(1);
+
+      expect(service.getUserBanHistory).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockBanHistory);
     });
   });
 });

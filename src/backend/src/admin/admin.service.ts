@@ -60,8 +60,13 @@ interface CommentPayload {
   _count?: { replies: number };
 }
 
+import { BanHistoryService } from '../reports/ban-history.service';
+import { BanHistoryItemDto } from '../reports/dto/ban-history.dto';
+import { ReportReason } from '@prisma/client';
+import { getDefaultBanDuration } from '../reports/constants/ban-duration-policy.constant';
+
 type UserWithRecipeCount = Prisma.UserGetPayload<{
-  include: { _count: { select: { recipes: true } } };
+  include: { _count: { select: { recipes: true; ban_history: true } } };
 }>;
 
 @Injectable()
@@ -69,6 +74,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly imageProcessingService: ImageProcessingService,
+    private readonly banHistoryService: BanHistoryService,
   ) {}
 
   /**
@@ -110,6 +116,8 @@ export class AdminService {
       city: user.city ?? null,
       postal_code: user.postal_code ?? null,
       recipes_count: user._count?.recipes ?? 0,
+      previous_bans_count: (user as any)._count?.ban_history ?? 0,
+      banned_until: (user as any).banned_until ?? null,
       created_at: user.created_at,
       deleted_at: user.deleted_at ?? null,
     };
@@ -182,7 +190,7 @@ export class AdminService {
         take: limit,
         include: {
           _count: {
-            select: { recipes: true },
+            select: { recipes: true, ban_history: true },
           },
         },
       }),
@@ -200,6 +208,38 @@ export class AdminService {
       has_next_page: page < totalPages,
       has_prev_page: page > 1,
     };
+  }
+
+  /**
+   * Retrieve administrative details for a specific user account.
+   */
+  async getUserById(targetUserId: number): Promise<AdminUserResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: {
+        _count: {
+          select: { recipes: true, ban_history: true },
+        },
+      },
+    });
+    if (!user) {
+      throw createHttpException(errors.users.notFound);
+    }
+    return this.mapToAdminUserResponse(user);
+  }
+
+  /**
+   * Retrieve chronological ban history audit trail for a specific user.
+   */
+  async getUserBanHistory(targetUserId: number): Promise<BanHistoryItemDto[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true },
+    });
+    if (!user) {
+      throw createHttpException(errors.users.notFound);
+    }
+    return await this.banHistoryService.getUserBanHistory(targetUserId);
   }
 
   /**
@@ -252,7 +292,7 @@ export class AdminService {
       },
       include: {
         _count: {
-          select: { recipes: true },
+          select: { recipes: true, ban_history: true },
         },
       },
     });
@@ -379,6 +419,20 @@ export class AdminService {
         (dto.status === UserStatus.disabled ||
           dto.status === UserStatus.banned));
 
+    let bannedUntil: Date | null | undefined = undefined;
+    if (dto.status === UserStatus.banned) {
+      if (dto.is_permanent) {
+        bannedUntil = null;
+      } else {
+        const duration =
+          dto.ban_duration_days ??
+          (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7);
+        bannedUntil = new Date(Date.now() + duration * 86400000);
+      }
+    } else if (isReactivating && targetUser.status === UserStatus.banned) {
+      bannedUntil = null;
+    }
+
     const updatedUser = await this.prisma.$transaction(async (tx) => {
       if (isReactivating) {
         // Revert platform-custody recipes back to the author
@@ -392,6 +446,15 @@ export class AdminService {
           where: { user_id: targetUserId, is_active: false },
           data: { is_active: true },
         });
+
+        if (targetUser.status === UserStatus.banned) {
+          await this.banHistoryService.recordUnban(
+            targetUserId,
+            currentAdminId,
+            dto.unban_reason ?? 'Admin account reactivation',
+            tx,
+          );
+        }
       }
 
       if (isDeactivating) {
@@ -406,6 +469,24 @@ export class AdminService {
           where: { user_id: targetUserId },
           data: { is_active: false },
         });
+
+        if (dto.status === UserStatus.banned) {
+          await this.banHistoryService.recordBan(
+            {
+              userId: targetUserId,
+              bannedById: currentAdminId,
+              reason: dto.ban_reason ?? ReportReason.other,
+              description: dto.ban_description ?? null,
+              durationDays: dto.is_permanent
+                ? null
+                : (dto.ban_duration_days ??
+                  (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7)),
+              isPermanent: dto.is_permanent ?? false,
+              expiresAt: bannedUntil,
+            },
+            tx,
+          );
+        }
       }
 
       if (shouldEvictSessions) {
@@ -420,6 +501,7 @@ export class AdminService {
         ...(password_hash ? { password_hash } : {}),
         ...(dto.role ? { role: dto.role } : {}),
         ...(dto.status ? { status: dto.status } : {}),
+        ...(bannedUntil !== undefined ? { banned_until: bannedUntil } : {}),
         ...(dto.avatar_url !== undefined ? { avatar_url: dto.avatar_url } : {}),
         ...(dto.bio !== undefined ? { bio: dto.bio } : {}),
         ...(dto.first_name !== undefined ? { first_name: dto.first_name } : {}),
@@ -440,7 +522,7 @@ export class AdminService {
         data: dataToUpdate,
         include: {
           _count: {
-            select: { recipes: true },
+            select: { recipes: true, ban_history: true },
           },
         },
       });

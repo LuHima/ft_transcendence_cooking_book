@@ -18,6 +18,7 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
   ApiCookieAuth,
@@ -41,6 +42,7 @@ import {
   SignUpResponseDto,
   TwoFactorEnableResponseDto,
 } from './dto/auth-response.dto';
+import { AccountBannedResponseDto } from './dto/account-banned-response.dto';
 import {
   ApiBadRequestResponseDto,
   ApiUnauthorizedResponseDto,
@@ -126,6 +128,10 @@ export class AuthController {
   @ApiUnauthorizedResponse({
     description: 'Invalid credentials or inactive account',
     type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: Account suspended (banned)',
+    type: AccountBannedResponseDto,
   })
   @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
   @Post('signin')

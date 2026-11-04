@@ -42,13 +42,13 @@ export class CreateReportDto {
 
   /**
    * Category / justification for the report.
-   * @example 'spam'
+   * @example ReportReason.spam_scam
    */
   @ApiProperty({
     enum: ReportReason,
     enumName: 'ReportReason',
     description: 'Reason category for the report',
-    example: ReportReason.spam,
+    example: ReportReason.spam_scam,
   })
   @IsEnum(ReportReason)
   reason: ReportReason;

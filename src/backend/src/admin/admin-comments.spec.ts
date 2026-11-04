@@ -4,6 +4,7 @@ import { AdminCommentsController } from './admin-comments.controller';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+import { BanHistoryService } from '../reports/ban-history.service';
 import {
   AdminCommentSort,
   AdminCommentFormat,
@@ -46,6 +47,15 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
           useValue: {
             processAndSaveImage: jest.fn(),
             safeUnlink: jest.fn(),
+          },
+        },
+        {
+          provide: BanHistoryService,
+          useValue: {
+            getUserBanHistory: jest.fn(),
+            recordBan: jest.fn(),
+            recordUnban: jest.fn(),
+            getPreviousBansCount: jest.fn(),
           },
         },
       ],

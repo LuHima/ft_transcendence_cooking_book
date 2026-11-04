@@ -420,6 +420,29 @@ export const errors = {
       error: 'Forbidden',
     },
   },
+
+  // ─────────────────────────────────────────────────────────
+  // MODERAZIONE E SEGNALAZIONI
+  // ─────────────────────────────────────────────────────────
+  moderation: {
+    banCapExceeded: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message:
+        'Moderator ban duration cannot exceed 180 days, and permanent bans are restricted to administrators',
+      error: 'Forbidden',
+    },
+    cannotBanAdmin: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'Moderators cannot moderate or ban administrator',
+      error: 'Forbidden',
+    },
+    resolutionReasonRequired: {
+      statusCode: HttpStatus.BAD_REQUEST,
+      message:
+        'Resolution reason is required when applying disciplinary actions',
+      error: 'Bad Request',
+    },
+  },
 } as const;
 
 //	 creo questa funzione per creare degli exeption che mi servono

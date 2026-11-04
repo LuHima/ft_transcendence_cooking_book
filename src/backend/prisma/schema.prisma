@@ -124,11 +124,13 @@ enum ReportSubject {
 }
 
 enum ReportReason {
-  spam
-  harassment
-  inappropriate_content
+  spam_scam
+  harassment_bullying
   hate_speech
-  copyright
+  sexual_content
+  violence_threats
+  copyright_infringement
+  impersonation_misinformation
   other
 }
 
@@ -158,6 +160,7 @@ model User {
   city          String?   @db.VarChar(100)
   postal_code   String?   @db.VarChar(10)
   status 		UserStatus @default(active)
+  banned_until  DateTime?
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
   role          Role    @default(user)
@@ -178,6 +181,10 @@ model User {
   blocks_sent          UserBlock[]  @relation("BlocksSent")
   blocks_received      UserBlock[]  @relation("BlocksReceived")
   reports_submitted    Report[]     @relation("ReportsSubmitted")
+
+  ban_history          BanHistory[] @relation("UserBanHistory")
+  bans_issued          BanHistory[] @relation("StaffIssuedBans")
+  unbans_issued        BanHistory[] @relation("StaffUnbans")
 
   @@map("users")
 }
@@ -473,23 +480,54 @@ model UserBlock {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Report {
-  id               Int           @id @default(autoincrement())
-  reporter_id      Int
-  subject          ReportSubject
-  target_id        Int
-  reason           ReportReason
-  description      String?       @db.VarChar(1000)
-  status           ReportStatus  @default(pending)
-  resolution_notes String?       @db.VarChar(1000)
-  resolved_by_id   Int?
-  resolved_at      DateTime?
-  created_at       DateTime      @default(now())
-  updated_at       DateTime      @updatedAt
+  id                     Int           @id @default(autoincrement())
+  reporter_id            Int
+  subject                ReportSubject
+  target_id              Int
+  reason                 ReportReason
+  description            String?       @db.VarChar(1000)
+  status                 ReportStatus  @default(pending)
+  resolution_reason      ReportReason?
+  resolution_description String?       @db.VarChar(1000)
+  resolution_notes       String?       @db.VarChar(1000)
+  resolved_by_id         Int?
+  resolved_at            DateTime?
+  created_at             DateTime      @default(now())
+  updated_at             DateTime      @updatedAt
 
-  reporter         User          @relation("ReportsSubmitted", fields: [reporter_id], references: [id], onDelete: Cascade)
+  reporter               User          @relation("ReportsSubmitted", fields: [reporter_id], references: [id], onDelete: Cascade)
+  ban_history            BanHistory[]
 
   @@index([status, created_at])
   @@index([subject, target_id])
   @@map("reports")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BAN HISTORY
+// ─────────────────────────────────────────────────────────────────────────────
+
+model BanHistory {
+  id             String       @id @default(uuid())
+  user_id        Int
+  user           User         @relation("UserBanHistory", fields: [user_id], references: [id], onDelete: Cascade)
+  banned_by_id   Int
+  banned_by      User         @relation("StaffIssuedBans", fields: [banned_by_id], references: [id])
+  report_id      Int?
+  report         Report?      @relation(fields: [report_id], references: [id], onDelete: SetNull)
+  reason         ReportReason
+  description    String?      @db.VarChar(1000)
+  duration_days  Int?
+  is_permanent   Boolean      @default(false)
+  banned_at      DateTime     @default(now())
+  expires_at     DateTime?
+  unbanned_at    DateTime?
+  unbanned_by_id Int?
+  unbanned_by    User?        @relation("StaffUnbans", fields: [unbanned_by_id], references: [id])
+  unban_reason   String?      @db.VarChar(1000)
+
+  @@index([user_id])
+  @@index([banned_at])
+  @@map("ban_history")
 }
 
