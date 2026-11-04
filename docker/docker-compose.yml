@@ -141,6 +141,8 @@ services:
       LIBRETRANSLATE_URL: ${LIBRETRANSLATE_URL}
       UPLOADS_DIR: ${UPLOADS_DIR}
       PORT: ${PORT:-3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLI_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLI_SECRET_KEY}
     # Connect to custom bridge network
     networks:
       - back-net
@@ -180,6 +182,7 @@ services:
     # Runtime configuration
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLI_ID}
     # Connect to custom bridge network
     networks:
       - front-net

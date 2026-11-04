@@ -49,6 +49,7 @@ import {
   ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
+import { GoogleAuthDto } from './dto/auth-google.dto';
 
 export class ConfirmPasswordDto extends PickType(SignInUserDto, [
   'password',
@@ -133,6 +134,22 @@ export class AuthController {
     description: 'Forbidden: Account suspended (banned)',
     type: AccountBannedResponseDto,
   })
+  @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
+  @Post('signin/google')
+  async signInGoogle(
+    @Body() signInGoogle: GoogleAuthDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result: jwts | twofactor = await this.authService.googleSignIn(
+      signInGoogle.idToken,
+    );
+
+    if ('tempToken' in result) return result;
+    else this.setAuthCookie(response, result);
+    return {
+      message: 'Authentication was successful',
+    };
+  }
   @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
   @Post('signin')
   async signIn(
