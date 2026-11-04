@@ -10,6 +10,7 @@ import {
   NotificationAction,
   NotificationSubject,
   TranslationStatus,
+  TranslationSource,
   UnitOfMeasure,
   Role,
 } from '@prisma/client';
@@ -585,6 +586,22 @@ describe('RecipeService', () => {
           data: expect.objectContaining({
             total_time: 25,
             translation_status: 'completed',
+            translations: {
+              create: expect.arrayContaining([
+                expect.objectContaining({
+                  locale: 'it',
+                  translation_source: TranslationSource.author_original,
+                }),
+                expect.objectContaining({
+                  locale: 'en',
+                  translation_source: TranslationSource.machine,
+                }),
+                expect.objectContaining({
+                  locale: 'fr',
+                  translation_source: TranslationSource.machine,
+                }),
+              ]),
+            },
           }),
         }),
       );
@@ -1584,10 +1601,143 @@ describe('RecipeService', () => {
           },
           update: expect.objectContaining({
             title: 'New Pesto Pasta',
+            translation_source: TranslationSource.manual,
           }),
         }),
       );
       expect(service.getRecipeById).toHaveBeenCalledWith(1, 'en', 1);
+    });
+
+    it('preserves existing translation provenance untouched when modifying non-translation attributes', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
+        source_lang: 'it',
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto',
+            description: 'Descrizione italiana.',
+            translation_source: TranslationSource.author_original,
+          },
+          {
+            recipe_id: 1,
+            locale: 'en',
+            title: 'Pesto Pasta',
+            description: 'English description.',
+            translation_source: TranslationSource.manual,
+          },
+        ],
+        steps: [],
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
+
+      await service.updateRecipe(1, 1, { prep_time: 20 });
+
+      expect(mockPrisma.recipeTranslation.upsert).not.toHaveBeenCalled();
+    });
+
+    it('protects manual and author_original translations from being overwritten during retranslation', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        source_lang: 'it',
+        prep_time: 15,
+        cook_time: 10,
+        total_time: 25,
+        servings: 4,
+        translations: [
+          {
+            recipe_id: 1,
+            locale: 'it',
+            title: 'Pasta al Pesto',
+            description: 'Descrizione vecchia.',
+            preservation: null,
+            tips: null,
+            translation_source: TranslationSource.author_original,
+          },
+          {
+            recipe_id: 1,
+            locale: 'en',
+            title: 'Curated English Title',
+            description: 'Manual curation.',
+            preservation: null,
+            tips: null,
+            translation_source: TranslationSource.manual,
+          },
+          {
+            recipe_id: 1,
+            locale: 'fr',
+            title: 'Pâtes au pesto',
+            description: 'Traduction machine.',
+            preservation: null,
+            tips: null,
+            translation_source: TranslationSource.machine,
+          },
+        ],
+        steps: [],
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      mockTranslationService.translateBatch.mockResolvedValue({
+        translations: ['Translated Title', 'Translated Description', '', ''],
+        success: true,
+      });
+
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        ...existingRecipe,
+        translation_status: 'completed',
+      });
+
+      await service.updateRecipe(
+        1,
+        1,
+        { title: 'Nuovo Titolo Pesto', locale: 'it' },
+        true,
+      );
+
+      // English was manual, so it must NOT be overwritten
+      expect(mockPrisma.recipeTranslation.upsert).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            recipe_id_locale: {
+              recipe_id: 1,
+              locale: 'en',
+            },
+          },
+        }),
+      );
+
+      // French was machine, so it SHOULD be overwritten
+      expect(mockPrisma.recipeTranslation.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            recipe_id_locale: {
+              recipe_id: 1,
+              locale: 'fr',
+            },
+          },
+          update: expect.objectContaining({
+            translation_source: TranslationSource.machine,
+          }),
+        }),
+      );
     });
 
     it('re-translates source text across remaining locales when retranslate is true and updates translation_status', async () => {

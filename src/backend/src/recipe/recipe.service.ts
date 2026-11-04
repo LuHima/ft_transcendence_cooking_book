@@ -2,7 +2,6 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
-  UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -11,12 +10,12 @@ import {
   MediaType,
   OwnerType,
   TranslationStatus,
+  TranslationSource,
   NotificationSubject,
   NotificationAction,
   Role,
   Prisma,
 } from '@prisma/client';
-import type { Recipe } from '@prisma/client';
 import { NotificationEmit } from 'src/notifications/notification-emit';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
@@ -336,6 +335,10 @@ export class RecipeService {
       description: translationsByLocale[locale].description,
       preservation: translationsByLocale[locale].preservation,
       tips: translationsByLocale[locale].tips,
+      translation_source:
+        locale === recipe.source_lang
+          ? TranslationSource.author_original
+          : TranslationSource.machine,
     }));
     const stepsData = recipe.steps.map((step, index) => ({
       step_number: step.step_number,
@@ -776,6 +779,27 @@ export class RecipeService {
           for (const [locale, translation] of Object.entries(
             translatedDataByLocale,
           )) {
+            const existingTrans = recipe.translations?.find(
+              (t) => t.locale === locale,
+            );
+            if (
+              existingTrans &&
+              (existingTrans.translation_source === TranslationSource.manual ||
+                existingTrans.translation_source ===
+                  TranslationSource.author_original)
+            ) {
+              const existingStepTrans = existingStep?.translations?.find(
+                (tr) => tr.locale === locale,
+              );
+              if (existingStepTrans) {
+                translations.push({
+                  locale,
+                  title: existingStepTrans.title,
+                  description: existingStepTrans.description,
+                });
+                continue;
+              }
+            }
             const translatedStep = translation.steps.find(
               (candidate) => candidate.stepNumber === step.step_number,
             );
@@ -802,6 +826,11 @@ export class RecipeService {
     await this.prisma.$transaction(async (tx) => {
       // Upsert direct translation modifications for the targeted locale
       if (Object.keys(transUpdate).length > 0) {
+        const isSourceLocale = targetLocale === recipe.source_lang;
+        if (!isSourceLocale) {
+          transUpdate.translation_source = TranslationSource.manual;
+        }
+
         await tx.recipeTranslation.upsert({
           where: {
             recipe_id_locale: {
@@ -816,6 +845,9 @@ export class RecipeService {
             description: recipeUpdate.description ?? '',
             preservation: recipeUpdate.preservation ?? null,
             tips: recipeUpdate.tips ?? null,
+            translation_source: isSourceLocale
+              ? TranslationSource.author_original
+              : TranslationSource.manual,
           },
           update: transUpdate,
         });
@@ -825,6 +857,18 @@ export class RecipeService {
       // succeeded
       if (retranslate && updateData.translation_status === 'completed') {
         for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+          const existingTrans = recipe.translations?.find(
+            (t) => t.locale === locale,
+          );
+          if (
+            existingTrans &&
+            (existingTrans.translation_source === TranslationSource.manual ||
+              existingTrans.translation_source ===
+                TranslationSource.author_original)
+          ) {
+            continue;
+          }
+
           await tx.recipeTranslation.upsert({
             where: {
               recipe_id_locale: {
@@ -839,12 +883,14 @@ export class RecipeService {
               description: trans.description,
               preservation: trans.preservation,
               tips: trans.tips,
+              translation_source: TranslationSource.machine,
             },
             update: {
               title: trans.title,
               description: trans.description,
               preservation: trans.preservation,
               tips: trans.tips,
+              translation_source: TranslationSource.machine,
             },
           });
 
@@ -1112,6 +1158,18 @@ export class RecipeService {
     return await this.prisma.$transaction(async (tx) => {
       // Upsert translations for each target locale
       for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+        const existingTrans = recipe.translations.find(
+          (t) => t.locale === locale,
+        );
+        if (
+          existingTrans &&
+          (existingTrans.translation_source === TranslationSource.manual ||
+            existingTrans.translation_source ===
+              TranslationSource.author_original)
+        ) {
+          continue;
+        }
+
         await tx.recipeTranslation.upsert({
           where: {
             recipe_id_locale: {
@@ -1126,12 +1184,14 @@ export class RecipeService {
             description: trans.description,
             preservation: trans.preservation,
             tips: trans.tips,
+            translation_source: TranslationSource.machine,
           },
           update: {
             title: trans.title,
             description: trans.description,
             preservation: trans.preservation,
             tips: trans.tips,
+            translation_source: TranslationSource.machine,
           },
         });
 
