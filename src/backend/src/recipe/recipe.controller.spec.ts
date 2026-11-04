@@ -11,6 +11,7 @@ import {
   TranslationStatus,
   TranslationSource,
   UnitOfMeasure,
+  Role,
 } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
@@ -249,9 +250,19 @@ describe('RecipeController', () => {
       };
       mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getRecipeById(1, { lang: 'it' }, 42);
+      const mockUser = {
+        id: 42,
+        username: 'test',
+        role: Role.user,
+        session: 1,
+      };
+      const result = await controller.getRecipeById(
+        1,
+        { lang: 'it' },
+        mockUser as any,
+      );
 
-      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 42);
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', mockUser);
       expect(result).toEqual(mockResult);
       expect((result as any).translation_source).toBe(
         TranslationSource.author_original,
@@ -278,9 +289,44 @@ describe('RecipeController', () => {
       mockRecipeService.updateRecipe.mockResolvedValueOnce(mockResult);
 
       const updateDto = { title: 'Updated Title' };
-      const result = await controller.updateRecipe(1, updateDto, 42, 'true');
+      const mockUser = {
+        id: 42,
+        username: 'test',
+        role: Role.user,
+        session: 1,
+      };
+      const result = await controller.updateRecipe(
+        1,
+        updateDto,
+        mockUser as any,
+        'true',
+      );
 
-      expect(service.updateRecipe).toHaveBeenCalledWith(42, 1, updateDto, true);
+      expect(service.updateRecipe).toHaveBeenCalledWith(
+        mockUser,
+        1,
+        updateDto,
+        true,
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteRecipe', () => {
+    it('delegates to service.deleteRecipe with recipeId, user, and query', async () => {
+      const mockResult = { id: 1, is_active: false };
+      mockRecipeService.deleteRecipe.mockResolvedValueOnce(mockResult);
+
+      const mockUser = {
+        id: 42,
+        username: 'test',
+        role: Role.user,
+        session: 1,
+      };
+      const query = { hard: false };
+      const result = await controller.deleteRecipe(1, mockUser as any, query);
+
+      expect(service.deleteRecipe).toHaveBeenCalledWith(1, mockUser, query);
       expect(result).toEqual(mockResult);
     });
   });

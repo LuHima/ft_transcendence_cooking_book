@@ -23,6 +23,7 @@ import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { DeleteCommentQueryDto } from './dto/delete-comment-query.dto';
+import { DeleteRecipeQueryDto } from './dto/delete-recipe-query.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import {
   ThreadedRecipeCommentResponseDto,
@@ -448,18 +449,25 @@ export class RecipeService {
   PATCH /api/recipes/:id
   */
   async updateRecipe(
-    userId: number,
+    userIdOrCaller: number | { id: number; role?: Role | string },
     recipeId: number,
     recipeUpdate: UpdateRecipeDto,
     retranslate?: boolean,
   ) {
-    // Fetch recipe with translations and steps to verify existence and
-    // ownership
+    const userId =
+      typeof userIdOrCaller === 'number' ? userIdOrCaller : userIdOrCaller.id;
+    let userRole =
+      typeof userIdOrCaller === 'object' && userIdOrCaller.role
+        ? (userIdOrCaller.role as Role)
+        : undefined;
+
+    // Fetch recipe with translations, steps, and author role
     const recipe = await this.prisma.recipe.findUnique({
       where: {
         id: recipeId,
       },
       include: {
+        user: { select: { id: true, role: true } },
         translations: true,
         steps: {
           include: { translations: true },
@@ -468,25 +476,52 @@ export class RecipeService {
       },
     });
 
-    // Guard: Verify existence and ownership (only author can update recipe)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
+    if (!recipe) {
       throw createHttpException(errors.recipes.notFound, 'Recipe not found');
-    //new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId is not the author of the recipe');
+    }
 
-    // TODO implementa questi check quando abbiamo risolto caslCheckAbility !!!!!!
-    // Check if current user has permission to update the recipe
-    /* if (!(await this.caslCheckAbility.canAbility(recipeId)))
-      throw createHttpException(errors.common.forbidden); */
+    if (!userRole && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      userRole = caller?.role;
+    }
+
+    const isAuthor = recipe.user_id === userId;
+
+    if (userRole === Role.admin) {
+      // Administrator authorized to update or restore any recipe
+    } else if (userRole === Role.moderator) {
+      // Moderator cannot modify or restore recipes authored by administrators
+      if (recipe.user?.role === Role.admin) {
+        throw createHttpException(
+          errors.common.forbidden,
+          'Moderators cannot moderate or delete administrator content',
+        );
+      }
+    } else {
+      if (!isAuthor) {
+        if (this.productionConfig.isProduction()) {
+          throw createHttpException(errors.recipes.notFound, 'Recipe not found');
+        } else {
+          throw new NotFoundException('UserId is not the author of the recipe');
+        }
+      }
+
+      // Authors cannot modify is_active (restoration restricted to staff)
+      if (recipeUpdate.is_active !== undefined) {
+        throw createHttpException(
+          errors.common.forbidden,
+          'Only platform staff can modify recipe activation status',
+        );
+      }
+    }
 
     // Update locale-invariant data of the recipe
     const updateData: any = {};
+    if (recipeUpdate.is_active !== undefined)
+      updateData.is_active = recipeUpdate.is_active;
     if (recipeUpdate.course !== undefined)
       updateData.course = recipeUpdate.course;
     if (recipeUpdate.difficulty !== undefined)
@@ -1001,16 +1036,109 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
+  /**
+   * Suspend/deactivate a recipe following role hierarchy rules.
+   * - admin: can suspend any recipe
+   * - moderator: can suspend user/moderator recipes (403 on admin recipes)
+   * - user: can suspend own recipes
+   */
+  async deactivateRecipe(
+    recipeId: number,
+    caller: number | { id: number; role?: Role | string },
+  ) {
+    const callerId = typeof caller === 'number' ? caller : caller.id;
+    let callerRole =
+      typeof caller === 'object' && caller.role
+        ? (caller.role as Role)
+        : undefined;
+
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      include: {
+        user: { select: { id: true, role: true } },
+      },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    if (!callerRole && this.prisma.user?.findUnique) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: callerId },
+        select: { role: true },
+      });
+      callerRole = user?.role;
+    }
+
+    if (callerRole === Role.admin) {
+      // Admin authorized
+    } else if (callerRole === Role.moderator) {
+      if (recipe.user?.role === Role.admin) {
+        throw createHttpException(
+          errors.common.forbidden,
+          'Moderators cannot moderate or delete administrator content',
+        );
+      }
+    } else {
+      if (recipe.user_id !== callerId) {
+        if (this.productionConfig.isProduction()) {
+          throw new NotFoundException('Recipe not found');
+        } else {
+          throw new NotFoundException('UserId not the author of the recipe');
+        }
+      }
+    }
+
+    return await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { is_active: false },
+    });
+  }
+
   /* 
   DELETE /api/recipes/:id
   */
-  async deleteRecipe(recipeId: number, userId: number) {
-    // Verify that the recipe exists and belongs to the requesting user
+  async deleteRecipe(
+    recipeId: number,
+    userOrId: number | { id: number; role?: Role | string },
+    query?: DeleteRecipeQueryDto,
+  ) {
+    const isHard = Boolean(query?.hard);
+
+    // If soft suspension (default): delegate directly to deactivateRecipe
+    if (!isHard) {
+      return await this.deactivateRecipe(recipeId, userOrId);
+    }
+
+    // Hard deletion path: restricted strictly to platform administrators
+    const userId = typeof userOrId === 'number' ? userOrId : userOrId.id;
+    let userRole =
+      typeof userOrId === 'object' && userOrId.role
+        ? (userOrId.role as Role)
+        : undefined;
+
+    if (!userRole && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      userRole = caller?.role;
+    }
+
+    if (userRole !== Role.admin) {
+      throw createHttpException(errors.common.adminOnly);
+    }
+
+    // Verify that the recipe exists and fetch associated media
     const recipe = await this.prisma.recipe.findUnique({
       where: {
         id: recipeId,
       },
       include: {
+        user: {
+          select: { id: true, role: true },
+        },
         steps: {
           select: { image_url: true },
         },
@@ -1020,16 +1148,9 @@ export class RecipeService {
       },
     });
 
-    // Guard: Verify existence and ownership (only author can delete recipe)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
+    if (!recipe) {
       throw new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId not the author of the recipe');
+    }
 
     // Collect all media URLs to clean up from disk
     const mediaUrls: string[] = [];
@@ -1042,19 +1163,22 @@ export class RecipeService {
       if (media.url) mediaUrls.push(media.url);
     }
 
-    // Delete the verified recipe from database (cascades relational rows)
-    const deleted = await this.prisma.recipe.delete({
-      where: {
-        id: recipeId,
-      },
-    });
+    // Transactionally delete comments, notifications, and recipe
+    await this.prisma.$transaction(async (tx) => {
+      await tx.comment.deleteMany({
+        where: { recipe_id: recipeId },
+      });
 
-    // Delete all notifications targeting this recipe
-    await this.prisma.notification.deleteMany({
-      where: {
-        subject: NotificationSubject.recipe,
-        target_id: recipeId,
-      },
+      await tx.notification.deleteMany({
+        where: {
+          subject: NotificationSubject.recipe,
+          target_id: recipeId,
+        },
+      });
+
+      await tx.recipe.delete({
+        where: { id: recipeId },
+      });
     });
 
     // Safely remove physical files from filesystem
@@ -1062,7 +1186,7 @@ export class RecipeService {
       await this.safeUnlink(url);
     }
 
-    return deleted;
+    return { message: 'Recipe permanently deleted successfully' };
   }
 
   // ---------------------------------------------------------------------------

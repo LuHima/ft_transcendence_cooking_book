@@ -42,6 +42,7 @@ import { FilterRecipeDto } from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { DeleteCommentQueryDto } from './dto/delete-comment-query.dto';
+import { DeleteRecipeQueryDto } from './dto/delete-recipe-query.dto';
 import {
   RecipeCommentResponseDto,
   ThreadedRecipeCommentResponseDto,
@@ -272,12 +273,12 @@ export class RecipeController {
   async updateRecipe(
     @Param('id', ParseIntPipe) recipeId: number,
     @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto,
-    @CurrentUser('id') userId: number,
+    @CurrentUser() user: ActiveUserData,
     @Query('retranslate') retranslate?: string,
   ) {
     const shouldRetranslate = retranslate === 'true' || retranslate === '1';
     return this.recipeService.updateRecipe(
-      userId,
+      user,
       recipeId,
       updateRecipeDto,
       shouldRetranslate,
@@ -285,21 +286,25 @@ export class RecipeController {
   }
 
   /**
-   * Delete an existing recipe.
+   * Delete or suspend an existing recipe.
    */
   @ApiOperation({
-    summary: 'Delete recipe',
+    summary: 'Delete or suspend recipe',
     description:
-      'Permanently deletes the recipe and all its steps, media, translations, and associated likes. Cleans up all orphaned social notifications targeting this recipe.',
+      'Suspends (soft-deactivates) or permanently purges a recipe following role hierarchy rules. Standard users can soft-delete their own recipes; moderators can suspend recipes of users and moderators (forbidden on admin recipes); administrators can suspend any recipe or permanently purge it with ?hard=true.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({
-    description: 'Recipe deleted successfully',
-    type: RecipeMessageResponseDto,
+    description: 'Recipe deleted or suspended successfully',
   })
   @ApiBadRequestResponse({
     description: 'Invalid recipe ID format (must be an integer)',
     type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Forbidden: Moderator cannot suspend admin recipe, non-author cannot delete recipe, or non-admin requested hard deletion',
+    type: ApiForbiddenResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
@@ -309,9 +314,10 @@ export class RecipeController {
   @Delete(':id')
   async deleteRecipe(
     @Param('id', ParseIntPipe) recipeId: number,
-    @CurrentUser('id') userId: number,
+    @CurrentUser() user: ActiveUserData,
+    @Query() query?: DeleteRecipeQueryDto,
   ) {
-    return this.recipeService.deleteRecipe(recipeId, userId);
+    return this.recipeService.deleteRecipe(recipeId, user, query);
   }
 
   /**

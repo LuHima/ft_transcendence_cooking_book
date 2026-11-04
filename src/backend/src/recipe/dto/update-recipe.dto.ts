@@ -1,12 +1,25 @@
 import { CreateRecipeDto } from './create-recipe.dto';
 import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator';
 
 /**
  * Data transfer object for updating an existing recipe.
  * Inherits all fields from CreateRecipeDto as optional fields.
  */
 export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {
+  /**
+   * Publication and visibility state of the recipe (admin/moderator restoration).
+   * @example true
+   */
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Publication state of the recipe (active or suspended)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  is_active?: boolean;
+
   /**
    * Optional target locale code if updating localized text directly.
    * @example 'it'

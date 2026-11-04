@@ -1955,6 +1955,122 @@ describe('RecipeService', () => {
       );
       expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
     });
+
+    it('allows administrator to restore/reactivate suspended recipe (is_active: true)', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        user: { id: 10, role: Role.user },
+        translations: [{ locale: 'it', title: 'Carbonara' }],
+        steps: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        ...existingRecipe,
+        is_active: true,
+      });
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce({ id: 1, is_active: true } as any);
+
+      const result = await service.updateRecipe(
+        { id: 99, role: Role.admin },
+        1,
+        { is_active: true },
+      );
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({ is_active: true }),
+        }),
+      );
+      expect(result).toEqual({ id: 1, is_active: true });
+    });
+
+    it('allows moderator to restore/reactivate user recipe (is_active: true)', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        user: { id: 10, role: Role.user },
+        translations: [{ locale: 'it', title: 'Carbonara' }],
+        steps: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        ...existingRecipe,
+        is_active: true,
+      });
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce({ id: 1, is_active: true } as any);
+
+      const result = await service.updateRecipe(
+        { id: 50, role: Role.moderator },
+        1,
+        { is_active: true },
+      );
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({ is_active: true }),
+        }),
+      );
+      expect(result).toEqual({ id: 1, is_active: true });
+    });
+
+    it('rejects moderator attempting to restore/reactivate admin recipe (403 Forbidden)', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 99,
+        is_active: false,
+        source_lang: 'it',
+        user: { id: 99, role: Role.admin },
+        translations: [{ locale: 'it', title: 'Carbonara' }],
+        steps: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      await expect(
+        service.updateRecipe({ id: 50, role: Role.moderator }, 1, {
+          is_active: true,
+        }),
+      ).rejects.toThrow(
+        expect.objectContaining({
+          status: 403,
+          message: 'Moderators cannot moderate or delete administrator content',
+        }),
+      );
+    });
+
+    it('rejects regular author attempting to toggle is_active status (403 Forbidden)', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        source_lang: 'it',
+        user: { id: 10, role: Role.user },
+        translations: [{ locale: 'it', title: 'Carbonara' }],
+        steps: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      await expect(
+        service.updateRecipe({ id: 10, role: Role.user }, 1, {
+          is_active: true,
+        }),
+      ).rejects.toThrow(
+        expect.objectContaining({
+          status: 403,
+          message: 'Only platform staff can modify recipe activation status',
+        }),
+      );
+    });
   });
 
   describe('deleteRecipe', () => {
@@ -1977,7 +2093,102 @@ describe('RecipeService', () => {
       );
     });
 
-    it('deletes recipe and unlinks all associated media files from disk', async () => {
+    it('moderator suspends regular user recipe non-destructively (200 OK, is_active=false)', async () => {
+      const mockRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: true,
+        user: { id: 10, role: Role.user },
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 1,
+        is_active: false,
+      });
+
+      const result = await service.deleteRecipe(1, {
+        id: 50,
+        role: Role.moderator,
+      });
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { is_active: false },
+      });
+      expect(result).toEqual({ id: 1, is_active: false });
+    });
+
+    it('moderator attempting to suspend admin recipe receives 403 Forbidden', async () => {
+      const mockAdminRecipe = {
+        id: 1,
+        user_id: 99,
+        is_active: true,
+        user: { id: 99, role: Role.admin },
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockAdminRecipe);
+
+      await expect(
+        service.deleteRecipe(1, { id: 50, role: Role.moderator }),
+      ).rejects.toThrow(
+        expect.objectContaining({
+          status: 403,
+          message: 'Moderators cannot moderate or delete administrator content',
+        }),
+      );
+    });
+
+    it('moderator attempting ?hard=true receives 403 Forbidden', async () => {
+      await expect(
+        service.deleteRecipe(
+          1,
+          { id: 50, role: Role.moderator },
+          { hard: true },
+        ),
+      ).rejects.toThrow(
+        expect.objectContaining({
+          status: 403,
+          message: 'This action is restricted to administrators',
+        }),
+      );
+    });
+
+    it('regular user successfully deactivates own recipe non-destructively', async () => {
+      const mockRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: true,
+        user: { id: 10, role: Role.user },
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 1,
+        is_active: false,
+      });
+
+      const result = await service.deleteRecipe(1, {
+        id: 10,
+        role: Role.user,
+      });
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { is_active: false },
+      });
+      expect(result).toEqual({ id: 1, is_active: false });
+    });
+
+    it('regular user attempting ?hard=true receives 403 Forbidden', async () => {
+      await expect(
+        service.deleteRecipe(1, { id: 10, role: Role.user }, { hard: true }),
+      ).rejects.toThrow(
+        expect.objectContaining({
+          status: 403,
+          message: 'This action is restricted to administrators',
+        }),
+      );
+    });
+
+    it('admin executes ?hard=true permanently removing recipe, comments, and media files', async () => {
       const unlinkSpy = jest
         .spyOn(fs.promises, 'unlink')
         .mockResolvedValue(undefined);
@@ -1985,6 +2196,7 @@ describe('RecipeService', () => {
       const mockRecipe = {
         id: 1,
         user_id: 1,
+        user: { id: 1, role: Role.user },
         cover_image_url: '/uploads/recipes/cover-1.jpg',
         video_url: '/uploads/recipes/video-1.mp4',
         steps: [
@@ -1995,10 +2207,25 @@ describe('RecipeService', () => {
       };
 
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockRecipe);
+      mockPrisma.comment.deleteMany.mockResolvedValueOnce({ count: 2 });
+      mockPrisma.notification.deleteMany.mockResolvedValueOnce({ count: 1 });
       mockPrisma.recipe.delete.mockResolvedValueOnce({ id: 1 });
 
-      const result = await service.deleteRecipe(1, 1);
+      const result = await service.deleteRecipe(
+        1,
+        { id: 99, role: Role.admin },
+        { hard: true },
+      );
 
+      expect(mockPrisma.comment.deleteMany).toHaveBeenCalledWith({
+        where: { recipe_id: 1 },
+      });
+      expect(mockPrisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          subject: NotificationSubject.recipe,
+          target_id: 1,
+        },
+      });
       expect(mockPrisma.recipe.delete).toHaveBeenCalledWith({
         where: { id: 1 },
       });
@@ -2014,13 +2241,9 @@ describe('RecipeService', () => {
       expect(unlinkSpy).toHaveBeenCalledWith(
         join(RECIPE_UPLOADS_DIR, 'gallery-1.jpg'),
       );
-      expect(mockPrisma.notification.deleteMany).toHaveBeenCalledWith({
-        where: {
-          subject: NotificationSubject.recipe,
-          target_id: 1,
-        },
+      expect(result).toEqual({
+        message: 'Recipe permanently deleted successfully',
       });
-      expect(result).toEqual({ id: 1 });
 
       unlinkSpy.mockRestore();
     });
