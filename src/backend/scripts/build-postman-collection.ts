@@ -240,6 +240,410 @@ export async function buildPostmanCollection(): Promise<void> {
 
   attachScripts(collection.item);
 
+  // Enrich Recipes folder with dedicated multi-criteria search and sorting test requests
+  const recipesFolder = collection.item?.find(
+    (f: any) => f.name === 'Recipes',
+  );
+  if (recipesFolder && Array.isArray(recipesFolder.item)) {
+    const enrichedRequests: any[] = [
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_duration_boundaries'),
+        name: 'Filter recipes by duration boundaries (min_time, max_prep_time)',
+        request: {
+          method: 'GET',
+          name: 'Filter recipes by duration boundaries (min_time, max_prep_time)',
+          description: {
+            content:
+              'Verify duration boundary filtering (min_time >= 15 and max_prep_time <= 20).',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [
+              { key: 'min_time', value: '15', disabled: false },
+              { key: 'max_prep_time', value: '20', disabled: false },
+              { key: 'lang', value: 'it', disabled: false },
+            ],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid(
+                'script:test:GET:api_recipes:duration_boundaries',
+              ),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 200", function () {',
+                '  pm.response.to.have.status(200);',
+                '});',
+                'pm.test("Returned recipes adhere to duration boundaries", function () {',
+                '  const data = pm.response.json();',
+                '  const items = data.items || data.data || [];',
+                '  pm.expect(items).to.be.an("array");',
+                '  items.forEach(function (recipe) {',
+                '    if (recipe.total_time !== undefined) {',
+                '      pm.expect(recipe.total_time).to.be.at.least(15);',
+                '    }',
+                '  });',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_curation_valid'),
+        name: 'Filter recipes by verified curation (curated_only with valid lang)',
+        request: {
+          method: 'GET',
+          name: 'Filter recipes by verified curation (curated_only with valid lang)',
+          description: {
+            content: 'Verify curation filtering with curated_only=true and lang=it.',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [
+              { key: 'curated_only', value: 'true', disabled: false },
+              { key: 'lang', value: 'it', disabled: false },
+            ],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid(
+                'script:test:GET:api_recipes:curation_valid',
+              ),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 200", function () {',
+                '  pm.response.to.have.status(200);',
+                '});',
+                'pm.test("Returned recipes have human curation in requested locale", function () {',
+                '  const data = pm.response.json();',
+                '  const items = data.items || data.data || [];',
+                '  pm.expect(items).to.be.an("array");',
+                '  items.forEach(function (recipe) {',
+                '    pm.expect(recipe).to.have.property("resolved_lang", "it");',
+                '  });',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_curation_invalid'),
+        name: 'Reject curation filter when lang is missing (400 Bad Request)',
+        request: {
+          method: 'GET',
+          name: 'Reject curation filter when lang is missing (400 Bad Request)',
+          description: {
+            content:
+              'Verify 400 Bad Request rejection when curated_only=true but lang is omitted.',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [{ key: 'curated_only', value: 'true', disabled: false }],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid(
+                'script:test:GET:api_recipes:curation_invalid',
+              ),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 400 Bad Request", function () {',
+                '  pm.response.to.have.status(400);',
+                '});',
+                'pm.test("Validation error message specifies missing lang", function () {',
+                '  const data = pm.response.json();',
+                '  const msg = typeof data.message === "string" ? data.message : JSON.stringify(data.message || data);',
+                '  pm.expect(msg.toLowerCase()).to.include("lang");',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_pantry_allergen'),
+        name: 'Filter recipes by pantry ingredients & allergy exclusion',
+        request: {
+          method: 'GET',
+          name: 'Filter recipes by pantry ingredients & allergy exclusion',
+          description: {
+            content:
+              'Verify pantry matching (ingredient_ids) and allergy exclusion (exclude_ingredient_ids).',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [
+              { key: 'ingredient_ids', value: '1,2', disabled: false },
+              { key: 'ingredient_mode', value: 'all', disabled: false },
+              { key: 'exclude_ingredient_ids', value: '3', disabled: false },
+              { key: 'lang', value: 'it', disabled: false },
+            ],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid(
+                'script:test:GET:api_recipes:pantry_allergen',
+              ),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 200", function () {',
+                '  pm.response.to.have.status(200);',
+                '});',
+                'pm.test("Response contains paginated recipe list", function () {',
+                '  const data = pm.response.json();',
+                '  pm.expect(data).to.be.an("object");',
+                '  pm.expect(data.items || data.data).to.be.an("array");',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_sort_total_time'),
+        name: 'Sort recipes by total time ascending',
+        request: {
+          method: 'GET',
+          name: 'Sort recipes by total time ascending',
+          description: {
+            content: 'Verify sorting by total_time in ascending order.',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [
+              { key: 'sort_by', value: 'total_time', disabled: false },
+              { key: 'sort_order', value: 'asc', disabled: false },
+              { key: 'lang', value: 'it', disabled: false },
+            ],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid(
+                'script:test:GET:api_recipes:sort_total_time',
+              ),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 200", function () {',
+                '  pm.response.to.have.status(200);',
+                '});',
+                'pm.test("Recipes are ordered by total_time ascending", function () {',
+                '  const data = pm.response.json();',
+                '  const items = data.items || data.data || [];',
+                '  if (items.length > 1) {',
+                '    for (let i = 0; i < items.length - 1; i++) {',
+                '      if (items[i].total_time !== undefined && items[i+1].total_time !== undefined) {',
+                '        pm.expect(items[i].total_time).to.be.at.most(items[i+1].total_time);',
+                '      }',
+                '    }',
+                '  }',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_sort_likes_count'),
+        name: 'Sort recipes by popularity (likes_count descending)',
+        request: {
+          method: 'GET',
+          name: 'Sort recipes by popularity (likes_count descending)',
+          description: {
+            content: 'Verify sorting by likes_count in descending order.',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [
+              { key: 'sort_by', value: 'likes_count', disabled: false },
+              { key: 'sort_order', value: 'desc', disabled: false },
+              { key: 'lang', value: 'it', disabled: false },
+            ],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid(
+                'script:test:GET:api_recipes:sort_likes_count',
+              ),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 200", function () {',
+                '  pm.response.to.have.status(200);',
+                '});',
+                'pm.test("Recipes are ordered by likes_count descending", function () {',
+                '  const data = pm.response.json();',
+                '  const items = data.items || data.data || [];',
+                '  if (items.length > 1) {',
+                '    for (let i = 0; i < items.length - 1; i++) {',
+                '      if (items[i].likes_count !== undefined && items[i+1].likes_count !== undefined) {',
+                '        pm.expect(items[i].likes_count).to.be.at.least(items[i+1].likes_count);',
+                '      }',
+                '    }',
+                '  }',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_sort_difficulty'),
+        name: 'Sort recipes by difficulty ascending',
+        request: {
+          method: 'GET',
+          name: 'Sort recipes by difficulty ascending',
+          description: {
+            content: 'Verify sorting by difficulty in ascending order.',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [
+              { key: 'sort_by', value: 'difficulty', disabled: false },
+              { key: 'sort_order', value: 'asc', disabled: false },
+              { key: 'lang', value: 'it', disabled: false },
+            ],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid(
+                'script:test:GET:api_recipes:sort_difficulty',
+              ),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 200", function () {',
+                '  pm.response.to.have.status(200);',
+                '});',
+                'pm.test("Returned recipes include difficulty level", function () {',
+                '  const data = pm.response.json();',
+                '  const items = data.items || data.data || [];',
+                '  items.forEach(function (recipe) {',
+                '    pm.expect(recipe).to.have.property("difficulty");',
+                '  });',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: deterministicUuid('request:GET:api_recipes:test_sort_title'),
+        name: 'Sort recipes by localized title ascending',
+        request: {
+          method: 'GET',
+          name: 'Sort recipes by localized title ascending',
+          description: {
+            content:
+              'Verify two-step localized title sorting in ascending alphabetical order.',
+            type: 'text/plain',
+          },
+          url: {
+            path: ['api', 'recipes'],
+            host: ['{{baseUrl}}'],
+            query: [
+              { key: 'sort_by', value: 'title', disabled: false },
+              { key: 'sort_order', value: 'asc', disabled: false },
+              { key: 'lang', value: 'it', disabled: false },
+            ],
+            variable: [],
+          },
+          header: [{ key: 'Accept', value: 'application/json' }],
+          auth: null,
+        },
+        response: [],
+        event: [
+          {
+            listen: 'test',
+            script: {
+              id: deterministicUuid('script:test:GET:api_recipes:sort_title'),
+              type: 'text/javascript',
+              exec: [
+                'pm.test("Status code is 200", function () {',
+                '  pm.response.to.have.status(200);',
+                '});',
+                'pm.test("Recipes are sorted alphabetically by title", function () {',
+                '  const data = pm.response.json();',
+                '  const items = data.items || data.data || [];',
+                '  if (items.length > 1) {',
+                '    for (let i = 0; i < items.length - 1; i++) {',
+                '      if (items[i].title && items[i+1].title) {',
+                '        pm.expect(items[i].title.localeCompare(items[i+1].title, "it", { sensitivity: "base" })).to.be.at.most(0);',
+                '      }',
+                '    }',
+                '  }',
+                '});',
+              ],
+            },
+          },
+        ],
+      },
+    ];
+    recipesFolder.item.push(...enrichedRequests);
+  }
+
   console.log(`Script overlay summary: ${overlaidCount} custom scripts overlaid, ${synthesizedCount} baseline tests synthesized.`);
 
   fs.writeFileSync(outputCollectionPath, JSON.stringify(collection, null, 2) + '\n', 'utf8');

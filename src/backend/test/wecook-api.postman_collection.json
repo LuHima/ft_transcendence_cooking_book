@@ -8225,11 +8225,11 @@
       "item": [
         {
           "id": "2b71b611-92e9-4d25-851b-06b7491275f2",
-          "name": "List recipes with filtering and search",
+          "name": "List recipes with multi-criteria filtering, search, and sorting",
           "request": {
-            "name": "List recipes with filtering and search",
+            "name": "List recipes with multi-criteria filtering, search, and sorting",
             "description": {
-              "content": "Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, returns localized title and description according to this order: requested language -[if not available]-> source language -[if not available]-> English. If authenticated via `accessToken` cookie, contextual social metrics such as `is_liked` are populated.",
+              "content": "Fetches recipes matching optional multi-criteria filters: duration boundaries (min_time, max_time, max_prep_time), author original source language (source_lang), human-verified translation curation (curated_only, requiring lang), tag matching with conjunction modes (tag_ids, tag_mode=\"all\"|\"any\", exclude_tag_ids), pantry ingredient search and allergy exclusions (ingredient_ids, ingredient_mode=\"all\"|\"any\", exclude_ingredient_ids), course, difficulty, and author ID. Supports decoupled sorting (sort_by: created_at, total_time, difficulty, likes_count, title; sort_order: asc, desc) with localized title sorting resolved via multi-tier fallback cascade. If authenticated via accessToken cookie, contextual social metrics such as is_liked are populated.",
               "type": "text/plain"
             },
             "url": {
@@ -8269,19 +8269,79 @@
                   "disabled": false,
                   "key": "tag_ids",
                   "value": "1",
-                  "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or single numbers e.g. \"tag_ids=1&tag_ids=2\""
+                  "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or repeated query params e.g. \"tag_ids=1&tag_ids=2\""
                 },
                 {
                   "disabled": false,
                   "key": "tag_ids",
                   "value": "2",
-                  "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or single numbers e.g. \"tag_ids=1&tag_ids=2\""
+                  "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or repeated query params e.g. \"tag_ids=1&tag_ids=2\""
+                },
+                {
+                  "disabled": false,
+                  "key": "tag_mode",
+                  "value": "all",
+                  "description": "Tag matching mode: \"all\" requires all specified tag_ids, \"any\" matches at least one tag_id (defaults to \"all\")"
+                },
+                {
+                  "disabled": false,
+                  "key": "exclude_tag_ids",
+                  "value": "3",
+                  "description": "Exclude recipes containing any of the specified tag IDs. Supports comma-separated string e.g. \"exclude_tag_ids=3,4\""
+                },
+                {
+                  "disabled": false,
+                  "key": "exclude_tag_ids",
+                  "value": "4",
+                  "description": "Exclude recipes containing any of the specified tag IDs. Supports comma-separated string e.g. \"exclude_tag_ids=3,4\""
+                },
+                {
+                  "disabled": false,
+                  "key": "ingredient_ids",
+                  "value": "10",
+                  "description": "Filter recipes by ingredient IDs (pantry search). Supports comma-separated string e.g. \"ingredient_ids=10,20\""
+                },
+                {
+                  "disabled": false,
+                  "key": "ingredient_ids",
+                  "value": "20",
+                  "description": "Filter recipes by ingredient IDs (pantry search). Supports comma-separated string e.g. \"ingredient_ids=10,20\""
+                },
+                {
+                  "disabled": false,
+                  "key": "ingredient_mode",
+                  "value": "all",
+                  "description": "Ingredient matching mode: \"all\" requires all specified ingredient_ids, \"any\" matches at least one ingredient_id (defaults to \"all\")"
+                },
+                {
+                  "disabled": false,
+                  "key": "exclude_ingredient_ids",
+                  "value": "30",
+                  "description": "Exclude recipes containing any of the specified ingredient IDs. Supports comma-separated string e.g. \"exclude_ingredient_ids=30,40\""
+                },
+                {
+                  "disabled": false,
+                  "key": "exclude_ingredient_ids",
+                  "value": "40",
+                  "description": "Exclude recipes containing any of the specified ingredient IDs. Supports comma-separated string e.g. \"exclude_ingredient_ids=30,40\""
+                },
+                {
+                  "disabled": false,
+                  "key": "min_time",
+                  "value": "15",
+                  "description": "Filter recipes where total_time is greater than or equal to this limit (in minutes)"
                 },
                 {
                   "disabled": false,
                   "key": "max_time",
                   "value": "30",
                   "description": "Filter recipes where total_time is less than or equal to this limit (in minutes)"
+                },
+                {
+                  "disabled": false,
+                  "key": "max_prep_time",
+                  "value": "15",
+                  "description": "Filter recipes where prep_time is less than or equal to this limit (in minutes)"
                 },
                 {
                   "disabled": false,
@@ -8297,9 +8357,33 @@
                 },
                 {
                   "disabled": false,
+                  "key": "source_lang",
+                  "value": "it",
+                  "description": "Filter recipes by the authoring original source language code (e.g., \"it\", \"en\", \"fr\")"
+                },
+                {
+                  "disabled": false,
+                  "key": "curated_only",
+                  "value": "true",
+                  "description": "Filter recipes that have human-verified translations (author_original or manual) for the requested locale. Requires lang parameter to be specified."
+                },
+                {
+                  "disabled": false,
                   "key": "lang",
                   "value": "it",
                   "description": "Target locale code for projected title and description"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_by",
+                  "value": "created_at",
+                  "description": "Field to sort recipes by (defaults to \"created_at\")"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_order",
+                  "value": "desc",
+                  "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title"
                 }
               ],
               "variable": []
@@ -8352,8 +8436,48 @@
                       "value": "2"
                     },
                     {
+                      "key": "tag_mode",
+                      "value": "all"
+                    },
+                    {
+                      "key": "exclude_tag_ids",
+                      "value": "3"
+                    },
+                    {
+                      "key": "exclude_tag_ids",
+                      "value": "4"
+                    },
+                    {
+                      "key": "ingredient_ids",
+                      "value": "10"
+                    },
+                    {
+                      "key": "ingredient_ids",
+                      "value": "20"
+                    },
+                    {
+                      "key": "ingredient_mode",
+                      "value": "all"
+                    },
+                    {
+                      "key": "exclude_ingredient_ids",
+                      "value": "30"
+                    },
+                    {
+                      "key": "exclude_ingredient_ids",
+                      "value": "40"
+                    },
+                    {
+                      "key": "min_time",
+                      "value": "15"
+                    },
+                    {
                       "key": "max_time",
                       "value": "30"
+                    },
+                    {
+                      "key": "max_prep_time",
+                      "value": "15"
                     },
                     {
                       "key": "author_id",
@@ -8364,8 +8488,24 @@
                       "value": "pasta"
                     },
                     {
+                      "key": "source_lang",
+                      "value": "it"
+                    },
+                    {
+                      "key": "curated_only",
+                      "value": "true"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
                     }
                   ],
                   "variable": []
@@ -8392,8 +8532,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "8417bf82-7124-41fd-8024-ff227e4e92f0",
-              "name": "Invalid recipe filter or pagination query parameter, including non-integer tag IDs, negative IDs or times, unsupported enum values, or an invalid language code",
+              "id": "3abff4c8-5e1a-4507-87f1-f1cf31d989ae",
+              "name": "Invalid recipe filter or pagination query parameter, such as non-integer tag or ingredient IDs, negative IDs or duration limits, overlapping inclusion and exclusion sets, curated_only=true without lang, unsupported enum values, or an invalid language code",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -8429,8 +8569,48 @@
                       "value": "2"
                     },
                     {
+                      "key": "tag_mode",
+                      "value": "all"
+                    },
+                    {
+                      "key": "exclude_tag_ids",
+                      "value": "3"
+                    },
+                    {
+                      "key": "exclude_tag_ids",
+                      "value": "4"
+                    },
+                    {
+                      "key": "ingredient_ids",
+                      "value": "10"
+                    },
+                    {
+                      "key": "ingredient_ids",
+                      "value": "20"
+                    },
+                    {
+                      "key": "ingredient_mode",
+                      "value": "all"
+                    },
+                    {
+                      "key": "exclude_ingredient_ids",
+                      "value": "30"
+                    },
+                    {
+                      "key": "exclude_ingredient_ids",
+                      "value": "40"
+                    },
+                    {
+                      "key": "min_time",
+                      "value": "15"
+                    },
+                    {
                       "key": "max_time",
                       "value": "30"
+                    },
+                    {
+                      "key": "max_prep_time",
+                      "value": "15"
                     },
                     {
                       "key": "author_id",
@@ -8441,8 +8621,24 @@
                       "value": "pasta"
                     },
                     {
+                      "key": "source_lang",
+                      "value": "it"
+                    },
+                    {
+                      "key": "curated_only",
+                      "value": "true"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
                     }
                   ],
                   "variable": []
@@ -8506,8 +8702,48 @@
                       "value": "2"
                     },
                     {
+                      "key": "tag_mode",
+                      "value": "all"
+                    },
+                    {
+                      "key": "exclude_tag_ids",
+                      "value": "3"
+                    },
+                    {
+                      "key": "exclude_tag_ids",
+                      "value": "4"
+                    },
+                    {
+                      "key": "ingredient_ids",
+                      "value": "10"
+                    },
+                    {
+                      "key": "ingredient_ids",
+                      "value": "20"
+                    },
+                    {
+                      "key": "ingredient_mode",
+                      "value": "all"
+                    },
+                    {
+                      "key": "exclude_ingredient_ids",
+                      "value": "30"
+                    },
+                    {
+                      "key": "exclude_ingredient_ids",
+                      "value": "40"
+                    },
+                    {
+                      "key": "min_time",
+                      "value": "15"
+                    },
+                    {
                       "key": "max_time",
                       "value": "30"
+                    },
+                    {
+                      "key": "max_prep_time",
+                      "value": "15"
                     },
                     {
                       "key": "author_id",
@@ -8518,8 +8754,24 @@
                       "value": "pasta"
                     },
                     {
+                      "key": "source_lang",
+                      "value": "it"
+                    },
+                    {
+                      "key": "curated_only",
+                      "value": "true"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
                     }
                   ],
                   "variable": []
@@ -8560,12 +8812,27 @@
                   "pm.test(\"Response adheres to PaginatedRecipeResponseDto schema\", function () {",
                   "  const jsonData = pm.response.json();",
                   "  pm.expect(jsonData).to.be.an(\"object\");",
-                  "  pm.expect(jsonData).to.have.property(\"data\").that.is.an(\"array\");",
-                  "  pm.expect(jsonData).to.have.property(\"meta\").that.is.an(\"object\");",
-                  "  pm.expect(jsonData.meta).to.have.property(\"page\").that.is.a(\"number\");",
-                  "  pm.expect(jsonData.meta).to.have.property(\"limit\").that.is.a(\"number\");",
-                  "  pm.expect(jsonData.meta).to.have.property(\"total\").that.is.a(\"number\");",
-                  "  pm.expect(jsonData.meta).to.have.property(\"totalPages\").that.is.a(\"number\");",
+                  "  const items = jsonData.items || jsonData.data;",
+                  "  pm.expect(items).to.be.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
+                  "});",
+                  "",
+                  "pm.test(\"Recipe cards contain multi-criteria attributes\", function () {",
+                  "  const jsonData = pm.response.json();",
+                  "  const items = jsonData.items || jsonData.data || [];",
+                  "  if (items.length > 0) {",
+                  "    const card = items[0];",
+                  "    pm.expect(card).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(card).to.have.property(\"title\").that.is.a(\"string\");",
+                  "    pm.expect(card).to.have.property(\"total_time\").that.is.a(\"number\");",
+                  "    pm.expect(card).to.have.property(\"difficulty\").that.is.a(\"string\");",
+                  "    pm.expect(card).to.have.property(\"likes_count\").that.is.a(\"number\");",
+                  "  }",
                   "});",
                   ""
                 ]
@@ -15640,6 +15907,552 @@
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           }
+        },
+        {
+          "id": "e6064f53-6503-4fdb-8d58-b0a234ef341c",
+          "name": "Filter recipes by duration boundaries (min_time, max_prep_time)",
+          "request": {
+            "method": "GET",
+            "name": "Filter recipes by duration boundaries (min_time, max_prep_time)",
+            "description": {
+              "content": "Verify duration boundary filtering (min_time >= 15 and max_prep_time <= 20).",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "min_time",
+                  "value": "15",
+                  "disabled": false
+                },
+                {
+                  "key": "max_prep_time",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "it",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "cfab914a-624a-448f-86c4-405bf8fae214",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returned recipes adhere to duration boundaries\", function () {",
+                  "  const data = pm.response.json();",
+                  "  const items = data.items || data.data || [];",
+                  "  pm.expect(items).to.be.an(\"array\");",
+                  "  items.forEach(function (recipe) {",
+                  "    if (recipe.total_time !== undefined) {",
+                  "      pm.expect(recipe.total_time).to.be.at.least(15);",
+                  "    }",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "9780b6c3-0dd3-4ccf-8463-9694d703e7d9",
+          "name": "Filter recipes by verified curation (curated_only with valid lang)",
+          "request": {
+            "method": "GET",
+            "name": "Filter recipes by verified curation (curated_only with valid lang)",
+            "description": {
+              "content": "Verify curation filtering with curated_only=true and lang=it.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "curated_only",
+                  "value": "true",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "it",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "b54f8aba-5cf6-480f-8f0f-4abd5cb6fffd",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returned recipes have human curation in requested locale\", function () {",
+                  "  const data = pm.response.json();",
+                  "  const items = data.items || data.data || [];",
+                  "  pm.expect(items).to.be.an(\"array\");",
+                  "  items.forEach(function (recipe) {",
+                  "    pm.expect(recipe).to.have.property(\"resolved_lang\", \"it\");",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "4080feac-b83a-4f6c-8e2d-13e785ef8ade",
+          "name": "Reject curation filter when lang is missing (400 Bad Request)",
+          "request": {
+            "method": "GET",
+            "name": "Reject curation filter when lang is missing (400 Bad Request)",
+            "description": {
+              "content": "Verify 400 Bad Request rejection when curated_only=true but lang is omitted.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "curated_only",
+                  "value": "true",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f5ef02c3-f378-4247-8f88-8542a7f25f7f",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Validation error message specifies missing lang\", function () {",
+                  "  const data = pm.response.json();",
+                  "  const msg = typeof data.message === \"string\" ? data.message : JSON.stringify(data.message || data);",
+                  "  pm.expect(msg.toLowerCase()).to.include(\"lang\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "f6175d36-ac61-49cd-88f1-bdfe18ffc9d1",
+          "name": "Filter recipes by pantry ingredients & allergy exclusion",
+          "request": {
+            "method": "GET",
+            "name": "Filter recipes by pantry ingredients & allergy exclusion",
+            "description": {
+              "content": "Verify pantry matching (ingredient_ids) and allergy exclusion (exclude_ingredient_ids).",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "ingredient_ids",
+                  "value": "1,2",
+                  "disabled": false
+                },
+                {
+                  "key": "ingredient_mode",
+                  "value": "all",
+                  "disabled": false
+                },
+                {
+                  "key": "exclude_ingredient_ids",
+                  "value": "3",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "it",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "6748fb02-d06f-4179-82df-d80610a5a9ac",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response contains paginated recipe list\", function () {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.be.an(\"object\");",
+                  "  pm.expect(data.items || data.data).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ef2f3a9f-1170-49cb-8e98-756eaaf974a5",
+          "name": "Sort recipes by total time ascending",
+          "request": {
+            "method": "GET",
+            "name": "Sort recipes by total time ascending",
+            "description": {
+              "content": "Verify sorting by total_time in ascending order.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "total_time",
+                  "disabled": false
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "it",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "00f179b1-9fbd-4aff-8e2c-a28fbb25a2d9",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Recipes are ordered by total_time ascending\", function () {",
+                  "  const data = pm.response.json();",
+                  "  const items = data.items || data.data || [];",
+                  "  if (items.length > 1) {",
+                  "    for (let i = 0; i < items.length - 1; i++) {",
+                  "      if (items[i].total_time !== undefined && items[i+1].total_time !== undefined) {",
+                  "        pm.expect(items[i].total_time).to.be.at.most(items[i+1].total_time);",
+                  "      }",
+                  "    }",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "9b3fbbf0-1d62-485c-8968-121349a14a43",
+          "name": "Sort recipes by popularity (likes_count descending)",
+          "request": {
+            "method": "GET",
+            "name": "Sort recipes by popularity (likes_count descending)",
+            "description": {
+              "content": "Verify sorting by likes_count in descending order.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "likes_count",
+                  "disabled": false
+                },
+                {
+                  "key": "sort_order",
+                  "value": "desc",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "it",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "73a27398-10e6-4410-89d7-d82c38d6d868",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Recipes are ordered by likes_count descending\", function () {",
+                  "  const data = pm.response.json();",
+                  "  const items = data.items || data.data || [];",
+                  "  if (items.length > 1) {",
+                  "    for (let i = 0; i < items.length - 1; i++) {",
+                  "      if (items[i].likes_count !== undefined && items[i+1].likes_count !== undefined) {",
+                  "        pm.expect(items[i].likes_count).to.be.at.least(items[i+1].likes_count);",
+                  "      }",
+                  "    }",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "dcc6697a-e757-458b-8005-d1dd3f1ec958",
+          "name": "Sort recipes by difficulty ascending",
+          "request": {
+            "method": "GET",
+            "name": "Sort recipes by difficulty ascending",
+            "description": {
+              "content": "Verify sorting by difficulty in ascending order.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "difficulty",
+                  "disabled": false
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "it",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f4313e30-d0c2-4b24-84aa-f27080d1a125",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returned recipes include difficulty level\", function () {",
+                  "  const data = pm.response.json();",
+                  "  const items = data.items || data.data || [];",
+                  "  items.forEach(function (recipe) {",
+                  "    pm.expect(recipe).to.have.property(\"difficulty\");",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "c9404299-1d62-46d1-820d-d76be99e3262",
+          "name": "Sort recipes by localized title ascending",
+          "request": {
+            "method": "GET",
+            "name": "Sort recipes by localized title ascending",
+            "description": {
+              "content": "Verify two-step localized title sorting in ascending alphabetical order.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "recipes"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "title",
+                  "disabled": false
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "disabled": false
+                },
+                {
+                  "key": "lang",
+                  "value": "it",
+                  "disabled": false
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": null
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "9afa7298-5535-4f87-85a0-08092c37f419",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Recipes are sorted alphabetically by title\", function () {",
+                  "  const data = pm.response.json();",
+                  "  const items = data.items || data.data || [];",
+                  "  if (items.length > 1) {",
+                  "    for (let i = 0; i < items.length - 1; i++) {",
+                  "      if (items[i].title && items[i+1].title) {",
+                  "        pm.expect(items[i].title.localeCompare(items[i+1].title, \"it\", { sensitivity: \"base\" })).to.be.at.most(0);",
+                  "      }",
+                  "    }",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ],
       "event": []
@@ -16744,7 +17557,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "3477.6807699131127",
+                  "value": "9742.716959561885",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -16790,7 +17603,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16843,7 +17656,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16896,7 +17709,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -16949,7 +17762,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17002,7 +17815,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17055,7 +17868,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17147,7 +17960,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "3477.6807699131127",
+                  "value": "9742.716959561885",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17180,7 +17993,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17219,7 +18032,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17264,7 +18077,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17309,7 +18122,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17354,7 +18167,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17399,7 +18212,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17468,7 +18281,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "3477.6807699131127",
+                  "value": "9742.716959561885",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17501,7 +18314,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17540,7 +18353,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17585,7 +18398,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17630,7 +18443,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17675,7 +18488,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17720,7 +18533,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17789,7 +18602,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "3477.6807699131127",
+                  "value": "9742.716959561885",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -17835,7 +18648,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17888,7 +18701,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17941,7 +18754,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -17994,7 +18807,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18047,7 +18860,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18100,7 +18913,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "3477.6807699131127",
+                      "value": "9742.716959561885",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19798,13 +20611,13 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "pending",
+                  "value": "reviewed",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "recipe",
+                  "value": "comment",
                   "description": "Filter reports by target entity type"
                 }
               ],

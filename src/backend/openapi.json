@@ -1692,7 +1692,7 @@
     },
     "/api/recipes": {
       "get": {
-        "description": "Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, returns localized title and description according to this order: requested language -[if not available]-> source language -[if not available]-> English. If authenticated via `accessToken` cookie, contextual social metrics such as `is_liked` are populated.",
+        "description": "Fetches recipes matching optional multi-criteria filters: duration boundaries (min_time, max_time, max_prep_time), author original source language (source_lang), human-verified translation curation (curated_only, requiring lang), tag matching with conjunction modes (tag_ids, tag_mode=\"all\"|\"any\", exclude_tag_ids), pantry ingredient search and allergy exclusions (ingredient_ids, ingredient_mode=\"all\"|\"any\", exclude_ingredient_ids), course, difficulty, and author ID. Supports decoupled sorting (sort_by: created_at, total_time, difficulty, likes_count, title; sort_order: asc, desc) with localized title sorting resolved via multi-tier fallback cascade. If authenticated via accessToken cookie, contextual social metrics such as is_liked are populated.",
         "operationId": "RecipeController_getRecipes",
         "parameters": [
           {
@@ -1758,7 +1758,7 @@
             "name": "tag_ids",
             "required": false,
             "in": "query",
-            "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or single numbers e.g. \"tag_ids=1&tag_ids=2\"",
+            "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or repeated query params e.g. \"tag_ids=1&tag_ids=2\"",
             "schema": {
               "example": [
                 1,
@@ -1772,6 +1772,98 @@
             }
           },
           {
+            "name": "tag_mode",
+            "required": false,
+            "in": "query",
+            "description": "Tag matching mode: \"all\" requires all specified tag_ids, \"any\" matches at least one tag_id (defaults to \"all\")",
+            "schema": {
+              "default": "all",
+              "example": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            }
+          },
+          {
+            "name": "exclude_tag_ids",
+            "required": false,
+            "in": "query",
+            "description": "Exclude recipes containing any of the specified tag IDs. Supports comma-separated string e.g. \"exclude_tag_ids=3,4\"",
+            "schema": {
+              "example": [
+                3,
+                4
+              ],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "name": "ingredient_ids",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by ingredient IDs (pantry search). Supports comma-separated string e.g. \"ingredient_ids=10,20\"",
+            "schema": {
+              "example": [
+                10,
+                20
+              ],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "name": "ingredient_mode",
+            "required": false,
+            "in": "query",
+            "description": "Ingredient matching mode: \"all\" requires all specified ingredient_ids, \"any\" matches at least one ingredient_id (defaults to \"all\")",
+            "schema": {
+              "default": "all",
+              "example": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            }
+          },
+          {
+            "name": "exclude_ingredient_ids",
+            "required": false,
+            "in": "query",
+            "description": "Exclude recipes containing any of the specified ingredient IDs. Supports comma-separated string e.g. \"exclude_ingredient_ids=30,40\"",
+            "schema": {
+              "example": [
+                30,
+                40
+              ],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "name": "min_time",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes where total_time is greater than or equal to this limit (in minutes)",
+            "schema": {
+              "minimum": 0,
+              "example": 15,
+              "type": "number"
+            }
+          },
+          {
             "name": "max_time",
             "required": false,
             "in": "query",
@@ -1779,6 +1871,17 @@
             "schema": {
               "minimum": 0,
               "example": 30,
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_prep_time",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes where prep_time is less than or equal to this limit (in minutes)",
+            "schema": {
+              "minimum": 0,
+              "example": 15,
               "type": "number"
             }
           },
@@ -1804,6 +1907,28 @@
             }
           },
           {
+            "name": "source_lang",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by the authoring original source language code (e.g., \"it\", \"en\", \"fr\")",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 5,
+              "example": "it",
+              "type": "string"
+            }
+          },
+          {
+            "name": "curated_only",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes that have human-verified translations (author_original or manual) for the requested locale. Requires lang parameter to be specified.",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
             "name": "lang",
             "required": false,
             "in": "query",
@@ -1815,6 +1940,38 @@
                 "it",
                 "en",
                 "fr"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort recipes by (defaults to \"created_at\")",
+            "schema": {
+              "default": "created_at",
+              "example": "created_at",
+              "type": "string",
+              "enum": [
+                "created_at",
+                "total_time",
+                "difficulty",
+                "likes_count",
+                "title"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           }
@@ -1831,7 +1988,7 @@
             }
           },
           "400": {
-            "description": "Invalid recipe filter or pagination query parameter, including non-integer tag IDs, negative IDs or times, unsupported enum values, or an invalid language code",
+            "description": "Invalid recipe filter or pagination query parameter, such as non-integer tag or ingredient IDs, negative IDs or duration limits, overlapping inclusion and exclusion sets, curated_only=true without lang, unsupported enum values, or an invalid language code",
             "content": {
               "application/json": {
                 "schema": {
@@ -1851,7 +2008,7 @@
             }
           }
         },
-        "summary": "List recipes with filtering and search",
+        "summary": "List recipes with multi-criteria filtering, search, and sorting",
         "tags": [
           "Recipes"
         ]

@@ -97,9 +97,9 @@ export class RecipeController {
    * localization.
    */
   @ApiOperation({
-    summary: 'List recipes with filtering and search',
+    summary: 'List recipes with multi-criteria filtering, search, and sorting',
     description:
-      'Fetches recipes matching optional filters (course, difficulty, author, max time, tags, keyword search). When `lang` is specified, returns localized title and description according to this order: requested language -[if not available]-> source language -[if not available]-> English. If authenticated via `accessToken` cookie, contextual social metrics such as `is_liked` are populated.',
+      'Fetches recipes matching optional multi-criteria filters: duration boundaries (min_time, max_time, max_prep_time), author original source language (source_lang), human-verified translation curation (curated_only, requiring lang), tag matching with conjunction modes (tag_ids, tag_mode="all"|"any", exclude_tag_ids), pantry ingredient search and allergy exclusions (ingredient_ids, ingredient_mode="all"|"any", exclude_ingredient_ids), course, difficulty, and author ID. Supports decoupled sorting (sort_by: created_at, total_time, difficulty, likes_count, title; sort_order: asc, desc) with localized title sorting resolved via multi-tier fallback cascade. If authenticated via accessToken cookie, contextual social metrics such as is_liked are populated.',
   })
   @ApiOkResponse({
     description: 'Paginated recipe cards with translations matching criteria',
@@ -107,7 +107,7 @@ export class RecipeController {
   })
   @ApiBadRequestResponse({
     description:
-      'Invalid recipe filter or pagination query parameter, including non-integer tag IDs, negative IDs or times, unsupported enum values, or an invalid language code',
+      'Invalid recipe filter or pagination query parameter, such as non-integer tag or ingredient IDs, negative IDs or duration limits, overlapping inclusion and exclusion sets, curated_only=true without lang, unsupported enum values, or an invalid language code',
     type: ApiBadRequestResponseDto,
   })
   @UseGuards(OptionalAuthGuard)
