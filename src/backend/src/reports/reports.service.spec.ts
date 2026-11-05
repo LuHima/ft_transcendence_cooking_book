@@ -548,7 +548,7 @@ describe('ReportsService', () => {
       ).rejects.toThrow('Moderators cannot moderate or ban administrator');
     });
 
-    it('deactivates comment and tombstones text on comment report delete_content', async () => {
+    it('deactivates comment without overwriting its content on delete_content', async () => {
       mockPrisma.report.findUnique.mockResolvedValueOnce({
         id: 2,
         subject: ReportSubject.comment,
@@ -580,10 +580,7 @@ describe('ReportsService', () => {
 
       expect(mockPrisma.comment.update).toHaveBeenCalledWith({
         where: { id: 55 },
-        data: {
-          is_active: false,
-          content: '[Comment removed by moderation]',
-        },
+        data: { is_active: false },
       });
     });
 

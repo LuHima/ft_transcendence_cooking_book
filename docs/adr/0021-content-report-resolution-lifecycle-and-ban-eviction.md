@@ -70,7 +70,7 @@ We decided to standardize content report resolution exclusively on `PATCH /api/r
 
 6. **Content Deactivation & Audit Trail**:
    - When `actions` includes `delete_content`:
-     - For `comment`: sets `is_active = false` and prunes unread reply notifications.
+     - For `comment`: sets `is_active = false` without overwriting the original content, and prunes unread reply notifications. Public comment APIs mask deactivated comment content and author details; staff moderation views retain the original content for audit.
      - For `recipe`: sets `is_active = false`, hiding it from discovery, search, author archives, and friend feeds.
    - Record `resolved_by_id`, `resolution_reason`, `resolution_description`, `resolution_notes`, and `resolved_at` on model `Report`.
 

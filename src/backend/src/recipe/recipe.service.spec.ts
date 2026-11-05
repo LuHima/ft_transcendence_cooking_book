@@ -3852,6 +3852,46 @@ describe('RecipeService', () => {
       });
     });
 
+    it('masks deactivated root comment content and author for public callers', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        {
+          id: 50,
+          recipe_id: 1,
+          user_id: 15,
+          parent_id: null,
+          content: 'Original deactivated content',
+          is_active: false,
+          created_at: new Date('2026-01-05'),
+          user: { id: 15, username: 'spammer', avatar_url: null },
+          replies: [
+            {
+              id: 51,
+              recipe_id: 1,
+              user_id: 16,
+              parent_id: 50,
+              content: 'Active reply text',
+              is_active: true,
+              is_edited: false,
+              created_at: new Date('2026-01-06'),
+              updated_at: null,
+              user: { id: 16, username: 'responder', avatar_url: null },
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getComments(1);
+
+      expect(result.items[0]).toMatchObject({
+        id: 50,
+        is_active: false,
+        content: null,
+        user_id: null,
+        user: null,
+      });
+    });
+
     it('paginates root comments correctly with page and limit', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
 

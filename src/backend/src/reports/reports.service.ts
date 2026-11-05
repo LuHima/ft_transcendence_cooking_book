@@ -290,10 +290,7 @@ export class ReportsService {
           } else if (report.subject === ReportSubject.comment) {
             await tx.comment.update({
               where: { id: report.target_id },
-              data: {
-                is_active: false,
-                content: '[Comment removed by moderation]',
-              },
+              data: { is_active: false },
             });
             this.logger.log(
               `Audit: Report #${reportId} resolved with delete_content. Comment #${report.target_id} deactivated.`,
