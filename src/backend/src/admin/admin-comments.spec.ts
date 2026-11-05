@@ -499,11 +499,26 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
 
       expect(result.items).toHaveLength(2);
 
+      // Verify Prisma query requested replies in ascending chronological order
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            replies: expect.objectContaining({
+              orderBy: { created_at: 'asc' },
+            }),
+          }),
+        }),
+      );
+
       // Root 1 has 7 replies, so replies window should be truncated at replies_limit (5)
       const thread1: any = result.items.find((item: any) => item.id === 10);
       expect(thread1.replies_count).toBe(7);
       expect(thread1.has_more_replies).toBe(true);
       expect(thread1.replies).toHaveLength(5);
+      // Verify windowed preview reflects earliest chronological replies
+      expect(thread1.replies.map((r: any) => r.id)).toEqual([
+        100, 101, 102, 103, 104,
+      ]);
 
       // Root 2 has 2 replies, which is <= 5, so has_more_replies should be false
       const thread2: any = result.items.find((item: any) => item.id === 20);

@@ -817,7 +817,7 @@ export class AdminService {
             },
           },
           replies: {
-            orderBy: { created_at: 'desc' },
+            orderBy: { created_at: 'asc' },
             include: {
               user: { select: { id: true, username: true, avatar_url: true } },
               recipe: {
