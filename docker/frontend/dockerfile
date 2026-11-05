@@ -27,7 +27,7 @@ COPY ./src/frontend/ ./
 EXPOSE 5173
 
 # Health check: verifies that the Vite development server is serving pages
-HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:5173/ || exit 1
 
 ENTRYPOINT ["entrypoint.sh"]
