@@ -10,6 +10,7 @@ import Avatar from '../components/Avatar'
 import { ReportButton } from '../components/ReportDialog'
 import { canDeleteRecipe, canEditRecipe, isAdmin as isAdminUser } from '../lib/permissions'
 import { RecipeDetailSkeleton } from '../components/Skeleton'
+import { exportRecipePdf, formatQuantity, ingredientNote } from '../lib/recipePdf'
 import type { RecipeDetail as RecipeDetailType } from '../types/models'
 
 function InfoBox({ label, children }: { label: string; children: ReactNode }) {
@@ -19,15 +20,6 @@ function InfoBox({ label, children }: { label: string; children: ReactNode }) {
 			<span className="text-sm font-medium text-[var(--wc-text)]">{children}</span>
 		</div>
 	)
-}
-
-// le note dell'ingrediente sono Json lato backend: si mostrano solo se sono testo
-function ingredientNote(notes: unknown): string | null {
-	return typeof notes === 'string' && notes.trim() ? notes.trim() : null
-}
-
-function formatQuantity(n: number): string {
-	return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2)))
 }
 
 function RecipeDetail() {
@@ -42,6 +34,7 @@ function RecipeDetail() {
 	const [liking, setLiking] = useState(false)
 	const [deleting, setDeleting] = useState(false)
 	const [retrying, setRetrying] = useState(false)
+	const [exporting, setExporting] = useState(false)
 
 	// si ricarica anche al cambio lingua dell'interfaccia: il backend restituisce i testi tradotti
 	useEffect(() => {
@@ -108,6 +101,18 @@ function RecipeDetail() {
 			toast.error(getErrorMessage(err, t('recipe.retryTranslationError')))
 		} finally {
 			setRetrying(false)
+		}
+	}
+
+	async function handleExportPdf() {
+		if (!recipe) return
+		setExporting(true)
+		try {
+			await exportRecipePdf(recipe, t)
+		} catch {
+			toast.error(t('recipe.exportPdfError'))
+		} finally {
+			setExporting(false)
 		}
 	}
 
@@ -228,24 +233,31 @@ function RecipeDetail() {
 				</div>
 			)}
 
-			{(canManage || (user && !isOwner && author)) && (
-				<div className="mt-4 flex flex-wrap items-center gap-3">
-					{canEdit && <Link
-						to={`/my-recipes/${recipe.id}/edit`}
-						className="rounded-full border border-[var(--wc-border)] px-4 py-1.5 text-sm hover:border-[var(--wc-basil)]"
-					>
-						{t('recipe.edit')}
-					</Link>}
-					{canDelete && <button
-						onClick={handleDelete}
-						disabled={deleting}
-						className="rounded-full border border-[var(--wc-border)] px-4 py-1.5 text-sm text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
-					>
-						{isAdmin && !isOwner ? t('recipe.removeAdmin') : t('common.delete')}
-					</button>}
-					{!isOwner && <ReportButton targetType="recipe" targetId={recipe.id} ownerId={author?.id ?? null} />}
-				</div>
-			)}
+			<div className="mt-4 flex flex-wrap items-center gap-3">
+				<button
+					onClick={handleExportPdf}
+					disabled={exporting}
+					className="rounded-full border border-[var(--wc-border)] px-4 py-1.5 text-sm hover:border-[var(--wc-basil)] disabled:opacity-50"
+				>
+					{exporting ? t('recipe.exportingPdf') : t('recipe.exportPdf')}
+				</button>
+				{canEdit && <Link
+					to={`/my-recipes/${recipe.id}/edit`}
+					className="rounded-full border border-[var(--wc-border)] px-4 py-1.5 text-sm hover:border-[var(--wc-basil)]"
+				>
+					{t('recipe.edit')}
+				</Link>}
+				{canDelete && <button
+					onClick={handleDelete}
+					disabled={deleting}
+					className="rounded-full border border-[var(--wc-border)] px-4 py-1.5 text-sm text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
+				>
+					{isAdmin && !isOwner ? t('recipe.removeAdmin') : t('common.delete')}
+				</button>}
+				{!isOwner && (canManage || (user && author)) && (
+					<ReportButton targetType="recipe" targetId={recipe.id} ownerId={author?.id ?? null} />
+				)}
+			</div>
 
 			<p className="mt-6 whitespace-pre-line text-[var(--wc-text)]">{recipe.description}</p>
 

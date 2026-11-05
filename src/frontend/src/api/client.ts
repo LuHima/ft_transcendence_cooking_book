@@ -2,6 +2,8 @@
 // Il backend espone le rotte sotto /api ed è configurato con setGlobalPrefix('api'),
 // quindi qui basta passare il path relativo (es. "/recipes", "/auth/signin").
 
+import i18n from '../i18n'
+
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 // le immagini/video caricati arrivano come path relativo (es. "/uploads/recipes/x.webp").
@@ -92,7 +94,7 @@ export async function apiFetch<T = unknown>(path: string, options: RequestOption
 	const data = contentType.includes('application/json') ? await response.json().catch(() => null) : null
 
 	if (!response.ok) {
-		const message = (data && (data.message as string)) || response.statusText || 'Errore di rete'
+		const message = (data && (data.message as string)) || response.statusText || i18n.t('common.networkError')
 		throw new ApiError(response.status, Array.isArray(message) ? message.join(', ') : message, data)
 	}
 

@@ -31,6 +31,13 @@ body {
 	background: var(--wc-bg);
 	color: var(--wc-text);
 	font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+	/* le parole lunghissime vanno a capo invece di uscire dai riquadri */
+	overflow-wrap: anywhere;
+}
+
+/* le etichette dei pulsanti restano intere: "Cerca" non deve diventare "Cer-ca" */
+button {
+	overflow-wrap: normal;
 }
 
 .font-display {

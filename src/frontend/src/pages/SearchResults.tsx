@@ -20,10 +20,23 @@ const PAGE_SIZE = 12
 const COURSES: Course[] = ['appetizer', 'first_course', 'main_course', 'dessert', 'side_dish', 'drink', 'snack']
 const DIFFICULTIES: RecipeDifficulty[] = ['easy', 'medium', 'hard']
 
+// ordinamenti disponibili: "campo:direzione" come li accetta il backend (sort_by + order).
+// Il primo è quello predefinito e non viene scritto nell'URL.
+const SORT_OPTIONS = [
+	{ value: 'created_at:desc', label: 'newest' },
+	{ value: 'created_at:asc', label: 'oldest' },
+	{ value: 'total_time:asc', label: 'quickest' },
+	{ value: 'total_time:desc', label: 'longest' },
+	{ value: 'likes:desc', label: 'mostLiked' },
+	{ value: 'difficulty:asc', label: 'easiest' },
+	{ value: 'difficulty:desc', label: 'hardest' },
+] as const
+const DEFAULT_SORT = SORT_OPTIONS[0].value
+
 const SELECT =
 	'rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm text-[var(--wc-text)] outline-none focus:border-[var(--wc-basil)]'
 
-// ricerca avanzata: tutti i filtri vivono nell'URL (?q=&course=&difficulty=&tags=1,2&max_time=&page=),
+// ricerca avanzata: filtri e ordinamento vivono nell'URL (?q=&course=&difficulty=&tags=1,2&max_time=&sort=&page=),
 // così i risultati sono condivisibili e il tasto "indietro" funziona
 function SearchResults() {
 	const { t } = useTranslation()
@@ -35,6 +48,9 @@ function SearchResults() {
 	const difficulty = params.get('difficulty') ?? ''
 	const maxTime = params.get('max_time') ?? ''
 	const tagIds = (params.get('tags') ?? '').split(',').filter(Boolean).map(Number).filter(Number.isInteger)
+	const sortParam = params.get('sort') ?? ''
+	const sort = SORT_OPTIONS.some((o) => o.value === sortParam) ? sortParam : DEFAULT_SORT
+	const [sortBy, sortOrder] = sort.split(':')
 	const page = Math.max(1, Number(params.get('page')) || 1)
 
 	const [tags, setTags] = useState<CatalogTag[]>([])
@@ -70,7 +86,7 @@ function SearchResults() {
 	}, [lang])
 
 	const tagKey = tagIds.join(',')
-	const requestKey = [query, course, difficulty, maxTime, tagKey, page, lang].join('|')
+	const requestKey = [query, course, difficulty, maxTime, tagKey, sort, page, lang].join('|')
 	useEffect(() => {
 		let cancelled = false
 
@@ -105,7 +121,7 @@ function SearchResults() {
 		return () => {
 			cancelled = true
 		}
-	}, [query, course, difficulty, maxTime, tagKey, page, lang, requestKey, t])
+	}, [query, course, difficulty, maxTime, tagKey, sortBy, sortOrder, page, lang, requestKey, t])
 
 	const activeFilters = [course, difficulty, maxTime].filter(Boolean).length + tagIds.length
 	const current = result?.key === requestKey ? result : null

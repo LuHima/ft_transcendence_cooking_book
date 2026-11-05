@@ -40,9 +40,15 @@ export function createRecipeTexture(
   if (title) {
     ctx.font = "30px serif";
     ctx.fillStyle = "#5a442b";
+    // oltre questo numero di righe il testo uscirebbe dalla copertina
+    const maxLines = 12;
     const lines = wrapLongLines(
       description,
     );
+    if (lines.length > maxLines) {
+      lines.length = maxLines;
+      lines[maxLines - 1] = `${lines[maxLines - 1].slice(0, 27)}...`;
+    }
 
     ctx.textAlign = "center";
     const lineHeight = 30;

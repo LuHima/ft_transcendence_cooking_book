@@ -154,7 +154,7 @@ export class CreateRecipeDto {
    */
   @ApiProperty({
     description:
-      'Introductory recipe description in source_lang (min 10 characters)',
+      'Introductory recipe description in source_lang (10-1000 characters)',
     minLength: 10,
     example:
       'Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.',
@@ -162,6 +162,7 @@ export class CreateRecipeDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(10, { message: 'Description must be at least 10 characters long' })
+  @MaxLength(1000, { message: 'Description cannot exceed 1000 characters' })
   description: string;
 
   /**

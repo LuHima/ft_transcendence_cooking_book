@@ -2,6 +2,8 @@ import { JwtService } from '@nestjs/jwt';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
+  ConnectedSocket,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
   WsException,
@@ -106,12 +108,14 @@ export class NotificationGateway
       if (!cookie) throw createWebSocketException(errors.socket.unauthorized);
       const jwt: string = this.findToken(cookie);
       const payload = this.handleJwtVerification(jwt);
-      client.data.user = payload;
-      client.join('room-' + payload.id);
+      if (!payload.sub || payload.type !== 'access')
+        throw createWebSocketException(errors.socket.unauthorized);
+      client.data.user = { ...payload, id: payload.sub };
+      client.join('room-' + payload.sub);
       // creo le stanze in maniere che piu utenti che entrano nello stesso
       // dispositivo ricevano le notifiche
       const notification = await this.prisma.notification.findMany({
-        where: { user_id: payload.id, is_read: false },
+        where: { user_id: payload.sub, is_read: false },
       });
       client.emit('unreadNotifications', {
         notification,
@@ -136,6 +140,19 @@ export class NotificationGateway
     if (client.data.user?.id) {
       await this.statusUser(client.data.user.id, false);
     }
+  }
+
+  @SubscribeMessage('getOnlineFriends')
+  async handleGetOnlineFriends(@ConnectedSocket() client: Socket) {
+    const id = client.data.user?.id;
+    if (!id) return { userIds: [] };
+    const friends = await this.findFriend(id);
+    const rooms = this.server.sockets.adapter.rooms;
+    return {
+      userIds: friends
+        .map((f) => f.friend_id)
+        .filter((friendId) => rooms.has('room-' + friendId)),
+    };
   }
 
   // subscribeMessage aspetta un messaggio che contenga l'evento scritto in

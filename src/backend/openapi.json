@@ -9051,9 +9051,10 @@
           },
           "description": {
             "type": "string",
-            "description": "Introductory recipe description in source_lang (min 10 characters)",
+            "description": "Introductory recipe description in source_lang (10-1000 characters)",
             "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.",
-            "minLength": 10
+            "minLength": 10,
+            "maxLength": 1000
           },
           "preservation": {
             "type": "string",
@@ -9184,9 +9185,10 @@
           },
           "description": {
             "type": "string",
-            "description": "Introductory recipe description in source_lang (min 10 characters)",
+            "description": "Introductory recipe description in source_lang (10-1000 characters)",
             "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.",
-            "minLength": 10
+            "minLength": 10,
+            "maxLength": 1000
           },
           "preservation": {
             "type": "string",

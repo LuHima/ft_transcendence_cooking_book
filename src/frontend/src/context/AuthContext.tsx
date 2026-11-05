@@ -9,6 +9,8 @@ interface AuthContextValue {
 	// con 2FA attiva il backend non apre la sessione ma restituisce un tempToken da completare con il codice a 6 cifre
 	signIn: (email: string, password: string) => Promise<SignInResult>
 	completeTwoFactor: (tempToken: string, code: string) => Promise<void>
+	// accesso (o registrazione al primo accesso) con l'ID token ottenuto da Google; il backend lo verifica
+	signInWithGoogle: (idToken: string) => Promise<SignInResult>
 	signUp: (data: { username: string; email: string; password: string }) => Promise<void>
 	signOut: () => Promise<void>
 	refreshUser: () => Promise<void>
@@ -53,6 +55,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[refreshUser],
 	)
 
+	const signInWithGoogle = useCallback(
+		async (idToken: string): Promise<SignInResult> => {
+			const res = await api.post<{ tempToken?: string; twofAuth?: boolean } | null>(
+				'/auth/signin/google',
+				{ idToken },
+				{ retryOnUnauthorized: false },
+			)
+			if (res?.twofAuth && res.tempToken) return { twoFactor: true, tempToken: res.tempToken }
+			await refreshUser()
+			return { twoFactor: false }
+		},
+		[refreshUser],
+	)
+
 	const completeTwoFactor = useCallback(
 		async (tempToken: string, code: string) => {
 			await api.post('/auth/twofactor/access', { tempToken, code }, { retryOnUnauthorized: false })
@@ -76,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, [])
 
 	return (
-		<AuthContext.Provider value={{ user, isLoading, signIn, completeTwoFactor, signUp, signOut, refreshUser }}>
+		<AuthContext.Provider value={{ user, isLoading, signIn, signInWithGoogle, completeTwoFactor, signUp, signOut, refreshUser }}>
 			{children}
 		</AuthContext.Provider>
 	)
