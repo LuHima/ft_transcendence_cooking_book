@@ -14897,11 +14897,11 @@
         },
         {
           "id": "577405f1-2e52-4b8e-8f23-8ce680c939e4",
-          "name": "Get recipe comments",
+          "name": "Get threaded comments for a recipe",
           "request": {
-            "name": "Get recipe comments",
+            "name": "Get threaded comments for a recipe",
             "description": {
-              "content": "Retrieves threaded comments and replies for a recipe, preserving conversational context for intermediate deactivated replies and pruning trailing deactivated replies.",
+              "content": "Retrieves paginated root comments with windowed chronological replies. Deactivated comments with active replies are sanitized with null content and author details for public callers while preserving staff inspection context. Inactive roots with zero active replies are completely pruned.",
               "type": "text/plain"
             },
             "url": {
@@ -14914,7 +14914,38 @@
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
+                  "key": "replies_limit",
+                  "value": "5",
+                  "description": "Max number of nested child replies to embed per root comment (1 to 20)"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_by",
+                  "value": "latest_activity",
+                  "description": "Field to sort root comments by: latest_activity (default) or created_at"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_order",
+                  "value": "desc",
+                  "description": "Sort direction. Defaults to desc."
+                }
+              ],
               "variable": [
                 {
                   "disabled": false,
@@ -14936,8 +14967,8 @@
           },
           "response": [
             {
-              "id": "55b0660a-8659-4b9e-8efa-391b9f5969cd",
-              "name": "List of threaded comments",
+              "id": "daacf7a7-55cb-40d7-8689-e9c7dbe9c783",
+              "name": "Paginated collection of threaded comments with windowed replies",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -14949,7 +14980,28 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "latest_activity"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -14977,13 +15029,13 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": 1,\n    \"recipe_id\": 42,\n    \"user_id\": 10,\n    \"parent_id\": null,\n    \"content\": \"Ottima ricetta!\",\n    \"is_active\": true,\n    \"is_edited\": false,\n    \"created_at\": \"2026-10-13T10:00:00.000Z\",\n    \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n    \"user\": {\n      \"id\": 1,\n      \"username\": \"chef_mario\",\n      \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n    },\n    \"replies\": [\n      {\n        \"id\": 1,\n        \"recipe_id\": 42,\n        \"user_id\": 10,\n        \"parent_id\": null,\n        \"content\": \"Ottima ricetta!\",\n        \"is_active\": true,\n        \"is_edited\": false,\n        \"created_at\": \"2026-10-13T10:00:00.000Z\",\n        \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n        \"user\": {\n          \"id\": 1,\n          \"username\": \"chef_mario\",\n          \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n        }\n      },\n      {\n        \"id\": 1,\n        \"recipe_id\": 42,\n        \"user_id\": 10,\n        \"parent_id\": null,\n        \"content\": \"Ottima ricetta!\",\n        \"is_active\": true,\n        \"is_edited\": false,\n        \"created_at\": \"2026-10-13T10:00:00.000Z\",\n        \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n        \"user\": {\n          \"id\": 1,\n          \"username\": \"chef_mario\",\n          \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n        }\n      }\n    ]\n  },\n  {\n    \"id\": 1,\n    \"recipe_id\": 42,\n    \"user_id\": 10,\n    \"parent_id\": null,\n    \"content\": \"Ottima ricetta!\",\n    \"is_active\": true,\n    \"is_edited\": false,\n    \"created_at\": \"2026-10-13T10:00:00.000Z\",\n    \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n    \"user\": {\n      \"id\": 1,\n      \"username\": \"chef_mario\",\n      \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n    },\n    \"replies\": [\n      {\n        \"id\": 1,\n        \"recipe_id\": 42,\n        \"user_id\": 10,\n        \"parent_id\": null,\n        \"content\": \"Ottima ricetta!\",\n        \"is_active\": true,\n        \"is_edited\": false,\n        \"created_at\": \"2026-10-13T10:00:00.000Z\",\n        \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n        \"user\": {\n          \"id\": 1,\n          \"username\": \"chef_mario\",\n          \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n        }\n      },\n      {\n        \"id\": 1,\n        \"recipe_id\": 42,\n        \"user_id\": 10,\n        \"parent_id\": null,\n        \"content\": \"Ottima ricetta!\",\n        \"is_active\": true,\n        \"is_edited\": false,\n        \"created_at\": \"2026-10-13T10:00:00.000Z\",\n        \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n        \"user\": {\n          \"id\": 1,\n          \"username\": \"chef_mario\",\n          \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n        }\n      }\n    ]\n  }\n]",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"replies_count\": 7,\n      \"has_more_replies\": true,\n      \"replies\": [\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        },\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"replies_count\": 7,\n      \"has_more_replies\": true,\n      \"replies\": [\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        },\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      ]\n    }\n  ],\n  \"total\": 15,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d4b29d42-7286-4eb4-8fd1-f052e123ed36",
-              "name": "Invalid recipe ID format (must be an integer)",
+              "id": "29d277d2-3c38-4c7e-8ba6-8b5d96475781",
+              "name": "Invalid recipe ID format or query parameters",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -14995,7 +15047,28 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "latest_activity"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -15041,7 +15114,28 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "latest_activity"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -15087,7 +15181,28 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "replies_limit",
+                      "value": "5"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "latest_activity"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -15132,16 +15247,24 @@
                   "});",
                   "",
                   "pm.test(",
-                  "  \"Response adheres to ThreadedRecipeCommentResponseDto array schema\",",
+                  "  \"Response adheres to PaginatedRecipeCommentsResponseDto schema\",",
                   "  function () {",
                   "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an(\"array\");",
-                  "    if (jsonData.length > 0) {",
-                  "      const comment = jsonData[0];",
+                  "    pm.expect(jsonData).to.be.an(\"object\");",
+                  "    pm.expect(jsonData).to.have.property(\"items\").that.is.an(\"array\");",
+                  "    pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "    pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "    pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "    pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "    pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "    pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
+                  "",
+                  "    if (jsonData.items.length > 0) {",
+                  "      const comment = jsonData.items[0];",
                   "      pm.expect(comment).to.have.property(\"id\").that.is.a(\"number\");",
                   "      pm.expect(comment).to.have.property(\"recipe_id\").that.is.a(\"number\");",
-                  "      pm.expect(comment).to.have.property(\"user_id\").that.is.a(\"number\");",
-                  "      pm.expect(comment).to.have.property(\"content\").that.is.a(\"string\");",
+                  "      pm.expect(comment).to.have.property(\"replies_count\").that.is.a(\"number\");",
+                  "      pm.expect(comment).to.have.property(\"has_more_replies\").that.is.a(\"boolean\");",
                   "      pm.expect(comment).to.have.property(\"replies\").that.is.an(\"array\");",
                   "    }",
                   "  },",
@@ -18130,7 +18253,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6475.101655435514",
+                  "value": "8803.793780472271",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18176,7 +18299,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18229,7 +18352,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18282,7 +18405,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18335,7 +18458,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18388,7 +18511,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18441,7 +18564,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18533,7 +18656,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6475.101655435514",
+                  "value": "8803.793780472271",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18566,7 +18689,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18605,7 +18728,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18650,7 +18773,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18695,7 +18818,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18740,7 +18863,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18785,7 +18908,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18854,7 +18977,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6475.101655435514",
+                  "value": "8803.793780472271",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18887,7 +19010,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18926,7 +19049,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18971,7 +19094,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19016,7 +19139,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19061,7 +19184,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19106,7 +19229,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19175,7 +19298,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6475.101655435514",
+                  "value": "8803.793780472271",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -19221,7 +19344,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19274,7 +19397,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19327,7 +19450,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19380,7 +19503,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19433,7 +19556,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19486,7 +19609,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6475.101655435514",
+                      "value": "8803.793780472271",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -20908,7 +21031,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"spam_scam\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"violence_threats\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21184,13 +21307,13 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "action_taken",
+                  "value": "dismissed",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "user",
+                  "value": "comment",
                   "description": "Filter reports by target entity type"
                 }
               ],
@@ -21254,7 +21377,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"sexual_content\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"violence_threats\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"spam_scam\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"copyright_infringement\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21589,7 +21712,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"spam_scam\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },

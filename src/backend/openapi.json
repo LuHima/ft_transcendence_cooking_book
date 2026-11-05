@@ -3643,7 +3643,7 @@
         ]
       },
       "get": {
-        "description": "Retrieves threaded comments and replies for a recipe, preserving conversational context for intermediate deactivated replies and pruning trailing deactivated replies.",
+        "description": "Retrieves paginated root comments with windowed chronological replies. Deactivated comments with active replies are sanitized with null content and author details for public callers while preserving staff inspection context. Inactive roots with zero active replies are completely pruned.",
         "operationId": "RecipeController_getComments",
         "parameters": [
           {
@@ -3655,24 +3655,89 @@
               "example": 42,
               "type": "number"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "replies_limit",
+            "required": false,
+            "in": "query",
+            "description": "Max number of nested child replies to embed per root comment (1 to 20)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 20,
+              "default": 5,
+              "example": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort root comments by: latest_activity (default) or created_at",
+            "schema": {
+              "default": "latest_activity",
+              "example": "latest_activity",
+              "type": "string",
+              "enum": [
+                "latest_activity",
+                "created_at"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to desc.",
+            "schema": {
+              "default": "desc",
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "List of threaded comments",
+            "description": "Paginated collection of threaded comments with windowed replies",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ThreadedRecipeCommentResponseDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedRecipeCommentsResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid recipe ID format (must be an integer)",
+            "description": "Invalid recipe ID format or query parameters",
             "content": {
               "application/json": {
                 "schema": {
@@ -3702,7 +3767,7 @@
             }
           }
         },
-        "summary": "Get recipe comments",
+        "summary": "Get threaded comments for a recipe",
         "tags": [
           "Recipes"
         ]
@@ -9561,8 +9626,18 @@
               }
             ]
           },
+          "replies_count": {
+            "type": "number",
+            "description": "Total number of child replies belonging to this root thread",
+            "example": 7
+          },
+          "has_more_replies": {
+            "type": "boolean",
+            "description": "Indicates whether more replies exist beyond the embedded preview window",
+            "example": true
+          },
           "replies": {
-            "description": "Chronological list of replies to this top-level comment",
+            "description": "Chronological windowed preview of child replies (up to replies_limit)",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RecipeCommentResponseDto"
@@ -9580,7 +9655,60 @@
           "created_at",
           "updated_at",
           "user",
+          "replies_count",
+          "has_more_replies",
           "replies"
+        ]
+      },
+      "PaginatedRecipeCommentsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Paginated list of root comments with windowed chronological replies",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThreadedRecipeCommentResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of visible root comment threads for the recipe",
+            "example": 15
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
         ]
       },
       "PaginatedRecipeCommentRepliesResponseDto": {
