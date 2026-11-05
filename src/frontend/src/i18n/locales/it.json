@@ -163,7 +163,10 @@
 		"placeholder": "Scrivi un commento…",
 		"loginLink": "Accedi",
 		"loginToComment": "per lasciare un commento.",
-		"empty": "Ancora nessun commento. Scrivi tu il primo!"
+		"empty": "Ancora nessun commento. Scrivi tu il primo!",
+		"showMoreReplies": "Mostra altre risposte",
+		"showMoreRepliesCount": "Mostra le altre risposte ({{count}})",
+		"loadingReplies": "Caricamento risposte…"
 	},
 	"home": {
 		"loadError": "Non è stato possibile caricare le ricette al momento.",

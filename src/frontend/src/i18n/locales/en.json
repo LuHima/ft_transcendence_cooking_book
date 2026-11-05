@@ -163,7 +163,10 @@
 		"placeholder": "Write a comment…",
 		"loginLink": "Sign in",
 		"loginToComment": "to leave a comment.",
-		"empty": "No comments yet. Be the first!"
+		"empty": "No comments yet. Be the first!",
+		"showMoreReplies": "Show more replies",
+		"showMoreRepliesCount": "Show remaining replies ({{count}})",
+		"loadingReplies": "Loading replies…"
 	},
 	"home": {
 		"loadError": "Recipes could not be loaded right now.",

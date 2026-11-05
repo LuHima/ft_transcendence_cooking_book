@@ -163,7 +163,10 @@
 		"placeholder": "Écrire un commentaire…",
 		"loginLink": "Connectez-vous",
 		"loginToComment": "pour laisser un commentaire.",
-		"empty": "Aucun commentaire pour le moment. Soyez le premier !"
+		"empty": "Aucun commentaire pour le moment. Soyez le premier !",
+		"showMoreReplies": "Afficher plus de réponses",
+		"showMoreRepliesCount": "Afficher les autres réponses ({{count}})",
+		"loadingReplies": "Chargement des réponses…"
 	},
 	"home": {
 		"loadError": "Impossible de charger les recettes pour le moment.",

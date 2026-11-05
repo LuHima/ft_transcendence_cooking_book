@@ -235,7 +235,29 @@ export interface ApiComment {
 }
 
 export interface ThreadedComment extends ApiComment {
+	replies_count: number
+	has_more_replies: boolean
 	replies: ApiComment[]
+}
+
+export interface PaginatedRecipeComments {
+	items: ThreadedComment[]
+	total: number
+	page: number
+	limit: number
+	total_pages: number
+	has_next_page: boolean
+	has_prev_page: boolean
+}
+
+export interface PaginatedCommentReplies {
+	items: ApiComment[]
+	total: number
+	page: number
+	limit: number
+	total_pages: number
+	has_next_page: boolean
+	has_prev_page: boolean
 }
 
 // commento "piatto" usato dalla moderazione admin (blocco 2)
