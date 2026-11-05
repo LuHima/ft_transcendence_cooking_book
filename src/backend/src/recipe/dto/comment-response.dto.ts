@@ -79,10 +79,63 @@ export class RecipeCommentResponseDto {
  */
 export class ThreadedRecipeCommentResponseDto extends RecipeCommentResponseDto {
   @ApiProperty({
+    description: 'Total number of child replies belonging to this root thread',
+    example: 7,
+  })
+  replies_count: number;
+
+  @ApiProperty({
+    description:
+      'Indicates whether more replies exist beyond the embedded preview window',
+    example: true,
+  })
+  has_more_replies: boolean;
+
+  @ApiProperty({
     type: [RecipeCommentResponseDto],
-    description: 'Chronological list of replies to this top-level comment',
+    description:
+      'Chronological windowed preview of child replies (up to replies_limit)',
   })
   replies: RecipeCommentResponseDto[];
+}
+
+/**
+ * Paginated collection envelope for public recipe comments.
+ */
+export class PaginatedRecipeCommentsResponseDto {
+  @ApiProperty({
+    type: [ThreadedRecipeCommentResponseDto],
+    description:
+      'Paginated list of root comments with windowed chronological replies',
+  })
+  items: ThreadedRecipeCommentResponseDto[];
+
+  @ApiProperty({
+    description: 'Total number of visible root comment threads for the recipe',
+    example: 15,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total available pages', example: 1 })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Indicates whether a next page exists',
+    example: false,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Indicates whether a previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
 }
 
 /**

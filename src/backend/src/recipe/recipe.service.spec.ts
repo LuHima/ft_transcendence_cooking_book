@@ -20,6 +20,11 @@ import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import {
+  RecipeCommentQueryDto,
+  RecipeCommentSortBy,
+} from './dto/recipe-comment-query.dto';
+import { SortOrder } from '../common/dto/sort-order.enum';
+import {
   FilterRecipeDto,
   RecipeSortBy,
   RecipeSortOrder,
@@ -3481,7 +3486,7 @@ describe('RecipeService', () => {
       await expect(service.getComments(999)).rejects.toThrow(NotFoundException);
     });
 
-    it('returns threaded comments, preserving intermediate deactivated replies and dropping trailing deactivated replies', async () => {
+    it('returns threaded comments with pagination envelope, preserving intermediate deactivated replies and dropping trailing deactivated replies', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
 
       const mockCommentsFromDb = [
@@ -3618,7 +3623,10 @@ describe('RecipeService', () => {
 
       mockPrisma.comment.findMany.mockResolvedValueOnce(mockCommentsFromDb);
 
-      const result = await service.getComments(1);
+      const result = await service.getComments(1, {
+        sort_by: RecipeCommentSortBy.created_at,
+        sort_order: SortOrder.asc,
+      });
 
       expect(mockPrisma.recipe.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
@@ -3651,17 +3659,27 @@ describe('RecipeService', () => {
         orderBy: { created_at: 'asc' },
       });
 
-      // Assertions on result: Root 2 must be excluded!
-      expect(result).toHaveLength(3);
+      // Pagination envelope assertions
+      expect(result.total).toBe(3);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.total_pages).toBe(1);
+      expect(result.has_next_page).toBe(false);
+      expect(result.has_prev_page).toBe(false);
+
+      // Assertions on result items: Root 2 must be excluded!
+      expect(result.items).toHaveLength(3);
 
       // Root 1
-      expect(result[0].id).toBe(1);
-      expect(result[0].content).toBe('Parent comment 1');
-      expect(result[0].is_active).toBe(true);
-      expect(result[0].replies).toHaveLength(3);
-      expect(result[0].replies[0]).toEqual(mockCommentsFromDb[0].replies[0]);
+      expect(result.items[0].id).toBe(1);
+      expect(result.items[0].content).toBe('Parent comment 1');
+      expect(result.items[0].is_active).toBe(true);
+      expect(result.items[0].replies_count).toBe(3);
+      expect(result.items[0].has_more_replies).toBe(false);
+      expect(result.items[0].replies).toHaveLength(3);
+      expect(result.items[0].replies[0]).toEqual(mockCommentsFromDb[0].replies[0]);
       // Intermediate inactive reply is redacted
-      expect(result[0].replies[1]).toEqual({
+      expect(result.items[0].replies[1]).toEqual({
         id: 3,
         recipe_id: 1,
         user_id: null,
@@ -3674,21 +3692,198 @@ describe('RecipeService', () => {
         user: null,
       });
       // 3rd reply is active
-      expect(result[0].replies[2]).toEqual(mockCommentsFromDb[0].replies[2]);
+      expect(result.items[0].replies[2]).toEqual(mockCommentsFromDb[0].replies[2]);
 
       // Root 3 (was inactive, but has active reply, so kept redacted)
-      expect(result[1].id).toBe(8);
-      expect(result[1].content).toBeNull();
-      expect(result[1].user).toBeNull();
-      expect(result[1].user_id).toBeNull();
-      expect(result[1].is_active).toBe(false);
-      expect(result[1].replies).toHaveLength(1);
-      expect(result[1].replies[0]).toEqual(mockCommentsFromDb[2].replies[0]);
+      expect(result.items[1].id).toBe(8);
+      expect(result.items[1].content).toBeNull();
+      expect(result.items[1].user).toBeNull();
+      expect(result.items[1].user_id).toBeNull();
+      expect(result.items[1].is_active).toBe(false);
+      expect(result.items[1].replies_count).toBe(1);
+      expect(result.items[1].has_more_replies).toBe(false);
+      expect(result.items[1].replies).toHaveLength(1);
+      expect(result.items[1].replies[0]).toEqual(mockCommentsFromDb[2].replies[0]);
 
       // Root 4 (active with no replies)
-      expect(result[2].id).toBe(10);
-      expect(result[2].content).toBe('Parent comment 4 (active, no replies)');
-      expect(result[2].replies).toEqual([]);
+      expect(result.items[2].id).toBe(10);
+      expect(result.items[2].content).toBe('Parent comment 4 (active, no replies)');
+      expect(result.items[2].replies_count).toBe(0);
+      expect(result.items[2].has_more_replies).toBe(false);
+      expect(result.items[2].replies).toEqual([]);
+    });
+
+    it('orders root comments by latest activity by default (recent reply bumps thread to top)', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+
+      // Root 1 created earlier (Jan 1) but has a very recent reply (Jan 20)
+      const root1 = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 1,
+        parent_id: null,
+        content: 'Older thread with recent activity',
+        is_active: true,
+        created_at: new Date('2026-01-01'),
+        replies: [
+          {
+            id: 101,
+            recipe_id: 1,
+            user_id: 2,
+            parent_id: 10,
+            content: 'Recent reply',
+            is_active: true,
+            is_edited: false,
+            created_at: new Date('2026-01-20'),
+            updated_at: null,
+            user: { id: 2, username: 'bob', avatar_url: null },
+          },
+        ],
+      };
+
+      // Root 2 created later (Jan 10) but has no replies
+      const root2 = {
+        id: 20,
+        recipe_id: 1,
+        user_id: 3,
+        parent_id: null,
+        content: 'Newer thread without replies',
+        is_active: true,
+        created_at: new Date('2026-01-10'),
+        replies: [],
+      };
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([root1, root2]);
+
+      const result = await service.getComments(1);
+
+      // Root 1 has latest activity (Jan 20) so it should appear before Root 2 (Jan 10)
+      expect(result.items[0].id).toBe(10);
+      expect(result.items[1].id).toBe(20);
+    });
+
+    it('windows replies to replies_limit and reports accurate replies_count and has_more_replies', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+
+      const rootWith7Replies = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 1,
+        parent_id: null,
+        content: 'Thread with 7 replies',
+        is_active: true,
+        created_at: new Date('2026-01-01'),
+        user: { id: 1, username: 'cook', avatar_url: null },
+        replies: Array.from({ length: 7 }, (_, i) => ({
+          id: 100 + i,
+          recipe_id: 1,
+          user_id: 2 + i,
+          parent_id: 10,
+          content: `Reply ${i + 1}`,
+          is_active: true,
+          is_edited: false,
+          created_at: new Date(`2026-01-0${i + 2}`),
+          updated_at: null,
+          user: { id: 2 + i, username: `user${i}`, avatar_url: null },
+        })),
+      };
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([rootWith7Replies]);
+
+      const result = await service.getComments(1, { replies_limit: 5 });
+
+      expect(result.items).toHaveLength(1);
+      const thread = result.items[0];
+      expect(thread.replies_count).toBe(7);
+      expect(thread.has_more_replies).toBe(true);
+      expect(thread.replies).toHaveLength(5);
+      // Verify chronological order (earliest 5 replies)
+      expect(thread.replies.map((r) => r.id)).toEqual([100, 101, 102, 103, 104]);
+    });
+
+    it('preserves authentic inspection context for staff callers (admin, moderator)', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+
+      const deactivatedRootWithActiveReply = {
+        id: 50,
+        recipe_id: 1,
+        user_id: 15,
+        parent_id: null,
+        content: 'Deactivated root comment text',
+        is_active: false,
+        created_at: new Date('2026-01-05'),
+        user: { id: 15, username: 'spammer', avatar_url: null },
+        replies: [
+          {
+            id: 51,
+            recipe_id: 1,
+            user_id: 16,
+            parent_id: 50,
+            content: 'Active reply text',
+            is_active: true,
+            is_edited: false,
+            created_at: new Date('2026-01-06'),
+            updated_at: null,
+            user: { id: 16, username: 'responder', avatar_url: null },
+          },
+        ],
+      };
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        deactivatedRootWithActiveReply,
+      ]);
+
+      const result = await service.getComments(1, undefined, {
+        id: 99,
+        role: Role.admin,
+      });
+
+      expect(result.items).toHaveLength(1);
+      const thread = result.items[0];
+      expect(thread.id).toBe(50);
+      expect(thread.is_active).toBe(false);
+      // Staff caller sees authentic text and user details
+      expect(thread.content).toBe('Deactivated root comment text');
+      expect(thread.user_id).toBe(15);
+      expect(thread.user).toEqual({
+        id: 15,
+        username: 'spammer',
+        avatar_url: null,
+      });
+    });
+
+    it('paginates root comments correctly with page and limit', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ id: 1 });
+
+      const roots = Array.from({ length: 5 }, (_, i) => ({
+        id: i + 1,
+        recipe_id: 1,
+        user_id: i + 10,
+        parent_id: null,
+        content: `Root comment ${i + 1}`,
+        is_active: true,
+        created_at: new Date(`2026-01-0${i + 1}`),
+        replies: [],
+      }));
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce(roots);
+
+      const result = await service.getComments(1, {
+        page: 2,
+        limit: 2,
+        sort_by: RecipeCommentSortBy.created_at,
+        sort_order: SortOrder.asc,
+      });
+
+      expect(result.total).toBe(5);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(2);
+      expect(result.total_pages).toBe(3);
+      expect(result.has_next_page).toBe(true);
+      expect(result.has_prev_page).toBe(true);
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].id).toBe(3);
+      expect(result.items[1].id).toBe(4);
     });
   });
 

@@ -487,25 +487,40 @@ describe('RecipeController', () => {
   });
 
   describe('getComments', () => {
-    it('delegates to service.getComments with recipeId', async () => {
-      const mockResult = [
-        {
-          id: 1,
-          recipe_id: 1,
-          user_id: 10,
-          parent_id: null,
-          content: 'Parent comment',
-          is_active: true,
-          created_at: new Date(),
-          user: { id: 10, username: 'marco', avatar_url: null },
-          replies: [],
-        },
-      ];
+    it('delegates to service.getComments with recipeId, query, and user', async () => {
+      const mockResult = {
+        items: [
+          {
+            id: 1,
+            recipe_id: 1,
+            user_id: 10,
+            parent_id: null,
+            content: 'Parent comment',
+            is_active: true,
+            is_edited: false,
+            created_at: new Date(),
+            updated_at: null,
+            user: { id: 10, username: 'marco', avatar_url: null },
+            replies: [],
+            replies_count: 0,
+            has_more_replies: false,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
       mockRecipeService.getComments.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getComments(1);
+      const query = { page: 1, limit: 20, replies_limit: 5 };
+      const user = { id: 10, role: 'admin' } as any;
 
-      expect(service.getComments).toHaveBeenCalledWith(1);
+      const result = await controller.getComments(1, query as any, user);
+
+      expect(service.getComments).toHaveBeenCalledWith(1, query, user);
       expect(result).toEqual(mockResult);
     });
   });

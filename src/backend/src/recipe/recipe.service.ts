@@ -32,7 +32,14 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import {
   ThreadedRecipeCommentResponseDto,
   PaginatedRecipeCommentRepliesResponseDto,
+  PaginatedRecipeCommentsResponseDto,
+  RecipeCommentResponseDto,
 } from './dto/comment-response.dto';
+import {
+  RecipeCommentQueryDto,
+  RecipeCommentSortBy,
+} from './dto/recipe-comment-query.dto';
+import { SortOrder } from '../common/dto/sort-order.enum';
 import { LocalizedRecipeDetailResponse } from './dto/localized-recipe.response';
 import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
 import {
@@ -2332,12 +2339,14 @@ export class RecipeService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Retrieve threaded comments for a recipe, preserving intermediate deactivated replies
-   * for conversational context and dropping trailing deactivated replies.
+   * Retrieve threaded comments for a recipe with pagination, windowed replies,
+   * activity-aware sorting, and role-based deactivation masking.
    */
   async getComments(
     recipeId: number,
-  ): Promise<ThreadedRecipeCommentResponseDto[]> {
+    query?: RecipeCommentQueryDto,
+    currentUser?: { id?: number; role?: string },
+  ): Promise<PaginatedRecipeCommentsResponseDto> {
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true },
@@ -2346,6 +2355,13 @@ export class RecipeService {
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
     }
+
+    const page = Math.max(1, query?.page || 1);
+    const limit = Math.max(1, Math.min(100, query?.limit || 20));
+    const skip = (page - 1) * limit;
+    const repliesLimit = Math.max(1, Math.min(20, query?.replies_limit || 5));
+    const sortBy = query?.sort_by ?? RecipeCommentSortBy.latest_activity;
+    const sortOrder = query?.sort_order ?? SortOrder.desc;
 
     const rootComments = await this.prisma.comment.findMany({
       where: {
@@ -2376,45 +2392,90 @@ export class RecipeService {
       orderBy: { created_at: 'asc' },
     });
 
-    const result: ThreadedRecipeCommentResponseDto[] = [];
+    const isStaff =
+      currentUser?.role === Role.admin || currentUser?.role === Role.moderator;
+
+    const visibleThreads: {
+      item: ThreadedRecipeCommentResponseDto;
+      rootTime: number;
+      latestActivity: number;
+    }[] = [];
 
     for (const root of rootComments) {
-      const replies = root.replies || [];
-      const lastActiveIndex = replies.findLastIndex((r) => r.is_active);
+      const rawReplies = root.replies || [];
+      const hasActiveReplies = rawReplies.some((r) => r.is_active);
 
-      const keptReplies =
-        lastActiveIndex === -1
-          ? []
-          : replies.slice(0, lastActiveIndex + 1).map((r) =>
-              r.is_active
-                ? {
-                    id: r.id,
-                    recipe_id: r.recipe_id,
-                    user_id: r.user_id,
-                    parent_id: r.parent_id,
-                    content: r.content,
-                    is_active: r.is_active,
-                    is_edited: r.is_edited ?? false,
-                    created_at: r.created_at,
-                    updated_at: r.updated_at ?? null,
-                    user: r.user,
-                  }
-                : {
-                    id: r.id,
-                    recipe_id: r.recipe_id,
-                    user_id: null,
-                    parent_id: r.parent_id,
-                    content: null,
-                    is_active: false,
-                    is_edited: false,
-                    created_at: r.created_at,
-                    updated_at: null,
-                    user: null,
-                  },
-            );
+      // Inactive root comments with zero active replies are excluded from total and result items
+      if (!root.is_active && !hasActiveReplies) {
+        continue;
+      }
 
-      if (root.is_active) {
-        result.push({
+      let processedReplies: RecipeCommentResponseDto[];
+      if (isStaff) {
+        // Staff callers retain authentic inspection context for all replies
+        processedReplies = rawReplies.map((r) => ({
+          id: r.id,
+          recipe_id: r.recipe_id,
+          user_id: r.user_id,
+          parent_id: r.parent_id,
+          content: r.content,
+          is_active: r.is_active,
+          is_edited: r.is_edited ?? false,
+          created_at: r.created_at,
+          updated_at: r.updated_at ?? null,
+          user: r.user,
+        }));
+      } else {
+        // Public/guest callers: prune trailing deactivated replies
+        const lastActiveIndex = rawReplies.findLastIndex((r) => r.is_active);
+        const keptReplies =
+          lastActiveIndex === -1
+            ? []
+            : rawReplies.slice(0, lastActiveIndex + 1);
+
+        processedReplies = keptReplies.map((r) =>
+          r.is_active
+            ? {
+                id: r.id,
+                recipe_id: r.recipe_id,
+                user_id: r.user_id,
+                parent_id: r.parent_id,
+                content: r.content,
+                is_active: r.is_active,
+                is_edited: r.is_edited ?? false,
+                created_at: r.created_at,
+                updated_at: r.updated_at ?? null,
+                user: r.user,
+              }
+            : {
+                id: r.id,
+                recipe_id: r.recipe_id,
+                user_id: null,
+                parent_id: r.parent_id,
+                content: null,
+                is_active: false,
+                is_edited: false,
+                created_at: r.created_at,
+                updated_at: null,
+                user: null,
+              },
+        );
+      }
+
+      const repliesCount = processedReplies.length;
+      const windowedReplies = processedReplies.slice(0, repliesLimit);
+      const hasMoreReplies = repliesCount > windowedReplies.length;
+
+      const rootTime = new Date(root.created_at).getTime();
+      const replyTimes = processedReplies.map((r) =>
+        new Date(r.created_at).getTime(),
+      );
+      const latestActivity =
+        replyTimes.length > 0 ? Math.max(rootTime, ...replyTimes) : rootTime;
+
+      let rootItem: ThreadedRecipeCommentResponseDto;
+      if (isStaff || root.is_active) {
+        rootItem = {
           id: root.id,
           recipe_id: root.recipe_id,
           user_id: root.user_id,
@@ -2425,10 +2486,12 @@ export class RecipeService {
           created_at: root.created_at,
           updated_at: root.updated_at ?? null,
           user: root.user,
-          replies: keptReplies,
-        });
-      } else if (keptReplies.length > 0) {
-        result.push({
+          replies: windowedReplies,
+          replies_count: repliesCount,
+          has_more_replies: hasMoreReplies,
+        };
+      } else {
+        rootItem = {
           id: root.id,
           recipe_id: root.recipe_id,
           user_id: null,
@@ -2439,13 +2502,59 @@ export class RecipeService {
           created_at: root.created_at,
           updated_at: null,
           user: null,
-          replies: keptReplies,
-        });
+          replies: windowedReplies,
+          replies_count: repliesCount,
+          has_more_replies: hasMoreReplies,
+        };
       }
-      // If root is deactivated and has no kept replies, prune completely
+
+      visibleThreads.push({
+        item: rootItem,
+        rootTime,
+        latestActivity,
+      });
     }
 
-    return result;
+    if (sortBy === RecipeCommentSortBy.created_at) {
+      visibleThreads.sort((a, b) => {
+        if (a.rootTime !== b.rootTime) {
+          return sortOrder === SortOrder.asc
+            ? a.rootTime - b.rootTime
+            : b.rootTime - a.rootTime;
+        }
+        return sortOrder === SortOrder.asc
+          ? a.item.id - b.item.id
+          : b.item.id - a.item.id;
+      });
+    } else {
+      // Default: latest_activity
+      visibleThreads.sort((a, b) => {
+        if (a.latestActivity !== b.latestActivity) {
+          return sortOrder === SortOrder.asc
+            ? a.latestActivity - b.latestActivity
+            : b.latestActivity - a.latestActivity;
+        }
+        return sortOrder === SortOrder.asc
+          ? a.item.id - b.item.id
+          : b.item.id - a.item.id;
+      });
+    }
+
+    const total = visibleThreads.length;
+    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+    const pagedItems = visibleThreads
+      .slice(skip, skip + limit)
+      .map((entry) => entry.item);
+
+    return {
+      items: pagedItems,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: page > 1,
+    };
   }
 
   // ---------------------------------------------------------------------------

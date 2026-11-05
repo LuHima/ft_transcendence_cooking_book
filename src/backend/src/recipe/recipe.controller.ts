@@ -47,7 +47,9 @@ import {
   RecipeCommentResponseDto,
   ThreadedRecipeCommentResponseDto,
   PaginatedRecipeCommentRepliesResponseDto,
+  PaginatedRecipeCommentsResponseDto,
 } from './dto/comment-response.dto';
+import { RecipeCommentQueryDto } from './dto/recipe-comment-query.dto';
 import {
   LocalizedRecipeDetailResponse,
   RecipeMediaResponse,
@@ -741,29 +743,34 @@ export class RecipeController {
   }
 
   /**
-   * Get all comments and nested replies for a recipe.
+   * Get threaded comments for a recipe with pagination and windowed preview.
    */
   @ApiOperation({
-    summary: 'Get recipe comments',
+    summary: 'Get threaded comments for a recipe',
     description:
-      'Retrieves threaded comments and replies for a recipe, preserving conversational context for intermediate deactivated replies and pruning trailing deactivated replies.',
+      'Retrieves paginated root comments with windowed chronological replies. Deactivated comments with active replies are sanitized with null content and author details for public callers while preserving staff inspection context. Inactive roots with zero active replies are completely pruned.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({
-    description: 'List of threaded comments',
-    type: [ThreadedRecipeCommentResponseDto],
+    description: 'Paginated collection of threaded comments with windowed replies',
+    type: PaginatedRecipeCommentsResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid recipe ID format (must be an integer)',
+    description: 'Invalid recipe ID format or query parameters',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
+  @UseGuards(OptionalAuthGuard)
   @Get(':id/comments')
-  async getComments(@Param('id', ParseIntPipe) recipeId: number) {
-    return await this.recipeService.getComments(recipeId);
+  async getComments(
+    @Param('id', ParseIntPipe) recipeId: number,
+    @Query() query: RecipeCommentQueryDto,
+    @CurrentUser() currentUser?: ActiveUserData,
+  ) {
+    return await this.recipeService.getComments(recipeId, query, currentUser);
   }
 
   /**
