@@ -536,7 +536,11 @@
 		"comment": "ha commentato la tua ricetta",
 		"post": "ha pubblicato una nuova ricetta",
 		"friend_request": "ti ha inviato una richiesta di amicizia",
-		"friend_accept": "ha accettato la tua richiesta di amicizia"
+		"friend_accept": "ha accettato la tua richiesta di amicizia",
+		"reply": "ha risposto al tuo commento",
+		"update": "ha aggiornato la ricetta",
+		"delete": "ha eliminato una ricetta",
+		"generic": "ha eseguito un'azione"
 	},
 	"auth": {
 		"or": "oppure",

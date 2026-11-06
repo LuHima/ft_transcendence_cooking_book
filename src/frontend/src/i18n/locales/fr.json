@@ -536,7 +536,11 @@
 		"comment": "a commenté votre recette",
 		"post": "a publié une nouvelle recette",
 		"friend_request": "vous a envoyé une demande d'ami",
-		"friend_accept": "a accepté votre demande d'ami"
+		"friend_accept": "a accepté votre demande d'ami",
+		"reply": "a répondu à votre commentaire",
+		"update": "a mis à jour la recette",
+		"delete": "a supprimé une recette",
+		"generic": "a effectué une action"
 	},
 	"auth": {
 		"or": "ou",

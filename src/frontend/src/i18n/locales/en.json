@@ -536,7 +536,11 @@
 		"comment": "commented on your recipe",
 		"post": "published a new recipe",
 		"friend_request": "sent you a friend request",
-		"friend_accept": "accepted your friend request"
+		"friend_accept": "accepted your friend request",
+		"reply": "replied to your comment",
+		"update": "updated the recipe",
+		"delete": "deleted a recipe",
+		"generic": "did something"
 	},
 	"auth": {
 		"or": "or",

@@ -45,3 +45,31 @@ button {
 	font-style: italic;
 	font-weight: 800;
 }
+/* scheletri di caricamento: compaiono solo se il caricamento dura più di 250 ms,
+   poi pulsano. Evita il "lampo" grigio a ogni cambio pagina quando l'API è veloce. */
+@keyframes wc-skeleton-appear {
+	from {
+		visibility: hidden;
+	}
+	to {
+		visibility: visible;
+	}
+}
+
+@keyframes wc-skeleton-pulse {
+	50% {
+		opacity: 0.5;
+	}
+}
+
+.wc-skeleton {
+	animation:
+		wc-skeleton-appear 0s linear 250ms both,
+		wc-skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 250ms infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wc-skeleton {
+		animation: wc-skeleton-appear 0s linear 250ms both;
+	}
+}

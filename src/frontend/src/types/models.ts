@@ -270,22 +270,41 @@ export interface RecipeComment {
 	user: Pick<User, 'id' | 'username' | 'avatar_url'>
 }
 
-// notifiche: ricalcano il modello Notification del backend (subject + action + target_id)
+// notifiche: ricalcano NotificationItemDto del backend (GET /api/notifications)
 export type NotificationSubject = 'recipe' | 'comment' | 'user'
-export type NotificationAction = 'like' | 'comment' | 'friend_request' | 'friend_accept' | 'post'
+export type NotificationAction =
+	| 'like'
+	| 'comment'
+	| 'friend_request'
+	| 'friend_accept'
+	| 'post'
+	| 'update'
+	| 'delete'
 
 export interface AppNotification {
 	id: number
+	user_id: number
 	subject: NotificationSubject
 	action: NotificationAction
-	target_id: number | null
+	actor: { id: number; username: string; avatar_url: string | null } | null
+	// target: ricetta / commento / utente a cui si riferisce la notifica
+	target: { id: number | null; subject: NotificationSubject; title_or_snippet: string | null } | null
+	// testo già localizzato dal backend (in base a ?lang=)
+	message: string
 	is_read: boolean
 	created_at: string
-	// può mancare finché il backend non include l'attore nella risposta
-	actor?: { id: number; username: string; avatar_url?: string | null } | null
-	// facoltativi: per le notifiche su commenti/ricette
-	recipe_id?: number | null
-	recipe_title?: string | null
+}
+
+// risposta paginata di GET /api/notifications
+export interface PaginatedNotifications {
+	items: AppNotification[]
+	total: number
+	page: number
+	limit: number
+	total_pages: number
+	has_next_page: boolean
+	has_prev_page: boolean
+	unread_count: number
 }
 
 export interface AdminComment extends RecipeComment {

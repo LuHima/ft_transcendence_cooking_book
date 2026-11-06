@@ -4,14 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
 import { useLang } from '../lib/useLang'
 import { acquireSocket, releaseSocket } from '../lib/socket'
-import type { AppNotification } from '../types/models'
+import type { AppNotification, PaginatedNotifications } from '../types/models'
 
 const POLL_INTERVAL_MS = 60_000
 
 // testo e destinazione di una notifica in base a subject + action (modello Notification del backend)
+// (target.id è l'id della ricetta solo quando subject === 'recipe'; per i commenti è l'id del commento)
 function describe(n: AppNotification): { textKey: string; to: string } {
-	const recipeTarget = n.recipe_id ?? (n.subject === 'recipe' ? n.target_id : null)
-	const recipePath = recipeTarget != null ? `/recipes/${recipeTarget}` : '/'
+	const recipeId = n.subject === 'recipe' ? (n.target?.id ?? null) : null
+	const recipePath = recipeId != null ? `/recipes/${recipeId}` : '/'
 	switch (n.action) {
 		case 'friend_request':
 			return { textKey: 'notifications.friend_request', to: '/friends' }
@@ -20,9 +21,19 @@ function describe(n: AppNotification): { textKey: string; to: string } {
 		case 'like':
 			return { textKey: 'notifications.like', to: recipePath }
 		case 'comment':
-			return { textKey: 'notifications.comment', to: recipePath }
+			return n.subject === 'comment'
+				? { textKey: 'notifications.reply', to: '/' }
+				: { textKey: 'notifications.comment', to: recipePath }
 		case 'post':
 			return { textKey: 'notifications.post', to: recipePath }
+		case 'update':
+			return { textKey: 'notifications.update', to: recipePath }
+		case 'delete':
+			// la ricetta non esiste più: nessun link
+			return { textKey: 'notifications.delete', to: '/' }
+		default:
+			// azioni nuove aggiunte dal backend: non far crashare il menu
+			return { textKey: 'notifications.generic', to: '/' }
 	}
 }
 
@@ -43,14 +54,15 @@ function NotificationBell() {
 	const containerRef = useRef<HTMLDivElement>(null)
 
 	// GET /api/notifications
+	// il backend risponde in forma paginata: { items, total, page, ..., unread_count }
 	const load = useCallback(() => {
 		api
-			.get<{ notification: AppNotification[] }>('/notifications')
-			.then((data) => setItems(data.notification))
+			.get<PaginatedNotifications>(`/notifications?lang=${lang}`)
+			.then((data) => setItems(Array.isArray(data?.items) ? data.items : []))
 			.catch(() => {
 				// le notifiche sono un extra: se falliscono non si mostra nessun errore
 			})
-	}, [])
+	}, [lang])
 
 	// primo caricamento + aggiornamento periodico (solo con la scheda visibile)
 	useEffect(() => {
@@ -80,18 +92,18 @@ function NotificationBell() {
 
 	const unreadCount = items.filter((n) => !n.is_read).length
 
-	// PATCH /api/notifications/read/:id (una chiamata per notifica non letta)
-	const markRead = useCallback((ids: number[]) => {
-		if (ids.length === 0) return
-		setItems((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, is_read: true } : n)))
-		ids.forEach((id) => api.patch(`/notifications/read/${id}`).catch(() => {}))
-	}, [])
+	// PATCH /api/notifications/read-all (una sola chiamata per tutte le non lette)
+	const markAllRead = useCallback((hasUnread: boolean) => {
+		if (!hasUnread) return
+		setItems((prev) => prev.map((n) => (n.is_read ? n : { ...n, is_read: true })))
+		api.patch('/notifications/read-all').catch(() => load())
+	}, [load])
 
 	const close = useCallback(() => {
 		setOpen(false)
 		// alla chiusura le notifiche visualizzate vengono segnate come lette
-		markRead(items.filter((n) => !n.is_read).map((n) => n.id))
-	}, [items, markRead])
+		markAllRead(items.some((n) => !n.is_read))
+	}, [items, markAllRead])
 
 	useEffect(() => {
 		if (!open) return
@@ -120,7 +132,7 @@ function NotificationBell() {
 
 	async function remove(id: number) {
 		setItems((prev) => prev.filter((n) => n.id !== id))
-		api.delete(`/notifications/delete/${id}`).catch(() => load())
+		api.delete(`/notifications/${id}`).catch(() => load())
 	}
 
 	// con il menu aperto il badge sparisce: le notifiche si stanno guardando
@@ -176,7 +188,9 @@ function NotificationBell() {
 										<Link to={to} onClick={close} className="block min-w-0 flex-1 px-4 py-3 text-sm text-[var(--wc-text)]">
 											<span className="font-semibold">{n.actor?.username ?? t('notifications.someone')}</span>{' '}
 											{t(textKey)}
-											{n.recipe_title && <span className="text-[var(--wc-saffron)]"> {n.recipe_title}</span>}
+											{n.subject === 'recipe' && n.action !== 'delete' && n.target?.title_or_snippet && (
+												<span className="text-[var(--wc-saffron)]"> {n.target.title_or_snippet}</span>
+											)}
 											<span className="mt-0.5 block text-xs text-[var(--wc-text-muted)]">{timeAgo(n.created_at, lang)}</span>
 										</Link>
 										<button
