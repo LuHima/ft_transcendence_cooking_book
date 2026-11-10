@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Course, RecipeDifficulty, TranslationStatus } from '@prisma/client';
+import {
+  Course,
+  RecipeDifficulty,
+  RecipePrivacy,
+  TranslationStatus,
+} from '@prisma/client';
 
 /**
  * Summary recipe item inside paginated recipe stack.
@@ -33,6 +38,13 @@ export class RecipeStackItemDto {
     example: 35,
   })
   total_time: number;
+
+  @ApiProperty({
+    enum: RecipePrivacy,
+    description: 'Recipe privacy visibility tier',
+    example: RecipePrivacy.public,
+  })
+  privacy: RecipePrivacy;
 
   @ApiProperty({ description: 'Servings yielded', example: 4 })
   servings: number;
@@ -81,6 +93,11 @@ export class RecipeStackItemDto {
 }
 
 import { LocalizedRecipeSummaryResponse } from './localized-recipe.response';
+
+/**
+ * Localized recipe summary response DTO.
+ */
+export class RecipeSummaryResponseDto extends LocalizedRecipeSummaryResponse {}
 
 /**
  * Standard paginated collection envelope for recipes.

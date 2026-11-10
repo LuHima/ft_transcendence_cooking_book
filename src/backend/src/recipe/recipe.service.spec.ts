@@ -7,6 +7,7 @@ import {
 import {
   Course,
   RecipeDifficulty,
+  RecipePrivacy,
   NotificationAction,
   NotificationSubject,
   TranslationStatus,
@@ -251,6 +252,7 @@ describe('RecipeService', () => {
           {
             id: 1,
             is_active: true,
+            privacy: RecipePrivacy.public,
             course: Course.first_course,
             difficulty: RecipeDifficulty.medium,
             prep_time: 15,
@@ -824,6 +826,38 @@ describe('RecipeService', () => {
       );
       expect(service.getRecipeById).toHaveBeenCalledWith(42, 'it', 1);
       expect(result).toEqual(mockDetailRecipe);
+    });
+
+    it('persists recipe privacy when provided and defaults to public when omitted', async () => {
+      const createdRecipe = {
+        id: 42,
+        user_id: 1,
+        privacy: RecipePrivacy.friends_only,
+      };
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValue({ id: 42 } as any);
+
+      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+        if (typeof cb === 'function') {
+          return cb(mockPrisma);
+        }
+        return createdRecipe;
+      });
+      mockPrisma.recipe.create.mockResolvedValue(createdRecipe);
+
+      await service.createRecipe(
+        { ...sampleDto, privacy: RecipePrivacy.friends_only },
+        1,
+      );
+
+      expect(mockPrisma.recipe.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            privacy: RecipePrivacy.friends_only,
+          }),
+        }),
+      );
     });
 
     it('does not persist target translations when translation fails', async () => {
@@ -1607,6 +1641,37 @@ describe('RecipeService', () => {
       );
       expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 1);
       expect(result.total_time).toBe(35);
+    });
+
+    it('allows author to update recipe privacy without modifying relations', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        source_lang: 'it',
+        privacy: RecipePrivacy.public,
+      };
+
+      jest.spyOn(service, 'getRecipeById').mockResolvedValueOnce({
+        ...existingRecipe,
+        privacy: RecipePrivacy.private,
+      } as any);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        ...existingRecipe,
+        privacy: RecipePrivacy.private,
+      });
+
+      await service.updateRecipe(1, 1, { privacy: RecipePrivacy.private });
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            privacy: RecipePrivacy.private,
+          }),
+        }),
+      );
     });
 
     it('updates steps, ingredients, and tags when those relations are provided', async () => {

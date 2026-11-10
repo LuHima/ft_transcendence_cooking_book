@@ -4,6 +4,7 @@ import {
   IngredientCategory,
   MediaType,
   RecipeDifficulty,
+  RecipePrivacy,
   TranslationStatus,
   TranslationSource,
   UnitOfMeasure,
@@ -324,6 +325,17 @@ export class LocalizedRecipeSummaryResponse {
     example: true,
   })
   is_active: boolean;
+
+  /**
+   * Visibility and access privacy tier of the recipe.
+   * @example RecipePrivacy.public
+   */
+  @ApiProperty({
+    enum: RecipePrivacy,
+    description: 'Recipe privacy visibility tier',
+    example: RecipePrivacy.public,
+  })
+  privacy: RecipePrivacy;
 
   /**
    * Course classification in a meal.

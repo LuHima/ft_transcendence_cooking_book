@@ -9,6 +9,7 @@ import { TranslationService } from '../translation/translation.service';
 import {
   MediaType,
   OwnerType,
+  RecipePrivacy,
   TranslationStatus,
   TranslationSource,
   NotificationSubject,
@@ -738,6 +739,7 @@ export class RecipeService {
         data: {
           user_id: userId,
           owner_type: OwnerType.user,
+          privacy: recipe.privacy ?? RecipePrivacy.public,
           course: recipe.course,
           difficulty: recipe.difficulty,
           prep_time: recipe.prep_time,
@@ -844,6 +846,8 @@ export class RecipeService {
 
     // Update locale-invariant data of the recipe
     const updateData: any = {};
+    if (recipeUpdate.privacy !== undefined)
+      updateData.privacy = recipeUpdate.privacy;
     if (recipeUpdate.is_active !== undefined)
       updateData.is_active = recipeUpdate.is_active;
     if (recipeUpdate.course !== undefined)

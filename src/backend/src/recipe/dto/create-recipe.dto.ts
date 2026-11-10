@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
+import {
+  Course,
+  RecipeDifficulty,
+  RecipePrivacy,
+  UnitOfMeasure,
+} from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
@@ -266,6 +271,19 @@ export class CreateRecipeDto {
   @IsString()
   @IsIn(['it', 'en', 'fr'], { message: 'source_lang must be it, en, or fr' })
   source_lang: string;
+
+  /**
+   * Optional privacy tier for recipe visibility. Defaults to public.
+   * @example RecipePrivacy.public
+   */
+  @ApiPropertyOptional({
+    enum: RecipePrivacy,
+    description: 'Privacy tier of the recipe (public, friends_only, private)',
+    example: RecipePrivacy.public,
+  })
+  @IsOptional()
+  @IsEnum(RecipePrivacy)
+  privacy?: RecipePrivacy;
 
   /**
    * Ordered sequence of preparation steps (at least one required).

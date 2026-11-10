@@ -94,6 +94,18 @@ enum UserStatus {
   banned
 }
 
+enum RecipePrivacy {
+  public
+  friends_only
+  private
+}
+
+enum ProfilePrivacy {
+  public
+  friends_only
+  private
+}
+
 enum NotificationSubject {
   recipe
   comment
@@ -161,6 +173,7 @@ model User {
   city          String?   @db.VarChar(100)
   postal_code   String?   @db.VarChar(10)
   status 		UserStatus @default(active)
+  profile_privacy ProfilePrivacy @default(public)
   banned_until  DateTime?
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
@@ -199,6 +212,7 @@ model Recipe {
   user_id            Int?
   owner_type         OwnerType          @default(user)
   is_active          Boolean            @default(true)
+  privacy            RecipePrivacy      @default(public)
   course             Course             @default(main_course)
   difficulty         RecipeDifficulty   @default(easy)
   prep_time          Int                @default(0)
@@ -221,6 +235,7 @@ model Recipe {
   likes              Like[]
   recipe_media       RecipeMedia[]
 
+  @@index([privacy, is_active])
   @@map("recipes")
 }
 

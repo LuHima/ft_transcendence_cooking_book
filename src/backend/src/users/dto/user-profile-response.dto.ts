@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
+import { ProfilePrivacy, Role } from '@prisma/client';
 
 /**
  * Full private user profile returned for the authenticated user.
@@ -35,6 +35,17 @@ export class UserProfileResponseDto {
    */
   @ApiProperty({ enum: Role, description: 'User role', example: Role.user })
   role: Role;
+
+  /**
+   * Profile visibility and privacy setting.
+   * @example ProfilePrivacy.public
+   */
+  @ApiProperty({
+    enum: ProfilePrivacy,
+    description: 'Profile privacy setting',
+    example: ProfilePrivacy.public,
+  })
+  profile_privacy: ProfilePrivacy;
 
   /**
    * URL to user avatar photo.
@@ -280,6 +291,17 @@ export class PublicUserResponseDto {
   })
   friendship_status?:
     'none' | 'pending_sent' | 'pending_received' | 'friends' | null;
+
+  /**
+   * Profile visibility and privacy setting.
+   * @example ProfilePrivacy.public
+   */
+  @ApiProperty({
+    enum: ProfilePrivacy,
+    description: 'Profile privacy setting',
+    example: ProfilePrivacy.public,
+  })
+  profile_privacy: ProfilePrivacy;
 }
 
 /**

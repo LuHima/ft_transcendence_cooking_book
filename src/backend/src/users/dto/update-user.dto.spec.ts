@@ -56,4 +56,20 @@ describe('UpdateUserDto', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].constraints).toHaveProperty('isString');
   });
+
+  it('should accept valid profile_privacy values', async () => {
+    for (const privacy of ['public', 'friends_only', 'private']) {
+      const dto = plainToInstance(UpdateUserDto, { profile_privacy: privacy });
+      const errors = await validate(dto);
+      expect(errors.length).toBe(0);
+      expect(dto.profile_privacy).toBe(privacy);
+    }
+  });
+
+  it('should reject invalid profile_privacy enum values', async () => {
+    const dto = plainToInstance(UpdateUserDto, { profile_privacy: 'invalid_tier' });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].constraints).toHaveProperty('isEnum');
+  });
 });

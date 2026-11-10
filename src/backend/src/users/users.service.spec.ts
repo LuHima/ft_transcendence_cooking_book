@@ -23,6 +23,7 @@ describe('UsersService', () => {
     username: 'mario',
     email: 'mario@example.com',
     role: 'user',
+    profile_privacy: 'public',
     avatar_url: 'https://example.com/avatar.jpg',
     bio: 'Passionate Italian chef and home cook.',
     first_name: 'Mario',
@@ -99,6 +100,7 @@ describe('UsersService', () => {
           username: true,
           email: true,
           role: true,
+          profile_privacy: true,
           avatar_url: true,
           bio: true,
           first_name: true,
@@ -150,6 +152,7 @@ describe('UsersService', () => {
           username: true,
           email: true,
           role: true,
+          profile_privacy: true,
           avatar_url: true,
           bio: true,
           first_name: true,
@@ -162,6 +165,29 @@ describe('UsersService', () => {
           created_at: true,
         },
       });
+    });
+
+    it('allows updating profile_privacy via updateMe', async () => {
+      const updateData = { profile_privacy: 'friends_only' as any };
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        ...mockDbUser,
+        profile_privacy: 'friends_only',
+      });
+
+      const result = await service.updateMe(1, updateData);
+
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            profile_privacy: 'friends_only',
+          }),
+          select: expect.objectContaining({
+            profile_privacy: true,
+          }),
+        }),
+      );
+      expect(result.profile_privacy).toBe('friends_only');
     });
 
     it('should parse valid ISO birth_date string into Date object', async () => {

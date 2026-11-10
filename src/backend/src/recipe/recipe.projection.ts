@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OwnerType, TranslationSource } from '@prisma/client';
+import { OwnerType, RecipePrivacy, TranslationSource } from '@prisma/client';
 import {
   LocalizedRecipeDetailResponse,
   LocalizedRecipeIngredientResponse,
@@ -215,6 +215,7 @@ export class RecipeProjection {
     return {
       id: recipe.id,
       is_active: recipe.is_active ?? true,
+      privacy: recipe.privacy ?? RecipePrivacy.public,
       course: recipe.course,
       difficulty: recipe.difficulty,
       prep_time: recipe.prep_time,
@@ -368,6 +369,7 @@ export class RecipeProjection {
     return {
       id: recipe.id,
       is_active: recipe.is_active ?? true,
+      privacy: recipe.privacy ?? RecipePrivacy.public,
       course: recipe.course,
       difficulty: recipe.difficulty,
       prep_time: recipe.prep_time,

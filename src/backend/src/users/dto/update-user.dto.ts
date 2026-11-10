@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ProfilePrivacy } from '@prisma/client';
 import {
+  IsEnum,
   IsOptional,
   IsString,
   IsEmail,
@@ -12,6 +14,19 @@ import { Transform } from 'class-transformer';
  * Data transfer object for updating current user profile details.
  */
 export class UpdateUserDto {
+  /**
+   * Profile privacy visibility tier.
+   * @example ProfilePrivacy.public
+   */
+  @ApiPropertyOptional({
+    enum: ProfilePrivacy,
+    description: 'Profile privacy setting (public, friends_only, private)',
+    example: ProfilePrivacy.public,
+  })
+  @IsOptional()
+  @IsEnum(ProfilePrivacy)
+  profile_privacy?: ProfilePrivacy;
+
   /**
    * Unique username (3-30 characters).
    * @example 'mario_rossi_updated'
