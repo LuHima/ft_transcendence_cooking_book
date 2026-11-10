@@ -1601,6 +1601,26 @@
               }
             }
           },
+          "401": {
+            "description": "Authentication required to view restricted recipe collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Recipe collection is private or restricted to confirmed friends",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "User not found",
             "content": {
@@ -1691,11 +1711,21 @@
             }
           },
           "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
+            "description": "Authentication required to view restricted friend list",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Friend list is private or restricted to confirmed friends",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -1721,11 +1751,6 @@
             }
           }
         },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
         "summary": "Get user confirmed friends",
         "tags": [
           "Users"
@@ -2358,6 +2383,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required when requesting friends-only recipe without credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: recipe is restricted to confirmed friends of the author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
                 }
               }
             }
@@ -7610,6 +7655,16 @@
             ],
             "type": "string"
           },
+          "profile_privacy": {
+            "description": "Profile privacy setting",
+            "example": "public",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "type": "string"
+          },
           "avatar_url": {
             "type": "string",
             "nullable": true,
@@ -7677,6 +7732,7 @@
           "username",
           "email",
           "role",
+          "profile_privacy",
           "avatar_url",
           "bio",
           "first_name",
@@ -7723,6 +7779,16 @@
       "UpdateUserDto": {
         "type": "object",
         "properties": {
+          "profile_privacy": {
+            "description": "Profile privacy setting (public, friends_only, private)",
+            "example": "public",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "type": "string"
+          },
           "username": {
             "type": "string",
             "description": "Updated username (3-30 characters)",
@@ -7886,6 +7952,16 @@
             "description": "Whether the recipe is actively published and visible to the public",
             "example": true
           },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "description": "Recipe privacy visibility tier",
+            "example": "public"
+          },
           "course": {
             "type": "string",
             "enum": [
@@ -8037,6 +8113,7 @@
         "required": [
           "id",
           "is_active",
+          "privacy",
           "course",
           "difficulty",
           "prep_time",
@@ -8380,6 +8457,16 @@
               "friends"
             ],
             "type": "string"
+          },
+          "profile_privacy": {
+            "description": "Profile privacy setting",
+            "example": "public",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -8392,7 +8479,39 @@
           "created_at",
           "recipes_count",
           "friends_count",
-          "total_likes_received"
+          "total_likes_received",
+          "profile_privacy"
+        ]
+      },
+      "ApiForbiddenResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing insufficient permissions to perform action",
+            "example": 403
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42"
+          },
+          "message": {
+            "type": "string",
+            "description": "Authorization failure message",
+            "example": "Forbidden: insufficient permissions for this action on the target resource"
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
         ]
       },
       "FriendItemDto": {
@@ -8803,6 +8922,16 @@
             "description": "Whether the recipe is actively published and visible to the public",
             "example": true
           },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "description": "Recipe privacy visibility tier",
+            "example": "public"
+          },
           "course": {
             "type": "string",
             "enum": [
@@ -8997,6 +9126,7 @@
         "required": [
           "id",
           "is_active",
+          "privacy",
           "course",
           "difficulty",
           "prep_time",
@@ -9183,6 +9313,16 @@
               "fr"
             ]
           },
+          "privacy": {
+            "description": "Privacy tier of the recipe (public, friends_only, private)",
+            "example": "public",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "type": "string"
+          },
           "steps": {
             "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
             "minItems": 1,
@@ -9317,6 +9457,16 @@
               "fr"
             ]
           },
+          "privacy": {
+            "description": "Updated privacy tier of the recipe (public, friends_only, private)",
+            "example": "friends_only",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "type": "string"
+          },
           "steps": {
             "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
             "minItems": 1,
@@ -9361,37 +9511,6 @@
             ]
           }
         }
-      },
-      "ApiForbiddenResponseDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "description": "HTTP status code representing insufficient permissions to perform action",
-            "example": 403
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "ISO 8601 formatted timestamp of when the error occurred",
-            "example": "2026-10-14T10:00:00.000Z"
-          },
-          "path": {
-            "type": "string",
-            "description": "Requested URL path that produced the error",
-            "example": "/api/recipes/42"
-          },
-          "message": {
-            "type": "string",
-            "description": "Authorization failure message",
-            "example": "Forbidden: insufficient permissions for this action on the target resource"
-          }
-        },
-        "required": [
-          "statusCode",
-          "timestamp",
-          "path",
-          "message"
-        ]
       },
       "CoverImageUploadResponseDto": {
         "type": "object",
