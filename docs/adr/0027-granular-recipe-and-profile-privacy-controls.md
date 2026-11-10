@@ -70,6 +70,9 @@ We decided to introduce discrete `RecipePrivacy` and `ProfilePrivacy` enums in P
    - `privacy: RecipePrivacy` is included in `RecipeSummaryResponseDto` and `LocalizedRecipeDetailResponse`.
    - Authors can update `privacy` at any time via `PATCH /api/recipes/:id`. Likes, comments, and metrics are preserved across transitions.
 
+8. **Comprehensive Privacy and Visibility Matrix**:
+   - The authoritative endpoint response matrix mapping all HTTP status codes, payloads, and role permissions across privacy tiers is documented in [docs/privacy-and-visibility-matrix.md](../privacy-and-visibility-matrix.md).
+
 ## Consequences
 
 - Prevents resource enumeration and information leakage for private drafts and blocked accounts.
