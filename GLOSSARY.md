@@ -174,6 +174,14 @@ _Avoid_: Account privacy, stealth mode, hidden user
 A contextual, privacy-filtered presentation of a culinary profile returned to non-friends or unauthorized callers, exposing essential identity markers (`id`, `username`, `avatar_url`, `bio`, `profile_privacy`) to facilitate social discovery and friend requests while withholding personal details and authored recipes.
 _Avoid_: Partial profile, hidden profile, restricted user card
 
+**Blended Recipe Search**:
+The discovery mechanism on `GET /api/recipes` that returns public recipes alongside friends-only recipes authored by the caller's confirmed friends, ensuring full keyword searchability across the caller's social network while omitting inaccessible content.
+_Avoid_: Combined search, friend search merge, hybrid query
+
+**Audited Private Inspection**:
+The administrative authorization policy allowing platform staff to view a private recipe or profile with mandatory audit logging, restricted to Administrators or to Moderators reviewing an active content report.
+_Avoid_: Admin sneak peek, staff bypass, secret view
+
 **Media Access Control**:
 The authorization mechanism that gates binary media assets (cover images, step illustrations, gallery photos, tutorial videos, and recipe PDF sheets) against recipe privacy settings and mutual user block invariants.
 _Avoid_: Static file serving, image gate, asset security
