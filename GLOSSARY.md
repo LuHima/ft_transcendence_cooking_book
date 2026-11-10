@@ -170,6 +170,10 @@ _Avoid_: Partial profile, hidden profile, restricted user card
 The authorization mechanism that gates binary media assets (cover images, step illustrations, gallery photos, tutorial videos, and recipe PDF sheets) against recipe privacy settings and mutual user block invariants.
 _Avoid_: Static file serving, image gate, asset security
 
+**HTTP Range Streaming**:
+The RFC 9110 byte-range partial content delivery protocol (`HTTP 206 Partial Content`) used by the media gateway to stream recipe tutorial videos, enabling seeking, scrubber caching, and cross-browser playback across WebKit, Gecko, and Blink engines.
+_Avoid_: Video dumping, progressive download, static video serving
+
 **Account Ban**:
 An administrative sanction applied to a community member's account, either temporary (capped at 180 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
 _Avoid_: Account freeze, lockout, strike, kick
