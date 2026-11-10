@@ -6,7 +6,7 @@ import {
   RecipeProjection,
   RECIPE_SUMMARY_INCLUDE,
 } from '../recipe/recipe.projection';
-import { Prisma, UserStatus } from '@prisma/client';
+import { Prisma, RecipePrivacy, UserStatus } from '@prisma/client';
 
 @Injectable()
 export class FeedService {
@@ -76,9 +76,10 @@ export class FeedService {
     }
 
     // Step 2: Friend Recipes Query
-    const where = {
+    const where: Prisma.RecipeWhereInput = {
       user_id: { in: activeFriendIds },
       is_active: true,
+      privacy: { in: [RecipePrivacy.public, RecipePrivacy.friends_only] },
       user: {
         status: UserStatus.active,
         deleted_at: null,

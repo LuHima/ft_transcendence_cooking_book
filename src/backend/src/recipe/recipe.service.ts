@@ -82,12 +82,42 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
-  private buildRecipeWhere(filterDto: FilterRecipeDto): Prisma.RecipeWhereInput {
+  private buildRecipeWhere(
+    filterDto: FilterRecipeDto,
+    currentUserId?: number,
+    friendIds: number[] = [],
+    blockedIds: number[] = [],
+  ): Prisma.RecipeWhereInput {
     const where: Prisma.RecipeWhereInput = {
       is_active: true,
     };
 
     const andConditions: Prisma.RecipeWhereInput[] = [];
+
+    if (!currentUserId) {
+      where.privacy = RecipePrivacy.public;
+    } else {
+      const privacyOr: Prisma.RecipeWhereInput[] = [
+        { privacy: RecipePrivacy.public },
+        { user_id: currentUserId },
+      ];
+      if (friendIds.length > 0) {
+        privacyOr.push({
+          privacy: RecipePrivacy.friends_only,
+          user_id: { in: friendIds },
+        });
+      }
+      andConditions.push({ OR: privacyOr });
+    }
+
+    if (blockedIds.length > 0) {
+      andConditions.push({
+        OR: [
+          { user_id: null },
+          { user_id: { notIn: blockedIds } },
+        ],
+      });
+    }
 
     if (filterDto.course) {
       where.course = filterDto.course;
@@ -256,6 +286,8 @@ export class RecipeService {
     skip: number,
     limit: number,
     currentUserId?: number,
+    friendIds: number[] = [],
+    blockedIds: number[] = [],
   ): Promise<{ recipes: any[]; total: number }> {
     const targetLocale = filterDto.lang || null;
     const sortOrder =
@@ -264,6 +296,26 @@ export class RecipeService {
       sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
 
     const sqlConditions: Prisma.Sql[] = [Prisma.sql`r.is_active = true`];
+
+    if (!currentUserId) {
+      sqlConditions.push(Prisma.sql`r.privacy = 'public'::"RecipePrivacy"`);
+    } else {
+      if (friendIds.length > 0) {
+        sqlConditions.push(
+          Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId} OR (r.privacy = 'friends_only'::"RecipePrivacy" AND r.user_id IN (${Prisma.join(friendIds)})))`,
+        );
+      } else {
+        sqlConditions.push(
+          Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId})`,
+        );
+      }
+    }
+
+    if (blockedIds.length > 0) {
+      sqlConditions.push(
+        Prisma.sql`(r.user_id IS NULL OR r.user_id NOT IN (${Prisma.join(blockedIds)}))`,
+      );
+    }
 
     if (filterDto.course) {
       sqlConditions.push(
@@ -426,7 +478,59 @@ export class RecipeService {
       Number(filterDto.limit) > 0 ? Math.min(Number(filterDto.limit), 100) : 20;
     const skip = (page - 1) * limit;
 
-    const where = this.buildRecipeWhere(filterDto);
+    let friendIds: number[] = [];
+    let blockedIds: number[] = [];
+
+    if (currentUserId) {
+      const [friendships, userBlocks] = await Promise.all([
+        this.prisma.friendship?.findMany
+          ? this.prisma.friendship.findMany({
+              where: {
+                status: 'accepted',
+                OR: [
+                  { requester_id: currentUserId },
+                  { addressee_id: currentUserId },
+                ],
+              },
+              select: { requester_id: true, addressee_id: true },
+            })
+          : Promise.resolve([]),
+        this.prisma.userBlock?.findMany
+          ? this.prisma.userBlock.findMany({
+              where: {
+                OR: [
+                  { blocker_id: currentUserId },
+                  { blocked_id: currentUserId },
+                ],
+              },
+              select: { blocker_id: true, blocked_id: true },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      if (friendships && Array.isArray(friendships)) {
+        friendIds = friendships.map((f) =>
+          f.requester_id === currentUserId ? f.addressee_id : f.requester_id,
+        );
+      }
+
+      if (userBlocks && Array.isArray(userBlocks)) {
+        const blockedSet = new Set<number>();
+        for (const b of userBlocks) {
+          blockedSet.add(
+            b.blocker_id === currentUserId ? b.blocked_id : b.blocker_id,
+          );
+        }
+        blockedIds = Array.from(blockedSet);
+      }
+    }
+
+    const where = this.buildRecipeWhere(
+      filterDto,
+      currentUserId,
+      friendIds,
+      blockedIds,
+    );
 
     let recipes: any[];
     let total: number;
@@ -438,6 +542,8 @@ export class RecipeService {
         skip,
         limit,
         currentUserId,
+        friendIds,
+        blockedIds,
       );
       recipes = titleResult.recipes;
       total = titleResult.total;
@@ -555,7 +661,7 @@ export class RecipeService {
           recipeId: recipe.id,
         });
       } else if (currentUserRole === Role.moderator) {
-        let hasActiveReport = null;
+        let hasActiveReport: any = null;
         if (this.prisma.report) {
           const recipeComments = this.prisma.comment
             ? await this.prisma.comment.findMany({

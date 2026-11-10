@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FeedService } from './feed.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
 import { PrismaService } from 'prisma/prisma.service';
-import { Course, RecipeDifficulty, TranslationStatus } from '@prisma/client';
+import { Course, RecipeDifficulty, RecipePrivacy, TranslationStatus } from '@prisma/client';
 
 describe('FeedService', () => {
   let service: FeedService;
@@ -82,6 +82,7 @@ describe('FeedService', () => {
           where: {
             user_id: { in: [2, 3] },
             is_active: true,
+            privacy: { in: [RecipePrivacy.public, RecipePrivacy.friends_only] },
             user: {
               status: 'active',
               deleted_at: null,
@@ -96,6 +97,7 @@ describe('FeedService', () => {
         where: {
           user_id: { in: [2, 3] },
           is_active: true,
+          privacy: { in: [RecipePrivacy.public, RecipePrivacy.friends_only] },
           user: {
             status: 'active',
             deleted_at: null,
@@ -124,6 +126,24 @@ describe('FeedService', () => {
         has_next_page: false,
         has_prev_page: false,
       });
+    });
+
+    it('strictly excludes private recipes by specifying privacy IN [public, friends_only]', async () => {
+      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue([
+        { requester_id: 1, addressee_id: 2 },
+      ]);
+      (prisma.recipe.findMany as jest.Mock<any>).mockResolvedValue([]);
+      (prisma.recipe.count as jest.Mock<any>).mockResolvedValue(0);
+
+      await service.getFeed(1, { page: 1, limit: 20 });
+
+      expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            privacy: { in: [RecipePrivacy.public, RecipePrivacy.friends_only] },
+          }),
+        }),
+      );
     });
   });
 

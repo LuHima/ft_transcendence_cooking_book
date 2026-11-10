@@ -110,6 +110,7 @@ describe('RecipeService', () => {
     },
     userBlock: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
     },
     friendship: {
       findFirst: jest.fn(),
@@ -239,7 +240,7 @@ describe('RecipeService', () => {
       const result = await service.getAllRecipe();
 
       expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
-        where: { is_active: true },
+        where: { is_active: true, privacy: 'public' },
         skip: 0,
         take: 20,
         orderBy: { created_at: 'desc' },
@@ -253,7 +254,7 @@ describe('RecipeService', () => {
         }),
       });
       expect(mockPrisma.recipe.count).toHaveBeenCalledWith({
-        where: { is_active: true },
+        where: { is_active: true, privacy: 'public' },
       });
 
       expect(result).toEqual({
@@ -357,6 +358,7 @@ describe('RecipeService', () => {
 
       const expectedWhere = {
         is_active: true,
+        privacy: 'public',
         course: Course.main_course,
         difficulty: RecipeDifficulty.easy,
         user_id: 5,
@@ -402,6 +404,7 @@ describe('RecipeService', () => {
         expect.objectContaining({
           where: {
             is_active: true,
+            privacy: 'public',
             AND: [
               { recipe_tags: { some: { tag_id: { in: [1, 2] } } } },
               { recipe_tags: { none: { tag_id: { in: [3, 4] } } } },
@@ -425,6 +428,7 @@ describe('RecipeService', () => {
         expect.objectContaining({
           where: {
             is_active: true,
+            privacy: 'public',
             total_time: { gte: 20, lte: 50 },
             prep_time: { lte: 15 },
           },
@@ -446,6 +450,7 @@ describe('RecipeService', () => {
         expect.objectContaining({
           where: {
             is_active: true,
+            privacy: 'public',
             source_lang: 'it',
             AND: [
               {
@@ -480,6 +485,7 @@ describe('RecipeService', () => {
         expect.objectContaining({
           where: {
             is_active: true,
+            privacy: 'public',
             AND: [
               { recipe_ingredients: { some: { ingredient_id: 10 } } },
               { recipe_ingredients: { some: { ingredient_id: 20 } } },
@@ -507,6 +513,7 @@ describe('RecipeService', () => {
         expect.objectContaining({
           where: {
             is_active: true,
+            privacy: 'public',
             AND: [
               {
                 recipe_ingredients: {
@@ -564,7 +571,7 @@ describe('RecipeService', () => {
 
       expect(mockPrisma.$queryRaw).toHaveBeenCalled();
       expect(mockPrisma.recipe.count).toHaveBeenCalledWith({
-        where: { is_active: true },
+        where: { is_active: true, privacy: 'public' },
       });
       expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -602,6 +609,98 @@ describe('RecipeService', () => {
       const result = await service.getAllRecipe({}, 42);
 
       expect(result.items[0].is_liked).toBe(true);
+    });
+
+    describe('Blended Recipe Search & Privacy Filtering (#146)', () => {
+      it('unauthenticated guest receives only public recipes', async () => {
+        mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+        mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+        await service.getAllRecipe({});
+
+        expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              is_active: true,
+              privacy: RecipePrivacy.public,
+            },
+          }),
+        );
+      });
+
+      it('authenticated user receives blended results (public + friends_only from confirmed friends + own)', async () => {
+        mockPrisma.friendship.findMany.mockResolvedValueOnce([
+          { requester_id: 1, addressee_id: 10 },
+          { requester_id: 20, addressee_id: 1 },
+        ]);
+        mockPrisma.userBlock.findMany.mockResolvedValueOnce([]);
+        mockPrisma.recipe.findMany.mockResolvedValueOnce(mockDbRecipes);
+        mockPrisma.recipe.count.mockResolvedValueOnce(1);
+
+        await service.getAllRecipe({}, 1);
+
+        expect(mockPrisma.friendship.findMany).toHaveBeenCalledWith({
+          where: {
+            status: 'accepted',
+            OR: [{ requester_id: 1 }, { addressee_id: 1 }],
+          },
+          select: { requester_id: true, addressee_id: true },
+        });
+
+        expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              is_active: true,
+              AND: [
+                {
+                  OR: [
+                    { privacy: RecipePrivacy.public },
+                    { user_id: 1 },
+                    {
+                      privacy: RecipePrivacy.friends_only,
+                      user_id: { in: [10, 20] },
+                    },
+                  ],
+                },
+              ],
+            },
+          }),
+        );
+      });
+
+      it('excludes recipes from mutually blocked accounts in blended search', async () => {
+        mockPrisma.friendship.findMany.mockResolvedValueOnce([]);
+        mockPrisma.userBlock.findMany.mockResolvedValueOnce([
+          { blocker_id: 1, blocked_id: 99 },
+          { blocker_id: 88, blocked_id: 1 },
+        ]);
+        mockPrisma.recipe.findMany.mockResolvedValueOnce([]);
+        mockPrisma.recipe.count.mockResolvedValueOnce(0);
+
+        await service.getAllRecipe({}, 1);
+
+        expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              is_active: true,
+              AND: [
+                {
+                  OR: [
+                    { privacy: RecipePrivacy.public },
+                    { user_id: 1 },
+                  ],
+                },
+                {
+                  OR: [
+                    { user_id: null },
+                    { user_id: { notIn: [99, 88] } },
+                  ],
+                },
+              ],
+            },
+          }),
+        );
+      });
     });
   });
 

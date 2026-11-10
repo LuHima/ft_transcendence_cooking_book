@@ -31,7 +31,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { Auth } from 'src/common/decorators/policies.decorator';
-import { CurrentUser, ActiveUserData } from 'src/common/decorators/current-user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { PaginatedFriendsResponseDto } from 'src/friends/dto/friend-response.dto';
