@@ -22,6 +22,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { AdminModule } from './admin/admin.module';
+import { MediaModule } from './media/media.module';
 import { ProductionConfigModule } from './common/config/production-config.module';
 
 @Module({
@@ -38,6 +39,7 @@ import { ProductionConfigModule } from './common/config/production-config.module
     FeedModule,
     ReportsModule,
     AdminModule,
+    MediaModule,
     // ScheduleModule cerca in tutti i provider per un @Cron vede quanto
     // manca al tempo stabilito e setta un timer per chiamare quella funzione
     // non appena finisce il sistemma setta in automatico un'altro timer per
