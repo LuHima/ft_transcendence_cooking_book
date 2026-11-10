@@ -289,16 +289,18 @@ describe('UsersService', () => {
       });
       (prisma.user.update as jest.Mock).mockResolvedValue({
         id: 1,
-        avatar_url: '/uploads/avatars/avatar-123.jpg',
+        avatar_url: '/api/media/avatars/1/avatar-123.jpg',
       });
       const mockFile = { filename: 'avatar-123.jpg' } as Express.Multer.File;
 
       const result = await service.updateAvatar(1, mockFile);
 
-      expect(result).toEqual({ avatar_url: '/uploads/avatars/avatar-123.jpg' });
+      expect(result).toEqual({
+        avatar_url: '/api/media/avatars/1/avatar-123.jpg',
+      });
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { avatar_url: '/uploads/avatars/avatar-123.jpg' },
+        data: { avatar_url: '/api/media/avatars/1/avatar-123.jpg' },
       });
     });
   });

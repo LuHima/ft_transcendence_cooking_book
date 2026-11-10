@@ -655,7 +655,7 @@ describe('AdminService', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockTargetUser);
       (prisma.user.update as jest.Mock).mockResolvedValue({
         ...mockTargetUser,
-        avatar_url: '/uploads/avatars/new-avatar.webp',
+        avatar_url: '/api/media/avatars/2/new-avatar.webp',
       });
 
       const mockFile = {
@@ -665,14 +665,14 @@ describe('AdminService', () => {
       const result = await service.uploadUserAvatar(2, mockFile);
 
       expect(result).toEqual({
-        avatar_url: '/uploads/avatars/new-avatar.webp',
+        avatar_url: '/api/media/avatars/2/new-avatar.webp',
       });
       expect(imageProcessingService.processAvatarFile).toHaveBeenCalledWith(
         mockFile,
       );
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 2 },
-        data: { avatar_url: '/uploads/avatars/new-avatar.webp' },
+        data: { avatar_url: '/api/media/avatars/2/new-avatar.webp' },
       });
     });
 

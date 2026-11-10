@@ -88,7 +88,9 @@ describe('UsersController', () => {
   describe('updateAvatar', () => {
     it('should upload avatar and return avatar_url', async () => {
       const mockFile = { filename: 'avatar-123.jpg' } as Express.Multer.File;
-      const mockResponse = { avatar_url: '/uploads/avatars/avatar-123.jpg' };
+      const mockResponse = {
+        avatar_url: '/api/media/avatars/1/avatar-123.jpg',
+      };
       (service.updateAvatar as jest.Mock<any>) = jest
         .fn()
         .mockResolvedValue(mockResponse);

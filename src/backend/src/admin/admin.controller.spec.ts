@@ -146,7 +146,7 @@ describe('AdminController', () => {
 
   describe('uploadUserAvatar', () => {
     it('delegates avatar upload to service.uploadUserAvatar', async () => {
-      const mockResponse = { avatar_url: '/uploads/avatars/new.webp' };
+      const mockResponse = { avatar_url: '/api/media/avatars/2/new.webp' };
       (service.uploadUserAvatar as jest.Mock).mockResolvedValue(mockResponse);
 
       const mockFile = { filename: 'avatar.webp' } as Express.Multer.File;

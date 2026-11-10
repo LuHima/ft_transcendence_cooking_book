@@ -651,14 +651,15 @@ export class UsersService {
     }
 
     // Process avatar image through Sharp WebP pipeline
-    let avatarUrl: string;
+    let filename: string;
     if (this.imageProcessingService) {
       const processed =
         await this.imageProcessingService.processAvatarFile(file);
-      avatarUrl = processed.relativePath;
+      filename = processed.filename;
     } else {
-      avatarUrl = `/uploads/avatars/${file.filename || file.originalname}`;
+      filename = file.filename || file.originalname;
     }
+    const avatarUrl = `/api/media/avatars/${userId}/${filename}`;
 
     // Delete previously uploaded avatar file from disk if present
     await this.safeUnlink(user.avatar_url);

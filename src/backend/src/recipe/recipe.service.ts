@@ -1969,7 +1969,8 @@ export class RecipeService {
       await this.safeUnlink(recipe.cover_image_url);
     }
 
-    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+    const filename = file.filename || file.originalname;
+    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update cover_image_url on recipe
     await this.prisma.recipe.update({
@@ -2026,7 +2027,8 @@ export class RecipeService {
       await this.safeUnlink(step.image_url);
     }
 
-    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+    const filename = file.filename || file.originalname;
+    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update image_url on step
     await this.prisma.recipeStep.update({
@@ -2088,7 +2090,8 @@ export class RecipeService {
     const startingOrder = existingMedia.length;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+      const filename = file.filename || file.originalname;
+      const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
       const media = await this.prisma.recipeMedia.create({
         data: {
           recipe_id: recipeId,
@@ -2137,7 +2140,8 @@ export class RecipeService {
       await this.safeUnlink(recipe.video_url);
     }
 
-    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+    const filename = file.filename || file.originalname;
+    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update video_url on recipe
     await this.prisma.recipe.update({

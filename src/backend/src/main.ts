@@ -10,7 +10,6 @@ import { ContentLanguageInterceptor } from './common/interceptors/content-langua
 import {
   RECIPE_UPLOADS_DIR,
   AVATAR_UPLOADS_DIR,
-  UPLOADS_DIR,
 } from './common/config/upload-paths';
 import { setupSwagger } from './common/config/swagger.config';
 import * as fs from 'fs';
@@ -19,12 +18,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // Spegnimanto pulito in caso di SIGINT ecc..
   app.enableShutdownHooks();
-  // Assicura che le directory uploads esistano e serve i file statici
+  // Assicura che le directory uploads esistano
   fs.mkdirSync(RECIPE_UPLOADS_DIR, { recursive: true });
   fs.mkdirSync(AVATAR_UPLOADS_DIR, { recursive: true });
-  app.useStaticAssets(UPLOADS_DIR, {
-    prefix: '/uploads/',
-  });
   // Al posto di scrivere http://localhost:3000 si srive /api/
   app.setGlobalPrefix('api');
   // Per lavorare con i cookie

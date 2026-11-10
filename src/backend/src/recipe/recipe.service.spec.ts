@@ -2859,17 +2859,17 @@ describe('RecipeService', () => {
 
       mockPrisma.recipe.update.mockResolvedValueOnce({
         id: 1,
-        cover_image_url: '/uploads/recipes/recipe-1-cover.jpg',
+        cover_image_url: '/api/media/recipes/1/recipe-1-cover.jpg',
       });
 
       const result = await service.uploadCoverImage(1, 1, mockFile);
 
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { cover_image_url: '/uploads/recipes/recipe-1-cover.jpg' },
+        data: { cover_image_url: '/api/media/recipes/1/recipe-1-cover.jpg' },
       });
       expect(result).toEqual({
-        cover_image_url: '/uploads/recipes/recipe-1-cover.jpg',
+        cover_image_url: '/api/media/recipes/1/recipe-1-cover.jpg',
       });
     });
 
@@ -2956,18 +2956,18 @@ describe('RecipeService', () => {
       mockPrisma.recipeStep.update.mockResolvedValueOnce({
         id: 10,
         step_number: 1,
-        image_url: '/uploads/recipes/recipe-1-step-1.jpg',
+        image_url: '/api/media/recipes/1/recipe-1-step-1.jpg',
       });
 
       const result = await service.uploadStepImage(1, 1, 1, mockFile);
 
       expect(mockPrisma.recipeStep.update).toHaveBeenCalledWith({
         where: { id: 10 },
-        data: { image_url: '/uploads/recipes/recipe-1-step-1.jpg' },
+        data: { image_url: '/api/media/recipes/1/recipe-1-step-1.jpg' },
       });
       expect(result).toEqual({
         step_number: 1,
-        image_url: '/uploads/recipes/recipe-1-step-1.jpg',
+        image_url: '/api/media/recipes/1/recipe-1-step-1.jpg',
       });
     });
 
@@ -3076,14 +3076,14 @@ describe('RecipeService', () => {
         .mockResolvedValueOnce({
           id: 2,
           recipe_id: 1,
-          url: '/uploads/recipes/recipe-1-gallery-1.jpg',
+          url: '/api/media/recipes/1/recipe-1-gallery-1.jpg',
           media_type: 'image',
           order: 1,
         })
         .mockResolvedValueOnce({
           id: 3,
           recipe_id: 1,
-          url: '/uploads/recipes/recipe-1-gallery-2.jpg',
+          url: '/api/media/recipes/1/recipe-1-gallery-2.jpg',
           media_type: 'image',
           order: 2,
         });
@@ -3094,7 +3094,7 @@ describe('RecipeService', () => {
       expect(mockPrisma.recipeMedia.create).toHaveBeenNthCalledWith(1, {
         data: expect.objectContaining({
           recipe_id: 1,
-          url: '/uploads/recipes/recipe-1-gallery-1.jpg',
+          url: '/api/media/recipes/1/recipe-1-gallery-1.jpg',
           media_type: 'image',
           order: 1,
         }),
@@ -3102,7 +3102,7 @@ describe('RecipeService', () => {
       expect(mockPrisma.recipeMedia.create).toHaveBeenNthCalledWith(2, {
         data: expect.objectContaining({
           recipe_id: 1,
-          url: '/uploads/recipes/recipe-1-gallery-2.jpg',
+          url: '/api/media/recipes/1/recipe-1-gallery-2.jpg',
           media_type: 'image',
           order: 2,
         }),
@@ -3143,17 +3143,17 @@ describe('RecipeService', () => {
 
       mockPrisma.recipe.update.mockResolvedValueOnce({
         id: 1,
-        video_url: '/uploads/recipes/recipe-1-video.mp4',
+        video_url: '/api/media/recipes/1/recipe-1-video.mp4',
       });
 
       const result = await service.uploadVideo(1, 1, mockFile);
 
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { video_url: '/uploads/recipes/recipe-1-video.mp4' },
+        data: { video_url: '/api/media/recipes/1/recipe-1-video.mp4' },
       });
       expect(result).toEqual({
-        video_url: '/uploads/recipes/recipe-1-video.mp4',
+        video_url: '/api/media/recipes/1/recipe-1-video.mp4',
       });
     });
 

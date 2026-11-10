@@ -25,10 +25,22 @@ describe('IsTrustedAvatarUrlConstraint', () => {
     ).toBe(true);
   });
 
+  it('allows valid canonical media avatar path', () => {
+    expect(
+      constraint.validate('/api/media/avatars/42/avatar-1700000-uuid.webp'),
+    ).toBe(true);
+  });
+
   it('rejects path traversal attempts in relative path', () => {
     expect(constraint.validate('/uploads/avatars/../../etc/passwd')).toBe(
       false,
     );
+  });
+
+  it('rejects path traversal attempts in canonical media avatar path', () => {
+    expect(
+      constraint.validate('/api/media/avatars/42/../../etc/passwd'),
+    ).toBe(false);
   });
 
   it('rejects insecure http URLs', () => {

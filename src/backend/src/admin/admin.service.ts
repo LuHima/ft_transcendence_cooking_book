@@ -650,8 +650,9 @@ export class AdminService {
     }
 
     // Process uploaded image through Sharp WebP pipeline
-    const { relativePath } =
+    const { filename } =
       await this.imageProcessingService.processAvatarFile(file);
+    const avatarUrl = `/api/media/avatars/${targetUserId}/${filename}`;
 
     // Unlink old avatar file if present
     await this.safeUnlink(targetUser.avatar_url);
@@ -659,10 +660,10 @@ export class AdminService {
     // Save new avatar path in database
     await this.prisma.user.update({
       where: { id: targetUserId },
-      data: { avatar_url: relativePath },
+      data: { avatar_url: avatarUrl },
     });
 
-    return { avatar_url: relativePath };
+    return { avatar_url: avatarUrl };
   }
 
   /**
