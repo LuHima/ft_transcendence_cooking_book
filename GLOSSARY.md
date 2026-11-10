@@ -80,6 +80,14 @@ _Avoid_: Translated flag, status code
 The dedicated process and module responsible for transforming raw relational recipe records and their localized translation tables into standardized, user-contextualized DTO projections (lightweight summary cards or comprehensive detail views) based on requested locale, author fallback rules, and viewer authentication state.
 _Avoid_: Recipe mapper, DTO serializer, view builder, response formatter
 
+**Printable Recipe PDF**:
+A client-generated document containing localized culinary details, ingredients checklist, timing badges, and sequential preparation instructions rendered directly in the browser via `jsPDF` for printing or physical kitchen use.
+_Avoid_: Server PDF, recipe sheet, print export
+
+**Dual-Layer Upload Validation**:
+The defensive verification pattern combining client-side pre-flight checks (inspecting file type and size before network transmission) with server-side Multer and NestJS ParseFilePipe enforcement to reject invalid or oversized media payloads.
+_Avoid_: Form validation, file check
+
 ## Social Interactions & Metrics
 
 **Cumulative Likes**:
