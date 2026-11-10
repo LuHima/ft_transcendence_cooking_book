@@ -3,6 +3,7 @@ import {
   NotFoundException,
   HttpException,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Course,
@@ -109,6 +110,14 @@ describe('RecipeService', () => {
     },
     userBlock: {
       findFirst: jest.fn(),
+    },
+    friendship: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+    },
+    report: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
@@ -1382,6 +1391,193 @@ describe('RecipeService', () => {
       });
       expect(result.id).toBe(1);
       expect(result.is_active).toBe(false);
+    });
+
+    describe('Privacy access control, status codes & audited staff inspection (Ticket #144)', () => {
+      const baseRecipe = {
+        id: 100,
+        user_id: 10,
+        is_active: true,
+        source_lang: 'it',
+        translations: [{ locale: 'it', title: 'Test Recipe', description: 'Test' }],
+        steps: [],
+        recipe_ingredients: [],
+        recipe_tags: [],
+        recipe_media: [],
+        _count: { likes: 0, comments: 0 },
+        likes: [],
+      };
+
+      beforeEach(() => {
+        mockPrisma.userBlock.findFirst.mockReset().mockResolvedValue(null);
+        mockPrisma.friendship.findFirst.mockReset().mockResolvedValue(null);
+        mockPrisma.report.findFirst.mockReset().mockResolvedValue(null);
+        mockPrisma.comment.findMany.mockReset().mockResolvedValue([]);
+      });
+
+      describe('public recipes', () => {
+        it('returns 200 OK for guest, stranger, friend, author, and staff', async () => {
+          const publicRecipe = { ...baseRecipe, privacy: RecipePrivacy.public };
+          mockPrisma.recipe.findUnique.mockResolvedValue(publicRecipe);
+
+          // Guest
+          const guestResult = await service.getRecipeById(100, 'it');
+          expect(guestResult.id).toBe(100);
+
+          // Stranger
+          const strangerResult = await service.getRecipeById(100, 'it', { id: 20, role: Role.user });
+          expect(strangerResult.id).toBe(100);
+
+          // Friend
+          const friendResult = await service.getRecipeById(100, 'it', { id: 30, role: Role.user });
+          expect(friendResult.id).toBe(100);
+
+          // Author
+          const authorResult = await service.getRecipeById(100, 'it', { id: 10, role: Role.user });
+          expect(authorResult.id).toBe(100);
+
+          // Staff
+          const modResult = await service.getRecipeById(100, 'it', { id: 40, role: Role.moderator });
+          expect(modResult.id).toBe(100);
+          const adminResult = await service.getRecipeById(100, 'it', { id: 50, role: Role.admin });
+          expect(adminResult.id).toBe(100);
+        });
+      });
+
+      describe('friends_only recipes', () => {
+        const friendsOnlyRecipe = { ...baseRecipe, privacy: RecipePrivacy.friends_only };
+
+        it('throws 401 Unauthorized for unauthenticated guest', async () => {
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(friendsOnlyRecipe);
+
+          await expect(service.getRecipeById(100, 'it')).rejects.toThrow(
+            UnauthorizedException,
+          );
+        });
+
+        it('throws 403 Forbidden for authenticated non-friend', async () => {
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(friendsOnlyRecipe);
+          mockPrisma.friendship.findFirst.mockResolvedValueOnce(null);
+
+          await expect(
+            service.getRecipeById(100, 'it', { id: 99, role: Role.user }),
+          ).rejects.toThrow(ForbiddenException);
+        });
+
+        it('returns 200 OK for confirmed friend', async () => {
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(friendsOnlyRecipe);
+          mockPrisma.friendship.findFirst.mockResolvedValueOnce({
+            id: 1,
+            requester_id: 10,
+            addressee_id: 20,
+            status: 'accepted',
+          });
+
+          const result = await service.getRecipeById(100, 'it', { id: 20, role: Role.user });
+          expect(result.id).toBe(100);
+        });
+
+        it('returns 200 OK for author and staff', async () => {
+          // Author
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(friendsOnlyRecipe);
+          const authorRes = await service.getRecipeById(100, 'it', { id: 10, role: Role.user });
+          expect(authorRes.id).toBe(100);
+
+          // Moderator
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(friendsOnlyRecipe);
+          const modRes = await service.getRecipeById(100, 'it', { id: 88, role: Role.moderator });
+          expect(modRes.id).toBe(100);
+
+          // Admin
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(friendsOnlyRecipe);
+          const adminRes = await service.getRecipeById(100, 'it', { id: 99, role: Role.admin });
+          expect(adminRes.id).toBe(100);
+        });
+      });
+
+      describe('private recipes', () => {
+        const privateRecipe = { ...baseRecipe, privacy: RecipePrivacy.private };
+
+        it('returns 404 Not Found for guest, non-friend, and friend', async () => {
+          // Guest
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(privateRecipe);
+          await expect(service.getRecipeById(100, 'it')).rejects.toThrow(NotFoundException);
+
+          // Non-friend
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(privateRecipe);
+          await expect(
+            service.getRecipeById(100, 'it', { id: 99, role: Role.user }),
+          ).rejects.toThrow(NotFoundException);
+
+          // Confirmed friend (still 404!)
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(privateRecipe);
+          mockPrisma.friendship.findFirst.mockResolvedValueOnce({ id: 1, status: 'accepted' });
+          await expect(
+            service.getRecipeById(100, 'it', { id: 20, role: Role.user }),
+          ).rejects.toThrow(NotFoundException);
+        });
+
+        it('returns 200 OK for author', async () => {
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(privateRecipe);
+          const result = await service.getRecipeById(100, 'it', { id: 10, role: Role.user });
+          expect(result.id).toBe(100);
+        });
+
+        it('returns 200 OK for admin and records ADMIN_PRIVATE_RECIPE_INSPECT audit log', async () => {
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(privateRecipe);
+          const logAuditSpy = jest.spyOn(service, 'logAudit');
+
+          const result = await service.getRecipeById(100, 'it', { id: 777, role: Role.admin });
+          expect(result.id).toBe(100);
+          expect(logAuditSpy).toHaveBeenCalledWith('ADMIN_PRIVATE_RECIPE_INSPECT', {
+            userId: 777,
+            recipeId: 100,
+          });
+        });
+
+        it('returns 200 OK for moderator when active report exists and records audit log', async () => {
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(privateRecipe);
+          mockPrisma.report.findFirst.mockResolvedValueOnce({ id: 55, status: 'pending', subject: 'recipe' });
+          const logAuditSpy = jest.spyOn(service, 'logAudit');
+
+          const result = await service.getRecipeById(100, 'it', { id: 444, role: Role.moderator });
+          expect(result.id).toBe(100);
+          expect(logAuditSpy).toHaveBeenCalledWith('MODERATOR_PRIVATE_RECIPE_CONTEXT_INSPECT', {
+            userId: 444,
+            recipeId: 100,
+            reportId: 55,
+          });
+        });
+
+        it('throws 404 Not Found for moderator when no active report exists', async () => {
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(privateRecipe);
+          mockPrisma.report.findFirst.mockResolvedValueOnce(null);
+
+          await expect(
+            service.getRecipeById(100, 'it', { id: 444, role: Role.moderator }),
+          ).rejects.toThrow(NotFoundException);
+        });
+      });
+
+      describe('mutual user blocks', () => {
+        it('throws 404 Not Found when active block exists between caller and author in either direction', async () => {
+          const publicRecipe = { ...baseRecipe, privacy: RecipePrivacy.public };
+
+          // Caller blocked author
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(publicRecipe);
+          mockPrisma.userBlock.findFirst.mockResolvedValueOnce({ id: 1, blocker_id: 20, blocked_id: 10 });
+          await expect(
+            service.getRecipeById(100, 'it', { id: 20, role: Role.user }),
+          ).rejects.toThrow(NotFoundException);
+
+          // Author blocked caller
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(publicRecipe);
+          mockPrisma.userBlock.findFirst.mockResolvedValueOnce({ id: 2, blocker_id: 10, blocked_id: 20 });
+          await expect(
+            service.getRecipeById(100, 'it', { id: 20, role: Role.user }),
+          ).rejects.toThrow(NotFoundException);
+        });
+      });
     });
   });
 

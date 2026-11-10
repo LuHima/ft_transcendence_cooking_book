@@ -3,6 +3,8 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
@@ -62,6 +64,21 @@ export class RecipeService {
     private readonly notificationEmit: NotificationEmit,
     private readonly recipeProjection: RecipeProjection,
   ) {}
+
+  private readonly logger = new Logger(RecipeService.name);
+
+  public logAudit(
+    event:
+      | 'ADMIN_PRIVATE_RECIPE_INSPECT'
+      | 'MODERATOR_PRIVATE_RECIPE_CONTEXT_INSPECT',
+    details: { userId?: number; recipeId: number; reportId?: number },
+  ) {
+    this.logger.log(
+      `[${event}] User #${details.userId} inspected private recipe #${details.recipeId}${
+        details.reportId ? ` for report #${details.reportId}` : ''
+      }`,
+    );
+  }
 
   // ---------------------------------------------------------------------------
 
@@ -473,6 +490,14 @@ export class RecipeService {
         ? currentUserOrId?.role
         : undefined);
 
+    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { role: true },
+      });
+      currentUserRole = caller?.role;
+    }
+
     // Fetch the recipe from database, joining it with its translations
     const recipe: any = await this.prisma.recipe.findUnique({
       where: {
@@ -484,25 +509,116 @@ export class RecipeService {
     // If recipe is not found -> throw 404 Not Found
     if (!recipe) throw new NotFoundException('Recipe not found');
 
+    const isAuthor =
+      currentUserId !== undefined &&
+      recipe.user_id !== null &&
+      recipe.user_id === currentUserId;
+
+    const isStaff =
+      currentUserRole === Role.admin || currentUserRole === Role.moderator;
+
     if (recipe.is_active === false) {
-      const isAuthor =
-        currentUserId !== undefined &&
-        recipe.user_id !== null &&
-        recipe.user_id === currentUserId;
-
-      if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
-        const caller = await this.prisma.user.findUnique({
-          where: { id: currentUserId },
-          select: { role: true },
-        });
-        currentUserRole = caller?.role;
-      }
-
-      const isStaff =
-        currentUserRole === Role.admin || currentUserRole === Role.moderator;
-
       if (!isAuthor && !isStaff) {
         throw new NotFoundException('Recipe not found');
+      }
+    }
+
+    // Mutual User Block Invariant
+    if (
+      currentUserId &&
+      recipe.user_id &&
+      currentUserId !== recipe.user_id &&
+      this.prisma.userBlock
+    ) {
+      const block = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: currentUserId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: currentUserId },
+          ],
+        },
+      });
+      if (block) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
+
+    // Privacy Access Control
+    const privacy = recipe.privacy ?? RecipePrivacy.public;
+
+    if (privacy === RecipePrivacy.private) {
+      if (isAuthor) {
+        // Author can view own private recipe
+      } else if (currentUserRole === Role.admin) {
+        this.logAudit('ADMIN_PRIVATE_RECIPE_INSPECT', {
+          userId: currentUserId,
+          recipeId: recipe.id,
+        });
+      } else if (currentUserRole === Role.moderator) {
+        let hasActiveReport = null;
+        if (this.prisma.report) {
+          const recipeComments = this.prisma.comment
+            ? await this.prisma.comment.findMany({
+                where: { recipe_id: recipe.id },
+                select: { id: true },
+              })
+            : [];
+          const commentIds = recipeComments.map((c) => c.id);
+
+          hasActiveReport = await this.prisma.report.findFirst({
+            where: {
+              status: 'pending',
+              OR: [
+                { subject: 'recipe', target_id: recipe.id },
+                ...(commentIds.length > 0
+                  ? [
+                      {
+                        subject: 'comment' as const,
+                        target_id: { in: commentIds },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          });
+        }
+        if (hasActiveReport) {
+          this.logAudit('MODERATOR_PRIVATE_RECIPE_CONTEXT_INSPECT', {
+            userId: currentUserId,
+            recipeId: recipe.id,
+            reportId: hasActiveReport.id,
+          });
+        } else {
+          throw new NotFoundException('Recipe not found');
+        }
+      } else {
+        throw new NotFoundException('Recipe not found');
+      }
+    } else if (privacy === RecipePrivacy.friends_only) {
+      if (!currentUserId) {
+        throw new UnauthorizedException('Unauthorized');
+      }
+      if (isAuthor || isStaff) {
+        // Author and staff can view friends_only recipe
+      } else {
+        let isFriend = false;
+        if (this.prisma.friendship && recipe.user_id) {
+          const friendship = await this.prisma.friendship.findFirst({
+            where: {
+              status: 'accepted',
+              OR: [
+                { requester_id: currentUserId, addressee_id: recipe.user_id },
+                { requester_id: recipe.user_id, addressee_id: currentUserId },
+              ],
+            },
+          });
+          isFriend = Boolean(friendship);
+        }
+        if (!isFriend) {
+          throw new ForbiddenException(
+            'This recipe is only visible to confirmed friends of the author',
+          );
+        }
       }
     }
 

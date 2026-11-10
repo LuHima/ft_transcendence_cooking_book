@@ -20,6 +20,7 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
   ApiNotFoundResponse,
   ApiForbiddenResponse,
   ApiConflictResponse,
@@ -65,6 +66,7 @@ import {
 import { CatalogMetadataResponseDto } from '../catalog/dto/catalog-response.dto';
 import {
   ApiBadRequestResponseDto,
+  ApiUnauthorizedResponseDto,
   ApiForbiddenResponseDto,
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
@@ -167,6 +169,16 @@ export class RecipeController {
     description:
       'Invalid recipe ID format (must be an integer) or invalid language code',
     type: ApiBadRequestResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      'Authentication required when requesting friends-only recipe without credentials',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Forbidden: recipe is restricted to confirmed friends of the author',
+    type: ApiForbiddenResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Recipe not found',
