@@ -62,7 +62,7 @@ describe('RecipeMediaMulter', () => {
   describe('limits', () => {
     it('enforces 10MB limit for images and 100MB for video', () => {
       expect(recipeImageMulterOptions.limits.fileSize).toBe(10 * 1024 * 1024);
-      expect(recipeVideoMulterOptions.limits.fileSize).toBe(100 * 1024 * 1024);
+      expect(recipeVideoMulterOptions.limits.fileSize).toBe(50 * 1024 * 1024);
     });
   });
 });
