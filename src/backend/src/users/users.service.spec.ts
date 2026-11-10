@@ -6,8 +6,10 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { OwnerType, Prisma } from '@prisma/client';
+import { OwnerType, Prisma, ProfilePrivacy, RecipePrivacy, Role } from '@prisma/client';
 import { UserSortBy, SortOrder } from './dto/search-user-query.dto';
 import {
   RecipeSortBy,
@@ -919,6 +921,7 @@ describe('UsersService', () => {
         last_name: 'Bianchi',
         avatar_url: 'https://example.com/avatar.jpg',
         bio: 'Passionate Italian home cook specializing in pasta.',
+        profile_privacy: 'public',
         created_at: new Date('2026-09-01T10:00:00Z'),
         recipes_count: 12,
         friends_count: 45,
@@ -939,6 +942,7 @@ describe('UsersService', () => {
           last_name: true,
           avatar_url: true,
           bio: true,
+          profile_privacy: true,
           created_at: true,
         },
       });
@@ -1148,7 +1152,7 @@ describe('UsersService', () => {
       expect(result.total_pages).toBe(1);
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
         where: { id: 2, status: 'active', deleted_at: null },
-        select: { id: true },
+        select: { id: true, profile_privacy: true },
       });
     });
 
@@ -1225,7 +1229,10 @@ describe('UsersService', () => {
     ];
 
     it('should return paginated recipes ordered chronologically with accurate is_liked for authenticated viewer', async () => {
-      (prisma.user.findFirst as jest.Mock).mockResolvedValue({ id: 2 });
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+        id: 2,
+        profile_privacy: 'public',
+      });
       (prisma.recipe.findMany as jest.Mock).mockResolvedValue(
         mockAuthorRecipes,
       );
@@ -1239,11 +1246,16 @@ describe('UsersService', () => {
 
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
         where: { id: 2, status: 'active', deleted_at: null },
-        select: { id: true },
+        select: { id: true, profile_privacy: true },
       });
       expect(prisma.recipe.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { user_id: 2, owner_type: OwnerType.user, is_active: true },
+          where: {
+            user_id: 2,
+            owner_type: OwnerType.user,
+            is_active: true,
+            privacy: 'public',
+          },
           skip: 0,
           take: 10,
           orderBy: { created_at: 'desc' },
@@ -1552,6 +1564,280 @@ describe('UsersService', () => {
       await expect(service.getUser(2, 1)).rejects.toThrow(
         new NotFoundException('User not found'),
       );
+    });
+  });
+
+  describe('Profile Privacy Controls and Sub-Resources (#145)', () => {
+    describe('degraded profiles on getUser', () => {
+      it('masks first_name and last_name for guest when profile is friends_only', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          username: 'privateer',
+          first_name: 'John',
+          last_name: 'Doe',
+          avatar_url: '/avatar.jpg',
+          bio: 'Secret cook',
+          profile_privacy: ProfilePrivacy.friends_only,
+          created_at: new Date('2026-01-01'),
+        });
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(5);
+        (prisma.friendship.count as jest.Mock).mockResolvedValue(2);
+        (prisma.like.count as jest.Mock).mockResolvedValue(10);
+
+        const result = await service.getUser(2);
+        expect(result.first_name).toBeNull();
+        expect(result.last_name).toBeNull();
+        expect(result.username).toBe('privateer');
+        expect(result.profile_privacy).toBe(ProfilePrivacy.friends_only);
+      });
+
+      it('masks first_name and last_name for authenticated non-friend when profile is friends_only', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          username: 'privateer',
+          first_name: 'John',
+          last_name: 'Doe',
+          avatar_url: '/avatar.jpg',
+          bio: 'Secret cook',
+          profile_privacy: ProfilePrivacy.friends_only,
+          created_at: new Date('2026-01-01'),
+        });
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(5);
+        (prisma.friendship.count as jest.Mock).mockResolvedValue(2);
+        (prisma.like.count as jest.Mock).mockResolvedValue(10);
+        (prisma.friendship.findFirst as jest.Mock).mockResolvedValue(null);
+
+        const result = await service.getUser(2, { id: 3, role: Role.user });
+        expect(result.first_name).toBeNull();
+        expect(result.last_name).toBeNull();
+      });
+
+      it('returns intact first_name and last_name for confirmed friends when profile is friends_only', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          username: 'privateer',
+          first_name: 'John',
+          last_name: 'Doe',
+          avatar_url: '/avatar.jpg',
+          bio: 'Secret cook',
+          profile_privacy: ProfilePrivacy.friends_only,
+          created_at: new Date('2026-01-01'),
+        });
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(5);
+        (prisma.friendship.count as jest.Mock).mockResolvedValue(2);
+        (prisma.like.count as jest.Mock).mockResolvedValue(10);
+        (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
+          id: 10,
+          requester_id: 3,
+          addressee_id: 2,
+          status: 'accepted',
+        });
+
+        const result = await service.getUser(2, { id: 3, role: Role.user });
+        expect(result.first_name).toBe('John');
+        expect(result.last_name).toBe('Doe');
+      });
+
+      it('returns intact first_name and last_name for staff when profile is private', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          username: 'superprivate',
+          first_name: 'Alice',
+          last_name: 'Wonder',
+          avatar_url: '/avatar.jpg',
+          bio: 'Top secret',
+          profile_privacy: ProfilePrivacy.private,
+          created_at: new Date('2026-01-01'),
+        });
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+        (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+        (prisma.like.count as jest.Mock).mockResolvedValue(0);
+
+        const result = await service.getUser(2, { id: 99, role: Role.moderator });
+        expect(result.first_name).toBe('Alice');
+        expect(result.last_name).toBe('Wonder');
+      });
+
+      it('returns intact first_name and last_name for author inspecting self', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          username: 'superprivate',
+          first_name: 'Alice',
+          last_name: 'Wonder',
+          avatar_url: '/avatar.jpg',
+          bio: 'Top secret',
+          profile_privacy: ProfilePrivacy.private,
+          created_at: new Date('2026-01-01'),
+        });
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+        (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+        (prisma.like.count as jest.Mock).mockResolvedValue(0);
+
+        const result = await service.getUser(2, { id: 2, role: Role.user });
+        expect(result.first_name).toBe('Alice');
+        expect(result.last_name).toBe('Wonder');
+      });
+    });
+
+    describe('getUserPublicRecipes access gating', () => {
+      it('throws 401 Unauthorized for guest when profile is friends_only', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.friends_only,
+        });
+
+        await expect(service.getUserPublicRecipes(2)).rejects.toThrow(
+          UnauthorizedException,
+        );
+      });
+
+      it('throws 403 Forbidden with PROFILE_COOKBOOK_RESTRICTED for authenticated non-friend on friends_only profile', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.friends_only,
+        });
+        (prisma.friendship.findFirst as jest.Mock).mockResolvedValue(null);
+
+        try {
+          await service.getUserPublicRecipes(2, undefined, { id: 5, role: Role.user });
+          fail('Should have thrown ForbiddenException');
+        } catch (err: any) {
+          expect(err).toBeInstanceOf(ForbiddenException);
+          expect(err.getResponse()).toEqual({
+            statusCode: 403,
+            error: 'Forbidden',
+            code: 'PROFILE_COOKBOOK_RESTRICTED',
+            message: "This user's recipe collection is private.",
+          });
+        }
+      });
+
+      it('returns public and friends_only recipes to confirmed friend', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.friends_only,
+        });
+        (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
+          id: 1,
+          status: 'accepted',
+        });
+        (prisma.recipe.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+
+        await service.getUserPublicRecipes(2, undefined, { id: 5, role: Role.user });
+        expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              user_id: 2,
+              owner_type: OwnerType.user,
+              is_active: true,
+              privacy: { in: [RecipePrivacy.public, RecipePrivacy.friends_only] },
+            },
+          }),
+        );
+      });
+
+      it('returns public, friends_only, and private recipes to author themself', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.private,
+        });
+        (prisma.recipe.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+
+        await service.getUserPublicRecipes(2, undefined, { id: 2, role: Role.user });
+        expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              user_id: 2,
+              owner_type: OwnerType.user,
+              is_active: true,
+            },
+          }),
+        );
+      });
+
+      it('throws 404 Not Found when caller and target are mutually blocked', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([
+          { blocker_id: 2, blocked_id: 5 },
+        ]);
+
+        await expect(
+          service.getUserPublicRecipes(2, undefined, { id: 5, role: Role.user }),
+        ).rejects.toThrow(NotFoundException);
+      });
+    });
+
+    describe('getUserFriends access gating', () => {
+      it('throws 401 Unauthorized for guest when profile is friends_only', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.friends_only,
+        });
+
+        await expect(service.getUserFriends(2)).rejects.toThrow(
+          UnauthorizedException,
+        );
+      });
+
+      it('throws 403 Forbidden with PROFILE_FRIENDS_RESTRICTED for non-friend on friends_only profile', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.friends_only,
+        });
+        (prisma.friendship.findFirst as jest.Mock).mockResolvedValue(null);
+
+        try {
+          await service.getUserFriends(2, undefined, { id: 5, role: Role.user });
+          fail('Should have thrown ForbiddenException');
+        } catch (err: any) {
+          expect(err).toBeInstanceOf(ForbiddenException);
+          expect(err.getResponse()).toEqual({
+            statusCode: 403,
+            error: 'Forbidden',
+            code: 'PROFILE_FRIENDS_RESTRICTED',
+            message: "This user's friend list is private.",
+          });
+        }
+      });
+
+      it('allows confirmed friends to view friends list on friends_only profile', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.friends_only,
+        });
+        (prisma.friendship.findFirst as jest.Mock).mockResolvedValue({
+          id: 1,
+          status: 'accepted',
+        });
+        (prisma.friendship.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+
+        const result = await service.getUserFriends(2, undefined, { id: 5, role: Role.user });
+        expect(result.items).toEqual([]);
+      });
+
+      it('throws 404 Not Found when caller is blocked by target', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([
+          { blocker_id: 2, blocked_id: 5 },
+        ]);
+
+        await expect(
+          service.getUserFriends(2, undefined, { id: 5, role: Role.user }),
+        ).rejects.toThrow(NotFoundException);
+      });
     });
   });
 });

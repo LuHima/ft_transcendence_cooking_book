@@ -18,6 +18,8 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
@@ -29,7 +31,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { Auth } from 'src/common/decorators/policies.decorator';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { CurrentUser, ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { PaginatedFriendsResponseDto } from 'src/friends/dto/friend-response.dto';
@@ -46,6 +48,8 @@ import {
 } from './dto/user-profile-response.dto';
 import {
   ApiBadRequestResponseDto,
+  ApiUnauthorizedResponseDto,
+  ApiForbiddenResponseDto,
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
@@ -315,9 +319,9 @@ export class UsersController {
   @Get('by-username/:username')
   async getUserByUsername(
     @Param('username') username: string,
-    @CurrentUser('id') currentUserId?: number,
+    @CurrentUser() currentUser?: ActiveUserData,
   ) {
-    return await this.userService.getUserByUsername(username, currentUserId);
+    return await this.userService.getUserByUsername(username, currentUser);
   }
 
   /**
@@ -349,9 +353,9 @@ export class UsersController {
   @Get(':id')
   async getUser(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser('id') currentUserId?: number,
+    @CurrentUser() currentUser?: ActiveUserData,
   ) {
-    return await this.userService.getUser(id, currentUserId);
+    return await this.userService.getUser(id, currentUser);
   }
 
   /**
@@ -376,6 +380,15 @@ export class UsersController {
       'Invalid user ID format or invalid pagination/language query parameters',
     type: ApiBadRequestResponseDto,
   })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication required to view restricted recipe collection',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Recipe collection is private or restricted to confirmed friends',
+    type: ApiForbiddenResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'User not found',
     type: ApiNotFoundResponseDto,
@@ -385,12 +398,12 @@ export class UsersController {
   async getUserPublicRecipes(
     @Param('id', ParseIntPipe) targetUserId: number,
     @Query() query: UserCookbookQueryDto,
-    @CurrentUser('id') currentUserId?: number,
+    @CurrentUser() currentUser?: ActiveUserData,
   ) {
     return await this.userService.getUserPublicRecipes(
       targetUserId,
       query,
-      currentUserId,
+      currentUser,
     );
   }
 
@@ -415,17 +428,26 @@ export class UsersController {
     description: 'Invalid user ID format or invalid pagination parameter',
     type: ApiBadRequestResponseDto,
   })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication required to view restricted friend list',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Friend list is private or restricted to confirmed friends',
+    type: ApiForbiddenResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'User not found',
     type: ApiNotFoundResponseDto,
   })
-  @Auth()
+  @UseGuards(OptionalAuthGuard)
   @Get(':id/friends')
   async getUserFriends(
     @Param('id', ParseIntPipe) id: number,
     @Query() query: PaginationQueryDto,
+    @CurrentUser() currentUser?: ActiveUserData,
   ) {
-    return await this.userService.getUserFriends(id, query);
+    return await this.userService.getUserFriends(id, query, currentUser);
   }
 
   /**

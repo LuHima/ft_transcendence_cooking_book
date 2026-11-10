@@ -373,7 +373,7 @@ describe('UsersController', () => {
       const result = await controller.getUserFriends(2, query);
 
       expect(result).toEqual(mockFriends);
-      expect(service.getUserFriends).toHaveBeenCalledWith(2, query);
+      expect(service.getUserFriends).toHaveBeenCalledWith(2, query, undefined);
     });
   });
 

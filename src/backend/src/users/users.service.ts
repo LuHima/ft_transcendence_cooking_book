@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpException,
   Injectable,
   NotFoundException,
   Optional,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { OwnerType, Prisma } from '@prisma/client';
+import { OwnerType, Prisma, ProfilePrivacy, RecipePrivacy, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -63,7 +65,8 @@ export class UsersService {
 
   async getUserByUsername(
     username: string,
-    currentUserId?: number,
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
   ): Promise<PublicUserResponseDto> {
     const user = await this.prisma.user.findFirst({
       where: {
@@ -76,7 +79,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return await this.getUser(user.id, currentUserId);
+    return await this.getUser(user.id, currentUserOrId, roleOverride);
   }
 
   async findUserByUsername(username: string) {
@@ -264,8 +267,19 @@ export class UsersService {
 
   async getUser(
     id: number,
-    currentUserId?: number,
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
   ): Promise<PublicUserResponseDto> {
+    const currentUserId =
+      typeof currentUserOrId === 'number'
+        ? currentUserOrId
+        : currentUserOrId?.id;
+    let currentUserRole =
+      roleOverride ??
+      (typeof currentUserOrId === 'object'
+        ? currentUserOrId?.role
+        : undefined);
+
     if (currentUserId) {
       const blockedIds = await this.getBlockedUserIds(currentUserId);
       if (blockedIds.includes(id)) {
@@ -286,10 +300,19 @@ export class UsersService {
         last_name: true,
         avatar_url: true,
         bio: true,
+        profile_privacy: true,
         created_at: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
+
+    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { role: true },
+      });
+      currentUserRole = caller?.role;
+    }
 
     const [recipesCount, friendsCount, totalLikesReceived] = await Promise.all([
       this.prisma.recipe.count({
@@ -336,13 +359,35 @@ export class UsersService {
       }
     }
 
+    const isSelf = currentUserId === id;
+    const isFriend = friendship_status === 'friends';
+    const isStaff =
+      currentUserRole === Role.admin || currentUserRole === Role.moderator;
+
+    const profilePrivacy = user.profile_privacy ?? ProfilePrivacy.public;
+
+    let shouldDegrade = false;
+    if (profilePrivacy === ProfilePrivacy.friends_only) {
+      if (!isSelf && !isFriend && !isStaff) {
+        shouldDegrade = true;
+      }
+    } else if (profilePrivacy === ProfilePrivacy.private) {
+      if (!isSelf && !isStaff) {
+        shouldDegrade = true;
+      }
+    }
+
+    const first_name = shouldDegrade ? null : user.first_name;
+    const last_name = shouldDegrade ? null : user.last_name;
+
     return {
       id: user.id,
       username: user.username,
-      first_name: user.first_name,
-      last_name: user.last_name,
+      first_name,
+      last_name,
       avatar_url: user.avatar_url,
       bio: user.bio,
+      profile_privacy: profilePrivacy,
       created_at: user.created_at,
       recipes_count: recipesCount,
       friends_count: friendsCount,
@@ -354,13 +399,88 @@ export class UsersService {
   async getUserFriends(
     targetUserId: number,
     query: PaginationQueryDto = new PaginationQueryDto(),
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
   ): Promise<PaginatedFriendsResponseDto> {
+    const currentUserId =
+      typeof currentUserOrId === 'number'
+        ? currentUserOrId
+        : currentUserOrId?.id;
+    let currentUserRole =
+      roleOverride ??
+      (typeof currentUserOrId === 'object'
+        ? currentUserOrId?.role
+        : undefined);
+
+    if (currentUserId) {
+      const blockedIds = await this.getBlockedUserIds(currentUserId);
+      if (blockedIds.includes(targetUserId)) {
+        throw new NotFoundException('User not found');
+      }
+    }
+
     const targetUser = await this.prisma.user.findFirst({
       where: { id: targetUserId, status: 'active', deleted_at: null },
-      select: { id: true },
+      select: { id: true, profile_privacy: true },
     });
     if (!targetUser) {
       throw new NotFoundException('User not found');
+    }
+
+    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { role: true },
+      });
+      currentUserRole = caller?.role;
+    }
+
+    const isSelf = currentUserId === targetUserId;
+    const isStaff =
+      currentUserRole === Role.admin || currentUserRole === Role.moderator;
+
+    let isFriend = false;
+    if (currentUserId && !isSelf && !isStaff) {
+      const friendship = await this.prisma.friendship.findFirst({
+        where: {
+          status: 'accepted',
+          OR: [
+            { requester_id: currentUserId, addressee_id: targetUserId },
+            { requester_id: targetUserId, addressee_id: currentUserId },
+          ],
+        },
+      });
+      if (friendship) {
+        isFriend = true;
+      }
+    }
+
+    const profilePrivacy = targetUser.profile_privacy ?? ProfilePrivacy.public;
+
+    if (profilePrivacy === ProfilePrivacy.friends_only) {
+      if (!isSelf && !isFriend && !isStaff) {
+        if (!currentUserId) {
+          throw new UnauthorizedException('Unauthorized');
+        }
+        throw new ForbiddenException({
+          statusCode: 403,
+          error: 'Forbidden',
+          code: 'PROFILE_FRIENDS_RESTRICTED',
+          message: "This user's friend list is private.",
+        });
+      }
+    } else if (profilePrivacy === ProfilePrivacy.private) {
+      if (!isSelf && !isStaff) {
+        if (!currentUserId) {
+          throw new UnauthorizedException('Unauthorized');
+        }
+        throw new ForbiddenException({
+          statusCode: 403,
+          error: 'Forbidden',
+          code: 'PROFILE_FRIENDS_RESTRICTED',
+          message: "This user's friend list is private.",
+        });
+      }
     }
 
     const page = query.page ?? 1;
@@ -820,8 +940,19 @@ export class UsersService {
   async getUserPublicRecipes(
     targetUserId: number,
     query: UserCookbookQueryDto = new UserCookbookQueryDto(),
-    currentUserId?: number,
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
   ): Promise<PaginatedRecipeResponseDto> {
+    const currentUserId =
+      typeof currentUserOrId === 'number'
+        ? currentUserOrId
+        : currentUserOrId?.id;
+    let currentUserRole =
+      roleOverride ??
+      (typeof currentUserOrId === 'object'
+        ? currentUserOrId?.role
+        : undefined);
+
     if (currentUserId) {
       const blockedIds = await this.getBlockedUserIds(currentUserId);
       if (blockedIds.includes(targetUserId)) {
@@ -831,10 +962,66 @@ export class UsersService {
 
     const targetUser = await this.prisma.user.findFirst({
       where: { id: targetUserId, status: 'active', deleted_at: null },
-      select: { id: true },
+      select: { id: true, profile_privacy: true },
     });
     if (!targetUser) {
       throw new NotFoundException('User not found');
+    }
+
+    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { role: true },
+      });
+      currentUserRole = caller?.role;
+    }
+
+    const isSelf = currentUserId === targetUserId;
+    const isStaff =
+      currentUserRole === Role.admin || currentUserRole === Role.moderator;
+
+    let isFriend = false;
+    if (currentUserId && !isSelf && !isStaff) {
+      const friendship = await this.prisma.friendship.findFirst({
+        where: {
+          status: 'accepted',
+          OR: [
+            { requester_id: currentUserId, addressee_id: targetUserId },
+            { requester_id: targetUserId, addressee_id: currentUserId },
+          ],
+        },
+      });
+      if (friendship) {
+        isFriend = true;
+      }
+    }
+
+    const profilePrivacy = targetUser.profile_privacy ?? ProfilePrivacy.public;
+
+    if (profilePrivacy === ProfilePrivacy.friends_only) {
+      if (!isSelf && !isFriend && !isStaff) {
+        if (!currentUserId) {
+          throw new UnauthorizedException('Unauthorized');
+        }
+        throw new ForbiddenException({
+          statusCode: 403,
+          error: 'Forbidden',
+          code: 'PROFILE_COOKBOOK_RESTRICTED',
+          message: "This user's recipe collection is private.",
+        });
+      }
+    } else if (profilePrivacy === ProfilePrivacy.private) {
+      if (!isSelf && !isStaff) {
+        if (!currentUserId) {
+          throw new UnauthorizedException('Unauthorized');
+        }
+        throw new ForbiddenException({
+          statusCode: 403,
+          error: 'Forbidden',
+          code: 'PROFILE_COOKBOOK_RESTRICTED',
+          message: "This user's recipe collection is private.",
+        });
+      }
     }
 
     const page = query.page ?? 1;
@@ -846,13 +1033,26 @@ export class UsersService {
       owner_type: OwnerType.user,
       is_active: true,
     };
+    let whereSql = Prisma.sql`r.user_id = ${targetUserId} AND r.owner_type = 'user'::"OwnerType" AND r.is_active = true`;
+
+    if (isSelf) {
+      // Author sees all recipes (public, friends_only, private)
+    } else if (isFriend || isStaff) {
+      // Confirmed friend or staff sees public and friends_only
+      where.privacy = { in: [RecipePrivacy.public, RecipePrivacy.friends_only] };
+      whereSql = Prisma.sql`r.user_id = ${targetUserId} AND r.owner_type = 'user'::"OwnerType" AND r.is_active = true AND r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy")`;
+    } else {
+      // Non-friend / guest sees public recipes only
+      where.privacy = RecipePrivacy.public;
+      whereSql = Prisma.sql`r.user_id = ${targetUserId} AND r.owner_type = 'user'::"OwnerType" AND r.is_active = true AND r.privacy = 'public'::"RecipePrivacy"`;
+    }
 
     let recipes: any[];
     let total: number;
 
     if (query.sort_by === RecipeSortBy.title) {
       const titleResult = await this.resolveCookbookRecipesSortedByTitle(
-        Prisma.sql`r.user_id = ${targetUserId} AND r.owner_type = 'user'::"OwnerType" AND r.is_active = true`,
+        whereSql,
         where,
         query,
         skip,
