@@ -2494,7 +2494,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"profile_privacy\": \"public\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -2675,7 +2675,7 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
+              "raw": "{\n  \"profile_privacy\": \"public\",\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2709,7 +2709,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
+                  "raw": "{\n  \"profile_privacy\": \"public\",\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2725,7 +2725,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"profile_privacy\": \"public\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -2754,7 +2754,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
+                  "raw": "{\n  \"profile_privacy\": \"public\",\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2799,7 +2799,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
+                  "raw": "{\n  \"profile_privacy\": \"public\",\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2844,7 +2844,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
+                  "raw": "{\n  \"profile_privacy\": \"public\",\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2889,7 +2889,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
+                  "raw": "{\n  \"profile_privacy\": \"public\",\n  \"username\": \"mario_rossi_updated\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"email\": \"mario.updated@example.com\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3589,7 +3589,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -3920,7 +3920,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -4728,7 +4728,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh pasta.\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"recipes_count\": 12,\n  \"friends_count\": 45,\n  \"total_likes_received\": 138,\n  \"friendship_status\": \"friends\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh pasta.\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"recipes_count\": 12,\n  \"friends_count\": 45,\n  \"total_likes_received\": 138,\n  \"profile_privacy\": \"public\",\n  \"friendship_status\": \"friends\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -4923,7 +4923,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh pasta.\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"recipes_count\": 12,\n  \"friends_count\": 45,\n  \"total_likes_received\": 138,\n  \"friendship_status\": \"friends\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh pasta.\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"recipes_count\": 12,\n  \"friends_count\": 45,\n  \"total_likes_received\": 138,\n  \"profile_privacy\": \"public\",\n  \"friendship_status\": \"friends\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -5227,7 +5227,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -5295,6 +5295,140 @@
                 }
               ],
               "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1adb198a-443c-4913-8b05-5288016e1507",
+              "name": "Authentication required to view restricted recipe collection",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "users",
+                    ":id",
+                    "recipes"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Target author user ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "398ceb78-dcb0-489e-8aba-6b5887d057ae",
+              "name": "Recipe collection is private or restricted to confirmed friends",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "users",
+                    ":id",
+                    "recipes"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Target author user ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -5514,7 +5648,8 @@
                 "value": "application/json"
               }
             ],
-            "method": "GET"
+            "method": "GET",
+            "auth": null
           },
           "response": [
             {
@@ -5628,8 +5763,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "2142c37b-da4f-49a1-85b6-8892b2dd8ab5",
-              "name": "Authentication required: missing or invalid accessToken cookie",
+              "id": "e0a52fc8-41e6-4b67-8359-b3882b6f86d7",
+              "name": "Authentication required to view restricted friend list",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -5679,6 +5814,61 @@
                 }
               ],
               "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5c59555a-b561-4c38-85f8-bea6511e80e3",
+              "name": "Friend list is private or restricted to confirmed friends",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "users",
+                    ":id",
+                    "friends"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Target user ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -8615,7 +8805,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9100,7 +9290,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9449,7 +9639,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
+              "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"privacy\": \"public\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -9482,7 +9672,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"privacy\": \"public\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9498,7 +9688,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9526,7 +9716,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"privacy\": \"public\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9570,7 +9760,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"privacy\": \"public\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9614,7 +9804,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"privacy\": \"public\",\n  \"tag_ids\": [\n    1,\n    3\n  ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9895,7 +10085,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9946,6 +10136,106 @@
                 }
               ],
               "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "65325a86-0f7e-447c-86a5-6295f1d8ca7e",
+              "name": "Authentication required when requesting friends-only recipe without credentials",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Unique numeric recipe ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bf6c4ab8-2309-4e81-8d0c-08b278f6f832",
+              "name": "Forbidden: recipe is restricted to confirmed friends of the author",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Unique numeric recipe ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -10131,7 +10421,7 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
+              "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"privacy\": \"friends_only\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -10178,7 +10468,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"privacy\": \"friends_only\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10194,7 +10484,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -10236,7 +10526,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"privacy\": \"friends_only\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10294,7 +10584,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"privacy\": \"friends_only\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10352,7 +10642,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"privacy\": \"friends_only\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10410,7 +10700,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
+                  "raw": "{\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.\",\n  \"preservation\": \"Consumare immediatamente; non congelare.\",\n  \"tips\": \"Mantecare a bagnomaria per evitare che le uova coagulino a frittata.\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"privacy\": \"friends_only\",\n  \"steps\": [\n    {\n      \"step_number\": 1,\n      \"description\": \"Tagliare il guanciale a striscioline spesse mezzo centimetro.\",\n      \"title\": \"Preparare il guanciale\",\n      \"duration\": 10\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"ingredient_id\": 5,\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": {}\n    }\n  ],\n  \"tag_ids\": [\n    1,\n    3\n  ],\n  \"is_active\": true,\n  \"locale\": \"it\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -18253,7 +18543,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6221.465836793911",
+                  "value": "4442.742074001276",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18299,7 +18589,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18352,7 +18642,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18405,7 +18695,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18458,7 +18748,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18511,7 +18801,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18564,7 +18854,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18656,7 +18946,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6221.465836793911",
+                  "value": "4442.742074001276",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -18689,7 +18979,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18728,7 +19018,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18773,7 +19063,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18818,7 +19108,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18863,7 +19153,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18908,7 +19198,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -18977,7 +19267,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6221.465836793911",
+                  "value": "4442.742074001276",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -19010,7 +19300,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19049,7 +19339,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19094,7 +19384,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19139,7 +19429,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19184,7 +19474,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19229,7 +19519,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19298,7 +19588,7 @@
                 {
                   "disabled": false,
                   "type": "any",
-                  "value": "6221.465836793911",
+                  "value": "4442.742074001276",
                   "key": "id",
                   "description": "(Required) "
                 }
@@ -19344,7 +19634,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19397,7 +19687,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19450,7 +19740,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19503,7 +19793,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19556,7 +19846,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -19609,7 +19899,7 @@
                     {
                       "disabled": false,
                       "type": "any",
-                      "value": "6221.465836793911",
+                      "value": "4442.742074001276",
                       "key": "id",
                       "description": "(Required) "
                     }
@@ -20942,6 +21232,1409 @@
       "event": []
     },
     {
+      "id": "20b823a3-3888-4681-8a40-099cc6f5317e",
+      "name": "Media",
+      "description": {
+        "content": "Protected media delivery, recipe asset access control, RFC 9110 video range streaming, and avatars",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "6f78a3a2-3413-476c-8812-1c3d424ecedc",
+          "name": "Retrieve protected recipe media asset (image or video)",
+          "request": {
+            "name": "Retrieve protected recipe media asset (image or video)",
+            "description": {
+              "content": "Delivers protected recipe media (covers, step photos, gallery, video tutorials) enforcing recipe privacy tiers, database asset linkage, mutual user block invariants, weak ETag conditional revalidation, and RFC 9110 HTTP 206 byte-range video streaming.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "media",
+                "recipes",
+                ":recipeId",
+                ":filename"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "42",
+                  "key": "recipeId",
+                  "description": "(Required) Unique database identifier of the recipe"
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "carbonara_cover.webp",
+                  "key": "filename",
+                  "description": "(Required) Sanitized media asset filename with extension"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "cfc64548-6b0c-4a33-8358-df6c1ef89640",
+              "name": "Media asset binary stream transferred successfully (200 OK)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "44a0351e-08d9-4e80-8d3d-729ac4d05b00",
+              "name": "Partial content chunk transferred successfully for byte-range video requests (RFC 9110)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Partial Content",
+              "code": 206,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "2d896909-0d17-4d21-82ba-4171b9b3e22b",
+              "name": "Not modified: client cached copy matches server ETag and caller remains authorized",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Modified",
+              "code": 304,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "4f283b59-e92b-4da9-8ba9-97749a843f6c",
+              "name": "Invalid filename syntax, illegal file extension, or directory traversal attempt detected",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "90259456-bd62-43eb-880b-71e105a68be3",
+              "name": "Authentication required: caller is unauthenticated attempting to view friends-only media",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "bf78a325-236e-4ffa-8487-398afd635f5a",
+              "name": "Forbidden: authenticated caller is not a confirmed friend of the recipe author",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4390b953-ebfc-4eb5-8609-f5e1200880a8",
+              "name": "Recipe not found, media asset unlinked, caller blocked, or private recipe hidden from non-author",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6ff413ea-f67c-4029-8fdc-96c272e6b7bb",
+              "name": "Range Not Satisfiable: requested byte range exceeds physical file size",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_cover.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Requested Range Not Satisfiable",
+              "code": 416,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "bf0a37a5-796b-4c06-85ce-d00de2aeb362",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "e2a46475-8b6b-4943-805d-2b2054a001d2",
+          "name": "Probe protected recipe media headers without transferring binary payload",
+          "request": {
+            "name": "Probe protected recipe media headers without transferring binary payload",
+            "description": {
+              "content": "Executes authorization, database verification, and ETag calculation identically to GET, returning HTTP response headers without body.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "media",
+                "recipes",
+                ":recipeId",
+                ":filename"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "42",
+                  "key": "recipeId",
+                  "description": "(Required) Unique database identifier of the recipe"
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "carbonara_tutorial.mp4",
+                  "key": "filename",
+                  "description": "(Required) Sanitized media asset filename with extension"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "HEAD"
+          },
+          "response": [
+            {
+              "id": "2f1501c4-4c04-461d-8499-009e3bef0c3d",
+              "name": "Asset headers emitted successfully without body payload",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_tutorial.mp4",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "3739a908-4bfb-4586-8fa9-769d790ae66f",
+              "name": "Not modified: client cache is fresh and caller is authorized",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_tutorial.mp4",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Not Modified",
+              "code": 304,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "768e5e2a-8ad4-414c-8a93-9a92966ffa64",
+              "name": "Invalid filename syntax or traversal attempt",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_tutorial.mp4",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "95f23dad-b4ea-4903-88cc-932bc2a44ddd",
+              "name": "Authentication required for friends-only media",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_tutorial.mp4",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "124675ed-8cc2-4c21-8578-9f241b690ce2",
+              "name": "Forbidden: not a confirmed friend",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_tutorial.mp4",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8e75b201-96e3-4a88-8104-972c0eaa78af",
+              "name": "Recipe or media asset not found or caller blocked",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "recipes",
+                    ":recipeId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "recipeId",
+                      "description": "(Required) Unique database identifier of the recipe"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "carbonara_tutorial.mp4",
+                      "key": "filename",
+                      "description": "(Required) Sanitized media asset filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "4158beae-8e74-49ca-8cff-85185d60a967",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "2de6db32-4b54-4412-807f-c8f4667e98a6",
+          "name": "Retrieve protected user avatar image",
+          "request": {
+            "name": "Retrieve protected user avatar image",
+            "description": {
+              "content": "Delivers user avatar image enforcing mutual user block invariants, filename verification, and weak ETag conditional revalidation.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "media",
+                "avatars",
+                ":userId",
+                ":filename"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "7",
+                  "key": "userId",
+                  "description": "(Required) Unique database identifier of the user"
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "avatar_7.webp",
+                  "key": "filename",
+                  "description": "(Required) Sanitized avatar image filename with extension"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "3ea80f88-5b5e-43ca-8a75-594c7fe812d9",
+              "name": "Avatar image binary stream transferred successfully (200 OK)",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "79487be7-15fb-4760-884b-a671c1caa038",
+              "name": "Not modified: client cached copy matches server ETag and caller remains unblocked",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Modified",
+              "code": 304,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "5b18484c-e4de-4bc7-8c1e-964e11587c28",
+              "name": "Invalid filename syntax, non-image extension, or directory traversal attempt detected",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d61f528d-3fea-4f69-8d5b-8a22d2a721c4",
+              "name": "User not found, avatar unlinked, or caller mutually blocked with the user",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a6cda55b-4342-486a-8cc0-936be406fa39",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "36b3f383-b54e-4adb-8a95-9d26f4307187",
+          "name": "Probe protected user avatar headers without transferring image payload",
+          "request": {
+            "name": "Probe protected user avatar headers without transferring image payload",
+            "description": {
+              "content": "Performs authorization and metadata probing for avatar image, emitting headers without body.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "media",
+                "avatars",
+                ":userId",
+                ":filename"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "7",
+                  "key": "userId",
+                  "description": "(Required) Unique database identifier of the user"
+                },
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "avatar_7.webp",
+                  "key": "filename",
+                  "description": "(Required) Sanitized avatar image filename with extension"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "HEAD"
+          },
+          "response": [
+            {
+              "id": "87818b81-07e1-4938-866f-427aad8faf0b",
+              "name": "Avatar image headers emitted successfully without body payload",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "f7d1fb72-cf6d-4f13-8f25-7392a9303ffc",
+              "name": "Not modified: client cache is fresh and caller is authorized",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Not Modified",
+              "code": 304,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                }
+              ],
+              "body": "",
+              "cookie": [],
+              "_postman_previewlanguage": "text"
+            },
+            {
+              "id": "eee0dfff-8cd6-466a-8264-e12c1aed4833",
+              "name": "Invalid filename syntax or traversal attempt",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "fef41496-5c51-4c66-85ef-0cdeaa536151",
+              "name": "User or avatar not found or caller blocked",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "media",
+                    "avatars",
+                    ":userId",
+                    ":filename"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "7",
+                      "key": "userId",
+                      "description": "(Required) Unique database identifier of the user"
+                    },
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "avatar_7.webp",
+                      "key": "filename",
+                      "description": "(Required) Sanitized avatar image filename with extension"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "HEAD",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "50682db1-7a5a-4e22-8643-2bdf60f70258",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    },
+    {
       "id": "cc980ff1-18d3-48f1-8fab-a5c9fd78348e",
       "name": "Reports",
       "description": {
@@ -21031,7 +22724,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"spam_scam\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"resolution_reason\": \"violence_threats\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21307,13 +23000,13 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "pending",
+                  "value": "dismissed",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "user",
+                  "value": "comment",
                   "description": "Filter reports by target entity type"
                 }
               ],
@@ -21377,7 +23070,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"copyright_infringement\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -25042,7 +26735,7 @@
   "info": {
     "_postman_id": "6cea2a4e-1dde-4ec2-9aa1-e861f9fee048",
     "name": "WeCook API",
-    "description": "RESTful backend API specification for the WeCook recipe sharing social platform.\n\n### Authentication\nAuthentication is based on secure, HttpOnly JWT cookies:\n- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n### Media Storage & Static Assets\nUploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n### Localization & Multilingual Engine\nRecipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.",
+    "description": "RESTful backend API specification for the WeCook recipe sharing social platform.\n\n### Authentication\nAuthentication is based on secure, HttpOnly JWT cookies:\n- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n### Protected Media Access & Video Streaming\nUploaded recipe covers, step images, gallery photos, tutorial videos, and user avatars are securely served under `/api/media/...` with recipe privacy tiers, mutual user block enforcement, weak ETag conditional revalidation, and RFC 9110 HTTP 206 Partial Content byte-range video streaming (migrated from legacy static `/uploads/`).\n\n### Localization & Multilingual Engine\nRecipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   }
 }

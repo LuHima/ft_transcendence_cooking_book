@@ -14,8 +14,8 @@ export function createSwaggerConfig(): Omit<OpenAPIObject, 'paths'> {
         'Authentication is based on secure, HttpOnly JWT cookies:\n' +
         '- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n' +
         '- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n' +
-        '### Media Storage & Static Assets\n' +
-        'Uploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n' +
+        '### Protected Media Access & Video Streaming\n' +
+        'Uploaded recipe covers, step images, gallery photos, tutorial videos, and user avatars are securely served under `/api/media/...` with recipe privacy tiers, mutual user block enforcement, weak ETag conditional revalidation, and RFC 9110 HTTP 206 Partial Content byte-range video streaming (migrated from legacy static `/uploads/`).\n\n' +
         '### Localization & Multilingual Engine\n' +
         'Recipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.',
     )
@@ -53,6 +53,10 @@ export function createSwaggerConfig(): Omit<OpenAPIObject, 'paths'> {
     .addTag(
       'System',
       'Health check, status probes, and system connectivity testing',
+    )
+    .addTag(
+      'Media',
+      'Protected media delivery, recipe asset access control, RFC 9110 video range streaming, and avatars',
     )
     .addCookieAuth('accessToken', {
       type: 'apiKey',

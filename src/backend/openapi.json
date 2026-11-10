@@ -7115,11 +7115,313 @@
           "Admin Comments"
         ]
       }
+    },
+    "/api/media/recipes/{recipeId}/{filename}": {
+      "get": {
+        "description": "Delivers protected recipe media (covers, step photos, gallery, video tutorials) enforcing recipe privacy tiers, database asset linkage, mutual user block invariants, weak ETag conditional revalidation, and RFC 9110 HTTP 206 byte-range video streaming.",
+        "operationId": "MediaController_getRecipeMedia",
+        "parameters": [
+          {
+            "name": "recipeId",
+            "required": true,
+            "in": "path",
+            "description": "Unique database identifier of the recipe",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          },
+          {
+            "name": "filename",
+            "required": true,
+            "in": "path",
+            "description": "Sanitized media asset filename with extension",
+            "schema": {
+              "example": "carbonara_cover.webp",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media asset binary stream transferred successfully (200 OK)"
+          },
+          "206": {
+            "description": "Partial content chunk transferred successfully for byte-range video requests (RFC 9110)"
+          },
+          "304": {
+            "description": "Not modified: client cached copy matches server ETag and caller remains authorized"
+          },
+          "400": {
+            "description": "Invalid filename syntax, illegal file extension, or directory traversal attempt detected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: caller is unauthenticated attempting to view friends-only media",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: authenticated caller is not a confirmed friend of the recipe author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe not found, media asset unlinked, caller blocked, or private recipe hidden from non-author",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "Range Not Satisfiable: requested byte range exceeds physical file size"
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Retrieve protected recipe media asset (image or video)",
+        "tags": [
+          "Media"
+        ]
+      },
+      "head": {
+        "description": "Executes authorization, database verification, and ETag calculation identically to GET, returning HTTP response headers without body.",
+        "operationId": "MediaController_headRecipeMedia",
+        "parameters": [
+          {
+            "name": "recipeId",
+            "required": true,
+            "in": "path",
+            "description": "Unique database identifier of the recipe",
+            "schema": {
+              "example": 42,
+              "type": "number"
+            }
+          },
+          {
+            "name": "filename",
+            "required": true,
+            "in": "path",
+            "description": "Sanitized media asset filename with extension",
+            "schema": {
+              "example": "carbonara_tutorial.mp4",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset headers emitted successfully without body payload"
+          },
+          "304": {
+            "description": "Not modified: client cache is fresh and caller is authorized"
+          },
+          "400": {
+            "description": "Invalid filename syntax or traversal attempt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required for friends-only media",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: not a confirmed friend",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recipe or media asset not found or caller blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Probe protected recipe media headers without transferring binary payload",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/api/media/avatars/{userId}/{filename}": {
+      "get": {
+        "description": "Delivers user avatar image enforcing mutual user block invariants, filename verification, and weak ETag conditional revalidation.",
+        "operationId": "MediaController_getAvatarMedia",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Unique database identifier of the user",
+            "schema": {
+              "example": 7,
+              "type": "number"
+            }
+          },
+          {
+            "name": "filename",
+            "required": true,
+            "in": "path",
+            "description": "Sanitized avatar image filename with extension",
+            "schema": {
+              "example": "avatar_7.webp",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Avatar image binary stream transferred successfully (200 OK)"
+          },
+          "304": {
+            "description": "Not modified: client cached copy matches server ETag and caller remains unblocked"
+          },
+          "400": {
+            "description": "Invalid filename syntax, non-image extension, or directory traversal attempt detected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found, avatar unlinked, or caller mutually blocked with the user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Retrieve protected user avatar image",
+        "tags": [
+          "Media"
+        ]
+      },
+      "head": {
+        "description": "Performs authorization and metadata probing for avatar image, emitting headers without body.",
+        "operationId": "MediaController_headAvatarMedia",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Unique database identifier of the user",
+            "schema": {
+              "example": 7,
+              "type": "number"
+            }
+          },
+          {
+            "name": "filename",
+            "required": true,
+            "in": "path",
+            "description": "Sanitized avatar image filename with extension",
+            "schema": {
+              "example": "avatar_7.webp",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Avatar image headers emitted successfully without body payload"
+          },
+          "304": {
+            "description": "Not modified: client cache is fresh and caller is authorized"
+          },
+          "400": {
+            "description": "Invalid filename syntax or traversal attempt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or avatar not found or caller blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Probe protected user avatar headers without transferring image payload",
+        "tags": [
+          "Media"
+        ]
+      }
     }
   },
   "info": {
     "title": "WeCook API",
-    "description": "RESTful backend API specification for the WeCook recipe sharing social platform.\n\n### Authentication\nAuthentication is based on secure, HttpOnly JWT cookies:\n- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n### Media Storage & Static Assets\nUploaded recipe covers, step images, gallery photos, videos, and user avatars are served statically under `/uploads/`.\n\n### Localization & Multilingual Engine\nRecipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.",
+    "description": "RESTful backend API specification for the WeCook recipe sharing social platform.\n\n### Authentication\nAuthentication is based on secure, HttpOnly JWT cookies:\n- **`accessToken`**: Short-lived (10 minutes) JWT sent automatically by browsers or HTTP clients on protected endpoints.\n- **`refreshToken`**: Long-lived (7 days) JWT restricted to the `/api/auth/refresh` path.\n\n### Protected Media Access & Video Streaming\nUploaded recipe covers, step images, gallery photos, tutorial videos, and user avatars are securely served under `/api/media/...` with recipe privacy tiers, mutual user block enforcement, weak ETag conditional revalidation, and RFC 9110 HTTP 206 Partial Content byte-range video streaming (migrated from legacy static `/uploads/`).\n\n### Localization & Multilingual Engine\nRecipes and catalogs support Italian (`it`), English (`en`), and French (`fr`), powered by LibreTranslate relational projection.",
     "version": "1.0.0",
     "contact": {}
   },
@@ -7155,6 +7457,10 @@
     {
       "name": "System",
       "description": "Health check, status probes, and system connectivity testing"
+    },
+    {
+      "name": "Media",
+      "description": "Protected media delivery, recipe asset access control, RFC 9110 video range streaming, and avatars"
     }
   ],
   "servers": [

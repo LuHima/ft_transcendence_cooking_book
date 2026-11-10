@@ -74,9 +74,14 @@ describe('SwaggerConfig', () => {
           description:
             'Health check, status probes, and system connectivity testing',
         },
+        {
+          name: 'Media',
+          description:
+            'Protected media delivery, recipe asset access control, RFC 9110 video range streaming, and avatars',
+        },
       ];
 
-      expect(config.tags).toHaveLength(8);
+      expect(config.tags).toHaveLength(9);
       expect(config.tags).toEqual(expectedTags);
     });
 
