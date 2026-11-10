@@ -162,6 +162,10 @@ _Avoid_: Visibility flag, secret recipe, recipe access level
 The visibility classification of a community member's personal culinary profile (`public`, `friends_only`, `private`), controlling access to culinary bio, personal statistics, authored recipe archives, and friendship networks while preserving basic identity discovery.
 _Avoid_: Account privacy, stealth mode, hidden user
 
+**Degraded Profile**:
+A contextual, privacy-filtered presentation of a culinary profile returned to non-friends or unauthorized callers, exposing essential identity markers (`id`, `username`, `avatar_url`, `bio`, `profile_privacy`) to facilitate social discovery and friend requests while withholding personal details and authored recipes.
+_Avoid_: Partial profile, hidden profile, restricted user card
+
 **Media Access Control**:
 The authorization mechanism that gates binary media assets (cover images, step illustrations, gallery photos, tutorial videos, and recipe PDF sheets) against recipe privacy settings and mutual user block invariants.
 _Avoid_: Static file serving, image gate, asset security
