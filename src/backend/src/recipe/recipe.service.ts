@@ -17,9 +17,15 @@ import {
   NotificationSubject,
   NotificationAction,
   Role,
+  ReportSubject,
+  ReportStatus,
   Prisma,
 } from '@prisma/client';
 import { NotificationEmit } from 'src/notifications/notification-emit';
+import {
+  AdminRecipeQueryDto,
+  AdminRecipeStatus,
+} from '../admin/dto/admin-recipe-query.dto';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import {
@@ -107,43 +113,11 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
-  private buildRecipeWhere(
+  private applyCatalogFilters(
     filterDto: FilterRecipeDto,
-    currentUserId?: number,
-    friendIds: number[] = [],
-    blockedIds: number[] = [],
-  ): Prisma.RecipeWhereInput {
-    const where: Prisma.RecipeWhereInput = {
-      is_active: true,
-    };
-
-    const andConditions: Prisma.RecipeWhereInput[] = [];
-
-    if (!currentUserId) {
-      where.privacy = RecipePrivacy.public;
-    } else {
-      const privacyOr: Prisma.RecipeWhereInput[] = [
-        { privacy: RecipePrivacy.public },
-        { user_id: currentUserId },
-      ];
-      if (friendIds.length > 0) {
-        privacyOr.push({
-          privacy: RecipePrivacy.friends_only,
-          user_id: { in: friendIds },
-        });
-      }
-      andConditions.push({ OR: privacyOr });
-    }
-
-    if (blockedIds.length > 0) {
-      andConditions.push({
-        OR: [
-          { user_id: null },
-          { user_id: { notIn: blockedIds } },
-        ],
-      });
-    }
-
+    where: Prisma.RecipeWhereInput,
+    andConditions: Prisma.RecipeWhereInput[],
+  ): void {
     if (filterDto.course) {
       where.course = filterDto.course;
     }
@@ -270,6 +244,46 @@ export class RecipeService {
         },
       });
     }
+  }
+
+  private buildRecipeWhere(
+    filterDto: FilterRecipeDto,
+    currentUserId?: number,
+    friendIds: number[] = [],
+    blockedIds: number[] = [],
+  ): Prisma.RecipeWhereInput {
+    const where: Prisma.RecipeWhereInput = {
+      is_active: true,
+    };
+
+    const andConditions: Prisma.RecipeWhereInput[] = [];
+
+    if (!currentUserId) {
+      where.privacy = RecipePrivacy.public;
+    } else {
+      const privacyOr: Prisma.RecipeWhereInput[] = [
+        { privacy: RecipePrivacy.public },
+        { user_id: currentUserId },
+      ];
+      if (friendIds.length > 0) {
+        privacyOr.push({
+          privacy: RecipePrivacy.friends_only,
+          user_id: { in: friendIds },
+        });
+      }
+      andConditions.push({ OR: privacyOr });
+    }
+
+    if (blockedIds.length > 0) {
+      andConditions.push({
+        OR: [
+          { user_id: null },
+          { user_id: { notIn: blockedIds } },
+        ],
+      });
+    }
+
+    this.applyCatalogFilters(filterDto, where, andConditions);
 
     if (andConditions.length > 0) {
       where.AND = andConditions;
@@ -305,42 +319,8 @@ export class RecipeService {
     }
   }
 
-  private async resolveRecipesSortedByTitle(
-    filterDto: FilterRecipeDto,
-    where: Prisma.RecipeWhereInput,
-    skip: number,
-    limit: number,
-    currentUserId?: number,
-    friendIds: number[] = [],
-    blockedIds: number[] = [],
-  ): Promise<{ recipes: any[]; total: number }> {
-    const targetLocale = filterDto.lang || null;
-    const sortOrder =
-      filterDto.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
-    const orderSql =
-      sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
-
-    const sqlConditions: Prisma.Sql[] = [Prisma.sql`r.is_active = true`];
-
-    if (!currentUserId) {
-      sqlConditions.push(Prisma.sql`r.privacy = 'public'::"RecipePrivacy"`);
-    } else {
-      if (friendIds.length > 0) {
-        sqlConditions.push(
-          Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId} OR (r.privacy = 'friends_only'::"RecipePrivacy" AND r.user_id IN (${Prisma.join(friendIds)})))`,
-        );
-      } else {
-        sqlConditions.push(
-          Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId})`,
-        );
-      }
-    }
-
-    if (blockedIds.length > 0) {
-      sqlConditions.push(
-        Prisma.sql`(r.user_id IS NULL OR r.user_id NOT IN (${Prisma.join(blockedIds)}))`,
-      );
-    }
+  private buildCatalogSqlFilters(filterDto: FilterRecipeDto): Prisma.Sql[] {
+    const sqlConditions: Prisma.Sql[] = [];
 
     if (filterDto.course) {
       sqlConditions.push(
@@ -460,6 +440,54 @@ export class RecipeService {
         )`,
       );
     }
+
+    return sqlConditions;
+  }
+
+  private async resolveRecipesSortedByTitle(
+    filterDto: FilterRecipeDto,
+    where: Prisma.RecipeWhereInput,
+    skip: number,
+    limit: number,
+    currentUserId?: number,
+    friendIds: number[] = [],
+    blockedIds: number[] = [],
+    customBaseSqlConditions?: Prisma.Sql[],
+  ): Promise<{ recipes: any[]; total: number }> {
+    const targetLocale = filterDto.lang || null;
+    const sortOrder =
+      filterDto.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
+    const orderSql =
+      sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+
+    let sqlConditions: Prisma.Sql[];
+    if (customBaseSqlConditions) {
+      sqlConditions = [...customBaseSqlConditions];
+    } else {
+      sqlConditions = [Prisma.sql`r.is_active = true`];
+
+      if (!currentUserId) {
+        sqlConditions.push(Prisma.sql`r.privacy = 'public'::"RecipePrivacy"`);
+      } else {
+        if (friendIds.length > 0) {
+          sqlConditions.push(
+            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId} OR (r.privacy = 'friends_only'::"RecipePrivacy" AND r.user_id IN (${Prisma.join(friendIds)})))`,
+          );
+        } else {
+          sqlConditions.push(
+            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId})`,
+          );
+        }
+      }
+
+      if (blockedIds.length > 0) {
+        sqlConditions.push(
+          Prisma.sql`(r.user_id IS NULL OR r.user_id NOT IN (${Prisma.join(blockedIds)}))`,
+        );
+      }
+    }
+
+    sqlConditions.push(...this.buildCatalogSqlFilters(filterDto));
 
     const whereSql = Prisma.join(sqlConditions, ' AND ');
 
@@ -597,6 +625,166 @@ export class RecipeService {
       total,
       { ...filterDto, page, limit },
       currentUserId,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+
+  public async getAdminRecipes(
+    query: AdminRecipeQueryDto,
+    caller: { id: number; role?: Role | string },
+  ): Promise<PaginatedRecipeResponseDto> {
+    const callerRole = String(caller?.role || '');
+    if (callerRole !== Role.admin && callerRole !== Role.moderator) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
+    const page = Number(query.page) > 0 ? Number(query.page) : 1;
+    const limit =
+      Number(query.limit) > 0 ? Math.min(Number(query.limit), 100) : 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.RecipeWhereInput = {};
+    const andConditions: Prisma.RecipeWhereInput[] = [];
+    const customBaseSqlConditions: Prisma.Sql[] = [];
+
+    // 1. Status lifecycle filter
+    if (query.status === AdminRecipeStatus.active) {
+      where.is_active = true;
+      customBaseSqlConditions.push(Prisma.sql`r.is_active = true`);
+    } else if (query.status === AdminRecipeStatus.inactive) {
+      where.is_active = false;
+      customBaseSqlConditions.push(Prisma.sql`r.is_active = false`);
+    }
+
+    // 2. Role-scoped visibility scoping per ADR 0027 & privacy-and-visibility-matrix
+    // Administrator: view all privacy tiers (public, friends_only, private)
+    // Moderator: view public + friends_only, and private ONLY IF an active pending report exists against the recipe (or its comments)
+    if (callerRole === Role.moderator) {
+      let allowedPrivateRecipeIds: number[] = [];
+      if (this.prisma.report) {
+        const recipeReports = await this.prisma.report.findMany({
+          where: {
+            status: ReportStatus.pending,
+            subject: ReportSubject.recipe,
+          },
+          select: { target_id: true },
+        });
+        const reportedRecipeIds = recipeReports.map((r) => r.target_id);
+
+        let commentRecipeIds: number[] = [];
+        if (this.prisma.comment) {
+          const commentReports = await this.prisma.report.findMany({
+            where: {
+              status: ReportStatus.pending,
+              subject: ReportSubject.comment,
+            },
+            select: { target_id: true },
+          });
+          const reportedCommentIds = commentReports.map((r) => r.target_id);
+          if (reportedCommentIds.length > 0) {
+            const reportedComments = await this.prisma.comment.findMany({
+              where: { id: { in: reportedCommentIds } },
+              select: { recipe_id: true },
+            });
+            commentRecipeIds = reportedComments.map((c) => c.recipe_id);
+          }
+        }
+
+        allowedPrivateRecipeIds = Array.from(
+          new Set([...reportedRecipeIds, ...commentRecipeIds]),
+        );
+      }
+
+      const privacyOr: Prisma.RecipeWhereInput[] = [
+        { privacy: RecipePrivacy.public },
+        { privacy: RecipePrivacy.friends_only },
+      ];
+      if (caller?.id) {
+        privacyOr.push({ user_id: caller.id });
+      }
+      if (allowedPrivateRecipeIds.length > 0) {
+        privacyOr.push({
+          privacy: RecipePrivacy.private,
+          id: { in: allowedPrivateRecipeIds },
+        });
+      }
+      andConditions.push({ OR: privacyOr });
+
+      if (allowedPrivateRecipeIds.length > 0) {
+        if (caller?.id) {
+          customBaseSqlConditions.push(
+            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR r.user_id = ${caller.id} OR (r.privacy = 'private'::"RecipePrivacy" AND r.id IN (${Prisma.join(allowedPrivateRecipeIds)})))`,
+          );
+        } else {
+          customBaseSqlConditions.push(
+            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR (r.privacy = 'private'::"RecipePrivacy" AND r.id IN (${Prisma.join(allowedPrivateRecipeIds)})))`,
+          );
+        }
+      } else {
+        if (caller?.id) {
+          customBaseSqlConditions.push(
+            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR r.user_id = ${caller.id})`,
+          );
+        } else {
+          customBaseSqlConditions.push(
+            Prisma.sql`r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy")`,
+          );
+        }
+      }
+    } else {
+      if (customBaseSqlConditions.length === 0) {
+        customBaseSqlConditions.push(Prisma.sql`1=1`);
+      }
+    }
+
+    this.applyCatalogFilters(query, where, andConditions);
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
+    let recipes: any[];
+    let total: number;
+
+    if (query.sort_by === RecipeSortBy.title) {
+      const titleResult = await this.resolveRecipesSortedByTitle(
+        query,
+        where,
+        skip,
+        limit,
+        caller.id,
+        [],
+        [],
+        customBaseSqlConditions,
+      );
+      recipes = titleResult.recipes;
+      total = titleResult.total;
+    } else {
+      const orderBy = this.resolveRecipeOrderBy(
+        query.sort_by,
+        query.sort_order,
+      );
+
+      [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: RECIPE_SUMMARY_INCLUDE(caller.id),
+        }),
+        this.prisma.recipe.count({
+          where,
+        }),
+      ]);
+    }
+
+    return this.recipeProjection.toPaginatedSummaryResponse(
+      recipes,
+      total,
+      { ...query, page, limit },
+      caller.id,
     );
   }
 
