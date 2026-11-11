@@ -213,6 +213,7 @@ services:
     environment:
       MODSEC_RULE_ENGINE: "On"
       BLOCKING_PARANOIA: ${WAF_PARANOIA:-1}
+      ANOMALY_INBOUND: ${WAF_ANOMALY_INBOUND:-50}
     # Expose HTTPS to host (HOST_PORT:CONTAINER_PORT)
     ports:
       - "8443:8443"
