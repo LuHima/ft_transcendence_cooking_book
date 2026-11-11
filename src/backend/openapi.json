@@ -11461,8 +11461,8 @@
           },
           "avatar_url": {
             "type": "string",
-            "description": "Avatar image URL (local path /uploads/avatars/* or trusted HTTPS domain)",
-            "example": "/uploads/avatars/default.webp"
+            "description": "Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)",
+            "example": "/api/media/avatars/1/default.webp"
           },
           "bio": {
             "type": "string",
@@ -11595,8 +11595,8 @@
           },
           "avatar_url": {
             "type": "string",
-            "description": "Avatar image URL (local path /uploads/avatars/* or trusted HTTPS domain)",
-            "example": "/uploads/avatars/chef.webp"
+            "description": "Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)",
+            "example": "/api/media/avatars/1/chef.webp"
           },
           "bio": {
             "type": "string",

@@ -19,10 +19,10 @@ describe('IsTrustedAvatarUrlConstraint', () => {
     expect(constraint.validate('')).toBe(true);
   });
 
-  it('allows valid local upload relative path', () => {
+  it('rejects legacy uploads avatar relative path', () => {
     expect(
       constraint.validate('/uploads/avatars/avatar-1700000-uuid.webp'),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('allows valid canonical media avatar path', () => {

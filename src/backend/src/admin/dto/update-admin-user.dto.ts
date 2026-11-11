@@ -164,13 +164,13 @@ export class UpdateAdminUserDto {
   unban_reason?: string;
 
   /**
-   * Updated avatar URL (must be a local upload path or trusted HTTPS domain).
-   * @example '/uploads/avatars/chef.webp'
+   * Updated avatar URL (must be a canonical media route or trusted HTTPS domain).
+   * @example '/api/media/avatars/1/chef.webp'
    */
   @ApiPropertyOptional({
     description:
-      'Avatar image URL (local path /uploads/avatars/* or trusted HTTPS domain)',
-    example: '/uploads/avatars/chef.webp',
+      'Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)',
+    example: '/api/media/avatars/1/chef.webp',
   })
   @IsOptional()
   @IsString()

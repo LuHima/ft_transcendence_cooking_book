@@ -7,7 +7,7 @@ import {
 
 /**
  * Validation constraint checking that an avatar URL supplied in administrative payloads is either:
- * 1. A safe relative path to local uploads (`/uploads/avatars/*`) without traversal.
+ * 1. A safe relative path to the canonical media endpoint (`/api/media/avatars/*`) without traversal.
  * 2. An HTTPS URL matching the whitelist defined in `TRUSTED_AVATAR_DOMAINS`.
  * Rejects insecure HTTP protocols, private IP addresses (SSRF prevention), and unlisted domains.
  */
@@ -22,11 +22,8 @@ export class IsTrustedAvatarUrlConstraint implements ValidatorConstraintInterfac
     }
     const val = value.trim();
 
-    // 1. Safe relative path to the local uploads directory or canonical media endpoint
-    if (
-      val.startsWith('/uploads/avatars/') ||
-      val.startsWith('/api/media/avatars/')
-    ) {
+    // 1. Safe relative path to the canonical media endpoint
+    if (val.startsWith('/api/media/avatars/')) {
       if (val.includes('..') || val.includes('\\')) {
         return false;
       }
@@ -89,7 +86,7 @@ export class IsTrustedAvatarUrlConstraint implements ValidatorConstraintInterfac
   }
 
   defaultMessage(): string {
-    return 'avatar_url must be a relative path matching /api/media/avatars/* or /uploads/avatars/* or an HTTPS URL from a trusted domain';
+    return 'avatar_url must be a relative path matching /api/media/avatars/* or an HTTPS URL from a trusted domain';
   }
 }
 

@@ -88,13 +88,13 @@ export class CreateAdminUserDto {
   status?: UserStatus;
 
   /**
-   * Optional initial avatar URL (must be a local upload or trusted HTTPS domain).
-   * @example '/uploads/avatars/default.webp'
+   * Optional initial avatar URL (must be a canonical media route or trusted HTTPS domain).
+   * @example '/api/media/avatars/1/default.webp'
    */
   @ApiPropertyOptional({
     description:
-      'Avatar image URL (local path /uploads/avatars/* or trusted HTTPS domain)',
-    example: '/uploads/avatars/default.webp',
+      'Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)',
+    example: '/api/media/avatars/1/default.webp',
   })
   @IsOptional()
   @IsString()
