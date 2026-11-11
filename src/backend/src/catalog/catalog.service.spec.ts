@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CatalogService } from './catalog.service';
+import { CatalogService, toTranslationDictionary } from './catalog.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-ability.factory';
 import { Action } from '../auth/casl/action.enum';
@@ -672,7 +672,21 @@ describe('CatalogService', () => {
     });
   });
 
-  describe('getIngredientById (Ticket #153)', () => {
+  describe('toTranslationDictionary helper', () => {
+    it('formats translations into it, en, fr keys with empty fallback', () => {
+      const dict = toTranslationDictionary([
+        { locale: 'it', name: 'Pomodoro' },
+        { locale: 'en', name: 'Tomato' },
+      ]);
+      expect(dict).toEqual({
+        it: 'Pomodoro',
+        en: 'Tomato',
+        fr: '',
+      });
+    });
+  });
+
+  describe('getIngredientDetail (Admin)', () => {
     it('returns single ingredient with full multilingual translations map', async () => {
       (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
         id: 12,
@@ -685,7 +699,7 @@ describe('CatalogService', () => {
         ],
       });
 
-      const result = await service.getIngredientById(12);
+      const result = await service.getIngredientDetail(12);
 
       expect(prisma.ingredient.findUnique).toHaveBeenCalledWith({
         where: { id: 12 },
@@ -706,13 +720,13 @@ describe('CatalogService', () => {
     it('throws 404 when ingredient does not exist', async () => {
       (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getIngredientById(999)).rejects.toMatchObject({
+      await expect(service.getIngredientDetail(999)).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
       });
     });
   });
 
-  describe('getTagById (Ticket #153)', () => {
+  describe('getTagDetail (Admin)', () => {
     it('returns single tag with full multilingual translations map', async () => {
       (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
@@ -724,7 +738,7 @@ describe('CatalogService', () => {
         ],
       });
 
-      const result = await service.getTagById(1);
+      const result = await service.getTagDetail(1);
 
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
@@ -744,7 +758,123 @@ describe('CatalogService', () => {
     it('throws 404 when tag does not exist', async () => {
       (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getTagById(999)).rejects.toMatchObject({
+      await expect(service.getTagDetail(999)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+    });
+  });
+
+  describe('getIngredientById (Public localized)', () => {
+    it('returns localized ingredient for requested language', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: [
+          { locale: 'it', name: 'Peperone' },
+          { locale: 'en', name: 'Bell pepper' },
+        ],
+      });
+
+      const result = await service.getIngredientById(12, { lang: 'it' });
+
+      expect(prisma.ingredient.findUnique).toHaveBeenCalledWith({
+        where: { id: 12 },
+        include: {
+          translations: {
+            where: { locale: { in: ['it', 'en'] } },
+          },
+        },
+      });
+      expect(result).toEqual({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        name: 'Peperone',
+        resolved_lang: 'it',
+      });
+    });
+
+    it('falls back to English when requested language translation is missing', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: [{ locale: 'en', name: 'Bell pepper' }],
+      });
+
+      const result = await service.getIngredientById(12, { lang: 'fr' });
+
+      expect(result).toEqual({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        name: 'Bell pepper',
+        resolved_lang: 'en',
+      });
+    });
+
+    it('throws 404 when ingredient does not exist', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        service.getIngredientById(999, { lang: 'it' }),
+      ).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+    });
+  });
+
+  describe('getTagById (Public localized)', () => {
+    it('returns localized tag for requested language', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        slug: 'gluten_free',
+        translations: [
+          { locale: 'it', name: 'Senza glutine' },
+          { locale: 'en', name: 'Gluten free' },
+        ],
+      });
+
+      const result = await service.getTagById(1, { lang: 'it' });
+
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        include: {
+          translations: {
+            where: { locale: { in: ['it', 'en'] } },
+          },
+        },
+      });
+      expect(result).toEqual({
+        id: 1,
+        slug: 'gluten_free',
+        name: 'Senza glutine',
+        resolved_lang: 'it',
+      });
+    });
+
+    it('falls back to English when requested language translation is missing', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        slug: 'gluten_free',
+        translations: [{ locale: 'en', name: 'Gluten free' }],
+      });
+
+      const result = await service.getTagById(1, { lang: 'fr' });
+
+      expect(result).toEqual({
+        id: 1,
+        slug: 'gluten_free',
+        name: 'Gluten free',
+        resolved_lang: 'en',
+      });
+    });
+
+    it('throws 404 when tag does not exist', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getTagById(999, { lang: 'it' })).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
       });
     });

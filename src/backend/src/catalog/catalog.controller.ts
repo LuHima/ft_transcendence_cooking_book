@@ -1,54 +1,28 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
-  ApiCreatedResponse,
-  ApiConflictResponse,
-  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiParam,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import {
-  IngredientDetailResponseDto,
   IngredientResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
 import {
   ApiBadRequestResponseDto,
-  ApiConflictResponseDto,
-  ApiForbiddenResponseDto,
   ApiInternalServerErrorResponseDto,
   ApiNotFoundResponseDto,
 } from 'src/common/dto/api-error-response.dto';
-import { Auth } from 'src/common/decorators/policies.decorator';
-import {
-  type ActiveUserData,
-  CurrentUser,
-} from 'src/common/decorators/current-user.decorator';
-import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { FilterIngredientDto } from './dto/filter-ingredient.dto';
-import { CreateTagDto } from './dto/create-tag.dto';
-import { UpdateIngredientDto } from './dto/update-ingredient.dto';
-import { UpdateTagDto } from './dto/update-tag.dto';
-import { TagDetailResponseDto } from './dto/catalog-response.dto';
 
 /**
- * Controller providing access to system metadata dictionaries, curated tags, and ingredient catalogs.
+ * Controller providing public localized access to curated tags and ingredient catalogs.
  */
 @ApiTags('Catalog')
 @ApiInternalServerErrorResponse({
@@ -81,12 +55,12 @@ export class CatalogController {
   }
 
   /**
-   * Retrieve a single curated tag by ID with all its translations.
+   * Retrieve a single curated tag by ID localized to the requested language.
    */
   @ApiOperation({
     summary: 'Get curated tag by ID',
     description:
-      'Returns a single curated catalog tag by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.',
+      'Returns a single curated catalog tag by its numeric ID, localized to the requested language (defaults to English if missing or unsupported). Public read access.',
   })
   @ApiParam({
     name: 'id',
@@ -95,16 +69,23 @@ export class CatalogController {
     example: 1,
   })
   @ApiOkResponse({
-    description: 'Single curated tag details with full translation map',
-    type: TagDetailResponseDto,
+    description: 'Single localized tag details',
+    type: TagResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Tag not found',
     type: ApiNotFoundResponseDto,
   })
   @Get('tags/:id')
-  async getTagById(@Param('id', ParseIntPipe) id: number) {
-    return await this.catalogService.getTagById(id);
+  async getTagById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() localeDto: LocaleQueryDto,
+  ) {
+    return await this.catalogService.getTagById(id, { lang: localeDto?.lang });
   }
 
   /**
@@ -129,12 +110,12 @@ export class CatalogController {
   }
 
   /**
-   * Retrieve a single curated ingredient by ID with all its translations.
+   * Retrieve a single curated ingredient by ID localized to the requested language.
    */
   @ApiOperation({
     summary: 'Get curated ingredient by ID',
     description:
-      'Returns a single curated catalog ingredient by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.',
+      'Returns a single curated catalog ingredient by its numeric ID, localized to the requested language (defaults to English if missing or unsupported). Public read access.',
   })
   @ApiParam({
     name: 'id',
@@ -143,214 +124,24 @@ export class CatalogController {
     example: 12,
   })
   @ApiOkResponse({
-    description: 'Single curated ingredient details with full translation map',
-    type: IngredientDetailResponseDto,
+    description: 'Single localized ingredient details',
+    type: IngredientResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid category or language parameter',
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Ingredient not found',
     type: ApiNotFoundResponseDto,
   })
   @Get('ingredients/:id')
-  async getIngredientById(@Param('id', ParseIntPipe) id: number) {
-    return await this.catalogService.getIngredientById(id);
-  }
-
-  /**
-   * Add a new ingredient to the curated catalog (admin only).
-   */
-  @ApiOperation({
-    summary: 'Create a curated ingredient',
-    description:
-      'Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.',
-  })
-  @ApiCreatedResponse({
-    description: 'Ingredient created with all its translations',
-    type: IngredientDetailResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid slug, category or translations',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiForbiddenResponse({
-    description: 'Only administrators can create catalog ingredients',
-    type: ApiForbiddenResponseDto,
-  })
-  @ApiConflictResponse({
-    description: 'An ingredient with this slug already exists',
-    type: ApiConflictResponseDto,
-  })
-  @Auth()
-  @Post('ingredients')
-  async createIngredient(
-    @CurrentUser() user: ActiveUserData,
-    @Body() dto: CreateIngredientDto,
-  ) {
-    return await this.catalogService.createIngredient(user, dto);
-  }
-
-  /**
-   * Add a new tag to the curated catalog (admin only).
-   */
-  @ApiOperation({
-    summary: 'Create a curated tag',
-    description:
-      'Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.',
-  })
-  @ApiCreatedResponse({
-    description: 'Tag created with all its translations',
-    type: TagDetailResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid slug or translations',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiForbiddenResponse({
-    description: 'Only administrators can create catalog tags',
-    type: ApiForbiddenResponseDto,
-  })
-  @ApiConflictResponse({
-    description: 'A tag with this slug already exists',
-    type: ApiConflictResponseDto,
-  })
-  @Auth()
-  @Post('tags')
-  async createTag(
-    @CurrentUser() user: ActiveUserData,
-    @Body() dto: CreateTagDto,
-  ) {
-    return await this.catalogService.createTag(user, dto);
-  }
-
-  /**
-   * Update the translations of an existing tag (admin only).
-   */
-  @ApiOperation({
-    summary: 'Update a curated tag',
-    description:
-      'Updates the Italian, English and French names of an existing tag. The slug is immutable. Restricted to administrators.',
-  })
-  @ApiOkResponse({
-    description: 'Tag updated with all its translations',
-    type: TagDetailResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid translations',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiForbiddenResponse({
-    description: 'Only administrators can update catalog tags',
-    type: ApiForbiddenResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'Tag not found',
-    type: ApiNotFoundResponseDto,
-  })
-  @Auth()
-  @Patch('tags/:id')
-  async updateTag(
-    @CurrentUser() user: ActiveUserData,
+  async getIngredientById(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateTagDto,
+    @Query() localeDto: LocaleQueryDto,
   ) {
-    return await this.catalogService.updateTag(user, id, dto);
-  }
-
-  /**
-   * Delete a curated tag (admin only). Refused if the tag is used by any recipe.
-   */
-  @ApiOperation({
-    summary: 'Delete a curated tag',
-    description:
-      'Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.',
-  })
-  @ApiOkResponse({
-    description: 'Tag deleted successfully',
-  })
-  @ApiForbiddenResponse({
-    description: 'Only administrators can delete catalog tags',
-    type: ApiForbiddenResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'Tag not found',
-    type: ApiNotFoundResponseDto,
-  })
-  @ApiConflictResponse({
-    description: 'Tag is used by one or more recipes and cannot be deleted',
-    type: ApiConflictResponseDto,
-  })
-  @Auth()
-  @Delete('tags/:id')
-  async deleteTag(
-    @CurrentUser() user: ActiveUserData,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    return await this.catalogService.deleteTag(user, id);
-  }
-
-  /**
-   * Delete a curated ingredient (admin only). Refused if the ingredient is used by any recipe.
-   */
-  @ApiOperation({
-    summary: 'Delete a curated ingredient',
-    description:
-      'Deletes an ingredient from the catalog. Returns 409 if the ingredient is used by one or more recipes. Restricted to administrators.',
-  })
-  @ApiOkResponse({
-    description: 'Ingredient deleted successfully',
-  })
-  @ApiForbiddenResponse({
-    description: 'Only administrators can delete catalog ingredients',
-    type: ApiForbiddenResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'Ingredient not found',
-    type: ApiNotFoundResponseDto,
-  })
-  @ApiConflictResponse({
-    description:
-      'Ingredient is used by one or more recipes and cannot be deleted',
-    type: ApiConflictResponseDto,
-  })
-  @Auth()
-  @Delete('ingredients/:id')
-  async deleteIngredient(
-    @CurrentUser() user: ActiveUserData,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    return await this.catalogService.deleteIngredient(user, id);
-  }
-
-  /**
-   * Update the translations of an existing ingredient (admin only).
-   */
-  @ApiOperation({
-    summary: 'Update a curated ingredient',
-    description:
-      'Updates the Italian, English and French names of an existing ingredient. The slug and category are immutable. Restricted to administrators.',
-  })
-  @ApiOkResponse({
-    description: 'Ingredient updated with all its translations',
-    type: IngredientDetailResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid translations',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiForbiddenResponse({
-    description: 'Only administrators can update catalog ingredients',
-    type: ApiForbiddenResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'Ingredient not found',
-    type: ApiNotFoundResponseDto,
-  })
-  @Auth()
-  @Patch('ingredients/:id')
-  async updateIngredient(
-    @CurrentUser() user: ActiveUserData,
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateIngredientDto,
-  ) {
-    return await this.catalogService.updateIngredient(user, id, dto);
+    return await this.catalogService.getIngredientById(id, {
+      lang: localeDto?.lang,
+    });
   }
 }

@@ -14,6 +14,27 @@ import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import {
+  IngredientDetailResponseDto,
+  IngredientResponseDto,
+  TagDetailResponseDto,
+  TagResponseDto,
+} from './dto/catalog-response.dto';
+
+/**
+ * Shared helper formatting an array of translation rows into a canonical multilingual dictionary.
+ */
+export function toTranslationDictionary(
+  translations: { locale: string; name: string }[],
+) {
+  const nameOf = (locale: string) =>
+    translations.find((t) => t.locale === locale)?.name ?? '';
+  return {
+    it: nameOf('it'),
+    en: nameOf('en'),
+    fr: nameOf('fr'),
+  };
+}
 
 @Injectable()
 export class CatalogService {
@@ -80,11 +101,45 @@ export class CatalogService {
 
   /*
   GET /api/tags/:id
-  Retrieves a single curated tag by ID with all its translations (it, en, fr).
+  Retrieves a single curated tag by ID, localized to the requested language (default 'en').
   Public read access without authentication.
   Throws 404 if not found.
   */
-  async getTagById(id: number) {
+  async getTagById(
+    id: number,
+    params: { lang?: string } = {},
+  ): Promise<TagResponseDto> {
+    const locale =
+      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
+    const tag = await this.prisma.tag.findUnique({
+      where: { id },
+      include: {
+        translations: {
+          where: { locale: { in: [locale, 'en'] } },
+        },
+      },
+    });
+    if (!tag) {
+      throw createHttpException(errors.tags.notFound);
+    }
+    const trans =
+      tag.translations.find((tr) => tr.locale === locale) ??
+      tag.translations.find((tr) => tr.locale === 'en');
+    return {
+      id: tag.id,
+      slug: tag.slug,
+      name: trans?.name ?? tag.slug,
+      resolved_lang: trans?.locale ?? 'en',
+    };
+  }
+
+  /*
+  GET /api/admin/catalog/tags/:id
+  Retrieves a single curated tag by ID with all its translations (it, en, fr).
+  Restricted to administrators.
+  Throws 404 if not found.
+  */
+  async getTagDetail(id: number): Promise<TagDetailResponseDto> {
     const tag = await this.prisma.tag.findUnique({
       where: { id },
       include: { translations: true },
@@ -172,11 +227,46 @@ export class CatalogService {
 
   /*
   GET /api/ingredients/:id
-  Retrieves a single curated ingredient by ID with all its translations (it, en, fr).
+  Retrieves a single curated ingredient by ID, localized to the requested language (default 'en').
   Public read access without authentication.
   Throws 404 if not found.
   */
-  async getIngredientById(id: number) {
+  async getIngredientById(
+    id: number,
+    params: { lang?: string } = {},
+  ): Promise<IngredientResponseDto> {
+    const locale =
+      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
+    const ingredient = await this.prisma.ingredient.findUnique({
+      where: { id },
+      include: {
+        translations: {
+          where: { locale: { in: [locale, 'en'] } },
+        },
+      },
+    });
+    if (!ingredient) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+    const trans =
+      ingredient.translations.find((tr) => tr.locale === locale) ??
+      ingredient.translations.find((tr) => tr.locale === 'en');
+    return {
+      id: ingredient.id,
+      slug: ingredient.slug,
+      category: ingredient.category,
+      name: trans?.name ?? ingredient.slug,
+      resolved_lang: trans?.locale ?? 'en',
+    };
+  }
+
+  /*
+  GET /api/admin/catalog/ingredients/:id
+  Retrieves a single curated ingredient by ID with all its translations (it, en, fr).
+  Restricted to administrators.
+  Throws 404 if not found.
+  */
+  async getIngredientDetail(id: number): Promise<IngredientDetailResponseDto> {
     const ingredient = await this.prisma.ingredient.findUnique({
       where: { id },
       include: { translations: true },
@@ -400,18 +490,12 @@ export class CatalogService {
     slug: string;
     category: IngredientCategory;
     translations: { locale: string; name: string }[];
-  }) {
-    const nameOf = (locale: string) =>
-      ingredient.translations.find((t) => t.locale === locale)?.name ?? '';
+  }): IngredientDetailResponseDto {
     return {
       id: ingredient.id,
       slug: ingredient.slug,
       category: ingredient.category,
-      translations: {
-        it: nameOf('it'),
-        en: nameOf('en'),
-        fr: nameOf('fr'),
-      },
+      translations: toTranslationDictionary(ingredient.translations),
     };
   }
 
@@ -423,17 +507,11 @@ export class CatalogService {
     id: number;
     slug: string;
     translations: { locale: string; name: string }[];
-  }) {
-    const nameOf = (locale: string) =>
-      tag.translations.find((t) => t.locale === locale)?.name ?? '';
+  }): TagDetailResponseDto {
     return {
       id: tag.id,
       slug: tag.slug,
-      translations: {
-        it: nameOf('it'),
-        en: nameOf('en'),
-        fr: nameOf('fr'),
-      },
+      translations: toTranslationDictionary(tag.translations),
     };
   }
 

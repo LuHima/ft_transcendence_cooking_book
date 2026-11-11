@@ -242,6 +242,10 @@ _Avoid_: Target expander, report populator, subject joining
 The administrative triage query filter (`reported_only=true` on `GET /api/admin/comments`) that restricts the comment audit stream strictly to comments having active pending reports, prioritizing heavily reported items by default, signaling pending report counts, and guaranteeing inclusion of reported child replies in threaded previews.
 _Avoid_: Flagged comment filter, dirty comments, report list
 
+**Administrative Catalog Management**:
+The dedicated administrative API namespace (`/api/admin/catalog`) and workflows restricted to administrators (`@Roles('admin')`) for creating, updating, inspecting full multilingual translation dictionaries, and deleting curated ingredients and tags.
+_Avoid_: Catalog admin, tag manager, ingredient editor, public catalog CRUD
+
 ## API Governance & Documentation
 
 **API Contract**:
