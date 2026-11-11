@@ -25,6 +25,7 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       },
       report: {
         groupBy: jest.fn(),
+        findMany: jest.fn(),
       },
       user: {
         findUnique: jest.fn(),
@@ -577,6 +578,172 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       // Root 1 latest activity is Jan 20 > Root 2 Jan 10
       expect(result.items[0].id).toBe(10);
       expect(result.items[1].id).toBe(20);
+    });
+  });
+
+  describe('Reported Comments Filtering & Guaranteed Reply Previews (Ticket #155)', () => {
+    it('filters comments having pending reports in flat mode, defaulting to reports_count desc', async () => {
+      mockPrisma.report.findMany.mockResolvedValueOnce([
+        { target_id: 1 },
+        { target_id: 2 },
+      ]);
+
+      const comment1 = {
+        id: 1,
+        recipe_id: 10,
+        user_id: 100,
+        parent_id: null,
+        content: 'Abusive remark 1',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-11-01'),
+        user: { id: 100, username: 'spammer1', avatar_url: null },
+        recipe: { id: 10, source_lang: 'it', translations: [{ locale: 'it', title: 'Pizza' }] },
+      };
+      const comment2 = {
+        id: 2,
+        recipe_id: 10,
+        user_id: 101,
+        parent_id: null,
+        content: 'Abusive remark 2',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-11-02'),
+        user: { id: 101, username: 'spammer2', avatar_url: null },
+        recipe: { id: 10, source_lang: 'it', translations: [{ locale: 'it', title: 'Pizza' }] },
+      };
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([comment1, comment2]);
+      mockPrisma.report.groupBy.mockResolvedValueOnce([
+        { target_id: 1, status: 'pending', _count: { id: 1 } },
+        { target_id: 2, status: 'pending', _count: { id: 3 } },
+      ]);
+
+      const result = await service.findAllAdminComments({
+        reported_only: true,
+      });
+
+      expect(mockPrisma.report.findMany).toHaveBeenCalledWith({
+        where: {
+          subject: 'comment',
+          status: 'pending',
+        },
+        select: { target_id: true },
+      });
+
+      expect(result.items).toHaveLength(2);
+      // Contextual default sorting: reports_count desc -> comment 2 (3 reports) first, comment 1 (1 report) second
+      expect(result.items[0].id).toBe(2);
+      expect(result.items[0].reports_count).toBe(3);
+      expect(result.items[0].pending_reports_count).toBe(3);
+      expect(result.items[0].has_pending_reports).toBe(true);
+
+      expect(result.items[1].id).toBe(1);
+      expect(result.items[1].reports_count).toBe(1);
+      expect(result.items[1].pending_reports_count).toBe(1);
+      expect(result.items[1].has_pending_reports).toBe(true);
+    });
+
+    it('in threaded mode, guarantees inclusion of reported child replies in preview window and adds reported_replies_count', async () => {
+      // Pending report is on reply 105 (child of root 10)
+      mockPrisma.report.findMany.mockResolvedValueOnce([{ target_id: 105 }]);
+
+      // Mock finding parent of reported comment
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        { id: 105, parent_id: 10 },
+      ]);
+
+      const replies = [
+        {
+          id: 101,
+          recipe_id: 1,
+          user_id: 2,
+          parent_id: 10,
+          content: 'Normal reply 1',
+          is_active: true,
+          is_edited: false,
+          created_at: new Date('2026-01-01'),
+        },
+        {
+          id: 102,
+          recipe_id: 1,
+          user_id: 3,
+          parent_id: 10,
+          content: 'Normal reply 2',
+          is_active: true,
+          is_edited: false,
+          created_at: new Date('2026-01-02'),
+        },
+        {
+          id: 103,
+          recipe_id: 1,
+          user_id: 4,
+          parent_id: 10,
+          content: 'Normal reply 3',
+          is_active: true,
+          is_edited: false,
+          created_at: new Date('2026-01-03'),
+        },
+        {
+          id: 104,
+          recipe_id: 1,
+          user_id: 5,
+          parent_id: 10,
+          content: 'Normal reply 4',
+          is_active: true,
+          is_edited: false,
+          created_at: new Date('2026-01-04'),
+        },
+        {
+          id: 105,
+          recipe_id: 1,
+          user_id: 6,
+          parent_id: 10,
+          content: 'Reported offensive child reply',
+          is_active: true,
+          is_edited: false,
+          created_at: new Date('2026-01-05'),
+        },
+      ];
+
+      const root10 = {
+        id: 10,
+        recipe_id: 1,
+        user_id: 1,
+        parent_id: null,
+        content: 'Root thread with reported child',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-01-01'),
+        replies,
+        _count: { replies: 5 },
+      };
+
+      // Second findMany returns root comments
+      mockPrisma.comment.findMany.mockResolvedValueOnce([root10]);
+      mockPrisma.report.groupBy.mockResolvedValue([
+        { target_id: 105, status: 'pending', _count: { id: 2 } },
+      ]);
+
+      const result = await service.findAllAdminComments({
+        format: AdminCommentFormat.threaded,
+        reported_only: true,
+        replies_limit: 2, // Preview limit is 2, so reply 105 at index 4 would normally be cut off!
+      });
+
+      expect(result.items).toHaveLength(1);
+      const rootItem = result.items[0] as any;
+      expect(rootItem.id).toBe(10);
+      expect(rootItem.reported_replies_count).toBe(1);
+
+      // Reply preview array must guarantee inclusion of reported child reply 105
+      expect(rootItem.replies).toHaveLength(2);
+      const replyIds = rootItem.replies.map((r: any) => r.id);
+      expect(replyIds).toContain(105);
+
+      const reportedReplyItem = rootItem.replies.find((r: any) => r.id === 105);
+      expect(reportedReplyItem.has_pending_reports).toBe(true);
+      expect(reportedReplyItem.pending_reports_count).toBe(2);
     });
   });
 });

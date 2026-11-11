@@ -76,4 +76,28 @@ describe('AdminCommentQueryDto', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('replies_limit');
   });
+
+  describe('reported_only filtering (Ticket #155)', () => {
+    it('accepts reported_only=true and contextually defaults sort_by to reports_count', async () => {
+      const dto = plainToInstance(AdminCommentQueryDto, {
+        reported_only: 'true',
+      });
+      const errors = await validate(dto);
+      expect(errors.length).toBe(0);
+      expect(dto.reported_only).toBe(true);
+      expect(dto.sort_by).toBe(AdminCommentSortBy.reports_count);
+      expect(dto.format).toBe(AdminCommentFormat.flat);
+    });
+
+    it('preserves explicitly provided sort_by when reported_only=true', async () => {
+      const dto = plainToInstance(AdminCommentQueryDto, {
+        reported_only: true,
+        sort_by: AdminCommentSortBy.created_at,
+      });
+      const errors = await validate(dto);
+      expect(errors.length).toBe(0);
+      expect(dto.reported_only).toBe(true);
+      expect(dto.sort_by).toBe(AdminCommentSortBy.created_at);
+    });
+  });
 });

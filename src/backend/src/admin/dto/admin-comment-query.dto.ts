@@ -135,19 +135,50 @@ export class AdminCommentQueryDto {
   is_edited?: boolean;
 
   /**
+   * Filter comments with active pending reports only.
+   * @example true
+   */
+  @ApiPropertyOptional({
+    description: 'Filter comments having at least one report in pending status',
+    example: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    return undefined;
+  })
+  @IsBoolean()
+  reported_only?: boolean;
+
+  private _sort_by?: AdminCommentSortBy;
+
+  /**
    * Field to sort comments by.
    * @example AdminCommentSortBy.created_at
    */
   @ApiPropertyOptional({
     enum: AdminCommentSortBy,
     description:
-      'Field to sort comments by: created_at (default), recipe, reports_count',
+      'Field to sort comments by: created_at (default), recipe, reports_count (default when reported_only=true)',
     default: AdminCommentSortBy.created_at,
     example: AdminCommentSortBy.created_at,
   })
   @IsOptional()
   @IsEnum(AdminCommentSortBy)
-  sort_by?: AdminCommentSortBy = AdminCommentSortBy.created_at;
+  get sort_by(): AdminCommentSortBy {
+    if (this._sort_by !== undefined) {
+      return this._sort_by;
+    }
+    if (this.reported_only) {
+      return AdminCommentSortBy.reports_count;
+    }
+    return AdminCommentSortBy.created_at;
+  }
+
+  set sort_by(value: AdminCommentSortBy | undefined) {
+    this._sort_by = value;
+  }
 
   /**
    * Sort direction. Defaults contextually to desc for created_at and reports_count, asc for recipe.

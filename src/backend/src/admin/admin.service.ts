@@ -5,6 +5,7 @@ import {
   Role,
   UserStatus,
   ReportSubject,
+  ReportStatus,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -701,6 +702,17 @@ export class AdminService {
     const limit = Math.max(1, Math.min(100, query?.limit || 20));
     const skip = (page - 1) * limit;
 
+    const isReportedOnly = query?.reported_only === true;
+    const format = query?.format ?? AdminCommentFormat.flat;
+    const sortBy =
+      query?.sort_by ??
+      (isReportedOnly
+        ? AdminCommentSortBy.reports_count
+        : AdminCommentSortBy.created_at);
+    const sortOrder =
+      query?.sort_order ??
+      (sortBy === AdminCommentSortBy.recipe ? SortOrder.asc : SortOrder.desc);
+
     const where: Prisma.CommentWhereInput = {};
 
     if (query?.status === AdminCommentStatus.active) {
@@ -728,6 +740,29 @@ export class AdminService {
       where.is_edited = query.is_edited;
     }
 
+    let pendingCommentIds: number[] = [];
+    if (isReportedOnly && this.prisma.report) {
+      try {
+        if (this.prisma.report.findMany) {
+          const pendingReports = await this.prisma.report.findMany({
+            where: {
+              subject: ReportSubject.comment,
+              status: ReportStatus.pending,
+            },
+            select: { target_id: true },
+          });
+          pendingCommentIds = Array.from(
+            new Set(pendingReports.map((r) => r.target_id)),
+          );
+        }
+      } catch {
+        // Fallback for mocked environments
+      }
+      if (format !== AdminCommentFormat.threaded) {
+        where.id = { in: pendingCommentIds };
+      }
+    }
+
     const localizeTitle = (
       recipe: CommentRecipePayload | null | undefined,
     ): string => {
@@ -746,67 +781,99 @@ export class AdminService {
 
     const fetchReportCounts = async (
       ids: number[],
-    ): Promise<Map<number, number>> => {
-      const counts = new Map<number, number>();
+    ): Promise<{ total: Map<number, number>; pending: Map<number, number> }> => {
+      const total = new Map<number, number>();
+      const pending = new Map<number, number>();
       if (ids.length === 0 || !this.prisma.report?.groupBy) {
-        return counts;
+        return { total, pending };
       }
       try {
         const groups = await this.prisma.report.groupBy({
-          by: ['target_id'],
+          by: ['target_id', 'status'],
           where: {
             subject: ReportSubject.comment,
             target_id: { in: ids },
           },
           _count: { id: true },
         });
-        for (const g of groups) {
-          counts.set(g.target_id, g._count.id);
+        for (const g of groups as any[]) {
+          const cnt =
+            typeof g._count === 'number'
+              ? g._count
+              : (g._count?.id ?? 1);
+          const currentTotal = total.get(g.target_id) || 0;
+          total.set(g.target_id, currentTotal + cnt);
+
+          if (g.status === ReportStatus.pending || g.status === 'pending') {
+            const currentPending = pending.get(g.target_id) || 0;
+            pending.set(g.target_id, currentPending + cnt);
+          }
         }
       } catch {
         // Fallback for mocked environments
       }
-      return counts;
+      return { total, pending };
     };
 
     const mapCommentItem = (
       c: CommentPayload,
-      reportCounts: Map<number, number>,
-    ): AdminCommentItemDto => ({
-      id: c.id,
-      recipe_id: c.recipe_id,
-      user_id: c.user_id,
-      parent_id: c.parent_id,
-      content: c.content,
-      is_active: c.is_active,
-      is_edited: c.is_edited ?? false,
-      created_at: c.created_at,
-      updated_at: c.updated_at ?? null,
-      reports_count: reportCounts.get(c.id) || 0,
-      user: c.user
-        ? {
-            id: c.user.id,
-            username: c.user.username,
-            avatar_url: c.user.avatar_url ?? null,
-          }
-        : null,
-      recipe: c.recipe
-        ? {
-            id: c.recipe.id,
-            title: localizeTitle(c.recipe),
-          }
-        : null,
-    });
+      reportCounts: { total: Map<number, number>; pending: Map<number, number> },
+    ): AdminCommentItemDto => {
+      const pendingCount = reportCounts.pending.get(c.id) || 0;
+      return {
+        id: c.id,
+        recipe_id: c.recipe_id,
+        user_id: c.user_id,
+        parent_id: c.parent_id,
+        content: c.content,
+        is_active: c.is_active,
+        is_edited: c.is_edited ?? false,
+        created_at: c.created_at,
+        updated_at: c.updated_at ?? null,
+        reports_count: reportCounts.total.get(c.id) || 0,
+        pending_reports_count: pendingCount,
+        has_pending_reports: pendingCount > 0,
+        user: c.user
+          ? {
+              id: c.user.id,
+              username: c.user.username,
+              avatar_url: c.user.avatar_url ?? null,
+            }
+          : null,
+        recipe: c.recipe
+          ? {
+              id: c.recipe.id,
+              title: localizeTitle(c.recipe),
+            }
+          : null,
+      };
+    };
 
     // Presentation format: Threaded
-    if (query?.format === AdminCommentFormat.threaded) {
+    if (format === AdminCommentFormat.threaded) {
       const threadedWhere: Prisma.CommentWhereInput = {
         ...where,
         parent_id: null,
       };
       const repliesLimit = Math.max(1, Math.min(20, query?.replies_limit || 5));
 
-      const candidateRoots = (await this.prisma.comment.findMany({
+      let matchingRootIds: number[] = [];
+      if (isReportedOnly && pendingCommentIds.length > 0 && this.prisma.comment?.findMany) {
+        try {
+          const reportedComments = await this.prisma.comment.findMany({
+            where: { id: { in: pendingCommentIds } },
+            select: { id: true, parent_id: true },
+          });
+          matchingRootIds = Array.from(
+            new Set(reportedComments.map((c) => c.parent_id ?? c.id)),
+          );
+          threadedWhere.id = { in: matchingRootIds };
+        } catch {
+          // Fallback for mocked environments
+        }
+      }
+
+      let candidateRoots = (await this.prisma.comment.findMany({
         where: threadedWhere,
         include: {
           user: { select: { id: true, username: true, avatar_url: true } },
@@ -834,6 +901,14 @@ export class AdminService {
         },
       })) as unknown as CommentPayload[];
 
+      if (isReportedOnly && matchingRootIds.length > 0) {
+        candidateRoots = candidateRoots.filter((root) =>
+          matchingRootIds.includes(root.id) ||
+          pendingCommentIds.includes(root.id) ||
+          (root.replies && root.replies.some((r) => pendingCommentIds.includes(r.id))),
+        );
+      }
+
       const withActivity = candidateRoots.map((root) => {
         const latestReplyTime =
           root.replies && root.replies.length > 0
@@ -846,17 +921,12 @@ export class AdminService {
         return { root, latestActivity };
       });
 
-      const sortBy = query?.sort_by ?? AdminCommentSortBy.created_at;
-      const sortOrder =
-        query?.sort_order ??
-        (sortBy === AdminCommentSortBy.recipe ? SortOrder.asc : SortOrder.desc);
-
       if (sortBy === AdminCommentSortBy.reports_count) {
         const rootIds = candidateRoots.map((c) => c.id);
         const rootReportCounts = await fetchReportCounts(rootIds);
         withActivity.sort((a, b) => {
-          const countA = rootReportCounts.get(a.root.id) || 0;
-          const countB = rootReportCounts.get(b.root.id) || 0;
+          const countA = rootReportCounts.total.get(a.root.id) || 0;
+          const countB = rootReportCounts.total.get(b.root.id) || 0;
           if (countB !== countA) {
             return sortOrder === SortOrder.asc
               ? countA - countB
@@ -890,7 +960,7 @@ export class AdminService {
       const allIds: number[] = [];
       for (const root of pagedRoots) {
         allIds.push(root.id);
-        const replies = root.replies?.slice(0, repliesLimit) || [];
+        const replies = root.replies || [];
         for (const r of replies) {
           allIds.push(r.id);
         }
@@ -900,7 +970,23 @@ export class AdminService {
       const items: ThreadedAdminCommentItemDto[] = pagedRoots.map((root) => {
         const totalReplies =
           root._count?.replies ?? (root.replies ? root.replies.length : 0);
-        const windowedReplies = (root.replies || [])
+        const allReplies = root.replies || [];
+        const reportedRepliesCount = allReplies.filter(
+          (r) => (reportCounts.pending.get(r.id) || 0) > 0,
+        ).length;
+
+        let repliesToWindow = allReplies;
+        if (isReportedOnly) {
+          const reportedReplies = allReplies.filter(
+            (r) => (reportCounts.pending.get(r.id) || 0) > 0,
+          );
+          const otherReplies = allReplies.filter(
+            (r) => (reportCounts.pending.get(r.id) || 0) === 0,
+          );
+          repliesToWindow = [...reportedReplies, ...otherReplies];
+        }
+
+        const windowedReplies = repliesToWindow
           .slice(0, repliesLimit)
           .map((r) => mapCommentItem(r, reportCounts));
 
@@ -909,6 +995,7 @@ export class AdminService {
         return {
           ...baseItem,
           replies_count: totalReplies,
+          reported_replies_count: reportedRepliesCount,
           has_more_replies: totalReplies > windowedReplies.length,
           replies: windowedReplies,
         };
@@ -926,11 +1013,6 @@ export class AdminService {
         has_prev_page: page > 1,
       };
     }
-
-    const sortBy = query?.sort_by ?? AdminCommentSortBy.created_at;
-    const sortOrder =
-      query?.sort_order ??
-      (sortBy === AdminCommentSortBy.recipe ? SortOrder.asc : SortOrder.desc);
 
     // Presentation format: Flat (Default)
     if (sortBy === AdminCommentSortBy.reports_count) {
@@ -953,8 +1035,8 @@ export class AdminService {
       const reportCounts = await fetchReportCounts(allIds);
 
       allComments.sort((a, b) => {
-        const countA = reportCounts.get(a.id) || 0;
-        const countB = reportCounts.get(b.id) || 0;
+        const countA = reportCounts.total.get(a.id) || 0;
+        const countB = reportCounts.total.get(b.id) || 0;
         if (countB !== countA) {
           return sortOrder === SortOrder.asc
             ? countA - countB

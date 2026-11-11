@@ -85,6 +85,20 @@ export class AdminCommentItemDto {
   reports_count: number;
 
   @ApiProperty({
+    description:
+      'Number of active pending moderation reports filed against this comment',
+    example: 1,
+  })
+  pending_reports_count: number;
+
+  @ApiProperty({
+    description:
+      'Whether this comment currently has at least one active pending moderation report',
+    example: true,
+  })
+  has_pending_reports: boolean;
+
+  @ApiProperty({
     type: RecipeAuthorSummaryDto,
     description: 'Author profile summary',
     nullable: true,
@@ -108,6 +122,13 @@ export class ThreadedAdminCommentItemDto extends AdminCommentItemDto {
     example: 12,
   })
   replies_count: number;
+
+  @ApiProperty({
+    description:
+      'Total number of child replies in this thread that have active pending reports',
+    example: 2,
+  })
+  reported_replies_count: number;
 
   @ApiProperty({
     description:
