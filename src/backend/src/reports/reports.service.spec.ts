@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsService } from './reports.service';
@@ -17,6 +18,11 @@ import {
   UserStatus,
 } from '@prisma/client';
 import { ReportAction } from './dto/update-report.dto';
+import { NotificationEmit } from '../notifications/notification-emit';
+
+const mockNotificationEmit = {
+  notification: jest.fn().mockResolvedValue(undefined),
+};
 
 describe('ReportsService', () => {
   let service: ReportsService;
@@ -79,6 +85,10 @@ describe('ReportsService', () => {
         {
           provide: BanHistoryService,
           useValue: mockBanHistoryService,
+        },
+        {
+          provide: NotificationEmit,
+          useValue: mockNotificationEmit,
         },
       ],
     }).compile();
@@ -311,6 +321,111 @@ describe('ReportsService', () => {
           }),
         }),
       );
+    });
+
+    it('notifies the content author when resolved with warn', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+        reason: ReportReason.harassment_bullying,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+      });
+
+      await service.updateReport(
+        1,
+        {
+          actions: [ReportAction.warn],
+          resolution_description: 'Please keep it civil.',
+        },
+        { id: 7, role: Role.moderator },
+      );
+
+      expect(mockNotificationEmit.notification).toHaveBeenCalledWith(
+        { id_user: 7, id_target: 10, details: 'Please keep it civil.' },
+        { subject: ReportSubject.recipe, action: 'warn' },
+      );
+    });
+
+    it('does not notify when resolved with dismiss', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+        reason: ReportReason.harassment_bullying,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.dismissed,
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.dismiss] },
+        { id: 7, role: Role.moderator },
+      );
+
+      expect(mockNotificationEmit.notification).not.toHaveBeenCalled();
+    });
+
+    it('does not notify twice when the report was already resolved', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.action_taken,
+        reason: ReportReason.harassment_bullying,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.warn] },
+        { id: 7, role: Role.moderator },
+      );
+
+      expect(mockNotificationEmit.notification).not.toHaveBeenCalled();
+    });
+
+    it('still resolves the report when the warn notification fails', async () => {
+      const loggerSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+        reason: ReportReason.harassment_bullying,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+      });
+      mockNotificationEmit.notification.mockRejectedValueOnce(
+        new Error('notification failed'),
+      );
+
+      await expect(
+        service.updateReport(
+          1,
+          { actions: [ReportAction.warn] },
+          { id: 7, role: Role.moderator },
+        ),
+      ).resolves.toMatchObject({ id: 1, status: ReportStatus.action_taken });
+
+      expect(mockNotificationEmit.notification).toHaveBeenCalledTimes(1);
+      expect(loggerSpy).toHaveBeenCalled();
+      loggerSpy.mockRestore();
     });
 
     it('executes composite action [delete_content, ban] atomically', async () => {

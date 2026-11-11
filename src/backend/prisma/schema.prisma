@@ -108,6 +108,7 @@ enum NotificationAction {
   post
   delete
   update
+  warn
 }
 
 enum FriendshipStatus {
@@ -413,6 +414,7 @@ model Notification {
   action     NotificationAction
 
   target_id	Int?
+  details   String? @db.VarChar(1000)  // spiegazione del moderatore (solo per warn)
 
   is_read    Boolean          @default(false)
   created_at DateTime         @default(now())

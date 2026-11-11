@@ -263,5 +263,53 @@ describe('NotificationEmit', () => {
       expect(prisma.notification.create).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
+
+    it('should save the moderator text in details for warn notifications', async () => {
+      await service.notification(
+        { id_user: 7, id_target: 42, details: 'Please keep it civil.' },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.warn,
+        },
+      );
+
+      expect(prisma.notification.create).toHaveBeenCalledWith({
+        data: {
+          user_id: 42,
+          actor_id: 7,
+          subject: NotificationSubject.user,
+          action: NotificationAction.warn,
+          target_id: 42,
+          details: 'Please keep it civil.',
+        },
+      });
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'newNotification',
+        expect.objectContaining({ idUser: 42 }),
+      );
+    });
+
+    it('should not write details when none is provided (undefined or null)', async () => {
+      await service.notification(
+        { id_user: 7, id_target: 42, details: null },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.warn,
+        },
+      );
+      await service.notification(
+        { id_user: 1, id_target: 42 },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.friend_request,
+        },
+      );
+
+      const calls = (prisma.notification.create as jest.Mock<any>).mock.calls;
+      expect(calls).toHaveLength(2);
+      for (const [arg] of calls) {
+        expect(arg.data.details).toBeUndefined();
+      }
+    });
   });
 });

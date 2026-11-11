@@ -10160,7 +10160,8 @@
               "friend_accept",
               "post",
               "delete",
-              "update"
+              "update",
+              "warn"
             ],
             "type": "string",
             "description": "Action that triggered the notification",
@@ -10178,6 +10179,12 @@
             "type": "string",
             "description": "Human-readable localized notification message",
             "example": "Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'"
+          },
+          "details": {
+            "type": "string",
+            "nullable": true,
+            "description": "Explanation written by the moderator (only for warning notifications)",
+            "example": "Your recipe contained offensive language."
           },
           "is_read": {
             "type": "boolean",
