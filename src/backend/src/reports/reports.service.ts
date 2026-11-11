@@ -130,17 +130,148 @@ export class ReportsService {
       this.prisma.report.count({ where }),
     ]);
 
-    // Hydrate previous_bans_count, reporter, and polymorphic target for each report item
+    // Hydrate previous_bans_count, reporter, and polymorphic target via batched queries
+    const reporterIds = Array.from(new Set(items.map((r) => r.reporter_id)));
+    const targetUserIds = Array.from(
+      new Set(
+        items
+          .filter((r) => r.subject === ReportSubject.user)
+          .map((r) => r.target_id),
+      ),
+    );
+    const targetRecipeIds = Array.from(
+      new Set(
+        items
+          .filter((r) => r.subject === ReportSubject.recipe)
+          .map((r) => r.target_id),
+      ),
+    );
+    const targetCommentIds = Array.from(
+      new Set(
+        items
+          .filter((r) => r.subject === ReportSubject.comment)
+          .map((r) => r.target_id),
+      ),
+    );
+
+    const [reporters, targetUsers, targetRecipes, targetComments] =
+      await Promise.all([
+        reporterIds.length > 0 && this.prisma.user?.findMany
+          ? this.prisma.user.findMany({
+              where: { id: { in: reporterIds } },
+              select: { id: true, username: true, avatar_url: true },
+            })
+          : Promise.resolve([]),
+        targetUserIds.length > 0 && this.prisma.user?.findMany
+          ? this.prisma.user.findMany({
+              where: { id: { in: targetUserIds } },
+              select: { id: true, username: true, avatar_url: true },
+            })
+          : Promise.resolve([]),
+        targetRecipeIds.length > 0 && this.prisma.recipe?.findMany
+          ? this.prisma.recipe.findMany({
+              where: { id: { in: targetRecipeIds } },
+              select: {
+                id: true,
+                user_id: true,
+                source_lang: true,
+                translations: { select: { locale: true, title: true } },
+                user: {
+                  select: { id: true, username: true, avatar_url: true },
+                },
+              },
+            })
+          : Promise.resolve([]),
+        targetCommentIds.length > 0 && this.prisma.comment?.findMany
+          ? this.prisma.comment.findMany({
+              where: { id: { in: targetCommentIds } },
+              select: {
+                id: true,
+                content: true,
+                recipe_id: true,
+                user_id: true,
+                user: {
+                  select: { id: true, username: true, avatar_url: true },
+                },
+              },
+            })
+          : Promise.resolve([]),
+      ]);
+
+    const reporterMap = new Map<
+      number,
+      { id: number; username: string; avatar_url: string | null }
+    >();
+    for (const u of reporters || []) {
+      reporterMap.set(u.id, u);
+    }
+
+    const targetUserMap = new Map<
+      number,
+      { id: number; username: string; avatar_url: string | null }
+    >();
+    for (const u of targetUsers || []) {
+      targetUserMap.set(u.id, u);
+    }
+
+    const targetRecipeMap = new Map<number, (typeof targetRecipes)[0]>();
+    for (const r of targetRecipes || []) {
+      targetRecipeMap.set(r.id, r);
+    }
+
+    const targetCommentMap = new Map<number, (typeof targetComments)[0]>();
+    for (const c of targetComments || []) {
+      targetCommentMap.set(c.id, c);
+    }
+
+    const allTargetUserIds = Array.from(
+      new Set(
+        items
+          .map((report) => {
+            if (report.subject === ReportSubject.user) {
+              return report.target_id;
+            }
+            if (report.subject === ReportSubject.recipe) {
+              const r = targetRecipeMap.get(report.target_id);
+              return r?.user_id ?? r?.user?.id ?? null;
+            }
+            if (report.subject === ReportSubject.comment) {
+              const c = targetCommentMap.get(report.target_id);
+              return c?.user_id ?? c?.user?.id ?? null;
+            }
+            return null;
+          })
+          .filter((id): id is number => id !== null),
+      ),
+    );
+
+    const banCountsMap = new Map<number, number>();
+    if (allTargetUserIds.length > 0 && this.prisma.banHistory?.groupBy) {
+      try {
+        const banGroups = await this.prisma.banHistory.groupBy({
+          by: ['user_id'],
+          _count: { id: true },
+          where: { user_id: { in: allTargetUserIds } },
+        });
+        if (Array.isArray(banGroups)) {
+          for (const bg of banGroups as any[]) {
+            const cnt =
+              typeof bg._count === 'number'
+                ? bg._count
+                : (bg._count?.id ?? 0);
+            banCountsMap.set(bg.user_id, cnt);
+          }
+        }
+      } catch {
+        // Fallback for mocked environments
+      }
+    }
+
     const hydratedItems: ReportItemDto[] = await Promise.all(
       items.map(async (report) => {
         let reporter = (report as any).reporter;
         if (!reporter) {
-          const u = this.prisma.user?.findUnique
-            ? await this.prisma.user.findUnique({
-                where: { id: report.reporter_id },
-                select: { id: true, username: true, avatar_url: true },
-              })
-            : null;
+          const u = reporterMap.get(report.reporter_id);
           reporter = u ?? {
             id: report.reporter_id,
             username: `user_${report.reporter_id}`,
@@ -152,84 +283,97 @@ export class ReportsService {
         let target: {
           label: string;
           recipe_id?: number;
-          owner?: { id: number; username: string } | null;
+          owner?: {
+            id: number;
+            username: string;
+            avatar_url: string | null;
+          } | null;
         } = { label: '' };
 
         if (report.subject === ReportSubject.user) {
           targetUserId = report.target_id;
-          const u = this.prisma.user?.findUnique
-            ? await this.prisma.user.findUnique({
-                where: { id: report.target_id },
-                select: { id: true, username: true },
-              })
-            : null;
+          const u = targetUserMap.get(report.target_id);
           const username = u?.username ?? `user_${report.target_id}`;
           target = {
             label: username,
-            owner: u
-              ? { id: u.id, username: u.username }
-              : { id: report.target_id, username },
+            owner: {
+              id: u?.id ?? report.target_id,
+              username,
+              avatar_url: u?.avatar_url ?? null,
+            },
           };
         } else if (report.subject === ReportSubject.recipe) {
-          const r = this.prisma.recipe?.findUnique
-            ? await this.prisma.recipe.findUnique({
-                where: { id: report.target_id },
-                select: {
-                  id: true,
-                  user_id: true,
-                  source_lang: true,
-                  translations: {
-                    select: { locale: true, title: true },
-                  },
-                  user: {
-                    select: { id: true, username: true },
-                  },
-                },
-              })
-            : null;
-          targetUserId = r?.user_id ?? (r?.user?.id ?? null);
-          const title =
-            r?.translations?.find((t) => t.locale === 'en')?.title ||
-            r?.translations?.find((t) => t.locale === r?.source_lang)?.title ||
-            r?.translations?.[0]?.title ||
-            `Recipe #${report.target_id}`;
+          const r = targetRecipeMap.get(report.target_id);
+          targetUserId = r?.user_id ?? r?.user?.id ?? null;
+
+          // 4-tier localization fallback:
+          // 1. Translation matching query.lang
+          // 2. Author's declared source_lang
+          // 3. English fallback ('en')
+          // 4. First available translation, or 'Recipe #{id}'
+          let title: string | undefined;
+          if (query?.lang) {
+            title = r?.translations?.find(
+              (t) => t.locale === query.lang,
+            )?.title;
+          }
+          if (!title && r?.source_lang) {
+            title = r?.translations?.find(
+              (t) => t.locale === r.source_lang,
+            )?.title;
+          }
+          if (!title) {
+            title = r?.translations?.find((t) => t.locale === 'en')?.title;
+          }
+          if (!title) {
+            title = r?.translations?.[0]?.title;
+          }
+          if (!title) {
+            title = `Recipe #${report.target_id}`;
+          }
+
           target = {
             label: title,
             recipe_id: report.target_id,
-            owner: r?.user ? { id: r.user.id, username: r.user.username } : null,
+            owner: r?.user
+              ? {
+                  id: r.user.id,
+                  username: r.user.username,
+                  avatar_url: r.user.avatar_url ?? null,
+                }
+              : null,
           };
         } else if (report.subject === ReportSubject.comment) {
-          const c = this.prisma.comment?.findUnique
-            ? await this.prisma.comment.findUnique({
-                where: { id: report.target_id },
-                select: {
-                  id: true,
-                  content: true,
-                  recipe_id: true,
-                  user_id: true,
-                  user: {
-                    select: { id: true, username: true },
-                  },
-                },
-              })
-            : null;
-          targetUserId = c?.user_id ?? (c?.user?.id ?? null);
+          const c = targetCommentMap.get(report.target_id);
+          targetUserId = c?.user_id ?? c?.user?.id ?? null;
           target = {
             label: c?.content ?? `Comment #${report.target_id}`,
             recipe_id: c?.recipe_id,
-            owner: c?.user ? { id: c.user.id, username: c.user.username } : null,
+            owner: c?.user
+              ? {
+                  id: c.user.id,
+                  username: c.user.username,
+                  avatar_url: c.user.avatar_url ?? null,
+                }
+              : null,
           };
         }
 
-        const count = targetUserId
-          ? await this.banHistoryService.getPreviousBansCount(targetUserId)
-          : 0;
+        let count =
+          targetUserId !== null ? banCountsMap.get(targetUserId) : 0;
+        if (
+          count === undefined &&
+          targetUserId !== null &&
+          this.banHistoryService?.getPreviousBansCount
+        ) {
+          count = await this.banHistoryService.getPreviousBansCount(targetUserId);
+        }
 
         return {
           ...report,
           reporter,
           target,
-          previous_bans_count: count,
+          previous_bans_count: count ?? 0,
         };
       }),
     );

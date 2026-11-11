@@ -24,16 +24,19 @@ describe('ReportsService', () => {
   const mockPrisma = {
     recipe: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
     },
     comment: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     user: {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     report: {
@@ -233,7 +236,7 @@ describe('ReportsService', () => {
   });
 
   describe('getReports', () => {
-    it('returns paginated reports with hydrated previous_bans_count', async () => {
+    it('returns paginated reports with hydrated previous_bans_count via batched groupBy', async () => {
       const reports = [
         {
           id: 1,
@@ -250,8 +253,21 @@ describe('ReportsService', () => {
       ];
       mockPrisma.report.findMany.mockResolvedValueOnce(reports);
       mockPrisma.report.count.mockResolvedValueOnce(1);
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({ user_id: 50 });
-      mockBanHistoryService.getPreviousBansCount.mockResolvedValueOnce(2);
+      mockPrisma.user.findMany.mockResolvedValueOnce([
+        { id: 5, username: 'reporter5', avatar_url: '/avatars/5.webp' },
+      ]);
+      mockPrisma.recipe.findMany.mockResolvedValueOnce([
+        {
+          id: 10,
+          user_id: 50,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pasta' }],
+          user: { id: 50, username: 'chef50', avatar_url: '/avatars/50.webp' },
+        },
+      ]);
+      mockPrisma.banHistory.groupBy.mockResolvedValueOnce([
+        { user_id: 50, _count: { id: 2 } },
+      ]);
 
       const result = await service.getReports({ page: 1, limit: 10 });
 
@@ -261,12 +277,22 @@ describe('ReportsService', () => {
         take: 10,
         orderBy: { created_at: 'desc' },
       });
+      expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [10] } },
+        select: expect.any(Object),
+      });
+      expect(mockPrisma.banHistory.groupBy).toHaveBeenCalledWith({
+        by: ['user_id'],
+        _count: { id: true },
+        where: { user_id: { in: [50] } },
+      });
       expect(result.items).toHaveLength(1);
       expect(result.items[0].previous_bans_count).toBe(2);
+      expect(result.items[0].target.owner?.avatar_url).toBe('/avatars/50.webp');
       expect(result.total).toBe(1);
     });
 
-    it('hydrates reporter details and polymorphic targets across recipe, comment, and user subjects (Ticket #156)', async () => {
+    it('hydrates reporter details and polymorphic targets with owner avatars across recipe, comment, and user subjects (Ticket #162)', async () => {
       const reports = [
         {
           id: 101,
@@ -306,38 +332,45 @@ describe('ReportsService', () => {
       mockPrisma.report.findMany.mockResolvedValueOnce(reports);
       mockPrisma.report.count.mockResolvedValueOnce(3);
 
-      // Reporter mock responses
-      mockPrisma.user.findUnique
-        .mockResolvedValueOnce({ id: 1, username: 'reporter1', avatar_url: '/avatars/1.webp' })
-        .mockResolvedValueOnce({ id: 2, username: 'reporter2', avatar_url: null })
-        .mockResolvedValueOnce({ id: 3, username: 'reporter3', avatar_url: '/avatars/3.webp' });
+      // Batched reporters
+      mockPrisma.user.findMany
+        .mockResolvedValueOnce([
+          { id: 1, username: 'reporter1', avatar_url: '/avatars/1.webp' },
+          { id: 2, username: 'reporter2', avatar_url: null },
+          { id: 3, username: 'reporter3', avatar_url: '/avatars/3.webp' },
+        ])
+        // Batched target users (subject === user)
+        .mockResolvedValueOnce([
+          { id: 99, username: 'fake_account', avatar_url: '/avatars/99.webp' },
+        ]);
 
-      // Target mocks:
-      // 1. Recipe 42
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
-        id: 42,
-        user_id: 501,
-        source_lang: 'it',
-        translations: [{ locale: 'it', title: 'Pizza Margherita' }],
-        user: { id: 501, username: 'chef_mario' },
-      });
+      // Batched target recipes
+      mockPrisma.recipe.findMany.mockResolvedValueOnce([
+        {
+          id: 42,
+          user_id: 501,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pizza Margherita' }],
+          user: { id: 501, username: 'chef_mario', avatar_url: '/avatars/501.webp' },
+        },
+      ]);
 
-      // 2. Comment 77
-      mockPrisma.comment.findUnique.mockResolvedValueOnce({
-        id: 77,
-        content: 'This recipe is terrible!',
-        recipe_id: 42,
-        user_id: 502,
-        user: { id: 502, username: 'troll_user' },
-      });
+      // Batched target comments
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        {
+          id: 77,
+          content: 'This recipe is terrible!',
+          recipe_id: 42,
+          user_id: 502,
+          user: { id: 502, username: 'troll_user', avatar_url: '/avatars/502.webp' },
+        },
+      ]);
 
-      // 3. User 99 (second call to user.findUnique for target user)
-      mockPrisma.user.findUnique.mockResolvedValueOnce({
-        id: 99,
-        username: 'fake_account',
-      });
-
-      mockBanHistoryService.getPreviousBansCount.mockResolvedValue(0);
+      mockPrisma.banHistory.groupBy.mockResolvedValueOnce([
+        { user_id: 501, _count: { id: 1 } },
+        { user_id: 502, _count: { id: 3 } },
+        { user_id: 99, _count: { id: 0 } },
+      ]);
 
       const result = await service.getReports({ page: 1, limit: 10 });
 
@@ -352,8 +385,9 @@ describe('ReportsService', () => {
       expect(result.items[0].target).toEqual({
         label: 'Pizza Margherita',
         recipe_id: 42,
-        owner: { id: 501, username: 'chef_mario' },
+        owner: { id: 501, username: 'chef_mario', avatar_url: '/avatars/501.webp' },
       });
+      expect(result.items[0].previous_bans_count).toBe(1);
 
       // Report 2: Comment subject
       expect(result.items[1].reporter).toEqual({
@@ -364,8 +398,9 @@ describe('ReportsService', () => {
       expect(result.items[1].target).toEqual({
         label: 'This recipe is terrible!',
         recipe_id: 42,
-        owner: { id: 502, username: 'troll_user' },
+        owner: { id: 502, username: 'troll_user', avatar_url: '/avatars/502.webp' },
       });
+      expect(result.items[1].previous_bans_count).toBe(3);
 
       // Report 3: User subject
       expect(result.items[2].reporter).toEqual({
@@ -375,8 +410,86 @@ describe('ReportsService', () => {
       });
       expect(result.items[2].target).toEqual({
         label: 'fake_account',
-        owner: { id: 99, username: 'fake_account' },
+        owner: { id: 99, username: 'fake_account', avatar_url: '/avatars/99.webp' },
       });
+      expect(result.items[2].previous_bans_count).toBe(0);
+    });
+
+    it('localizes recipe target labels following 4-tier fallback hierarchy (Ticket #162)', async () => {
+      const reports = [
+        {
+          id: 201,
+          reporter_id: 1,
+          subject: ReportSubject.recipe,
+          target_id: 101,
+          reason: ReportReason.spam_scam,
+          status: ReportStatus.pending,
+        },
+        {
+          id: 202,
+          reporter_id: 1,
+          subject: ReportSubject.recipe,
+          target_id: 102,
+          reason: ReportReason.spam_scam,
+          status: ReportStatus.pending,
+        },
+        {
+          id: 203,
+          reporter_id: 1,
+          subject: ReportSubject.recipe,
+          target_id: 103,
+          reason: ReportReason.spam_scam,
+          status: ReportStatus.pending,
+        },
+      ];
+
+      mockPrisma.report.findMany.mockResolvedValueOnce(reports);
+      mockPrisma.report.count.mockResolvedValueOnce(3);
+      mockPrisma.user.findMany.mockResolvedValueOnce([]); // reporters
+      mockPrisma.recipe.findMany.mockResolvedValueOnce([
+        // Recipe 101: has requested fr translation
+        {
+          id: 101,
+          user_id: 11,
+          source_lang: 'it',
+          translations: [
+            { locale: 'it', title: 'Tiramisù' },
+            { locale: 'fr', title: 'Tiramisu Français' },
+            { locale: 'en', title: 'Tiramisu EN' },
+          ],
+          user: { id: 11, username: 'u11', avatar_url: null },
+        },
+        // Recipe 102: missing fr, falls back to source_lang (it)
+        {
+          id: 102,
+          user_id: 12,
+          source_lang: 'it',
+          translations: [
+            { locale: 'it', title: 'Risotto ai Funghi' },
+            { locale: 'en', title: 'Mushroom Risotto' },
+          ],
+          user: { id: 12, username: 'u12', avatar_url: null },
+        },
+        // Recipe 103: missing fr and source_lang, falls back to en
+        {
+          id: 103,
+          user_id: 13,
+          source_lang: 'es',
+          translations: [{ locale: 'en', title: 'English Stew' }],
+          user: { id: 13, username: 'u13', avatar_url: null },
+        },
+      ]);
+      mockPrisma.banHistory.groupBy.mockResolvedValueOnce([]);
+
+      const result = await service.getReports({
+        page: 1,
+        limit: 10,
+        lang: 'fr',
+      });
+
+      expect(result.items[0].target.label).toBe('Tiramisu Français');
+      expect(result.items[1].target.label).toBe('Risotto ai Funghi');
+      expect(result.items[2].target.label).toBe('English Stew');
     });
   });
 

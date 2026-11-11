@@ -63,8 +63,13 @@ describe('ReportsController', () => {
   });
 
   describe('getReports', () => {
-    it('delegates queue listing to reportsService.getReports', async () => {
-      const query = { page: 1, limit: 20, status: ReportStatus.pending };
+    it('delegates queue listing to reportsService.getReports with lang parameter forwarding', async () => {
+      const query = {
+        page: 1,
+        limit: 20,
+        status: ReportStatus.pending,
+        lang: 'it' as const,
+      };
       const expectedEnvelope = {
         items: [],
         total: 0,

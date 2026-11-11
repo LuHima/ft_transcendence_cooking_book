@@ -29,6 +29,14 @@ export class ReportTargetOwnerDto {
 
   @ApiProperty({ description: 'Username of the content owner', example: 'chef_luigi' })
   username: string;
+
+  @ApiPropertyOptional({
+    description: 'Avatar image URL of the content owner',
+    example: '/uploads/avatars/avatar_10.webp',
+    nullable: true,
+    type: String,
+  })
+  avatar_url: string | null;
 }
 
 /**
