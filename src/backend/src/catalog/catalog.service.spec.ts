@@ -671,4 +671,82 @@ describe('CatalogService', () => {
       expect(prisma.tag.findUnique).not.toHaveBeenCalled();
     });
   });
+
+  describe('getIngredientById (Ticket #153)', () => {
+    it('returns single ingredient with full multilingual translations map', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: [
+          { locale: 'it', name: 'Peperone' },
+          { locale: 'en', name: 'Bell pepper' },
+          { locale: 'fr', name: 'Poivron' },
+        ],
+      });
+
+      const result = await service.getIngredientById(12);
+
+      expect(prisma.ingredient.findUnique).toHaveBeenCalledWith({
+        where: { id: 12 },
+        include: { translations: true },
+      });
+      expect(result).toEqual({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: {
+          it: 'Peperone',
+          en: 'Bell pepper',
+          fr: 'Poivron',
+        },
+      });
+    });
+
+    it('throws 404 when ingredient does not exist', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getIngredientById(999)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+    });
+  });
+
+  describe('getTagById (Ticket #153)', () => {
+    it('returns single tag with full multilingual translations map', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        slug: 'gluten_free',
+        translations: [
+          { locale: 'it', name: 'Senza glutine' },
+          { locale: 'en', name: 'Gluten free' },
+          { locale: 'fr', name: 'Sans gluten' },
+        ],
+      });
+
+      const result = await service.getTagById(1);
+
+      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        include: { translations: true },
+      });
+      expect(result).toEqual({
+        id: 1,
+        slug: 'gluten_free',
+        translations: {
+          it: 'Senza glutine',
+          en: 'Gluten free',
+          fr: 'Sans gluten',
+        },
+      });
+    });
+
+    it('throws 404 when tag does not exist', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getTagById(999)).rejects.toMatchObject({
+        status: HttpStatus.NOT_FOUND,
+      });
+    });
+  });
 });

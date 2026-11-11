@@ -69,6 +69,25 @@ describe('CatalogController', () => {
                 fr: 'Sans gluten',
               },
             }),
+            getTagById: jest.fn().mockResolvedValue({
+              id: 5,
+              slug: 'gluten_free',
+              translations: {
+                it: 'Senza glutine',
+                en: 'Gluten free',
+                fr: 'Sans gluten',
+              },
+            }),
+            getIngredientById: jest.fn().mockResolvedValue({
+              id: 9,
+              slug: 'bell_pepper',
+              category: IngredientCategory.produce,
+              translations: {
+                it: 'Peperone',
+                en: 'Bell pepper',
+                fr: 'Poivron',
+              },
+            }),
             updateIngredient: jest.fn().mockResolvedValue({
               id: 7,
               slug: 'bell_pepper',
@@ -221,6 +240,35 @@ describe('CatalogController', () => {
 
       expect(service.updateIngredient).toHaveBeenCalledWith(user, 7, dto);
       expect(result.id).toBe(7);
+    });
+  });
+
+  describe('getTagById (Ticket #153)', () => {
+    it('delegates to service.getTagById with numeric id', async () => {
+      const result = await controller.getTagById(5);
+
+      expect(service.getTagById).toHaveBeenCalledWith(5);
+      expect(result.id).toBe(5);
+      expect(result.translations).toEqual({
+        it: 'Senza glutine',
+        en: 'Gluten free',
+        fr: 'Sans gluten',
+      });
+    });
+  });
+
+  describe('getIngredientById (Ticket #153)', () => {
+    it('delegates to service.getIngredientById with numeric id', async () => {
+      const result = await controller.getIngredientById(9);
+
+      expect(service.getIngredientById).toHaveBeenCalledWith(9);
+      expect(result.id).toBe(9);
+      expect(result.category).toBe(IngredientCategory.produce);
+      expect(result.translations).toEqual({
+        it: 'Peperone',
+        en: 'Bell pepper',
+        fr: 'Poivron',
+      });
     });
   });
 });

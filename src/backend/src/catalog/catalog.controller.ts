@@ -19,6 +19,7 @@ import {
   ApiConflictResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import {
@@ -80,6 +81,33 @@ export class CatalogController {
   }
 
   /**
+   * Retrieve a single curated tag by ID with all its translations.
+   */
+  @ApiOperation({
+    summary: 'Get curated tag by ID',
+    description:
+      'Returns a single curated catalog tag by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'Unique numeric tag ID',
+    example: 1,
+  })
+  @ApiOkResponse({
+    description: 'Single curated tag details with full translation map',
+    type: TagDetailResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Tag not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Get('tags/:id')
+  async getTagById(@Param('id', ParseIntPipe) id: number) {
+    return await this.catalogService.getTagById(id);
+  }
+
+  /**
    * Retrieve curated ingredient catalog items with optional filtering and search.
    */
   @ApiOperation({
@@ -98,6 +126,33 @@ export class CatalogController {
   @Get('ingredients')
   async getIngredients(@Query() filterDto: FilterIngredientDto) {
     return await this.catalogService.getIngredients(filterDto);
+  }
+
+  /**
+   * Retrieve a single curated ingredient by ID with all its translations.
+   */
+  @ApiOperation({
+    summary: 'Get curated ingredient by ID',
+    description:
+      'Returns a single curated catalog ingredient by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'Unique numeric ingredient ID',
+    example: 12,
+  })
+  @ApiOkResponse({
+    description: 'Single curated ingredient details with full translation map',
+    type: IngredientDetailResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Ingredient not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Get('ingredients/:id')
+  async getIngredientById(@Param('id', ParseIntPipe) id: number) {
+    return await this.catalogService.getIngredientById(id);
   }
 
   /**

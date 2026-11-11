@@ -78,6 +78,23 @@ export class CatalogService {
     return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
   }
 
+  /*
+  GET /api/tags/:id
+  Retrieves a single curated tag by ID with all its translations (it, en, fr).
+  Public read access without authentication.
+  Throws 404 if not found.
+  */
+  async getTagById(id: number) {
+    const tag = await this.prisma.tag.findUnique({
+      where: { id },
+      include: { translations: true },
+    });
+    if (!tag) {
+      throw createHttpException(errors.tags.notFound);
+    }
+    return this.toTagDetail(tag);
+  }
+
   /* 
   GET /api/ingredients
   Returns a list of ingredients for a recipe, ordered alphabetically by name.
@@ -151,6 +168,23 @@ export class CatalogService {
     });
     // Returns the array of ingredients ordered by name
     return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
+  }
+
+  /*
+  GET /api/ingredients/:id
+  Retrieves a single curated ingredient by ID with all its translations (it, en, fr).
+  Public read access without authentication.
+  Throws 404 if not found.
+  */
+  async getIngredientById(id: number) {
+    const ingredient = await this.prisma.ingredient.findUnique({
+      where: { id },
+      include: { translations: true },
+    });
+    if (!ingredient) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+    return this.toIngredientDetail(ingredient);
   }
 
   /*
