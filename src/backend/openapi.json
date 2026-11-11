@@ -4303,6 +4303,233 @@
         ]
       }
     },
+    "/api/tags/{id}": {
+      "get": {
+        "description": "Returns a single curated catalog tag by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.",
+        "operationId": "CatalogController_getTagById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique numeric tag ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single curated tag details with full translation map",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDetailResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get curated tag by ID",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "patch": {
+        "description": "Updates the Italian, English and French names of an existing tag. The slug is immutable. Restricted to administrators.",
+        "operationId": "CatalogController_updateTag",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can update catalog tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Update a curated tag",
+        "tags": [
+          "Catalog"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.",
+        "operationId": "CatalogController_deleteTag",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag deleted successfully"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can delete catalog tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Tag is used by one or more recipes and cannot be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Delete a curated tag",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
     "/api/ingredients": {
       "get": {
         "description": "Returns curated catalog ingredients matching the given category or text query, ordered alphabetically by localized name.",
@@ -4482,73 +4709,35 @@
         ]
       }
     },
-    "/api/tags/{id}": {
-      "patch": {
-        "description": "Updates the Italian, English and French names of an existing tag. The slug is immutable. Restricted to administrators.",
-        "operationId": "CatalogController_updateTag",
+    "/api/ingredients/{id}": {
+      "get": {
+        "description": "Returns a single curated catalog ingredient by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.",
+        "operationId": "CatalogController_getIngredientById",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "Unique numeric ingredient ID",
             "schema": {
+              "example": 12,
               "type": "number"
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTagDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Tag updated with all its translations",
+            "description": "Single curated ingredient details with full translation map",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TagDetailResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can update catalog tags",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
                 }
               }
             }
           },
           "404": {
-            "description": "Tag not found",
+            "description": "Ingredient not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -4568,96 +4757,11 @@
             }
           }
         },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Update a curated tag",
+        "summary": "Get curated ingredient by ID",
         "tags": [
           "Catalog"
         ]
       },
-      "delete": {
-        "description": "Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.",
-        "operationId": "CatalogController_deleteTag",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tag deleted successfully"
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can delete catalog tags",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tag not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Tag is used by one or more recipes and cannot be deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Delete a curated tag",
-        "tags": [
-          "Catalog"
-        ]
-      }
-    },
-    "/api/ingredients/{id}": {
       "delete": {
         "description": "Deletes an ingredient from the catalog. Returns 409 if the ingredient is used by one or more recipes. Restricted to administrators.",
         "operationId": "CatalogController_deleteIngredient",
@@ -6992,10 +7096,20 @@
             }
           },
           {
+            "name": "reported_only",
+            "required": false,
+            "in": "query",
+            "description": "Filter comments having at least one report in pending status",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
             "name": "sort_by",
             "required": false,
             "in": "query",
-            "description": "Field to sort comments by: created_at (default), recipe, reports_count",
+            "description": "Field to sort comments by: created_at (default), recipe, reports_count (default when reported_only=true)",
             "schema": {
               "default": "created_at",
               "example": "created_at",
@@ -7058,6 +7172,19 @@
               "example": "it",
               "type": "string"
             }
+          },
+          {
+            "name": "_sort_by",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "recipe",
+                "reports_count"
+              ]
+            }
           }
         ],
         "responses": {
@@ -7113,6 +7240,364 @@
         "summary": "Comment audit stream (Admin and Moderator)",
         "tags": [
           "Admin Comments"
+        ]
+      }
+    },
+    "/api/admin/recipes": {
+      "get": {
+        "description": "Provides a dedicated administrative recipe stream supporting status filtering (active, inactive, all) and search capabilities, enforcing platform privacy visibility boundaries (Admins access all privacy tiers; Moderators access public and friends-only recipes, plus private recipes only if actively reported).",
+        "operationId": "AdminRecipesController_getAdminRecipes",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "course",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by course meal category (first course, main course, dessert, etc.)",
+            "schema": {
+              "example": "main_course",
+              "type": "string",
+              "enum": [
+                "appetizer",
+                "first_course",
+                "main_course",
+                "dessert",
+                "side_dish",
+                "drink",
+                "snack"
+              ]
+            }
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by difficulty level",
+            "schema": {
+              "example": "easy",
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            }
+          },
+          {
+            "name": "tag_ids",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by tag IDs. Supports comma-separated string e.g. \"tag_ids=1,2\" or repeated query params e.g. \"tag_ids=1&tag_ids=2\"",
+            "schema": {
+              "example": [
+                1,
+                2
+              ],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "name": "tag_mode",
+            "required": false,
+            "in": "query",
+            "description": "Tag matching mode: \"all\" requires all specified tag_ids, \"any\" matches at least one tag_id (defaults to \"all\")",
+            "schema": {
+              "default": "all",
+              "example": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            }
+          },
+          {
+            "name": "exclude_tag_ids",
+            "required": false,
+            "in": "query",
+            "description": "Exclude recipes containing any of the specified tag IDs. Supports comma-separated string e.g. \"exclude_tag_ids=3,4\"",
+            "schema": {
+              "example": [
+                3,
+                4
+              ],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "name": "ingredient_ids",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by ingredient IDs (pantry search). Supports comma-separated string e.g. \"ingredient_ids=10,20\"",
+            "schema": {
+              "example": [
+                10,
+                20
+              ],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "name": "ingredient_mode",
+            "required": false,
+            "in": "query",
+            "description": "Ingredient matching mode: \"all\" requires all specified ingredient_ids, \"any\" matches at least one ingredient_id (defaults to \"all\")",
+            "schema": {
+              "default": "all",
+              "example": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            }
+          },
+          {
+            "name": "exclude_ingredient_ids",
+            "required": false,
+            "in": "query",
+            "description": "Exclude recipes containing any of the specified ingredient IDs. Supports comma-separated string e.g. \"exclude_ingredient_ids=30,40\"",
+            "schema": {
+              "example": [
+                30,
+                40
+              ],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "name": "min_time",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes where total_time is greater than or equal to this limit (in minutes)",
+            "schema": {
+              "minimum": 0,
+              "example": 15,
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_time",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes where total_time is less than or equal to this limit (in minutes)",
+            "schema": {
+              "minimum": 0,
+              "example": 30,
+              "type": "number"
+            }
+          },
+          {
+            "name": "max_prep_time",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes where prep_time is less than or equal to this limit (in minutes)",
+            "schema": {
+              "minimum": 0,
+              "example": 15,
+              "type": "number"
+            }
+          },
+          {
+            "name": "author_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes authored by a specific user ID",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Keyword search query matching recipe title or description",
+            "schema": {
+              "example": "pasta",
+              "type": "string"
+            }
+          },
+          {
+            "name": "source_lang",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by the authoring original source language code (e.g., \"it\", \"en\", \"fr\")",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 5,
+              "example": "it",
+              "type": "string"
+            }
+          },
+          {
+            "name": "curated_only",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes that have human-verified translations (author_original or manual) for the requested locale. Requires lang parameter to be specified.",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target locale code for projected title and description",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort recipes by (defaults to \"created_at\")",
+            "schema": {
+              "default": "created_at",
+              "example": "created_at",
+              "type": "string",
+              "enum": [
+                "created_at",
+                "total_time",
+                "difficulty",
+                "likes_count",
+                "title"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title",
+            "schema": {
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes by lifecycle status (active, inactive, all)",
+            "schema": {
+              "default": "all",
+              "example": "all",
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated recipe records conforming to platform visibility matrix",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRecipeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed on query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Insufficient privileges (requires admin or moderator role)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Administrative recipe stream (Admin and Moderator)",
+        "tags": [
+          "Admin Recipes"
         ]
       }
     },
@@ -10263,6 +10748,62 @@
           "resolved_lang"
         ]
       },
+      "TranslationDto": {
+        "type": "object",
+        "properties": {
+          "it": {
+            "type": "string",
+            "description": "Italian display name",
+            "example": "Pomodoro",
+            "maxLength": 100
+          },
+          "en": {
+            "type": "string",
+            "description": "English display name",
+            "example": "Tomato",
+            "maxLength": 100
+          },
+          "fr": {
+            "type": "string",
+            "description": "French display name",
+            "example": "Tomate",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "it",
+          "en",
+          "fr"
+        ]
+      },
+      "TagDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "gluten_free"
+          },
+          "translations": {
+            "description": "Tag display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "translations"
+        ]
+      },
       "IngredientResponseDto": {
         "type": "object",
         "properties": {
@@ -10316,75 +10857,6 @@
           "resolved_lang"
         ]
       },
-      "TranslationDto": {
-        "type": "object",
-        "properties": {
-          "it": {
-            "type": "string",
-            "description": "Italian display name",
-            "example": "Pomodoro",
-            "maxLength": 100
-          },
-          "en": {
-            "type": "string",
-            "description": "English display name",
-            "example": "Tomato",
-            "maxLength": 100
-          },
-          "fr": {
-            "type": "string",
-            "description": "French display name",
-            "example": "Tomate",
-            "maxLength": 100
-          }
-        },
-        "required": [
-          "it",
-          "en",
-          "fr"
-        ]
-      },
-      "CreateIngredientDto": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Unique canonical slug (lowercase letters, digits, underscores)",
-            "example": "bell_pepper",
-            "maxLength": 100,
-            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
-          },
-          "category": {
-            "description": "Ingredient culinary category",
-            "example": "produce",
-            "enum": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ],
-            "type": "string"
-          },
-          "translations": {
-            "description": "Ingredient display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "slug",
-          "category",
-          "translations"
-        ]
-      },
       "IngredientDetailResponseDto": {
         "type": "object",
         "properties": {
@@ -10430,6 +10902,47 @@
           "translations"
         ]
       },
+      "CreateIngredientDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Unique canonical slug (lowercase letters, digits, underscores)",
+            "example": "bell_pepper",
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "produce",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "translations": {
+            "description": "Ingredient display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "slug",
+          "category",
+          "translations"
+        ]
+      },
       "CreateTagDto": {
         "type": "object",
         "properties": {
@@ -10450,34 +10963,6 @@
           }
         },
         "required": [
-          "slug",
-          "translations"
-        ]
-      },
-      "TagDetailResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique tag identifier",
-            "example": 1
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical tag slug",
-            "example": "gluten_free"
-          },
-          "translations": {
-            "description": "Tag display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
           "slug",
           "translations"
         ]
@@ -10564,6 +11049,12 @@
             "nullable": true,
             "description": "Localized title of recipe or text snippet of comment",
             "example": "Lasagna alla Bolognese"
+          },
+          "recipe_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Parent recipe ID for comment interactions, or recipe ID for recipe interactions",
+            "example": 42
           }
         },
         "required": [
@@ -10772,6 +11263,79 @@
           "reason"
         ]
       },
+      "ReportReporterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Numeric user ID of the reporter",
+            "example": 5
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the reporter",
+            "example": "mario_rossi"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar image URL of the reporter",
+            "example": "/uploads/avatars/avatar_5.webp"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url"
+        ]
+      },
+      "ReportTargetOwnerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Numeric user ID of the content owner",
+            "example": 10
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the content owner",
+            "example": "chef_luigi"
+          }
+        },
+        "required": [
+          "id",
+          "username"
+        ]
+      },
+      "ReportTargetSummaryDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Localized title for recipe, content snippet for comment, or username for user",
+            "example": "Spaghetti alla Carbonara"
+          },
+          "recipe_id": {
+            "type": "number",
+            "description": "Parent recipe ID for comment reports, or recipe ID for recipe reports",
+            "example": 42
+          },
+          "owner": {
+            "nullable": true,
+            "description": "Author or owner of the reported entity",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportTargetOwnerDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "label"
+        ]
+      },
       "ReportStatus": {
         "type": "string",
         "enum": [
@@ -10795,6 +11359,16 @@
             "description": "User ID of the member who submitted the report",
             "example": 5
           },
+          "reporter": {
+            "nullable": true,
+            "description": "Hydrated profile details of the reporter",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReporterDto"
+              }
+            ]
+          },
           "subject": {
             "description": "Target subject entity type",
             "example": "recipe",
@@ -10808,6 +11382,16 @@
             "type": "number",
             "description": "Target entity ID",
             "example": 42
+          },
+          "target": {
+            "nullable": true,
+            "description": "Polymorphic target summary context",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportTargetSummaryDto"
+              }
+            ]
           },
           "reason": {
             "description": "Justification reason",
@@ -11749,6 +12333,16 @@
             "description": "Total number of moderation reports filed against this comment",
             "example": 3
           },
+          "pending_reports_count": {
+            "type": "number",
+            "description": "Number of active pending moderation reports filed against this comment",
+            "example": 1
+          },
+          "has_pending_reports": {
+            "type": "boolean",
+            "description": "Whether this comment currently has at least one active pending moderation report",
+            "example": true
+          },
           "user": {
             "nullable": true,
             "description": "Author profile summary",
@@ -11781,6 +12375,8 @@
           "created_at",
           "updated_at",
           "reports_count",
+          "pending_reports_count",
+          "has_pending_reports",
           "user",
           "recipe"
         ]

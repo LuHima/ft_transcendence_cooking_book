@@ -88,6 +88,10 @@ _Avoid_: Server PDF, recipe sheet, print export
 The defensive verification pattern combining client-side pre-flight checks (inspecting file type and size before network transmission) with server-side Multer and NestJS ParseFilePipe enforcement to reject invalid or oversized media payloads.
 _Avoid_: Form validation, file check
 
+**Single-Resource Catalog Inspection**:
+The public localized inspection endpoints (`GET /api/ingredients/:id` and `GET /api/tags/:id`) allowing clients to retrieve canonical definitions, category associations, and localized names for individual catalog entities without downloading whole dictionary catalogs.
+_Avoid_: Catalog lookup, ingredient fetch, tag detail
+
 ## Social Interactions & Metrics
 
 **Cumulative Likes**:
@@ -225,6 +229,18 @@ _Avoid_: Child truncation, lazy comments, reply snippet
 **Translation Provenance**:
 The lifecycle classification of a localized recipe projection (`author_original`, `machine`, `manual`), explicitly identifying whether text was authored in the source language, synthesized by automated translation, or curated through human intervention.
 _Avoid_: Translation author, translation tag, origin flag
+
+**Administrative Recipe Stream**:
+The dedicated administrative and staff recipe search and triage stream (`GET /api/admin/recipes`) guarded by `@Roles('admin', 'moderator')` supporting status filtering (`active`, `inactive`, `all`), text search, and catalog attributes, conforming to platform privacy visibility boundaries (Administrators access all privacy tiers; Moderators access public and friends-only recipes, plus private recipes only if actively reported).
+_Avoid_: Admin recipe feed, backend recipe list, recipe manager
+
+**Polymorphic Report Target Hydration**:
+The contextual resolution process within the moderation queue (`GET /api/reports`) that augments report records with structured reporter identities and target-specific metadata (such as parent recipe IDs, preview snippets, usernames, and content owners) across heterogeneous report subjects (`recipe`, `comment`, `user`) to streamline staff triage without supplemental queries.
+_Avoid_: Target expander, report populator, subject joining
+
+**Reported Comments Audit Filter**:
+The administrative triage query filter (`reported_only=true` on `GET /api/admin/comments`) that restricts the comment audit stream strictly to comments having active pending reports, prioritizing heavily reported items by default, signaling pending report counts, and guaranteeing inclusion of reported child replies in threaded previews.
+_Avoid_: Flagged comment filter, dirty comments, report list
 
 ## API Governance & Documentation
 
