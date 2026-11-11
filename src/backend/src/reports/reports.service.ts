@@ -14,6 +14,7 @@ import {
   PaginatedReportsResponseDto,
 } from './dto/report-response.dto';
 import {
+  NotificationAction,
   Prisma,
   ReportReason,
   ReportStatus,
@@ -21,6 +22,7 @@ import {
   Role,
   UserStatus,
 } from '@prisma/client';
+import { NotificationEmit } from '../notifications/notification-emit';
 import { createHttpException, errors } from '../common/config/error.config';
 import { BanHistoryService } from './ban-history.service';
 import {
@@ -36,6 +38,7 @@ export class ReportsService {
     private readonly prisma: PrismaService,
     private readonly recipeService: RecipeService,
     private readonly banHistoryService: BanHistoryService,
+    private readonly notificationEmit: NotificationEmit,
   ) {}
 
   /**
@@ -436,7 +439,7 @@ export class ReportsService {
 
     const effectiveReason = dto.resolution_reason ?? report.reason;
 
-    return await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       let resolvedTargetUserId: number | null = null;
 
       // Handle actions that require target author / content resolution
@@ -623,5 +626,34 @@ export class ReportsService {
         previous_bans_count: previousBansCount,
       };
     });
+    // notify the author of the reported content. Done AFTER the transaction
+    const shouldWarn =
+      actions.includes(ReportAction.warn) &&
+      !actions.includes(ReportAction.dismiss) &&
+      report.status !== ReportStatus.action_taken &&
+      report.status !== ReportStatus.dismissed;
+
+    if (shouldWarn && callerId) {
+      try {
+        await this.notificationEmit.notification(
+          {
+            id_user: callerId,
+            id_target: report.target_id,
+            details: dto.resolution_description?.trim() || null,
+          },
+          {
+            subject: report.subject,
+            action: NotificationAction.warn,
+          },
+        );
+      } catch (err) {
+        // The report is already resolved: a failed notification must not fail the request.
+        this.logger.error(
+          `Report #${reportId}: warn notification failed`,
+          err instanceof Error ? err.stack : String(err),
+        );
+      }
+    }
+    return result;
   }
 }

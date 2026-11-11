@@ -122,6 +122,14 @@ export class NotificationItemDto {
       "Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'",
   })
   message: string;
+  @ApiPropertyOptional({
+    description:
+      'Explanation written by the moderator (only for warning notifications)',
+    example: 'Your recipe contained offensive language.',
+    nullable: true,
+    type: String,
+  })
+  details?: string | null;
 
   @ApiProperty({
     description: 'Whether the notification has been marked as read',

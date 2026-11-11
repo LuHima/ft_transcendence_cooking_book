@@ -2,6 +2,7 @@ import { SetMetadata, applyDecorators, UseGuards } from '@nestjs/common';
 import { ApiForbiddenResponse } from '@nestjs/swagger';
 import { RolesGuard } from '../guards/roles.guard';
 import { ApiForbiddenResponseDto } from '../dto/api-error-response.dto';
+import { AuthGuard } from '../guards/auth.guard';
 
 export const ROLES_KEY = 'roles';
 
@@ -13,7 +14,7 @@ export const ROLES_KEY = 'roles';
 export const Roles = (...roles: string[]) =>
   applyDecorators(
     SetMetadata(ROLES_KEY, roles),
-    UseGuards(RolesGuard),
+    UseGuards(AuthGuard, RolesGuard),
     ApiForbiddenResponse({
       description: 'Forbidden: Insufficient privileges to access this resource',
       type: ApiForbiddenResponseDto,

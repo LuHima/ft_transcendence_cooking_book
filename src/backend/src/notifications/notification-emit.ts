@@ -45,6 +45,13 @@ export class NotificationEmit {
         return `${senderName} delete a recipe`;
       case 'update':
         return `${senderName} update a recipe`;
+      case 'warn':
+        if (notifyData.subject === 'recipe') {
+          return 'You received a warning from the moderation team about your recipe';
+        } else if (notifyData.subject === 'comment') {
+          return 'You received a warning from the moderation team about your comment';
+        }
+        return 'You received a warning from the moderation team';
       default:
         return `New notification from ${senderName}`;
     }
@@ -119,6 +126,7 @@ export class NotificationEmit {
         subject: notifyData.subject,
         action: notifyData.action,
         target_id: structNotify.id_target,
+        details: structNotify.details ?? undefined,
       },
     });
 

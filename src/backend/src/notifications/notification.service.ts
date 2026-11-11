@@ -220,6 +220,7 @@ export class NotificationService {
           recipe_id,
         },
         message,
+        details: n.details ?? null,
         is_read: n.is_read,
         created_at: n.created_at,
       };
@@ -291,6 +292,15 @@ export class NotificationService {
         ) {
           return `${actor} ha eliminato una ricetta`;
         }
+        if (action === NotificationAction.warn) {
+          if (subject === NotificationSubject.recipe) {
+            return `Hai ricevuto un avviso dal team di moderazione per la tua ricetta "${safeTitle}"`;
+          }
+          if (subject === NotificationSubject.comment) {
+            return `Hai ricevuto un avviso dal team di moderazione per un tuo commento`;
+          }
+          return `Hai ricevuto un avviso dal team di moderazione per il tuo profilo`;
+        }
         return `${actor} ha eseguito un'azione`;
 
       case 'fr':
@@ -335,6 +345,15 @@ export class NotificationService {
           subject === NotificationSubject.recipe
         ) {
           return `${actor} a supprimé une recette`;
+        }
+        if (action === NotificationAction.warn) {
+          if (subject === NotificationSubject.recipe) {
+            return `Vous avez reçu un avertissement de l'équipe de modération pour votre recette "${safeTitle}"`;
+          }
+          if (subject === NotificationSubject.comment) {
+            return `Vous avez reçu un avertissement de l'équipe de modération pour l'un de vos commentaires`;
+          }
+          return `Vous avez reçu un avertissement de l'équipe de modération pour votre profil`;
         }
         return `${actor} a effectué une action`;
 
@@ -381,6 +400,15 @@ export class NotificationService {
           subject === NotificationSubject.recipe
         ) {
           return `${actor} deleted a recipe`;
+        }
+        if (action === NotificationAction.warn) {
+          if (subject === NotificationSubject.recipe) {
+            return `You received a warning from the moderation team about your recipe "${safeTitle}"`;
+          }
+          if (subject === NotificationSubject.comment) {
+            return `You received a warning from the moderation team about one of your comments`;
+          }
+          return `You received a warning from the moderation team about your profile`;
         }
         return `${actor} performed an action`;
     }
