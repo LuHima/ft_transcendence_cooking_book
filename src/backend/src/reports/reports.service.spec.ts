@@ -33,6 +33,7 @@ describe('ReportsService', () => {
     },
     user: {
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       update: jest.fn(),
     },
     report: {
@@ -263,6 +264,119 @@ describe('ReportsService', () => {
       expect(result.items).toHaveLength(1);
       expect(result.items[0].previous_bans_count).toBe(2);
       expect(result.total).toBe(1);
+    });
+
+    it('hydrates reporter details and polymorphic targets across recipe, comment, and user subjects (Ticket #156)', async () => {
+      const reports = [
+        {
+          id: 101,
+          reporter_id: 1,
+          subject: ReportSubject.recipe,
+          target_id: 42,
+          reason: ReportReason.inappropriate_content,
+          description: 'Spam recipe',
+          status: ReportStatus.pending,
+          created_at: new Date('2026-11-01'),
+          updated_at: new Date('2026-11-01'),
+        },
+        {
+          id: 102,
+          reporter_id: 2,
+          subject: ReportSubject.comment,
+          target_id: 77,
+          reason: ReportReason.harassment_bullying,
+          description: 'Insulting remark',
+          status: ReportStatus.pending,
+          created_at: new Date('2026-11-02'),
+          updated_at: new Date('2026-11-02'),
+        },
+        {
+          id: 103,
+          reporter_id: 3,
+          subject: ReportSubject.user,
+          target_id: 99,
+          reason: ReportReason.impersonation,
+          description: 'Fake profile',
+          status: ReportStatus.pending,
+          created_at: new Date('2026-11-03'),
+          updated_at: new Date('2026-11-03'),
+        },
+      ];
+
+      mockPrisma.report.findMany.mockResolvedValueOnce(reports);
+      mockPrisma.report.count.mockResolvedValueOnce(3);
+
+      // Reporter mock responses
+      mockPrisma.user.findUnique
+        .mockResolvedValueOnce({ id: 1, username: 'reporter1', avatar_url: '/avatars/1.webp' })
+        .mockResolvedValueOnce({ id: 2, username: 'reporter2', avatar_url: null })
+        .mockResolvedValueOnce({ id: 3, username: 'reporter3', avatar_url: '/avatars/3.webp' });
+
+      // Target mocks:
+      // 1. Recipe 42
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 42,
+        user_id: 501,
+        source_lang: 'it',
+        translations: [{ locale: 'it', title: 'Pizza Margherita' }],
+        user: { id: 501, username: 'chef_mario' },
+      });
+
+      // 2. Comment 77
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 77,
+        content: 'This recipe is terrible!',
+        recipe_id: 42,
+        user_id: 502,
+        user: { id: 502, username: 'troll_user' },
+      });
+
+      // 3. User 99 (second call to user.findUnique for target user)
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 99,
+        username: 'fake_account',
+      });
+
+      mockBanHistoryService.getPreviousBansCount.mockResolvedValue(0);
+
+      const result = await service.getReports({ page: 1, limit: 10 });
+
+      expect(result.items).toHaveLength(3);
+
+      // Report 1: Recipe subject
+      expect(result.items[0].reporter).toEqual({
+        id: 1,
+        username: 'reporter1',
+        avatar_url: '/avatars/1.webp',
+      });
+      expect(result.items[0].target).toEqual({
+        label: 'Pizza Margherita',
+        recipe_id: 42,
+        owner: { id: 501, username: 'chef_mario' },
+      });
+
+      // Report 2: Comment subject
+      expect(result.items[1].reporter).toEqual({
+        id: 2,
+        username: 'reporter2',
+        avatar_url: null,
+      });
+      expect(result.items[1].target).toEqual({
+        label: 'This recipe is terrible!',
+        recipe_id: 42,
+        owner: { id: 502, username: 'troll_user' },
+      });
+
+      // Report 3: User subject
+      expect(result.items[2].reporter).toEqual({
+        id: 3,
+        username: 'reporter3',
+        avatar_url: '/avatars/3.webp',
+      });
+      expect(result.items[2].target).toEqual({
+        label: 'fake_account',
+        owner: { id: 99, username: 'fake_account' },
+      });
     });
   });
 

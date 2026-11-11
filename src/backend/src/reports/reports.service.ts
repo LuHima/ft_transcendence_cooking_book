@@ -130,24 +130,95 @@ export class ReportsService {
       this.prisma.report.count({ where }),
     ]);
 
-    // Hydrate previous_bans_count for each report item
+    // Hydrate previous_bans_count, reporter, and polymorphic target for each report item
     const hydratedItems: ReportItemDto[] = await Promise.all(
       items.map(async (report) => {
+        let reporter = (report as any).reporter;
+        if (!reporter) {
+          const u = this.prisma.user?.findUnique
+            ? await this.prisma.user.findUnique({
+                where: { id: report.reporter_id },
+                select: { id: true, username: true, avatar_url: true },
+              })
+            : null;
+          reporter = u ?? {
+            id: report.reporter_id,
+            username: `user_${report.reporter_id}`,
+            avatar_url: null,
+          };
+        }
+
         let targetUserId: number | null = null;
+        let target: {
+          label: string;
+          recipe_id?: number;
+          owner?: { id: number; username: string } | null;
+        } = { label: '' };
+
         if (report.subject === ReportSubject.user) {
           targetUserId = report.target_id;
+          const u = this.prisma.user?.findUnique
+            ? await this.prisma.user.findUnique({
+                where: { id: report.target_id },
+                select: { id: true, username: true },
+              })
+            : null;
+          const username = u?.username ?? `user_${report.target_id}`;
+          target = {
+            label: username,
+            owner: u
+              ? { id: u.id, username: u.username }
+              : { id: report.target_id, username },
+          };
         } else if (report.subject === ReportSubject.recipe) {
-          const r = await this.prisma.recipe.findUnique({
-            where: { id: report.target_id },
-            select: { user_id: true },
-          });
-          targetUserId = r?.user_id ?? null;
+          const r = this.prisma.recipe?.findUnique
+            ? await this.prisma.recipe.findUnique({
+                where: { id: report.target_id },
+                select: {
+                  id: true,
+                  user_id: true,
+                  source_lang: true,
+                  translations: {
+                    select: { locale: true, title: true },
+                  },
+                  user: {
+                    select: { id: true, username: true },
+                  },
+                },
+              })
+            : null;
+          targetUserId = r?.user_id ?? (r?.user?.id ?? null);
+          const title =
+            r?.translations?.find((t) => t.locale === 'en')?.title ||
+            r?.translations?.find((t) => t.locale === r?.source_lang)?.title ||
+            r?.translations?.[0]?.title ||
+            `Recipe #${report.target_id}`;
+          target = {
+            label: title,
+            recipe_id: report.target_id,
+            owner: r?.user ? { id: r.user.id, username: r.user.username } : null,
+          };
         } else if (report.subject === ReportSubject.comment) {
-          const c = await this.prisma.comment.findUnique({
-            where: { id: report.target_id },
-            select: { user_id: true },
-          });
-          targetUserId = c?.user_id ?? null;
+          const c = this.prisma.comment?.findUnique
+            ? await this.prisma.comment.findUnique({
+                where: { id: report.target_id },
+                select: {
+                  id: true,
+                  content: true,
+                  recipe_id: true,
+                  user_id: true,
+                  user: {
+                    select: { id: true, username: true },
+                  },
+                },
+              })
+            : null;
+          targetUserId = c?.user_id ?? (c?.user?.id ?? null);
+          target = {
+            label: c?.content ?? `Comment #${report.target_id}`,
+            recipe_id: c?.recipe_id,
+            owner: c?.user ? { id: c.user.id, username: c.user.username } : null,
+          };
         }
 
         const count = targetUserId
@@ -156,6 +227,8 @@ export class ReportsService {
 
         return {
           ...report,
+          reporter,
+          target,
           previous_bans_count: count,
         };
       }),

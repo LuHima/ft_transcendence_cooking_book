@@ -1,5 +1,61 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReportReason, ReportStatus, ReportSubject } from '@prisma/client';
+
+/**
+ * Hydrated profile information for the reporter who submitted a report.
+ */
+export class ReportReporterDto {
+  @ApiProperty({ description: 'Numeric user ID of the reporter', example: 5 })
+  id: number;
+
+  @ApiProperty({ description: 'Username of the reporter', example: 'mario_rossi' })
+  username: string;
+
+  @ApiProperty({
+    description: 'Avatar image URL of the reporter',
+    example: '/uploads/avatars/avatar_5.webp',
+    nullable: true,
+    type: String,
+  })
+  avatar_url: string | null;
+}
+
+/**
+ * Author or owner profile card for reported target content.
+ */
+export class ReportTargetOwnerDto {
+  @ApiProperty({ description: 'Numeric user ID of the content owner', example: 10 })
+  id: number;
+
+  @ApiProperty({ description: 'Username of the content owner', example: 'chef_luigi' })
+  username: string;
+}
+
+/**
+ * Polymorphic target context providing localized recipe title, comment snippet, user handle, and parent recipe associations.
+ */
+export class ReportTargetSummaryDto {
+  @ApiProperty({
+    description:
+      'Localized title for recipe, content snippet for comment, or username for user',
+    example: 'Spaghetti alla Carbonara',
+  })
+  label: string;
+
+  @ApiPropertyOptional({
+    description: 'Parent recipe ID for comment reports, or recipe ID for recipe reports',
+    example: 42,
+    type: Number,
+  })
+  recipe_id?: number;
+
+  @ApiPropertyOptional({
+    description: 'Author or owner of the reported entity',
+    type: ReportTargetOwnerDto,
+    nullable: true,
+  })
+  owner?: ReportTargetOwnerDto | null;
+}
 
 /**
  * Moderation report item representation.
@@ -23,6 +79,16 @@ export class ReportItemDto {
   reporter_id: number;
 
   /**
+   * Hydrated profile details of the reporter.
+   */
+  @ApiPropertyOptional({
+    description: 'Hydrated profile details of the reporter',
+    type: ReportReporterDto,
+    nullable: true,
+  })
+  reporter?: ReportReporterDto | null;
+
+  /**
    * Target subject entity type.
    * @example 'recipe'
    */
@@ -40,6 +106,16 @@ export class ReportItemDto {
    */
   @ApiProperty({ description: 'Target entity ID', example: 42 })
   target_id: number;
+
+  /**
+   * Polymorphic target summary context.
+   */
+  @ApiPropertyOptional({
+    description: 'Polymorphic target summary context',
+    type: ReportTargetSummaryDto,
+    nullable: true,
+  })
+  target?: ReportTargetSummaryDto | null;
 
   /**
    * Justification reason.
