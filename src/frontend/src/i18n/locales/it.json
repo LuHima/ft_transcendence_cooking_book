@@ -16,7 +16,8 @@
 		"save": "Salva",
 		"remove": "Rimuovi",
 		"accessDenied": "Accesso negato",
-		"noPermission": "Non hai i permessi per vedere questa pagina."
+		"noPermission": "Non hai i permessi per vedere questa pagina.",
+		"typeToConfirm": "Scrivi \"{{text}}\" per confermare"
 	},
 	"errorBoundary": {
 		"title": "Qualcosa è andato storto",
@@ -112,8 +113,8 @@
 		"notFound": "Ricetta non trovata.",
 		"backToRecipes": "Torna alle ricette",
 		"likeError": "Impossibile aggiornare il like.",
-		"confirmDeleteAdmin": "Rimuovere questa ricetta come amministratore? L'azione non è reversibile.",
-		"confirmDelete": "Eliminare questa ricetta? L'azione non è reversibile.",
+		"confirmDeleteAdmin": "Sospendere questa ricetta come amministratore? Potrà essere riattivata in seguito.",
+		"confirmDelete": "Eliminare questa ricetta? Non sarà più visibile a nessuno.",
 		"deleted": "Ricetta eliminata.",
 		"deleteError": "Impossibile eliminare la ricetta.",
 		"retryTranslationOk": "Traduzione completata.",
@@ -134,14 +135,35 @@
 		"exportPdf": "Scarica PDF",
 		"exportingPdf": "Creazione del PDF...",
 		"exportPdfError": "Impossibile creare il PDF.",
-		"removeAdmin": "Rimuovi ricetta",
+		"removeAdmin": "Sospendi ricetta",
 		"ingredients": "Ingredienti",
 		"noIngredients": "Nessun ingrediente indicato per questa ricetta.",
 		"preparation": "Preparazione",
 		"stepImageAlt": "Foto del passaggio {{n}}",
 		"tips": "Consigli",
 		"preservation": "Conservazione",
-		"platformName": "WeCook"
+		"platformName": "WeCook",
+		"suspendedBadge": "Sospesa",
+		"suspendedTitle": "Ricetta sospesa.",
+		"suspendedText": "Questa ricetta è attualmente esclusa dalla ricerca pubblica.",
+		"reactivate": "Riattiva ricetta",
+		"reactivated": "Ricetta riattivata.",
+		"reactivateError": "Impossibile riattivare la ricetta.",
+		"purge": "Elimina definitivamente",
+		"purgeTitle": "Eliminare definitivamente la ricetta?",
+		"purgeText": "\"{{title}}\" verrà cancellata con tutti i media, i like e i commenti. L'azione non è reversibile.",
+		"purged": "Ricetta eliminata definitivamente.",
+		"retranslate": "Ritraduci",
+		"suggestEdits": "Suggerisci modifiche",
+		"provenance": {
+			"author_original": "Testo originale dell'autore",
+			"manual": "Traduzione curata / revisionata",
+			"machine": "Traduzione automatica",
+			"author_originalHelp": "Scritta dall'autore in questa lingua.",
+			"manualHelp": "Traduzione revisionata o scritta da una persona.",
+			"machineHelp": "Traduzione automatica: potrebbe contenere errori.",
+			"machineActions": "Testo tradotto automaticamente:"
+		}
 	},
 	"comments": {
 		"title": "Commenti",
@@ -174,7 +196,21 @@
 		"heroText": "Salva le tue ricette e ritrova subito i tuoi piatti preferiti.",
 		"recent": "Ricette recenti",
 		"seeAll": "Vedi tutte",
-		"empty": "Nessuna ricetta pubblicata ancora."
+		"empty": "Nessuna ricetta pubblicata ancora.",
+		"feedTabs": "Feed delle ricette",
+		"tabs": {
+			"friends": "Amici",
+			"community": "Community"
+		},
+		"friendsEmpty": {
+			"title": "Ancora nulla dai tuoi amici",
+			"text": "Quando i tuoi amici pubblicheranno ricette le troverai qui. Esplora la community e connettiti con altri cuochi!",
+			"guestTitle": "Accedi per vedere le ricette dei tuoi amici",
+			"guestText": "Crea un account o accedi, poi aggiungi amici per costruire il tuo feed personale.",
+			"explore": "Esplora le ricette della community",
+			"connect": "Trova amici"
+		},
+		"addRecipe": "Aggiungi ricetta"
 	},
 	"myRecipes": {
 		"loadError": "Impossibile caricare le ricette.",
@@ -196,7 +232,9 @@
 			"longest": "Più lunghe",
 			"mostLiked": "Più apprezzate",
 			"easiest": "Più facili",
-			"hardest": "Più difficili"
+			"hardest": "Più difficili",
+			"titleAsc": "Titolo A–Z",
+			"titleDesc": "Titolo Z–A"
 		},
 		"error": "Ricerca non riuscita.",
 		"resultsFor": "Risultati per \"{{query}}\"",
@@ -213,7 +251,37 @@
 		"placeholder": "Cerca ricette o utenti…",
 		"button": "Cerca",
 		"userLabel": "utente",
-		"recipeLabel": "ricetta"
+		"recipeLabel": "ricetta",
+		"userSort": {
+			"usernameAsc": "Username A–Z",
+			"usernameDesc": "Username Z–A",
+			"mostRecipes": "Più ricette",
+			"newestMembers": "Iscritti più recenti",
+			"oldestMembers": "Iscritti da più tempo"
+		},
+		"minTime": "Tempo min (min)",
+		"maxPrepTime": "Preparazione max (min)",
+		"timeRangeInvalid": "Il tempo minimo è maggiore del tempo massimo.",
+		"curatedOnly": "Solo traduzioni curate",
+		"curatedOnlyHelp": "Solo ricette scritte dall'autore o tradotte da una persona in {{lang}}.",
+		"tagHelp": "un clic per includere, due per escludere",
+		"tagMode": "Modalità di corrispondenza dei tag",
+		"matchMode": {
+			"all": "Tutti",
+			"any": "Almeno uno"
+		},
+		"tagState": {
+			"none": "non usato",
+			"included": "incluso",
+			"excluded": "escluso"
+		},
+		"pantry": "Ingredienti",
+		"ingredientMode": "Modalità di corrispondenza degli ingredienti",
+		"includeIngredients": "Deve contenere",
+		"excludeIngredients": "Escludi (es. allergie)",
+		"removeItem": "Rimuovi {{name}}",
+		"userMinChars": "Scrivi almeno {{count}} caratteri per cercare anche gli utenti.",
+		"moreUsers": "Mostra altri utenti"
 	},
 	"form": {
 		"newTitle": "Nuova ricetta",
@@ -287,7 +355,11 @@
 		"catalogEmpty": "Il catalogo ingredienti è vuoto: chiedi al backend di caricarlo (seed).",
 		"editLanguage": "Lingua del testo da modificare",
 		"editLanguageHelp": "La ricetta è stata scritta in {{lang}}. Cambiando lingua modifichi la traduzione in quella lingua; il testo non ancora salvato viene sostituito.",
-		"localeUnavailable": "La traduzione in {{lang}} non è ancora disponibile."
+		"localeUnavailable": "La traduzione in {{lang}} non è ancora disponibile.",
+		"galleryLabel": "Galleria",
+		"uploadingItem": "Caricamento: {{label}} ({{done}}/{{total}})",
+		"uploadProgress": "Avanzamento caricamento",
+		"uploadKeepOpen": "Non chiudere la pagina finché il caricamento non è completato."
 	},
 	"notFound": {
 		"text": "Questa pagina non esiste, o la ricetta è stata rimossa.",
@@ -379,16 +451,20 @@
 		},
 		"reason": "Motivo",
 		"reasons": {
-			"spam": "Spam o pubblicità",
-			"offensive": "Contenuto offensivo",
-			"inappropriate": "Contenuto inappropriato",
-			"copyright": "Violazione di copyright",
+			"spam_scam": "Spam o truffa",
+			"harassment_bullying": "Molestie o bullismo",
+			"hate_speech": "Incitamento all'odio",
+			"sexual_content": "Contenuti sessuali",
+			"violence_threats": "Violenza o minacce",
+			"copyright_infringement": "Violazione di copyright",
+			"impersonation_misinformation": "Furto d'identità o disinformazione",
 			"other": "Altro"
 		},
 		"details": "Dettagli (facoltativi)",
 		"submit": "Invia segnalazione",
 		"sent": "Segnalazione inviata. Grazie!",
-		"error": "Impossibile inviare la segnalazione."
+		"error": "Impossibile inviare la segnalazione.",
+		"alreadyReported": "Hai già segnalato questo contenuto: è in attesa di revisione."
 	},
 	"moderation": {
 		"title": "Moderazione",
@@ -396,8 +472,8 @@
 		"loadError": "Impossibile caricare le segnalazioni.",
 		"status": "Stato",
 		"statuses": {
-			"open": "Aperte",
-			"resolved": "Gestite",
+			"pending": "In attesa",
+			"action_taken": "Provvedimento preso",
 			"dismissed": "Archiviate"
 		},
 		"type": "Tipo",
@@ -408,29 +484,50 @@
 			"user": "Utente"
 		},
 		"empty": "Nessuna segnalazione.",
-		"reportedBy": "segnalato da {{name}}",
-		"owner": "autore:",
 		"handle": "Gestisci",
 		"done": "Segnalazione gestita.",
 		"chooseAction": "Cosa vuoi fare?",
 		"actions": {
 			"dismiss": "Archivia",
 			"warn": "Invia un avviso",
-			"delete_content": "Elimina il contenuto",
+			"delete_content": "Sospendi il contenuto",
 			"ban": "Banna l'utente"
 		},
 		"actionHelp": {
 			"dismiss": "La segnalazione non richiede interventi.",
-			"warn": "L'autore riceve una notifica con il tuo messaggio.",
-			"delete_content": "Ricetta o commento vengono rimossi.",
+			"warn": "L'autore riceve una notifica con il messaggio qui sotto.",
+			"delete_content": "Ricetta o commento vengono nascosti al pubblico (ripristinabili).",
 			"ban": "L'account dell'autore viene bannato."
 		},
-		"note": "Nota interna (facoltativa)",
-		"warnMessage": "Messaggio per l'utente",
+		"note": "Note interne dello staff (facoltative)",
 		"confirm": "Conferma",
-		"confirmBan": "Bannare {{name}}?",
-		"confirmDelete": "Eliminare il contenuto segnalato? L'azione non è reversibile.",
-		"actionError": "Azione non riuscita."
+		"confirmBan": "Bannare l'autore di questo contenuto?",
+		"confirmDelete": "Sospendere il contenuto segnalato?",
+		"actionError": "Azione non riuscita.",
+		"columns": {
+			"target": "Contenuto segnalato",
+			"reason": "Motivo",
+			"reporter": "Segnalato da",
+			"created": "Data",
+			"resolution": "Esito"
+		},
+		"takeAction": "Prendi provvedimenti",
+		"resolutionReason": "Regola violata",
+		"banDuration": "Durata del ban (giorni)",
+		"banDurationHelp": "Lascia vuoto per usare la durata predefinita per questo motivo ({{days}} giorni).",
+		"banCapHelp": "I moderatori possono bannare al massimo per {{max}} giorni.",
+		"permanentBan": "Ban permanente (solo amministratori)",
+		"userMessage": "Messaggio per l'utente",
+		"userMessageHelp": "Mostrato all'utente sanzionato (es. nella schermata di accesso se bannato).",
+		"internalNotes": "Note interne",
+		"resolvedBy": "da",
+		"previousBans_one": "{{count}} ban precedente",
+		"previousBans_other": "{{count}} ban precedenti",
+		"errors": {
+			"noAction": "Scegli almeno un'azione.",
+			"banDays": "La durata del ban deve essere un numero intero di giorni (almeno 1).",
+			"banCap": "La durata massima del ban per i moderatori è {{max}} giorni."
+		}
 	},
 	"admin": {
 		"subtitle": "Segnalazioni, utenti, ruoli e contenuti della piattaforma.",
@@ -438,13 +535,14 @@
 			"reports": "Segnalazioni",
 			"users": "Utenti",
 			"recipes": "Ricette",
-			"comments": "Commenti"
+			"comments": "Commenti",
+			"catalog": "Catalogo"
 		},
 		"users": {
 			"loadError": "Impossibile caricare gli utenti.",
 			"updated": "Utente aggiornato.",
 			"updateError": "Modifica non riuscita.",
-			"confirmDelete": "Eliminare definitivamente l'utente \"{{name}}\"? L'azione non è reversibile.",
+			"confirmDelete": "L'account \"{{name}}\" verrà disattivato (soft delete): i dati vengono conservati.",
 			"deleted": "Utente eliminato.",
 			"deleteError": "Eliminazione non riuscita.",
 			"filter": "Filtra per username o email…",
@@ -468,17 +566,116 @@
 			"confirmBan": "Bannare \"{{name}}\"?",
 			"editTitle": "Modifica {{name}}",
 			"created": "Utente creato.",
-			"passwordKeep": "Lascia vuoto per non modificarla"
+			"passwordKeep": "Lascia vuoto per non modificarla",
+			"confirmDeleteTitle": "Disattivare {{name}}?",
+			"deactivateHelp": "Disattivazione: l'account non può più accedere, i dati restano.",
+			"purge": "Elimina definitivamente",
+			"confirmPurgeTitle": "Eliminare definitivamente {{name}}?",
+			"confirmPurge": "L'account \"{{name}}\" e i suoi dati verranno cancellati per sempre. L'azione non è reversibile.",
+			"purged": "Account eliminato definitivamente.",
+			"allStatuses": "Tutti gli stati",
+			"recipes": "Ricette",
+			"joined": "iscritto il {{date}}",
+			"bannedUntil": "fino al {{date}}",
+			"bannedPermanent": "Permanente",
+			"banHistory": "Storico ban",
+			"banHistoryTitle": "Storico ban di {{name}}",
+			"banHistoryEmpty": "Nessun ban precedente.",
+			"banHistoryError": "Impossibile caricare lo storico dei ban.",
+			"banStart": "Inizio",
+			"banEnd": "Scadenza",
+			"unbannedAt": "Revocato",
+			"bannedBy": "Emesso da",
+			"fromReport": "segnalazione #{{id}}",
+			"unbanReason": "Motivo della revoca",
+			"banDays_one": "{{count}} giorno",
+			"banDays_other": "{{count}} giorni",
+			"uploadAvatar": "Carica foto",
+			"avatarUpdated": "Foto profilo aggiornata.",
+			"avatarError": "Impossibile aggiornare la foto profilo.",
+			"sort": {
+				"newest": "Più recenti",
+				"oldest": "Meno recenti",
+				"usernameAsc": "Username A–Z",
+				"usernameDesc": "Username Z–A",
+				"mostRecipes": "Più ricette",
+				"fewestRecipes": "Meno ricette"
+			}
 		},
 		"recipes": {
-			"confirmDelete": "Rimuovere la ricetta \"{{title}}\"? L'azione non è reversibile.",
+			"confirmDelete": "Sospendere la ricetta \"{{title}}\"? Potrà essere riattivata dalla sua pagina.",
 			"filter": "Cerca ricetta…",
-			"empty": "Nessuna ricetta trovata."
+			"empty": "Nessuna ricetta trovata.",
+			"suspend": "Sospendi"
 		},
 		"comments": {
 			"filter": "Filtra per testo o autore…",
 			"empty": "Nessun commento trovato.",
-			"on": "su"
+			"on": "su",
+			"recipeId": "ID ricetta",
+			"userId": "ID utente",
+			"threadMode": "Visualizzazione thread",
+			"format": {
+				"flat": "Lista piatta",
+				"threaded": "Solo radici (thread)"
+			},
+			"flaggedOnly": "Solo segnalati",
+			"statuses": {
+				"all": "Tutti",
+				"active": "Attivi",
+				"inactive": "Disattivati"
+			},
+			"sort": {
+				"newest": "Più recenti",
+				"oldest": "Meno recenti",
+				"mostReported": "Più segnalati",
+				"recipe": "Per ricetta"
+			},
+			"inactive": "Disattivato",
+			"deactivate": "Disattiva",
+			"purge": "Elimina definitivamente",
+			"purgeTitle": "Eliminare definitivamente il commento?",
+			"purgeText": "Il commento verrà cancellato dal database. L'azione non è reversibile.",
+			"purgeWithReplies": "Questo commento ha delle risposte. Eliminarlo insieme a tutte le risposte?",
+			"purged": "Commento eliminato definitivamente.",
+			"replyTo": "risposta a #{{id}}",
+			"moreReplies_one": "+ {{count}} altra risposta",
+			"moreReplies_other": "+ altre {{count}} risposte"
+		},
+		"catalog": {
+			"title": "Catalogo",
+			"ingredients": "Ingredienti",
+			"tags": "Tag",
+			"search": "Cerca…",
+			"category": "Categoria",
+			"allCategories": "Tutte le categorie",
+			"slug": "Slug",
+			"name": "Nome",
+			"translations": "Nome in ogni lingua",
+			"newIngredient": "Nuovo ingrediente",
+			"newTag": "Nuovo tag",
+			"editTitle": "Modifica \"{{slug}}\"",
+			"immutable": "Non modificabile dopo la creazione.",
+			"slugHelp": "Lettere minuscole, cifre e singoli underscore (max {{max}} caratteri).",
+			"empty": "Nessun risultato.",
+			"loadError": "Impossibile caricare il catalogo.",
+			"fallback": "Nome non tradotto in questa lingua",
+			"created": "Creato.",
+			"updated": "Modifiche salvate.",
+			"deleted": "\"{{name}}\" eliminato.",
+			"deleteError": "Eliminazione non riuscita.",
+			"confirmDeleteTitle": "Eliminare \"{{name}}\"?",
+			"confirmDelete": "L'elemento \"{{slug}}\" verrà rimosso dal catalogo.",
+			"ingredientInUse": "\"{{name}}\" non può essere eliminato perché è usato in ricette esistenti.",
+			"tagInUse": "\"{{name}}\" non può essere eliminato perché è usato da ricette esistenti.",
+			"errors": {
+				"allNames": "Compila il nome in italiano, inglese e francese.",
+				"slug": "Slug non valido: usa lettere minuscole, cifre e singoli underscore (max {{max}}).",
+				"slugTaken": "Esiste già un elemento con questo slug."
+			},
+			"allCategoriesShort": "Tutte",
+			"count_one": "{{count}} elemento",
+			"count_other": "{{count}} elementi"
 		}
 	},
 	"friends": {
@@ -507,6 +704,12 @@
 			"friends": "Non hai ancora nessun amico.",
 			"received": "Nessuna richiesta in arrivo.",
 			"sent": "Nessuna richiesta in attesa."
+		},
+		"cooldown": "Non è possibile inviare la richiesta di amicizia in questo momento. Se una richiesta precedente è stata rifiutata, attendi la fine del periodo di attesa di 30 giorni.",
+		"status": {
+			"friends": "Amico",
+			"pending_sent": "Richiesta inviata",
+			"pending_received": "Vuole essere tuo amico"
 		}
 	},
 	"profile": {
@@ -524,7 +727,9 @@
 		"intro": "Gestisci le informazioni del tuo account.",
 		"changeAvatar": "Cambia foto profilo",
 		"language": "Lingua del profilo",
-		"languageHelp": "Lingua dell'interfaccia e delle ricette mostrate. Per ora è salvata solo su questo browser."
+		"languageHelp": "Lingua dell'interfaccia e delle ricette mostrate. Per ora è salvata solo su questo browser.",
+		"likesReceived_one": "{{count}} like ricevuto",
+		"likesReceived_other": "{{count}} like ricevuti"
 	},
 	"notifications": {
 		"title": "Notifiche",
@@ -564,7 +769,15 @@
 		"haveAccount": "Hai già un account?",
 		"showPassword": "Mostra password",
 		"confirmPassword": "Conferma password",
-		"passwordMismatch": "Le password non coincidono."
+		"passwordMismatch": "Le password non coincidono.",
+		"banned": {
+			"title": "Il tuo account è sospeso",
+			"titlePermanent": "Il tuo account è stato bannato definitivamente",
+			"reason": "Violazione",
+			"explanation": "Motivazione",
+			"until": "La sospensione termina il {{date}}.",
+			"permanent": "Questo ban è permanente."
+		}
 	},
 	"personal": {
 		"intro": "Questi dati sono facoltativi e restano visibili solo a te.",
@@ -602,5 +815,23 @@
 		"alreadyDisabled": "La 2FA è già disattivata.",
 		"passwordError": "Password non corretta.",
 		"codeError": "Codice non valido, riprova."
+	},
+	"block": {
+		"button": "Blocca utente",
+		"confirmTitle": "Bloccare {{name}}?",
+		"confirm": "Blocca",
+		"confirmFriends": "L'amicizia e le eventuali richieste di amicizia in sospeso tra voi verranno rimosse.",
+		"confirmHidden": "Non vedrete più a vicenda né il profilo né i commenti.",
+		"blocked": "{{name}} è stato bloccato.",
+		"error": "Operazione non riuscita.",
+		"title": "Utenti bloccati",
+		"intro": "Le persone che blocchi non vedono il tuo profilo né i tuoi commenti, e tu non vedi i loro.",
+		"empty": "Non hai bloccato nessuno.",
+		"loadError": "Impossibile caricare gli utenti bloccati.",
+		"blockedOn": "Bloccato il {{date}}",
+		"unblock": "Sblocca",
+		"confirmUnblock": "Sbloccare {{name}}?",
+		"unblockHelp": "Potrete di nuovo vedere a vicenda profilo e commenti. Le amicizie precedenti non vengono ripristinate.",
+		"unblocked": "{{name}} è stato sbloccato."
 	}
 }

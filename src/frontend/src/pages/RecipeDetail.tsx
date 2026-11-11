@@ -8,10 +8,17 @@ import { useLang } from '../lib/useLang'
 import Comments from '../components/Comments'
 import Avatar from '../components/Avatar'
 import { ReportButton } from '../components/ReportDialog'
-import { canDeleteRecipe, canEditRecipe, isAdmin as isAdminUser } from '../lib/permissions'
+import { canDeleteRecipe, canEditRecipe, isAdmin as isAdminUser, isStaff as isStaffUser } from '../lib/permissions'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { RecipeDetailSkeleton } from '../components/Skeleton'
 import { exportRecipePdf, formatQuantity, ingredientNote } from '../lib/recipePdf'
-import type { RecipeDetail as RecipeDetailType } from '../types/models'
+import type { RecipeDetail as RecipeDetailType, TranslationSource } from '../types/models'
+
+const PROVENANCE_STYLE: Record<TranslationSource, string> = {
+	author_original: 'border-[var(--wc-basil)] text-[var(--wc-basil)]',
+	manual: 'border-[var(--wc-saffron)] text-[var(--wc-saffron)]',
+	machine: 'border-[var(--wc-border)] text-[var(--wc-text-muted)]',
+}
 
 function InfoBox({ label, children }: { label: string; children: ReactNode }) {
 	return (
@@ -35,6 +42,8 @@ function RecipeDetail() {
 	const [deleting, setDeleting] = useState(false)
 	const [retrying, setRetrying] = useState(false)
 	const [exporting, setExporting] = useState(false)
+	const [reactivating, setReactivating] = useState(false)
+	const [confirmPurge, setConfirmPurge] = useState(false)
 
 	// si ricarica anche al cambio lingua dell'interfaccia: il backend restituisce i testi tradotti
 	useEffect(() => {
@@ -89,6 +98,34 @@ function RecipeDetail() {
 		}
 	}
 
+	// PATCH /recipes/:id { is_active: true }: solo moderatori e admin possono riattivare una ricetta sospesa
+	async function reactivate() {
+		if (!recipe) return
+		setReactivating(true)
+		try {
+			await api.patch(`/recipes/${recipe.id}`, { is_active: true })
+			setRecipe({ ...recipe, is_active: true })
+			toast.success(t('recipe.reactivated'))
+		} catch (err) {
+			toast.error(getErrorMessage(err, t('recipe.reactivateError')))
+		} finally {
+			setReactivating(false)
+		}
+	}
+
+	// DELETE /recipes/:id?hard=true: eliminazione definitiva, solo admin
+	async function purge() {
+		if (!recipe) return
+		try {
+			await api.delete(`/recipes/${recipe.id}${qs({ hard: 'true' })}`)
+			toast.success(t('recipe.purged'))
+			navigate('/admin')
+		} catch (err) {
+			toast.error(getErrorMessage(err, t('recipe.deleteError')))
+			setConfirmPurge(false)
+		}
+	}
+
 	async function retryTranslation() {
 		if (!recipe) return
 		setRetrying(true)
@@ -130,6 +167,9 @@ function RecipeDetail() {
 
 	const isOwner = Boolean(user && recipe.author && recipe.author.id === user.id)
 	const isAdmin = isAdminUser(user)
+	const isStaff = isStaffUser(user)
+	const suspended = recipe.is_active === false
+	const provenance = recipe.translation_source
 	// proprietario o admin modificano / eliminano; il moderatore elimina solo dalla coda segnalazioni
 	const canEdit = canEditRecipe(user, recipe.author?.id)
 	const canDelete = canDeleteRecipe(user, recipe.author?.id)
@@ -144,6 +184,26 @@ function RecipeDetail() {
 
 	return (
 		<div className="mx-auto max-w-3xl px-4 py-12">
+			{suspended && (
+				<div
+					role="alert"
+					className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-[var(--wc-paprika)] bg-[var(--wc-surface)] px-4 py-3 text-sm text-[var(--wc-text)]"
+				>
+					<span>
+						<span className="font-semibold text-[var(--wc-paprika)]">⚠ {t('recipe.suspendedTitle')}</span>{' '}
+						{t('recipe.suspendedText')}
+					</span>
+					{isStaff && (
+						<button
+							onClick={reactivate}
+							disabled={reactivating}
+							className="rounded-full bg-[var(--wc-basil)] px-4 py-1.5 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)] disabled:opacity-60"
+						>
+							{reactivating ? t('common.sending') : t('recipe.reactivate')}
+						</button>
+					)}
+				</div>
+			)}
 			{cover && (
 				<img src={cover} alt={recipe.title} className="mb-4 aspect-[16/9] w-full rounded-2xl object-cover" />
 			)}
@@ -216,7 +276,37 @@ function RecipeDetail() {
 				{' · '}
 				{t('recipe.writtenIn', { lang: t(`lang.${recipe.source_lang}`) })}
 				{translatedFromOtherLang && ` · ${t('recipe.shownIn', { lang: t(`lang.${recipe.resolved_lang}`) })}`}
+				{provenance && (
+					<span
+						className={`ml-2 inline-block rounded-full border px-2 py-0.5 align-middle text-[10px] uppercase tracking-wide ${PROVENANCE_STYLE[provenance]}`}
+						title={t(`recipe.provenance.${provenance}Help`)}
+					>
+						{t(`recipe.provenance.${provenance}`)}
+					</span>
+				)}
 			</p>
+			{provenance === 'machine' && recipe.translation_status !== 'failed' && (canManage || canEdit) && (
+				<div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--wc-text-muted)]">
+					<span>{t('recipe.provenance.machineActions')}</span>
+					{canManage && (
+						<button
+							onClick={retryTranslation}
+							disabled={retrying}
+							className="rounded-full border border-[var(--wc-border)] px-3 py-1 hover:border-[var(--wc-basil)] disabled:opacity-50"
+						>
+							{retrying ? t('common.sending') : t('recipe.retranslate')}
+						</button>
+					)}
+					{canEdit && (
+						<Link
+							to={`/my-recipes/${recipe.id}/edit`}
+							className="rounded-full border border-[var(--wc-border)] px-3 py-1 hover:border-[var(--wc-basil)]"
+						>
+							{t('recipe.suggestEdits')}
+						</Link>
+					)}
+				</div>
+			)}
 
 			{recipe.translation_status === 'failed' && (
 				<div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-[var(--wc-saffron)] px-4 py-3 text-sm text-[var(--wc-text)]">
@@ -254,6 +344,14 @@ function RecipeDetail() {
 				>
 					{isAdmin && !isOwner ? t('recipe.removeAdmin') : t('common.delete')}
 				</button>}
+				{isAdmin && (
+					<button
+						onClick={() => setConfirmPurge(true)}
+						className="rounded-full border border-[var(--wc-paprika)] px-4 py-1.5 text-sm font-medium text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)]"
+					>
+						{t('recipe.purge')}
+					</button>
+				)}
 				{!isOwner && (canManage || (user && author)) && (
 					<ReportButton targetType="recipe" targetId={recipe.id} ownerId={author?.id ?? null} />
 				)}
@@ -334,6 +432,18 @@ function RecipeDetail() {
 			)}
 
 			<Comments key={recipe.id} recipeId={recipe.id} recipeAuthorId={author?.id ?? null} />
+
+			{confirmPurge && (
+				<ConfirmDialog
+					title={t('recipe.purgeTitle')}
+					confirmLabel={t('recipe.purge')}
+					danger
+					onConfirm={purge}
+					onClose={() => setConfirmPurge(false)}
+				>
+					<p>{t('recipe.purgeText', { title: recipe.title })}</p>
+				</ConfirmDialog>
+			)}
 		</div>
 	)
 }

@@ -2,14 +2,14 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { api, getErrorMessage } from '../api/client'
-import type { ReportReason, ReportTarget } from '../types/models'
+import { api, ApiError, getErrorMessage } from '../api/client'
+import { REPORT_REASONS, type CreateReportDto, type ReportReason, type ReportSubject } from '../types/models'
 
-const REASONS: ReportReason[] = ['spam', 'offensive', 'inappropriate', 'copyright', 'other']
-const MAX_DETAILS = 500
+// CreateReportDto: description max 1000 caratteri
+const MAX_DESCRIPTION = 1000
 
 interface ReportDialogProps {
-	targetType: ReportTarget
+	targetType: ReportSubject
 	targetId: number
 	onClose: () => void
 }
@@ -17,25 +17,29 @@ interface ReportDialogProps {
 function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 	const { t } = useTranslation()
 	const toast = useToast()
-	const [reason, setReason] = useState<ReportReason>('inappropriate')
-	const [details, setDetails] = useState('')
+	// nessuna motivazione preselezionata: l'utente deve sceglierla esplicitamente
+	const [reason, setReason] = useState<ReportReason | null>(null)
+	const [description, setDescription] = useState('')
 	const [submitting, setSubmitting] = useState(false)
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
+		if (!reason) return
 		setSubmitting(true)
 		try {
-			// NB: endpoint da esporre lato backend: POST /reports { target_type, target_id, reason, details? }
-			await api.post('/reports', {
-				target_type: targetType,
+			// POST /api/reports (CreateReportDto)
+			const body: CreateReportDto = {
+				subject: targetType,
 				target_id: targetId,
 				reason,
-				...(details.trim() ? { details: details.trim() } : {}),
-			})
+				...(description.trim() ? { description: description.trim() } : {}),
+			}
+			await api.post('/reports', body)
 			toast.success(t('report.sent'))
 			onClose()
 		} catch (err) {
-			toast.error(getErrorMessage(err, t('report.error')))
+			// 409 = esiste già una segnalazione in attesa per questo contenuto
+			toast.error(err instanceof ApiError && err.status === 409 ? t('report.alreadyReported') : getErrorMessage(err, t('report.error')))
 			setSubmitting(false)
 		}
 	}
@@ -62,7 +66,7 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 
 				<fieldset className="space-y-2">
 					<legend className="mb-1 text-sm text-[var(--wc-text-muted)]">{t('report.reason')}</legend>
-					{REASONS.map((r) => (
+					{REPORT_REASONS.map((r) => (
 						<label key={r} className="flex cursor-pointer items-center gap-2 text-sm text-[var(--wc-text)]">
 							<input type="radio" name="reason" value={r} checked={reason === r} onChange={() => setReason(r)} />
 							{t(`report.reasons.${r}`)}
@@ -71,17 +75,20 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 				</fieldset>
 
 				<div>
-					<label htmlFor="report-details" className="mb-1 block text-sm text-[var(--wc-text-muted)]">
+					<label htmlFor="report-description" className="mb-1 block text-sm text-[var(--wc-text-muted)]">
 						{t('report.details')}
 					</label>
 					<textarea
-						id="report-details"
+						id="report-description"
 						rows={3}
-						maxLength={MAX_DETAILS}
-						value={details}
-						onChange={(e) => setDetails(e.target.value)}
+						maxLength={MAX_DESCRIPTION}
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
 						className="w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--wc-basil)]"
 					/>
+					<p className="mt-1 text-right text-xs text-[var(--wc-text-muted)]">
+						{description.length}/{MAX_DESCRIPTION}
+					</p>
 				</div>
 
 				<div className="flex justify-end gap-2">
@@ -94,7 +101,7 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 					</button>
 					<button
 						type="submit"
-						disabled={submitting}
+						disabled={submitting || !reason}
 						className="rounded-full bg-[var(--wc-paprika)] px-5 py-2 text-sm font-medium text-[var(--wc-bg)] disabled:opacity-60"
 					>
 						{submitting ? t('common.sending') : t('report.submit')}
@@ -106,7 +113,7 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 }
 
 interface ReportButtonProps {
-	targetType: ReportTarget
+	targetType: ReportSubject
 	targetId: number
 	// id del proprietario del contenuto: non si segnalano i propri contenuti
 	ownerId?: number | null
