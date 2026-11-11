@@ -6,12 +6,17 @@ import {
   ApiBadRequestResponse,
   ApiForbiddenResponse,
   ApiBearerAuth,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { Auth } from '../common/decorators/policies.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AdminCommentQueryDto } from './dto/admin-comment-query.dto';
-import { PaginatedAdminCommentsResponseDto } from './dto/admin-comment-response.dto';
+import {
+  PaginatedAdminCommentsResponseDto,
+  AdminCommentItemDto,
+  ThreadedAdminCommentItemDto,
+} from './dto/admin-comment-response.dto';
 import {
   ApiBadRequestResponseDto,
   ApiForbiddenResponseDto,
@@ -23,6 +28,7 @@ import {
  */
 @ApiTags('Admin Comments')
 @ApiBearerAuth('JWT')
+@ApiExtraModels(AdminCommentItemDto, ThreadedAdminCommentItemDto)
 @Auth()
 @Roles('admin', 'moderator')
 @Controller('admin/comments')

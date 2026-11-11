@@ -4215,97 +4215,11 @@
         "tags": [
           "Catalog"
         ]
-      },
-      "post": {
-        "description": "Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.",
-        "operationId": "CatalogController_createTag",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTagDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Tag created with all its translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagDetailResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid slug or translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can create catalog tags",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "A tag with this slug already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Create a curated tag",
-        "tags": [
-          "Catalog"
-        ]
       }
     },
     "/api/tags/{id}": {
       "get": {
-        "description": "Returns a single curated catalog tag by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.",
+        "description": "Returns a single curated catalog tag by its numeric ID, localized to the requested language (defaults to English if missing or unsupported). Public read access.",
         "operationId": "CatalogController_getTagById",
         "parameters": [
           {
@@ -4317,15 +4231,40 @@
               "example": 1,
               "type": "number"
             }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Single curated tag details with full translation map",
+            "description": "Single localized tag details",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TagDetailResponseDto"
+                  "$ref": "#/components/schemas/TagResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid language parameter (must be one of: it, en, fr)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -4352,179 +4291,6 @@
           }
         },
         "summary": "Get curated tag by ID",
-        "tags": [
-          "Catalog"
-        ]
-      },
-      "patch": {
-        "description": "Updates the Italian, English and French names of an existing tag. The slug is immutable. Restricted to administrators.",
-        "operationId": "CatalogController_updateTag",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTagDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Tag updated with all its translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagDetailResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can update catalog tags",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tag not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Update a curated tag",
-        "tags": [
-          "Catalog"
-        ]
-      },
-      "delete": {
-        "description": "Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.",
-        "operationId": "CatalogController_deleteTag",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tag deleted successfully"
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can delete catalog tags",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tag not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Tag is used by one or more recipes and cannot be deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Delete a curated tag",
         "tags": [
           "Catalog"
         ]
@@ -4621,97 +4387,11 @@
         "tags": [
           "Catalog"
         ]
-      },
-      "post": {
-        "description": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
-        "operationId": "CatalogController_createIngredient",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateIngredientDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Ingredient created with all its translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid slug, category or translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can create catalog ingredients",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "An ingredient with this slug already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Create a curated ingredient",
-        "tags": [
-          "Catalog"
-        ]
       }
     },
     "/api/ingredients/{id}": {
       "get": {
-        "description": "Returns a single curated catalog ingredient by its numeric ID, including complete translation maps across all supported locales (Italian, English, French). Public read access.",
+        "description": "Returns a single curated catalog ingredient by its numeric ID, localized to the requested language (defaults to English if missing or unsupported). Public read access.",
         "operationId": "CatalogController_getIngredientById",
         "parameters": [
           {
@@ -4723,15 +4403,40 @@
               "example": 12,
               "type": "number"
             }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Single curated ingredient details with full translation map",
+            "description": "Single localized ingredient details",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
+                  "$ref": "#/components/schemas/IngredientResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid category or language parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -4758,179 +4463,6 @@
           }
         },
         "summary": "Get curated ingredient by ID",
-        "tags": [
-          "Catalog"
-        ]
-      },
-      "delete": {
-        "description": "Deletes an ingredient from the catalog. Returns 409 if the ingredient is used by one or more recipes. Restricted to administrators.",
-        "operationId": "CatalogController_deleteIngredient",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ingredient deleted successfully"
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can delete catalog ingredients",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Ingredient not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Ingredient is used by one or more recipes and cannot be deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Delete a curated ingredient",
-        "tags": [
-          "Catalog"
-        ]
-      },
-      "patch": {
-        "description": "Updates the Italian, English and French names of an existing ingredient. The slug and category are immutable. Restricted to administrators.",
-        "operationId": "CatalogController_updateIngredient",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateIngredientDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Ingredient updated with all its translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can update catalog ingredients",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Ingredient not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          }
-        ],
-        "summary": "Update a curated ingredient",
         "tags": [
           "Catalog"
         ]
@@ -5394,6 +4926,21 @@
             "description": "Filter reports by target entity type",
             "schema": {
               "$ref": "#/components/schemas/ReportSubject"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Preferred language locale for recipe label localization",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
             }
           }
         ],
@@ -7598,6 +7145,638 @@
         "summary": "Administrative recipe stream (Admin and Moderator)",
         "tags": [
           "Admin Recipes"
+        ]
+      }
+    },
+    "/api/admin/catalog/ingredients/{id}": {
+      "get": {
+        "description": "Returns a single curated catalog ingredient by its numeric ID with complete translation maps across all supported locales (Italian, English, French). Restricted to administrators.",
+        "operationId": "AdminCatalogController_getIngredientById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique numeric ingredient ID",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single curated ingredient details with full translation map",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can inspect administrative catalog details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ingredient not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get curated ingredient detail by ID (admin)",
+        "tags": [
+          "Admin Catalog"
+        ]
+      },
+      "patch": {
+        "description": "Updates the Italian, English and French names of an existing ingredient. The slug and category are immutable. Restricted to administrators.",
+        "operationId": "AdminCatalogController_updateIngredient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique numeric ingredient ID",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIngredientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ingredient updated with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can update catalog ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ingredient not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update a curated ingredient",
+        "tags": [
+          "Admin Catalog"
+        ]
+      },
+      "delete": {
+        "description": "Deletes an ingredient from the catalog. Returns 409 if the ingredient is used by one or more recipes. Restricted to administrators.",
+        "operationId": "AdminCatalogController_deleteIngredient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique numeric ingredient ID",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ingredient deleted successfully"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can delete catalog ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ingredient not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ingredient is used by one or more recipes and cannot be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Delete a curated ingredient",
+        "tags": [
+          "Admin Catalog"
+        ]
+      }
+    },
+    "/api/admin/catalog/tags/{id}": {
+      "get": {
+        "description": "Returns a single curated catalog tag by its numeric ID with complete translation maps across all supported locales (Italian, English, French). Restricted to administrators.",
+        "operationId": "AdminCatalogController_getTagById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique numeric tag ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single curated tag details with full translation map",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDetailResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can inspect administrative catalog details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get curated tag detail by ID (admin)",
+        "tags": [
+          "Admin Catalog"
+        ]
+      },
+      "patch": {
+        "description": "Updates the Italian, English and French names of an existing tag. The slug is immutable. Restricted to administrators.",
+        "operationId": "AdminCatalogController_updateTag",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique numeric tag ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can update catalog tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update a curated tag",
+        "tags": [
+          "Admin Catalog"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a tag from the catalog. Returns 409 if the tag is used by one or more recipes. Restricted to administrators.",
+        "operationId": "AdminCatalogController_deleteTag",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique numeric tag ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag deleted successfully"
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can delete catalog tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Tag is used by one or more recipes and cannot be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Delete a curated tag",
+        "tags": [
+          "Admin Catalog"
+        ]
+      }
+    },
+    "/api/admin/catalog/ingredients": {
+      "post": {
+        "description": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
+        "operationId": "AdminCatalogController_createIngredient",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIngredientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ingredient created with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid slug, category or translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can create catalog ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An ingredient with this slug already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Create a curated ingredient",
+        "tags": [
+          "Admin Catalog"
+        ]
+      }
+    },
+    "/api/admin/catalog/tags": {
+      "post": {
+        "description": "Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.",
+        "operationId": "AdminCatalogController_createTag",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tag created with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid slug or translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can create catalog tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A tag with this slug already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Create a curated tag",
+        "tags": [
+          "Admin Catalog"
         ]
       }
     },
@@ -10748,62 +10927,6 @@
           "resolved_lang"
         ]
       },
-      "TranslationDto": {
-        "type": "object",
-        "properties": {
-          "it": {
-            "type": "string",
-            "description": "Italian display name",
-            "example": "Pomodoro",
-            "maxLength": 100
-          },
-          "en": {
-            "type": "string",
-            "description": "English display name",
-            "example": "Tomato",
-            "maxLength": 100
-          },
-          "fr": {
-            "type": "string",
-            "description": "French display name",
-            "example": "Tomate",
-            "maxLength": 100
-          }
-        },
-        "required": [
-          "it",
-          "en",
-          "fr"
-        ]
-      },
-      "TagDetailResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique tag identifier",
-            "example": 1
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical tag slug",
-            "example": "gluten_free"
-          },
-          "translations": {
-            "description": "Tag display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "translations"
-        ]
-      },
       "IngredientResponseDto": {
         "type": "object",
         "properties": {
@@ -10855,148 +10978,6 @@
           "category",
           "name",
           "resolved_lang"
-        ]
-      },
-      "IngredientDetailResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique ingredient catalog identifier",
-            "example": 12
-          },
-          "slug": {
-            "type": "string",
-            "description": "Canonical ingredient slug",
-            "example": "bell_pepper"
-          },
-          "category": {
-            "description": "Ingredient culinary category",
-            "example": "produce",
-            "enum": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ],
-            "type": "string"
-          },
-          "translations": {
-            "description": "Ingredient display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "category",
-          "translations"
-        ]
-      },
-      "CreateIngredientDto": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Unique canonical slug (lowercase letters, digits, underscores)",
-            "example": "bell_pepper",
-            "maxLength": 100,
-            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
-          },
-          "category": {
-            "description": "Ingredient culinary category",
-            "example": "produce",
-            "enum": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ],
-            "type": "string"
-          },
-          "translations": {
-            "description": "Ingredient display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "slug",
-          "category",
-          "translations"
-        ]
-      },
-      "CreateTagDto": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Unique canonical slug (lowercase letters, digits, underscores)",
-            "example": "gluten_free",
-            "maxLength": 50,
-            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
-          },
-          "translations": {
-            "description": "Tag display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "slug",
-          "translations"
-        ]
-      },
-      "UpdateTagDto": {
-        "type": "object",
-        "properties": {
-          "translations": {
-            "description": "Tag display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "translations"
-        ]
-      },
-      "UpdateIngredientDto": {
-        "type": "object",
-        "properties": {
-          "translations": {
-            "description": "Ingredient display name in Italian, English and French",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/TranslationDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "translations"
         ]
       },
       "NotificationActorDto": {
@@ -11301,6 +11282,12 @@
             "type": "string",
             "description": "Username of the content owner",
             "example": "chef_luigi"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar image URL of the content owner",
+            "example": "/uploads/avatars/avatar_10.webp"
           }
         },
         "required": [
@@ -12381,14 +12368,159 @@
           "recipe"
         ]
       },
+      "ThreadedAdminCommentItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique comment ID",
+            "example": 1
+          },
+          "recipe_id": {
+            "type": "number",
+            "description": "Recipe ID",
+            "example": 42
+          },
+          "user_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Author user ID, or null if deleted/deactivated",
+            "example": 10
+          },
+          "parent_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "Parent root comment ID if reply, or null for top-level root comment",
+            "example": null
+          },
+          "content": {
+            "type": "string",
+            "description": "Comment content text in authentic author-composed language",
+            "example": "Ottima ricetta!"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the comment is active or deactivated",
+            "example": true
+          },
+          "is_edited": {
+            "type": "boolean",
+            "description": "Whether the comment was edited after posting",
+            "example": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-10-13T10:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "description": "Last update timestamp, or null if never edited",
+            "example": "2026-10-15T11:00:00.000Z"
+          },
+          "reports_count": {
+            "type": "number",
+            "description": "Total number of moderation reports filed against this comment",
+            "example": 3
+          },
+          "pending_reports_count": {
+            "type": "number",
+            "description": "Number of active pending moderation reports filed against this comment",
+            "example": 1
+          },
+          "has_pending_reports": {
+            "type": "boolean",
+            "description": "Whether this comment currently has at least one active pending moderation report",
+            "example": true
+          },
+          "user": {
+            "nullable": true,
+            "description": "Author profile summary",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          },
+          "recipe": {
+            "nullable": true,
+            "description": "Recipe summary metadata",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminCommentRecipeSummaryDto"
+              }
+            ]
+          },
+          "replies_count": {
+            "type": "number",
+            "description": "Total number of child replies belonging to this root thread",
+            "example": 12
+          },
+          "reported_replies_count": {
+            "type": "number",
+            "description": "Total number of child replies in this thread that have active pending reports",
+            "example": 2
+          },
+          "thread_pending_reports_count": {
+            "type": "number",
+            "description": "Cumulative pending report count across the root comment and all child replies",
+            "example": 3
+          },
+          "has_more_replies": {
+            "type": "boolean",
+            "description": "Indicates whether more replies exist beyond the embedded preview window",
+            "example": true
+          },
+          "replies": {
+            "description": "Windowed preview of recent child replies (up to replies_limit)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCommentItemDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "recipe_id",
+          "user_id",
+          "parent_id",
+          "content",
+          "is_active",
+          "is_edited",
+          "created_at",
+          "updated_at",
+          "reports_count",
+          "pending_reports_count",
+          "has_pending_reports",
+          "user",
+          "recipe",
+          "replies_count",
+          "reported_replies_count",
+          "thread_pending_reports_count",
+          "has_more_replies",
+          "replies"
+        ]
+      },
       "PaginatedAdminCommentsResponseDto": {
         "type": "object",
         "properties": {
           "items": {
-            "description": "Comment items (flat comment records or threaded root comments with windowed replies)",
             "type": "array",
+            "description": "Comment items (flat comment records or threaded root comments with windowed replies)",
             "items": {
-              "$ref": "#/components/schemas/AdminCommentItemDto"
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AdminCommentItemDto"
+                },
+                {
+                  "$ref": "#/components/schemas/ThreadedAdminCommentItemDto"
+                }
+              ]
             }
           },
           "total": {
@@ -12430,6 +12562,204 @@
           "total_pages",
           "has_next_page",
           "has_prev_page"
+        ]
+      },
+      "TranslationDto": {
+        "type": "object",
+        "properties": {
+          "it": {
+            "type": "string",
+            "description": "Italian display name",
+            "example": "Pomodoro",
+            "maxLength": 100
+          },
+          "en": {
+            "type": "string",
+            "description": "English display name",
+            "example": "Tomato",
+            "maxLength": 100
+          },
+          "fr": {
+            "type": "string",
+            "description": "French display name",
+            "example": "Tomate",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "it",
+          "en",
+          "fr"
+        ]
+      },
+      "IngredientDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique ingredient catalog identifier",
+            "example": 12
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical ingredient slug",
+            "example": "bell_pepper"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "produce",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "translations": {
+            "description": "Ingredient display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "category",
+          "translations"
+        ]
+      },
+      "TagDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique tag identifier",
+            "example": 1
+          },
+          "slug": {
+            "type": "string",
+            "description": "Canonical tag slug",
+            "example": "gluten_free"
+          },
+          "translations": {
+            "description": "Tag display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "translations"
+        ]
+      },
+      "CreateIngredientDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Unique canonical slug (lowercase letters, digits, underscores)",
+            "example": "bell_pepper",
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+          },
+          "category": {
+            "description": "Ingredient culinary category",
+            "example": "produce",
+            "enum": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
+            "type": "string"
+          },
+          "translations": {
+            "description": "Ingredient display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "slug",
+          "category",
+          "translations"
+        ]
+      },
+      "UpdateIngredientDto": {
+        "type": "object",
+        "properties": {
+          "translations": {
+            "description": "Ingredient display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "translations"
+        ]
+      },
+      "CreateTagDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Unique canonical slug (lowercase letters, digits, underscores)",
+            "example": "gluten_free",
+            "maxLength": 50,
+            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+          },
+          "translations": {
+            "description": "Tag display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "slug",
+          "translations"
+        ]
+      },
+      "UpdateTagDto": {
+        "type": "object",
+        "properties": {
+          "translations": {
+            "description": "Tag display name in Italian, English and French",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranslationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "translations"
         ]
       }
     }

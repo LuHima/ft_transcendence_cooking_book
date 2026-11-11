@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { ReportStatus, ReportSubject } from '@prisma/client';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { SupportedLocale } from 'src/common/dto/locale-query.dto';
+import type { SupportedLocale } from 'src/common/dto/locale-query.dto';
 
 /**
  * Query filters for the administrative moderation reports queue.

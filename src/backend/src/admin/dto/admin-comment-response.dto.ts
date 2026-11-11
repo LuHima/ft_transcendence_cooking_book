@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { RecipeAuthorSummaryDto } from '../../recipe/dto/localized-recipe.response';
 
 /**
@@ -157,9 +157,15 @@ export class ThreadedAdminCommentItemDto extends AdminCommentItemDto {
  */
 export class PaginatedAdminCommentsResponseDto {
   @ApiProperty({
-    type: [AdminCommentItemDto],
     description:
       'Comment items (flat comment records or threaded root comments with windowed replies)',
+    type: 'array',
+    items: {
+      oneOf: [
+        { $ref: getSchemaPath(AdminCommentItemDto) },
+        { $ref: getSchemaPath(ThreadedAdminCommentItemDto) },
+      ],
+    },
   })
   items: (AdminCommentItemDto | ThreadedAdminCommentItemDto)[];
 
