@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   HttpException,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
   UnauthorizedException,
@@ -53,6 +54,45 @@ export class UsersService {
     @Optional()
     private readonly imageProcessingService?: ImageProcessingService,
   ) {}
+
+  private readonly logger = new Logger(UsersService.name);
+
+  public logAudit(
+    event:
+      | 'ADMIN_PRIVATE_PROFILE_INSPECT'
+      | 'MODERATOR_PRIVATE_PROFILE_INSPECT'
+      | 'ADMIN_PRIVATE_PROFILE_COOKBOOK_INSPECT',
+    details: { userId?: number; targetUserId: number },
+  ): void {
+    this.logger.log(
+      `[${event}] Staff user #${details.userId} inspected private user profile or cookbook #${details.targetUserId}`,
+    );
+  }
+
+  private async resolveCaller(
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
+  ): Promise<{ currentUserId?: number; currentUserRole?: Role | string }> {
+    const currentUserId =
+      typeof currentUserOrId === 'number'
+        ? currentUserOrId
+        : currentUserOrId?.id;
+    let currentUserRole =
+      roleOverride ??
+      (typeof currentUserOrId === 'object'
+        ? currentUserOrId?.role
+        : undefined);
+
+    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { role: true },
+      });
+      currentUserRole = caller?.role;
+    }
+
+    return { currentUserId, currentUserRole };
+  }
 
   async getUserByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
@@ -270,15 +310,10 @@ export class UsersService {
     currentUserOrId?: number | { id: number; role?: Role | string },
     roleOverride?: Role | string,
   ): Promise<PublicUserResponseDto> {
-    const currentUserId =
-      typeof currentUserOrId === 'number'
-        ? currentUserOrId
-        : currentUserOrId?.id;
-    let currentUserRole =
-      roleOverride ??
-      (typeof currentUserOrId === 'object'
-        ? currentUserOrId?.role
-        : undefined);
+    const { currentUserId, currentUserRole } = await this.resolveCaller(
+      currentUserOrId,
+      roleOverride,
+    );
 
     if (currentUserId) {
       const blockedIds = await this.getBlockedUserIds(currentUserId);
@@ -298,6 +333,10 @@ export class UsersService {
         username: true,
         first_name: true,
         last_name: true,
+        email: true,
+        phone: true,
+        city: true,
+        birth_date: true,
         avatar_url: true,
         bio: true,
         profile_privacy: true,
@@ -305,14 +344,6 @@ export class UsersService {
       },
     });
     if (!user) throw new NotFoundException('User not found');
-
-    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
-      const caller = await this.prisma.user.findUnique({
-        where: { id: currentUserId },
-        select: { role: true },
-      });
-      currentUserRole = caller?.role;
-    }
 
     const [recipesCount, friendsCount, totalLikesReceived] = await Promise.all([
       this.prisma.recipe.count({
@@ -361,8 +392,9 @@ export class UsersService {
 
     const isSelf = currentUserId === id;
     const isFriend = friendship_status === 'friends';
-    const isStaff =
-      currentUserRole === Role.admin || currentUserRole === Role.moderator;
+    const isAdmin = currentUserRole === Role.admin;
+    const isModerator = currentUserRole === Role.moderator;
+    const isStaff = isAdmin || isModerator;
 
     const profilePrivacy = user.profile_privacy ?? ProfilePrivacy.public;
 
@@ -374,17 +406,37 @@ export class UsersService {
     } else if (profilePrivacy === ProfilePrivacy.private) {
       if (!isSelf && !isStaff) {
         shouldDegrade = true;
+      } else if (isStaff && !isSelf) {
+        if (isAdmin) {
+          this.logAudit('ADMIN_PRIVATE_PROFILE_INSPECT', {
+            userId: currentUserId,
+            targetUserId: id,
+          });
+        } else if (isModerator) {
+          this.logAudit('MODERATOR_PRIVATE_PROFILE_INSPECT', {
+            userId: currentUserId,
+            targetUserId: id,
+          });
+        }
       }
     }
 
     const first_name = shouldDegrade ? null : user.first_name;
     const last_name = shouldDegrade ? null : user.last_name;
+    const email = shouldDegrade ? null : user.email;
+    const phone = shouldDegrade ? null : user.phone;
+    const city = shouldDegrade ? null : user.city;
+    const birth_date = shouldDegrade ? null : user.birth_date;
 
     return {
       id: user.id,
       username: user.username,
       first_name,
       last_name,
+      email,
+      phone,
+      city,
+      birth_date,
       avatar_url: user.avatar_url,
       bio: user.bio,
       profile_privacy: profilePrivacy,
@@ -402,15 +454,10 @@ export class UsersService {
     currentUserOrId?: number | { id: number; role?: Role | string },
     roleOverride?: Role | string,
   ): Promise<PaginatedFriendsResponseDto> {
-    const currentUserId =
-      typeof currentUserOrId === 'number'
-        ? currentUserOrId
-        : currentUserOrId?.id;
-    let currentUserRole =
-      roleOverride ??
-      (typeof currentUserOrId === 'object'
-        ? currentUserOrId?.role
-        : undefined);
+    const { currentUserId, currentUserRole } = await this.resolveCaller(
+      currentUserOrId,
+      roleOverride,
+    );
 
     if (currentUserId) {
       const blockedIds = await this.getBlockedUserIds(currentUserId);
@@ -425,14 +472,6 @@ export class UsersService {
     });
     if (!targetUser) {
       throw new NotFoundException('User not found');
-    }
-
-    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
-      const caller = await this.prisma.user.findUnique({
-        where: { id: currentUserId },
-        select: { role: true },
-      });
-      currentUserRole = caller?.role;
     }
 
     const isSelf = currentUserId === targetUserId;
@@ -944,15 +983,10 @@ export class UsersService {
     currentUserOrId?: number | { id: number; role?: Role | string },
     roleOverride?: Role | string,
   ): Promise<PaginatedRecipeResponseDto> {
-    const currentUserId =
-      typeof currentUserOrId === 'number'
-        ? currentUserOrId
-        : currentUserOrId?.id;
-    let currentUserRole =
-      roleOverride ??
-      (typeof currentUserOrId === 'object'
-        ? currentUserOrId?.role
-        : undefined);
+    const { currentUserId, currentUserRole } = await this.resolveCaller(
+      currentUserOrId,
+      roleOverride,
+    );
 
     if (currentUserId) {
       const blockedIds = await this.getBlockedUserIds(currentUserId);
@@ -969,17 +1003,10 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
-      const caller = await this.prisma.user.findUnique({
-        where: { id: currentUserId },
-        select: { role: true },
-      });
-      currentUserRole = caller?.role;
-    }
-
     const isSelf = currentUserId === targetUserId;
-    const isStaff =
-      currentUserRole === Role.admin || currentUserRole === Role.moderator;
+    const isAdmin = currentUserRole === Role.admin;
+    const isModerator = currentUserRole === Role.moderator;
+    const isStaff = isAdmin || isModerator;
 
     let isFriend = false;
     if (currentUserId && !isSelf && !isStaff) {
@@ -1012,7 +1039,7 @@ export class UsersService {
         });
       }
     } else if (profilePrivacy === ProfilePrivacy.private) {
-      if (!isSelf && !isStaff) {
+      if (!isSelf && !isAdmin) {
         if (!currentUserId) {
           throw new UnauthorizedException('Unauthorized');
         }
@@ -1021,6 +1048,13 @@ export class UsersService {
           error: 'Forbidden',
           code: 'PROFILE_COOKBOOK_RESTRICTED',
           message: "This user's recipe collection is private.",
+        });
+      }
+
+      if (isAdmin && !isSelf) {
+        this.logAudit('ADMIN_PRIVATE_PROFILE_COOKBOOK_INSPECT', {
+          userId: currentUserId,
+          targetUserId,
         });
       }
     }

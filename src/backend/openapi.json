@@ -8773,6 +8773,31 @@
               "private"
             ],
             "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Account email address (masked to null on degraded profile)",
+            "example": "mario.rossi@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "User telephone number (masked to null on degraded profile)",
+            "example": "+39021234567"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "description": "City of residence (masked to null on degraded profile)",
+            "example": "Milano"
+          },
+          "birth_date": {
+            "type": "string",
+            "nullable": true,
+            "description": "User date of birth (masked to null on degraded profile)",
+            "example": "1995-03-15",
+            "format": "date"
           }
         },
         "required": [

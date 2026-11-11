@@ -302,6 +302,55 @@ export class PublicUserResponseDto {
     example: ProfilePrivacy.public,
   })
   profile_privacy: ProfilePrivacy;
+
+  /**
+   * Account email address (masked to null on degraded profile).
+   * @example 'mario.rossi@example.com'
+   */
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Account email address (masked to null on degraded profile)',
+    example: 'mario.rossi@example.com',
+    nullable: true,
+  })
+  email?: string | null;
+
+  /**
+   * User telephone number (masked to null on degraded profile).
+   * @example '+39021234567'
+   */
+  @ApiPropertyOptional({
+    type: String,
+    description: 'User telephone number (masked to null on degraded profile)',
+    example: '+39021234567',
+    nullable: true,
+  })
+  phone?: string | null;
+
+  /**
+   * City of residence (masked to null on degraded profile).
+   * @example 'Milano'
+   */
+  @ApiPropertyOptional({
+    type: String,
+    description: 'City of residence (masked to null on degraded profile)',
+    example: 'Milano',
+    nullable: true,
+  })
+  city?: string | null;
+
+  /**
+   * User date of birth (masked to null on degraded profile).
+   * @example '1995-03-15'
+   */
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date',
+    description: 'User date of birth (masked to null on degraded profile)',
+    example: '1995-03-15',
+    nullable: true,
+  })
+  birth_date?: Date | null;
 }
 
 /**

@@ -903,6 +903,10 @@ describe('UsersService', () => {
       username: 'giulia',
       first_name: 'Giulia',
       last_name: 'Bianchi',
+      email: 'giulia@example.com',
+      phone: '+39021234567',
+      city: 'Milano',
+      birth_date: new Date('1995-03-15'),
       avatar_url: 'https://example.com/avatar.jpg',
       bio: 'Passionate Italian home cook specializing in pasta.',
       created_at: new Date('2026-09-01T10:00:00Z'),
@@ -921,6 +925,10 @@ describe('UsersService', () => {
         username: 'giulia',
         first_name: 'Giulia',
         last_name: 'Bianchi',
+        email: 'giulia@example.com',
+        phone: '+39021234567',
+        city: 'Milano',
+        birth_date: new Date('1995-03-15'),
         avatar_url: 'https://example.com/avatar.jpg',
         bio: 'Passionate Italian home cook specializing in pasta.',
         profile_privacy: 'public',
@@ -942,6 +950,10 @@ describe('UsersService', () => {
           username: true,
           first_name: true,
           last_name: true,
+          email: true,
+          phone: true,
+          city: true,
+          birth_date: true,
           avatar_url: true,
           bio: true,
           profile_privacy: true,
@@ -1075,6 +1087,10 @@ describe('UsersService', () => {
       username: 'giulia_chef',
       first_name: 'Giulia',
       last_name: 'Bianchi',
+      email: 'giulia@example.com',
+      phone: '+39021234567',
+      city: 'Milano',
+      birth_date: new Date('1995-03-15'),
       avatar_url: '/uploads/avatars/giulia.webp',
       bio: 'Culinary enthusiast',
       created_at: new Date('2026-09-01T10:00:00Z'),
@@ -1571,13 +1587,17 @@ describe('UsersService', () => {
 
   describe('Profile Privacy Controls and Sub-Resources (#145)', () => {
     describe('degraded profiles on getUser', () => {
-      it('masks first_name and last_name for guest when profile is friends_only', async () => {
+      it('masks sensitive fields for guest when profile is friends_only', async () => {
         (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.user.findFirst as jest.Mock).mockResolvedValue({
           id: 2,
           username: 'privateer',
           first_name: 'John',
           last_name: 'Doe',
+          email: 'john.doe@example.com',
+          phone: '+39021234567',
+          city: 'Milano',
+          birth_date: new Date('1990-01-01'),
           avatar_url: '/avatar.jpg',
           bio: 'Secret cook',
           profile_privacy: ProfilePrivacy.friends_only,
@@ -1590,17 +1610,25 @@ describe('UsersService', () => {
         const result = await service.getUser(2);
         expect(result.first_name).toBeNull();
         expect(result.last_name).toBeNull();
+        expect(result.email).toBeNull();
+        expect(result.phone).toBeNull();
+        expect(result.city).toBeNull();
+        expect(result.birth_date).toBeNull();
         expect(result.username).toBe('privateer');
         expect(result.profile_privacy).toBe(ProfilePrivacy.friends_only);
       });
 
-      it('masks first_name and last_name for authenticated non-friend when profile is friends_only', async () => {
+      it('masks sensitive fields for authenticated non-friend when profile is friends_only', async () => {
         (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.user.findFirst as jest.Mock).mockResolvedValue({
           id: 2,
           username: 'privateer',
           first_name: 'John',
           last_name: 'Doe',
+          email: 'john.doe@example.com',
+          phone: '+39021234567',
+          city: 'Milano',
+          birth_date: new Date('1990-01-01'),
           avatar_url: '/avatar.jpg',
           bio: 'Secret cook',
           profile_privacy: ProfilePrivacy.friends_only,
@@ -1614,15 +1642,23 @@ describe('UsersService', () => {
         const result = await service.getUser(2, { id: 3, role: Role.user });
         expect(result.first_name).toBeNull();
         expect(result.last_name).toBeNull();
+        expect(result.email).toBeNull();
+        expect(result.phone).toBeNull();
+        expect(result.city).toBeNull();
+        expect(result.birth_date).toBeNull();
       });
 
-      it('returns intact first_name and last_name for confirmed friends when profile is friends_only', async () => {
+      it('returns intact sensitive fields for confirmed friends when profile is friends_only', async () => {
         (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.user.findFirst as jest.Mock).mockResolvedValue({
           id: 2,
           username: 'privateer',
           first_name: 'John',
           last_name: 'Doe',
+          email: 'john.doe@example.com',
+          phone: '+39021234567',
+          city: 'Milano',
+          birth_date: new Date('1990-01-01'),
           avatar_url: '/avatar.jpg',
           bio: 'Secret cook',
           profile_privacy: ProfilePrivacy.friends_only,
@@ -1641,15 +1677,24 @@ describe('UsersService', () => {
         const result = await service.getUser(2, { id: 3, role: Role.user });
         expect(result.first_name).toBe('John');
         expect(result.last_name).toBe('Doe');
+        expect(result.email).toBe('john.doe@example.com');
+        expect(result.phone).toBe('+39021234567');
+        expect(result.city).toBe('Milano');
+        expect(result.birth_date).toEqual(new Date('1990-01-01'));
       });
 
-      it('returns intact first_name and last_name for staff when profile is private', async () => {
+      it('returns intact sensitive fields for moderator when profile is private and records audit log', async () => {
+        const logAuditSpy = jest.spyOn(service, 'logAudit');
         (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.user.findFirst as jest.Mock).mockResolvedValue({
           id: 2,
           username: 'superprivate',
           first_name: 'Alice',
           last_name: 'Wonder',
+          email: 'alice@example.com',
+          phone: '+39029876543',
+          city: 'Torino',
+          birth_date: new Date('1992-05-20'),
           avatar_url: '/avatar.jpg',
           bio: 'Top secret',
           profile_privacy: ProfilePrivacy.private,
@@ -1662,6 +1707,48 @@ describe('UsersService', () => {
         const result = await service.getUser(2, { id: 99, role: Role.moderator });
         expect(result.first_name).toBe('Alice');
         expect(result.last_name).toBe('Wonder');
+        expect(result.email).toBe('alice@example.com');
+        expect(result.phone).toBe('+39029876543');
+        expect(result.city).toBe('Torino');
+        expect(result.birth_date).toEqual(new Date('1992-05-20'));
+        expect(logAuditSpy).toHaveBeenCalledWith('MODERATOR_PRIVATE_PROFILE_INSPECT', {
+          userId: 99,
+          targetUserId: 2,
+        });
+      });
+
+      it('returns intact sensitive fields for admin when profile is private and records audit log', async () => {
+        const logAuditSpy = jest.spyOn(service, 'logAudit');
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          username: 'superprivate',
+          first_name: 'Alice',
+          last_name: 'Wonder',
+          email: 'alice@example.com',
+          phone: '+39029876543',
+          city: 'Torino',
+          birth_date: new Date('1992-05-20'),
+          avatar_url: '/avatar.jpg',
+          bio: 'Top secret',
+          profile_privacy: ProfilePrivacy.private,
+          created_at: new Date('2026-01-01'),
+        });
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(1);
+        (prisma.friendship.count as jest.Mock).mockResolvedValue(0);
+        (prisma.like.count as jest.Mock).mockResolvedValue(0);
+
+        const result = await service.getUser(2, { id: 1, role: Role.admin });
+        expect(result.first_name).toBe('Alice');
+        expect(result.last_name).toBe('Wonder');
+        expect(result.email).toBe('alice@example.com');
+        expect(result.phone).toBe('+39029876543');
+        expect(result.city).toBe('Torino');
+        expect(result.birth_date).toEqual(new Date('1992-05-20'));
+        expect(logAuditSpy).toHaveBeenCalledWith('ADMIN_PRIVATE_PROFILE_INSPECT', {
+          userId: 1,
+          targetUserId: 2,
+        });
       });
 
       it('returns intact first_name and last_name for author inspecting self', async () => {
@@ -1671,6 +1758,10 @@ describe('UsersService', () => {
           username: 'superprivate',
           first_name: 'Alice',
           last_name: 'Wonder',
+          email: 'alice@example.com',
+          phone: '+39029876543',
+          city: 'Torino',
+          birth_date: new Date('1992-05-20'),
           avatar_url: '/avatar.jpg',
           bio: 'Top secret',
           profile_privacy: ProfilePrivacy.private,
@@ -1683,6 +1774,10 @@ describe('UsersService', () => {
         const result = await service.getUser(2, { id: 2, role: Role.user });
         expect(result.first_name).toBe('Alice');
         expect(result.last_name).toBe('Wonder');
+        expect(result.email).toBe('alice@example.com');
+        expect(result.phone).toBe('+39029876543');
+        expect(result.city).toBe('Torino');
+        expect(result.birth_date).toEqual(new Date('1992-05-20'));
       });
     });
 
@@ -1719,6 +1814,54 @@ describe('UsersService', () => {
             message: "This user's recipe collection is private.",
           });
         }
+      });
+
+      it('throws 403 Forbidden with PROFILE_COOKBOOK_RESTRICTED for moderator when profile is private', async () => {
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.private,
+        });
+
+        try {
+          await service.getUserPublicRecipes(2, undefined, { id: 99, role: Role.moderator });
+          fail('Should have thrown ForbiddenException');
+        } catch (err: any) {
+          expect(err).toBeInstanceOf(ForbiddenException);
+          expect(err.getResponse()).toEqual({
+            statusCode: 403,
+            error: 'Forbidden',
+            code: 'PROFILE_COOKBOOK_RESTRICTED',
+            message: "This user's recipe collection is private.",
+          });
+        }
+      });
+
+      it('returns public and friends_only recipes to admin on private profile and records audit log', async () => {
+        const logAuditSpy = jest.spyOn(service, 'logAudit');
+        (prisma.userBlock.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+          id: 2,
+          profile_privacy: ProfilePrivacy.private,
+        });
+        (prisma.recipe.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.recipe.count as jest.Mock).mockResolvedValue(0);
+
+        await service.getUserPublicRecipes(2, undefined, { id: 1, role: Role.admin });
+        expect(prisma.recipe.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: {
+              user_id: 2,
+              owner_type: OwnerType.user,
+              is_active: true,
+              privacy: { in: [RecipePrivacy.public, RecipePrivacy.friends_only] },
+            },
+          }),
+        );
+        expect(logAuditSpy).toHaveBeenCalledWith('ADMIN_PRIVATE_PROFILE_COOKBOOK_INSPECT', {
+          userId: 1,
+          targetUserId: 2,
+        });
       });
 
       it('returns public and friends_only recipes to confirmed friend', async () => {

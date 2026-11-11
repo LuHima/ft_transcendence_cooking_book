@@ -80,6 +80,31 @@ export class RecipeService {
     );
   }
 
+  private async resolveCaller(
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
+  ): Promise<{ currentUserId?: number; currentUserRole?: Role | string }> {
+    const currentUserId =
+      typeof currentUserOrId === 'number'
+        ? currentUserOrId
+        : currentUserOrId?.id;
+    let currentUserRole =
+      roleOverride ??
+      (typeof currentUserOrId === 'object'
+        ? currentUserOrId?.role
+        : undefined);
+
+    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { role: true },
+      });
+      currentUserRole = caller?.role;
+    }
+
+    return { currentUserId, currentUserRole };
+  }
+
   // ---------------------------------------------------------------------------
 
   private buildRecipeWhere(
@@ -586,23 +611,10 @@ export class RecipeService {
     currentUserOrId?: number | { id: number; role?: Role | string },
     roleOverride?: Role | string,
   ): Promise<LocalizedRecipeDetailResponse> {
-    const currentUserId =
-      typeof currentUserOrId === 'number'
-        ? currentUserOrId
-        : currentUserOrId?.id;
-    let currentUserRole =
-      roleOverride ??
-      (typeof currentUserOrId === 'object'
-        ? currentUserOrId?.role
-        : undefined);
-
-    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
-      const caller = await this.prisma.user.findUnique({
-        where: { id: currentUserId },
-        select: { role: true },
-      });
-      currentUserRole = caller?.role;
-    }
+    const { currentUserId, currentUserRole } = await this.resolveCaller(
+      currentUserOrId,
+      roleOverride,
+    );
 
     // Fetch the recipe from database, joining it with its translations
     const recipe: any = await this.prisma.recipe.findUnique({

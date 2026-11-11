@@ -39,13 +39,6 @@ export class RecipeStackItemDto {
   })
   total_time: number;
 
-  @ApiProperty({
-    enum: RecipePrivacy,
-    description: 'Recipe privacy visibility tier',
-    example: RecipePrivacy.public,
-  })
-  privacy: RecipePrivacy;
-
   @ApiProperty({ description: 'Servings yielded', example: 4 })
   servings: number;
 
