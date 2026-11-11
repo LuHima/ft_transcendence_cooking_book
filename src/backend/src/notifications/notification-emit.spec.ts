@@ -96,13 +96,21 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 2,
         message: 'Mario posted a new recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 100 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 100,
+          recipe_id: 100,
+        },
       });
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 3,
         message: 'Mario posted a new recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 100 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 100,
+          recipe_id: 100,
+        },
       });
     });
 
@@ -122,7 +130,11 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 2,
         message: 'Mario update a recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 50 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 50,
+          recipe_id: 50,
+        },
       });
     });
 
@@ -175,7 +187,11 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 99,
         message: 'Mario liked your recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 10 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 10,
+          recipe_id: 10,
+        },
       });
     });
 
@@ -183,6 +199,7 @@ describe('NotificationEmit', () => {
       (prisma.comment.findUnique as jest.Mock<any>).mockResolvedValue({
         id: 25,
         user_id: 77,
+        recipe_id: 12,
       });
 
       await service.notification(
@@ -195,13 +212,17 @@ describe('NotificationEmit', () => {
 
       expect(prisma.comment.findUnique).toHaveBeenCalledWith({
         where: { id: 25 },
-        select: { user_id: true },
+        select: { user_id: true, recipe_id: true },
       });
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 77,
         message: 'Mario replied to your comment',
-        target: { subject: NotificationSubject.comment, idTarget: 25 },
+        target: {
+          subject: NotificationSubject.comment,
+          idTarget: 25,
+          recipe_id: 12,
+        },
       });
     });
 
@@ -227,7 +248,11 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 42,
         message: 'Mario sent you a friend request',
-        target: { subject: NotificationSubject.user, idTarget: 42 },
+        target: {
+          subject: NotificationSubject.user,
+          idTarget: 42,
+          recipe_id: null,
+        },
       });
     });
 

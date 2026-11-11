@@ -154,7 +154,7 @@ export class NotificationService {
       commentIds.length > 0
         ? this.prisma.comment.findMany({
             where: { id: { in: commentIds } },
-            select: { id: true, content: true },
+            select: { id: true, content: true, recipe_id: true },
           })
         : [],
     ]);
@@ -174,9 +174,11 @@ export class NotificationService {
     const items: NotificationItemDto[] = notifications.map((n) => {
       let title_or_snippet: string | null = null;
       let recipeTitle: string | null = null;
+      let recipe_id: number | null = null;
 
       if (n.subject === NotificationSubject.recipe && n.target_id) {
         const recipe = recipeMap.get(n.target_id);
+        recipe_id = recipe ? recipe.id : n.target_id;
         if (recipe) {
           const translation =
             recipe.translations?.find((t) => t.locale === lang) ??
@@ -189,6 +191,7 @@ export class NotificationService {
       } else if (n.subject === NotificationSubject.comment && n.target_id) {
         const comment = commentMap.get(n.target_id);
         title_or_snippet = comment?.content ?? null;
+        recipe_id = comment?.recipe_id ?? null;
       }
 
       const actorUsername = n.actor?.username ?? 'Someone';
@@ -214,6 +217,7 @@ export class NotificationService {
           id: n.target_id,
           subject: n.subject,
           title_or_snippet,
+          recipe_id,
         },
         message,
         is_read: n.is_read,

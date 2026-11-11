@@ -505,4 +505,85 @@ describe('NotificationService', () => {
       );
     });
   });
+
+  describe('Recipe Context Hydration (Ticket #154)', () => {
+    it('populates target.recipe_id across comments and recipes in getNotifications', async () => {
+      const mockNotifications = [
+        {
+          id: 1,
+          user_id: 1,
+          actor_id: 2,
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+          target_id: 100,
+          is_read: false,
+          created_at: new Date('2026-11-01T10:00:00Z'),
+          actor: { id: 2, username: 'mario', avatar_url: null },
+        },
+        {
+          id: 2,
+          user_id: 1,
+          actor_id: 3,
+          subject: NotificationSubject.comment,
+          action: NotificationAction.comment,
+          target_id: 200,
+          is_read: false,
+          created_at: new Date('2026-11-01T11:00:00Z'),
+          actor: { id: 3, username: 'luigi', avatar_url: null },
+        },
+        {
+          id: 3,
+          user_id: 1,
+          actor_id: 4,
+          subject: NotificationSubject.user,
+          action: NotificationAction.friend_request,
+          target_id: 4,
+          is_read: false,
+          created_at: new Date('2026-11-01T12:00:00Z'),
+          actor: { id: 4, username: 'peach', avatar_url: null },
+        },
+      ];
+
+      prisma.notification.findMany.mockResolvedValue(mockNotifications);
+      prisma.notification.count
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(3);
+
+      prisma.recipe.findMany.mockResolvedValue([
+        {
+          id: 100,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pasta al forno' }],
+        },
+      ]);
+
+      prisma.comment.findMany.mockResolvedValue([
+        {
+          id: 200,
+          content: 'Deliziosa!',
+          recipe_id: 100,
+        },
+      ]);
+
+      const result = await service.getNotifications(1, {});
+
+      expect(result.items.length).toBe(3);
+
+      // Recipe notification: target.recipe_id is 100
+      expect(result.items[0].target.subject).toBe(NotificationSubject.recipe);
+      expect(result.items[0].target.id).toBe(100);
+      expect(result.items[0].target.recipe_id).toBe(100);
+
+      // Comment notification: target.recipe_id is populated from parent comment relation (100)
+      expect(result.items[1].target.subject).toBe(NotificationSubject.comment);
+      expect(result.items[1].target.id).toBe(200);
+      expect(result.items[1].target.title_or_snippet).toBe('Deliziosa!');
+      expect(result.items[1].target.recipe_id).toBe(100);
+
+      // User notification: target.recipe_id is null
+      expect(result.items[2].target.subject).toBe(NotificationSubject.user);
+      expect(result.items[2].target.id).toBe(4);
+      expect(result.items[2].target.recipe_id).toBeNull();
+    });
+  });
 });

@@ -161,7 +161,7 @@ export class NotificationGateway
   handleNotificationEvent(userNotification: {
     idUser: number;
     message: string;
-    target: { subject: string; idTarget: number };
+    target: { subject: string; idTarget: number; recipe_id?: number | null };
   }) {
     this.server
       ?.to('room-' + userNotification.idUser)

@@ -63,6 +63,15 @@ export class NotificationTargetDto {
     type: String,
   })
   title_or_snippet?: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Parent recipe ID for comment interactions, or recipe ID for recipe interactions',
+    example: 42,
+    nullable: true,
+    type: Number,
+  })
+  recipe_id?: number | null;
 }
 
 /**
