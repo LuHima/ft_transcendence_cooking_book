@@ -32,6 +32,7 @@ import {
 } from './dto/admin-comment-response.dto';
 import { UserSortBy, SortOrder } from '../users/dto/search-user-query.dto';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+import { getPendingCommentReportTargetIds } from '../reports/helpers/pending-reports.helper';
 
 interface CommentRecipePayload {
   id: number;
@@ -742,21 +743,17 @@ export class AdminService {
 
     let pendingCommentIds: number[] = [];
     if (isReportedOnly && this.prisma.report) {
-      try {
-        if (this.prisma.report.findMany) {
-          const pendingReports = await this.prisma.report.findMany({
-            where: {
-              subject: ReportSubject.comment,
-              status: ReportStatus.pending,
-            },
-            select: { target_id: true },
-          });
-          pendingCommentIds = Array.from(
-            new Set(pendingReports.map((r) => r.target_id)),
-          );
-        }
-      } catch {
-        // Fallback for mocked environments
+      pendingCommentIds = await getPendingCommentReportTargetIds(this.prisma);
+      if (pendingCommentIds.length === 0) {
+        return {
+          items: [],
+          total: 0,
+          page,
+          limit,
+          total_pages: 0,
+          has_next_page: false,
+          has_prev_page: false,
+        };
       }
       if (format !== AdminCommentFormat.threaded) {
         where.id = { in: pendingCommentIds };
@@ -921,12 +918,34 @@ export class AdminService {
         return { root, latestActivity };
       });
 
+      let candidateReportCounts:
+        | { total: Map<number, number>; pending: Map<number, number> }
+        | undefined;
+
       if (sortBy === AdminCommentSortBy.reports_count) {
-        const rootIds = candidateRoots.map((c) => c.id);
-        const rootReportCounts = await fetchReportCounts(rootIds);
+        const allCandidateIds: number[] = [];
+        for (const root of candidateRoots) {
+          allCandidateIds.push(root.id);
+          for (const r of root.replies || []) {
+            allCandidateIds.push(r.id);
+          }
+        }
+        candidateReportCounts = await fetchReportCounts(allCandidateIds);
         withActivity.sort((a, b) => {
-          const countA = rootReportCounts.total.get(a.root.id) || 0;
-          const countB = rootReportCounts.total.get(b.root.id) || 0;
+          const countA =
+            (candidateReportCounts!.pending.get(a.root.id) || 0) +
+            (a.root.replies || []).reduce(
+              (sum, r) =>
+                sum + (candidateReportCounts!.pending.get(r.id) || 0),
+              0,
+            );
+          const countB =
+            (candidateReportCounts!.pending.get(b.root.id) || 0) +
+            (b.root.replies || []).reduce(
+              (sum, r) =>
+                sum + (candidateReportCounts!.pending.get(r.id) || 0),
+              0,
+            );
           if (countB !== countA) {
             return sortOrder === SortOrder.asc
               ? countA - countB
@@ -957,15 +976,23 @@ export class AdminService {
         .slice(skip, skip + limit)
         .map((w) => w.root);
 
-      const allIds: number[] = [];
-      for (const root of pagedRoots) {
-        allIds.push(root.id);
-        const replies = root.replies || [];
-        for (const r of replies) {
-          allIds.push(r.id);
+      let reportCounts: {
+        total: Map<number, number>;
+        pending: Map<number, number>;
+      };
+      if (candidateReportCounts) {
+        reportCounts = candidateReportCounts;
+      } else {
+        const allIds: number[] = [];
+        for (const root of pagedRoots) {
+          allIds.push(root.id);
+          const replies = root.replies || [];
+          for (const r of replies) {
+            allIds.push(r.id);
+          }
         }
+        reportCounts = await fetchReportCounts(allIds);
       }
-      const reportCounts = await fetchReportCounts(allIds);
 
       const items: ThreadedAdminCommentItemDto[] = pagedRoots.map((root) => {
         const totalReplies =
@@ -974,6 +1001,13 @@ export class AdminService {
         const reportedRepliesCount = allReplies.filter(
           (r) => (reportCounts.pending.get(r.id) || 0) > 0,
         ).length;
+
+        const threadPendingReportsCount =
+          (reportCounts.pending.get(root.id) || 0) +
+          allReplies.reduce(
+            (sum, r) => sum + (reportCounts.pending.get(r.id) || 0),
+            0,
+          );
 
         let repliesToWindow = allReplies;
         if (isReportedOnly) {
@@ -996,6 +1030,7 @@ export class AdminService {
           ...baseItem,
           replies_count: totalReplies,
           reported_replies_count: reportedRepliesCount,
+          thread_pending_reports_count: threadPendingReportsCount,
           has_more_replies: totalReplies > windowedReplies.length,
           replies: windowedReplies,
         };

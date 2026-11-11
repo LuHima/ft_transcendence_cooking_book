@@ -746,4 +746,107 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       expect(reportedReplyItem.pending_reports_count).toBe(2);
     });
   });
+
+  describe('Ticket #163: Empty Filter Guards, Cumulative Threaded Report Ranking & Pending Lookup Deduplication', () => {
+    it('returns empty result when reported_only=true and zero pending reports exist (flat mode)', async () => {
+      mockPrisma.report.findMany.mockResolvedValueOnce([]); // No pending reports
+
+      const result = await service.findAllAdminComments({
+        reported_only: true,
+        format: AdminCommentFormat.flat,
+      });
+
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
+      expect(mockPrisma.comment.findMany).not.toHaveBeenCalled();
+    });
+
+    it('returns empty result when reported_only=true and zero pending reports exist (threaded mode)', async () => {
+      mockPrisma.report.findMany.mockResolvedValueOnce([]); // No pending reports
+
+      const result = await service.findAllAdminComments({
+        reported_only: true,
+        format: AdminCommentFormat.threaded,
+      });
+
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
+      expect(mockPrisma.comment.findMany).not.toHaveBeenCalled();
+    });
+
+    it('ranks threads by cumulative pending reports across root and child replies in format=threaded', async () => {
+      // Thread 1: Root 1 (0 pending) + Child 11 (3 pending) -> Cumulative: 3
+      // Thread 2: Root 2 (1 pending) + Child 21 (0 pending) -> Cumulative: 1
+      const thread1 = {
+        id: 1,
+        recipe_id: 10,
+        user_id: 100,
+        parent_id: null,
+        content: 'Root 1 (no reports)',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-01-01T10:00:00Z'),
+        replies: [
+          {
+            id: 11,
+            recipe_id: 10,
+            user_id: 101,
+            parent_id: 1,
+            content: 'Child 11 (heavily reported)',
+            is_active: true,
+            is_edited: false,
+            created_at: new Date('2026-01-01T11:00:00Z'),
+          },
+        ],
+        _count: { replies: 1 },
+      };
+
+      const thread2 = {
+        id: 2,
+        recipe_id: 10,
+        user_id: 200,
+        parent_id: null,
+        content: 'Root 2 (1 report)',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-01-02T10:00:00Z'),
+        replies: [
+          {
+            id: 21,
+            recipe_id: 10,
+            user_id: 201,
+            parent_id: 2,
+            content: 'Child 21 (clean)',
+            is_active: true,
+            is_edited: false,
+            created_at: new Date('2026-01-02T11:00:00Z'),
+          },
+        ],
+        _count: { replies: 1 },
+      };
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([thread2, thread1]);
+      mockPrisma.report.groupBy.mockResolvedValue([
+        { target_id: 11, status: 'pending', _count: { id: 3 } },
+        { target_id: 2, status: 'pending', _count: { id: 1 } },
+      ]);
+
+      const result = await service.findAllAdminComments({
+        format: AdminCommentFormat.threaded,
+        sort_by: AdminCommentSortBy.reports_count,
+      });
+
+      expect(result.items).toHaveLength(2);
+      // Thread 1 should be ranked first because cumulative pending is 3 vs 1
+      expect(result.items[0].id).toBe(1);
+      expect(
+        (result.items[0] as any).thread_pending_reports_count,
+      ).toBe(3);
+
+      expect(result.items[1].id).toBe(2);
+      expect(
+        (result.items[1] as any).thread_pending_reports_count,
+      ).toBe(1);
+    });
+  });
 });

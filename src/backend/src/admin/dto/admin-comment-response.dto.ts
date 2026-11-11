@@ -132,6 +132,13 @@ export class ThreadedAdminCommentItemDto extends AdminCommentItemDto {
 
   @ApiProperty({
     description:
+      'Cumulative pending report count across the root comment and all child replies',
+    example: 3,
+  })
+  thread_pending_reports_count: number;
+
+  @ApiProperty({
+    description:
       'Indicates whether more replies exist beyond the embedded preview window',
     example: true,
   })

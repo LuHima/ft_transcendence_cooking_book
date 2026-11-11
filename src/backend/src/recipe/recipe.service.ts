@@ -48,6 +48,7 @@ import {
   RecipeCommentQueryDto,
   RecipeCommentSortBy,
 } from './dto/recipe-comment-query.dto';
+import { getPendingCommentReportTargetIds } from '../reports/helpers/pending-reports.helper';
 import { SortOrder } from '../common/dto/sort-order.enum';
 import { LocalizedRecipeDetailResponse } from './dto/localized-recipe.response';
 import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
@@ -674,14 +675,9 @@ export class RecipeService {
 
         let commentRecipeIds: number[] = [];
         if (this.prisma.comment) {
-          const commentReports = await this.prisma.report.findMany({
-            where: {
-              status: ReportStatus.pending,
-              subject: ReportSubject.comment,
-            },
-            select: { target_id: true },
-          });
-          const reportedCommentIds = commentReports.map((r) => r.target_id);
+          const reportedCommentIds = await getPendingCommentReportTargetIds(
+            this.prisma,
+          );
           if (reportedCommentIds.length > 0) {
             const reportedComments = await this.prisma.comment.findMany({
               where: { id: { in: reportedCommentIds } },
