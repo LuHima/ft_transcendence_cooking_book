@@ -10,13 +10,16 @@ describe('MediaStreamingService', () => {
   let tempDir: string;
   let tempVideoPath: string;
   let tempWebmPath: string;
+  let tempImagePath: string;
 
   beforeAll(() => {
     tempDir = fs.mkdtempSync(join(os.tmpdir(), 'streaming-test-'));
     tempVideoPath = join(tempDir, 'sample.mp4');
     tempWebmPath = join(tempDir, 'sample.webm');
+    tempImagePath = join(tempDir, 'sample.webp');
     fs.writeFileSync(tempVideoPath, Buffer.alloc(10000, 1));
     fs.writeFileSync(tempWebmPath, Buffer.alloc(5000, 2));
+    fs.writeFileSync(tempImagePath, Buffer.alloc(1200, 3));
   });
 
   afterAll(() => {
@@ -198,7 +201,7 @@ describe('MediaStreamingService', () => {
       service.streamVideo(tempVideoPath, mockReq as Request, mockRes as Response);
     });
 
-    it('returns headers and ends response without piping for HEAD request (range)', () => {
+    it('returns 200 OK representation headers and ends response without piping for HEAD request (RFC 9110)', () => {
       mockReq.headers = { range: 'bytes=0-499' };
 
       service.streamVideo(
@@ -208,20 +211,58 @@ describe('MediaStreamingService', () => {
         true,
       );
 
-      expect(mockRes.status).toHaveBeenCalledWith(206);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Length', 10000);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Accept-Ranges', 'bytes');
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+  });
+
+  describe('streamImage', () => {
+    let mockReq: Partial<Request>;
+    let mockRes: any;
+
+    beforeEach(() => {
+      mockReq = {
+        headers: {},
+      };
+      mockRes = new PassThrough();
+      mockRes.setHeader = jest.fn().mockReturnThis();
+      mockRes.status = jest.fn().mockReturnThis();
     });
 
-    it('returns headers and ends response without piping for HEAD request (no range)', () => {
-      mockReq.headers = {};
+    it('streams image with correct Content-Type and 200 OK', (done) => {
+      const chunks: Buffer[] = [];
+      mockRes.on('data', (chunk: Buffer) => chunks.push(chunk));
+      mockRes.on('finish', () => {
+        expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'image/webp');
+        expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Length', 1200);
+        expect(mockRes.status).toHaveBeenCalledWith(200);
+        expect(Buffer.concat(chunks).length).toBe(1200);
+        done();
+      });
 
-      service.streamVideo(
-        tempVideoPath,
-        mockReq as Request,
-        mockRes as Response,
-        true,
-      );
+      service.streamImage(tempImagePath, mockReq as Request, mockRes as Response);
+    });
 
+    it('returns 304 Not Modified when ETag matches', () => {
+      const endSpy = jest.spyOn(mockRes, 'end');
+      const stat = fs.statSync(tempImagePath);
+      const etag = `W/"${stat.size}-${stat.mtimeMs}"`;
+      mockReq.headers = { 'if-none-match': etag };
+
+      service.streamImage(tempImagePath, mockReq as Request, mockRes as Response);
+
+      expect(mockRes.status).toHaveBeenCalledWith(304);
+      expect(endSpy).toHaveBeenCalled();
+    });
+
+    it('returns headers and ends response on HEAD request', () => {
+      const endSpy = jest.spyOn(mockRes, 'end');
+      service.streamImage(tempImagePath, mockReq as Request, mockRes as Response, true);
+
+      expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'image/webp');
       expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(endSpy).toHaveBeenCalled();
     });
   });
 });

@@ -8,12 +8,11 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { RecipePrivacy, Role } from '@prisma/client';
+import { RecipePrivacy, Role, ReportStatus, FriendshipStatus } from '@prisma/client';
 import {
   RECIPE_UPLOADS_DIR,
   AVATAR_UPLOADS_DIR,
 } from '../common/config/upload-paths';
-import { PassThrough } from 'stream';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -44,6 +43,7 @@ describe('MediaService', () => {
 
   const mockStreamingService = {
     streamVideo: jest.fn(),
+    streamImage: jest.fn(),
   };
 
   const testRecipeFile = join(RECIPE_UPLOADS_DIR, 'test_cover.webp');
@@ -120,6 +120,22 @@ describe('MediaService', () => {
         service.getRecipeMedia(1, 'test_cover.webp', undefined, {} as any, {} as any),
       ).rejects.toThrow(new NotFoundException('Media not found'));
     });
+
+    it('rejects false-positive substring matches in linkage check', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 10,
+        privacy: RecipePrivacy.public,
+        cover_image_url: '/api/media/recipes/1/apple_test_cover.webp',
+        video_url: null,
+        steps: [],
+        recipe_media: [],
+      });
+
+      await expect(
+        service.getRecipeMedia(1, 'test_cover.webp', undefined, {} as any, {} as any),
+      ).rejects.toThrow(new NotFoundException('Media not found'));
+    });
   });
 
   describe('getRecipeMedia - Mutual Block & Privacy Access Control', () => {
@@ -133,7 +149,7 @@ describe('MediaService', () => {
       recipe_media: [],
     };
 
-    it('throws NotFoundException when caller and recipe author are mutually blocked', async () => {
+    it('throws NotFoundException when regular caller and recipe author are mutually blocked', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(publicRecipe);
       mockPrisma.userBlock.findFirst.mockResolvedValueOnce({ id: 1 });
 
@@ -148,32 +164,33 @@ describe('MediaService', () => {
       ).rejects.toThrow(new NotFoundException('Recipe not found'));
     });
 
-    it('allows guest access to public recipe media', async () => {
+    it('allows guest access to public recipe media and delegates to streamImage', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(publicRecipe);
 
-      const mockRes: any = new PassThrough();
-      mockRes.setHeader = jest.fn().mockReturnThis();
-      mockRes.status = jest.fn().mockReturnThis();
+      const mockReq = {} as any;
+      const mockRes = {} as any;
 
       await service.getRecipeMedia(
         1,
         'test_cover.webp',
         undefined,
-        {} as any,
+        mockReq,
         mockRes,
       );
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Content-Type',
-        'image/webp',
+      expect(streamingService.streamImage).toHaveBeenCalledWith(
+        testRecipeFile,
+        mockReq,
+        mockRes,
+        false,
       );
-      expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
-    it('friends_only recipe throws UnauthorizedException for unauthenticated guests', async () => {
+    it('evaluates friends_only privacy upfront, throwing UnauthorizedException for guests before checking linkage', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         ...publicRecipe,
         privacy: RecipePrivacy.friends_only,
+        cover_image_url: '/api/media/recipes/1/unrelated.webp', // Linkage would fail, but 401 should trigger first!
       });
 
       await expect(
@@ -181,12 +198,12 @@ describe('MediaService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('friends_only recipe throws ForbiddenException for authenticated non-friends', async () => {
+    it('evaluates friends_only privacy upfront, throwing ForbiddenException for non-friends before checking linkage', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         ...publicRecipe,
         privacy: RecipePrivacy.friends_only,
+        cover_image_url: '/api/media/recipes/1/unrelated.webp',
       });
-      mockPrisma.userBlock.findFirst.mockResolvedValueOnce(null);
       mockPrisma.friendship.findFirst.mockResolvedValueOnce(null);
 
       await expect(
@@ -205,22 +222,21 @@ describe('MediaService', () => {
         ...publicRecipe,
         privacy: RecipePrivacy.friends_only,
       });
+      mockPrisma.friendship.findFirst.mockResolvedValueOnce({ id: 100, status: FriendshipStatus.accepted });
       mockPrisma.userBlock.findFirst.mockResolvedValueOnce(null);
-      mockPrisma.friendship.findFirst.mockResolvedValueOnce({ id: 100, status: 'accepted' });
 
-      const mockRes: any = new PassThrough();
-      mockRes.setHeader = jest.fn().mockReturnThis();
-      mockRes.status = jest.fn().mockReturnThis();
+      const mockReq = {} as any;
+      const mockRes = {} as any;
 
       await service.getRecipeMedia(
         1,
         'test_cover.webp',
         { id: 2, username: 'friend', role: Role.user, session: 1 },
-        {} as any,
+        mockReq,
         mockRes,
       );
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(streamingService.streamImage).toHaveBeenCalled();
     });
 
     it('private recipe returns 404 for non-authors and guests', async () => {
@@ -237,7 +253,6 @@ describe('MediaService', () => {
         ...publicRecipe,
         privacy: RecipePrivacy.private,
       });
-      mockPrisma.userBlock.findFirst.mockResolvedValueOnce(null);
 
       await expect(
         service.getRecipeMedia(
@@ -256,46 +271,45 @@ describe('MediaService', () => {
         privacy: RecipePrivacy.private,
       });
 
-      const mockRes: any = new PassThrough();
-      mockRes.setHeader = jest.fn().mockReturnThis();
-      mockRes.status = jest.fn().mockReturnThis();
+      const mockReq = {} as any;
+      const mockRes = {} as any;
 
       await service.getRecipeMedia(
         1,
         'test_cover.webp',
         { id: 10, username: 'author', role: Role.user, session: 1 },
-        {} as any,
+        mockReq,
         mockRes,
       );
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(streamingService.streamImage).toHaveBeenCalled();
     });
 
-    it('private recipe allows admin access and records audit log', async () => {
+    it('private recipe allows admin access even if author blocked admin and records audit log', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         ...publicRecipe,
         privacy: RecipePrivacy.private,
       });
-      mockPrisma.userBlock.findFirst.mockResolvedValueOnce(null);
 
       const logAuditSpy = jest.spyOn(service, 'logAudit');
-      const mockRes: any = new PassThrough();
-      mockRes.setHeader = jest.fn().mockReturnThis();
-      mockRes.status = jest.fn().mockReturnThis();
+      const mockReq = {} as any;
+      const mockRes = {} as any;
 
       await service.getRecipeMedia(
         1,
         'test_cover.webp',
         { id: 99, username: 'admin', role: Role.admin, session: 1 },
-        {} as any,
+        mockReq,
         mockRes,
       );
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(streamingService.streamImage).toHaveBeenCalled();
       expect(logAuditSpy).toHaveBeenCalledWith('ADMIN_PRIVATE_RECIPE_INSPECT', {
         userId: 99,
         recipeId: 1,
       });
+      // Admin should be immune to user blocks
+      expect(mockPrisma.userBlock.findFirst).not.toHaveBeenCalled();
     });
 
     it('private recipe allows moderator access with active pending report and logs audit', async () => {
@@ -303,24 +317,22 @@ describe('MediaService', () => {
         ...publicRecipe,
         privacy: RecipePrivacy.private,
       });
-      mockPrisma.userBlock.findFirst.mockResolvedValueOnce(null);
       mockPrisma.comment.findMany.mockResolvedValueOnce([]);
-      mockPrisma.report.findFirst.mockResolvedValueOnce({ id: 55, status: 'pending' });
+      mockPrisma.report.findFirst.mockResolvedValueOnce({ id: 55, status: ReportStatus.pending });
 
       const logAuditSpy = jest.spyOn(service, 'logAudit');
-      const mockRes: any = new PassThrough();
-      mockRes.setHeader = jest.fn().mockReturnThis();
-      mockRes.status = jest.fn().mockReturnThis();
+      const mockReq = {} as any;
+      const mockRes = {} as any;
 
       await service.getRecipeMedia(
         1,
         'test_cover.webp',
         { id: 77, username: 'moderator', role: Role.moderator, session: 1 },
-        {} as any,
+        mockReq,
         mockRes,
       );
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(streamingService.streamImage).toHaveBeenCalled();
       expect(logAuditSpy).toHaveBeenCalledWith(
         'MODERATOR_PRIVATE_RECIPE_CONTEXT_INSPECT',
         {
@@ -336,7 +348,6 @@ describe('MediaService', () => {
         ...publicRecipe,
         privacy: RecipePrivacy.private,
       });
-      mockPrisma.userBlock.findFirst.mockResolvedValueOnce(null);
       mockPrisma.comment.findMany.mockResolvedValueOnce([]);
       mockPrisma.report.findFirst.mockResolvedValueOnce(null);
 
@@ -352,8 +363,8 @@ describe('MediaService', () => {
     });
   });
 
-  describe('getRecipeMedia - Video Streaming & ETag Revalidation', () => {
-    it('delegates video files to MediaStreamingService', async () => {
+  describe('getRecipeMedia - Video Streaming', () => {
+    it('delegates video files to MediaStreamingService.streamVideo', async () => {
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
         id: 1,
         user_id: 10,
@@ -365,10 +376,7 @@ describe('MediaService', () => {
       });
 
       const mockReq = { headers: {} } as any;
-      const mockRes = {
-        setHeader: jest.fn().mockReturnThis(),
-        status: jest.fn().mockReturnThis(),
-      } as any;
+      const mockRes = {} as any;
 
       await service.getRecipeMedia(
         1,
@@ -385,77 +393,6 @@ describe('MediaService', () => {
         mockRes,
         false,
       );
-    });
-
-    it('returns 304 Not Modified when ETag matches and user is authorized', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
-        id: 1,
-        user_id: 10,
-        privacy: RecipePrivacy.public,
-        cover_image_url: '/api/media/recipes/1/test_cover.webp',
-        video_url: null,
-        steps: [],
-        recipe_media: [],
-      });
-
-      const stat = fs.statSync(testRecipeFile);
-      const computedEtag = `W/"${stat.size}-${stat.mtimeMs}"`;
-
-      const mockReq = {
-        headers: { 'if-none-match': computedEtag },
-      } as any;
-      const mockRes = {
-        setHeader: jest.fn().mockReturnThis(),
-        status: jest.fn().mockReturnThis(),
-        end: jest.fn().mockReturnThis(),
-      } as any;
-
-      await service.getRecipeMedia(
-        1,
-        'test_cover.webp',
-        undefined,
-        mockReq,
-        mockRes,
-      );
-
-      expect(mockRes.status).toHaveBeenCalledWith(304);
-      expect(mockRes.end).toHaveBeenCalled();
-    });
-
-    it('evaluates access control before ETag matching (immediate privacy revocation)', async () => {
-      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
-        id: 1,
-        user_id: 10,
-        privacy: RecipePrivacy.friends_only,
-        cover_image_url: '/api/media/recipes/1/test_cover.webp',
-        video_url: null,
-        steps: [],
-        recipe_media: [],
-      });
-      mockPrisma.userBlock.findFirst.mockResolvedValueOnce(null);
-      // Unfriended!
-      mockPrisma.friendship.findFirst.mockResolvedValueOnce(null);
-
-      const stat = fs.statSync(testRecipeFile);
-      const computedEtag = `W/"${stat.size}-${stat.mtimeMs}"`;
-
-      const mockReq = {
-        headers: { 'if-none-match': computedEtag },
-      } as any;
-      const mockRes = {
-        setHeader: jest.fn().mockReturnThis(),
-        status: jest.fn().mockReturnThis(),
-      } as any;
-
-      await expect(
-        service.getRecipeMedia(
-          1,
-          'test_cover.webp',
-          { id: 2, username: 'ex_friend', role: Role.user, session: 1 },
-          mockReq,
-          mockRes,
-        ),
-      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -495,23 +432,23 @@ describe('MediaService', () => {
         avatar_url: '/api/media/avatars/7/test_avatar.webp',
       });
 
-      const mockRes: any = new PassThrough();
-      mockRes.setHeader = jest.fn().mockReturnThis();
-      mockRes.status = jest.fn().mockReturnThis();
+      const mockReq = {} as any;
+      const mockRes = {} as any;
 
       await service.getAvatarMedia(
         7,
         'test_avatar.webp',
         undefined,
-        {} as any,
+        mockReq,
         mockRes,
       );
 
-      expect(mockRes.setHeader).toHaveBeenCalledWith(
-        'Content-Type',
-        'image/webp',
+      expect(streamingService.streamImage).toHaveBeenCalledWith(
+        testAvatarFile,
+        mockReq,
+        mockRes,
+        false,
       );
-      expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
     it('throws NotFoundException if caller is blocked by user or has blocked user', async () => {
@@ -530,36 +467,6 @@ describe('MediaService', () => {
           {} as any,
         ),
       ).rejects.toThrow(new NotFoundException('User not found'));
-    });
-
-    it('returns 304 Not Modified when ETag matches on avatar request', async () => {
-      mockPrisma.user.findUnique.mockResolvedValueOnce({
-        id: 7,
-        avatar_url: '/api/media/avatars/7/test_avatar.webp',
-      });
-
-      const stat = fs.statSync(testAvatarFile);
-      const computedEtag = `W/"${stat.size}-${stat.mtimeMs}"`;
-
-      const mockReq = {
-        headers: { 'if-none-match': computedEtag },
-      } as any;
-      const mockRes = {
-        setHeader: jest.fn().mockReturnThis(),
-        status: jest.fn().mockReturnThis(),
-        end: jest.fn().mockReturnThis(),
-      } as any;
-
-      await service.getAvatarMedia(
-        7,
-        'test_avatar.webp',
-        undefined,
-        mockReq,
-        mockRes,
-      );
-
-      expect(mockRes.status).toHaveBeenCalledWith(304);
-      expect(mockRes.end).toHaveBeenCalled();
     });
   });
 });

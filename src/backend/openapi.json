@@ -7118,7 +7118,7 @@
     },
     "/api/media/recipes/{recipeId}/{filename}": {
       "get": {
-        "description": "Delivers protected recipe media (covers, step photos, gallery, video tutorials) enforcing recipe privacy tiers, database asset linkage, mutual user block invariants, weak ETag conditional revalidation, and RFC 9110 HTTP 206 byte-range video streaming.",
+        "description": "Delivers protected recipe media (covers, step photos, gallery, tutorial videos) enforcing recipe privacy tiers, database asset linkage, mutual user block invariants, weak ETag conditional revalidation, and RFC 9110 HTTP 206 byte-range video streaming.",
         "operationId": "MediaController_getRecipeMedia",
         "parameters": [
           {

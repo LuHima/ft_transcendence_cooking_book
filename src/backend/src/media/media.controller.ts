@@ -45,7 +45,7 @@ export class MediaController {
   @ApiOperation({
     summary: 'Retrieve protected recipe media asset (image or video)',
     description:
-      'Delivers protected recipe media (covers, step photos, gallery, video tutorials) enforcing recipe privacy tiers, database asset linkage, mutual user block invariants, weak ETag conditional revalidation, and RFC 9110 HTTP 206 byte-range video streaming.',
+      'Delivers protected recipe media (covers, step photos, gallery, tutorial videos) enforcing recipe privacy tiers, database asset linkage, mutual user block invariants, weak ETag conditional revalidation, and RFC 9110 HTTP 206 byte-range video streaming.',
   })
   @ApiParam({
     name: 'recipeId',

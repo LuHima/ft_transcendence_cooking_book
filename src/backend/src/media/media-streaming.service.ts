@@ -70,6 +70,7 @@ export class MediaStreamingService {
   /**
    * Streams a video file supporting RFC 9110 HTTP 206 Partial Content byte ranges,
    * full 200 OK playback, and zero-payload HEAD requests.
+   * Note: RFC 9110 §14.2 strictly forbids 206 responses to HEAD requests.
    */
   streamVideo(
     filePath: string,
@@ -88,6 +89,15 @@ export class MediaStreamingService {
     res.setHeader('ETag', `W/"${stat.size}-${stat.mtimeMs}"`);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', 'inline');
+
+    // RFC 9110 §14.2: Server MUST NOT generate a 206 response to a HEAD request
+    if (isHeadRequest) {
+      res.setHeader('Content-Length', fileSize);
+      res.setHeader('Content-Type', mimeType);
+      res.status(200);
+      res.end();
+      return;
+    }
 
     const rangeHeader = req.headers.range;
 
@@ -108,11 +118,6 @@ export class MediaStreamingService {
       res.setHeader('Content-Type', mimeType);
       res.status(206);
 
-      if (isHeadRequest) {
-        res.end();
-        return;
-      }
-
       const stream = fs.createReadStream(filePath, { start, end });
       stream.on('error', () => {
         if (!res.headersSent) {
@@ -126,6 +131,50 @@ export class MediaStreamingService {
     // Full video delivery without Range header
     res.setHeader('Content-Length', fileSize);
     res.setHeader('Content-Type', mimeType);
+    res.status(200);
+
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', () => {
+      if (!res.headersSent) {
+        res.status(500).end();
+      }
+    });
+    stream.pipe(res);
+  }
+
+  /**
+   * Streams an image file with weak ETag conditional revalidation (304 Not Modified)
+   * and standard security headers.
+   */
+  streamImage(
+    filePath: string,
+    req: Request,
+    res: Response,
+    isHeadRequest = false,
+  ): void {
+    const stat = fs.statSync(filePath);
+    const etag = `W/"${stat.size}-${stat.mtimeMs}"`;
+
+    res.setHeader('Cache-Control', 'private, no-cache');
+    res.setHeader('ETag', etag);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', 'inline');
+
+    // Conditional revalidation
+    if (req?.headers?.['if-none-match'] === etag) {
+      res.status(304).end();
+      return;
+    }
+
+    const lowerPath = filePath.toLowerCase();
+    let mimeType = 'application/octet-stream';
+    if (lowerPath.endsWith('.webp')) mimeType = 'image/webp';
+    else if (lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg'))
+      mimeType = 'image/jpeg';
+    else if (lowerPath.endsWith('.png')) mimeType = 'image/png';
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', stat.size);
     res.status(200);
 
     if (isHeadRequest) {
