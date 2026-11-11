@@ -9,6 +9,7 @@ import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
 import Avatar from '../components/Avatar'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import TwoFactorSettings from '../components/TwoFactorSettings'
+import BlockedUsers from '../components/BlockedUsers'
 
 function Profile() {
 	const { t } = useTranslation()
@@ -134,6 +135,8 @@ function Profile() {
 			</form>
 
 			<TwoFactorSettings />
+
+			<BlockedUsers />
 		</div>
 	)
 }

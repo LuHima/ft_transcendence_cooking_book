@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api, asArray, qs } from '../api/client'
+import { api, qs, toPage } from '../api/client'
 import { useLang } from '../lib/useLang'
 import type { Paginated, RecipeSummary, UserSearchResult } from '../types/models'
 
@@ -17,8 +17,7 @@ const DEBOUNCE_MS = 250
 
 interface Suggestion {
 	kind: 'recipe' | 'user'
-	// gli utenti per ora possono arrivare senza id (GET /users?search= restituisce solo username)
-	id?: number
+	id: number
 	label: string
 }
 
@@ -49,14 +48,15 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 					`/recipes${qs({ search: trimmed, limit: MAX_RECIPES, lang })}`,
 					opts,
 				),
-				api.get<UserSearchResult[]>(`/users${qs({ search: trimmed })}`, opts),
+				// GET /users è paginata (PaginatedUsersResponseDto); search richiede almeno 2 caratteri
+				api.get<unknown>(`/users${qs({ search: trimmed, page: 1, limit: MAX_USERS })}`, opts),
 			]).then(([recipes, users]) => {
 				if (controller.signal.aborted) return
 				const list: Suggestion[] = [
 					...(recipes.status === 'fulfilled' ? (recipes.value?.items ?? []) : [])
 						.slice(0, MAX_RECIPES)
 						.map((r) => ({ kind: 'recipe' as const, id: r.id, label: r.title })),
-					...asArray<UserSearchResult>(users.status === 'fulfilled' ? users.value : [])
+					...toPage<UserSearchResult>(users.status === 'fulfilled' ? users.value : [], MAX_USERS).items
 						.slice(0, MAX_USERS)
 						.map((u) => ({ kind: 'user' as const, id: u.id, label: u.username })),
 				]
@@ -91,8 +91,7 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 	}
 
 	function goTo(s: Suggestion) {
-		if (s.id == null) navigate(`/search?q=${encodeURIComponent(s.label)}`)
-		else navigate(s.kind === 'user' ? `/users/${s.id}` : `/recipes/${s.id}`)
+		navigate(s.kind === 'user' ? `/users/${s.id}` : `/recipes/${s.id}`)
 		reset()
 	}
 
@@ -161,7 +160,7 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 					className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg"
 				>
 					{suggestions.map((s, index) => (
-						<li key={`${s.kind}-${s.id ?? s.label}`} role="option" aria-selected={index === activeIndex}>
+						<li key={`${s.kind}-${s.id}`} role="option" aria-selected={index === activeIndex}>
 							<button
 								type="button"
 								onMouseEnter={() => setActiveIndex(index)}

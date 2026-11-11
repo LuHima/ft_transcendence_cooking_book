@@ -1,18 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api/client'
+import { api, qs } from '../api/client'
 import { useLang } from '../lib/useLang'
+import Avatar from './Avatar'
 import { acquireSocket, releaseSocket } from '../lib/socket'
 import type { AppNotification, PaginatedNotifications } from '../types/models'
 
 const POLL_INTERVAL_MS = 60_000
+const PAGE_SIZE = 20
 
 // testo e destinazione di una notifica in base a subject + action (modello Notification del backend)
-// (target.id è l'id della ricetta solo quando subject === 'recipe'; per i commenti è l'id del commento)
+// (target.id è l'id della ricetta solo quando subject === 'recipe'; per i commenti è l'id del commento,
+// quindi in quel caso si apre il profilo dell'autore)
 function describe(n: AppNotification): { textKey: string; to: string } {
 	const recipeId = n.subject === 'recipe' ? (n.target?.id ?? null) : null
-	const recipePath = recipeId != null ? `/recipes/${recipeId}` : '/'
+	const actorPath = n.actor ? `/users/${n.actor.id}` : '/'
+	const recipePath = recipeId != null ? `/recipes/${recipeId}` : actorPath
 	switch (n.action) {
 		case 'friend_request':
 			return { textKey: 'notifications.friend_request', to: '/friends' }
@@ -22,7 +26,7 @@ function describe(n: AppNotification): { textKey: string; to: string } {
 			return { textKey: 'notifications.like', to: recipePath }
 		case 'comment':
 			return n.subject === 'comment'
-				? { textKey: 'notifications.reply', to: '/' }
+				? { textKey: 'notifications.reply', to: actorPath }
 				: { textKey: 'notifications.comment', to: recipePath }
 		case 'post':
 			return { textKey: 'notifications.post', to: recipePath }
@@ -33,7 +37,7 @@ function describe(n: AppNotification): { textKey: string; to: string } {
 			return { textKey: 'notifications.delete', to: '/' }
 		default:
 			// azioni nuove aggiunte dal backend: non far crashare il menu
-			return { textKey: 'notifications.generic', to: '/' }
+			return { textKey: 'notifications.generic', to: n.subject === 'user' ? actorPath : recipePath }
 	}
 }
 
@@ -50,15 +54,21 @@ function NotificationBell() {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const [items, setItems] = useState<AppNotification[]>([])
+	// contatore del server (copre anche le non lette oltre la prima pagina)
+	const [unreadCount, setUnreadCount] = useState(0)
 	const [open, setOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
 
-	// GET /api/notifications
+	// GET /api/notifications?page=1&limit=20&lang=
 	// il backend risponde in forma paginata: { items, total, page, ..., unread_count }
 	const load = useCallback(() => {
 		api
-			.get<PaginatedNotifications>(`/notifications?lang=${lang}`)
-			.then((data) => setItems(Array.isArray(data?.items) ? data.items : []))
+			.get<PaginatedNotifications>(`/notifications${qs({ page: 1, limit: PAGE_SIZE, lang })}`)
+			.then((data) => {
+				const list = Array.isArray(data?.items) ? data.items : []
+				setItems(list)
+				setUnreadCount(typeof data?.unread_count === 'number' ? data.unread_count : list.filter((n) => !n.is_read).length)
+			})
 			.catch(() => {
 				// le notifiche sono un extra: se falliscono non si mostra nessun errore
 			})
@@ -90,20 +100,33 @@ function NotificationBell() {
 		}
 	}, [load])
 
-	const unreadCount = items.filter((n) => !n.is_read).length
-
 	// PATCH /api/notifications/read-all (una sola chiamata per tutte le non lette)
-	const markAllRead = useCallback((hasUnread: boolean) => {
-		if (!hasUnread) return
-		setItems((prev) => prev.map((n) => (n.is_read ? n : { ...n, is_read: true })))
-		api.patch('/notifications/read-all').catch(() => load())
-	}, [load])
+	const markAllRead = useCallback(
+		(hasUnread: boolean) => {
+			if (!hasUnread) return
+			setItems((prev) => prev.map((n) => (n.is_read ? n : { ...n, is_read: true })))
+			setUnreadCount(0)
+			api.patch('/notifications/read-all').catch(() => load())
+		},
+		[load],
+	)
+
+	// PATCH /api/notifications/:id/read (click su una singola notifica)
+	const markRead = useCallback(
+		(n: AppNotification) => {
+			if (n.is_read) return
+			setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)))
+			setUnreadCount((c) => Math.max(0, c - 1))
+			api.patch(`/notifications/${n.id}/read`).catch(() => load())
+		},
+		[load],
+	)
 
 	const close = useCallback(() => {
 		setOpen(false)
 		// alla chiusura le notifiche visualizzate vengono segnate come lette
-		markAllRead(items.some((n) => !n.is_read))
-	}, [items, markAllRead])
+		markAllRead(unreadCount > 0 || items.some((n) => !n.is_read))
+	}, [items, unreadCount, markAllRead])
 
 	useEffect(() => {
 		if (!open) return
@@ -130,9 +153,11 @@ function NotificationBell() {
 		}
 	}
 
-	async function remove(id: number) {
-		setItems((prev) => prev.filter((n) => n.id !== id))
-		api.delete(`/notifications/${id}`).catch(() => load())
+	// DELETE /api/notifications/:id
+	function remove(n: AppNotification) {
+		setItems((prev) => prev.filter((x) => x.id !== n.id))
+		if (!n.is_read) setUnreadCount((c) => Math.max(0, c - 1))
+		api.delete(`/notifications/${n.id}`).catch(() => load())
 	}
 
 	// con il menu aperto il badge sparisce: le notifiche si stanno guardando
@@ -185,17 +210,35 @@ function NotificationBell() {
 										key={n.id}
 										className={`flex items-start gap-2 hover:bg-[var(--wc-surface-raised)] ${n.is_read ? '' : 'bg-[var(--wc-surface-raised)]/60'}`}
 									>
-										<Link to={to} onClick={close} className="block min-w-0 flex-1 px-4 py-3 text-sm text-[var(--wc-text)]">
-											<span className="font-semibold">{n.actor?.username ?? t('notifications.someone')}</span>{' '}
-											{t(textKey)}
-											{n.subject === 'recipe' && n.action !== 'delete' && n.target?.title_or_snippet && (
-												<span className="text-[var(--wc-saffron)]"> {n.target.title_or_snippet}</span>
-											)}
-											<span className="mt-0.5 block text-xs text-[var(--wc-text-muted)]">{timeAgo(n.created_at, lang)}</span>
+										<Link
+											to={to}
+											onClick={() => {
+												markRead(n)
+												close()
+											}}
+											className="flex min-w-0 flex-1 items-start gap-3 px-4 py-3 text-sm text-[var(--wc-text)]"
+										>
+											{/* actor idratato dal backend (id, username, avatar_url); null = sistema / utente eliminato */}
+											<Avatar
+												username={n.actor?.username ?? '?'}
+												url={n.actor?.avatar_url}
+												className="mt-0.5 h-8 w-8 text-xs"
+											/>
+											<span className="min-w-0 flex-1">
+												<span className="font-semibold">{n.actor?.username ?? t('notifications.someone')}</span>{' '}
+												{t(textKey)}
+												{n.subject === 'recipe' && n.action !== 'delete' && n.target?.title_or_snippet && (
+													<span className="text-[var(--wc-saffron)]"> {n.target.title_or_snippet}</span>
+												)}
+												{n.subject === 'comment' && n.target?.title_or_snippet && (
+													<span className="block truncate italic text-[var(--wc-text-muted)]">“{n.target.title_or_snippet}”</span>
+												)}
+												<span className="mt-0.5 block text-xs text-[var(--wc-text-muted)]">{timeAgo(n.created_at, lang)}</span>
+											</span>
 										</Link>
 										<button
 											type="button"
-											onClick={() => remove(n.id)}
+											onClick={() => remove(n)}
 											aria-label={t('common.delete')}
 											className="px-3 py-3 text-[var(--wc-text-muted)] hover:text-[var(--wc-paprika)]"
 										>

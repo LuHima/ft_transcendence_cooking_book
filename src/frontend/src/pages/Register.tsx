@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { getErrorMessage } from '../api/client'
@@ -7,12 +7,16 @@ import { INPUT_CLASS, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
 import ShowPasswordToggle from '../components/ShowPasswordToggle'
 import GoogleSignInButton from '../components/GoogleSignInButton'
+import { getAccountBannedDetails } from '../lib/accountBanned'
 import { GOOGLE_CLIENT_ID } from '../config'
 
 function Register() {
 	const { t } = useTranslation()
 	const { signUp, signIn, signInWithGoogle } = useAuth()
 	const navigate = useNavigate()
+	// pagina da cui l'utente è arrivato (es. form "Aggiungi ricetta"), passata dalla pagina di login
+	const fromState = (useLocation().state as { from?: { pathname: string } } | null)?.from
+	const from = fromState?.pathname ?? '/'
 
 	const [username, setUsername] = useState('')
 	const [email, setEmail] = useState('')
@@ -35,9 +39,9 @@ function Register() {
 			await signUp({ username, email, password })
 			try {
 				await signIn(email, password)
-				navigate('/', { replace: true })
+				navigate(from, { replace: true })
 			} catch {
-				navigate('/login', { state: { registered: true } })
+				navigate('/login', { state: { registered: true, from: fromState } })
 			}
 		} catch (err) {
 			setError(getErrorMessage(err, t('auth.registerError')))
@@ -57,11 +61,17 @@ function Register() {
 			const result = await signInWithGoogle(idToken)
 			if (result.twoFactor) {
 				// la 2FA si completa nella pagina di login
-				navigate('/login', { state: { tempToken: result.tempToken } })
+				navigate('/login', { state: { tempToken: result.tempToken, from: fromState } })
 				return
 			}
-			navigate('/', { replace: true })
+			navigate(from, { replace: true })
 		} catch (err) {
+			// account Google sospeso: la card con i dettagli del ban si mostra nella pagina di login
+			const banned = getAccountBannedDetails(err)
+			if (banned) {
+				navigate('/login', { state: { banned } })
+				return
+			}
 			setError(getErrorMessage(err, t('auth.googleError')))
 		}
 	}
@@ -158,7 +168,7 @@ function Register() {
 
 			<p className="mt-6 text-sm text-[var(--wc-text-muted)]">
 				{t('auth.haveAccount')}{' '}
-				<Link to="/login" className="text-[var(--wc-saffron)] hover:underline">
+				<Link to="/login" state={fromState ? { from: fromState } : undefined} className="text-[var(--wc-saffron)] hover:underline">
 					{t('nav.signIn')}
 				</Link>
 			</p>

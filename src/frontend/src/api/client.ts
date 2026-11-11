@@ -101,6 +101,52 @@ export async function apiFetch<T = unknown>(path: string, options: RequestOption
 	return data as T
 }
 
+// upload multipart con avanzamento (fetch non espone il progresso dell'invio): usa XMLHttpRequest.
+// onProgress riceve i byte inviati e il totale. Stessa gestione di apiFetch per 401 → refresh → nuovo tentativo.
+export async function uploadWithProgress<T = unknown>(
+	path: string,
+	formData: FormData,
+	onProgress?: (loaded: number, total: number) => void,
+	retryOnUnauthorized = true,
+): Promise<T> {
+	const send = () =>
+		new Promise<{ status: number; statusText: string; data: unknown }>((resolve, reject) => {
+			const xhr = new XMLHttpRequest()
+			xhr.open('POST', `${API_BASE}${path}`)
+			xhr.withCredentials = true
+			xhr.responseType = 'text'
+			xhr.upload.onprogress = (e) => {
+				if (e.lengthComputable) onProgress?.(e.loaded, e.total)
+			}
+			xhr.onload = () => {
+				let data: unknown = null
+				const type = xhr.getResponseHeader('content-type') ?? ''
+				if (type.includes('application/json')) {
+					try {
+						data = JSON.parse(xhr.responseText)
+					} catch {
+						data = null
+					}
+				}
+				resolve({ status: xhr.status, statusText: xhr.statusText, data })
+			}
+			xhr.onerror = () => reject(new ApiError(0, i18n.t('common.networkError')))
+			xhr.onabort = () => reject(new ApiError(0, i18n.t('common.networkError')))
+			xhr.send(formData)
+		})
+
+	let res = await send()
+	if (res.status === 401 && retryOnUnauthorized && (await tryRefresh())) {
+		res = await send()
+	}
+	if (res.status < 200 || res.status >= 300) {
+		const body = res.data as { message?: string | string[] } | null
+		const message = body?.message ?? res.statusText ?? i18n.t('common.networkError')
+		throw new ApiError(res.status, Array.isArray(message) ? message.join(', ') : message, res.data)
+	}
+	return res.data as T
+}
+
 export const api = {
 	get: <T = unknown>(path: string, options?: RequestOptions) => apiFetch<T>(path, { ...options, method: 'GET' }),
 	post: <T = unknown>(path: string, body?: unknown, options?: RequestOptions) =>

@@ -8,13 +8,16 @@ import PasswordInput from '../components/PasswordInput'
 import ShowPasswordToggle from '../components/ShowPasswordToggle'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 import { GOOGLE_CLIENT_ID } from '../config'
+import BannedAccountNotice from '../components/BannedAccountNotice'
+import { getAccountBannedDetails } from '../lib/accountBanned'
+import type { AccountBannedDetails } from '../types/models'
 
 function Login() {
 	const { t } = useTranslation()
 	const { signIn, signInWithGoogle, completeTwoFactor } = useAuth()
 	const navigate = useNavigate()
 	const location = useLocation()
-	const locationState = location.state as { from?: Location; tempToken?: string } | null
+	const locationState = location.state as { from?: Location; tempToken?: string; banned?: AccountBannedDetails } | null
 	const from = locationState?.from?.pathname ?? '/'
 
 	const [email, setEmail] = useState('')
@@ -25,12 +28,15 @@ function Login() {
 	const [showPassword, setShowPassword] = useState(false)
 	const [code, setCode] = useState('')
 	const [error, setError] = useState<string | null>(null)
+	// 403 ACCOUNT_BANNED: dettagli strutturati della sospensione
+	const [banned, setBanned] = useState<AccountBannedDetails | null>(locationState?.banned ?? null)
 	const [submitting, setSubmitting] = useState(false)
 	const passwordRef = useRef<HTMLInputElement>(null)
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
 		setError(null)
+		setBanned(null)
 		setSubmitting(true)
 		try {
 			if (tempToken) {
@@ -45,7 +51,9 @@ function Login() {
 			}
 			navigate(from, { replace: true })
 		} catch (err) {
-			setError(getErrorMessage(err, t('auth.loginError')))
+			const ban = getAccountBannedDetails(err)
+			if (ban) setBanned(ban)
+			else setError(getErrorMessage(err, t('auth.loginError')))
 			if (tempToken) {
 				setCode('')
 			} else {
@@ -60,6 +68,7 @@ function Login() {
 
 	async function handleGoogle(idToken: string) {
 		setError(null)
+		setBanned(null)
 		try {
 			const result = await signInWithGoogle(idToken)
 			if (result.twoFactor) {
@@ -68,7 +77,9 @@ function Login() {
 			}
 			navigate(from, { replace: true })
 		} catch (err) {
-			setError(getErrorMessage(err, t('auth.googleError')))
+			const ban = getAccountBannedDetails(err)
+			if (ban) setBanned(ban)
+			else setError(getErrorMessage(err, t('auth.googleError')))
 		}
 	}
 
@@ -76,6 +87,8 @@ function Login() {
 		<div className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-4 py-12">
 			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('auth.welcomeBack')}</h1>
 			<p className="mt-1 text-sm text-[var(--wc-text-muted)]">{tempToken ? t('auth.twoFactorIntro') : t('auth.loginIntro')}</p>
+
+			{banned && <BannedAccountNotice details={banned} />}
 
 			<form onSubmit={handleSubmit} className="mt-8 space-y-4">
 				{tempToken ? (
@@ -158,7 +171,7 @@ function Login() {
 
 			<p className="mt-6 text-sm text-[var(--wc-text-muted)]">
 				{t('auth.noAccount')}{' '}
-				<Link to="/register" className="text-[var(--wc-saffron)] hover:underline">
+				<Link to="/register" state={locationState?.from ? { from: locationState.from } : undefined} className="text-[var(--wc-saffron)] hover:underline">
 					{t('nav.signUp')}
 				</Link>
 			</p>

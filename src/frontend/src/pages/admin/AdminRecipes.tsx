@@ -5,13 +5,15 @@ import { api, getErrorMessage, qs } from '../../api/client'
 import { useToast } from '../../context/ToastContext'
 import { useLang } from '../../lib/useLang'
 import Pagination from '../../components/Pagination'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import { ListSkeleton } from '../../components/Skeleton'
 import type { Paginated, RecipeSummary } from '../../types/models'
 
 const PAGE_SIZE = 15
 
-// elenco ricette per l'admin: usa GET /recipes (già pronta) con ricerca e paginazione.
-// L'eliminazione usa DELETE /recipes/:id, che il backend consente a proprietario e admin.
+// elenco ricette per l'admin: usa GET /recipes con ricerca e paginazione (solo ricette attive).
+//   DELETE /recipes/:id            → sospensione (soft delete, riattivabile dalla pagina della ricetta)
+//   DELETE /recipes/:id?hard=true  → eliminazione definitiva (solo admin, con conferma esplicita)
 function AdminRecipes() {
 	const { t } = useTranslation()
 	const lang = useLang()
@@ -23,6 +25,7 @@ function AdminRecipes() {
 	const [page, setPage] = useState(1)
 	const [reload, setReload] = useState(0)
 	const [deletingId, setDeletingId] = useState<number | null>(null)
+	const [purging, setPurging] = useState<RecipeSummary | null>(null)
 
 	useEffect(() => {
 		const id = window.setTimeout(() => {
@@ -61,6 +64,19 @@ function AdminRecipes() {
 			toast.error(getErrorMessage(err, t('recipe.deleteError')))
 		} finally {
 			setDeletingId(null)
+		}
+	}
+
+	async function handlePurge(r: RecipeSummary) {
+		try {
+			await api.delete(`/recipes/${r.id}${qs({ hard: 'true' })}`)
+			toast.success(t('recipe.purged'))
+			setPurging(null)
+			if (data && data.items.length === 1 && page > 1) setPage(page - 1)
+			else setReload((n) => n + 1)
+		} catch (err) {
+			toast.error(getErrorMessage(err, t('recipe.deleteError')))
+			setPurging(null)
 		}
 	}
 
@@ -103,7 +119,13 @@ function AdminRecipes() {
 									disabled={deletingId === r.id}
 									className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
 								>
-									{t('common.remove')}
+									{t('admin.recipes.suspend')}
+								</button>
+								<button
+									onClick={() => setPurging(r)}
+									className="rounded-full border border-[var(--wc-paprika)] px-3 py-1.5 font-medium text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)]"
+								>
+									{t('recipe.purge')}
 								</button>
 							</div>
 						</div>
@@ -112,6 +134,18 @@ function AdminRecipes() {
 			)}
 
 			{data && <Pagination page={data.page} totalPages={data.total_pages} onChange={setPage} />}
+
+			{purging && (
+				<ConfirmDialog
+					title={t('recipe.purgeTitle')}
+					confirmLabel={t('recipe.purge')}
+					danger
+					onConfirm={() => handlePurge(purging)}
+					onClose={() => setPurging(null)}
+				>
+					<p>{t('recipe.purgeText', { title: purging.title })}</p>
+				</ConfirmDialog>
+			)}
 		</div>
 	)
 }
