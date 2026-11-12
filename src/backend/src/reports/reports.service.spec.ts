@@ -70,8 +70,10 @@ describe('ReportsService', () => {
 
   const mockBanHistoryService = {
     recordBan: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+    recordSanction: jest.fn().mockResolvedValue({ id: 'sanction-1' }),
     recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
     getPreviousBansCount: jest.fn().mockResolvedValue(0),
+    getPreviousWarningsCount: jest.fn().mockResolvedValue(0),
     getUserBanHistory: jest.fn().mockResolvedValue([]),
   };
 
@@ -278,7 +280,7 @@ describe('ReportsService', () => {
         },
       ]);
       mockPrisma.banHistory.groupBy.mockResolvedValueOnce([
-        { user_id: 50, _count: { id: 2 } },
+        { user_id: 50, action: ReportAction.ban, _count: { id: 2 } },
       ]);
 
       const result = await service.getReports({ page: 1, limit: 10 });
@@ -294,12 +296,13 @@ describe('ReportsService', () => {
         select: expect.any(Object),
       });
       expect(mockPrisma.banHistory.groupBy).toHaveBeenCalledWith({
-        by: ['user_id'],
+        by: ['user_id', 'action'],
         _count: { id: true },
         where: { user_id: { in: [50] } },
       });
       expect(result.items).toHaveLength(1);
       expect(result.items[0].previous_bans_count).toBe(2);
+      expect(result.items[0].previous_warnings_count).toBe(0);
       expect(result.items[0].target.owner?.avatar_url).toBe('/avatars/50.webp');
       expect(result.total).toBe(1);
     });

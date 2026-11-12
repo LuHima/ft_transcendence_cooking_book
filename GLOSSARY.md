@@ -198,6 +198,18 @@ _Avoid_: Video dumping, progressive download, static video serving
 An administrative sanction applied to a community member's account, either temporary (capped at 180 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
 _Avoid_: Account freeze, lockout, strike, kick
 
+**Moderation Warning**:
+An administrative notice issued by platform staff against reported content or accounts to alert an author of policy infractions and deliver corrective guidance without suspending account access or evicting sessions.
+_Avoid_: Strike, informal warning, ping, slap on the wrist
+
+**Anonymous Staff Notification**:
+A platform-dispatched notification resulting from moderation actions (such as warnings) where staff identity is strictly masked (`actor: null`) to shield moderators and administrators from targeted harassment and retaliatory hostility while delivering official community feedback.
+_Avoid_: Ghost alert, stealth notice, hidden author notification
+
+**Report Actions Array**:
+The explicit array of disciplinary choices (`actions: ReportAction[]`) persisted on a Content Report record, enforcing strict mutual exclusivity constraints (`dismiss` standalone, `warn` and `ban` mutually exclusive, composable with `delete_content`).
+_Avoid_: Actions list, resolution flags, status tags
+
 **Ban History**:
 The immutable historical ledger recording all account suspensions, duration intervals, policy violation categories, user-facing explanations, and issuing staff identifiers for a community member, informing progressive discipline for repeat offenders.
 _Avoid_: Ban log, strike history, black mark list

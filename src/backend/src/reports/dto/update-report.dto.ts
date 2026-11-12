@@ -9,14 +9,9 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { ReportReason, ReportStatus } from '@prisma/client';
+import { ReportAction, ReportReason, ReportStatus } from '@prisma/client';
 
-export enum ReportAction {
-  delete_content = 'delete_content',
-  ban = 'ban',
-  warn = 'warn',
-  dismiss = 'dismiss',
-}
+export { ReportAction };
 
 /**
  * Payload for updating moderation report status, executing composite sanctions,

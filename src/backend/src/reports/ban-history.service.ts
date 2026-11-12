@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { Prisma, ReportReason } from '@prisma/client';
+import { Prisma, ReportAction, ReportReason } from '@prisma/client';
 import { BanHistoryItemDto } from './dto/ban-history.dto';
 
 export interface RecordBanParams {
   userId: number;
   bannedById: number;
   reason: ReportReason;
+  action?: ReportAction;
   description?: string | null;
   durationDays?: number | null;
   isPermanent?: boolean;
@@ -21,33 +22,50 @@ export class BanHistoryService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Record a new account ban in the immutable ban history ledger.
+   * Record a new disciplinary sanction (warning or suspension) in the immutable history ledger.
    */
-  async recordBan(
+  async recordSanction(
     params: RecordBanParams,
     tx?: Prisma.TransactionClient,
   ): Promise<BanHistoryItemDto> {
     const client = tx ?? this.prisma;
-    const isPermanent = params.isPermanent ?? false;
+    const action = params.action ?? ReportAction.ban;
+    const isWarn = action === ReportAction.warn;
+    const isPermanent = isWarn ? false : (params.isPermanent ?? false);
 
     const record = await client.banHistory.create({
       data: {
         user_id: params.userId,
         banned_by_id: params.bannedById,
         report_id: params.reportId ?? null,
+        action,
         reason: params.reason,
         description: params.description ?? null,
-        duration_days: isPermanent ? null : (params.durationDays ?? null),
+        duration_days:
+          isWarn || isPermanent ? null : (params.durationDays ?? null),
         is_permanent: isPermanent,
-        expires_at: params.expiresAt ?? null,
+        expires_at: isWarn ? null : (params.expiresAt ?? null),
       },
     });
 
     this.logger.log(
-      `Recorded ban event ${record.id} for user #${params.userId} by staff #${params.bannedById} (reason: ${params.reason})`,
+      `Recorded ${action} sanction event ${record.id} for user #${params.userId} by staff #${params.bannedById} (reason: ${params.reason})`,
     );
 
     return record;
+  }
+
+  /**
+   * Record a new account ban in the immutable ban history ledger (backward-compatible delegate).
+   */
+  async recordBan(
+    params: RecordBanParams,
+    tx?: Prisma.TransactionClient,
+  ): Promise<BanHistoryItemDto> {
+    return this.recordSanction(
+      { ...params, action: params.action ?? ReportAction.ban },
+      tx,
+    );
   }
 
   /**
@@ -64,6 +82,7 @@ export class BanHistoryService {
     const latestActiveBan = await client.banHistory.findFirst({
       where: {
         user_id: userId,
+        action: ReportAction.ban,
         unbanned_at: null,
       },
       orderBy: { banned_at: 'desc' },
@@ -98,12 +117,31 @@ export class BanHistoryService {
   ): Promise<number> {
     const client = tx ?? this.prisma;
     return await client.banHistory.count({
-      where: { user_id: userId },
+      where: {
+        user_id: userId,
+        action: ReportAction.ban,
+      },
     });
   }
 
   /**
-   * Retrieve chronological ban history audit trail for a user.
+   * Retrieve total number of historical warnings for a user.
+   */
+  async getPreviousWarningsCount(
+    userId: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const client = tx ?? this.prisma;
+    return await client.banHistory.count({
+      where: {
+        user_id: userId,
+        action: ReportAction.warn,
+      },
+    });
+  }
+
+  /**
+   * Retrieve chronological ban and warning history audit trail for a user.
    */
   async getUserBanHistory(
     userId: number,
@@ -137,7 +175,10 @@ export class BanHistoryService {
   ): Promise<BanHistoryItemDto | null> {
     const client = tx ?? this.prisma;
     return await client.banHistory.findFirst({
-      where: { user_id: userId },
+      where: {
+        user_id: userId,
+        action: ReportAction.ban,
+      },
       orderBy: { banned_at: 'desc' },
     });
   }

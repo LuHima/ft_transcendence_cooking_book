@@ -18,14 +18,16 @@ We decided to refactor notification routes to idiomatic RESTful paths (`PATCH /a
    - `DELETE /api/notifications/:id`: Permanently deletes a single notification.
    - `GET /api/notifications`: Retrieves paginated, sorted, and hydrated notifications.
 2. **Actor & Target Hydration**:
-   - Each notification item embeds an `actor` profile summary:
+   - Each notification item embeds an `actor` profile summary (nullable for anonymous moderation notices):
      ```typescript
      actor: {
        id: number;
        username: string;
        avatar_url: string | null;
-     }
+     } | null;
      ```
+     - For peer social interactions (`like`, `comment`, `friend_*`), `actor` hydrates the initiating member's public card.
+     - For disciplinary moderation notifications (`action: 'warn'`), `actor` is strictly serialized as `null` to shield staff members (administrators and moderators) from personal harassment and retaliatory friction. The client renders the notice as originating generically from the platform moderation team.
    - Each notification item embeds structured `target` metadata:
      ```typescript
      target: {
@@ -34,7 +36,8 @@ We decided to refactor notification routes to idiomatic RESTful paths (`PATCH /a
        title_or_snippet?: string | null;
      }
      ```
-   - Each notification embeds a human-readable, localized `message: string` (e.g. *"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna'"*).
+   - Each notification embeds a human-readable, localized `message: string` (e.g. *"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna'"* or *"Hai ricevuto un avviso dal team di moderazione per la tua ricetta 'Lasagna'"*).
+   - An optional `details?: string | null` field delivers the user-facing explanation (`resolution_description`) authored by moderation staff for warning notifications.
 3. **Query Contract & Localization (`NotificationQueryDto`)**:
    - Extends `PaginationQueryDto` (`page?: number = 1`, `limit?: number = 20`, max 100).
    - `unread_only?: boolean`: Optional filter to retrieve only unread alerts (`is_read: false`).

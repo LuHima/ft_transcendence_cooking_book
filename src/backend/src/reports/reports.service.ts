@@ -105,7 +105,9 @@ export class ReportsService {
 
     return {
       ...created,
+      actions: created.actions ?? [],
       previous_bans_count: 0,
+      previous_warnings_count: 0,
     };
   }
 
@@ -251,25 +253,31 @@ export class ReportsService {
     );
 
     const banCountsMap = new Map<number, number>();
+    const warningCountsMap = new Map<number, number>();
     let ranBanBatch = false;
     if (allTargetUserIds.length > 0 && this.prisma.banHistory?.groupBy) {
       try {
-        const banGroups = await this.prisma.banHistory.groupBy({
-          by: ['user_id'],
+        const sanctionGroups = await this.prisma.banHistory.groupBy({
+          by: ['user_id', 'action'],
           _count: { id: true },
           where: { user_id: { in: allTargetUserIds } },
         });
-        if (Array.isArray(banGroups)) {
+        if (Array.isArray(sanctionGroups)) {
           ranBanBatch = true;
           for (const uid of allTargetUserIds) {
             banCountsMap.set(uid, 0);
+            warningCountsMap.set(uid, 0);
           }
-          for (const bg of banGroups as any[]) {
+          for (const bg of sanctionGroups as any[]) {
             const cnt =
               typeof bg._count === 'number'
                 ? bg._count
                 : (bg._count?.id ?? 0);
-            banCountsMap.set(bg.user_id, cnt);
+            if (bg.action === ReportAction.warn) {
+              warningCountsMap.set(bg.user_id, cnt);
+            } else {
+              banCountsMap.set(bg.user_id, cnt);
+            }
           }
         }
       } catch {
@@ -352,23 +360,33 @@ export class ReportsService {
           };
         }
 
-        let count = 0;
+        let banCount = 0;
+        let warningCount = 0;
         if (targetUserId !== null) {
-          if (banCountsMap.has(targetUserId)) {
-            count = banCountsMap.get(targetUserId) ?? 0;
-          } else if (
-            !ranBanBatch &&
-            this.banHistoryService?.getPreviousBansCount
-          ) {
-            count = await this.banHistoryService.getPreviousBansCount(targetUserId);
+          if (ranBanBatch) {
+            banCount = banCountsMap.get(targetUserId) ?? 0;
+            warningCount = warningCountsMap.get(targetUserId) ?? 0;
+          } else {
+            if (this.banHistoryService?.getPreviousBansCount) {
+              banCount =
+                await this.banHistoryService.getPreviousBansCount(targetUserId);
+            }
+            if (this.banHistoryService?.getPreviousWarningsCount) {
+              warningCount =
+                await this.banHistoryService.getPreviousWarningsCount(
+                  targetUserId,
+                );
+            }
           }
         }
 
         return {
           ...report,
+          actions: report.actions ?? [],
           reporter,
           target,
-          previous_bans_count: count ?? 0,
+          previous_bans_count: banCount,
+          previous_warnings_count: warningCount,
         };
       }),
     );
@@ -591,6 +609,7 @@ export class ReportsService {
         where: { id: reportId },
         data: {
           status: targetStatus,
+          actions: actions,
           resolution_reason: effectiveReason,
           resolution_description: dto.resolution_description?.trim() || null,
           resolution_notes:
@@ -613,9 +632,18 @@ export class ReportsService {
           )
         : 0;
 
+      const previousWarningsCount = resolvedTargetUserId
+        ? await this.banHistoryService.getPreviousWarningsCount(
+            resolvedTargetUserId,
+            tx,
+          )
+        : 0;
+
       return {
         ...updatedReport,
+        actions: updatedReport.actions ?? actions,
         previous_bans_count: previousBansCount,
+        previous_warnings_count: previousWarningsCount,
       };
     });
     // notify the author of the reported content. Done AFTER the transaction
