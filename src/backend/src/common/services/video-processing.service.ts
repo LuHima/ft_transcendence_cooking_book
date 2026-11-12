@@ -106,9 +106,10 @@ export class VideoProcessingService {
       }, VIDEO_TRANSCODE_TIMEOUT_MS);
 
       child.stderr?.on('data', (chunk: Buffer) => {
-        // Cap captured stderr to avoid unbounded memory growth on verbose logs
-        if (stderrOutput.length < 4096) {
-          stderrOutput += chunk.toString();
+        // Keep a rolling tail of the last 4096 chars so FFmpeg's final error line is preserved
+        stderrOutput += chunk.toString();
+        if (stderrOutput.length > 4096) {
+          stderrOutput = stderrOutput.slice(-4096);
         }
       });
 

@@ -55,6 +55,7 @@ describe('Recipe Media Optimization & Retrieval (e2e)', () => {
   const mockPrisma = {
     $connect: jest.fn(),
     $disconnect: jest.fn(),
+    $transaction: jest.fn(async (cb: any) => cb(mockPrisma)),
     recipe: {
       findUnique: jest.fn(async ({ where }: any) => {
         if (where?.id !== recipeStore.id) return null;

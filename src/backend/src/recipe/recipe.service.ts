@@ -2333,21 +2333,24 @@ export class RecipeService {
         throw firstRejection;
       }
 
-      // Persist each gallery media item with sequential ordering
-      const createdMedia: any[] = [];
+      // Persist all gallery media items atomically so partial DB errors roll back cleanly
       const startingOrder = existingMedia.length;
-      for (let i = 0; i < processedFiles.length; i++) {
-        const { relativePath: fileUrl } = processedFiles[i];
-        const media = await this.prisma.recipeMedia.create({
-          data: {
-            recipe_id: recipeId,
-            url: fileUrl,
-            media_type: MediaType.image,
-            order: startingOrder + i,
-          },
-        });
-        createdMedia.push(media);
-      }
+      const createdMedia = await this.prisma.$transaction(async (tx) => {
+        const items: any[] = [];
+        for (let i = 0; i < processedFiles.length; i++) {
+          const { relativePath: fileUrl } = processedFiles[i];
+          const media = await tx.recipeMedia.create({
+            data: {
+              recipe_id: recipeId,
+              url: fileUrl,
+              media_type: MediaType.image,
+              order: startingOrder + i,
+            },
+          });
+          items.push(media);
+        }
+        return items;
+      });
 
       return createdMedia;
     } catch (err) {

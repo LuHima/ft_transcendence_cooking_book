@@ -498,7 +498,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Upload recipe tutorial video',
     description:
-      'Uploads a single demonstration video for the recipe and synchronously compresses it via FFmpeg into a streaming-optimized MP4 (H.264/AAC, CRF 27, max 1080p, +faststart). Replaces any existing tutorial video.',
+      'Uploads a single demonstration video for the recipe and synchronously compresses it via FFmpeg into a streaming-optimized MP4 (H.264/AAC, CRF 27, max 1920x1080 horizontal / 1080x1920 vertical without upscaling, +faststart). Replaces any existing tutorial video.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiConsumes('multipart/form-data')
