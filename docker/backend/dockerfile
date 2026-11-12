@@ -7,10 +7,12 @@ WORKDIR /usr/src/app
 # Install system dependencies:
 #   - openssl: required by Prisma ORM query engine binaries
 #   - curl: used for healthcheck to verify NestJS API availability
+#   - ffmpeg: used for synchronous recipe tutorial video transcoding
 # Clean apt cache to keep the image minimal
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     curl \
+    ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy the entrypoint script and make it executable
