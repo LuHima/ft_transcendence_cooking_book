@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
+import { RecipeProjection } from '../recipe/recipe.projection';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto, ReportAction } from './dto/update-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
@@ -39,6 +40,7 @@ export class ReportsService {
     private readonly recipeService: RecipeService,
     private readonly banHistoryService: BanHistoryService,
     private readonly notificationEmit: NotificationEmit,
+    private readonly recipeProjection: RecipeProjection,
   ) {}
 
   /**
@@ -249,6 +251,7 @@ export class ReportsService {
     );
 
     const banCountsMap = new Map<number, number>();
+    let ranBanBatch = false;
     if (allTargetUserIds.length > 0 && this.prisma.banHistory?.groupBy) {
       try {
         const banGroups = await this.prisma.banHistory.groupBy({
@@ -257,6 +260,10 @@ export class ReportsService {
           where: { user_id: { in: allTargetUserIds } },
         });
         if (Array.isArray(banGroups)) {
+          ranBanBatch = true;
+          for (const uid of allTargetUserIds) {
+            banCountsMap.set(uid, 0);
+          }
           for (const bg of banGroups as any[]) {
             const cnt =
               typeof bg._count === 'number'
@@ -309,31 +316,14 @@ export class ReportsService {
           const r = targetRecipeMap.get(report.target_id);
           targetUserId = r?.user_id ?? r?.user?.id ?? null;
 
-          // 4-tier localization fallback:
-          // 1. Translation matching query.lang
-          // 2. Author's declared source_lang
-          // 3. English fallback ('en')
-          // 4. First available translation, or 'Recipe #{id}'
-          let title: string | undefined;
-          if (query?.lang) {
-            title = r?.translations?.find(
-              (t) => t.locale === query.lang,
-            )?.title;
-          }
-          if (!title && r?.source_lang) {
-            title = r?.translations?.find(
-              (t) => t.locale === r.source_lang,
-            )?.title;
-          }
-          if (!title) {
-            title = r?.translations?.find((t) => t.locale === 'en')?.title;
-          }
-          if (!title) {
-            title = r?.translations?.[0]?.title;
-          }
-          if (!title) {
-            title = `Recipe #${report.target_id}`;
-          }
+          const resolvedTrans = r?.translations
+            ? this.recipeProjection.resolveTranslation(
+                r.translations,
+                query?.lang ?? '',
+                r.source_lang,
+              )
+            : undefined;
+          const title = resolvedTrans?.title || `Recipe #${report.target_id}`;
 
           target = {
             label: title,
@@ -362,14 +352,16 @@ export class ReportsService {
           };
         }
 
-        let count =
-          targetUserId !== null ? banCountsMap.get(targetUserId) : 0;
-        if (
-          count === undefined &&
-          targetUserId !== null &&
-          this.banHistoryService?.getPreviousBansCount
-        ) {
-          count = await this.banHistoryService.getPreviousBansCount(targetUserId);
+        let count = 0;
+        if (targetUserId !== null) {
+          if (banCountsMap.has(targetUserId)) {
+            count = banCountsMap.get(targetUserId) ?? 0;
+          } else if (
+            !ranBanBatch &&
+            this.banHistoryService?.getPreviousBansCount
+          ) {
+            count = await this.banHistoryService.getPreviousBansCount(targetUserId);
+          }
         }
 
         return {

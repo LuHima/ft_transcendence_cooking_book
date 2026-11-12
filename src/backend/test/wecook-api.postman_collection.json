@@ -18514,7 +18514,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\"\n    },\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\"\n    }\n  ],\n  \"total\": 10,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false,\n  \"unread_count\": 4\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\",\n      \"details\": \"Your recipe contained offensive language.\"\n    },\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\",\n      \"details\": \"Your recipe contained offensive language.\"\n    }\n  ],\n  \"total\": 10,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false,\n  \"unread_count\": 4\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21155,7 +21155,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"resolution_reason\": \"spam_scam\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"resolution_reason\": \"sexual_content\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21430,21 +21430,21 @@
                 },
                 {
                   "disabled": false,
+                  "key": "lang",
+                  "value": "it",
+                  "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted."
+                },
+                {
+                  "disabled": false,
                   "key": "status",
-                  "value": "pending",
+                  "value": "dismissed",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "comment",
+                  "value": "recipe",
                   "description": "Filter reports by target entity type"
-                },
-                {
-                  "disabled": false,
-                  "key": "lang",
-                  "value": "it",
-                  "description": "Preferred language locale for recipe label localization"
                 }
               ],
               "variable": []
@@ -21480,16 +21480,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21511,7 +21511,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"resolution_reason\": \"hate_speech\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"resolution_reason\": \"other\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"resolution_reason\": \"spam_scam\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21537,16 +21537,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21594,16 +21594,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21651,16 +21651,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21708,16 +21708,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21862,7 +21862,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"resolution_reason\": \"copyright_infringement\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -25987,8 +25987,8 @@
       "event": []
     },
     {
-      "id": "e3b9ce8a-ef95-410d-8603-bb068c78b45a",
-      "name": "Admin Catalog",
+      "id": "5522ba4e-39af-4a45-84f3-f47f2585d7de",
+      "name": "Administrative Catalog Management",
       "description": {
         "content": "",
         "type": "text/plain"

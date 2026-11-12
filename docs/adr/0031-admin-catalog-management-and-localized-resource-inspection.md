@@ -28,7 +28,12 @@ We decided to introduce a dedicated administrative catalog controller (`AdminCat
    - Public inspection endpoints under `CatalogController` accept optional query parameter `?lang=` (via `LocaleQueryDto`).
    - `GET /api/ingredients/:id` returns localized `IngredientResponseDto` (`{ id, slug, category, name, resolved_lang }`).
    - `GET /api/tags/:id` returns localized `TagResponseDto` (`{ id, slug, name, resolved_lang }`).
-   - Localization resolves matching locale, with automatic fallback to author/source language, English (`en`), or default catalog entry. Returns `404 Not Found` for non-existent IDs.
+   - Localization resolution strictly follows a 4-tier fallback hierarchy:
+     1. Requested language (`?lang=`) if an exact translation match exists.
+     2. English (`en`) translation fallback.
+     3. First available translation found in the entity's translation records (e.g., if an item only possesses `it` and the client requested `?lang=fr`, it resolves the `it` translation).
+     4. Canonical entity `slug` as the ultimate fallback if no translation records exist.
+   - Accurately reports `resolved_lang` corresponding to the matched translation locale (or `en` when defaulting to slug). Returns `404 Not Found` for non-existent IDs.
 
 3. **Frontend Integration Contract**:
    - `src/frontend/src/pages/admin/AdminCatalog.tsx` updates its CRUD and translation pre-population calls to query `/api/admin/catalog/ingredients` and `/api/admin/catalog/tags`.

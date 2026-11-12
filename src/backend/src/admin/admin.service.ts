@@ -801,7 +801,11 @@ export class AdminService {
           const currentTotal = total.get(g.target_id) || 0;
           total.set(g.target_id, currentTotal + cnt);
 
-          if (g.status === ReportStatus.pending || g.status === 'pending') {
+          if (
+            !g.status ||
+            g.status === ReportStatus.pending ||
+            g.status === 'pending'
+          ) {
             const currentPending = pending.get(g.target_id) || 0;
             pending.set(g.target_id, currentPending + cnt);
           }
@@ -810,6 +814,20 @@ export class AdminService {
         // Fallback for mocked environments
       }
       return { total, pending };
+    };
+
+    const calculateThreadPendingReports = (
+      rootId: number,
+      replies: Array<{ id: number }> | undefined,
+      pendingMap: Map<number, number>,
+    ): number => {
+      return (
+        (pendingMap.get(rootId) || 0) +
+        (replies || []).reduce(
+          (sum, r) => sum + (pendingMap.get(r.id) || 0),
+          0,
+        )
+      );
     };
 
     const mapCommentItem = (
@@ -827,7 +845,7 @@ export class AdminService {
         is_edited: c.is_edited ?? false,
         created_at: c.created_at,
         updated_at: c.updated_at ?? null,
-        reports_count: reportCounts.total.get(c.id) || 0,
+        reports_count: pendingCount,
         pending_reports_count: pendingCount,
         has_pending_reports: pendingCount > 0,
         user: c.user
@@ -932,20 +950,16 @@ export class AdminService {
         }
         candidateReportCounts = await fetchReportCounts(allCandidateIds);
         withActivity.sort((a, b) => {
-          const countA =
-            (candidateReportCounts!.pending.get(a.root.id) || 0) +
-            (a.root.replies || []).reduce(
-              (sum, r) =>
-                sum + (candidateReportCounts!.pending.get(r.id) || 0),
-              0,
-            );
-          const countB =
-            (candidateReportCounts!.pending.get(b.root.id) || 0) +
-            (b.root.replies || []).reduce(
-              (sum, r) =>
-                sum + (candidateReportCounts!.pending.get(r.id) || 0),
-              0,
-            );
+          const countA = calculateThreadPendingReports(
+            a.root.id,
+            a.root.replies,
+            candidateReportCounts!.pending,
+          );
+          const countB = calculateThreadPendingReports(
+            b.root.id,
+            b.root.replies,
+            candidateReportCounts!.pending,
+          );
           if (countB !== countA) {
             return sortOrder === SortOrder.asc
               ? countA - countB
@@ -1002,12 +1016,11 @@ export class AdminService {
           (r) => (reportCounts.pending.get(r.id) || 0) > 0,
         ).length;
 
-        const threadPendingReportsCount =
-          (reportCounts.pending.get(root.id) || 0) +
-          allReplies.reduce(
-            (sum, r) => sum + (reportCounts.pending.get(r.id) || 0),
-            0,
-          );
+        const threadPendingReportsCount = calculateThreadPendingReports(
+          root.id,
+          allReplies,
+          reportCounts.pending,
+        );
 
         let repliesToWindow = allReplies;
         if (isReportedOnly) {
@@ -1070,8 +1083,8 @@ export class AdminService {
       const reportCounts = await fetchReportCounts(allIds);
 
       allComments.sort((a, b) => {
-        const countA = reportCounts.total.get(a.id) || 0;
-        const countB = reportCounts.total.get(b.id) || 0;
+        const countA = reportCounts.pending.get(a.id) || 0;
+        const countB = reportCounts.pending.get(b.id) || 0;
         if (countB !== countA) {
           return sortOrder === SortOrder.asc
             ? countA - countB

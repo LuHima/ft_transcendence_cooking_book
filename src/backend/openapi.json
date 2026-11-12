@@ -4911,6 +4911,21 @@
             }
           },
           {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
+          },
+          {
             "name": "status",
             "required": false,
             "in": "query",
@@ -4926,21 +4941,6 @@
             "description": "Filter reports by target entity type",
             "schema": {
               "$ref": "#/components/schemas/ReportSubject"
-            }
-          },
-          {
-            "name": "lang",
-            "required": false,
-            "in": "query",
-            "description": "Preferred language locale for recipe label localization",
-            "schema": {
-              "example": "it",
-              "type": "string",
-              "enum": [
-                "it",
-                "en",
-                "fr"
-              ]
             }
           }
         ],
@@ -7216,7 +7216,7 @@
         ],
         "summary": "Get curated ingredient detail by ID (admin)",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "patch": {
@@ -7306,7 +7306,7 @@
         ],
         "summary": "Update a curated ingredient",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "delete": {
@@ -7379,7 +7379,7 @@
         ],
         "summary": "Delete a curated ingredient",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -7451,7 +7451,7 @@
         ],
         "summary": "Get curated tag detail by ID (admin)",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "patch": {
@@ -7541,7 +7541,7 @@
         ],
         "summary": "Update a curated tag",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "delete": {
@@ -7614,7 +7614,7 @@
         ],
         "summary": "Delete a curated tag",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -7695,7 +7695,7 @@
         ],
         "summary": "Create a curated ingredient",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -7776,7 +7776,7 @@
         ],
         "summary": "Create a curated tag",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -12324,7 +12324,7 @@
           },
           "reports_count": {
             "type": "number",
-            "description": "Total number of moderation reports filed against this comment",
+            "description": "Number of active pending moderation reports filed against this comment",
             "example": 3
           },
           "pending_reports_count": {
@@ -12430,7 +12430,7 @@
           },
           "reports_count": {
             "type": "number",
-            "description": "Total number of moderation reports filed against this comment",
+            "description": "Number of active pending moderation reports filed against this comment",
             "example": 3
           },
           "pending_reports_count": {

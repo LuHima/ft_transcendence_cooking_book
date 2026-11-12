@@ -9,6 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsService } from './reports.service';
 import { PrismaService } from 'prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
+import { RecipeProjection } from '../recipe/recipe.projection';
 import { BanHistoryService } from './ban-history.service';
 import {
   ReportReason,
@@ -78,6 +79,7 @@ describe('ReportsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReportsService,
+        RecipeProjection,
         {
           provide: PrismaService,
           useValue: mockPrisma,
