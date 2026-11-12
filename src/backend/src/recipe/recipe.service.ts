@@ -2304,12 +2304,12 @@ export class RecipeService {
   ) {
     const processedFiles: ProcessedMediaResult[] = [];
     try {
-      await this.assertRecipeAuthor(recipeId, userId);
-
-      // Guard: Validate that at least one file is provided
+      // Guard: Validate that at least one file is provided before hitting the DB
       if (!files || files.length === 0) {
         throw new BadRequestException('At least one file must be provided');
       }
+
+      await this.assertRecipeAuthor(recipeId, userId);
 
       // Fast-fail gallery limit check before expensive image transcoding
       const existingMedia = await this.prisma.recipeMedia.findMany({

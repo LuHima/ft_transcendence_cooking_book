@@ -32,11 +32,8 @@ export class ImageProcessingService {
    * - Encodes to WebP format at 80% quality
    * - Persists into AVATAR_UPLOADS_DIR with a collision-resistant filename
    */
-  async processAvatarBuffer(
-    buffer: Buffer,
-    userId: number,
-  ): Promise<ProcessedMediaResult> {
-    return this.processWebpInput(buffer, {
+  private getAvatarOptions(userId: number): WebpProcessingOptions {
+    return {
       dir: AVATAR_UPLOADS_DIR,
       prefix: 'avatar',
       canonicalUrlPrefix: `/api/media/avatars/${userId}`,
@@ -44,7 +41,26 @@ export class ImageProcessingService {
       height: 512,
       resizeOptions: { fit: 'cover', position: 'center' },
       errorLabel: 'avatar image',
-    });
+    };
+  }
+
+  private getRecipeImageOptions(recipeId: number): WebpProcessingOptions {
+    return {
+      dir: RECIPE_UPLOADS_DIR,
+      prefix: 'recipe',
+      canonicalUrlPrefix: `/api/media/recipes/${recipeId}`,
+      width: 1920,
+      height: 1080,
+      resizeOptions: { fit: 'inside', withoutEnlargement: true },
+      errorLabel: 'recipe image',
+    };
+  }
+
+  async processAvatarBuffer(
+    buffer: Buffer,
+    userId: number,
+  ): Promise<ProcessedMediaResult> {
+    return this.processWebpInput(buffer, this.getAvatarOptions(userId));
   }
 
   /**
@@ -55,15 +71,7 @@ export class ImageProcessingService {
     userId: number,
   ): Promise<ProcessedMediaResult> {
     return this.processImageFile(file, (input) =>
-      this.processWebpInput(input, {
-        dir: AVATAR_UPLOADS_DIR,
-        prefix: 'avatar',
-        canonicalUrlPrefix: `/api/media/avatars/${userId}`,
-        width: 512,
-        height: 512,
-        resizeOptions: { fit: 'cover', position: 'center' },
-        errorLabel: 'avatar image',
-      }),
+      this.processWebpInput(input, this.getAvatarOptions(userId)),
     );
   }
 
@@ -78,15 +86,7 @@ export class ImageProcessingService {
     buffer: Buffer,
     recipeId: number,
   ): Promise<ProcessedMediaResult> {
-    return this.processWebpInput(buffer, {
-      dir: RECIPE_UPLOADS_DIR,
-      prefix: 'recipe',
-      canonicalUrlPrefix: `/api/media/recipes/${recipeId}`,
-      width: 1920,
-      height: 1080,
-      resizeOptions: { fit: 'inside', withoutEnlargement: true },
-      errorLabel: 'recipe image',
-    });
+    return this.processWebpInput(buffer, this.getRecipeImageOptions(recipeId));
   }
 
   /**
@@ -98,15 +98,7 @@ export class ImageProcessingService {
     recipeId: number,
   ): Promise<ProcessedMediaResult> {
     return this.processImageFile(file, (input) =>
-      this.processWebpInput(input, {
-        dir: RECIPE_UPLOADS_DIR,
-        prefix: 'recipe',
-        canonicalUrlPrefix: `/api/media/recipes/${recipeId}`,
-        width: 1920,
-        height: 1080,
-        resizeOptions: { fit: 'inside', withoutEnlargement: true },
-        errorLabel: 'recipe image',
-      }),
+      this.processWebpInput(input, this.getRecipeImageOptions(recipeId)),
     );
   }
 
@@ -114,10 +106,7 @@ export class ImageProcessingService {
     input: Buffer | string,
     options: WebpProcessingOptions,
   ): Promise<ProcessedMediaResult> {
-    if (Buffer.isBuffer(input) && input.length === 0) {
-      throw new BadRequestException('Empty image buffer provided');
-    }
-    if (!input) {
+    if (!input || (Buffer.isBuffer(input) && input.length === 0)) {
       throw new BadRequestException('Empty image buffer provided');
     }
 

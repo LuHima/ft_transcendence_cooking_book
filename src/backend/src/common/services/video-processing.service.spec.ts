@@ -62,7 +62,7 @@ describe('VideoProcessingService', () => {
 
   it('should transcode video with expected FFmpeg flags and unlink raw input', async () => {
     const child = new MockChildProcess();
-    mockSpawn.mockReturnValue(child as any);
+    mockSpawn.mockReturnValue(child as unknown as ReturnType<typeof spawn>);
 
     jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
     const mkdirSpy = jest
@@ -128,7 +128,7 @@ describe('VideoProcessingService', () => {
 
   it('should unlink partial output and raw input and throw BadRequestException on non-zero exit', async () => {
     const child = new MockChildProcess();
-    mockSpawn.mockReturnValue(child as any);
+    mockSpawn.mockReturnValue(child as unknown as ReturnType<typeof spawn>);
 
     jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
     jest.spyOn(fs.promises, 'mkdir').mockResolvedValue(undefined);
@@ -139,7 +139,7 @@ describe('VideoProcessingService', () => {
     const inputPath = join(RECIPE_UPLOADS_DIR, 'corrupt.mp4');
     const mockFile = { path: inputPath } as Express.Multer.File;
 
-    const promise = service.processVideoFile({ path: inputPath } as Express.Multer.File, 1);
+    const promise = service.processVideoFile(mockFile, 1);
     await Promise.resolve();
     await Promise.resolve();
 
@@ -160,7 +160,7 @@ describe('VideoProcessingService', () => {
 
   it('should handle FFmpeg spawn error event and clean up files', async () => {
     const child = new MockChildProcess();
-    mockSpawn.mockReturnValue(child as any);
+    mockSpawn.mockReturnValue(child as unknown as ReturnType<typeof spawn>);
 
     jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
     jest.spyOn(fs.promises, 'mkdir').mockResolvedValue(undefined);
@@ -188,7 +188,7 @@ describe('VideoProcessingService', () => {
   it('should terminate FFmpeg with SIGKILL and clean up on 120s timeout', async () => {
     jest.useFakeTimers();
     const child = new MockChildProcess();
-    mockSpawn.mockReturnValue(child as any);
+    mockSpawn.mockReturnValue(child as unknown as ReturnType<typeof spawn>);
 
     jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
     jest.spyOn(fs.promises, 'mkdir').mockResolvedValue(undefined);
