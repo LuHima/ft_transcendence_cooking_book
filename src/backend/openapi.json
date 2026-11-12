@@ -8850,7 +8850,7 @@
           "avatar_url": {
             "type": "string",
             "description": "Author avatar photo URL",
-            "example": "/uploads/avatars/chef_mario.webp",
+            "example": "/api/media/avatars/1/chef_mario.webp",
             "nullable": true
           }
         },

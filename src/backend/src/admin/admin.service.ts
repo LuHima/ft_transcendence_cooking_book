@@ -703,20 +703,22 @@ export class AdminService {
     }
 
     // Process uploaded image through Sharp WebP pipeline
-    const { filename } = await this.imageProcessingService.processAvatarFile(
-      file,
-      targetUserId,
-    );
-    const avatarUrl = `/api/media/avatars/${targetUserId}/${filename}`;
+    const { relativePath: avatarUrl } =
+      await this.imageProcessingService.processAvatarFile(file, targetUserId);
 
-    // Unlink old avatar file if present
+    // Save new avatar path in database; clean up the new file if DB update fails
+    try {
+      await this.prisma.user.update({
+        where: { id: targetUserId },
+        data: { avatar_url: avatarUrl },
+      });
+    } catch (err) {
+      await this.safeUnlink(avatarUrl);
+      throw err;
+    }
+
+    // Unlink old avatar file only after DB update succeeds
     await this.safeUnlink(targetUser.avatar_url);
-
-    // Save new avatar path in database
-    await this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { avatar_url: avatarUrl },
-    });
 
     return { avatar_url: avatarUrl };
   }

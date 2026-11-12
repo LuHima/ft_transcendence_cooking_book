@@ -266,12 +266,12 @@ export class RecipeAuthorSummaryDto {
 
   /**
    * Author avatar image URL, or null if none uploaded.
-   * @example '/uploads/avatars/chef_mario.webp'
+   * @example '/api/media/avatars/1/chef_mario.webp'
    */
   @ApiProperty({
     type: String,
     description: 'Author avatar photo URL',
-    example: '/uploads/avatars/chef_mario.webp',
+    example: '/api/media/avatars/1/chef_mario.webp',
     nullable: true,
   })
   avatar_url: string | null;

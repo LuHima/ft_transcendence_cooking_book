@@ -88,7 +88,7 @@ describe('AdminService', () => {
     const mockImageProcessing = {
       processAvatarFile: jest.fn().mockResolvedValue({
         filename: 'new-avatar.webp',
-        relativePath: '/uploads/avatars/new-avatar.webp',
+        relativePath: '/api/media/avatars/2/new-avatar.webp',
       }),
     };
 

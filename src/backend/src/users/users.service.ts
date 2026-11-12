@@ -692,14 +692,19 @@ export class UsersService {
     const { relativePath: avatarUrl } =
       await this.imageProcessingService.processAvatarFile(file, userId);
 
-    // Delete previously uploaded avatar file from disk if present
-    await this.safeUnlink(user.avatar_url);
+    // Persist the new avatar path; clean up the new file if DB update fails
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { avatar_url: avatarUrl },
+      });
+    } catch (err) {
+      await this.safeUnlink(avatarUrl);
+      throw err;
+    }
 
-    // Persist the new avatar path
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { avatar_url: avatarUrl },
-    });
+    // Delete previously uploaded avatar file from disk only after DB update succeeds
+    await this.safeUnlink(user.avatar_url);
 
     return { avatar_url: avatarUrl };
   }
