@@ -6719,19 +6719,6 @@
               "example": "it",
               "type": "string"
             }
-          },
-          {
-            "name": "_sort_by",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "created_at",
-                "recipe",
-                "reports_count"
-              ]
-            }
           }
         ],
         "responses": {
@@ -11057,7 +11044,9 @@
             "example": 2
           },
           "actor": {
-            "description": "Actor profile card who triggered the notification",
+            "nullable": true,
+            "description": "Actor profile card who triggered the notification (null for anonymous staff/moderation notices)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/NotificationActorDto"
@@ -11123,7 +11112,6 @@
         "required": [
           "id",
           "user_id",
-          "actor",
           "subject",
           "action",
           "target",
@@ -11411,6 +11399,23 @@
               }
             ]
           },
+          "actions": {
+            "type": "array",
+            "description": "Executed moderation actions array",
+            "example": [
+              "warn"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "delete_content",
+                "ban",
+                "warn",
+                "dismiss"
+              ]
+            },
+            "default": []
+          },
           "resolution_notes": {
             "type": "string",
             "nullable": true,
@@ -11437,6 +11442,12 @@
             "type": "number",
             "nullable": true,
             "description": "Previous sanctions count for recidivism tracking",
+            "example": 0
+          },
+          "previous_warnings_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Previous warnings count for recidivism tracking",
             "example": 0
           },
           "resolved_by_id": {
@@ -11542,12 +11553,12 @@
             ]
           },
           "actions": {
+            "type": "array",
             "description": "Composite moderation actions (delete_content, ban, warn, dismiss)",
             "example": [
               "delete_content",
               "ban"
             ],
-            "type": "array",
             "items": {
               "type": "string",
               "enum": [
@@ -11928,6 +11939,16 @@
           "has_prev_page"
         ]
       },
+      "ReportAction": {
+        "type": "string",
+        "enum": [
+          "delete_content",
+          "ban",
+          "warn",
+          "dismiss"
+        ],
+        "description": "Sanction type (ban or warn)"
+      },
       "BanHistoryItemDto": {
         "type": "object",
         "properties": {
@@ -11951,6 +11972,16 @@
             "nullable": true,
             "description": "Originating report ID if ban was issued via report resolution",
             "example": 10
+          },
+          "action": {
+            "description": "Sanction type (ban or warn)",
+            "example": "ban",
+            "default": "ban",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportAction"
+              }
+            ]
           },
           "reason": {
             "description": "Policy violation reason",
@@ -12015,6 +12046,7 @@
           "id",
           "user_id",
           "banned_by_id",
+          "action",
           "reason",
           "is_permanent",
           "banned_at"
