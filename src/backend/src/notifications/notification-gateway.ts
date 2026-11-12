@@ -114,9 +114,13 @@ export class NotificationGateway
       client.join('room-' + payload.sub);
       // creo le stanze in maniere che piu utenti che entrano nello stesso
       // dispositivo ricevano le notifiche
-      const notification = await this.prisma.notification.findMany({
+      const rawNotifications = await this.prisma.notification.findMany({
         where: { user_id: payload.sub, is_read: false },
       });
+      const notification = rawNotifications.map((n) => ({
+        ...n,
+        actor_id: n.action === 'warn' ? null : n.actor_id,
+      }));
       client.emit('unreadNotifications', {
         notification,
       });

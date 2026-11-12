@@ -193,6 +193,74 @@ describe('NotificationService', () => {
       });
     });
 
+    it('shields moderation staff identity by returning actor: null for warn notifications and delivering details and localized message', async () => {
+      const mockNotifications = [
+        {
+          id: 99,
+          user_id: 1,
+          actor_id: 7,
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.warn,
+          target_id: 42,
+          details: 'Please remove offensive terms from recipe instructions.',
+          is_read: false,
+          created_at: new Date('2026-11-12T10:00:00Z'),
+          actor: {
+            id: 7,
+            username: 'staff_moderator',
+            avatar_url: '/uploads/avatars/mod.webp',
+          },
+        },
+        {
+          id: 100,
+          user_id: 1,
+          actor_id: 2,
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+          target_id: 42,
+          details: null,
+          is_read: false,
+          created_at: new Date('2026-11-12T11:00:00Z'),
+          actor: {
+            id: 2,
+            username: 'regular_user',
+            avatar_url: '/uploads/avatars/user.webp',
+          },
+        },
+      ];
+
+      prisma.notification.findMany.mockResolvedValue(mockNotifications);
+      prisma.notification.count
+        .mockResolvedValueOnce(2)
+        .mockResolvedValueOnce(2);
+      prisma.recipe.findMany.mockResolvedValue([
+        {
+          id: 42,
+          source_lang: 'en',
+          translations: [{ locale: 'en', title: 'Delicious Cake' }],
+        },
+      ]);
+
+      const result = await service.getNotifications(1, { lang: 'en' });
+
+      // Warn notification: actor strictly null, details populated, localized message without staff identity
+      expect(result.items[0].actor).toBeNull();
+      expect(result.items[0].details).toBe(
+        'Please remove offensive terms from recipe instructions.',
+      );
+      expect(result.items[0].message).toBe(
+        'You received a warning from the moderation team about your recipe "Delicious Cake"',
+      );
+
+      // Social notification: actor hydrated
+      expect(result.items[1].actor).toEqual({
+        id: 2,
+        username: 'regular_user',
+        avatar_url: '/uploads/avatars/user.webp',
+      });
+      expect(result.items[1].details).toBeNull();
+    });
+
     it('5. Target & Message Hydration: populates recipe title and localized message across it, en, and fr', async () => {
       const mockNotifications = [
         {
