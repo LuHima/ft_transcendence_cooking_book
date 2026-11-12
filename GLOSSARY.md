@@ -13,8 +13,12 @@ A localized text projection of a recipe (title, description, preservation, tips)
 _Avoid_: Localized recipe, text copy
 
 **RecipeStep**:
-A discrete, ordered instruction step in a recipe with an optional duration and step-specific illustration.
+A discrete, ordered instruction step in a recipe with an optional duration (in minutes) and step-specific illustration. Step durations may exceed Total Recipe Time because preparation or cooking steps can run in parallel.
 _Avoid_: Instruction, direction, step description
+
+**Total Recipe Time**:
+The overall wall-clock duration of a recipe, computed as the sum of preparation time and active cooking time.
+_Avoid_: Step sum, cumulative step duration
 
 **RecipeStepTranslation**:
 The localized title and description of an instruction step for a specific locale.
