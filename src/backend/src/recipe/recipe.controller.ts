@@ -340,7 +340,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Upload recipe cover image',
     description:
-      'Uploads and sets the primary hero cover photo for the recipe. Replaces any existing cover image.',
+      'Uploads and sets the primary hero cover photo for the recipe. The image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio. Replaces any existing cover image.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiConsumes('multipart/form-data')
@@ -351,7 +351,8 @@ export class RecipeController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Image file (JPEG, PNG, or WebP; maximum 5MB)',
+          description:
+            'Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)',
         },
       },
       required: ['file'],
@@ -387,7 +388,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Upload step illustration photo',
     description:
-      'Uploads an illustration photo for a specific recipe preparation step (identified by step number).',
+      'Uploads an illustration photo for a specific recipe preparation step (identified by step number). The image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiParam({
@@ -403,7 +404,8 @@ export class RecipeController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Step illustration photo (JPEG, PNG, or WebP; max 5MB)',
+          description:
+            'Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)',
         },
       },
       required: ['file'],
@@ -445,7 +447,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Upload recipe gallery photos',
     description:
-      'Uploads supplementary plating photos to the recipe gallery. Enforces a maximum limit of 3 gallery photos per recipe.',
+      'Uploads supplementary plating photos to the recipe gallery. Enforces a maximum limit of 3 gallery photos per recipe. Each image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiConsumes('multipart/form-data')
@@ -459,7 +461,8 @@ export class RecipeController {
             type: 'string',
             format: 'binary',
           },
-          description: 'Gallery photos (up to 3 files total, max 5MB each)',
+          description:
+            'Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)',
         },
       },
       required: ['files'],
@@ -495,7 +498,7 @@ export class RecipeController {
   @ApiOperation({
     summary: 'Upload recipe tutorial video',
     description:
-      'Uploads a single demonstration video for the recipe. Replaces any existing tutorial video.',
+      'Uploads a single demonstration video for the recipe and synchronously compresses it via FFmpeg into a streaming-optimized MP4 (H.264/AAC, CRF 27, max 1080p, +faststart). Replaces any existing tutorial video.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiConsumes('multipart/form-data')
@@ -506,7 +509,8 @@ export class RecipeController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Video file (MP4 or WebM format, max 100MB)',
+          description:
+            'Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)',
         },
       },
       required: ['file'],
