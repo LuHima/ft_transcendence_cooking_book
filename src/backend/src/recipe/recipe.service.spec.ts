@@ -36,6 +36,7 @@ import { RecipeProjection } from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+import { VideoProcessingService } from '../common/services/video-processing.service';
 import { NotificationEmit } from '../notifications/notification-emit';
 import * as fs from 'fs';
 import { join } from 'path';
@@ -173,6 +174,19 @@ describe('RecipeService', () => {
     }),
   };
 
+  const mockVideoProcessingService = {
+    processVideoFile: jest.fn(async (file: any) => {
+      const base = (file?.filename || file?.originalname || 'recipe.mp4').replace(
+        /\.[^/.]+$/,
+        '.mp4',
+      );
+      return {
+        filename: base,
+        relativePath: `/uploads/recipes/${base}`,
+      };
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -185,6 +199,10 @@ describe('RecipeService', () => {
         {
           provide: ImageProcessingService,
           useValue: mockImageProcessingService,
+        },
+        {
+          provide: VideoProcessingService,
+          useValue: mockVideoProcessingService,
         },
       ],
     }).compile();
@@ -3175,6 +3193,9 @@ describe('RecipeService', () => {
 
       const result = await service.uploadVideo(1, 1, mockFile);
 
+      expect(
+        mockVideoProcessingService.processVideoFile,
+      ).toHaveBeenCalledWith(mockFile);
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { video_url: '/api/media/recipes/1/recipe-1-video.mp4' },
@@ -3182,6 +3203,28 @@ describe('RecipeService', () => {
       expect(result).toEqual({
         video_url: '/api/media/recipes/1/recipe-1-video.mp4',
       });
+    });
+
+    it('should propagate BadRequestException from VideoProcessingService without unlinking old video or updating DB', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+        video_url: '/api/media/recipes/1/existing.mp4',
+      });
+      mockVideoProcessingService.processVideoFile.mockRejectedValueOnce(
+        new BadRequestException(
+          'Failed to process video: corrupt or unsupported file format',
+        ),
+      );
+      const safeUnlinkSpy = jest
+        .spyOn(service as any, 'safeUnlink')
+        .mockResolvedValue(undefined);
+
+      await expect(service.uploadVideo(1, 1, mockFile)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(safeUnlinkSpy).not.toHaveBeenCalled();
+      expect(mockPrisma.recipe.update).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if video file is missing', async () => {

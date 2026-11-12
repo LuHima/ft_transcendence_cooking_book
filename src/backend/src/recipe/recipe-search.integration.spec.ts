@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RecipeService } from './recipe.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+import { VideoProcessingService } from '../common/services/video-processing.service';
 import { RecipeProjection } from './recipe.projection';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
@@ -204,6 +205,10 @@ describe('Advanced Recipe Search & Localized Sorting Integration Suite', () => {
         {
           provide: ImageProcessingService,
           useValue: { processRecipeImageFile: jest.fn() },
+        },
+        {
+          provide: VideoProcessingService,
+          useValue: { processVideoFile: jest.fn() },
         },
       ],
     }).compile();

@@ -60,6 +60,7 @@ import {
 import { ProductionConfig } from '../common/config/production.config';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import { ImageProcessingService } from '../common/services/image-processing.service';
+import { VideoProcessingService } from '../common/services/video-processing.service';
 import * as fs from 'fs';
 import { createHttpException, errors } from 'src/common/config/error.config';
 
@@ -72,6 +73,7 @@ export class RecipeService {
     private readonly notificationEmit: NotificationEmit,
     private readonly recipeProjection: RecipeProjection,
     private readonly imageProcessingService: ImageProcessingService,
+    private readonly videoProcessingService: VideoProcessingService,
   ) {}
 
   private readonly logger = new Logger(RecipeService.name);
@@ -2343,11 +2345,13 @@ export class RecipeService {
       // Development only
       throw new NotFoundException('UserId not the author of the recipe');
 
+    const { filename } =
+      await this.videoProcessingService.processVideoFile(file);
+
     if (recipe.video_url) {
       await this.safeUnlink(recipe.video_url);
     }
 
-    const filename = file.filename || file.originalname;
     const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update video_url on recipe
