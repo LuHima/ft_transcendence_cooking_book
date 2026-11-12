@@ -68,12 +68,12 @@ export class LocalizedRecipeStepResponse {
 
   /**
    * URL of the step illustration image, if uploaded.
-   * @example '/uploads/recipes/step_1_carbonara.webp'
+   * @example '/api/media/recipes/42/step_1_carbonara.webp'
    */
   @ApiProperty({
     type: String,
-    description: 'Static URL path to step illustration photo',
-    example: '/uploads/recipes/step_1_carbonara.webp',
+    description: 'Canonical API URL path to step illustration photo',
+    example: '/api/media/recipes/42/step_1_carbonara.webp',
     nullable: true,
   })
   image_url: string | null;
@@ -218,12 +218,12 @@ export class RecipeMediaResponse {
   id: number;
 
   /**
-   * Static asset URL path to the uploaded image file.
-   * @example '/uploads/recipes/gallery_1_carbonara.webp'
+   * Canonical API asset URL path to the uploaded image file.
+   * @example '/api/media/recipes/42/gallery_1_carbonara.webp'
    */
   @ApiProperty({
-    description: 'Static URL path to media file',
-    example: '/uploads/recipes/gallery_1_carbonara.webp',
+    description: 'Canonical API URL path to media file',
+    example: '/api/media/recipes/42/gallery_1_carbonara.webp',
   })
   url: string;
 
@@ -410,24 +410,24 @@ export class LocalizedRecipeSummaryResponse {
 
   /**
    * Main cover image URL path.
-   * @example '/uploads/recipes/carbonara_cover.webp'
+   * @example '/api/media/recipes/42/carbonara_cover.webp'
    */
   @ApiProperty({
     type: String,
     description: 'Recipe cover image URL',
-    example: '/uploads/recipes/carbonara_cover.webp',
+    example: '/api/media/recipes/42/carbonara_cover.webp',
     nullable: true,
   })
   cover_image_url: string | null;
 
   /**
    * Tutorial demonstration video URL path.
-   * @example '/uploads/recipes/carbonara_tutorial.mp4'
+   * @example '/api/media/recipes/42/carbonara_tutorial.mp4'
    */
   @ApiProperty({
     type: String,
     description: 'Tutorial demonstration video URL',
-    example: '/uploads/recipes/carbonara_tutorial.mp4',
+    example: '/api/media/recipes/42/carbonara_tutorial.mp4',
     nullable: true,
   })
   video_url: string | null;

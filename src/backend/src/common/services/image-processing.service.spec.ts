@@ -46,9 +46,9 @@ describe('ImageProcessingService', () => {
       .png()
       .toBuffer();
 
-    const result = await service.processAvatarBuffer(testPngBuffer);
+    const result = await service.processAvatarBuffer(testPngBuffer, 42);
     expect(result.relativePath).toMatch(
-      /^\/uploads\/avatars\/avatar-\d+-[a-f0-9-]+\.webp$/,
+      /^\/api\/media\/avatars\/42\/avatar-\d+-[a-f0-9-]+\.webp$/,
     );
     expect(result.filename.endsWith('.webp')).toBe(true);
 
@@ -90,18 +90,55 @@ describe('ImageProcessingService', () => {
 
     const result = await service.processAvatarFile(mockFile);
     expect(result.relativePath).toMatch(
-      /^\/uploads\/avatars\/avatar-\d+-[a-f0-9-]+\.webp$/,
+      /^\/api\/media\/avatars\/0\/avatar-\d+-[a-f0-9-]+\.webp$/,
     );
     createdFiles.push(join(AVATAR_UPLOADS_DIR, result.filename));
   });
 
-  it('should fallback gracefully when neither buffer nor file path exists', async () => {
-    const mockFile = {
-      filename: 'fallback-avatar.jpg',
-    } as Express.Multer.File;
+  it('should throw BadRequestException when neither buffer nor file path exists or buffer is empty', async () => {
+    await expect(
+      service.processAvatarFile({
+        filename: 'fallback-avatar.jpg',
+      } as Express.Multer.File),
+    ).rejects.toThrow(BadRequestException);
 
-    const result = await service.processAvatarFile(mockFile);
-    expect(result.relativePath).toBe('/uploads/avatars/fallback-avatar.jpg');
+    await expect(
+      service.processAvatarFile({
+        buffer: Buffer.alloc(0),
+      } as Express.Multer.File),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      service.processAvatarFile({
+        path: '/non-existent/avatar.jpg',
+      } as Express.Multer.File),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should unlink temporary disk path when buffer is also present', async () => {
+    await fs.promises.mkdir(RECIPE_UPLOADS_DIR, { recursive: true });
+    const tempPath = join(RECIPE_UPLOADS_DIR, `temp-dup-${Date.now()}.png`);
+    const buf = await sharp({
+      create: {
+        width: 100,
+        height: 100,
+        channels: 3,
+        background: { r: 10, g: 20, b: 30 },
+      },
+    })
+      .png()
+      .toBuffer();
+    await fs.promises.writeFile(tempPath, buf);
+
+    const result = await service.processRecipeImageFile(
+      { buffer: buf, path: tempPath } as Express.Multer.File,
+      7,
+    );
+    expect(result.relativePath).toMatch(
+      /^\/api\/media\/recipes\/7\/recipe-\d+-[a-f0-9-]+\.webp$/,
+    );
+    expect(fs.existsSync(tempPath)).toBe(false);
+    createdFiles.push(join(RECIPE_UPLOADS_DIR, result.filename));
   });
 
   describe('processRecipeImageBuffer & processRecipeImageFile', () => {
@@ -119,9 +156,9 @@ describe('ImageProcessingService', () => {
         .jpeg()
         .toBuffer();
 
-      const result = await service.processRecipeImageBuffer(largeBuffer);
+      const result = await service.processRecipeImageBuffer(largeBuffer, 15);
       expect(result.relativePath).toMatch(
-        /^\/uploads\/recipes\/recipe-\d+-[a-f0-9-]+\.webp$/,
+        /^\/api\/media\/recipes\/15\/recipe-\d+-[a-f0-9-]+\.webp$/,
       );
       expect(result.filename.endsWith('.webp')).toBe(true);
 

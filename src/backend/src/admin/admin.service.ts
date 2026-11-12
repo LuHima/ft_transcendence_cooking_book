@@ -703,8 +703,10 @@ export class AdminService {
     }
 
     // Process uploaded image through Sharp WebP pipeline
-    const { filename } =
-      await this.imageProcessingService.processAvatarFile(file);
+    const { filename } = await this.imageProcessingService.processAvatarFile(
+      file,
+      targetUserId,
+    );
     const avatarUrl = `/api/media/avatars/${targetUserId}/${filename}`;
 
     // Unlink old avatar file if present

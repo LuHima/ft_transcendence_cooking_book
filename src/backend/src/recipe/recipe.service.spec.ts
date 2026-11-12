@@ -162,27 +162,29 @@ describe('RecipeService', () => {
   };
 
   const mockImageProcessingService = {
-    processRecipeImageFile: jest.fn(async (file: any) => {
-      const base = (file?.filename || file?.originalname || 'recipe.webp').replace(
-        /\.[^/.]+$/,
-        '.webp',
-      );
+    processRecipeImageFile: jest.fn(async (file: any, recipeId = 1) => {
+      const base = (
+        file?.filename ||
+        file?.originalname ||
+        'recipe.webp'
+      ).replace(/\.[^/.]+$/, '.webp');
       return {
         filename: base,
-        relativePath: `/uploads/recipes/${base}`,
+        relativePath: `/api/media/recipes/${recipeId}/${base}`,
       };
     }),
   };
 
   const mockVideoProcessingService = {
-    processVideoFile: jest.fn(async (file: any) => {
-      const base = (file?.filename || file?.originalname || 'recipe.mp4').replace(
-        /\.[^/.]+$/,
-        '.mp4',
-      );
+    processVideoFile: jest.fn(async (file: any, recipeId = 1) => {
+      const base = (
+        file?.filename ||
+        file?.originalname ||
+        'recipe.mp4'
+      ).replace(/\.[^/.]+$/, '.mp4');
       return {
         filename: base,
-        relativePath: `/uploads/recipes/${base}`,
+        relativePath: `/api/media/recipes/${recipeId}/${base}`,
       };
     }),
   };
@@ -2902,7 +2904,7 @@ describe('RecipeService', () => {
 
       expect(
         mockImageProcessingService.processRecipeImageFile,
-      ).toHaveBeenCalledWith(mockFile);
+      ).toHaveBeenCalledWith(mockFile, 1);
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { cover_image_url: '/api/media/recipes/1/recipe-1-cover.webp' },
@@ -3002,7 +3004,7 @@ describe('RecipeService', () => {
 
       expect(
         mockImageProcessingService.processRecipeImageFile,
-      ).toHaveBeenCalledWith(mockFile);
+      ).toHaveBeenCalledWith(mockFile, 1);
       expect(mockPrisma.recipeStep.update).toHaveBeenCalledWith({
         where: { id: 10 },
         data: { image_url: '/api/media/recipes/1/recipe-1-step-1.webp' },
@@ -3154,6 +3156,71 @@ describe('RecipeService', () => {
       });
       expect(result).toHaveLength(2);
     });
+
+    it('cleans up already-transcoded webp outputs and raw files if a gallery item fails', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+      mockPrisma.recipeMedia.findMany.mockResolvedValueOnce([]);
+      mockImageProcessingService.processRecipeImageFile
+        .mockResolvedValueOnce({
+          filename: 'first-ok.webp',
+          relativePath: '/api/media/recipes/1/first-ok.webp',
+        })
+        .mockRejectedValueOnce(new BadRequestException('Corrupt second image'));
+
+      const filesWithPaths = [
+        { path: join(RECIPE_UPLOADS_DIR, 'raw-1.jpg') },
+        { path: join(RECIPE_UPLOADS_DIR, 'raw-2.jpg') },
+      ] as Express.Multer.File[];
+
+      await expect(
+        service.uploadGalleryMedia(1, 1, filesWithPaths),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'first-ok.webp'),
+      );
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'raw-1.jpg'),
+      );
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'raw-2.jpg'),
+      );
+      unlinkSpy.mockRestore();
+    });
+
+    it('cleans up raw multer files when gallery limit guard rejects', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+      });
+      mockPrisma.recipeMedia.findMany.mockResolvedValueOnce([
+        { id: 1 },
+        { id: 2 },
+        { id: 3 },
+      ]);
+
+      const filesWithPaths = [
+        { path: join(RECIPE_UPLOADS_DIR, 'raw-excess.jpg') },
+      ] as Express.Multer.File[];
+
+      await expect(
+        service.uploadGalleryMedia(1, 1, filesWithPaths),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'raw-excess.jpg'),
+      );
+      unlinkSpy.mockRestore();
+    });
   });
 
   describe('uploadVideo', () => {
@@ -3195,7 +3262,7 @@ describe('RecipeService', () => {
 
       expect(
         mockVideoProcessingService.processVideoFile,
-      ).toHaveBeenCalledWith(mockFile);
+      ).toHaveBeenCalledWith(mockFile, 1);
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { video_url: '/api/media/recipes/1/recipe-1-video.mp4' },

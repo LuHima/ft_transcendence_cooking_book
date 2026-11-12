@@ -13,6 +13,16 @@ export interface ProcessedMediaResult {
   relativePath: string;
 }
 
+interface WebpProcessingOptions {
+  dir: string;
+  prefix: string;
+  canonicalUrlPrefix: string;
+  width: number;
+  height: number;
+  resizeOptions: sharp.ResizeOptions;
+  errorLabel: string;
+}
+
 @Injectable()
 export class ImageProcessingService {
   /**
@@ -22,33 +32,19 @@ export class ImageProcessingService {
    * - Encodes to WebP format at 80% quality
    * - Persists into AVATAR_UPLOADS_DIR with a collision-resistant filename
    */
-  async processAvatarBuffer(buffer: Buffer): Promise<ProcessedMediaResult> {
-    if (!buffer || buffer.length === 0) {
-      throw new BadRequestException('Empty image buffer provided');
-    }
-
-    await fs.promises.mkdir(AVATAR_UPLOADS_DIR, { recursive: true });
-    const filename = `avatar-${Date.now()}-${randomUUID()}.webp`;
-    const outputPath = join(AVATAR_UPLOADS_DIR, filename);
-
-    try {
-      await sharp(buffer)
-        .rotate()
-        .resize(512, 512, { fit: 'cover', position: 'center' })
-        .webp({ quality: 80 })
-        .toFile(outputPath);
-    } catch (err: unknown) {
-      const errorMsg =
-        err instanceof Error ? err.message : 'Invalid image format';
-      throw new BadRequestException(
-        `Failed to process avatar image: ${errorMsg}`,
-      );
-    }
-
-    return {
-      filename,
-      relativePath: `/uploads/avatars/${filename}`,
-    };
+  async processAvatarBuffer(
+    buffer: Buffer,
+    userId = 0,
+  ): Promise<ProcessedMediaResult> {
+    return this.processWebpBuffer(buffer, {
+      dir: AVATAR_UPLOADS_DIR,
+      prefix: 'avatar',
+      canonicalUrlPrefix: `/api/media/avatars/${userId}`,
+      width: 512,
+      height: 512,
+      resizeOptions: { fit: 'cover', position: 'center' },
+      errorLabel: 'avatar image',
+    });
   }
 
   /**
@@ -56,12 +52,10 @@ export class ImageProcessingService {
    */
   async processAvatarFile(
     file: Express.Multer.File,
+    userId = 0,
   ): Promise<ProcessedMediaResult> {
-    return this.processImageFile(
-      file,
-      (buffer) => this.processAvatarBuffer(buffer),
-      '/uploads/avatars',
-      'avatar',
+    return this.processImageFile(file, (buffer) =>
+      this.processAvatarBuffer(buffer, userId),
     );
   }
 
@@ -74,33 +68,17 @@ export class ImageProcessingService {
    */
   async processRecipeImageBuffer(
     buffer: Buffer,
+    recipeId = 0,
   ): Promise<ProcessedMediaResult> {
-    if (!buffer || buffer.length === 0) {
-      throw new BadRequestException('Empty image buffer provided');
-    }
-
-    await fs.promises.mkdir(RECIPE_UPLOADS_DIR, { recursive: true });
-    const filename = `recipe-${Date.now()}-${randomUUID()}.webp`;
-    const outputPath = join(RECIPE_UPLOADS_DIR, filename);
-
-    try {
-      await sharp(buffer)
-        .rotate()
-        .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toFile(outputPath);
-    } catch (err: unknown) {
-      const errorMsg =
-        err instanceof Error ? err.message : 'Invalid image format';
-      throw new BadRequestException(
-        `Failed to process recipe image: ${errorMsg}`,
-      );
-    }
-
-    return {
-      filename,
-      relativePath: `/uploads/recipes/${filename}`,
-    };
+    return this.processWebpBuffer(buffer, {
+      dir: RECIPE_UPLOADS_DIR,
+      prefix: 'recipe',
+      canonicalUrlPrefix: `/api/media/recipes/${recipeId}`,
+      width: 1920,
+      height: 1080,
+      resizeOptions: { fit: 'inside', withoutEnlargement: true },
+      errorLabel: 'recipe image',
+    });
   }
 
   /**
@@ -109,55 +87,83 @@ export class ImageProcessingService {
    */
   async processRecipeImageFile(
     file: Express.Multer.File,
+    recipeId = 0,
   ): Promise<ProcessedMediaResult> {
-    return this.processImageFile(
-      file,
-      (buffer) => this.processRecipeImageBuffer(buffer),
-      '/uploads/recipes',
-      'recipe',
+    return this.processImageFile(file, (buffer) =>
+      this.processRecipeImageBuffer(buffer, recipeId),
     );
+  }
+
+  private async processWebpBuffer(
+    buffer: Buffer,
+    options: WebpProcessingOptions,
+  ): Promise<ProcessedMediaResult> {
+    if (!buffer || buffer.length === 0) {
+      throw new BadRequestException('Empty image buffer provided');
+    }
+
+    await fs.promises.mkdir(options.dir, { recursive: true });
+    const filename = `${options.prefix}-${Date.now()}-${randomUUID()}.webp`;
+    const outputPath = join(options.dir, filename);
+
+    try {
+      await sharp(buffer)
+        .rotate()
+        .resize(options.width, options.height, options.resizeOptions)
+        .webp({ quality: 80 })
+        .toFile(outputPath);
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : 'Invalid image format';
+      throw new BadRequestException(
+        `Failed to process ${options.errorLabel}: ${errorMsg}`,
+      );
+    }
+
+    return {
+      filename,
+      relativePath: `${options.canonicalUrlPrefix}/${filename}`,
+    };
   }
 
   private async processImageFile(
     file: Express.Multer.File,
     processBuffer: (buffer: Buffer) => Promise<ProcessedMediaResult>,
-    fallbackBasePath: string,
-    fallbackPrefix: string,
   ): Promise<ProcessedMediaResult> {
     if (!file) {
       throw new BadRequestException('File is required');
     }
 
-    if (file.buffer && file.buffer.length > 0) {
-      try {
-        return await processBuffer(file.buffer);
-      } finally {
-        if (file.path && fs.existsSync(file.path)) {
-          await fs.promises.unlink(file.path).catch(() => {});
+    if (file.buffer !== undefined) {
+      if (file.buffer.length === 0 && !file.path) {
+        throw new BadRequestException('Empty image buffer provided');
+      }
+      if (file.buffer.length > 0) {
+        try {
+          return await processBuffer(file.buffer);
+        } finally {
+          if (file.path) {
+            await fs.promises.unlink(file.path).catch(() => {});
+          }
         }
       }
     }
 
-    if (file.path && fs.existsSync(file.path)) {
-      try {
-        const buffer = await fs.promises.readFile(file.path);
-        const result = await processBuffer(buffer);
-        await fs.promises.unlink(file.path).catch(() => {});
-        return result;
-      } catch (err: unknown) {
-        await fs.promises.unlink(file.path).catch(() => {});
-        throw err;
-      }
+    if (!file.path) {
+      throw new BadRequestException('Uploaded image file has no content');
     }
 
-    // Fallback for tests or synthetic file descriptors without binary backing
-    const fallbackFilename =
-      file.filename ||
-      file.originalname ||
-      `${fallbackPrefix}-${Date.now()}-${randomUUID()}.webp`;
-    return {
-      filename: fallbackFilename,
-      relativePath: `${fallbackBasePath}/${fallbackFilename}`,
-    };
+    try {
+      await fs.promises.access(file.path);
+    } catch {
+      throw new BadRequestException('Uploaded image file not found on disk');
+    }
+
+    try {
+      const buffer = await fs.promises.readFile(file.path);
+      return await processBuffer(buffer);
+    } finally {
+      await fs.promises.unlink(file.path).catch(() => {});
+    }
   }
 }

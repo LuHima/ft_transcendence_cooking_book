@@ -14,11 +14,13 @@ export class VideoProcessingService {
 
   /**
    * Synchronously transcodes an uploaded tutorial video to a streaming-optimized
-   * H.264/AAC MP4 (max 1080p, CRF 27, preset fast, +faststart) via FFmpeg.
+   * H.264/AAC MP4 (max 1920x1080 horizontal / 1080x1920 vertical, CRF 27,
+   * preset fast, +faststart) via FFmpeg.
    * Cleans up the raw multer input file upon completion or failure.
    */
   async processVideoFile(
     file: Express.Multer.File,
+    recipeId = 0,
   ): Promise<ProcessedMediaResult> {
     if (!file) {
       throw new BadRequestException('File is required');
@@ -51,7 +53,7 @@ export class VideoProcessingService {
 
     return {
       filename,
-      relativePath: `/uploads/recipes/${filename}`,
+      relativePath: `/api/media/recipes/${recipeId}/${filename}`,
     };
   }
 
@@ -61,7 +63,7 @@ export class VideoProcessingService {
       '-i',
       inputPath,
       '-vf',
-      "scale='min(1920,iw)':-2",
+      "scale='if(gte(iw,ih),min(1920,iw),min(1080,iw))':'if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2",
       '-c:v',
       'libx264',
       '-crf',

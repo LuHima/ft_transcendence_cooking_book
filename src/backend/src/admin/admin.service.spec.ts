@@ -671,6 +671,7 @@ describe('AdminService', () => {
       });
       expect(imageProcessingService.processAvatarFile).toHaveBeenCalledWith(
         mockFile,
+        2,
       );
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 2 },

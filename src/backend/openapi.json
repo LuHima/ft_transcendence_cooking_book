@@ -8980,13 +8980,13 @@
           "cover_image_url": {
             "type": "string",
             "description": "Recipe cover image URL",
-            "example": "/uploads/recipes/carbonara_cover.webp",
+            "example": "/api/media/recipes/42/carbonara_cover.webp",
             "nullable": true
           },
           "video_url": {
             "type": "string",
             "description": "Tutorial demonstration video URL",
-            "example": "/uploads/recipes/carbonara_tutorial.mp4",
+            "example": "/api/media/recipes/42/carbonara_tutorial.mp4",
             "nullable": true
           },
           "created_at": {
@@ -9755,8 +9755,8 @@
           },
           "image_url": {
             "type": "string",
-            "description": "Static URL path to step illustration photo",
-            "example": "/uploads/recipes/step_1_carbonara.webp",
+            "description": "Canonical API URL path to step illustration photo",
+            "example": "/api/media/recipes/42/step_1_carbonara.webp",
             "nullable": true
           }
         },
@@ -9866,8 +9866,8 @@
           },
           "url": {
             "type": "string",
-            "description": "Static URL path to media file",
-            "example": "/uploads/recipes/gallery_1_carbonara.webp"
+            "description": "Canonical API URL path to media file",
+            "example": "/api/media/recipes/42/gallery_1_carbonara.webp"
           },
           "media_type": {
             "type": "string",
@@ -9975,13 +9975,13 @@
           "cover_image_url": {
             "type": "string",
             "description": "Recipe cover image URL",
-            "example": "/uploads/recipes/carbonara_cover.webp",
+            "example": "/api/media/recipes/42/carbonara_cover.webp",
             "nullable": true
           },
           "video_url": {
             "type": "string",
             "description": "Tutorial demonstration video URL",
-            "example": "/uploads/recipes/carbonara_tutorial.mp4",
+            "example": "/api/media/recipes/42/carbonara_tutorial.mp4",
             "nullable": true
           },
           "created_at": {
@@ -10499,8 +10499,8 @@
         "properties": {
           "cover_image_url": {
             "type": "string",
-            "description": "Static URL path to uploaded recipe cover image",
-            "example": "/uploads/recipes/recipe_42_cover.webp"
+            "description": "Canonical API URL path to uploaded recipe cover image",
+            "example": "/api/media/recipes/42/recipe_42_cover.webp"
           }
         },
         "required": [
@@ -10517,8 +10517,8 @@
           },
           "image_url": {
             "type": "string",
-            "description": "Static URL path to uploaded step illustration photo",
-            "example": "/uploads/recipes/step_2_recipe_42.webp"
+            "description": "Canonical API URL path to uploaded step illustration photo",
+            "example": "/api/media/recipes/42/step_2_recipe_42.webp"
           }
         },
         "required": [
@@ -10531,8 +10531,8 @@
         "properties": {
           "video_url": {
             "type": "string",
-            "description": "Static URL path to uploaded tutorial demonstration video",
-            "example": "/uploads/recipes/recipe_42_video.mp4"
+            "description": "Canonical API URL path to uploaded tutorial demonstration video",
+            "example": "/api/media/recipes/42/recipe_42_video.mp4"
           }
         },
         "required": [

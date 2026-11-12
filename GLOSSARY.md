@@ -41,7 +41,7 @@ The automated server-side transformation using Sharp that strips camera EXIF met
 _Avoid_: Image conversion, photo shrink, raw upload
 
 **Synchronous Video Compression**:
-The in-request transcoding process using FFmpeg that compresses and standardizes uploaded tutorial videos into MP4 container format (H.264 video, AAC audio, CRF 27, preset fast, max 1080p, and FastStart metadata optimization) before saving the media asset and returning the media URL to the client.
+The in-request transcoding process using FFmpeg that compresses and standardizes uploaded tutorial videos into MP4 container format (H.264 video, AAC audio, CRF 27, preset fast, max 1920x1080 for horizontal videos and 1080x1920 for vertical videos without upscaling, and FastStart metadata optimization) before saving the media asset and returning the media URL to the client.
 _Avoid_: Video convert, clip render, background transcode, raw video storage
 
 **Preservation Notes**:

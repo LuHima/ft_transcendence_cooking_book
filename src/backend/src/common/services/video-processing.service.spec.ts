@@ -38,9 +38,13 @@ describe('VideoProcessingService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should throw BadRequestException when file is missing or not on disk', async () => {
+  it('should throw BadRequestException when file or path is missing or not on disk', async () => {
     await expect(
       service.processVideoFile(undefined as unknown as Express.Multer.File),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      service.processVideoFile({} as Express.Multer.File),
     ).rejects.toThrow(BadRequestException);
 
     await expect(
@@ -70,7 +74,7 @@ describe('VideoProcessingService', () => {
       mimetype: 'video/quicktime',
     } as Express.Multer.File;
 
-    const promise = service.processVideoFile(mockFile);
+    const promise = service.processVideoFile(mockFile, 42);
 
     // Wait a tick for mkdir and spawn to be called
     await Promise.resolve();
@@ -89,7 +93,7 @@ describe('VideoProcessingService', () => {
         '-i',
         inputPath,
         '-vf',
-        "scale='min(1920,iw)':-2",
+        "scale='if(gte(iw,ih),min(1920,iw),min(1080,iw))':'if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2",
         '-c:v',
         'libx264',
         '-crf',
@@ -112,7 +116,7 @@ describe('VideoProcessingService', () => {
 
     const result = await promise;
     expect(result.filename).toMatch(/^recipe-\d+-[a-f0-9-]+\.mp4$/);
-    expect(result.relativePath).toBe(`/uploads/recipes/${result.filename}`);
+    expect(result.relativePath).toBe(`/api/media/recipes/42/${result.filename}`);
     expect(unlinkSpy).toHaveBeenCalledWith(inputPath);
   });
 

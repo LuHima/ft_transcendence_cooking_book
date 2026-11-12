@@ -692,8 +692,10 @@ export class UsersService {
     // Process avatar image through Sharp WebP pipeline
     let filename: string;
     if (this.imageProcessingService) {
-      const processed =
-        await this.imageProcessingService.processAvatarFile(file);
+      const processed = await this.imageProcessingService.processAvatarFile(
+        file,
+        userId,
+      );
       filename = processed.filename;
     } else {
       filename = file.filename || file.originalname;
