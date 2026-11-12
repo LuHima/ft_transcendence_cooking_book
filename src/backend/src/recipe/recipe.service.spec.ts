@@ -2946,6 +2946,33 @@ describe('RecipeService', () => {
         '/uploads/recipes/old-cover.png',
       );
     });
+
+    it('should unlink newly transcoded cover output and preserve old cover if DB update fails', async () => {
+      const unlinkSpy = jest
+        .spyOn(fs.promises, 'unlink')
+        .mockResolvedValue(undefined);
+      const safeUnlinkSpy = jest
+        .spyOn(service as any, 'safeUnlink')
+        .mockResolvedValue(undefined);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 1,
+        cover_image_url: '/api/media/recipes/1/old-cover.webp',
+      });
+      mockPrisma.recipe.update.mockRejectedValueOnce(
+        new Error('DB write error'),
+      );
+
+      await expect(service.uploadCoverImage(1, 1, mockFile)).rejects.toThrow(
+        'DB write error',
+      );
+      expect(safeUnlinkSpy).not.toHaveBeenCalled();
+      expect(unlinkSpy).toHaveBeenCalledWith(
+        join(RECIPE_UPLOADS_DIR, 'recipe-1-cover.webp'),
+      );
+      unlinkSpy.mockRestore();
+      safeUnlinkSpy.mockRestore();
+    });
   });
 
   describe('uploadStepImage', () => {

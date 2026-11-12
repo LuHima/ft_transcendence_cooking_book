@@ -34,7 +34,7 @@ export class ImageProcessingService {
    */
   async processAvatarBuffer(
     buffer: Buffer,
-    userId = 0,
+    userId: number,
   ): Promise<ProcessedMediaResult> {
     return this.processWebpBuffer(buffer, {
       dir: AVATAR_UPLOADS_DIR,
@@ -52,7 +52,7 @@ export class ImageProcessingService {
    */
   async processAvatarFile(
     file: Express.Multer.File,
-    userId = 0,
+    userId: number,
   ): Promise<ProcessedMediaResult> {
     return this.processImageFile(file, (buffer) =>
       this.processAvatarBuffer(buffer, userId),
@@ -68,7 +68,7 @@ export class ImageProcessingService {
    */
   async processRecipeImageBuffer(
     buffer: Buffer,
-    recipeId = 0,
+    recipeId: number,
   ): Promise<ProcessedMediaResult> {
     return this.processWebpBuffer(buffer, {
       dir: RECIPE_UPLOADS_DIR,
@@ -87,7 +87,7 @@ export class ImageProcessingService {
    */
   async processRecipeImageFile(
     file: Express.Multer.File,
-    recipeId = 0,
+    recipeId: number,
   ): Promise<ProcessedMediaResult> {
     return this.processImageFile(file, (buffer) =>
       this.processRecipeImageBuffer(buffer, recipeId),

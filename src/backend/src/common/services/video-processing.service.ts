@@ -20,7 +20,7 @@ export class VideoProcessingService {
    */
   async processVideoFile(
     file: Express.Multer.File,
-    recipeId = 0,
+    recipeId: number,
   ): Promise<ProcessedMediaResult> {
     if (!file) {
       throw new BadRequestException('File is required');

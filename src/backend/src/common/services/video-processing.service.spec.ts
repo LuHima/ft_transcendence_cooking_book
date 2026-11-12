@@ -40,17 +40,20 @@ describe('VideoProcessingService', () => {
 
   it('should throw BadRequestException when file or path is missing or not on disk', async () => {
     await expect(
-      service.processVideoFile(undefined as unknown as Express.Multer.File),
+      service.processVideoFile(undefined as unknown as Express.Multer.File, 1),
     ).rejects.toThrow(BadRequestException);
 
     await expect(
-      service.processVideoFile({} as Express.Multer.File),
+      service.processVideoFile({} as Express.Multer.File, 1),
     ).rejects.toThrow(BadRequestException);
 
     await expect(
-      service.processVideoFile({
-        path: '/non-existent/video.mp4',
-      } as Express.Multer.File),
+      service.processVideoFile(
+        {
+          path: '/non-existent/video.mp4',
+        } as Express.Multer.File,
+        1,
+      ),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -133,7 +136,7 @@ describe('VideoProcessingService', () => {
     const inputPath = join(RECIPE_UPLOADS_DIR, 'corrupt.mp4');
     const mockFile = { path: inputPath } as Express.Multer.File;
 
-    const promise = service.processVideoFile(mockFile);
+    const promise = service.processVideoFile({ path: inputPath } as Express.Multer.File, 1);
     await Promise.resolve();
     await Promise.resolve();
 
@@ -163,9 +166,12 @@ describe('VideoProcessingService', () => {
       .mockResolvedValue(undefined);
 
     const inputPath = join(RECIPE_UPLOADS_DIR, 'bad-spawn.mp4');
-    const promise = service.processVideoFile({
-      path: inputPath,
-    } as Express.Multer.File);
+    const promise = service.processVideoFile(
+      {
+        path: inputPath,
+      } as Express.Multer.File,
+      1,
+    );
 
     await Promise.resolve();
     await Promise.resolve();
@@ -188,9 +194,12 @@ describe('VideoProcessingService', () => {
       .mockResolvedValue(undefined);
 
     const inputPath = join(RECIPE_UPLOADS_DIR, 'slow-video.mp4');
-    const promise = service.processVideoFile({
-      path: inputPath,
-    } as Express.Multer.File);
+    const promise = service.processVideoFile(
+      {
+        path: inputPath,
+      } as Express.Multer.File,
+      1,
+    );
 
     await Promise.resolve();
     await Promise.resolve();

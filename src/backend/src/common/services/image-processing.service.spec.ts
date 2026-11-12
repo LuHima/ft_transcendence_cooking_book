@@ -88,30 +88,39 @@ describe('ImageProcessingService', () => {
       mimetype: 'image/jpeg',
     } as Express.Multer.File;
 
-    const result = await service.processAvatarFile(mockFile);
+    const result = await service.processAvatarFile(mockFile, 7);
     expect(result.relativePath).toMatch(
-      /^\/api\/media\/avatars\/0\/avatar-\d+-[a-f0-9-]+\.webp$/,
+      /^\/api\/media\/avatars\/7\/avatar-\d+-[a-f0-9-]+\.webp$/,
     );
     createdFiles.push(join(AVATAR_UPLOADS_DIR, result.filename));
   });
 
   it('should throw BadRequestException when neither buffer nor file path exists or buffer is empty', async () => {
     await expect(
-      service.processAvatarFile({
-        filename: 'fallback-avatar.jpg',
-      } as Express.Multer.File),
+      service.processAvatarFile(
+        {
+          filename: 'fallback-avatar.jpg',
+        } as Express.Multer.File,
+        1,
+      ),
     ).rejects.toThrow(BadRequestException);
 
     await expect(
-      service.processAvatarFile({
-        buffer: Buffer.alloc(0),
-      } as Express.Multer.File),
+      service.processAvatarFile(
+        {
+          buffer: Buffer.alloc(0),
+        } as Express.Multer.File,
+        1,
+      ),
     ).rejects.toThrow(BadRequestException);
 
     await expect(
-      service.processAvatarFile({
-        path: '/non-existent/avatar.jpg',
-      } as Express.Multer.File),
+      service.processAvatarFile(
+        {
+          path: '/non-existent/avatar.jpg',
+        } as Express.Multer.File,
+        1,
+      ),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -186,7 +195,7 @@ describe('ImageProcessingService', () => {
         .png()
         .toBuffer();
 
-      const result = await service.processRecipeImageBuffer(smallBuffer);
+      const result = await service.processRecipeImageBuffer(smallBuffer, 15);
       const fullPath = join(RECIPE_UPLOADS_DIR, result.filename);
       createdFiles.push(fullPath);
 
@@ -198,11 +207,11 @@ describe('ImageProcessingService', () => {
 
     it('should throw BadRequestException on empty or corrupt recipe image buffer', async () => {
       await expect(
-        service.processRecipeImageBuffer(Buffer.alloc(0)),
+        service.processRecipeImageBuffer(Buffer.alloc(0), 15),
       ).rejects.toThrow(BadRequestException);
 
       await expect(
-        service.processRecipeImageBuffer(Buffer.from('corrupt-image-data')),
+        service.processRecipeImageBuffer(Buffer.from('corrupt-image-data'), 15),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -210,6 +219,7 @@ describe('ImageProcessingService', () => {
       await expect(
         service.processRecipeImageFile(
           undefined as unknown as Express.Multer.File,
+          15,
         ),
       ).rejects.toThrow(BadRequestException);
     });
@@ -239,7 +249,7 @@ describe('ImageProcessingService', () => {
         mimetype: 'image/jpeg',
       } as Express.Multer.File;
 
-      const result = await service.processRecipeImageFile(mockFile);
+      const result = await service.processRecipeImageFile(mockFile, 15);
       expect(result.filename.endsWith('.webp')).toBe(true);
       expect(fs.existsSync(tempInputPath)).toBe(false);
 
@@ -261,9 +271,9 @@ describe('ImageProcessingService', () => {
         filename: 'temp-corrupt.jpg',
       } as Express.Multer.File;
 
-      await expect(service.processRecipeImageFile(mockFile)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.processRecipeImageFile(mockFile, 15),
+      ).rejects.toThrow(BadRequestException);
       expect(fs.existsSync(tempCorruptPath)).toBe(false);
     });
   });

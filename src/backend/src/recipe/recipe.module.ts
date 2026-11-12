@@ -17,6 +17,11 @@ import { VideoProcessingService } from '../common/services/video-processing.serv
     ImageProcessingService,
     VideoProcessingService,
   ],
-  exports: [RecipeService, RecipeProjection],
+  exports: [
+    RecipeService,
+    RecipeProjection,
+    ImageProcessingService,
+    VideoProcessingService,
+  ],
 })
 export class RecipeModule {}
