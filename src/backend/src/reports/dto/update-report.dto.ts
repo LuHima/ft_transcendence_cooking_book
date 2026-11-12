@@ -147,17 +147,4 @@ export class UpdateReportDto {
   @IsOptional()
   @IsBoolean()
   permanent?: boolean;
-
-  /**
-   * Permanent ban flag alias (Administrator only).
-   * @example false
-   */
-  @ApiPropertyOptional({
-    description:
-      'Permanent ban flag alias (restricted to administrators, rejected for moderators)',
-    example: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  is_permanent?: boolean;
 }

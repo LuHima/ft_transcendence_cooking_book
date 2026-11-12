@@ -11601,11 +11601,6 @@
             "description": "Permanent ban flag (default false; restricted to administrators, rejected for moderators)",
             "example": false,
             "default": false
-          },
-          "is_permanent": {
-            "type": "boolean",
-            "description": "Permanent ban flag alias (restricted to administrators, rejected for moderators)",
-            "example": false
           }
         }
       },

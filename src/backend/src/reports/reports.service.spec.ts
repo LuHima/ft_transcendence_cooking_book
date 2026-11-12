@@ -819,7 +819,7 @@ describe('ReportsService', () => {
           1,
           {
             actions: [ReportAction.ban],
-            is_permanent: true,
+            permanent: true,
           },
           caller,
         ),
@@ -854,7 +854,7 @@ describe('ReportsService', () => {
         1,
         {
           actions: [ReportAction.ban],
-          is_permanent: true,
+          permanent: true,
         },
         caller,
       );

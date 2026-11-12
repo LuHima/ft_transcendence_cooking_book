@@ -610,7 +610,7 @@ export class ReportsService {
 
         // Account Ban Action
         if (actions.includes(ReportAction.ban)) {
-          const isPermanent = Boolean(dto.permanent ?? dto.is_permanent);
+          const isPermanent = Boolean(dto.permanent);
 
           // Moderator Cap Enforcement: maximum 180 days, no permanent bans
           if (callerRole === Role.moderator) {
