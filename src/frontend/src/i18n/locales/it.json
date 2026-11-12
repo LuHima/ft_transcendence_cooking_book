@@ -527,7 +527,9 @@
 			"noAction": "Scegli almeno un'azione.",
 			"banDays": "La durata del ban deve essere un numero intero di giorni (almeno 1).",
 			"banCap": "La durata massima del ban per i moderatori è {{max}} giorni."
-		}
+		},
+		"owner": "autore:",
+		"confirmBanName": "Bannare {{name}}, autore di questo contenuto?"
 	},
 	"admin": {
 		"subtitle": "Segnalazioni, utenti, ruoli e contenuti della piattaforma.",
@@ -603,10 +605,17 @@
 			}
 		},
 		"recipes": {
-			"confirmDelete": "Sospendere la ricetta \"{{title}}\"? Potrà essere riattivata dalla sua pagina.",
+			"confirmDelete": "Sospendere la ricetta \"{{title}}\"? Potrà essere riattivata in seguito.",
 			"filter": "Cerca ricetta…",
 			"empty": "Nessuna ricetta trovata.",
-			"suspend": "Sospendi"
+			"suspend": "Sospendi",
+			"reactivate": "Riattiva",
+			"suspended": "Ricetta sospesa.",
+			"statuses": {
+				"all": "Tutte",
+				"active": "Attive",
+				"inactive": "Sospese"
+			}
 		},
 		"comments": {
 			"filter": "Filtra per testo o autore…",
@@ -619,7 +628,6 @@
 				"flat": "Lista piatta",
 				"threaded": "Solo radici (thread)"
 			},
-			"flaggedOnly": "Solo segnalati",
 			"statuses": {
 				"all": "Tutti",
 				"active": "Attivi",
@@ -640,7 +648,14 @@
 			"purged": "Commento eliminato definitivamente.",
 			"replyTo": "risposta a #{{id}}",
 			"moreReplies_one": "+ {{count}} altra risposta",
-			"moreReplies_other": "+ altre {{count}} risposte"
+			"moreReplies_other": "+ altre {{count}} risposte",
+			"reported": "Segnalato",
+			"reportedOnly": "Solo segnalati (in attesa)",
+			"totalReports": "Segnalazioni totali (già gestite)",
+			"threadPending_one": "{{count}} segnalazione in attesa nella conversazione",
+			"threadPending_other": "{{count}} segnalazioni in attesa nella conversazione",
+			"reportedReplies_one": "{{count}} risposta segnalata",
+			"reportedReplies_other": "{{count}} risposte segnalate"
 		},
 		"catalog": {
 			"title": "Catalogo",
@@ -729,7 +744,9 @@
 		"language": "Lingua del profilo",
 		"languageHelp": "Lingua dell'interfaccia e delle ricette mostrate. Per ora è salvata solo su questo browser.",
 		"likesReceived_one": "{{count}} like ricevuto",
-		"likesReceived_other": "{{count}} like ricevuti"
+		"likesReceived_other": "{{count}} like ricevuti",
+		"avatarPending": "La nuova foto verrà caricata quando salvi (max {{max}} MB).",
+		"avatarUploading": "Caricamento della foto profilo"
 	},
 	"notifications": {
 		"title": "Notifiche",
@@ -745,7 +762,8 @@
 		"reply": "ha risposto al tuo commento",
 		"update": "ha aggiornato la ricetta",
 		"delete": "ha eliminato una ricetta",
-		"generic": "ha eseguito un'azione"
+		"generic": "ha eseguito un'azione",
+		"warn": "ti ha inviato un avviso di moderazione"
 	},
 	"auth": {
 		"or": "oppure",

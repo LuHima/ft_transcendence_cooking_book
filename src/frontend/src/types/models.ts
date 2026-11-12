@@ -233,7 +233,9 @@ export interface CatalogTag {
 	name: string
 }
 
-// ─── gestione catalogo (solo admin) ───
+// ─── gestione catalogo (solo admin): /api/admin/catalog/(ingredients|tags)[/:id] ───
+// GET /admin/catalog/ingredients/:id → IngredientDetailResponseDto, GET /admin/catalog/tags/:id → TagDetailResponseDto
+// (con tutte le traduzioni); POST, PATCH e DELETE sotto lo stesso prefisso. Gli elenchi restano GET /ingredients e GET /tags.
 export interface CatalogTranslations {
 	it: string
 	en: string
@@ -352,6 +354,8 @@ export type NotificationAction =
 	| 'post'
 	| 'update'
 	| 'delete'
+	// avviso di un moderatore dopo una segnalazione (testo in `details`)
+	| 'warn'
 
 export interface AppNotification {
 	id: number
@@ -360,7 +364,15 @@ export interface AppNotification {
 	action: NotificationAction
 	actor: { id: number; username: string; avatar_url: string | null } | null
 	// target: ricetta / commento / utente a cui si riferisce la notifica
-	target: { id: number | null; subject: NotificationSubject; title_or_snippet: string | null } | null
+	// recipe_id: ricetta che contiene il commento (per subject 'comment'), o la ricetta stessa
+	target: {
+		id: number | null
+		subject: NotificationSubject
+		title_or_snippet: string | null
+		recipe_id?: number | null
+	} | null
+	// testo aggiuntivo (es. messaggio del moderatore per 'warn')
+	details?: string | null
 	// testo già localizzato dal backend (in base a ?lang=)
 	message: string
 	is_read: boolean
@@ -395,13 +407,23 @@ export interface AdminComment {
 	created_at: string
 	updated_at: string | null
 	reports_count: number
+	// segnalazioni ancora da gestire su questo commento
+	pending_reports_count?: number
+	has_pending_reports?: boolean
 	user: RecipeAuthor | null
 	recipe: { id: number; title: string } | null
-	// solo con format=threaded
+	// solo con format=threaded (ThreadedAdminCommentItemDto)
 	replies_count?: number
+	// risposte con almeno una segnalazione in attesa
+	reported_replies_count?: number
+	// segnalazioni in attesa su tutta la conversazione (radice + risposte)
+	thread_pending_reports_count?: number
 	has_more_replies?: boolean
 	replies?: AdminComment[]
 }
+
+// ─── ricette admin (GET /admin/recipes = filtri di GET /recipes + status) ───
+export type AdminRecipeStatus = 'all' | 'active' | 'inactive'
 
 // ─── gestione utenti admin (GET /admin/users → AdminUserResponseDto) ───
 export interface AdminUser extends User {
@@ -481,11 +503,30 @@ export interface UpdateReportDto {
 	is_permanent?: boolean
 }
 
+// utente idratato dal backend (segnalatore o autore del contenuto)
+export interface ReportUser {
+	id: number
+	username: string
+	avatar_url: string | null
+}
+
+// contesto del contenuto segnalato (ReportTargetSummaryDto), label localizzata con ?lang=
+export interface ReportTarget {
+	// titolo ricetta, estratto del commento o username
+	label: string
+	// per i commenti: ricetta che li contiene; per le ricette: la ricetta stessa
+	recipe_id?: number
+	// autore del contenuto (chi riceverebbe avvisi / ban)
+	owner?: ReportUser | null
+}
+
 export interface ReportItem {
 	id: number
 	reporter_id: number
+	reporter?: ReportUser | null
 	subject: ReportSubject
 	target_id: number
+	target?: ReportTarget | null
 	reason: ReportReason
 	description: string | null
 	status: ReportStatus
@@ -506,4 +547,9 @@ export interface AccountBannedDetails {
 	// ISO, null se permanente
 	banned_until: string | null
 	is_permanent: boolean
+}
+
+// risposta di POST /users/me/avatar e POST /admin/users/:id/avatar
+export interface AvatarUploadResponseDto {
+	avatar_url: string
 }

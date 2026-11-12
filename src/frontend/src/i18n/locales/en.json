@@ -527,7 +527,9 @@
 			"noAction": "Choose at least one action.",
 			"banDays": "The ban duration must be a whole number of days (at least 1).",
 			"banCap": "The maximum ban duration for moderators is {{max}} days."
-		}
+		},
+		"owner": "author:",
+		"confirmBanName": "Ban {{name}}, the author of this content?"
 	},
 	"admin": {
 		"subtitle": "Reports, users, roles and platform content.",
@@ -603,10 +605,17 @@
 			}
 		},
 		"recipes": {
-			"confirmDelete": "Suspend the recipe \"{{title}}\"? It can be reactivated from its page.",
+			"confirmDelete": "Suspend the recipe \"{{title}}\"? It can be reactivated later.",
 			"filter": "Search recipe…",
 			"empty": "No recipes found.",
-			"suspend": "Suspend"
+			"suspend": "Suspend",
+			"reactivate": "Reactivate",
+			"suspended": "Recipe suspended.",
+			"statuses": {
+				"all": "All",
+				"active": "Active",
+				"inactive": "Suspended"
+			}
 		},
 		"comments": {
 			"filter": "Filter by text or author…",
@@ -619,7 +628,6 @@
 				"flat": "Flatten",
 				"threaded": "Roots only (threaded)"
 			},
-			"flaggedOnly": "Reported only",
 			"statuses": {
 				"all": "All",
 				"active": "Active",
@@ -640,7 +648,14 @@
 			"purged": "Comment permanently deleted.",
 			"replyTo": "reply to #{{id}}",
 			"moreReplies_one": "+ {{count}} more reply",
-			"moreReplies_other": "+ {{count}} more replies"
+			"moreReplies_other": "+ {{count}} more replies",
+			"reported": "Reported",
+			"reportedOnly": "Reported only (pending)",
+			"totalReports": "Total reports (already handled)",
+			"threadPending_one": "{{count}} pending report in this conversation",
+			"threadPending_other": "{{count}} pending reports in this conversation",
+			"reportedReplies_one": "{{count}} reported reply",
+			"reportedReplies_other": "{{count}} reported replies"
 		},
 		"catalog": {
 			"title": "Catalog",
@@ -729,7 +744,9 @@
 		"language": "Profile language",
 		"languageHelp": "Language of the interface and of the recipes shown. For now it is only saved on this browser.",
 		"likesReceived_one": "{{count}} like received",
-		"likesReceived_other": "{{count}} likes received"
+		"likesReceived_other": "{{count}} likes received",
+		"avatarPending": "The new photo will be uploaded when you save (max {{max}} MB).",
+		"avatarUploading": "Uploading profile photo"
 	},
 	"notifications": {
 		"title": "Notifications",
@@ -745,7 +762,8 @@
 		"reply": "replied to your comment",
 		"update": "updated the recipe",
 		"delete": "deleted a recipe",
-		"generic": "did something"
+		"generic": "did something",
+		"warn": "sent you a moderation warning"
 	},
 	"auth": {
 		"or": "or",
