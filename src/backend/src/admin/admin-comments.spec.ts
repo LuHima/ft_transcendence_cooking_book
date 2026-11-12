@@ -54,8 +54,8 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
         {
           provide: BanHistoryService,
           useValue: {
-            getUserBanHistory: jest.fn(),
-            recordBan: jest.fn(),
+            getUserSanctionsHistory: jest.fn(),
+            recordSanction: jest.fn(),
             recordUnban: jest.fn(),
             getPreviousBansCount: jest.fn(),
           },

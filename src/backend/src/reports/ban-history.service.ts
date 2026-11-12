@@ -56,19 +56,6 @@ export class BanHistoryService {
   }
 
   /**
-   * Record a new account ban in the immutable ban history ledger (backward-compatible delegate).
-   */
-  async recordBan(
-    params: RecordBanParams,
-    tx?: Prisma.TransactionClient,
-  ): Promise<BanHistoryItemDto> {
-    return this.recordSanction(
-      { ...params, action: params.action ?? ReportAction.ban },
-      tx,
-    );
-  }
-
-  /**
    * Record an unban event against the latest active ban record for a user.
    */
   async recordUnban(
@@ -141,9 +128,9 @@ export class BanHistoryService {
   }
 
   /**
-   * Retrieve chronological ban and warning history audit trail for a user.
+   * Retrieve chronological ban and warning sanctions history audit trail for a user.
    */
-  async getUserBanHistory(
+  async getUserSanctionsHistory(
     userId: number,
     tx?: Prisma.TransactionClient,
   ): Promise<BanHistoryItemDto[]> {
@@ -155,7 +142,9 @@ export class BanHistoryService {
   }
 
   /**
-   * Compute progressive ban duration using doubling formula min(base * 2^previousBansCount, cap).
+   * Advisory helper for staff: compute suggested progressive ban duration using
+   * doubling formula min(base * 2^previousBansCount, cap).
+   * Staff retain full discretionary choice over actual ban duration.
    */
   calculateProgressiveDuration(
     baseDuration: number,

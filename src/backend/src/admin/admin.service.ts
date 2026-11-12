@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   OwnerType,
   Prisma,
+  ReportAction,
   Role,
   UserStatus,
   ReportSubject,
@@ -96,11 +97,46 @@ export class AdminService {
     }
   }
 
-  /**
-   * Transforms a Prisma user entity (with relational recipe counts) into AdminUserResponseDto.
-   */
+  private async getSanctionCountsMap(
+    userIds: number[],
+  ): Promise<Map<number, { bans: number; warnings: number }>> {
+    const countsMap = new Map<number, { bans: number; warnings: number }>();
+    if (userIds.length === 0 || !this.prisma.banHistory?.groupBy) {
+      return countsMap;
+    }
+
+    try {
+      const groups = await this.prisma.banHistory.groupBy({
+        by: ['user_id', 'action'],
+        _count: { id: true },
+        where: { user_id: { in: userIds } },
+      });
+      if (Array.isArray(groups)) {
+        for (const uid of userIds) {
+          countsMap.set(uid, { bans: 0, warnings: 0 });
+        }
+        for (const g of groups as any[]) {
+          const cnt =
+            typeof g._count === 'number' ? g._count : (g._count?.id ?? 0);
+          const entry = countsMap.get(g.user_id) ?? { bans: 0, warnings: 0 };
+          if (g.action === ReportAction.warn) {
+            entry.warnings = cnt;
+          } else {
+            entry.bans = cnt;
+          }
+          countsMap.set(g.user_id, entry);
+        }
+      }
+    } catch {
+      // Fallback for mocked environments without banHistory.groupBy
+    }
+
+    return countsMap;
+  }
+
   private mapToAdminUserResponse(
-    user: UserWithRecipeCount,
+    user: any,
+    sanctions?: { bans: number; warnings: number },
   ): AdminUserResponseDto {
     return {
       id: user.id,
@@ -118,7 +154,9 @@ export class AdminService {
       city: user.city ?? null,
       postal_code: user.postal_code ?? null,
       recipes_count: user._count?.recipes ?? 0,
-      previous_bans_count: (user as any)._count?.ban_history ?? 0,
+      previous_bans_count:
+        sanctions?.bans ?? (user as any)._count?.ban_history ?? 0,
+      previous_warnings_count: sanctions?.warnings ?? 0,
       banned_until: (user as any).banned_until ?? null,
       created_at: user.created_at,
       deleted_at: user.deleted_at ?? null,
@@ -199,10 +237,16 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
+    const sanctionCountsMap = await this.getSanctionCountsMap(
+      users.map((u) => u.id),
+    );
+
     const totalPages = Math.ceil(total / limit) || 1;
 
     return {
-      items: users.map((u) => this.mapToAdminUserResponse(u)),
+      items: users.map((u) =>
+        this.mapToAdminUserResponse(u, sanctionCountsMap.get(u.id)),
+      ),
       total,
       page,
       limit,
@@ -227,13 +271,19 @@ export class AdminService {
     if (!user) {
       throw createHttpException(errors.users.notFound);
     }
-    return this.mapToAdminUserResponse(user);
+    const sanctionCountsMap = await this.getSanctionCountsMap([targetUserId]);
+    return this.mapToAdminUserResponse(
+      user,
+      sanctionCountsMap.get(targetUserId),
+    );
   }
 
   /**
-   * Retrieve chronological ban history audit trail for a specific user.
+   * Retrieve chronological sanctions history audit trail for a specific user.
    */
-  async getUserBanHistory(targetUserId: number): Promise<BanHistoryItemDto[]> {
+  async getUserSanctionsHistory(
+    targetUserId: number,
+  ): Promise<BanHistoryItemDto[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: targetUserId },
       select: { id: true },
@@ -241,7 +291,7 @@ export class AdminService {
     if (!user) {
       throw createHttpException(errors.users.notFound);
     }
-    return await this.banHistoryService.getUserBanHistory(targetUserId);
+    return await this.banHistoryService.getUserSanctionsHistory(targetUserId);
   }
 
   /**
@@ -473,11 +523,12 @@ export class AdminService {
         });
 
         if (dto.status === UserStatus.banned) {
-          await this.banHistoryService.recordBan(
+          await this.banHistoryService.recordSanction(
             {
               userId: targetUserId,
               bannedById: currentAdminId,
               reason: dto.ban_reason ?? ReportReason.other,
+              action: ReportAction.ban,
               description: dto.ban_description ?? null,
               durationDays: dto.is_permanent
                 ? null

@@ -24,7 +24,7 @@ We decided to standardize content report resolution exclusively on `PATCH /api/r
          - `dismiss`: must stand alone (`actions: ['dismiss']`). It cannot coexist with `warn`, `ban`, or `delete_content`.
          - `warn` and `ban`: strictly mutually exclusive. Passing both (`['warn', 'ban']`) returns `400 Bad Request`.
          - `delete_content`: composable with either `warn` (`['warn', 'delete_content']`) or `ban` (`['ban', 'delete_content']`), or executable as a standalone action (`['delete_content']`).
-     - `resolution_reason`: `ReportReason` enum (mandatory when `status === 'action_taken'`).
+     - `resolution_reason`: optional `ReportReason` enum (falls back to `report.reason` when omitted).
      - `resolution_description`: optional user-facing explanation (up to 1000 characters) detailing the violation (e.g. "Explicit imagery in recipe gallery").
      - `resolution_notes`: optional internal staff notes (up to 1000 characters) documenting evidence and triage rationale.
      - `ban_duration_days`: optional integer overriding the policy default.
@@ -76,7 +76,7 @@ We decided to standardize content report resolution exclusively on `PATCH /api/r
      - `unbanned_at`: timestamp of de-escalation/unban.
      - `report_id`: optional foreign key to the originating `Report`.
    - In moderation queues and user profiles, hydrate both `previous_bans_count: number` and `previous_warnings_count: number` alongside historical sanction ledgers.
-   - Progressive discipline guideline:
+   - Advisory progressive discipline guideline (`BanHistoryService.calculateProgressiveDuration` provides a suggested duration for staff, which they may override with `ban_duration_days` or `permanent`):
      - 1st offense = Warning (`warn`) or standard default ban depending on severity.
      - 2nd offense = Double duration ($2\times$) ban.
      - 3rd offense = 180-day cap (moderator) or permanent ban (admin).

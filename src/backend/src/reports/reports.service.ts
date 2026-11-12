@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   ConflictException,
@@ -16,6 +17,7 @@ import {
 } from './dto/report-response.dto';
 import {
   NotificationAction,
+  NotificationSubject,
   Prisma,
   ReportReason,
   ReportStatus,
@@ -30,6 +32,7 @@ import {
   getDefaultBanDuration,
   MAX_MODERATOR_BAN_DAYS,
 } from './constants/ban-duration-policy.constant';
+import { validateReportActions } from './helpers/report-actions.validator';
 
 @Injectable()
 export class ReportsService {
@@ -50,24 +53,33 @@ export class ReportsService {
     reporterId: number,
     dto: CreateReportDto,
   ): Promise<ReportItemDto> {
-    // 1. Verify that target resource exists
+    // 1. Verify that target resource exists and is not owned by the reporter
     if (dto.subject === ReportSubject.recipe) {
       const recipe = await this.prisma.recipe.findUnique({
         where: { id: dto.target_id },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       if (!recipe) {
         throw new NotFoundException('Target item not found');
       }
+      if (recipe.user_id === reporterId) {
+        throw new BadRequestException('You cannot report your own recipe');
+      }
     } else if (dto.subject === ReportSubject.comment) {
       const comment = await this.prisma.comment.findUnique({
         where: { id: dto.target_id },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       if (!comment) {
         throw new NotFoundException('Target item not found');
       }
+      if (comment.user_id === reporterId) {
+        throw new BadRequestException('You cannot report your own comment');
+      }
     } else if (dto.subject === ReportSubject.user) {
+      if (dto.target_id === reporterId) {
+        throw new BadRequestException('You cannot report yourself');
+      }
       const user = await this.prisma.user.findFirst({
         where: { id: dto.target_id, deleted_at: null },
         select: { id: true },
@@ -252,8 +264,10 @@ export class ReportsService {
       ),
     );
 
-    const banCountsMap = new Map<number, number>();
-    const warningCountsMap = new Map<number, number>();
+    const sanctionCountsMap = new Map<
+      number,
+      { bans: number; warnings: number }
+    >();
     let ranBanBatch = false;
     if (allTargetUserIds.length > 0 && this.prisma.banHistory?.groupBy) {
       try {
@@ -265,19 +279,23 @@ export class ReportsService {
         if (Array.isArray(sanctionGroups)) {
           ranBanBatch = true;
           for (const uid of allTargetUserIds) {
-            banCountsMap.set(uid, 0);
-            warningCountsMap.set(uid, 0);
+            sanctionCountsMap.set(uid, { bans: 0, warnings: 0 });
           }
           for (const bg of sanctionGroups as any[]) {
             const cnt =
               typeof bg._count === 'number'
                 ? bg._count
                 : (bg._count?.id ?? 0);
+            const entry = sanctionCountsMap.get(bg.user_id) ?? {
+              bans: 0,
+              warnings: 0,
+            };
             if (bg.action === ReportAction.warn) {
-              warningCountsMap.set(bg.user_id, cnt);
+              entry.warnings = cnt;
             } else {
-              banCountsMap.set(bg.user_id, cnt);
+              entry.bans = cnt;
             }
+            sanctionCountsMap.set(bg.user_id, entry);
           }
         }
       } catch {
@@ -364,8 +382,9 @@ export class ReportsService {
         let warningCount = 0;
         if (targetUserId !== null) {
           if (ranBanBatch) {
-            banCount = banCountsMap.get(targetUserId) ?? 0;
-            warningCount = warningCountsMap.get(targetUserId) ?? 0;
+            const counts = sanctionCountsMap.get(targetUserId);
+            banCount = counts?.bans ?? 0;
+            warningCount = counts?.warnings ?? 0;
           } else {
             if (this.banHistoryService?.getPreviousBansCount) {
               banCount =
@@ -424,16 +443,7 @@ export class ReportsService {
     const callerRole = typeof caller === 'object' ? caller.role : undefined;
     const callerId = typeof caller === 'number' ? caller : caller?.id;
 
-    // Normalize resolution actions: supports actions array as well as legacy resolution/action string
-    let actions: ReportAction[] = [];
-    if (dto.actions && dto.actions.length > 0) {
-      actions = [...dto.actions];
-    } else if (dto.resolution || dto.action) {
-      const legacy = (dto.resolution || dto.action) as ReportAction;
-      if (Object.values(ReportAction).includes(legacy)) {
-        actions = [legacy];
-      }
-    }
+    const actions: ReportAction[] = [...(dto.actions ?? [])];
 
     // Automatically resolve status if not explicitly passed
     let targetStatus = dto.status;
@@ -447,26 +457,22 @@ export class ReportsService {
       }
     }
 
-    // Action mutual exclusivity validation
-    if (actions.includes(ReportAction.dismiss) && actions.length > 1) {
+    const actionValidation = validateReportActions(actions, targetStatus);
+    if (!actionValidation.valid) {
       throw createHttpException(
         errors.common.badRequest,
-        "Action 'dismiss' must stand alone and cannot be combined with other actions",
+        actionValidation.message,
       );
     }
+
     if (
-      actions.includes(ReportAction.warn) &&
-      actions.includes(ReportAction.ban)
+      (actions.includes(ReportAction.ban) ||
+        actions.includes(ReportAction.warn)) &&
+      !callerId
     ) {
       throw createHttpException(
-        errors.common.badRequest,
-        "Actions 'warn' and 'ban' are mutually exclusive and cannot be combined",
-      );
-    }
-    if (targetStatus === ReportStatus.action_taken && actions.length === 0) {
-      throw createHttpException(
-        errors.common.badRequest,
-        "Status 'action_taken' requires at least one resolution action",
+        errors.common.unauthorized,
+        'Authenticated staff user ID is required to issue sanctions',
       );
     }
 
@@ -474,6 +480,8 @@ export class ReportsService {
 
     const result = await this.prisma.$transaction(async (tx) => {
       let resolvedTargetUserId: number | null = null;
+      let previousBansCount = 0;
+      let previousWarningsCount = 0;
 
       // Handle actions that require target author / content resolution
       if (
@@ -537,13 +545,27 @@ export class ReportsService {
           }
         }
 
+        // Compute prior sanction counts before recording any new sanction
+        previousBansCount = resolvedTargetUserId
+          ? await this.banHistoryService.getPreviousBansCount(
+              resolvedTargetUserId,
+              tx,
+            )
+          : 0;
+        previousWarningsCount = resolvedTargetUserId
+          ? await this.banHistoryService.getPreviousWarningsCount(
+              resolvedTargetUserId,
+              tx,
+            )
+          : 0;
+
         // Warning Action
         if (actions.includes(ReportAction.warn)) {
           if (resolvedTargetUserId) {
             await this.banHistoryService.recordSanction(
               {
                 userId: resolvedTargetUserId,
-                bannedById: callerId ?? 0,
+                bannedById: callerId!,
                 reason: effectiveReason,
                 action: ReportAction.warn,
                 description: dto.resolution_description?.trim() || null,
@@ -573,6 +595,13 @@ export class ReportsService {
               where: { id: report.target_id },
               data: { is_active: false },
             });
+            await tx.notification.deleteMany({
+              where: {
+                subject: NotificationSubject.comment,
+                target_id: report.target_id,
+                is_read: false,
+              },
+            });
             this.logger.log(
               `Audit: Report #${reportId} resolved with delete_content. Comment #${report.target_id} deactivated.`,
             );
@@ -581,7 +610,7 @@ export class ReportsService {
 
         // Account Ban Action
         if (actions.includes(ReportAction.ban)) {
-          const isPermanent = Boolean(dto.is_permanent);
+          const isPermanent = Boolean(dto.permanent ?? dto.is_permanent);
 
           // Moderator Cap Enforcement: maximum 180 days, no permanent bans
           if (callerRole === Role.moderator) {
@@ -634,11 +663,12 @@ export class ReportsService {
             });
 
             // Record in immutable BanHistory ledger
-            await this.banHistoryService.recordBan(
+            await this.banHistoryService.recordSanction(
               {
                 userId: resolvedTargetUserId,
-                bannedById: callerId ?? 0,
+                bannedById: callerId!,
                 reason: effectiveReason,
+                action: ReportAction.ban,
                 description: dto.resolution_description ?? null,
                 durationDays,
                 isPermanent,
@@ -676,20 +706,6 @@ export class ReportsService {
         },
       });
 
-      const previousBansCount = resolvedTargetUserId
-        ? await this.banHistoryService.getPreviousBansCount(
-            resolvedTargetUserId,
-            tx,
-          )
-        : 0;
-
-      const previousWarningsCount = resolvedTargetUserId
-        ? await this.banHistoryService.getPreviousWarningsCount(
-            resolvedTargetUserId,
-            tx,
-          )
-        : 0;
-
       return {
         ...updatedReport,
         actions: updatedReport.actions ?? actions,
@@ -701,8 +717,7 @@ export class ReportsService {
     const shouldWarn =
       actions.includes(ReportAction.warn) &&
       !actions.includes(ReportAction.dismiss) &&
-      report.status !== ReportStatus.action_taken &&
-      report.status !== ReportStatus.dismissed;
+      !(report.actions ?? []).includes(ReportAction.warn);
 
     if (shouldWarn && callerId) {
       try {

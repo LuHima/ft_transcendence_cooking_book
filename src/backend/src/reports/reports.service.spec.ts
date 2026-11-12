@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   NotFoundException,
   ConflictException,
   ForbiddenException,
@@ -12,6 +13,7 @@ import { RecipeService } from '../recipe/recipe.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
 import { BanHistoryService } from './ban-history.service';
 import {
+  NotificationSubject,
   ReportReason,
   ReportStatus,
   ReportSubject,
@@ -61,6 +63,9 @@ describe('ReportsService', () => {
       count: jest.fn(),
       groupBy: jest.fn(),
     },
+    notification: {
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
     $transaction: jest.fn((callback) => callback(mockPrisma)),
   };
 
@@ -69,12 +74,11 @@ describe('ReportsService', () => {
   };
 
   const mockBanHistoryService = {
-    recordBan: jest.fn().mockResolvedValue({ id: 'ban-1' }),
     recordSanction: jest.fn().mockResolvedValue({ id: 'sanction-1' }),
     recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
     getPreviousBansCount: jest.fn().mockResolvedValue(0),
     getPreviousWarningsCount: jest.fn().mockResolvedValue(0),
-    getUserBanHistory: jest.fn().mockResolvedValue([]),
+    getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
   };
 
   beforeEach(async () => {
@@ -131,7 +135,7 @@ describe('ReportsService', () => {
 
       expect(mockPrisma.recipe.findUnique).toHaveBeenCalledWith({
         where: { id: 10 },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       expect(mockPrisma.report.create).toHaveBeenCalled();
       expect(result.id).toBe(1);
@@ -162,7 +166,7 @@ describe('ReportsService', () => {
 
       expect(mockPrisma.comment.findUnique).toHaveBeenCalledWith({
         where: { id: 25 },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       expect(result.id).toBe(2);
     });
@@ -621,12 +625,13 @@ describe('ReportsService', () => {
       expect(mockNotificationEmit.notification).not.toHaveBeenCalled();
     });
 
-    it('does not notify twice when the report was already resolved', async () => {
+    it('does not notify twice when the report was already resolved with warn', async () => {
       mockPrisma.report.findUnique.mockResolvedValueOnce({
         id: 1,
         subject: ReportSubject.recipe,
         target_id: 10,
         status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
         reason: ReportReason.harassment_bullying,
       });
       mockPrisma.recipe.findUnique.mockResolvedValueOnce({
@@ -755,10 +760,11 @@ describe('ReportsService', () => {
         where: { id_user: 42 },
       });
       // Ban history recorded
-      expect(mockBanHistoryService.recordBan).toHaveBeenCalledWith(
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 42,
           bannedById: 1,
+          action: ReportAction.ban,
           reason: ReportReason.hate_speech,
           durationDays: 30, // policy default for hate_speech
           isPermanent: false,
@@ -860,9 +866,10 @@ describe('ReportsService', () => {
           banned_until: null,
         },
       });
-      expect(mockBanHistoryService.recordBan).toHaveBeenCalledWith(
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 42,
+          action: ReportAction.ban,
           isPermanent: true,
           durationDays: null,
           expiresAt: null,
@@ -1205,6 +1212,215 @@ describe('ReportsService', () => {
         ReportAction.warn,
         ReportAction.delete_content,
       ]);
+    });
+
+    it('blocks self-reporting for user, own recipe, and own comment', async () => {
+      await expect(
+        service.createReport(42, {
+          subject: ReportSubject.user,
+          target_id: 42,
+          reason: ReportReason.other,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 42,
+        is_active: true,
+      });
+      await expect(
+        service.createReport(42, {
+          subject: ReportSubject.recipe,
+          target_id: 10,
+          reason: ReportReason.spam_scam,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 20,
+        user_id: 42,
+        is_active: true,
+      });
+      await expect(
+        service.createReport(42, {
+          subject: ReportSubject.comment,
+          target_id: 20,
+          reason: ReportReason.harassment_bullying,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws Unauthorized when issuing ban or warn without callerId', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, { actions: [ReportAction.warn] }, undefined),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('supports permanent: true property for admin bans', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.hate_speech,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.user.findFirst.mockResolvedValueOnce({
+        id: 42,
+        role: Role.user,
+      });
+      mockPrisma.user.update.mockResolvedValueOnce({
+        id: 42,
+        status: UserStatus.banned,
+      });
+      mockPrisma.recipe.updateMany.mockResolvedValueOnce({ count: 0 });
+      mockPrisma.jwtSession.deleteMany.mockResolvedValueOnce({ count: 0 });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.ban],
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.ban], permanent: true },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 42,
+          action: ReportAction.ban,
+          isPermanent: true,
+          durationDays: null,
+        }),
+        mockPrisma,
+      );
+    });
+
+    it('prunes unread comment notifications when delete_content is applied to a comment report', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.comment,
+        target_id: 77,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 77,
+        user_id: 42,
+        user: { id: 42, role: Role.user },
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 77,
+        is_active: false,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.delete_content],
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.delete_content] },
+        { id: 2, role: Role.moderator },
+      );
+
+      expect(mockPrisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          subject: NotificationSubject.comment,
+          target_id: 77,
+          is_read: false,
+        },
+      });
+    });
+
+    it('computes previous_bans_count and previous_warnings_count before recording new sanction', async () => {
+      const callOrder: string[] = [];
+      mockBanHistoryService.getPreviousBansCount.mockImplementationOnce(
+        async () => {
+          callOrder.push('getPreviousBansCount');
+          return 1;
+        },
+      );
+      mockBanHistoryService.getPreviousWarningsCount.mockImplementationOnce(
+        async () => {
+          callOrder.push('getPreviousWarningsCount');
+          return 2;
+        },
+      );
+      mockBanHistoryService.recordSanction.mockImplementationOnce(async () => {
+        callOrder.push('recordSanction');
+        return { id: 'sanction-new' };
+      });
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.user.findFirst.mockResolvedValueOnce({
+        id: 42,
+        role: Role.user,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
+      });
+
+      const result = await service.updateReport(
+        1,
+        { actions: [ReportAction.warn] },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(callOrder).toEqual([
+        'getPreviousBansCount',
+        'getPreviousWarningsCount',
+        'recordSanction',
+      ]);
+      expect(result.previous_bans_count).toBe(1);
+      expect(result.previous_warnings_count).toBe(2);
+    });
+
+    it('notifies when re-resolving an action_taken report with warn if warn was not previously applied', async () => {
+      mockNotificationEmit.notification.mockClear();
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.delete_content],
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 42,
+        user: { id: 42, role: Role.user },
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.warn] },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(mockNotificationEmit.notification).toHaveBeenCalledTimes(1);
     });
   });
 });

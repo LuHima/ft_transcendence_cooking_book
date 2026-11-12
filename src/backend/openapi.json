@@ -6040,7 +6040,7 @@
     "/api/admin/users/{id}/ban-history": {
       "get": {
         "description": "Returns chronological sanction audit records for repeat offender investigation.",
-        "operationId": "AdminController_getUserBanHistory",
+        "operationId": "AdminController_getUserSanctionsHistory",
         "parameters": [
           {
             "name": "id",
@@ -11596,32 +11596,16 @@
             "example": 30,
             "minimum": 1
           },
+          "permanent": {
+            "type": "boolean",
+            "description": "Permanent ban flag (default false; restricted to administrators, rejected for moderators)",
+            "example": false,
+            "default": false
+          },
           "is_permanent": {
             "type": "boolean",
-            "description": "Permanent ban flag (restricted to administrators, rejected for moderators)",
+            "description": "Permanent ban flag alias (restricted to administrators, rejected for moderators)",
             "example": false
-          },
-          "resolution": {
-            "type": "string",
-            "description": "Specific moderation action executed when resolving the report with action_taken (delete_content, ban, warn, dismiss)",
-            "example": "delete_content",
-            "enum": [
-              "delete_content",
-              "ban",
-              "warn",
-              "dismiss"
-            ]
-          },
-          "action": {
-            "type": "string",
-            "description": "Alternative alias for resolution action (delete_content, ban, warn, dismiss)",
-            "example": "delete_content",
-            "enum": [
-              "delete_content",
-              "ban",
-              "warn",
-              "dismiss"
-            ]
           }
         }
       },
@@ -11857,7 +11841,12 @@
           },
           "previous_bans_count": {
             "type": "number",
-            "description": "Total number of prior sanctions/bans recorded for this user",
+            "description": "Total number of prior bans recorded for this user",
+            "example": 0
+          },
+          "previous_warnings_count": {
+            "type": "number",
+            "description": "Total number of prior warnings recorded for this user",
             "example": 0
           },
           "deleted_at": {

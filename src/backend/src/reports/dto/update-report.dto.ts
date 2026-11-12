@@ -14,6 +14,7 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { ReportAction, ReportReason, ReportStatus } from '@prisma/client';
+import { validateReportActions } from '../helpers/report-actions.validator';
 
 export { ReportAction };
 
@@ -22,49 +23,16 @@ export class ValidReportActionsConstraint
   implements ValidatorConstraintInterface
 {
   validate(actions: any, args: ValidationArguments) {
-    if (actions === undefined || actions === null) return true;
-    if (!Array.isArray(actions)) return false;
-
-    if (actions.includes(ReportAction.dismiss) && actions.length > 1) {
-      return false;
-    }
-
-    if (
-      actions.includes(ReportAction.warn) &&
-      actions.includes(ReportAction.ban)
-    ) {
-      return false;
-    }
-
     const obj = args.object as UpdateReportDto;
-    if (obj.status === ReportStatus.action_taken && actions.length === 0) {
-      return false;
-    }
-
-    return true;
+    return validateReportActions(actions as ReportAction[], obj.status).valid;
   }
 
   defaultMessage(args: ValidationArguments) {
-    const actions = args.value;
-    if (Array.isArray(actions)) {
-      if (actions.includes(ReportAction.dismiss) && actions.length > 1) {
-        return "Action 'dismiss' must stand alone and cannot be combined with other actions";
-      }
-      if (
-        actions.includes(ReportAction.warn) &&
-        actions.includes(ReportAction.ban)
-      ) {
-        return "Actions 'warn' and 'ban' are mutually exclusive and cannot be combined";
-      }
-    }
     const obj = args.object as UpdateReportDto;
-    if (
-      obj.status === ReportStatus.action_taken &&
-      (!actions || actions.length === 0)
-    ) {
-      return "Status 'action_taken' requires at least one resolution action";
-    }
-    return 'Invalid resolution actions combination';
+    return (
+      validateReportActions(args.value as ReportAction[], obj.status).message ??
+      'Invalid resolution actions combination'
+    );
   }
 }
 
@@ -172,38 +140,24 @@ export class UpdateReportDto {
    */
   @ApiPropertyOptional({
     description:
-      'Permanent ban flag (restricted to administrators, rejected for moderators)',
+      'Permanent ban flag (default false; restricted to administrators, rejected for moderators)',
+    default: false,
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  permanent?: boolean;
+
+  /**
+   * Permanent ban flag alias (Administrator only).
+   * @example false
+   */
+  @ApiPropertyOptional({
+    description:
+      'Permanent ban flag alias (restricted to administrators, rejected for moderators)',
     example: false,
   })
   @IsOptional()
   @IsBoolean()
   is_permanent?: boolean;
-
-  /**
-   * Single-action alias for backward compatibility.
-   * @example 'delete_content'
-   */
-  @ApiPropertyOptional({
-    description:
-      'Specific moderation action executed when resolving the report with action_taken (delete_content, ban, warn, dismiss)',
-    enum: ['delete_content', 'ban', 'warn', 'dismiss'],
-    example: 'delete_content',
-  })
-  @IsOptional()
-  @IsString()
-  resolution?: string;
-
-  /**
-   * Alternative alias for resolution action (backward compatibility).
-   * @example 'delete_content'
-   */
-  @ApiPropertyOptional({
-    description:
-      'Alternative alias for resolution action (delete_content, ban, warn, dismiss)',
-    enum: ['delete_content', 'ban', 'warn', 'dismiss'],
-    example: 'delete_content',
-  })
-  @IsOptional()
-  @IsString()
-  action?: string;
 }

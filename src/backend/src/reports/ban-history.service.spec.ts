@@ -31,7 +31,7 @@ describe('BanHistoryService', () => {
     jest.clearAllMocks();
   });
 
-  describe('recordBan & recordSanction', () => {
+  describe('recordSanction', () => {
     it('creates an immutable ban history record for temporary ban', async () => {
       const expiresAt = new Date(Date.now() + 30 * 86400000);
       const expectedRecord = {
@@ -53,7 +53,7 @@ describe('BanHistoryService', () => {
 
       mockPrisma.banHistory.create.mockResolvedValueOnce(expectedRecord);
 
-      const result = await service.recordBan({
+      const result = await service.recordSanction({
         userId: 10,
         bannedById: 1,
         reason: ReportReason.harassment_bullying,
@@ -89,7 +89,7 @@ describe('BanHistoryService', () => {
         duration_days: null,
       });
 
-      await service.recordBan({
+      await service.recordSanction({
         userId: 10,
         bannedById: 1,
         reason: ReportReason.violence_threats,
@@ -224,8 +224,8 @@ describe('BanHistoryService', () => {
     });
   });
 
-  describe('getUserBanHistory', () => {
-    it('returns chronological list of bans ordered desc', async () => {
+  describe('getUserSanctionsHistory', () => {
+    it('returns chronological list of bans and warnings ordered desc', async () => {
       const historyList = [
         {
           id: 'ban-2',
@@ -242,7 +242,7 @@ describe('BanHistoryService', () => {
       ];
       mockPrisma.banHistory.findMany.mockResolvedValueOnce(historyList);
 
-      const result = await service.getUserBanHistory(10);
+      const result = await service.getUserSanctionsHistory(10);
 
       expect(mockPrisma.banHistory.findMany).toHaveBeenCalledWith({
         where: { user_id: 10 },

@@ -21155,7 +21155,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"sexual_content\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21437,13 +21437,13 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "pending",
+                  "value": "dismissed",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "recipe",
+                  "value": "user",
                   "description": "Filter reports by target entity type"
                 }
               ],
@@ -21511,7 +21511,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"spam_scam\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21804,7 +21804,7 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+              "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false,\n  \"is_permanent\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -21846,7 +21846,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false,\n  \"is_permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -21862,7 +21862,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"hate_speech\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21899,7 +21899,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false,\n  \"is_permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -21952,7 +21952,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false,\n  \"is_permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22005,7 +22005,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false,\n  \"is_permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22058,7 +22058,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false,\n  \"is_permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22111,7 +22111,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false,\n  \"is_permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22296,7 +22296,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0\n    },\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0\n    },\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22614,7 +22614,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -23145,7 +23145,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -23408,7 +23408,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },

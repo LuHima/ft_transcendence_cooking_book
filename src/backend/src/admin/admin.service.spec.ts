@@ -93,10 +93,10 @@ describe('AdminService', () => {
     };
 
     mockBanHistoryService = {
-      recordBan: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      recordSanction: jest.fn().mockResolvedValue({ id: 'ban-1' }),
       recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
       getPreviousBansCount: jest.fn().mockResolvedValue(0),
-      getUserBanHistory: jest.fn().mockResolvedValue([]),
+      getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -288,7 +288,7 @@ describe('AdminService', () => {
     });
   });
 
-  describe('getUserBanHistory', () => {
+  describe('getUserSanctionsHistory', () => {
     it('delegates lookup to banHistoryService when user exists', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 2 });
       const mockHistory = [
@@ -302,24 +302,26 @@ describe('AdminService', () => {
           banned_at: new Date(),
         },
       ];
-      (mockBanHistoryService.getUserBanHistory as jest.Mock).mockResolvedValue(
-        mockHistory,
-      );
+      (
+        mockBanHistoryService.getUserSanctionsHistory as jest.Mock
+      ).mockResolvedValue(mockHistory);
 
-      const result = await service.getUserBanHistory(2);
+      const result = await service.getUserSanctionsHistory(2);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 2 },
         select: { id: true },
       });
-      expect(mockBanHistoryService.getUserBanHistory).toHaveBeenCalledWith(2);
+      expect(
+        mockBanHistoryService.getUserSanctionsHistory,
+      ).toHaveBeenCalledWith(2);
       expect(result).toEqual(mockHistory);
     });
 
     it('throws HttpException with 404 when target user is not found', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getUserBanHistory(999)).rejects.toThrow();
+      await expect(service.getUserSanctionsHistory(999)).rejects.toThrow();
     });
   });
 

@@ -15,6 +15,7 @@ import {
   errors,
 } from 'src/common/config/error.config';
 import { OnEvent } from '@nestjs/event-emitter';
+import { NotificationAction } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 
 /*
@@ -119,7 +120,7 @@ export class NotificationGateway
       });
       const notification = rawNotifications.map((n) => ({
         ...n,
-        actor_id: n.action === 'warn' ? null : n.actor_id,
+        actor_id: n.action === NotificationAction.warn ? null : n.actor_id,
       }));
       client.emit('unreadNotifications', {
         notification,
