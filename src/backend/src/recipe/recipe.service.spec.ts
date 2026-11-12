@@ -3139,7 +3139,7 @@ describe('RecipeService', () => {
         user_id: 1,
       });
 
-      mockPrisma.recipeMedia.findMany.mockResolvedValueOnce([
+      mockPrisma.recipeMedia.findMany.mockResolvedValue([
         { id: 1, order: 0 },
       ]);
 

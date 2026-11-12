@@ -20,6 +20,7 @@ import {
   ReportSubject,
   ReportStatus,
   Prisma,
+  RecipeMedia,
 } from '@prisma/client';
 import { NotificationEmit } from 'src/notifications/notification-emit';
 import {
@@ -2185,6 +2186,30 @@ export class RecipeService {
     );
   }
 
+  private async replaceSingleRecipeMedia(
+    file: Express.Multer.File,
+    processFn: () => Promise<ProcessedMediaResult>,
+    persistFn: (fileUrl: string) => Promise<void>,
+    previousUrl?: string | null,
+  ): Promise<string> {
+    let processedOutput: ProcessedMediaResult | null = null;
+    try {
+      processedOutput = await processFn();
+      const fileUrl = processedOutput.relativePath;
+      await persistFn(fileUrl);
+      if (previousUrl) {
+        await this.safeUnlink(previousUrl);
+      }
+      return fileUrl;
+    } catch (err) {
+      if (processedOutput) {
+        await this.cleanupProcessedOutputs([processedOutput]);
+      }
+      await this.cleanupUploadedFiles([file]);
+      throw err;
+    }
+  }
+
   /*
   POST /api/recipes/:id/cover
   */
@@ -2197,33 +2222,27 @@ export class RecipeService {
       throw new BadRequestException('File is required');
     }
 
-    let processedOutput: ProcessedMediaResult | null = null;
+    let recipe;
     try {
-      const recipe = await this.assertRecipeAuthor(recipeId, userId);
-
-      processedOutput = await this.imageProcessingService.processRecipeImageFile(
-        file,
-        recipeId,
-      );
-      const fileUrl = processedOutput.relativePath;
-
-      await this.prisma.recipe.update({
-        where: { id: recipeId },
-        data: { cover_image_url: fileUrl },
-      });
-
-      if (recipe.cover_image_url) {
-        await this.safeUnlink(recipe.cover_image_url);
-      }
-
-      return { cover_image_url: fileUrl };
+      recipe = await this.assertRecipeAuthor(recipeId, userId);
     } catch (err) {
-      if (processedOutput) {
-        await this.cleanupProcessedOutputs([processedOutput]);
-      }
       await this.cleanupUploadedFiles([file]);
       throw err;
     }
+
+    const fileUrl = await this.replaceSingleRecipeMedia(
+      file,
+      () => this.imageProcessingService.processRecipeImageFile(file, recipeId),
+      async (url) => {
+        await this.prisma.recipe.update({
+          where: { id: recipeId },
+          data: { cover_image_url: url },
+        });
+      },
+      recipe.cover_image_url,
+    );
+
+    return { cover_image_url: fileUrl };
   }
 
   // ---------------------------------------------------------------------------
@@ -2241,12 +2260,10 @@ export class RecipeService {
       throw new BadRequestException('File is required');
     }
 
-    let processedOutput: ProcessedMediaResult | null = null;
+    let step;
     try {
       await this.assertRecipeAuthor(recipeId, userId);
-
-      // Guard: Verify recipe step exists
-      const step = await this.prisma.recipeStep.findFirst({
+      step = await this.prisma.recipeStep.findFirst({
         where: {
           recipe_id: recipeId,
           step_number: stepNumber,
@@ -2255,30 +2272,24 @@ export class RecipeService {
       if (!step) {
         throw new NotFoundException('Recipe step not found');
       }
-
-      processedOutput = await this.imageProcessingService.processRecipeImageFile(
-        file,
-        recipeId,
-      );
-      const fileUrl = processedOutput.relativePath;
-
-      await this.prisma.recipeStep.update({
-        where: { id: step.id },
-        data: { image_url: fileUrl },
-      });
-
-      if (step.image_url) {
-        await this.safeUnlink(step.image_url);
-      }
-
-      return { step_number: stepNumber, image_url: fileUrl };
     } catch (err) {
-      if (processedOutput) {
-        await this.cleanupProcessedOutputs([processedOutput]);
-      }
       await this.cleanupUploadedFiles([file]);
       throw err;
     }
+
+    const fileUrl = await this.replaceSingleRecipeMedia(
+      file,
+      () => this.imageProcessingService.processRecipeImageFile(file, recipeId),
+      async (url) => {
+        await this.prisma.recipeStep.update({
+          where: { id: step.id },
+          data: { image_url: url },
+        });
+      },
+      step.image_url,
+    );
+
+    return { step_number: stepNumber, image_url: fileUrl };
   }
 
   // ---------------------------------------------------------------------------
@@ -2300,7 +2311,7 @@ export class RecipeService {
         throw new BadRequestException('At least one file must be provided');
       }
 
-      // Guard: Fetch existing gallery media and ensure limit of 3 is respected
+      // Fast-fail gallery limit check before expensive image transcoding
       const existingMedia = await this.prisma.recipeMedia.findMany({
         where: {
           recipe_id: recipeId,
@@ -2333,10 +2344,23 @@ export class RecipeService {
         throw firstRejection;
       }
 
-      // Persist all gallery media items atomically so partial DB errors roll back cleanly
-      const startingOrder = existingMedia.length;
+      // Re-verify gallery limit & persist atomically inside $transaction to prevent TOCTOU races
       const createdMedia = await this.prisma.$transaction(async (tx) => {
-        const items: any[] = [];
+        const currentMedia = await tx.recipeMedia.findMany({
+          where: {
+            recipe_id: recipeId,
+            media_type: MediaType.image,
+          },
+          orderBy: { order: 'asc' },
+        });
+        if (currentMedia.length + processedFiles.length > 3) {
+          throw new BadRequestException(
+            `Cannot upload more than 3 gallery images per recipe. Already has ${currentMedia.length}.`,
+          );
+        }
+
+        const startingOrder = currentMedia.length;
+        const items: RecipeMedia[] = [];
         for (let i = 0; i < processedFiles.length; i++) {
           const { relativePath: fileUrl } = processedFiles[i];
           const media = await tx.recipeMedia.create({
@@ -2374,33 +2398,27 @@ export class RecipeService {
       throw new BadRequestException('File is required');
     }
 
-    let processedOutput: ProcessedMediaResult | null = null;
+    let recipe;
     try {
-      const recipe = await this.assertRecipeAuthor(recipeId, userId);
-
-      processedOutput = await this.videoProcessingService.processVideoFile(
-        file,
-        recipeId,
-      );
-      const fileUrl = processedOutput.relativePath;
-
-      await this.prisma.recipe.update({
-        where: { id: recipeId },
-        data: { video_url: fileUrl },
-      });
-
-      if (recipe.video_url) {
-        await this.safeUnlink(recipe.video_url);
-      }
-
-      return { video_url: fileUrl };
+      recipe = await this.assertRecipeAuthor(recipeId, userId);
     } catch (err) {
-      if (processedOutput) {
-        await this.cleanupProcessedOutputs([processedOutput]);
-      }
       await this.cleanupUploadedFiles([file]);
       throw err;
     }
+
+    const fileUrl = await this.replaceSingleRecipeMedia(
+      file,
+      () => this.videoProcessingService.processVideoFile(file, recipeId),
+      async (url) => {
+        await this.prisma.recipe.update({
+          where: { id: recipeId },
+          data: { video_url: url },
+        });
+      },
+      recipe.video_url,
+    );
+
+    return { video_url: fileUrl };
   }
 
   // ---------------------------------------------------------------------------

@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { spawn } from 'child_process';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
@@ -45,11 +50,10 @@ export class VideoProcessingService {
       await this.runFfmpeg(inputPath, outputPath);
     } catch (err) {
       await fs.promises.unlink(outputPath).catch(() => {});
-      await fs.promises.unlink(inputPath).catch(() => {});
       throw err;
+    } finally {
+      await fs.promises.unlink(inputPath).catch(() => {});
     }
-
-    await fs.promises.unlink(inputPath).catch(() => {});
 
     return {
       filename,
@@ -117,8 +121,8 @@ export class VideoProcessingService {
         this.logger.error(`FFmpeg spawn error: ${err.message}`);
         finish(() =>
           reject(
-            new BadRequestException(
-              'Failed to process video: corrupt or unsupported file format',
+            new InternalServerErrorException(
+              'Video transcoding service unavailable',
             ),
           ),
         );

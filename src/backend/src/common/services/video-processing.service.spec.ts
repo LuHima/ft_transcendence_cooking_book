@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import { join } from 'path';
@@ -178,7 +181,7 @@ describe('VideoProcessingService', () => {
 
     child.emit('error', new Error('ENOENT'));
 
-    await expect(promise).rejects.toThrow(BadRequestException);
+    await expect(promise).rejects.toThrow(InternalServerErrorException);
     expect(unlinkSpy).toHaveBeenCalledWith(inputPath);
   });
 

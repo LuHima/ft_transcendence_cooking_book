@@ -36,7 +36,7 @@ export class ImageProcessingService {
     buffer: Buffer,
     userId: number,
   ): Promise<ProcessedMediaResult> {
-    return this.processWebpBuffer(buffer, {
+    return this.processWebpInput(buffer, {
       dir: AVATAR_UPLOADS_DIR,
       prefix: 'avatar',
       canonicalUrlPrefix: `/api/media/avatars/${userId}`,
@@ -54,8 +54,16 @@ export class ImageProcessingService {
     file: Express.Multer.File,
     userId: number,
   ): Promise<ProcessedMediaResult> {
-    return this.processImageFile(file, (buffer) =>
-      this.processAvatarBuffer(buffer, userId),
+    return this.processImageFile(file, (input) =>
+      this.processWebpInput(input, {
+        dir: AVATAR_UPLOADS_DIR,
+        prefix: 'avatar',
+        canonicalUrlPrefix: `/api/media/avatars/${userId}`,
+        width: 512,
+        height: 512,
+        resizeOptions: { fit: 'cover', position: 'center' },
+        errorLabel: 'avatar image',
+      }),
     );
   }
 
@@ -70,7 +78,7 @@ export class ImageProcessingService {
     buffer: Buffer,
     recipeId: number,
   ): Promise<ProcessedMediaResult> {
-    return this.processWebpBuffer(buffer, {
+    return this.processWebpInput(buffer, {
       dir: RECIPE_UPLOADS_DIR,
       prefix: 'recipe',
       canonicalUrlPrefix: `/api/media/recipes/${recipeId}`,
@@ -89,16 +97,27 @@ export class ImageProcessingService {
     file: Express.Multer.File,
     recipeId: number,
   ): Promise<ProcessedMediaResult> {
-    return this.processImageFile(file, (buffer) =>
-      this.processRecipeImageBuffer(buffer, recipeId),
+    return this.processImageFile(file, (input) =>
+      this.processWebpInput(input, {
+        dir: RECIPE_UPLOADS_DIR,
+        prefix: 'recipe',
+        canonicalUrlPrefix: `/api/media/recipes/${recipeId}`,
+        width: 1920,
+        height: 1080,
+        resizeOptions: { fit: 'inside', withoutEnlargement: true },
+        errorLabel: 'recipe image',
+      }),
     );
   }
 
-  private async processWebpBuffer(
-    buffer: Buffer,
+  private async processWebpInput(
+    input: Buffer | string,
     options: WebpProcessingOptions,
   ): Promise<ProcessedMediaResult> {
-    if (!buffer || buffer.length === 0) {
+    if (Buffer.isBuffer(input) && input.length === 0) {
+      throw new BadRequestException('Empty image buffer provided');
+    }
+    if (!input) {
       throw new BadRequestException('Empty image buffer provided');
     }
 
@@ -107,7 +126,7 @@ export class ImageProcessingService {
     const outputPath = join(options.dir, filename);
 
     try {
-      await sharp(buffer)
+      await sharp(input)
         .rotate()
         .resize(options.width, options.height, options.resizeOptions)
         .webp({ quality: 80 })
@@ -128,7 +147,7 @@ export class ImageProcessingService {
 
   private async processImageFile(
     file: Express.Multer.File,
-    processBuffer: (buffer: Buffer) => Promise<ProcessedMediaResult>,
+    processInput: (input: Buffer | string) => Promise<ProcessedMediaResult>,
   ): Promise<ProcessedMediaResult> {
     if (!file) {
       throw new BadRequestException('File is required');
@@ -140,7 +159,7 @@ export class ImageProcessingService {
       }
       if (file.buffer.length > 0) {
         try {
-          return await processBuffer(file.buffer);
+          return await processInput(file.buffer);
         } finally {
           if (file.path) {
             await fs.promises.unlink(file.path).catch(() => {});
@@ -160,8 +179,7 @@ export class ImageProcessingService {
     }
 
     try {
-      const buffer = await fs.promises.readFile(file.path);
-      return await processBuffer(buffer);
+      return await processInput(file.path);
     } finally {
       await fs.promises.unlink(file.path).catch(() => {});
     }
