@@ -17,11 +17,13 @@ import type {
 	UpdateTagDto,
 } from '../../types/models'
 
-// gestione del catalogo multilingua (solo admin):
-//   GET    /ingredients?category=&search=&lang=   GET /tags?lang=
-//   POST   /ingredients (CreateIngredientDto)    POST /tags (CreateTagDto)
-//   PATCH  /ingredients/:id (UpdateIngredientDto) PATCH /tags/:id (UpdateTagDto)  → solo translations
-//   DELETE /ingredients/:id                      DELETE /tags/:id               → 409 se usati in ricette
+// gestione del catalogo multilingua (solo admin), namespace /api/admin/catalog (ADR 0031):
+//   elenchi (pubblici):  GET /ingredients?category=&search=&lang=          GET /tags?lang=
+//   dettaglio:           GET    /admin/catalog/ingredients/:id            GET    /admin/catalog/tags/:id   → tutte le traduzioni
+//   creazione:           POST   /admin/catalog/ingredients                POST   /admin/catalog/tags
+//   modifica:            PATCH  /admin/catalog/ingredients/:id            PATCH  /admin/catalog/tags/:id   → solo translations
+//   eliminazione:        DELETE /admin/catalog/ingredients/:id            DELETE /admin/catalog/tags/:id   → 409 se usati in ricette
+const ADMIN_CATALOG = '/admin/catalog'
 
 type Kind = 'ingredients' | 'tags'
 
@@ -132,7 +134,7 @@ function CatalogPanel({ kind }: { kind: Kind }) {
 
 	async function remove(row: CatalogRow) {
 		try {
-			await api.delete(`/${kind}/${row.id}`)
+			await api.delete(`${ADMIN_CATALOG}/${kind}/${row.id}`)
 			toast.success(t('admin.catalog.deleted', { name: row.name }))
 			setDeleting(null)
 			setReload((n) => n + 1)
@@ -301,16 +303,10 @@ function CatalogPanel({ kind }: { kind: Kind }) {
 	)
 }
 
-// i nomi esistenti nelle tre lingue si ricavano dalle GET con ?lang=it|en|fr
-// (solo se resolved_lang coincide: altrimenti è un fallback e il campo resta vuoto)
+// nomi in it/en/fr con una sola chiamata: GET /admin/catalog/(ingredients|tags)/:id
 async function loadTranslations(kind: Kind, id: number): Promise<CatalogTranslations> {
-	const lists = await Promise.all(LANGS.map((l) => api.get<CatalogRow[]>(`/${kind}${qs({ lang: l })}`).then((r) => asArray<CatalogRow>(r))))
-	const out: CatalogTranslations = { ...EMPTY_TRANSLATIONS }
-	LANGS.forEach((l, i) => {
-		const row = lists[i].find((x) => x.id === id)
-		if (row && (!row.resolved_lang || row.resolved_lang === l)) out[l] = row.name
-	})
-	return out
+	const data = await api.get<IngredientDetailResponseDto | TagDetailResponseDto>(`${ADMIN_CATALOG}/${kind}/${id}`)
+	return { ...EMPTY_TRANSLATIONS, ...(data?.translations ?? {}) }
 }
 
 interface CatalogDialogProps {
@@ -364,17 +360,17 @@ function CatalogDialog({ kind, row, onClose, onSaved }: CatalogDialogProps) {
 			if (kind === 'ingredients') {
 				if (isEdit) {
 					const body: UpdateIngredientDto = { translations: names }
-					await api.patch<IngredientDetailResponseDto>(`/ingredients/${row.id}`, body)
+					await api.patch<IngredientDetailResponseDto>(`${ADMIN_CATALOG}/ingredients/${row.id}`, body)
 				} else {
 					const body: CreateIngredientDto = { slug, category, translations: names }
-					await api.post<IngredientDetailResponseDto>('/ingredients', body)
+					await api.post<IngredientDetailResponseDto>(`${ADMIN_CATALOG}/ingredients`, body)
 				}
 			} else if (isEdit) {
 				const body: UpdateTagDto = { translations: names }
-				await api.patch<TagDetailResponseDto>(`/tags/${row.id}`, body)
+				await api.patch<TagDetailResponseDto>(`${ADMIN_CATALOG}/tags/${row.id}`, body)
 			} else {
 				const body: CreateTagDto = { slug, translations: names }
-				await api.post<TagDetailResponseDto>('/tags', body)
+				await api.post<TagDetailResponseDto>(`${ADMIN_CATALOG}/tags`, body)
 			}
 			onSaved(!isEdit)
 		} catch (err) {

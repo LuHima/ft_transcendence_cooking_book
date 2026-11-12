@@ -527,7 +527,9 @@
 			"noAction": "Choisissez au moins une action.",
 			"banDays": "La durée du bannissement doit être un nombre entier de jours (au moins 1).",
 			"banCap": "La durée maximale de bannissement pour les modérateurs est de {{max}} jours."
-		}
+		},
+		"owner": "auteur :",
+		"confirmBanName": "Bannir {{name}}, l'auteur de ce contenu ?"
 	},
 	"admin": {
 		"subtitle": "Signalements, utilisateurs, rôles et contenus de la plateforme.",
@@ -603,10 +605,17 @@
 			}
 		},
 		"recipes": {
-			"confirmDelete": "Suspendre la recette « {{title}} » ? Elle pourra être réactivée depuis sa page.",
+			"confirmDelete": "Suspendre la recette « {{title}} » ? Elle pourra être réactivée plus tard.",
 			"filter": "Rechercher une recette…",
 			"empty": "Aucune recette trouvée.",
-			"suspend": "Suspendre"
+			"suspend": "Suspendre",
+			"reactivate": "Réactiver",
+			"suspended": "Recette suspendue.",
+			"statuses": {
+				"all": "Toutes",
+				"active": "Actives",
+				"inactive": "Suspendues"
+			}
 		},
 		"comments": {
 			"filter": "Filtrer par texte ou auteur…",
@@ -619,7 +628,6 @@
 				"flat": "Liste à plat",
 				"threaded": "Racines seulement (fils)"
 			},
-			"flaggedOnly": "Signalés uniquement",
 			"statuses": {
 				"all": "Tous",
 				"active": "Actifs",
@@ -640,7 +648,14 @@
 			"purged": "Commentaire supprimé définitivement.",
 			"replyTo": "réponse à #{{id}}",
 			"moreReplies_one": "+ {{count}} autre réponse",
-			"moreReplies_other": "+ {{count}} autres réponses"
+			"moreReplies_other": "+ {{count}} autres réponses",
+			"reported": "Signalé",
+			"reportedOnly": "Signalés uniquement (en attente)",
+			"totalReports": "Signalements au total (déjà traités)",
+			"threadPending_one": "{{count}} signalement en attente dans la conversation",
+			"threadPending_other": "{{count}} signalements en attente dans la conversation",
+			"reportedReplies_one": "{{count}} réponse signalée",
+			"reportedReplies_other": "{{count}} réponses signalées"
 		},
 		"catalog": {
 			"title": "Catalogue",
@@ -729,7 +744,9 @@
 		"language": "Langue du profil",
 		"languageHelp": "Langue de l'interface et des recettes affichées. Pour l'instant elle n'est enregistrée que sur ce navigateur.",
 		"likesReceived_one": "{{count}} j'aime reçu",
-		"likesReceived_other": "{{count}} j'aime reçus"
+		"likesReceived_other": "{{count}} j'aime reçus",
+		"avatarPending": "La nouvelle photo sera envoyée lors de l'enregistrement (max {{max}} Mo).",
+		"avatarUploading": "Envoi de la photo de profil"
 	},
 	"notifications": {
 		"title": "Notifications",
@@ -745,7 +762,8 @@
 		"reply": "a répondu à votre commentaire",
 		"update": "a mis à jour la recette",
 		"delete": "a supprimé une recette",
-		"generic": "a effectué une action"
+		"generic": "a effectué une action",
+		"warn": "vous a envoyé un avertissement de modération"
 	},
 	"auth": {
 		"or": "ou",

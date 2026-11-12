@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { api, asArray, getErrorMessage, qs, toPage } from '../../api/client'
+import { api, asArray, getErrorMessage, qs, toPage, uploadWithProgress } from '../../api/client'
+import { UPLOAD_LIMITS } from '../../config'
+import UploadProgress from '../../components/UploadProgress'
 import { useLang } from '../../lib/useLang'
 import { validateImage } from '../../lib/files'
 import { useObjectUrl } from '../../lib/useObjectUrl'
@@ -11,7 +13,7 @@ import Avatar from '../../components/Avatar'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { ListSkeleton } from '../../components/Skeleton'
-import type { AdminUser, BanHistoryItem, Paginated, SortOrder, User, UserRole, UserSortBy, UserStatus } from '../../types/models'
+import type { AdminUser, AvatarUploadResponseDto, BanHistoryItem, Paginated, SortOrder, User, UserRole, UserSortBy, UserStatus } from '../../types/models'
 
 // endpoint admin (guard: solo admin)
 //   GET    /admin/users?page=&limit=&search=&role=&status=&sort_by=&sort_order=  -> PaginatedAdminUsersResponseDto
@@ -522,11 +524,13 @@ function AvatarManager({ user, onChanged }: { user: AdminUser; onChanged: (avata
 	const fileRef = useRef<HTMLInputElement>(null)
 	const [file, setFile] = useState<File | null>(null)
 	const [busy, setBusy] = useState(false)
+	const [progress, setProgress] = useState<number | null>(null)
 	const preview = useObjectUrl(file)
 
 	function pick(f: File | undefined) {
 		if (!f) return
-		const err = validateImage(f, t)
+		// controllo prima dell'invio: tipo e dimensione massima dell'avatar
+		const err = validateImage(f, t, UPLOAD_LIMITS.avatarMaxMb)
 		if (err) return toast.error(err)
 		setFile(f)
 	}
@@ -537,7 +541,10 @@ function AvatarManager({ user, onChanged }: { user: AdminUser; onChanged: (avata
 		try {
 			const form = new FormData()
 			form.append('file', file)
-			const res = await api.post<{ avatar_url?: string | null } | null>(`/admin/users/${user.id}/avatar`, form)
+			setProgress(0)
+			const res = await uploadWithProgress<AvatarUploadResponseDto | null>(`/admin/users/${user.id}/avatar`, form, (loaded, total) =>
+				setProgress(total > 0 ? (loaded / total) * 100 : 0),
+			)
 			onChanged(res?.avatar_url ?? user.avatar_url ?? null)
 			setFile(null)
 			toast.success(t('admin.users.avatarUpdated'))
@@ -545,6 +552,7 @@ function AvatarManager({ user, onChanged }: { user: AdminUser; onChanged: (avata
 			toast.error(getErrorMessage(err, t('admin.users.avatarError')))
 		} finally {
 			setBusy(false)
+			setProgress(null)
 		}
 	}
 
@@ -562,59 +570,62 @@ function AvatarManager({ user, onChanged }: { user: AdminUser; onChanged: (avata
 	}
 
 	return (
-		<div className="flex flex-wrap items-center gap-3">
-			{preview ? (
-				<img src={preview} alt="" className="h-14 w-14 rounded-full object-cover" />
-			) : (
-				<Avatar username={user.username} url={user.avatar_url} className="h-14 w-14 text-lg" />
-			)}
-			<input
-				ref={fileRef}
-				type="file"
-				accept="image/jpeg,image/png,image/webp"
-				aria-label={t('profile.changeAvatar')}
-				className="hidden"
-				onChange={(e) => {
-					pick(e.target.files?.[0])
-					e.target.value = ''
-				}}
-			/>
-			{file ? (
-				<>
-					<button
-						type="button"
-						disabled={busy}
-						onClick={() => void upload()}
-						className="rounded-full bg-[var(--wc-basil)] px-3 py-1 text-sm font-medium text-[var(--wc-bg)] disabled:opacity-60"
-					>
-						{busy ? t('common.sending') : t('admin.users.uploadAvatar')}
-					</button>
-					<button type="button" disabled={busy} onClick={() => setFile(null)} className="text-sm text-[var(--wc-text-muted)] hover:underline">
-						{t('common.cancel')}
-					</button>
-				</>
-			) : (
-				<>
-					<button
-						type="button"
-						disabled={busy}
-						onClick={() => fileRef.current?.click()}
-						className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-sm hover:border-[var(--wc-basil)]"
-					>
-						{t('profile.changeAvatar')}
-					</button>
-					{user.avatar_url && (
+		<div className="space-y-2">
+			<div className="flex flex-wrap items-center gap-3">
+				{preview ? (
+					<img src={preview} alt="" className="h-14 w-14 rounded-full object-cover" />
+				) : (
+					<Avatar username={user.username} url={user.avatar_url} className="h-14 w-14 text-lg" />
+				)}
+				<input
+					ref={fileRef}
+					type="file"
+					accept="image/jpeg,image/png,image/webp"
+					aria-label={t('profile.changeAvatar')}
+					className="hidden"
+					onChange={(e) => {
+						pick(e.target.files?.[0])
+						e.target.value = ''
+					}}
+				/>
+				{file ? (
+					<>
 						<button
 							type="button"
 							disabled={busy}
-							onClick={() => void remove()}
-							className="text-sm text-[var(--wc-paprika)] hover:underline disabled:opacity-60"
+							onClick={() => void upload()}
+							className="rounded-full bg-[var(--wc-basil)] px-3 py-1 text-sm font-medium text-[var(--wc-bg)] disabled:opacity-60"
 						>
-							{t('common.remove')}
+							{busy ? t('common.sending') : t('admin.users.uploadAvatar')}
 						</button>
-					)}
-				</>
-			)}
+						<button type="button" disabled={busy} onClick={() => setFile(null)} className="text-sm text-[var(--wc-text-muted)] hover:underline">
+							{t('common.cancel')}
+						</button>
+					</>
+				) : (
+					<>
+						<button
+							type="button"
+							disabled={busy}
+							onClick={() => fileRef.current?.click()}
+							className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-sm hover:border-[var(--wc-basil)]"
+						>
+							{t('profile.changeAvatar')}
+						</button>
+						{user.avatar_url && (
+							<button
+								type="button"
+								disabled={busy}
+								onClick={() => void remove()}
+								className="text-sm text-[var(--wc-paprika)] hover:underline disabled:opacity-60"
+							>
+								{t('common.remove')}
+							</button>
+						)}
+					</>
+				)}
+			</div>
+			{progress !== null && <UploadProgress percent={progress} label={t('profile.avatarUploading')} />}
 		</div>
 	)
 }

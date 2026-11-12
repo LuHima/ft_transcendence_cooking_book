@@ -11,10 +11,10 @@ const POLL_INTERVAL_MS = 60_000
 const PAGE_SIZE = 20
 
 // testo e destinazione di una notifica in base a subject + action (modello Notification del backend)
-// (target.id è l'id della ricetta solo quando subject === 'recipe'; per i commenti è l'id del commento,
-// quindi in quel caso si apre il profilo dell'autore)
+// target.id è l'id della ricetta per subject 'recipe' e l'id del commento per subject 'comment':
+// per i commenti la ricetta arriva in target.recipe_id
 function describe(n: AppNotification): { textKey: string; to: string } {
-	const recipeId = n.subject === 'recipe' ? (n.target?.id ?? null) : null
+	const recipeId = n.target?.recipe_id ?? (n.subject === 'recipe' ? (n.target?.id ?? null) : null)
 	const actorPath = n.actor ? `/users/${n.actor.id}` : '/'
 	const recipePath = recipeId != null ? `/recipes/${recipeId}` : actorPath
 	switch (n.action) {
@@ -26,12 +26,15 @@ function describe(n: AppNotification): { textKey: string; to: string } {
 			return { textKey: 'notifications.like', to: recipePath }
 		case 'comment':
 			return n.subject === 'comment'
-				? { textKey: 'notifications.reply', to: actorPath }
+				? { textKey: 'notifications.reply', to: recipePath }
 				: { textKey: 'notifications.comment', to: recipePath }
 		case 'post':
 			return { textKey: 'notifications.post', to: recipePath }
 		case 'update':
 			return { textKey: 'notifications.update', to: recipePath }
+		case 'warn':
+			// avviso del moderatore: porta al contenuto se si conosce la ricetta
+			return { textKey: 'notifications.warn', to: recipeId != null ? recipePath : '/' }
 		case 'delete':
 			// la ricetta non esiste più: nessun link
 			return { textKey: 'notifications.delete', to: '/' }
@@ -229,6 +232,9 @@ function NotificationBell() {
 												{t(textKey)}
 												{n.subject === 'recipe' && n.action !== 'delete' && n.target?.title_or_snippet && (
 													<span className="text-[var(--wc-saffron)]"> {n.target.title_or_snippet}</span>
+												)}
+												{n.action === 'warn' && n.details && (
+													<span className="mt-0.5 block whitespace-pre-line break-words text-[var(--wc-paprika)]">{n.details}</span>
 												)}
 												{n.subject === 'comment' && n.target?.title_or_snippet && (
 													<span className="block truncate italic text-[var(--wc-text-muted)]">“{n.target.title_or_snippet}”</span>

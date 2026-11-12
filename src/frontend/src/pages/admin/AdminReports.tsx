@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useLang } from '../../lib/useLang'
 import { isAdmin } from '../../lib/permissions'
+import Avatar from '../../components/Avatar'
 import Pagination from '../../components/Pagination'
 import { ListSkeleton } from '../../components/Skeleton'
 import {
@@ -16,6 +17,7 @@ import {
 	type ReportReason,
 	type ReportStatus,
 	type ReportSubject,
+	type ReportUser,
 	type UpdateReportDto,
 } from '../../types/models'
 
@@ -47,15 +49,27 @@ function actionsFor(r: ReportItem): Exclude<ModerationAction, 'dismiss'>[] {
 	return r.subject === 'user' ? ['warn', 'ban'] : ['warn', 'delete_content', 'ban']
 }
 
-// ReportItemDto non include l'id della ricetta di un commento: i commenti non hanno un link diretto
+// link al contenuto segnalato: per i commenti si apre la ricetta che li contiene (target.recipe_id)
 function targetLink(r: ReportItem): string | null {
-	if (r.subject === 'recipe') return `/recipes/${r.target_id}`
+	if (r.subject === 'recipe') return `/recipes/${r.target?.recipe_id ?? r.target_id}`
 	if (r.subject === 'user') return `/users/${r.target_id}`
-	return null
+	return r.target?.recipe_id ? `/recipes/${r.target.recipe_id}` : null
+}
+
+// utente con avatar e link al profilo (segnalatore / autore del contenuto)
+function UserChip({ user, fallbackId }: { user?: ReportUser | null; fallbackId?: number }) {
+	if (!user) return fallbackId != null ? <span className="text-[var(--wc-text-muted)]">#{fallbackId}</span> : <span>—</span>
+	return (
+		<Link to={`/users/${user.id}`} className="inline-flex items-center gap-1.5 hover:text-[var(--wc-saffron)]">
+			<Avatar username={user.username} url={user.avatar_url} className="h-5 w-5 text-[10px]" />
+			<span className="truncate">{user.username}</span>
+		</Link>
+	)
 }
 
 // coda delle segnalazioni, condivisa da moderatori e admin:
-//   GET   /api/reports?page=&limit=&status=&subject=  -> PaginatedReportsResponseDto
+//   GET   /api/reports?page=&limit=&status=&subject=&lang=  -> PaginatedReportsResponseDto
+//         (reporter e target idratati; target.label localizzata in base a lang)
 //   PATCH /api/reports/:id                             (UpdateReportDto)
 function AdminReports() {
 	const { t } = useTranslation()
@@ -72,7 +86,7 @@ function AdminReports() {
 	useEffect(() => {
 		let cancelled = false
 		api
-			.get<unknown>(`/reports${qs({ page, limit: PAGE_SIZE, status, subject })}`)
+			.get<unknown>(`/reports${qs({ page, limit: PAGE_SIZE, status, subject, lang })}`)
 			.then((res) => {
 				if (cancelled) return
 				setData(toPage<ReportItem>(res, PAGE_SIZE))
@@ -86,7 +100,7 @@ function AdminReports() {
 		return () => {
 			cancelled = true
 		}
-	}, [status, subject, page, reload, t])
+	}, [status, subject, page, lang, reload, t])
 
 	function changeFilter(fn: () => void) {
 		fn()
@@ -157,17 +171,28 @@ function AdminReports() {
 						<tbody>
 							{data.items.map((r) => {
 								const link = targetLink(r)
-								const targetLabel = `${t(`moderation.targets.${r.subject}`)} #${r.target_id}`
+								const targetLabel = r.target?.label || `#${r.target_id}`
 								return (
 									<tr key={r.id} className="border-t border-[var(--wc-border)] align-top">
 										<td className="p-3 text-[var(--wc-text-muted)]">{r.id}</td>
-										<td className="p-3">
-											{link ? (
-												<Link to={link} className="font-medium hover:text-[var(--wc-saffron)] hover:underline">
-													{targetLabel}
-												</Link>
-											) : (
-												<span className="font-medium">{targetLabel}</span>
+										<td className="max-w-xs p-3">
+											<span className="mb-1 inline-block rounded-full bg-[var(--wc-surface-raised)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-saffron)]">
+												{t(`moderation.targets.${r.subject}`)}
+											</span>
+											<span className="block break-words">
+												{link ? (
+													<Link to={link} className="font-medium hover:text-[var(--wc-saffron)] hover:underline">
+														{r.subject === 'comment' ? `“${targetLabel}”` : targetLabel}
+													</Link>
+												) : (
+													<span className="font-medium">{targetLabel}</span>
+												)}
+											</span>
+											{r.target?.owner && r.subject !== 'user' && (
+												<span className="mt-1 flex items-center gap-1 text-xs text-[var(--wc-text-muted)]">
+													{t('moderation.owner')}
+													<UserChip user={r.target.owner} />
+												</span>
 											)}
 											{r.previous_bans_count != null && r.previous_bans_count > 0 && (
 												<span className="mt-1 block text-xs text-[var(--wc-paprika)]">
@@ -184,9 +209,7 @@ function AdminReports() {
 											)}
 										</td>
 										<td className="p-3">
-											<Link to={`/users/${r.reporter_id}`} className="hover:text-[var(--wc-saffron)] hover:underline">
-												#{r.reporter_id}
-											</Link>
+											<UserChip user={r.reporter} fallbackId={r.reporter_id} />
 										</td>
 										<td className="whitespace-nowrap p-3 text-xs text-[var(--wc-text-muted)]">{fmtDate(r.created_at)}</td>
 										<td className="max-w-xs p-3 text-xs">
@@ -301,7 +324,8 @@ function ResolveDialog({ report, onClose, onDone }: { report: ReportItem; onClos
 				if (!Number.isInteger(days) || days < 1) return setFormError(t('moderation.errors.banDays'))
 				if (maxDays && days > maxDays) return setFormError(t('moderation.errors.banCap', { max: maxDays }))
 			}
-			if (actions.includes('ban') && !confirm(t('moderation.confirmBan'))) return
+			const owner = report.target?.owner?.username
+			if (actions.includes('ban') && !confirm(owner ? t('moderation.confirmBanName', { name: owner }) : t('moderation.confirmBan'))) return
 			if (actions.includes('delete_content') && !confirm(t('moderation.confirmDelete'))) return
 			body = {
 				status: 'action_taken',
@@ -343,7 +367,8 @@ function ResolveDialog({ report, onClose, onDone }: { report: ReportItem; onClos
 			>
 				<h2 className="font-display text-2xl text-[var(--wc-saffron)]">{t('moderation.handle')}</h2>
 				<p className="text-xs text-[var(--wc-text-muted)]">
-					{t(`moderation.targets.${report.subject}`)} #{report.target_id} · {t(`report.reasons.${report.reason}`)}
+					{t(`moderation.targets.${report.subject}`)}: {report.target?.label ?? `#${report.target_id}`}
+					{report.target?.owner && ` · ${t('moderation.owner')} ${report.target.owner.username}`} · {t(`report.reasons.${report.reason}`)}
 				</p>
 
 				<fieldset className="flex gap-4 text-sm">

@@ -29,10 +29,9 @@ const INPUT =
 const positiveInt = (v: string) => (/^\d+$/.test(v.trim()) && Number(v) > 0 ? Number(v) : undefined)
 
 // flusso di audit dei commenti:
-//   GET /admin/comments?page=&limit=&search=&status=&recipe_id=&user_id=&sort_by=&sort_order=&format=&lang=
-// NB: il backend accetta `format` = flat | threaded (equivalente di thread_mode flatten | roots_only) e
-// NON ha un parametro flagged_only (forbidNonWhitelisted → 400): "Solo segnalati" ordina per reports_count
-// e filtra lato client i commenti con reports_count > 0.
+// GET /admin/comments?page=&limit=&search=&status=&recipe_id=&user_id=&reported_only=&sort_by=&sort_order=&format=&lang=
+// reported_only=true: solo commenti con segnalazioni in attesa; se sort_by non viene inviato il backend
+// ordina per numero di segnalazioni. format = flat | threaded vale anche insieme a reported_only.
 // Eliminazione: DELETE /recipes/:recipeId/comments/:commentId (soft) | ?hard=true (solo admin, definitiva)
 function AdminComments() {
 	const { t } = useTranslation()
@@ -50,15 +49,15 @@ function AdminComments() {
 	const [userId, setUserId] = useState<number | undefined>()
 	const [status, setStatus] = useState<AdminCommentStatus>('all')
 	const [format, setFormat] = useState<AdminCommentFormat>('flat')
-	const [flaggedOnly, setFlaggedOnly] = useState(false)
+	const [reportedOnly, setReportedOnly] = useState(false)
 	const [sort, setSort] = useState<SortValue>('created_at:desc')
 	const [page, setPage] = useState(1)
 	const [reload, setReload] = useState(0)
 	const [busyId, setBusyId] = useState<number | null>(null)
 	const [purging, setPurging] = useState<{ comment: AdminComment; prune: boolean } | null>(null)
 
-	// "solo segnalati" forza l'ordinamento per numero di segnalazioni
-	const [sortBy, sortOrder] = (flaggedOnly ? 'reports_count:desc' : sort).split(':') as [AdminCommentSortBy, SortOrder]
+	// con "solo segnalati" l'ordinamento lo decide il backend (numero di segnalazioni)
+	const [sortBy, sortOrder] = sort.split(':') as [AdminCommentSortBy, SortOrder]
 
 	// filtri testuali: partono 300ms dopo l'ultimo tasto
 	useEffect(() => {
@@ -82,8 +81,9 @@ function AdminComments() {
 					status,
 					recipe_id: recipeId,
 					user_id: userId,
-					sort_by: sortBy,
-					sort_order: sortOrder,
+					reported_only: reportedOnly ? 'true' : undefined,
+					sort_by: reportedOnly ? undefined : sortBy,
+					sort_order: reportedOnly ? undefined : sortOrder,
 					format,
 					lang,
 				})}`,
@@ -101,7 +101,7 @@ function AdminComments() {
 		return () => {
 			cancelled = true
 		}
-	}, [page, debounced, status, recipeId, userId, sortBy, sortOrder, format, lang, reload, t])
+	}, [page, debounced, status, recipeId, userId, reportedOnly, sortBy, sortOrder, format, lang, reload, t])
 
 	function refresh() {
 		if (data && data.items.length === 1 && page > 1) setPage(page - 1)
@@ -141,7 +141,7 @@ function AdminComments() {
 		}
 	}
 
-	const visible = (data?.items ?? []).filter((c) => !flaggedOnly || c.reports_count > 0)
+	const visible = data?.items ?? []
 	const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })
 
 	function renderComment(c: AdminComment, isReply = false) {
@@ -149,7 +149,7 @@ function AdminComments() {
 			<li
 				key={c.id}
 				className={`rounded-xl border bg-[var(--wc-surface)] p-4 ${
-					c.reports_count > 0 ? 'border-[var(--wc-paprika)]' : 'border-[var(--wc-border)]'
+					c.has_pending_reports ? 'border-[var(--wc-paprika)]' : 'border-[var(--wc-border)]'
 				} ${isReply ? 'ml-6' : ''}`}
 			>
 				<div className="flex flex-wrap items-start justify-between gap-3 text-xs text-[var(--wc-text-muted)]">
@@ -170,8 +170,14 @@ function AdminComments() {
 						{c.parent_id != null && !isReply && ` · ${t('admin.comments.replyTo', { id: c.parent_id })}`}
 					</span>
 					<span className="flex shrink-0 items-center gap-3">
-						{c.reports_count > 0 && (
+						{c.has_pending_reports && (
 							<span className="rounded-full bg-[var(--wc-paprika)] px-2 py-0.5 font-semibold text-[var(--wc-bg)]">
+								⚑ {t('admin.comments.reported')}
+								{(c.pending_reports_count ?? 0) > 0 && ` (${c.pending_reports_count})`}
+							</span>
+						)}
+						{!c.has_pending_reports && c.reports_count > 0 && (
+							<span className="rounded-full border border-[var(--wc-border)] px-2 py-0.5" title={t('admin.comments.totalReports')}>
 								⚑ {c.reports_count}
 							</span>
 						)}
@@ -201,6 +207,17 @@ function AdminComments() {
 				<p className={`mt-2 whitespace-pre-line break-words text-sm ${c.is_active ? 'text-[var(--wc-text)]' : 'text-[var(--wc-text-muted)] line-through'}`}>
 					{c.content}
 				</p>
+				{/* vista a thread: riepilogo delle segnalazioni nella conversazione */}
+				{!isReply && format === 'threaded' && ((c.thread_pending_reports_count ?? 0) > 0 || (c.reported_replies_count ?? 0) > 0) && (
+					<p className="mt-2 flex flex-wrap gap-3 text-xs text-[var(--wc-paprika)]">
+						{(c.thread_pending_reports_count ?? 0) > 0 && (
+							<span>{t('admin.comments.threadPending', { count: c.thread_pending_reports_count })}</span>
+						)}
+						{(c.reported_replies_count ?? 0) > 0 && (
+							<span>{t('admin.comments.reportedReplies', { count: c.reported_replies_count })}</span>
+						)}
+					</p>
+				)}
 				{c.replies && c.replies.length > 0 && (
 					<ul className="mt-3 space-y-2">{c.replies.map((r) => renderComment(r, true))}</ul>
 				)}
@@ -241,7 +258,7 @@ function AdminComments() {
 				/>
 				<select
 					value={sort}
-					disabled={flaggedOnly}
+					disabled={reportedOnly}
 					aria-label={t('search.sortBy')}
 					onChange={(e) => {
 						setSort(e.target.value as SortValue)
@@ -293,13 +310,13 @@ function AdminComments() {
 				<label className="flex cursor-pointer items-center gap-2 text-[var(--wc-text)]">
 					<input
 						type="checkbox"
-						checked={flaggedOnly}
+						checked={reportedOnly}
 						onChange={(e) => {
-							setFlaggedOnly(e.target.checked)
+							setReportedOnly(e.target.checked)
 							setPage(1)
 						}}
 					/>
-					{t('admin.comments.flaggedOnly')}
+					{t('admin.comments.reportedOnly')}
 				</label>
 			</div>
 
