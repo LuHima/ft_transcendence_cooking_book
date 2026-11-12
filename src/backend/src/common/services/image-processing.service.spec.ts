@@ -65,9 +65,9 @@ describe('ImageProcessingService', () => {
 
   it('should throw BadRequestException on corrupt image buffer', async () => {
     const corruptBuffer = Buffer.from('not an image at all');
-    await expect(service.processAvatarBuffer(corruptBuffer)).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(
+      service.processAvatarBuffer(corruptBuffer, 1),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('should process avatar file with buffer attached', async () => {

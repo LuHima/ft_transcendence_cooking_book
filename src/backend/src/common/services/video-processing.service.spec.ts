@@ -102,6 +102,8 @@ describe('VideoProcessingService', () => {
         "scale='if(gte(iw,ih),min(1920,iw),min(1080,iw))':'if(gte(iw,ih),min(1080,ih),min(1920,ih))':force_original_aspect_ratio=decrease:force_divisible_by=2",
         '-c:v',
         'libx264',
+        '-pix_fmt',
+        'yuv420p',
         '-crf',
         '27',
         '-preset',
