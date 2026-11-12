@@ -59,6 +59,7 @@ import {
 } from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
+import { ImageProcessingService } from '../common/services/image-processing.service';
 import * as fs from 'fs';
 import { createHttpException, errors } from 'src/common/config/error.config';
 
@@ -70,6 +71,7 @@ export class RecipeService {
     private readonly productionConfig: ProductionConfig,
     private readonly notificationEmit: NotificationEmit,
     private readonly recipeProjection: RecipeProjection,
+    private readonly imageProcessingService: ImageProcessingService,
   ) {}
 
   private readonly logger = new Logger(RecipeService.name);
@@ -2161,11 +2163,13 @@ export class RecipeService {
       // Development only
       throw new NotFoundException('UserId not the author of the recipe');
 
+    const { filename } =
+      await this.imageProcessingService.processRecipeImageFile(file);
+
     if (recipe.cover_image_url) {
       await this.safeUnlink(recipe.cover_image_url);
     }
 
-    const filename = file.filename || file.originalname;
     const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update cover_image_url on recipe
@@ -2219,11 +2223,13 @@ export class RecipeService {
       throw new NotFoundException('Recipe step not found');
     }
 
+    const { filename } =
+      await this.imageProcessingService.processRecipeImageFile(file);
+
     if (step.image_url) {
       await this.safeUnlink(step.image_url);
     }
 
-    const filename = file.filename || file.originalname;
     const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update image_url on step
@@ -2281,12 +2287,17 @@ export class RecipeService {
       );
     }
 
+    const processedFiles = await Promise.all(
+      files.map((file) =>
+        this.imageProcessingService.processRecipeImageFile(file),
+      ),
+    );
+
     // Persist each gallery media item with sequential ordering
     const createdMedia: any[] = [];
     const startingOrder = existingMedia.length;
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const filename = file.filename || file.originalname;
+    for (let i = 0; i < processedFiles.length; i++) {
+      const { filename } = processedFiles[i];
       const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
       const media = await this.prisma.recipeMedia.create({
         data: {

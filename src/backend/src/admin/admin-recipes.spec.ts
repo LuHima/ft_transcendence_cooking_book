@@ -9,6 +9,7 @@ import {
 import { AdminRecipesController } from './admin-recipes.controller';
 import { AdminRecipeQueryDto, AdminRecipeStatus } from './dto/admin-recipe-query.dto';
 import { RecipeService } from '../recipe/recipe.service';
+import { ImageProcessingService } from '../common/services/image-processing.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
@@ -98,6 +99,10 @@ describe('AdminRecipesController & RecipeService.getAdminRecipes', () => {
         { provide: ProductionConfig, useValue: mockProductionConfig },
         { provide: NotificationEmit, useValue: mockNotificationEmit },
         { provide: JwtService, useValue: mockJwtService },
+        {
+          provide: ImageProcessingService,
+          useValue: { processRecipeImageFile: jest.fn() },
+        },
       ],
     }).compile();
 

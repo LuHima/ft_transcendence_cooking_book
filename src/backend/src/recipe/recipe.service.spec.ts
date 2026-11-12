@@ -35,6 +35,7 @@ import { RecipeService } from './recipe.service';
 import { RecipeProjection } from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
 import { RECIPE_UPLOADS_DIR } from '../common/config/upload-paths';
+import { ImageProcessingService } from '../common/services/image-processing.service';
 import { NotificationEmit } from '../notifications/notification-emit';
 import * as fs from 'fs';
 import { join } from 'path';
@@ -159,6 +160,19 @@ describe('RecipeService', () => {
     tag_ids: [1],
   };
 
+  const mockImageProcessingService = {
+    processRecipeImageFile: jest.fn(async (file: any) => {
+      const base = (file?.filename || file?.originalname || 'recipe.webp').replace(
+        /\.[^/.]+$/,
+        '.webp',
+      );
+      return {
+        filename: base,
+        relativePath: `/uploads/recipes/${base}`,
+      };
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -168,6 +182,10 @@ describe('RecipeService', () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ProductionConfig, useValue: mockProductionConfig },
         { provide: NotificationEmit, useValue: mockNotificationEmit },
+        {
+          provide: ImageProcessingService,
+          useValue: mockImageProcessingService,
+        },
       ],
     }).compile();
 
@@ -2859,17 +2877,20 @@ describe('RecipeService', () => {
 
       mockPrisma.recipe.update.mockResolvedValueOnce({
         id: 1,
-        cover_image_url: '/api/media/recipes/1/recipe-1-cover.jpg',
+        cover_image_url: '/api/media/recipes/1/recipe-1-cover.webp',
       });
 
       const result = await service.uploadCoverImage(1, 1, mockFile);
 
+      expect(
+        mockImageProcessingService.processRecipeImageFile,
+      ).toHaveBeenCalledWith(mockFile);
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { cover_image_url: '/api/media/recipes/1/recipe-1-cover.jpg' },
+        data: { cover_image_url: '/api/media/recipes/1/recipe-1-cover.webp' },
       });
       expect(result).toEqual({
-        cover_image_url: '/api/media/recipes/1/recipe-1-cover.jpg',
+        cover_image_url: '/api/media/recipes/1/recipe-1-cover.webp',
       });
     });
 
@@ -2956,18 +2977,21 @@ describe('RecipeService', () => {
       mockPrisma.recipeStep.update.mockResolvedValueOnce({
         id: 10,
         step_number: 1,
-        image_url: '/api/media/recipes/1/recipe-1-step-1.jpg',
+        image_url: '/api/media/recipes/1/recipe-1-step-1.webp',
       });
 
       const result = await service.uploadStepImage(1, 1, 1, mockFile);
 
+      expect(
+        mockImageProcessingService.processRecipeImageFile,
+      ).toHaveBeenCalledWith(mockFile);
       expect(mockPrisma.recipeStep.update).toHaveBeenCalledWith({
         where: { id: 10 },
-        data: { image_url: '/api/media/recipes/1/recipe-1-step-1.jpg' },
+        data: { image_url: '/api/media/recipes/1/recipe-1-step-1.webp' },
       });
       expect(result).toEqual({
         step_number: 1,
-        image_url: '/api/media/recipes/1/recipe-1-step-1.jpg',
+        image_url: '/api/media/recipes/1/recipe-1-step-1.webp',
       });
     });
 
@@ -3090,11 +3114,14 @@ describe('RecipeService', () => {
 
       const result = await service.uploadGalleryMedia(1, 1, mockFiles);
 
+      expect(
+        mockImageProcessingService.processRecipeImageFile,
+      ).toHaveBeenCalledTimes(2);
       expect(mockPrisma.recipeMedia.create).toHaveBeenCalledTimes(2);
       expect(mockPrisma.recipeMedia.create).toHaveBeenNthCalledWith(1, {
         data: expect.objectContaining({
           recipe_id: 1,
-          url: '/api/media/recipes/1/recipe-1-gallery-1.jpg',
+          url: '/api/media/recipes/1/recipe-1-gallery-1.webp',
           media_type: 'image',
           order: 1,
         }),
@@ -3102,7 +3129,7 @@ describe('RecipeService', () => {
       expect(mockPrisma.recipeMedia.create).toHaveBeenNthCalledWith(2, {
         data: expect.objectContaining({
           recipe_id: 1,
-          url: '/api/media/recipes/1/recipe-1-gallery-2.jpg',
+          url: '/api/media/recipes/1/recipe-1-gallery-2.webp',
           media_type: 'image',
           order: 2,
         }),
