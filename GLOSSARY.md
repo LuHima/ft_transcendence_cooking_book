@@ -36,6 +36,14 @@ _Avoid_: Photo album, media dump
 A single optional demonstration video attached to a recipe showcasing its execution.
 _Avoid_: Clip, media, video tutorial, stream
 
+**WebP Transcoding**:
+The automated server-side transformation using Sharp that strips camera EXIF metadata, applies aspect-ratio-preserving bounding-box downscaling (max width 1920px, max height 1080px), and encodes recipe images (Cover Image, Recipe Step illustrations, Recipe Gallery) to WebP at quality 80 upon upload.
+_Avoid_: Image conversion, photo shrink, raw upload
+
+**Synchronous Video Compression**:
+The in-request transcoding process using FFmpeg that compresses and standardizes uploaded tutorial videos into MP4 container format (H.264 video, AAC audio, CRF 27, preset fast, max 1080p, and FastStart metadata optimization) before saving the media asset and returning the media URL to the client.
+_Avoid_: Video convert, clip render, background transcode, raw video storage
+
 **Preservation Notes**:
 Guidance on how to store and preserve the prepared dish (shelf life in fridge/freezer, container advice).
 _Avoid_: Storage, shelf life

@@ -1,8 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
-import { ReportReason, ReportStatus, ReportSubject } from '@prisma/client';
+import {
+  ReportAction,
+  ReportReason,
+  ReportStatus,
+  ReportSubject,
+  Role,
+} from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 
 describe('ReportsController', () => {
   let controller: ReportsController;
@@ -117,6 +124,62 @@ describe('ReportsController', () => {
         caller,
       );
       expect(result).toEqual(expectedResult);
+    });
+
+    it('delegates composite actions [warn, delete_content] to reportsService.updateReport', async () => {
+      const dto = {
+        actions: [ReportAction.warn, ReportAction.delete_content],
+        resolution_description: 'Warning for inappropriate content',
+      };
+      const caller = { id: 2, role: Role.moderator };
+      const expectedResult = {
+        id: 1,
+        reporter_id: 5,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        actions: [ReportAction.warn, ReportAction.delete_content],
+        status: ReportStatus.action_taken,
+        previous_bans_count: 0,
+        previous_warnings_count: 1,
+      };
+      mockReportsService.updateReport.mockResolvedValueOnce(expectedResult);
+
+      const result = await controller.updateReport(1, dto, caller as any);
+
+      expect(mockReportsService.updateReport).toHaveBeenCalledWith(
+        1,
+        dto,
+        caller,
+      );
+      expect(result).toEqual(expectedResult);
+    });
+
+    it('propagates 400 Bad Request when reportsService rejects invalid action combination', async () => {
+      const dto = {
+        actions: [ReportAction.warn, ReportAction.ban],
+      };
+      const caller = { id: 2, role: Role.moderator };
+      mockReportsService.updateReport.mockRejectedValueOnce(
+        new BadRequestException("Actions 'warn' and 'ban' are mutually exclusive"),
+      );
+
+      await expect(
+        controller.updateReport(1, dto, caller as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('propagates 403 Forbidden when moderator attempts to warn an administrator', async () => {
+      const dto = {
+        actions: [ReportAction.warn],
+      };
+      const caller = { id: 2, role: Role.moderator };
+      mockReportsService.updateReport.mockRejectedValueOnce(
+        new ForbiddenException('Moderators cannot moderate or warn administrators'),
+      );
+
+      await expect(
+        controller.updateReport(1, dto, caller as any),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

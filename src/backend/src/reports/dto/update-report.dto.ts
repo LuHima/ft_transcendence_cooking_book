@@ -8,10 +8,65 @@ import {
   IsString,
   MaxLength,
   Min,
+  Validate,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { ReportAction, ReportReason, ReportStatus } from '@prisma/client';
 
 export { ReportAction };
+
+@ValidatorConstraint({ name: 'ValidReportActions', async: false })
+export class ValidReportActionsConstraint
+  implements ValidatorConstraintInterface
+{
+  validate(actions: any, args: ValidationArguments) {
+    if (actions === undefined || actions === null) return true;
+    if (!Array.isArray(actions)) return false;
+
+    if (actions.includes(ReportAction.dismiss) && actions.length > 1) {
+      return false;
+    }
+
+    if (
+      actions.includes(ReportAction.warn) &&
+      actions.includes(ReportAction.ban)
+    ) {
+      return false;
+    }
+
+    const obj = args.object as UpdateReportDto;
+    if (obj.status === ReportStatus.action_taken && actions.length === 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    const actions = args.value;
+    if (Array.isArray(actions)) {
+      if (actions.includes(ReportAction.dismiss) && actions.length > 1) {
+        return "Action 'dismiss' must stand alone and cannot be combined with other actions";
+      }
+      if (
+        actions.includes(ReportAction.warn) &&
+        actions.includes(ReportAction.ban)
+      ) {
+        return "Actions 'warn' and 'ban' are mutually exclusive and cannot be combined";
+      }
+    }
+    const obj = args.object as UpdateReportDto;
+    if (
+      obj.status === ReportStatus.action_taken &&
+      (!actions || actions.length === 0)
+    ) {
+      return "Status 'action_taken' requires at least one resolution action";
+    }
+    return 'Invalid resolution actions combination';
+  }
+}
 
 /**
  * Payload for updating moderation report status, executing composite sanctions,
@@ -47,6 +102,7 @@ export class UpdateReportDto {
   @IsOptional()
   @IsArray()
   @IsEnum(ReportAction, { each: true })
+  @Validate(ValidReportActionsConstraint)
   actions?: ReportAction[];
 
   /**

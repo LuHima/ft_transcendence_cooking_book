@@ -447,6 +447,29 @@ export class ReportsService {
       }
     }
 
+    // Action mutual exclusivity validation
+    if (actions.includes(ReportAction.dismiss) && actions.length > 1) {
+      throw createHttpException(
+        errors.common.badRequest,
+        "Action 'dismiss' must stand alone and cannot be combined with other actions",
+      );
+    }
+    if (
+      actions.includes(ReportAction.warn) &&
+      actions.includes(ReportAction.ban)
+    ) {
+      throw createHttpException(
+        errors.common.badRequest,
+        "Actions 'warn' and 'ban' are mutually exclusive and cannot be combined",
+      );
+    }
+    if (targetStatus === ReportStatus.action_taken && actions.length === 0) {
+      throw createHttpException(
+        errors.common.badRequest,
+        "Status 'action_taken' requires at least one resolution action",
+      );
+    }
+
     const effectiveReason = dto.resolution_reason ?? report.reason;
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -455,7 +478,8 @@ export class ReportsService {
       // Handle actions that require target author / content resolution
       if (
         actions.includes(ReportAction.delete_content) ||
-        actions.includes(ReportAction.ban)
+        actions.includes(ReportAction.ban) ||
+        actions.includes(ReportAction.warn)
       ) {
         let targetAuthorRole: Role | undefined;
 
@@ -491,8 +515,14 @@ export class ReportsService {
           targetAuthorRole = user.role;
         }
 
-        // Role hierarchy safeguard: Moderator cannot moderate or ban Administrator
+        // Role hierarchy safeguard: Moderator cannot moderate, delete content, ban, or warn Administrator
         if (callerRole === Role.moderator && targetAuthorRole === Role.admin) {
+          if (actions.includes(ReportAction.warn)) {
+            throw createHttpException(
+              errors.common.forbidden,
+              'Moderators cannot moderate or warn administrators',
+            );
+          }
           if (actions.includes(ReportAction.delete_content)) {
             throw createHttpException(
               errors.common.forbidden,
@@ -503,6 +533,27 @@ export class ReportsService {
             throw createHttpException(
               errors.moderation.cannotBanAdmin,
               'Moderators cannot moderate or ban administrator',
+            );
+          }
+        }
+
+        // Warning Action
+        if (actions.includes(ReportAction.warn)) {
+          if (resolvedTargetUserId) {
+            await this.banHistoryService.recordSanction(
+              {
+                userId: resolvedTargetUserId,
+                bannedById: callerId ?? 0,
+                reason: effectiveReason,
+                action: ReportAction.warn,
+                description: dto.resolution_description?.trim() || null,
+                reportId: report.id,
+              },
+              tx,
+            );
+
+            this.logger.log(
+              `Audit: Report #${reportId} resolved with warning for user #${resolvedTargetUserId} by staff #${callerId ?? 0}.`,
             );
           }
         }

@@ -563,6 +563,11 @@ describe('ReportsService', () => {
         status: ReportStatus.pending,
         reason: ReportReason.harassment_bullying,
       });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 20,
+        user: { id: 20, role: Role.user },
+      });
       mockPrisma.report.update.mockResolvedValueOnce({
         id: 1,
         status: ReportStatus.action_taken,
@@ -575,6 +580,17 @@ describe('ReportsService', () => {
           resolution_description: 'Please keep it civil.',
         },
         { id: 7, role: Role.moderator },
+      );
+
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 20,
+          bannedById: 7,
+          action: ReportAction.warn,
+          description: 'Please keep it civil.',
+          reportId: 1,
+        }),
+        mockPrisma,
       );
 
       expect(mockNotificationEmit.notification).toHaveBeenCalledWith(
@@ -613,6 +629,11 @@ describe('ReportsService', () => {
         status: ReportStatus.action_taken,
         reason: ReportReason.harassment_bullying,
       });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 20,
+        user: { id: 20, role: Role.user },
+      });
       mockPrisma.report.update.mockResolvedValueOnce({
         id: 1,
         status: ReportStatus.action_taken,
@@ -638,6 +659,11 @@ describe('ReportsService', () => {
         target_id: 10,
         status: ReportStatus.pending,
         reason: ReportReason.harassment_bullying,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 20,
+        user: { id: 20, role: Role.user },
       });
       mockPrisma.report.update.mockResolvedValueOnce({
         id: 1,
@@ -962,6 +988,223 @@ describe('ReportsService', () => {
           caller,
         ),
       ).rejects.toThrow('Database disk full');
+    });
+
+    it("rejects contradictory actions ['warn', 'ban'] with 400 Bad Request", async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          actions: [ReportAction.warn, ReportAction.ban],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    });
+
+    it("rejects combining 'dismiss' with other actions with 400 Bad Request", async () => {
+      mockPrisma.report.findUnique.mockResolvedValue({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          actions: [ReportAction.dismiss, ReportAction.warn],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          actions: [ReportAction.dismiss, ReportAction.delete_content],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    });
+
+    it("rejects empty actions array when status is action_taken with 400 Bad Request", async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          status: ReportStatus.action_taken,
+          actions: [],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    });
+
+    it('throws ForbiddenException when moderator attempts to warn an administrator', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 99,
+        user: { id: 99, role: Role.admin },
+      });
+
+      const caller = { id: 2, role: Role.moderator };
+      await expect(
+        service.updateReport(
+          1,
+          {
+            actions: [ReportAction.warn],
+            resolution_description: 'Do not do this again',
+          },
+          caller,
+        ),
+      ).rejects.toThrow('Moderators cannot moderate or warn administrators');
+
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 99,
+        user: { id: 99, role: Role.admin },
+      });
+
+      await expect(
+        service.updateReport(
+          1,
+          {
+            actions: [ReportAction.warn],
+            resolution_description: 'Do not do this again',
+          },
+          caller,
+        ),
+      ).rejects.toMatchObject({ status: 403 });
+    });
+
+    it('allows administrator to warn another administrator', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 99,
+        user: { id: 99, role: Role.admin },
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
+      });
+
+      const caller = { id: 1, role: Role.admin };
+      const result = await service.updateReport(
+        1,
+        {
+          actions: [ReportAction.warn],
+          resolution_description: 'Internal admin reminder',
+        },
+        caller,
+      );
+
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 99,
+          bannedById: 1,
+          action: ReportAction.warn,
+        }),
+        mockPrisma,
+      );
+      expect(mockPrisma.report.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            actions: [ReportAction.warn],
+          }),
+        }),
+      );
+      expect(result.actions).toEqual([ReportAction.warn]);
+    });
+
+    it('executes composite action [warn, delete_content] atomically and persists actions column', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 42,
+        user: { id: 42, role: Role.user },
+      });
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn, ReportAction.delete_content],
+      });
+
+      const caller = { id: 2, role: Role.moderator };
+      const result = await service.updateReport(
+        1,
+        {
+          actions: [ReportAction.warn, ReportAction.delete_content],
+          resolution_description: 'Spam recipe removed and warning logged',
+        },
+        caller,
+      );
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { is_active: false },
+      });
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 42,
+          bannedById: 2,
+          action: ReportAction.warn,
+          description: 'Spam recipe removed and warning logged',
+        }),
+        mockPrisma,
+      );
+      expect(mockPrisma.report.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            actions: [ReportAction.warn, ReportAction.delete_content],
+          }),
+        }),
+      );
+      expect(result.actions).toEqual([
+        ReportAction.warn,
+        ReportAction.delete_content,
+      ]);
     });
   });
 });
