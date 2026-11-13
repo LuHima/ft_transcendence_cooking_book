@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BanHistoryService } from './ban-history.service';
 import { PrismaService } from 'prisma/prisma.service';
-import { ReportReason } from '@prisma/client';
+import { ReportAction, ReportReason } from '@prisma/client';
 
 describe('BanHistoryService', () => {
   let service: BanHistoryService;
@@ -31,7 +31,7 @@ describe('BanHistoryService', () => {
     jest.clearAllMocks();
   });
 
-  describe('recordBan', () => {
+  describe('recordSanction', () => {
     it('creates an immutable ban history record for temporary ban', async () => {
       const expiresAt = new Date(Date.now() + 30 * 86400000);
       const expectedRecord = {
@@ -39,6 +39,7 @@ describe('BanHistoryService', () => {
         user_id: 10,
         banned_by_id: 1,
         report_id: 5,
+        action: ReportAction.ban,
         reason: ReportReason.harassment_bullying,
         description: 'Repeated offensive comments',
         duration_days: 30,
@@ -52,7 +53,7 @@ describe('BanHistoryService', () => {
 
       mockPrisma.banHistory.create.mockResolvedValueOnce(expectedRecord);
 
-      const result = await service.recordBan({
+      const result = await service.recordSanction({
         userId: 10,
         bannedById: 1,
         reason: ReportReason.harassment_bullying,
@@ -68,6 +69,7 @@ describe('BanHistoryService', () => {
           user_id: 10,
           banned_by_id: 1,
           report_id: 5,
+          action: ReportAction.ban,
           reason: ReportReason.harassment_bullying,
           description: 'Repeated offensive comments',
           duration_days: 30,
@@ -82,11 +84,12 @@ describe('BanHistoryService', () => {
       mockPrisma.banHistory.create.mockResolvedValueOnce({
         id: 'ban-uuid-2',
         user_id: 10,
+        action: ReportAction.ban,
         is_permanent: true,
         duration_days: null,
       });
 
-      await service.recordBan({
+      await service.recordSanction({
         userId: 10,
         bannedById: 1,
         reason: ReportReason.violence_threats,
@@ -96,11 +99,57 @@ describe('BanHistoryService', () => {
 
       expect(mockPrisma.banHistory.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
+          action: ReportAction.ban,
           duration_days: null,
           is_permanent: true,
           expires_at: null,
         }),
       });
+    });
+
+    it('records a warning sanction with action: warn, duration_days: null, is_permanent: false, expires_at: null', async () => {
+      const expectedRecord = {
+        id: 'warn-uuid-1',
+        user_id: 10,
+        banned_by_id: 2,
+        report_id: 8,
+        action: ReportAction.warn,
+        reason: ReportReason.harassment_bullying,
+        description: 'First warning for disrespectful language',
+        duration_days: null,
+        is_permanent: false,
+        banned_at: new Date(),
+        expires_at: null,
+      };
+
+      mockPrisma.banHistory.create.mockResolvedValueOnce(expectedRecord);
+
+      const result = await service.recordSanction({
+        userId: 10,
+        bannedById: 2,
+        reason: ReportReason.harassment_bullying,
+        action: ReportAction.warn,
+        description: 'First warning for disrespectful language',
+        reportId: 8,
+        durationDays: 14,
+        isPermanent: true,
+        expiresAt: new Date(),
+      });
+
+      expect(mockPrisma.banHistory.create).toHaveBeenCalledWith({
+        data: {
+          user_id: 10,
+          banned_by_id: 2,
+          report_id: 8,
+          action: ReportAction.warn,
+          reason: ReportReason.harassment_bullying,
+          description: 'First warning for disrespectful language',
+          duration_days: null,
+          is_permanent: false,
+          expires_at: null,
+        },
+      });
+      expect(result).toEqual(expectedRecord);
     });
   });
 
@@ -109,6 +158,7 @@ describe('BanHistoryService', () => {
       const activeBan = {
         id: 'ban-uuid-1',
         user_id: 10,
+        action: ReportAction.ban,
         unbanned_at: null,
       };
       const unbannedRecord = {
@@ -124,7 +174,7 @@ describe('BanHistoryService', () => {
       const result = await service.recordUnban(10, 1, 'Appeal approved');
 
       expect(mockPrisma.banHistory.findFirst).toHaveBeenCalledWith({
-        where: { user_id: 10, unbanned_at: null },
+        where: { user_id: 10, action: ReportAction.ban, unbanned_at: null },
         orderBy: { banned_at: 'desc' },
       });
       expect(mockPrisma.banHistory.update).toHaveBeenCalledWith({
@@ -149,27 +199,50 @@ describe('BanHistoryService', () => {
   });
 
   describe('getPreviousBansCount', () => {
-    it('returns historical ban count for a user', async () => {
+    it('returns historical ban count for a user (strictly action: ban)', async () => {
       mockPrisma.banHistory.count.mockResolvedValueOnce(3);
 
       const count = await service.getPreviousBansCount(10);
 
       expect(mockPrisma.banHistory.count).toHaveBeenCalledWith({
-        where: { user_id: 10 },
+        where: { user_id: 10, action: ReportAction.ban },
       });
       expect(count).toBe(3);
     });
   });
 
-  describe('getUserBanHistory', () => {
-    it('returns chronological list of bans ordered desc', async () => {
+  describe('getPreviousWarningsCount', () => {
+    it('returns historical warning count for a user (strictly action: warn)', async () => {
+      mockPrisma.banHistory.count.mockResolvedValueOnce(2);
+
+      const count = await service.getPreviousWarningsCount(10);
+
+      expect(mockPrisma.banHistory.count).toHaveBeenCalledWith({
+        where: { user_id: 10, action: ReportAction.warn },
+      });
+      expect(count).toBe(2);
+    });
+  });
+
+  describe('getUserSanctionsHistory', () => {
+    it('returns chronological list of bans and warnings ordered desc', async () => {
       const historyList = [
-        { id: 'ban-2', user_id: 10, banned_at: new Date('2026-11-04') },
-        { id: 'ban-1', user_id: 10, banned_at: new Date('2026-10-01') },
+        {
+          id: 'ban-2',
+          user_id: 10,
+          action: ReportAction.ban,
+          banned_at: new Date('2026-11-04'),
+        },
+        {
+          id: 'warn-1',
+          user_id: 10,
+          action: ReportAction.warn,
+          banned_at: new Date('2026-10-01'),
+        },
       ];
       mockPrisma.banHistory.findMany.mockResolvedValueOnce(historyList);
 
-      const result = await service.getUserBanHistory(10);
+      const result = await service.getUserSanctionsHistory(10);
 
       expect(mockPrisma.banHistory.findMany).toHaveBeenCalledWith({
         where: { user_id: 10 },
@@ -192,6 +265,21 @@ describe('BanHistoryService', () => {
       expect(service.calculateProgressiveDuration(base, 3)).toBe(56);
       // 5 bans: 7 * 32 = 224 -> capped at 180
       expect(service.calculateProgressiveDuration(base, 5)).toBe(180);
+    });
+  });
+
+  describe('getLatestActiveBan', () => {
+    it('returns latest active ban filtering by action: ban', async () => {
+      const activeBan = { id: 'ban-1', user_id: 10, action: ReportAction.ban };
+      mockPrisma.banHistory.findFirst.mockResolvedValueOnce(activeBan);
+
+      const result = await service.getLatestActiveBan(10);
+
+      expect(mockPrisma.banHistory.findFirst).toHaveBeenCalledWith({
+        where: { user_id: 10, action: ReportAction.ban },
+        orderBy: { banned_at: 'desc' },
+      });
+      expect(result).toEqual(activeBan);
     });
   });
 });

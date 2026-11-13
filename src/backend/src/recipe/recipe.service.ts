@@ -20,6 +20,7 @@ import {
   ReportSubject,
   ReportStatus,
   Prisma,
+  RecipeMedia,
 } from '@prisma/client';
 import { NotificationEmit } from 'src/notifications/notification-emit';
 import {
@@ -58,8 +59,17 @@ import {
   RECIPE_DETAIL_INCLUDE,
 } from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
-import { resolveStoredUploadPath } from '../common/config/upload-paths';
+import {
+  RECIPE_UPLOADS_DIR,
+  resolveStoredUploadPath,
+} from '../common/config/upload-paths';
+import {
+  ImageProcessingService,
+  ProcessedMediaResult,
+} from '../common/services/image-processing.service';
+import { VideoProcessingService } from '../common/services/video-processing.service';
 import * as fs from 'fs';
+import { join } from 'path';
 import { createHttpException, errors } from 'src/common/config/error.config';
 
 @Injectable()
@@ -70,6 +80,8 @@ export class RecipeService {
     private readonly productionConfig: ProductionConfig,
     private readonly notificationEmit: NotificationEmit,
     private readonly recipeProjection: RecipeProjection,
+    private readonly imageProcessingService: ImageProcessingService,
+    private readonly videoProcessingService: VideoProcessingService,
   ) {}
 
   private readonly logger = new Logger(RecipeService.name);
@@ -2133,6 +2145,71 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
+  private async assertRecipeAuthor(recipeId: number, userId: number) {
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+    });
+
+    // In production, both missing recipe and non-author return 404 (security through obscurity)
+    if (
+      !recipe ||
+      (recipe.user_id !== userId && this.productionConfig.isProduction())
+    ) {
+      throw new NotFoundException('Recipe not found');
+    }
+    if (recipe.user_id !== userId) {
+      throw new NotFoundException('UserId not the author of the recipe');
+    }
+
+    return recipe;
+  }
+
+  private async cleanupUploadedFiles(
+    files: Array<Express.Multer.File | undefined>,
+  ): Promise<void> {
+    await Promise.all(
+      files
+        .filter((f): f is Express.Multer.File => Boolean(f?.path))
+        .map((f) => fs.promises.unlink(f.path).catch(() => {})),
+    );
+  }
+
+  private async cleanupProcessedOutputs(
+    outputs: ProcessedMediaResult[],
+  ): Promise<void> {
+    await Promise.all(
+      outputs.map((item) =>
+        fs.promises
+          .unlink(join(RECIPE_UPLOADS_DIR, item.filename))
+          .catch(() => {}),
+      ),
+    );
+  }
+
+  private async replaceSingleRecipeMedia(
+    file: Express.Multer.File,
+    processFn: () => Promise<ProcessedMediaResult>,
+    persistFn: (fileUrl: string) => Promise<void>,
+    previousUrl?: string | null,
+  ): Promise<string> {
+    let processedOutput: ProcessedMediaResult | null = null;
+    try {
+      processedOutput = await processFn();
+      const fileUrl = processedOutput.relativePath;
+      await persistFn(fileUrl);
+      if (previousUrl) {
+        await this.safeUnlink(previousUrl);
+      }
+      return fileUrl;
+    } catch (err) {
+      if (processedOutput) {
+        await this.cleanupProcessedOutputs([processedOutput]);
+      }
+      await this.cleanupUploadedFiles([file]);
+      throw err;
+    }
+  }
+
   /*
   POST /api/recipes/:id/cover
   */
@@ -2145,34 +2222,25 @@ export class RecipeService {
       throw new BadRequestException('File is required');
     }
 
-    // Fetch recipe from database
-    const recipe = await this.prisma.recipe.findUnique({
-      where: { id: recipeId },
-    });
-
-    // Guard: Verify existence and ownership (only author can post images)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
-      throw new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId not the author of the recipe');
-
-    if (recipe.cover_image_url) {
-      await this.safeUnlink(recipe.cover_image_url);
+    let recipe;
+    try {
+      recipe = await this.assertRecipeAuthor(recipeId, userId);
+    } catch (err) {
+      await this.cleanupUploadedFiles([file]);
+      throw err;
     }
 
-    const filename = file.filename || file.originalname;
-    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
-
-    // Update cover_image_url on recipe
-    await this.prisma.recipe.update({
-      where: { id: recipeId },
-      data: { cover_image_url: fileUrl },
-    });
+    const fileUrl = await this.replaceSingleRecipeMedia(
+      file,
+      () => this.imageProcessingService.processRecipeImageFile(file, recipeId),
+      async (url) => {
+        await this.prisma.recipe.update({
+          where: { id: recipeId },
+          data: { cover_image_url: url },
+        });
+      },
+      recipe.cover_image_url,
+    );
 
     return { cover_image_url: fileUrl };
   }
@@ -2192,45 +2260,34 @@ export class RecipeService {
       throw new BadRequestException('File is required');
     }
 
-    // Fetch recipe from database
-    const recipe = await this.prisma.recipe.findUnique({
-      where: { id: recipeId },
-    });
+    let step;
+    try {
+      await this.assertRecipeAuthor(recipeId, userId);
+      step = await this.prisma.recipeStep.findFirst({
+        where: {
+          recipe_id: recipeId,
+          step_number: stepNumber,
+        },
+      });
+      if (!step) {
+        throw new NotFoundException('Recipe step not found');
+      }
+    } catch (err) {
+      await this.cleanupUploadedFiles([file]);
+      throw err;
+    }
 
-    // Guard: Verify existence and ownership (only author can post images)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
-      throw new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId not the author of the recipe');
-
-    // Guard: Verify recipe step exists
-    const step = await this.prisma.recipeStep.findFirst({
-      where: {
-        recipe_id: recipeId,
-        step_number: stepNumber,
+    const fileUrl = await this.replaceSingleRecipeMedia(
+      file,
+      () => this.imageProcessingService.processRecipeImageFile(file, recipeId),
+      async (url) => {
+        await this.prisma.recipeStep.update({
+          where: { id: step.id },
+          data: { image_url: url },
+        });
       },
-    });
-    if (!step) {
-      throw new NotFoundException('Recipe step not found');
-    }
-
-    if (step.image_url) {
-      await this.safeUnlink(step.image_url);
-    }
-
-    const filename = file.filename || file.originalname;
-    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
-
-    // Update image_url on step
-    await this.prisma.recipeStep.update({
-      where: { id: step.id },
-      data: { image_url: fileUrl },
-    });
+      step.image_url,
+    );
 
     return { step_number: stepNumber, image_url: fileUrl };
   }
@@ -2245,61 +2302,86 @@ export class RecipeService {
     userId: number,
     files: Express.Multer.File[],
   ) {
-    // Fetch recipe from database
-    const recipe = await this.prisma.recipe.findUnique({
-      where: { id: recipeId },
-    });
+    const processedFiles: ProcessedMediaResult[] = [];
+    try {
+      // Guard: Validate that at least one file is provided before hitting the DB
+      if (!files || files.length === 0) {
+        throw new BadRequestException('At least one file must be provided');
+      }
 
-    // Guard: Verify existence and ownership (only author can post images)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
-      throw new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId not the author of the recipe');
+      await this.assertRecipeAuthor(recipeId, userId);
 
-    // Guard: Validate that at least one file is provided
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one file must be provided');
-    }
-
-    // Guard: Fetch existing gallery media and ensure limit of 3 is respected
-    const existingMedia = await this.prisma.recipeMedia.findMany({
-      where: {
-        recipe_id: recipeId,
-        media_type: MediaType.image,
-      },
-      orderBy: { order: 'asc' },
-    });
-
-    if (existingMedia.length + files.length > 3) {
-      throw new BadRequestException(
-        `Cannot upload more than 3 gallery images per recipe. Already has ${existingMedia.length}.`,
-      );
-    }
-
-    // Persist each gallery media item with sequential ordering
-    const createdMedia: any[] = [];
-    const startingOrder = existingMedia.length;
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const filename = file.filename || file.originalname;
-      const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
-      const media = await this.prisma.recipeMedia.create({
-        data: {
+      // Fast-fail gallery limit check before expensive image transcoding
+      const existingMedia = await this.prisma.recipeMedia.findMany({
+        where: {
           recipe_id: recipeId,
-          url: fileUrl,
           media_type: MediaType.image,
-          order: startingOrder + i,
         },
+        orderBy: { order: 'asc' },
       });
-      createdMedia.push(media);
-    }
 
-    return createdMedia;
+      if (existingMedia.length + files.length > 3) {
+        throw new BadRequestException(
+          `Cannot upload more than 3 gallery images per recipe. Already has ${existingMedia.length}.`,
+        );
+      }
+
+      const settled = await Promise.allSettled(
+        files.map((file) =>
+          this.imageProcessingService.processRecipeImageFile(file, recipeId),
+        ),
+      );
+
+      let firstRejection: unknown = null;
+      for (const result of settled) {
+        if (result.status === 'fulfilled') {
+          processedFiles.push(result.value);
+        } else if (firstRejection === null) {
+          firstRejection = result.reason;
+        }
+      }
+      if (firstRejection !== null) {
+        throw firstRejection;
+      }
+
+      // Re-verify gallery limit & persist atomically inside $transaction to prevent TOCTOU races
+      const createdMedia = await this.prisma.$transaction(async (tx) => {
+        const currentMedia = await tx.recipeMedia.findMany({
+          where: {
+            recipe_id: recipeId,
+            media_type: MediaType.image,
+          },
+          orderBy: { order: 'asc' },
+        });
+        if (currentMedia.length + processedFiles.length > 3) {
+          throw new BadRequestException(
+            `Cannot upload more than 3 gallery images per recipe. Already has ${currentMedia.length}.`,
+          );
+        }
+
+        const startingOrder = currentMedia.length;
+        const items: RecipeMedia[] = [];
+        for (let i = 0; i < processedFiles.length; i++) {
+          const { relativePath: fileUrl } = processedFiles[i];
+          const media = await tx.recipeMedia.create({
+            data: {
+              recipe_id: recipeId,
+              url: fileUrl,
+              media_type: MediaType.image,
+              order: startingOrder + i,
+            },
+          });
+          items.push(media);
+        }
+        return items;
+      });
+
+      return createdMedia;
+    } catch (err) {
+      await this.cleanupProcessedOutputs(processedFiles);
+      await this.cleanupUploadedFiles(files ?? []);
+      throw err;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -2316,34 +2398,25 @@ export class RecipeService {
       throw new BadRequestException('File is required');
     }
 
-    // Fetch recipe from database
-    const recipe = await this.prisma.recipe.findUnique({
-      where: { id: recipeId },
-    });
-
-    // Guard: Verify existence and ownership (only author can post the video)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
-      throw new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId not the author of the recipe');
-
-    if (recipe.video_url) {
-      await this.safeUnlink(recipe.video_url);
+    let recipe;
+    try {
+      recipe = await this.assertRecipeAuthor(recipeId, userId);
+    } catch (err) {
+      await this.cleanupUploadedFiles([file]);
+      throw err;
     }
 
-    const filename = file.filename || file.originalname;
-    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
-
-    // Update video_url on recipe
-    await this.prisma.recipe.update({
-      where: { id: recipeId },
-      data: { video_url: fileUrl },
-    });
+    const fileUrl = await this.replaceSingleRecipeMedia(
+      file,
+      () => this.videoProcessingService.processVideoFile(file, recipeId),
+      async (url) => {
+        await this.prisma.recipe.update({
+          where: { id: recipeId },
+          data: { video_url: url },
+        });
+      },
+      recipe.video_url,
+    );
 
     return { video_url: fileUrl };
   }

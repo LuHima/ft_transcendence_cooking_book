@@ -781,9 +781,7 @@ describe('CatalogService', () => {
       expect(prisma.ingredient.findUnique).toHaveBeenCalledWith({
         where: { id: 12 },
         include: {
-          translations: {
-            where: { locale: { in: ['it', 'en'] } },
-          },
+          translations: true,
         },
       });
       expect(result).toEqual({
@@ -810,6 +808,44 @@ describe('CatalogService', () => {
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
         name: 'Bell pepper',
+        resolved_lang: 'en',
+      });
+    });
+
+    it('falls back to first available language when requested and English translations are missing (ADR 0031)', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: [{ locale: 'it', name: 'Peperone' }],
+      });
+
+      const result = await service.getIngredientById(12, { lang: 'fr' });
+
+      expect(result).toEqual({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        name: 'Peperone',
+        resolved_lang: 'it',
+      });
+    });
+
+    it('falls back to slug when translations are empty', async () => {
+      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        translations: [],
+      });
+
+      const result = await service.getIngredientById(12, { lang: 'fr' });
+
+      expect(result).toEqual({
+        id: 12,
+        slug: 'bell_pepper',
+        category: IngredientCategory.produce,
+        name: 'bell_pepper',
         resolved_lang: 'en',
       });
     });
@@ -841,9 +877,7 @@ describe('CatalogService', () => {
       expect(prisma.tag.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
         include: {
-          translations: {
-            where: { locale: { in: ['it', 'en'] } },
-          },
+          translations: true,
         },
       });
       expect(result).toEqual({
@@ -867,6 +901,40 @@ describe('CatalogService', () => {
         id: 1,
         slug: 'gluten_free',
         name: 'Gluten free',
+        resolved_lang: 'en',
+      });
+    });
+
+    it('falls back to first available language when requested and English translations are missing (ADR 0031)', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        slug: 'gluten_free',
+        translations: [{ locale: 'it', name: 'Senza glutine' }],
+      });
+
+      const result = await service.getTagById(1, { lang: 'fr' });
+
+      expect(result).toEqual({
+        id: 1,
+        slug: 'gluten_free',
+        name: 'Senza glutine',
+        resolved_lang: 'it',
+      });
+    });
+
+    it('falls back to slug when translations are empty', async () => {
+      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        slug: 'gluten_free',
+        translations: [],
+      });
+
+      const result = await service.getTagById(1, { lang: 'fr' });
+
+      expect(result).toEqual({
+        id: 1,
+        slug: 'gluten_free',
+        name: 'gluten_free',
         resolved_lang: 'en',
       });
     });

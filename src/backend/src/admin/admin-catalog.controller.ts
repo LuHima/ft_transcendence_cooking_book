@@ -46,7 +46,7 @@ import {
  * Controller providing administrative management of curated ingredients and tags.
  * Restricted strictly to administrators.
  */
-@ApiTags('Admin Catalog')
+@ApiTags('Administrative Catalog Management')
 @ApiBearerAuth('JWT')
 @Auth()
 @Roles('admin')

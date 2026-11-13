@@ -55,7 +55,7 @@ export class RecipeStackItemDto {
   @ApiProperty({
     type: String,
     description: 'Cover image URL path',
-    example: '/uploads/recipes/cover.webp',
+    example: '/api/media/recipes/1/cover.webp',
     nullable: true,
   })
   cover_image_url: string | null;
@@ -63,7 +63,7 @@ export class RecipeStackItemDto {
   @ApiProperty({
     type: String,
     description: 'Tutorial video URL path',
-    example: '/uploads/recipes/video.mp4',
+    example: '/api/media/recipes/1/video.mp4',
     nullable: true,
   })
   video_url: string | null;
@@ -208,11 +208,11 @@ export class RecipePaginationResponseDto {
 export class CoverImageUploadResponseDto {
   /**
    * Relative URL path to the newly saved cover image.
-   * @example '/uploads/recipes/recipe_42_cover.webp'
+   * @example '/api/media/recipes/42/recipe_42_cover.webp'
    */
   @ApiProperty({
-    description: 'Static URL path to uploaded recipe cover image',
-    example: '/uploads/recipes/recipe_42_cover.webp',
+    description: 'Canonical API URL path to uploaded recipe cover image',
+    example: '/api/media/recipes/42/recipe_42_cover.webp',
   })
   cover_image_url: string;
 }
@@ -233,11 +233,11 @@ export class StepImageUploadResponseDto {
 
   /**
    * Relative URL path to the newly saved step illustration image.
-   * @example '/uploads/recipes/step_2_recipe_42.webp'
+   * @example '/api/media/recipes/42/step_2_recipe_42.webp'
    */
   @ApiProperty({
-    description: 'Static URL path to uploaded step illustration photo',
-    example: '/uploads/recipes/step_2_recipe_42.webp',
+    description: 'Canonical API URL path to uploaded step illustration photo',
+    example: '/api/media/recipes/42/step_2_recipe_42.webp',
   })
   image_url: string;
 }
@@ -248,11 +248,12 @@ export class StepImageUploadResponseDto {
 export class VideoUploadResponseDto {
   /**
    * Relative URL path to the uploaded tutorial video.
-   * @example '/uploads/recipes/recipe_42_video.mp4'
+   * @example '/api/media/recipes/42/recipe_42_video.mp4'
    */
   @ApiProperty({
-    description: 'Static URL path to uploaded tutorial demonstration video',
-    example: '/uploads/recipes/recipe_42_video.mp4',
+    description:
+      'Canonical API URL path to uploaded tutorial demonstration video',
+    example: '/api/media/recipes/42/recipe_42_video.mp4',
   })
   video_url: string;
 }

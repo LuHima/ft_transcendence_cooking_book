@@ -28,6 +28,11 @@ export enum AdminCommentStatus {
   all = 'all',
 }
 
+const adminCommentSortByOverrides = new WeakMap<
+  AdminCommentQueryDto,
+  AdminCommentSortBy
+>();
+
 /**
  * Query parameters for administrative comment audit stream.
  */
@@ -151,8 +156,6 @@ export class AdminCommentQueryDto {
   @IsBoolean()
   reported_only?: boolean;
 
-  private _sort_by?: AdminCommentSortBy;
-
   /**
    * Field to sort comments by.
    * @example AdminCommentSortBy.created_at
@@ -167,8 +170,9 @@ export class AdminCommentQueryDto {
   @IsOptional()
   @IsEnum(AdminCommentSortBy)
   get sort_by(): AdminCommentSortBy {
-    if (this._sort_by !== undefined) {
-      return this._sort_by;
+    const sortByOverride = adminCommentSortByOverrides.get(this);
+    if (sortByOverride !== undefined) {
+      return sortByOverride;
     }
     if (this.reported_only) {
       return AdminCommentSortBy.reports_count;
@@ -177,7 +181,11 @@ export class AdminCommentQueryDto {
   }
 
   set sort_by(value: AdminCommentSortBy | undefined) {
-    this._sort_by = value;
+    if (value === undefined) {
+      adminCommentSortByOverrides.delete(this);
+      return;
+    }
+    adminCommentSortByOverrides.set(this, value);
   }
 
   /**

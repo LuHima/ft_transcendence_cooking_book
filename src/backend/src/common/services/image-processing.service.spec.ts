@@ -3,7 +3,10 @@ import { ImageProcessingService } from './image-processing.service';
 import sharp from 'sharp';
 import * as fs from 'fs';
 import { join } from 'path';
-import { AVATAR_UPLOADS_DIR } from '../config/upload-paths';
+import {
+  AVATAR_UPLOADS_DIR,
+  RECIPE_UPLOADS_DIR,
+} from '../config/upload-paths';
 import { BadRequestException } from '@nestjs/common';
 
 describe('ImageProcessingService', () => {
@@ -43,9 +46,9 @@ describe('ImageProcessingService', () => {
       .png()
       .toBuffer();
 
-    const result = await service.processAvatarBuffer(testPngBuffer);
+    const result = await service.processAvatarBuffer(testPngBuffer, 42);
     expect(result.relativePath).toMatch(
-      /^\/uploads\/avatars\/avatar-\d+-[a-f0-9-]+\.webp$/,
+      /^\/api\/media\/avatars\/42\/avatar-\d+-[a-f0-9-]+\.webp$/,
     );
     expect(result.filename.endsWith('.webp')).toBe(true);
 
@@ -62,9 +65,9 @@ describe('ImageProcessingService', () => {
 
   it('should throw BadRequestException on corrupt image buffer', async () => {
     const corruptBuffer = Buffer.from('not an image at all');
-    await expect(service.processAvatarBuffer(corruptBuffer)).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(
+      service.processAvatarBuffer(corruptBuffer, 1),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('should process avatar file with buffer attached', async () => {
@@ -85,19 +88,193 @@ describe('ImageProcessingService', () => {
       mimetype: 'image/jpeg',
     } as Express.Multer.File;
 
-    const result = await service.processAvatarFile(mockFile);
+    const result = await service.processAvatarFile(mockFile, 7);
     expect(result.relativePath).toMatch(
-      /^\/uploads\/avatars\/avatar-\d+-[a-f0-9-]+\.webp$/,
+      /^\/api\/media\/avatars\/7\/avatar-\d+-[a-f0-9-]+\.webp$/,
     );
     createdFiles.push(join(AVATAR_UPLOADS_DIR, result.filename));
   });
 
-  it('should fallback gracefully when neither buffer nor file path exists', async () => {
-    const mockFile = {
-      filename: 'fallback-avatar.jpg',
-    } as Express.Multer.File;
+  it('should throw BadRequestException when neither buffer nor file path exists or buffer is empty', async () => {
+    await expect(
+      service.processAvatarFile(
+        {
+          filename: 'fallback-avatar.jpg',
+        } as Express.Multer.File,
+        1,
+      ),
+    ).rejects.toThrow(BadRequestException);
 
-    const result = await service.processAvatarFile(mockFile);
-    expect(result.relativePath).toBe('/uploads/avatars/fallback-avatar.jpg');
+    await expect(
+      service.processAvatarFile(
+        {
+          buffer: Buffer.alloc(0),
+        } as Express.Multer.File,
+        1,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      service.processAvatarFile(
+        {
+          path: '/non-existent/avatar.jpg',
+        } as Express.Multer.File,
+        1,
+      ),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('should unlink temporary disk path when buffer is also present', async () => {
+    await fs.promises.mkdir(RECIPE_UPLOADS_DIR, { recursive: true });
+    const tempPath = join(RECIPE_UPLOADS_DIR, `temp-dup-${Date.now()}.png`);
+    const buf = await sharp({
+      create: {
+        width: 100,
+        height: 100,
+        channels: 3,
+        background: { r: 10, g: 20, b: 30 },
+      },
+    })
+      .png()
+      .toBuffer();
+    await fs.promises.writeFile(tempPath, buf);
+
+    const result = await service.processRecipeImageFile(
+      { buffer: buf, path: tempPath } as Express.Multer.File,
+      7,
+    );
+    expect(result.relativePath).toMatch(
+      /^\/api\/media\/recipes\/7\/recipe-\d+-[a-f0-9-]+\.webp$/,
+    );
+    expect(fs.existsSync(tempPath)).toBe(false);
+    createdFiles.push(join(RECIPE_UPLOADS_DIR, result.filename));
+  });
+
+  describe('processRecipeImageBuffer & processRecipeImageFile', () => {
+    it('should downscale images exceeding 1920x1080 preserving aspect ratio, strip EXIF, and encode to webp', async () => {
+      // Create a 3840x2160 (16:9) JPEG with EXIF metadata
+      const largeBuffer = await sharp({
+        create: {
+          width: 2400,
+          height: 1600, // 3:2 aspect ratio
+          channels: 3,
+          background: { r: 100, g: 150, b: 200 },
+        },
+      })
+        .withMetadata({ exif: { IFD0: { Copyright: 'Test EXIF' } } })
+        .jpeg()
+        .toBuffer();
+
+      const result = await service.processRecipeImageBuffer(largeBuffer, 15);
+      expect(result.relativePath).toMatch(
+        /^\/api\/media\/recipes\/15\/recipe-\d+-[a-f0-9-]+\.webp$/,
+      );
+      expect(result.filename.endsWith('.webp')).toBe(true);
+
+      const fullPath = join(RECIPE_UPLOADS_DIR, result.filename);
+      createdFiles.push(fullPath);
+      expect(fs.existsSync(fullPath)).toBe(true);
+
+      const metadata = await sharp(fullPath).metadata();
+      expect(metadata.format).toBe('webp');
+      // 2400x1600 (3:2) fitted inside 1920x1080 -> height-bound: 1620x1080
+      expect(metadata.width).toBe(1620);
+      expect(metadata.height).toBe(1080);
+      expect(metadata.exif).toBeUndefined();
+    });
+
+    it('should not upscale images smaller than 1920x1080', async () => {
+      const smallBuffer = await sharp({
+        create: {
+          width: 800,
+          height: 600,
+          channels: 3,
+          background: { r: 50, g: 100, b: 150 },
+        },
+      })
+        .png()
+        .toBuffer();
+
+      const result = await service.processRecipeImageBuffer(smallBuffer, 15);
+      const fullPath = join(RECIPE_UPLOADS_DIR, result.filename);
+      createdFiles.push(fullPath);
+
+      const metadata = await sharp(fullPath).metadata();
+      expect(metadata.format).toBe('webp');
+      expect(metadata.width).toBe(800);
+      expect(metadata.height).toBe(600);
+    });
+
+    it('should throw BadRequestException on empty or corrupt recipe image buffer', async () => {
+      await expect(
+        service.processRecipeImageBuffer(Buffer.alloc(0), 15),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.processRecipeImageBuffer(Buffer.from('corrupt-image-data'), 15),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if file is missing in processRecipeImageFile', async () => {
+      await expect(
+        service.processRecipeImageFile(
+          undefined as unknown as Express.Multer.File,
+          15,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should process disk-staged recipe image file and unlink temporary raw upload', async () => {
+      await fs.promises.mkdir(RECIPE_UPLOADS_DIR, { recursive: true });
+      const tempInputPath = join(
+        RECIPE_UPLOADS_DIR,
+        `temp-raw-${Date.now()}.jpg`,
+      );
+      const pngBuffer = await sharp({
+        create: {
+          width: 640,
+          height: 480,
+          channels: 3,
+          background: { r: 20, g: 40, b: 60 },
+        },
+      })
+        .jpeg()
+        .toBuffer();
+      await fs.promises.writeFile(tempInputPath, pngBuffer);
+
+      const mockFile = {
+        path: tempInputPath,
+        filename: 'temp-raw.jpg',
+        originalname: 'dish.jpg',
+        mimetype: 'image/jpeg',
+      } as Express.Multer.File;
+
+      const result = await service.processRecipeImageFile(mockFile, 15);
+      expect(result.filename.endsWith('.webp')).toBe(true);
+      expect(fs.existsSync(tempInputPath)).toBe(false);
+
+      const fullPath = join(RECIPE_UPLOADS_DIR, result.filename);
+      createdFiles.push(fullPath);
+      expect(fs.existsSync(fullPath)).toBe(true);
+    });
+
+    it('should unlink temporary raw disk file even when processing fails', async () => {
+      await fs.promises.mkdir(RECIPE_UPLOADS_DIR, { recursive: true });
+      const tempCorruptPath = join(
+        RECIPE_UPLOADS_DIR,
+        `temp-corrupt-${Date.now()}.jpg`,
+      );
+      await fs.promises.writeFile(tempCorruptPath, Buffer.from('not-an-image'));
+
+      const mockFile = {
+        path: tempCorruptPath,
+        filename: 'temp-corrupt.jpg',
+      } as Express.Multer.File;
+
+      await expect(
+        service.processRecipeImageFile(mockFile, 15),
+      ).rejects.toThrow(BadRequestException);
+      expect(fs.existsSync(tempCorruptPath)).toBe(false);
+    });
   });
 });

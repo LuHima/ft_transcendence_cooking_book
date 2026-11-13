@@ -20,6 +20,7 @@ import {
   TagDetailResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
+import { SupportedLocale } from '../common/dto/locale-query.dto';
 
 /**
  * Shared helper formatting an array of translation rows into a canonical multilingual dictionary.
@@ -34,6 +35,57 @@ export function toTranslationDictionary(
     en: nameOf('en'),
     fr: nameOf('fr'),
   };
+}
+
+/**
+ * Normalizes a given string locale to a supported platform locale ('it', 'fr', 'en'), defaulting to 'en'.
+ */
+export function normalizeSupportedLocale(lang?: string): SupportedLocale {
+  if (lang === 'it' || lang === 'fr' || lang === 'en') {
+    return lang;
+  }
+  return 'en';
+}
+
+/**
+ * Resolves a localized catalog entity name and resolved locale following ADR 0031 4-tier fallback:
+ * 1. Requested language (lang)
+ * 2. English (en)
+ * 3. First available translation found in entity translations
+ * 4. Canonical entity slug
+ */
+export function resolveCatalogTranslation<
+  T extends { locale: string; name: string },
+>(
+  translations: T[] | undefined,
+  requestedLocale: SupportedLocale,
+  slug: string,
+): { name: string; resolved_lang: SupportedLocale } {
+  if (!translations || translations.length === 0) {
+    return { name: slug, resolved_lang: 'en' };
+  }
+  const matchRequested = translations.find((tr) => tr.locale === requestedLocale);
+  if (matchRequested) {
+    return {
+      name: matchRequested.name,
+      resolved_lang: matchRequested.locale as SupportedLocale,
+    };
+  }
+  const matchEn = translations.find((tr) => tr.locale === 'en');
+  if (matchEn) {
+    return {
+      name: matchEn.name,
+      resolved_lang: matchEn.locale as SupportedLocale,
+    };
+  }
+  const firstFound = translations[0];
+  if (firstFound) {
+    return {
+      name: firstFound.name,
+      resolved_lang: (firstFound.locale as SupportedLocale) ?? 'en',
+    };
+  }
+  return { name: slug, resolved_lang: 'en' };
 }
 
 @Injectable()
@@ -60,42 +112,23 @@ export class CatalogService {
   /*
   GET /api/tags
   Returns all the possible tags for a recipe (vegetarian, vegan, etc.),
-  ordered alfabetically by name.
+  ordered alphabetically by name.
   */
-  async getTags(params: { lang?: string } = {}) {
-    // Checks user locale, if unsupported defaults to English
-    const locale =
-      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
-    // Fetches all rows of the Tag table
+  async getTags(params: { lang?: SupportedLocale } = {}) {
+    const locale = normalizeSupportedLocale(params.lang);
     const tags = await this.prisma.tag.findMany({
-      // Retrieves up to two translation of every tag from the TagTranslation
-      // table: 'en' tag and the eventual 'it' or 'fr' translation of that tag
-      include: {
-        translations: {
-          where: { locale: { in: [locale, 'en'] } },
-        },
-      },
-      // Order the tags alphabetically by slug in ascending order
+      include: { translations: true },
       orderBy: { slug: 'asc' },
     });
-    // Maps the fetch data to return an array of tags objects formatted as
-    // { id, slug, name }
     const mapped = tags.map((t) => {
-      // Gets the translated tag name, if it exists in the user language.
-      // Falls back to English if the translation is missing
-      const trans =
-        t.translations.find((tr) => tr.locale === locale) ??
-        t.translations.find((tr) => tr.locale === 'en');
-      // Return every tag as an object { id, slug, name }. The name falls back
-      // to the slug as a last resort, if neither translation exists
+      const resolved = resolveCatalogTranslation(t.translations, locale, t.slug);
       return {
         id: t.id,
         slug: t.slug,
-        name: trans?.name ?? t.slug,
-        resolved_lang: trans?.locale ?? 'en',
+        name: resolved.name,
+        resolved_lang: resolved.resolved_lang,
       };
     });
-    // Returns the array of tags ordered by name
     return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
   }
 
@@ -107,29 +140,22 @@ export class CatalogService {
   */
   async getTagById(
     id: number,
-    params: { lang?: string } = {},
+    params: { lang?: SupportedLocale } = {},
   ): Promise<TagResponseDto> {
-    const locale =
-      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
+    const locale = normalizeSupportedLocale(params.lang);
     const tag = await this.prisma.tag.findUnique({
       where: { id },
-      include: {
-        translations: {
-          where: { locale: { in: [locale, 'en'] } },
-        },
-      },
+      include: { translations: true },
     });
     if (!tag) {
       throw createHttpException(errors.tags.notFound);
     }
-    const trans =
-      tag.translations.find((tr) => tr.locale === locale) ??
-      tag.translations.find((tr) => tr.locale === 'en');
+    const resolved = resolveCatalogTranslation(tag.translations, locale, tag.slug);
     return {
       id: tag.id,
       slug: tag.slug,
-      name: trans?.name ?? tag.slug,
-      resolved_lang: trans?.locale ?? 'en',
+      name: resolved.name,
+      resolved_lang: resolved.resolved_lang,
     };
   }
 
@@ -159,14 +185,12 @@ export class CatalogService {
   */
   async getIngredients(
     params: {
-      lang?: string;
+      lang?: SupportedLocale;
       category?: IngredientCategory;
       search?: string;
     } = {},
   ) {
-    // Checks user locale, if unsupported defaults to English
-    const locale =
-      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
+    const locale = normalizeSupportedLocale(params.lang);
     // Prisma filter used to select only specific ingredients
     const where: any = {};
     // Filter ingredients by 'category' parameter
@@ -197,28 +221,20 @@ export class CatalogService {
     const ingredients = await this.prisma.ingredient.findMany({
       // Select rows that respect the 'where' filter
       where,
-      // Retrieves up to two translation of every ingredient from the
-      // IngredientTranslation table: 'en' and eventual locale
-      include: {
-        translations: {
-          where: { locale: { in: [locale, 'en'] } },
-        },
-      },
+      include: { translations: true },
       // Order the ingredients alphabetically by slug in ascending order
       orderBy: { slug: 'asc' },
     });
     // Maps the fetch data to return an array of ingredients objects formatted
     // as { id, slug, name }
     const mapped = ingredients.map((i) => {
-      const trans =
-        i.translations.find((tr) => tr.locale === locale) ??
-        i.translations.find((tr) => tr.locale === 'en');
+      const resolved = resolveCatalogTranslation(i.translations, locale, i.slug);
       return {
         id: i.id,
         slug: i.slug,
         category: i.category,
-        name: trans?.name ?? i.slug,
-        resolved_lang: trans?.locale ?? 'en',
+        name: resolved.name,
+        resolved_lang: resolved.resolved_lang,
       };
     });
     // Returns the array of ingredients ordered by name
@@ -233,30 +249,27 @@ export class CatalogService {
   */
   async getIngredientById(
     id: number,
-    params: { lang?: string } = {},
+    params: { lang?: SupportedLocale } = {},
   ): Promise<IngredientResponseDto> {
-    const locale =
-      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
+    const locale = normalizeSupportedLocale(params.lang);
     const ingredient = await this.prisma.ingredient.findUnique({
       where: { id },
-      include: {
-        translations: {
-          where: { locale: { in: [locale, 'en'] } },
-        },
-      },
+      include: { translations: true },
     });
     if (!ingredient) {
       throw createHttpException(errors.ingredients.notFound);
     }
-    const trans =
-      ingredient.translations.find((tr) => tr.locale === locale) ??
-      ingredient.translations.find((tr) => tr.locale === 'en');
+    const resolved = resolveCatalogTranslation(
+      ingredient.translations,
+      locale,
+      ingredient.slug,
+    );
     return {
       id: ingredient.id,
       slug: ingredient.slug,
       category: ingredient.category,
-      name: trans?.name ?? ingredient.slug,
-      resolved_lang: trans?.locale ?? 'en',
+      name: resolved.name,
+      resolved_lang: resolved.resolved_lang,
     };
   }
 

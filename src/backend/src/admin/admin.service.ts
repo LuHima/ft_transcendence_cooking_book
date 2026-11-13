@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   OwnerType,
   Prisma,
+  ReportAction,
   Role,
   UserStatus,
   ReportSubject,
@@ -96,11 +97,46 @@ export class AdminService {
     }
   }
 
-  /**
-   * Transforms a Prisma user entity (with relational recipe counts) into AdminUserResponseDto.
-   */
+  private async getSanctionCountsMap(
+    userIds: number[],
+  ): Promise<Map<number, { bans: number; warnings: number }>> {
+    const countsMap = new Map<number, { bans: number; warnings: number }>();
+    if (userIds.length === 0 || !this.prisma.banHistory?.groupBy) {
+      return countsMap;
+    }
+
+    try {
+      const groups = await this.prisma.banHistory.groupBy({
+        by: ['user_id', 'action'],
+        _count: { id: true },
+        where: { user_id: { in: userIds } },
+      });
+      if (Array.isArray(groups)) {
+        for (const uid of userIds) {
+          countsMap.set(uid, { bans: 0, warnings: 0 });
+        }
+        for (const g of groups as any[]) {
+          const cnt =
+            typeof g._count === 'number' ? g._count : (g._count?.id ?? 0);
+          const entry = countsMap.get(g.user_id) ?? { bans: 0, warnings: 0 };
+          if (g.action === ReportAction.warn) {
+            entry.warnings = cnt;
+          } else {
+            entry.bans = cnt;
+          }
+          countsMap.set(g.user_id, entry);
+        }
+      }
+    } catch {
+      // Fallback for mocked environments without banHistory.groupBy
+    }
+
+    return countsMap;
+  }
+
   private mapToAdminUserResponse(
-    user: UserWithRecipeCount,
+    user: any,
+    sanctions?: { bans: number; warnings: number },
   ): AdminUserResponseDto {
     return {
       id: user.id,
@@ -118,7 +154,9 @@ export class AdminService {
       city: user.city ?? null,
       postal_code: user.postal_code ?? null,
       recipes_count: user._count?.recipes ?? 0,
-      previous_bans_count: (user as any)._count?.ban_history ?? 0,
+      previous_bans_count:
+        sanctions?.bans ?? (user as any)._count?.ban_history ?? 0,
+      previous_warnings_count: sanctions?.warnings ?? 0,
       banned_until: (user as any).banned_until ?? null,
       created_at: user.created_at,
       deleted_at: user.deleted_at ?? null,
@@ -199,10 +237,16 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
+    const sanctionCountsMap = await this.getSanctionCountsMap(
+      users.map((u) => u.id),
+    );
+
     const totalPages = Math.ceil(total / limit) || 1;
 
     return {
-      items: users.map((u) => this.mapToAdminUserResponse(u)),
+      items: users.map((u) =>
+        this.mapToAdminUserResponse(u, sanctionCountsMap.get(u.id)),
+      ),
       total,
       page,
       limit,
@@ -227,13 +271,19 @@ export class AdminService {
     if (!user) {
       throw createHttpException(errors.users.notFound);
     }
-    return this.mapToAdminUserResponse(user);
+    const sanctionCountsMap = await this.getSanctionCountsMap([targetUserId]);
+    return this.mapToAdminUserResponse(
+      user,
+      sanctionCountsMap.get(targetUserId),
+    );
   }
 
   /**
-   * Retrieve chronological ban history audit trail for a specific user.
+   * Retrieve chronological sanctions history audit trail for a specific user.
    */
-  async getUserBanHistory(targetUserId: number): Promise<BanHistoryItemDto[]> {
+  async getUserSanctionsHistory(
+    targetUserId: number,
+  ): Promise<BanHistoryItemDto[]> {
     const user = await this.prisma.user.findUnique({
       where: { id: targetUserId },
       select: { id: true },
@@ -241,7 +291,7 @@ export class AdminService {
     if (!user) {
       throw createHttpException(errors.users.notFound);
     }
-    return await this.banHistoryService.getUserBanHistory(targetUserId);
+    return await this.banHistoryService.getUserSanctionsHistory(targetUserId);
   }
 
   /**
@@ -473,11 +523,12 @@ export class AdminService {
         });
 
         if (dto.status === UserStatus.banned) {
-          await this.banHistoryService.recordBan(
+          await this.banHistoryService.recordSanction(
             {
               userId: targetUserId,
               bannedById: currentAdminId,
               reason: dto.ban_reason ?? ReportReason.other,
+              action: ReportAction.ban,
               description: dto.ban_description ?? null,
               durationDays: dto.is_permanent
                 ? null
@@ -652,18 +703,22 @@ export class AdminService {
     }
 
     // Process uploaded image through Sharp WebP pipeline
-    const { filename } =
-      await this.imageProcessingService.processAvatarFile(file);
-    const avatarUrl = `/api/media/avatars/${targetUserId}/${filename}`;
+    const { relativePath: avatarUrl } =
+      await this.imageProcessingService.processAvatarFile(file, targetUserId);
 
-    // Unlink old avatar file if present
+    // Save new avatar path in database; clean up the new file if DB update fails
+    try {
+      await this.prisma.user.update({
+        where: { id: targetUserId },
+        data: { avatar_url: avatarUrl },
+      });
+    } catch (err) {
+      await this.safeUnlink(avatarUrl);
+      throw err;
+    }
+
+    // Unlink old avatar file only after DB update succeeds
     await this.safeUnlink(targetUser.avatar_url);
-
-    // Save new avatar path in database
-    await this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { avatar_url: avatarUrl },
-    });
 
     return { avatar_url: avatarUrl };
   }
@@ -801,7 +856,11 @@ export class AdminService {
           const currentTotal = total.get(g.target_id) || 0;
           total.set(g.target_id, currentTotal + cnt);
 
-          if (g.status === ReportStatus.pending || g.status === 'pending') {
+          if (
+            !g.status ||
+            g.status === ReportStatus.pending ||
+            g.status === 'pending'
+          ) {
             const currentPending = pending.get(g.target_id) || 0;
             pending.set(g.target_id, currentPending + cnt);
           }
@@ -810,6 +869,20 @@ export class AdminService {
         // Fallback for mocked environments
       }
       return { total, pending };
+    };
+
+    const calculateThreadPendingReports = (
+      rootId: number,
+      replies: Array<{ id: number }> | undefined,
+      pendingMap: Map<number, number>,
+    ): number => {
+      return (
+        (pendingMap.get(rootId) || 0) +
+        (replies || []).reduce(
+          (sum, r) => sum + (pendingMap.get(r.id) || 0),
+          0,
+        )
+      );
     };
 
     const mapCommentItem = (
@@ -827,7 +900,7 @@ export class AdminService {
         is_edited: c.is_edited ?? false,
         created_at: c.created_at,
         updated_at: c.updated_at ?? null,
-        reports_count: reportCounts.total.get(c.id) || 0,
+        reports_count: pendingCount,
         pending_reports_count: pendingCount,
         has_pending_reports: pendingCount > 0,
         user: c.user
@@ -932,20 +1005,16 @@ export class AdminService {
         }
         candidateReportCounts = await fetchReportCounts(allCandidateIds);
         withActivity.sort((a, b) => {
-          const countA =
-            (candidateReportCounts!.pending.get(a.root.id) || 0) +
-            (a.root.replies || []).reduce(
-              (sum, r) =>
-                sum + (candidateReportCounts!.pending.get(r.id) || 0),
-              0,
-            );
-          const countB =
-            (candidateReportCounts!.pending.get(b.root.id) || 0) +
-            (b.root.replies || []).reduce(
-              (sum, r) =>
-                sum + (candidateReportCounts!.pending.get(r.id) || 0),
-              0,
-            );
+          const countA = calculateThreadPendingReports(
+            a.root.id,
+            a.root.replies,
+            candidateReportCounts!.pending,
+          );
+          const countB = calculateThreadPendingReports(
+            b.root.id,
+            b.root.replies,
+            candidateReportCounts!.pending,
+          );
           if (countB !== countA) {
             return sortOrder === SortOrder.asc
               ? countA - countB
@@ -1002,12 +1071,11 @@ export class AdminService {
           (r) => (reportCounts.pending.get(r.id) || 0) > 0,
         ).length;
 
-        const threadPendingReportsCount =
-          (reportCounts.pending.get(root.id) || 0) +
-          allReplies.reduce(
-            (sum, r) => sum + (reportCounts.pending.get(r.id) || 0),
-            0,
-          );
+        const threadPendingReportsCount = calculateThreadPendingReports(
+          root.id,
+          allReplies,
+          reportCounts.pending,
+        );
 
         let repliesToWindow = allReplies;
         if (isReportedOnly) {
@@ -1070,8 +1138,8 @@ export class AdminService {
       const reportCounts = await fetchReportCounts(allIds);
 
       allComments.sort((a, b) => {
-        const countA = reportCounts.total.get(a.id) || 0;
-        const countB = reportCounts.total.get(b.id) || 0;
+        const countA = reportCounts.pending.get(a.id) || 0;
+        const countB = reportCounts.pending.get(b.id) || 0;
         if (countB !== countA) {
           return sortOrder === SortOrder.asc
             ? countA - countB

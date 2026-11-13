@@ -141,10 +141,10 @@ describe('Admin User Governance & Content Lifecycle Integration Suite', () => {
     };
 
     const mockBanHistoryService = {
-      recordBan: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      recordSanction: jest.fn().mockResolvedValue({ id: 'ban-1' }),
       recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
       getPreviousBansCount: jest.fn().mockResolvedValue(0),
-      getUserBanHistory: jest.fn().mockResolvedValue([]),
+      getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({

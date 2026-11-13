@@ -49,10 +49,10 @@ describe('AuthService', () => {
     };
   };
   let banHistoryService: {
-    recordBan: jest.Mock;
+    recordSanction: jest.Mock;
     recordUnban: jest.Mock;
     getPreviousBansCount: jest.Mock;
-    getUserBanHistory: jest.Mock;
+    getUserSanctionsHistory: jest.Mock;
     getLatestActiveBan: jest.Mock;
   };
   let encryptionService: {
@@ -112,10 +112,10 @@ describe('AuthService', () => {
     };
 
     banHistoryService = {
-      recordBan: jest.fn(),
+      recordSanction: jest.fn(),
       recordUnban: jest.fn(),
       getPreviousBansCount: jest.fn(),
-      getUserBanHistory: jest.fn(),
+      getUserSanctionsHistory: jest.fn(),
       getLatestActiveBan: jest.fn(),
     };
 

@@ -61,6 +61,82 @@ describe('NotificationGateway', () => {
         target: { subject: 'recipe', idTarget: 10 },
       });
     });
+
+    it('should forward warning notification omitting staff credentials', () => {
+      gateway.handleNotificationEvent({
+        idUser: 42,
+        message:
+          'You received a warning from the moderation team about your recipe',
+        target: { subject: 'recipe', idTarget: 10 },
+      });
+
+      expect(mockServer.to).toHaveBeenCalledWith('room-42');
+      expect(mockServer.emit).toHaveBeenCalledWith('newNotification', {
+        message:
+          'You received a warning from the moderation team about your recipe',
+        target: { subject: 'recipe', idTarget: 10 },
+      });
+    });
+  });
+
+  describe('handleConnection & unreadNotifications shielding', () => {
+    it('masks actor_id to null for warn notifications when emitting unreadNotifications', async () => {
+      const mockClient = {
+        handshake: {
+          headers: {
+            cookie: 'accessToken=valid.jwt.token',
+          },
+        },
+        data: {},
+        join: jest.fn(),
+        emit: jest.fn(),
+      };
+
+      jest
+        .spyOn(gateway as any, 'findToken')
+        .mockReturnValue('valid.jwt.token');
+      jest.spyOn(gateway as any, 'handleJwtVerification').mockReturnValue({
+        sub: 10,
+        type: 'access',
+      });
+      jest.spyOn(gateway as any, 'statusUser').mockResolvedValue(undefined);
+
+      (prisma.notification.findMany as jest.Mock).mockResolvedValueOnce([
+        {
+          id: 1,
+          user_id: 10,
+          actor_id: 99,
+          action: 'warn',
+          subject: 'recipe',
+          target_id: 5,
+        },
+        {
+          id: 2,
+          user_id: 10,
+          actor_id: 3,
+          action: 'like',
+          subject: 'recipe',
+          target_id: 5,
+        },
+      ]);
+
+      await gateway.handleConnection(mockClient as any);
+
+      expect(mockClient.emit).toHaveBeenCalledWith('unreadNotifications', {
+        notification: [
+          expect.objectContaining({
+            id: 1,
+            action: 'warn',
+            actor_id: null,
+          }),
+          expect.objectContaining({
+            id: 2,
+            action: 'like',
+            actor_id: 3,
+          }),
+        ],
+      });
+    });
   });
 
   describe('User presence and friends status', () => {
