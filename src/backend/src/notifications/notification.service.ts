@@ -206,11 +206,14 @@ export class NotificationService {
       return {
         id: n.id,
         user_id: n.user_id,
-        actor: {
-          id: n.actor?.id ?? n.actor_id,
-          username: actorUsername,
-          avatar_url: n.actor?.avatar_url ?? null,
-        },
+        actor:
+          n.action === NotificationAction.warn
+            ? null
+            : {
+                id: n.actor?.id ?? n.actor_id,
+                username: actorUsername,
+                avatar_url: n.actor?.avatar_url ?? null,
+              },
         subject: n.subject,
         action: n.action,
         target: {

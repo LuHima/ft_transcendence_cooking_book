@@ -333,7 +333,7 @@ function ResolveDialog({ report, onClose, onDone }: { report: ReportItem; onClos
 				resolution_reason: resolutionReason,
 				...(resolutionDescription.trim() ? { resolution_description: resolutionDescription.trim() } : {}),
 				...(resolutionNotes.trim() ? { resolution_notes: resolutionNotes.trim() } : {}),
-				...(banSelected && admin && isPermanent ? { is_permanent: true } : {}),
+				...(banSelected && admin && isPermanent ? { permanent: true } : {}),
 				...(banSelected && !isPermanent && days !== undefined ? { ban_duration_days: days } : {}),
 			}
 		}

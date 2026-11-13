@@ -33,6 +33,23 @@ describe('AdminCommentQueryDto', () => {
     expect(dto.sort_by).toBe(sortBy);
   });
 
+  it('accepts sort_by with whitelist validation enabled', async () => {
+    const dto = plainToInstance(AdminCommentQueryDto, {
+      page: 1,
+      limit: 20,
+      sort_by: AdminCommentSortBy.created_at,
+      sort_order: SortOrder.desc,
+      lang: 'it',
+    });
+    const errors = await validate(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+
+    expect(errors).toHaveLength(0);
+    expect(dto.sort_by).toBe(AdminCommentSortBy.created_at);
+  });
+
   it.each([SortOrder.asc, SortOrder.desc])(
     'accepts valid sort_order value %s',
     async (sortOrder) => {

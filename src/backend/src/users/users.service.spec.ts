@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
+import { ImageProcessingService } from '../common/services/image-processing.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   NotFoundException,
@@ -43,6 +44,15 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         RecipeProjection,
+        {
+          provide: ImageProcessingService,
+          useValue: {
+            processAvatarFile: jest.fn().mockResolvedValue({
+              filename: 'avatar-123.jpg',
+              relativePath: '/api/media/avatars/1/avatar-123.jpg',
+            }),
+          },
+        },
         {
           provide: PrismaService,
           useValue: {

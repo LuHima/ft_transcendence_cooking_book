@@ -13,8 +13,12 @@ A localized text projection of a recipe (title, description, preservation, tips)
 _Avoid_: Localized recipe, text copy
 
 **RecipeStep**:
-A discrete, ordered instruction step in a recipe with an optional duration and step-specific illustration.
+A discrete, ordered instruction step in a recipe with an optional duration (in minutes) and step-specific illustration. Step durations may exceed Total Recipe Time because preparation or cooking steps can run in parallel.
 _Avoid_: Instruction, direction, step description
+
+**Total Recipe Time**:
+The overall wall-clock duration of a recipe, computed as the sum of preparation time and active cooking time.
+_Avoid_: Step sum, cumulative step duration
 
 **RecipeStepTranslation**:
 The localized title and description of an instruction step for a specific locale.
@@ -35,6 +39,14 @@ _Avoid_: Photo album, media dump
 **Tutorial Video**:
 A single optional demonstration video attached to a recipe showcasing its execution.
 _Avoid_: Clip, media, video tutorial, stream
+
+**WebP Transcoding**:
+The automated server-side transformation using Sharp that strips camera EXIF metadata, applies aspect-ratio-preserving bounding-box downscaling (max width 1920px, max height 1080px), and encodes recipe images (Cover Image, Recipe Step illustrations, Recipe Gallery) to WebP at quality 80 upon upload.
+_Avoid_: Image conversion, photo shrink, raw upload
+
+**Synchronous Video Compression**:
+The in-request transcoding process using FFmpeg that compresses and standardizes uploaded tutorial videos into MP4 container format (H.264 video, AAC audio, CRF 27, preset fast, max 1920x1080 for horizontal videos and 1080x1920 for vertical videos without upscaling, and FastStart metadata optimization) before saving the media asset and returning the media URL to the client.
+_Avoid_: Video convert, clip render, background transcode, raw video storage
 
 **Preservation Notes**:
 Guidance on how to store and preserve the prepared dish (shelf life in fridge/freezer, container advice).
@@ -132,6 +144,10 @@ _Avoid_: Follow status, relation type, connection state
 The public presentation of a community member showcasing their biographical note, culinary metrics, confirmed friends, and public recipes.
 _Avoid_: Account page, user card, bio sheet
 
+**Vanity Profile Route**:
+A human-readable frontend URL path (`/u/:username`) that resolves a community member's Culinary Profile by username via `GET /api/users/by-username/:username` so shared profile links carry the member's username instead of an opaque database ID.
+_Avoid_: Pretty link, custom slug, username redirect
+
 **Culinary Bio**:
 A brief self-written summary (up to 500 characters) describing a community member's cooking background, philosophy, or favorite cuisines.
 _Avoid_: About me, description, user status
@@ -197,6 +213,18 @@ _Avoid_: Video dumping, progressive download, static video serving
 **Account Ban**:
 An administrative sanction applied to a community member's account, either temporary (capped at 180 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
 _Avoid_: Account freeze, lockout, strike, kick
+
+**Moderation Warning**:
+An administrative notice issued by platform staff against reported content or accounts to alert an author of policy infractions and deliver corrective guidance without suspending account access or evicting sessions.
+_Avoid_: Strike, informal warning, ping, slap on the wrist
+
+**Anonymous Staff Notification**:
+A platform-dispatched notification resulting from moderation actions (such as warnings) where staff identity is strictly masked (`actor: null`) to shield moderators and administrators from targeted harassment and retaliatory hostility while delivering official community feedback.
+_Avoid_: Ghost alert, stealth notice, hidden author notification
+
+**Report Actions Array**:
+The explicit array of disciplinary choices (`actions: ReportAction[]`) persisted on a Content Report record, enforcing strict mutual exclusivity constraints (`dismiss` standalone, `warn` and `ban` mutually exclusive, composable with `delete_content`).
+_Avoid_: Actions list, resolution flags, status tags
 
 **Ban History**:
 The immutable historical ledger recording all account suspensions, duration intervals, policy violation categories, user-facing explanations, and issuing staff identifiers for a community member, informing progressive discipline for repeat offenders.

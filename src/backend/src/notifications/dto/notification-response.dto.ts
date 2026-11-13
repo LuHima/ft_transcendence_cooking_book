@@ -90,11 +90,13 @@ export class NotificationItemDto {
   })
   user_id: number;
 
-  @ApiProperty({
-    description: 'Actor profile card who triggered the notification',
+  @ApiPropertyOptional({
+    description:
+      'Actor profile card who triggered the notification (null for anonymous staff/moderation notices)',
     type: () => NotificationActorDto,
+    nullable: true,
   })
-  actor: NotificationActorDto;
+  actor: NotificationActorDto | null;
 
   @ApiProperty({
     description: 'Domain entity subject associated with the notification',

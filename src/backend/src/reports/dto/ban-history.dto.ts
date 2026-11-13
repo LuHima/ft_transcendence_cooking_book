@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ReportReason } from '@prisma/client';
+import { ReportAction, ReportReason } from '@prisma/client';
 
 export class BanHistoryItemDto {
   @ApiProperty({
@@ -24,6 +24,15 @@ export class BanHistoryItemDto {
     nullable: true,
   })
   report_id: number | null;
+
+  @ApiProperty({
+    enum: ReportAction,
+    enumName: 'ReportAction',
+    description: 'Sanction type (ban or warn)',
+    example: ReportAction.ban,
+    default: ReportAction.ban,
+  })
+  action: ReportAction;
 
   @ApiProperty({
     enum: ReportReason,

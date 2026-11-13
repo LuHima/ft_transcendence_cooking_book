@@ -51,8 +51,7 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private readonly recipeProjection: RecipeProjection,
-    @Optional()
-    private readonly imageProcessingService?: ImageProcessingService,
+    private readonly imageProcessingService: ImageProcessingService,
   ) {}
 
   private readonly logger = new Logger(UsersService.name);
@@ -694,24 +693,22 @@ export class UsersService {
     }
 
     // Process avatar image through Sharp WebP pipeline
-    let filename: string;
-    if (this.imageProcessingService) {
-      const processed =
-        await this.imageProcessingService.processAvatarFile(file);
-      filename = processed.filename;
-    } else {
-      filename = file.filename || file.originalname;
+    const { relativePath: avatarUrl } =
+      await this.imageProcessingService.processAvatarFile(file, userId);
+
+    // Persist the new avatar path; clean up the new file if DB update fails
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { avatar_url: avatarUrl },
+      });
+    } catch (err) {
+      await this.safeUnlink(avatarUrl);
+      throw err;
     }
-    const avatarUrl = `/api/media/avatars/${userId}/${filename}`;
 
-    // Delete previously uploaded avatar file from disk if present
+    // Delete previously uploaded avatar file from disk only after DB update succeeds
     await this.safeUnlink(user.avatar_url);
-
-    // Persist the new avatar path
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { avatar_url: avatarUrl },
-    });
 
     return { avatar_url: avatarUrl };
   }

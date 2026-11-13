@@ -27,9 +27,10 @@ We decided to introduce a dedicated administrative recipe triage stream (`GET /a
    - Handled gracefully across all report subjects (`recipe`, `comment`, `user`) even when targeted entities or authors have been removed or deleted.
 
 3. **Reported Comments Audit Stream & Pending Indicators (`GET /api/admin/comments`)**:
+   - Standardized `reports_count` across flat and threaded formats to exclusively count active pending reports filed against comments (aligning sorting contracts and metric indicators strictly with pending moderation triage).
    - Added `reported_only?: boolean` filter to `AdminCommentQueryDto`. When `true`, automatically applies contextual defaults: sorts by `reports_count: desc` and switches format to `flat` unless explicitly overridden.
-   - Enriched comment response DTOs with `pending_reports_count: number` and `has_pending_reports: boolean`.
-   - For `format=threaded`, added `reported_replies_count: number` and guaranteed that reported child replies are included in the embedded preview array up to `replies_limit`.
+   - Enriched comment response DTOs with `pending_reports_count: number`, `has_pending_reports: boolean`, and `thread_pending_reports_count: number` (for threaded root comments, reflecting cumulative pending reports across the root and its replies).
+   - For `format=threaded`, added `reported_replies_count: number`. For `format=threaded` AND `reported_only=true` guaranteed that reported child replies are included in the embedded preview array up to `replies_limit`.
 
 4. **Single-Resource Catalog Inspection API**:
    - Implemented `GET /api/ingredients/:id` and `GET /api/tags/:id` in `CatalogController`, returning localized entities conforming to requested locale with fallback to source/English.

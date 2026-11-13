@@ -154,6 +154,13 @@ enum ReportStatus {
   action_taken
 }
 
+enum ReportAction {
+  delete_content
+  ban
+  warn
+  dismiss
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // USERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -498,22 +505,23 @@ model UserBlock {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Report {
-  id                     Int           @id @default(autoincrement())
+  id                     Int            @id @default(autoincrement())
   reporter_id            Int
   subject                ReportSubject
   target_id              Int
   reason                 ReportReason
-  description            String?       @db.VarChar(1000)
-  status                 ReportStatus  @default(pending)
+  description            String?        @db.VarChar(1000)
+  status                 ReportStatus   @default(pending)
+  actions                ReportAction[] @default([])
   resolution_reason      ReportReason?
-  resolution_description String?       @db.VarChar(1000)
-  resolution_notes       String?       @db.VarChar(1000)
+  resolution_description String?        @db.VarChar(1000)
+  resolution_notes       String?        @db.VarChar(1000)
   resolved_by_id         Int?
   resolved_at            DateTime?
-  created_at             DateTime      @default(now())
-  updated_at             DateTime      @updatedAt
+  created_at             DateTime       @default(now())
+  updated_at             DateTime       @updatedAt
 
-  reporter               User          @relation("ReportsSubmitted", fields: [reporter_id], references: [id], onDelete: Cascade)
+  reporter               User           @relation("ReportsSubmitted", fields: [reporter_id], references: [id], onDelete: Cascade)
   ban_history            BanHistory[]
 
   @@index([status, created_at])
@@ -533,6 +541,7 @@ model BanHistory {
   banned_by      User         @relation("StaffIssuedBans", fields: [banned_by_id], references: [id])
   report_id      Int?
   report         Report?      @relation(fields: [report_id], references: [id], onDelete: SetNull)
+  action         ReportAction @default(ban)
   reason         ReportReason
   description    String?      @db.VarChar(1000)
   duration_days  Int?

@@ -15,5 +15,5 @@ A recipe combines complex relational data (steps, ingredients with quantities/no
 
 ## Consequences
 - Guaranteed referential integrity: no recipe can exist without its complete ingredients or steps.
-- Clear file size and MIME-type limits per route (e.g. video allows 100MB, images 10MB).
+- Clear file size and MIME-type limits per route (e.g. video allows 50MB, images 10MB).
 - The frontend can show precise upload progress bars per step/cover.

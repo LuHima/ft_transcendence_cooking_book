@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   NotFoundException,
   ConflictException,
   ForbiddenException,
@@ -9,8 +10,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsService } from './reports.service';
 import { PrismaService } from 'prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
+import { RecipeProjection } from '../recipe/recipe.projection';
 import { BanHistoryService } from './ban-history.service';
 import {
+  NotificationSubject,
   ReportReason,
   ReportStatus,
   ReportSubject,
@@ -60,6 +63,9 @@ describe('ReportsService', () => {
       count: jest.fn(),
       groupBy: jest.fn(),
     },
+    notification: {
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
     $transaction: jest.fn((callback) => callback(mockPrisma)),
   };
 
@@ -68,16 +74,18 @@ describe('ReportsService', () => {
   };
 
   const mockBanHistoryService = {
-    recordBan: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+    recordSanction: jest.fn().mockResolvedValue({ id: 'sanction-1' }),
     recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
     getPreviousBansCount: jest.fn().mockResolvedValue(0),
-    getUserBanHistory: jest.fn().mockResolvedValue([]),
+    getPreviousWarningsCount: jest.fn().mockResolvedValue(0),
+    getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReportsService,
+        RecipeProjection,
         {
           provide: PrismaService,
           useValue: mockPrisma,
@@ -127,7 +135,7 @@ describe('ReportsService', () => {
 
       expect(mockPrisma.recipe.findUnique).toHaveBeenCalledWith({
         where: { id: 10 },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       expect(mockPrisma.report.create).toHaveBeenCalled();
       expect(result.id).toBe(1);
@@ -158,7 +166,7 @@ describe('ReportsService', () => {
 
       expect(mockPrisma.comment.findUnique).toHaveBeenCalledWith({
         where: { id: 25 },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       expect(result.id).toBe(2);
     });
@@ -276,7 +284,7 @@ describe('ReportsService', () => {
         },
       ]);
       mockPrisma.banHistory.groupBy.mockResolvedValueOnce([
-        { user_id: 50, _count: { id: 2 } },
+        { user_id: 50, action: ReportAction.ban, _count: { id: 2 } },
       ]);
 
       const result = await service.getReports({ page: 1, limit: 10 });
@@ -292,12 +300,13 @@ describe('ReportsService', () => {
         select: expect.any(Object),
       });
       expect(mockPrisma.banHistory.groupBy).toHaveBeenCalledWith({
-        by: ['user_id'],
+        by: ['user_id', 'action'],
         _count: { id: true },
         where: { user_id: { in: [50] } },
       });
       expect(result.items).toHaveLength(1);
       expect(result.items[0].previous_bans_count).toBe(2);
+      expect(result.items[0].previous_warnings_count).toBe(0);
       expect(result.items[0].target.owner?.avatar_url).toBe('/avatars/50.webp');
       expect(result.total).toBe(1);
     });
@@ -558,6 +567,11 @@ describe('ReportsService', () => {
         status: ReportStatus.pending,
         reason: ReportReason.harassment_bullying,
       });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 20,
+        user: { id: 20, role: Role.user },
+      });
       mockPrisma.report.update.mockResolvedValueOnce({
         id: 1,
         status: ReportStatus.action_taken,
@@ -570,6 +584,17 @@ describe('ReportsService', () => {
           resolution_description: 'Please keep it civil.',
         },
         { id: 7, role: Role.moderator },
+      );
+
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 20,
+          bannedById: 7,
+          action: ReportAction.warn,
+          description: 'Please keep it civil.',
+          reportId: 1,
+        }),
+        mockPrisma,
       );
 
       expect(mockNotificationEmit.notification).toHaveBeenCalledWith(
@@ -600,13 +625,19 @@ describe('ReportsService', () => {
       expect(mockNotificationEmit.notification).not.toHaveBeenCalled();
     });
 
-    it('does not notify twice when the report was already resolved', async () => {
+    it('does not notify twice when the report was already resolved with warn', async () => {
       mockPrisma.report.findUnique.mockResolvedValueOnce({
         id: 1,
         subject: ReportSubject.recipe,
         target_id: 10,
         status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
         reason: ReportReason.harassment_bullying,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 20,
+        user: { id: 20, role: Role.user },
       });
       mockPrisma.report.update.mockResolvedValueOnce({
         id: 1,
@@ -633,6 +664,11 @@ describe('ReportsService', () => {
         target_id: 10,
         status: ReportStatus.pending,
         reason: ReportReason.harassment_bullying,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 20,
+        user: { id: 20, role: Role.user },
       });
       mockPrisma.report.update.mockResolvedValueOnce({
         id: 1,
@@ -724,10 +760,11 @@ describe('ReportsService', () => {
         where: { id_user: 42 },
       });
       // Ban history recorded
-      expect(mockBanHistoryService.recordBan).toHaveBeenCalledWith(
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 42,
           bannedById: 1,
+          action: ReportAction.ban,
           reason: ReportReason.hate_speech,
           durationDays: 30, // policy default for hate_speech
           isPermanent: false,
@@ -782,7 +819,7 @@ describe('ReportsService', () => {
           1,
           {
             actions: [ReportAction.ban],
-            is_permanent: true,
+            permanent: true,
           },
           caller,
         ),
@@ -817,7 +854,7 @@ describe('ReportsService', () => {
         1,
         {
           actions: [ReportAction.ban],
-          is_permanent: true,
+          permanent: true,
         },
         caller,
       );
@@ -829,9 +866,10 @@ describe('ReportsService', () => {
           banned_until: null,
         },
       });
-      expect(mockBanHistoryService.recordBan).toHaveBeenCalledWith(
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 42,
+          action: ReportAction.ban,
           isPermanent: true,
           durationDays: null,
           expiresAt: null,
@@ -957,6 +995,432 @@ describe('ReportsService', () => {
           caller,
         ),
       ).rejects.toThrow('Database disk full');
+    });
+
+    it("rejects contradictory actions ['warn', 'ban'] with 400 Bad Request", async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          actions: [ReportAction.warn, ReportAction.ban],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    });
+
+    it("rejects combining 'dismiss' with other actions with 400 Bad Request", async () => {
+      mockPrisma.report.findUnique.mockResolvedValue({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          actions: [ReportAction.dismiss, ReportAction.warn],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          actions: [ReportAction.dismiss, ReportAction.delete_content],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    });
+
+    it("rejects empty actions array when status is action_taken with 400 Bad Request", async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, {
+          status: ReportStatus.action_taken,
+          actions: [],
+        }),
+      ).rejects.toMatchObject({
+        status: 400,
+      });
+    });
+
+    it('throws ForbiddenException when moderator attempts to warn an administrator', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 99,
+        user: { id: 99, role: Role.admin },
+      });
+
+      const caller = { id: 2, role: Role.moderator };
+      await expect(
+        service.updateReport(
+          1,
+          {
+            actions: [ReportAction.warn],
+            resolution_description: 'Do not do this again',
+          },
+          caller,
+        ),
+      ).rejects.toThrow('Moderators cannot moderate or warn administrators');
+
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 99,
+        user: { id: 99, role: Role.admin },
+      });
+
+      await expect(
+        service.updateReport(
+          1,
+          {
+            actions: [ReportAction.warn],
+            resolution_description: 'Do not do this again',
+          },
+          caller,
+        ),
+      ).rejects.toMatchObject({ status: 403 });
+    });
+
+    it('allows administrator to warn another administrator', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 99,
+        user: { id: 99, role: Role.admin },
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
+      });
+
+      const caller = { id: 1, role: Role.admin };
+      const result = await service.updateReport(
+        1,
+        {
+          actions: [ReportAction.warn],
+          resolution_description: 'Internal admin reminder',
+        },
+        caller,
+      );
+
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 99,
+          bannedById: 1,
+          action: ReportAction.warn,
+        }),
+        mockPrisma,
+      );
+      expect(mockPrisma.report.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            actions: [ReportAction.warn],
+          }),
+        }),
+      );
+      expect(result.actions).toEqual([ReportAction.warn]);
+    });
+
+    it('executes composite action [warn, delete_content] atomically and persists actions column', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 42,
+        user: { id: 42, role: Role.user },
+      });
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn, ReportAction.delete_content],
+      });
+
+      const caller = { id: 2, role: Role.moderator };
+      const result = await service.updateReport(
+        1,
+        {
+          actions: [ReportAction.warn, ReportAction.delete_content],
+          resolution_description: 'Spam recipe removed and warning logged',
+        },
+        caller,
+      );
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { is_active: false },
+      });
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 42,
+          bannedById: 2,
+          action: ReportAction.warn,
+          description: 'Spam recipe removed and warning logged',
+        }),
+        mockPrisma,
+      );
+      expect(mockPrisma.report.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            actions: [ReportAction.warn, ReportAction.delete_content],
+          }),
+        }),
+      );
+      expect(result.actions).toEqual([
+        ReportAction.warn,
+        ReportAction.delete_content,
+      ]);
+    });
+
+    it('blocks self-reporting for user, own recipe, and own comment', async () => {
+      await expect(
+        service.createReport(42, {
+          subject: ReportSubject.user,
+          target_id: 42,
+          reason: ReportReason.other,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 42,
+        is_active: true,
+      });
+      await expect(
+        service.createReport(42, {
+          subject: ReportSubject.recipe,
+          target_id: 10,
+          reason: ReportReason.spam_scam,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 20,
+        user_id: 42,
+        is_active: true,
+      });
+      await expect(
+        service.createReport(42, {
+          subject: ReportSubject.comment,
+          target_id: 20,
+          reason: ReportReason.harassment_bullying,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws Unauthorized when issuing ban or warn without callerId', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+      });
+
+      await expect(
+        service.updateReport(1, { actions: [ReportAction.warn] }, undefined),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('supports permanent: true property for admin bans', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.hate_speech,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.user.findFirst.mockResolvedValueOnce({
+        id: 42,
+        role: Role.user,
+      });
+      mockPrisma.user.update.mockResolvedValueOnce({
+        id: 42,
+        status: UserStatus.banned,
+      });
+      mockPrisma.recipe.updateMany.mockResolvedValueOnce({ count: 0 });
+      mockPrisma.jwtSession.deleteMany.mockResolvedValueOnce({ count: 0 });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.ban],
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.ban], permanent: true },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 42,
+          action: ReportAction.ban,
+          isPermanent: true,
+          durationDays: null,
+        }),
+        mockPrisma,
+      );
+    });
+
+    it('prunes unread comment notifications when delete_content is applied to a comment report', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.comment,
+        target_id: 77,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.comment.findUnique.mockResolvedValueOnce({
+        id: 77,
+        user_id: 42,
+        user: { id: 42, role: Role.user },
+      });
+      mockPrisma.comment.update.mockResolvedValueOnce({
+        id: 77,
+        is_active: false,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.delete_content],
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.delete_content] },
+        { id: 2, role: Role.moderator },
+      );
+
+      expect(mockPrisma.notification.deleteMany).toHaveBeenCalledWith({
+        where: {
+          subject: NotificationSubject.comment,
+          target_id: 77,
+          is_read: false,
+        },
+      });
+    });
+
+    it('computes previous_bans_count and previous_warnings_count before recording new sanction', async () => {
+      const callOrder: string[] = [];
+      mockBanHistoryService.getPreviousBansCount.mockImplementationOnce(
+        async () => {
+          callOrder.push('getPreviousBansCount');
+          return 1;
+        },
+      );
+      mockBanHistoryService.getPreviousWarningsCount.mockImplementationOnce(
+        async () => {
+          callOrder.push('getPreviousWarningsCount');
+          return 2;
+        },
+      );
+      mockBanHistoryService.recordSanction.mockImplementationOnce(async () => {
+        callOrder.push('recordSanction');
+        return { id: 'sanction-new' };
+      });
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+      });
+      mockPrisma.user.findFirst.mockResolvedValueOnce({
+        id: 42,
+        role: Role.user,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
+      });
+
+      const result = await service.updateReport(
+        1,
+        { actions: [ReportAction.warn] },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(callOrder).toEqual([
+        'getPreviousBansCount',
+        'getPreviousWarningsCount',
+        'recordSanction',
+      ]);
+      expect(result.previous_bans_count).toBe(1);
+      expect(result.previous_warnings_count).toBe(2);
+    });
+
+    it('notifies when re-resolving an action_taken report with warn if warn was not previously applied', async () => {
+      mockNotificationEmit.notification.mockClear();
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.delete_content],
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 42,
+        user: { id: 42, role: Role.user },
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.warn] },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(mockNotificationEmit.notification).toHaveBeenCalledTimes(1);
     });
   });
 });

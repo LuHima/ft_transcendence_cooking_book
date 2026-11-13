@@ -3589,7 +3589,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -3920,7 +3920,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -5227,7 +5227,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -8805,7 +8805,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9290,7 +9290,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -9688,7 +9688,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n  \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/api/media/recipes/42/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/api/media/recipes/42/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -10085,7 +10085,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n  \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/api/media/recipes/42/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/api/media/recipes/42/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -10484,7 +10484,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n  \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/uploads/recipes/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
+              "body": "{\n  \"id\": 42,\n  \"is_active\": true,\n  \"privacy\": \"public\",\n  \"course\": \"first_course\",\n  \"difficulty\": \"medium\",\n  \"prep_time\": 15,\n  \"cook_time\": 10,\n  \"total_time\": 25,\n  \"servings\": 4,\n  \"source_lang\": \"it\",\n  \"translation_status\": \"completed\",\n  \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n  \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n  \"author\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n  },\n  \"title\": \"Spaghetti alla Carbonara\",\n  \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n  \"tags\": [\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"traditional\",\n      \"name\": \"Tradizionale\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"likes_count\": 42,\n  \"comments_count\": 8,\n  \"is_liked\": true,\n  \"resolved_lang\": \"it\",\n  \"available_languages\": [\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    },\n    {\n      \"locale\": \"it\",\n      \"translation_source\": \"author_original\"\n    }\n  ],\n  \"translation_source\": \"author_original\",\n  \"preservation\": \"Si consiglia di consumare al momento. Non congelare.\",\n  \"tips\": \"Utilizzare acqua di cottura per emulsionare i tuorli fuori dal fuoco.\",\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/api/media/recipes/42/step_1_carbonara.webp\"\n    },\n    {\n      \"id\": 1,\n      \"step_number\": 1,\n      \"title\": \"Preparare il guanciale\",\n      \"description\": \"Tagliare il guanciale a listarelle di circa mezzo centimetro di spessore.\",\n      \"duration\": 10,\n      \"image_url\": \"/api/media/recipes/42/step_1_carbonara.webp\"\n    }\n  ],\n  \"ingredients\": [\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 5,\n      \"slug\": \"guanciale\",\n      \"category\": \"meat_poultry\",\n      \"name\": \"Guanciale di Amatrice\",\n      \"quantity\": 200,\n      \"unit\": \"g\",\n      \"notes\": \"tagliato a listarelle spesse\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"media\": [\n    {\n      \"id\": 1,\n      \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    },\n    {\n      \"id\": 1,\n      \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n      \"media_type\": \"image\",\n      \"order\": 0\n    }\n  ]\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -11419,7 +11419,7 @@
           "request": {
             "name": "Upload recipe cover image",
             "description": {
-              "content": "Uploads and sets the primary hero cover photo for the recipe. Replaces any existing cover image.",
+              "content": "Uploads and sets the primary hero cover photo for the recipe. The image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio. Replaces any existing cover image.",
               "type": "text/plain"
             },
             "url": {
@@ -11460,7 +11460,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "description": "(Required) Image file (JPEG, PNG, or WebP; maximum 5MB)"
+                  "description": "(Required) Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)"
                 }
               ]
             }
@@ -11503,7 +11503,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 5MB)",
+                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -11520,7 +11520,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"cover_image_url\": \"/uploads/recipes/recipe_42_cover.webp\"\n}",
+              "body": "{\n  \"cover_image_url\": \"/api/media/recipes/42/recipe_42_cover.webp\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -11561,7 +11561,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 5MB)",
+                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -11619,7 +11619,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 5MB)",
+                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -11677,7 +11677,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 5MB)",
+                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -11735,7 +11735,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 5MB)",
+                        "content": "(Required) Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -12084,7 +12084,7 @@
           "request": {
             "name": "Upload step illustration photo",
             "description": {
-              "content": "Uploads an illustration photo for a specific recipe preparation step (identified by step number).",
+              "content": "Uploads an illustration photo for a specific recipe preparation step (identified by step number). The image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio.",
               "type": "text/plain"
             },
             "url": {
@@ -12134,7 +12134,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "description": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 5MB)"
+                  "description": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)"
                 }
               ]
             }
@@ -12186,7 +12186,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 5MB)",
+                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -12203,7 +12203,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"step_number\": 2,\n  \"image_url\": \"/uploads/recipes/step_2_recipe_42.webp\"\n}",
+              "body": "{\n  \"step_number\": 2,\n  \"image_url\": \"/api/media/recipes/42/step_2_recipe_42.webp\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -12253,7 +12253,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 5MB)",
+                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -12320,7 +12320,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 5MB)",
+                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -12387,7 +12387,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 5MB)",
+                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -12454,7 +12454,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 5MB)",
+                        "content": "(Required) Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -12857,7 +12857,7 @@
           "request": {
             "name": "Upload recipe gallery photos",
             "description": {
-              "content": "Uploads supplementary plating photos to the recipe gallery. Enforces a maximum limit of 3 gallery photos per recipe.",
+              "content": "Uploads supplementary plating photos to the recipe gallery. Enforces a maximum limit of 3 gallery photos per recipe. Each image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio.",
               "type": "text/plain"
             },
             "url": {
@@ -12899,7 +12899,7 @@
                   "key": "files",
                   "value": "[\"string\",\"string\"]",
                   "type": "text",
-                  "description": "(Required) Gallery photos (up to 3 files total, max 5MB each)"
+                  "description": "(Required) Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)"
                 }
               ]
             }
@@ -12942,7 +12942,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Gallery photos (up to 3 files total, max 5MB each)",
+                        "content": "(Required) Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "files",
@@ -12960,7 +12960,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": 1,\n    \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n    \"media_type\": \"image\",\n    \"order\": 0\n  },\n  {\n    \"id\": 1,\n    \"url\": \"/uploads/recipes/gallery_1_carbonara.webp\",\n    \"media_type\": \"image\",\n    \"order\": 0\n  }\n]",
+              "body": "[\n  {\n    \"id\": 1,\n    \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n    \"media_type\": \"image\",\n    \"order\": 0\n  },\n  {\n    \"id\": 1,\n    \"url\": \"/api/media/recipes/42/gallery_1_carbonara.webp\",\n    \"media_type\": \"image\",\n    \"order\": 0\n  }\n]",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -13001,7 +13001,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Gallery photos (up to 3 files total, max 5MB each)",
+                        "content": "(Required) Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "files",
@@ -13060,7 +13060,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Gallery photos (up to 3 files total, max 5MB each)",
+                        "content": "(Required) Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "files",
@@ -13119,7 +13119,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Gallery photos (up to 3 files total, max 5MB each)",
+                        "content": "(Required) Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "files",
@@ -13178,7 +13178,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Gallery photos (up to 3 files total, max 5MB each)",
+                        "content": "(Required) Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)",
                         "type": "text/plain"
                       },
                       "key": "files",
@@ -13237,7 +13237,7 @@
           "request": {
             "name": "Upload recipe tutorial video",
             "description": {
-              "content": "Uploads a single demonstration video for the recipe. Replaces any existing tutorial video.",
+              "content": "Uploads a single demonstration video for the recipe and synchronously compresses it via FFmpeg into a streaming-optimized MP4 (H.264/AAC, CRF 27, max 1920x1080 horizontal / 1080x1920 vertical without upscaling, +faststart). Replaces any existing tutorial video.",
               "type": "text/plain"
             },
             "url": {
@@ -13278,7 +13278,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "description": "(Required) Video file (MP4 or WebM format, max 100MB)"
+                  "description": "(Required) Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)"
                 }
               ]
             }
@@ -13321,7 +13321,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Video file (MP4 or WebM format, max 100MB)",
+                        "content": "(Required) Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -13338,7 +13338,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"video_url\": \"/uploads/recipes/recipe_42_video.mp4\"\n}",
+              "body": "{\n  \"video_url\": \"/api/media/recipes/42/recipe_42_video.mp4\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -13379,7 +13379,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Video file (MP4 or WebM format, max 100MB)",
+                        "content": "(Required) Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -13437,7 +13437,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Video file (MP4 or WebM format, max 100MB)",
+                        "content": "(Required) Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -13495,7 +13495,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Video file (MP4 or WebM format, max 100MB)",
+                        "content": "(Required) Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -13553,7 +13553,7 @@
                   "formdata": [
                     {
                       "description": {
-                        "content": "(Required) Video file (MP4 or WebM format, max 100MB)",
+                        "content": "(Required) Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)",
                         "type": "text/plain"
                       },
                       "key": "file",
@@ -14935,7 +14935,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"recipe_id\": 42,\n  \"user_id\": 10,\n  \"parent_id\": null,\n  \"content\": \"Ottima ricetta!\",\n  \"is_active\": true,\n  \"is_edited\": false,\n  \"created_at\": \"2026-10-13T10:00:00.000Z\",\n  \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  }\n}",
+              "body": "{\n  \"id\": 1,\n  \"recipe_id\": 42,\n  \"user_id\": 10,\n  \"parent_id\": null,\n  \"content\": \"Ottima ricetta!\",\n  \"is_active\": true,\n  \"is_edited\": false,\n  \"created_at\": \"2026-10-13T10:00:00.000Z\",\n  \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n  }\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -15319,7 +15319,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"replies_count\": 7,\n      \"has_more_replies\": true,\n      \"replies\": [\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        },\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"replies_count\": 7,\n      \"has_more_replies\": true,\n      \"replies\": [\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        },\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      ]\n    }\n  ],\n  \"total\": 15,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"replies_count\": 7,\n      \"has_more_replies\": true,\n      \"replies\": [\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        },\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"replies_count\": 7,\n      \"has_more_replies\": true,\n      \"replies\": [\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        },\n        {\n          \"id\": 1,\n          \"recipe_id\": 42,\n          \"user_id\": 10,\n          \"parent_id\": null,\n          \"content\": \"Ottima ricetta!\",\n          \"is_active\": true,\n          \"is_edited\": false,\n          \"created_at\": \"2026-10-13T10:00:00.000Z\",\n          \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n          \"user\": {\n            \"id\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"username\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            },\n            \"avatar_url\": {\n              \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n            }\n          }\n        }\n      ]\n    }\n  ],\n  \"total\": 15,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -15690,7 +15690,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -16550,7 +16550,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"recipe_id\": 42,\n  \"user_id\": 10,\n  \"parent_id\": null,\n  \"content\": \"Ottima ricetta!\",\n  \"is_active\": true,\n  \"is_edited\": false,\n  \"created_at\": \"2026-10-13T10:00:00.000Z\",\n  \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n  }\n}",
+              "body": "{\n  \"id\": 1,\n  \"recipe_id\": 42,\n  \"user_id\": 10,\n  \"parent_id\": null,\n  \"content\": \"Ottima ricetta!\",\n  \"is_active\": true,\n  \"is_edited\": false,\n  \"created_at\": \"2026-10-13T10:00:00.000Z\",\n  \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"chef_mario\",\n    \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n  }\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -18514,7 +18514,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\"\n    },\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\"\n    }\n  ],\n  \"total\": 10,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false,\n  \"unread_count\": 4\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\",\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"details\": \"Your recipe contained offensive language.\"\n    },\n    {\n      \"id\": 1,\n      \"user_id\": 2,\n      \"subject\": \"recipe\",\n      \"action\": \"like\",\n      \"target\": {\n        \"id\": 42,\n        \"subject\": \"recipe\",\n        \"title_or_snippet\": \"Lasagna alla Bolognese\",\n        \"recipe_id\": 42\n      },\n      \"message\": \"Mario ha messo 'Mi piace' alla tua ricetta 'Lasagna alla Bolognese'\",\n      \"is_read\": false,\n      \"created_at\": \"2026-10-28T12:00:00.000Z\",\n      \"actor\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"details\": \"Your recipe contained offensive language.\"\n    }\n  ],\n  \"total\": 10,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false,\n  \"unread_count\": 4\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21155,7 +21155,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"resolution_reason\": \"spam_scam\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"violence_threats\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21430,21 +21430,21 @@
                 },
                 {
                   "disabled": false,
+                  "key": "lang",
+                  "value": "it",
+                  "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted."
+                },
+                {
+                  "disabled": false,
                   "key": "status",
-                  "value": "pending",
+                  "value": "dismissed",
                   "description": "Filter reports by current review status"
                 },
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "comment",
+                  "value": "user",
                   "description": "Filter reports by target entity type"
-                },
-                {
-                  "disabled": false,
-                  "key": "lang",
-                  "value": "it",
-                  "description": "Preferred language locale for recipe label localization"
                 }
               ],
               "variable": []
@@ -21480,16 +21480,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21511,7 +21511,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"resolution_reason\": \"hate_speech\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"resolution_reason\": \"other\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"violence_threats\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"copyright_infringement\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21537,16 +21537,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21594,16 +21594,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21651,16 +21651,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21708,16 +21708,16 @@
                       "value": "20"
                     },
                     {
+                      "key": "lang",
+                      "value": "it"
+                    },
+                    {
                       "key": "status",
                       "value": "<string>"
                     },
                     {
                       "key": "subject",
                       "value": "<string>"
-                    },
-                    {
-                      "key": "lang",
-                      "value": "it"
                     }
                   ],
                   "variable": []
@@ -21804,7 +21804,7 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+              "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -21846,7 +21846,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -21862,7 +21862,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21899,7 +21899,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -21952,7 +21952,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22005,7 +22005,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22058,7 +22058,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22111,7 +22111,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"resolution\": \"delete_content\",\n  \"action\": \"delete_content\"\n}",
+                  "raw": "{\n  \"status\": \"action_taken\",\n  \"actions\": [\n    \"delete_content\",\n    \"ban\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": \"Your content was removed for violating community safety policies.\",\n  \"resolution_notes\": \"Content reviewed and removed; user account banned.\",\n  \"ban_duration_days\": 30,\n  \"permanent\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -22296,7 +22296,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0\n    },\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0\n    },\n    {\n      \"id\": 1,\n      \"username\": \"mario_rossi\",\n      \"email\": \"mario.rossi@example.com\",\n      \"role\": \"admin\",\n      \"status\": \"active\",\n      \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n      \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n      \"first_name\": \"Mario\",\n      \"last_name\": \"Rossi\",\n      \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n      \"phone\": \"+39 06 1234567\",\n      \"address\": \"Via Roma 1\",\n      \"city\": \"Roma\",\n      \"postal_code\": \"00100\",\n      \"recipes_count\": 5,\n      \"created_at\": \"2026-10-01T12:00:00.000Z\",\n      \"deleted_at\": null,\n      \"banned_until\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22614,7 +22614,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22900,7 +22900,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"user_id\": 42,\n    \"banned_by_id\": 1,\n    \"reason\": \"harassment_bullying\",\n    \"is_permanent\": false,\n    \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n    \"report_id\": 10,\n    \"description\": \"Harassment in recipe comments\",\n    \"duration_days\": 30,\n    \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n    \"unbanned_at\": null,\n    \"unbanned_by_id\": null,\n    \"unban_reason\": null\n  },\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"user_id\": 42,\n    \"banned_by_id\": 1,\n    \"reason\": \"harassment_bullying\",\n    \"is_permanent\": false,\n    \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n    \"report_id\": 10,\n    \"description\": \"Harassment in recipe comments\",\n    \"duration_days\": 30,\n    \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n    \"unbanned_at\": null,\n    \"unbanned_by_id\": null,\n    \"unban_reason\": null\n  }\n]",
+              "body": "[\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"user_id\": 42,\n    \"banned_by_id\": 1,\n    \"action\": \"ban\",\n    \"reason\": \"harassment_bullying\",\n    \"is_permanent\": false,\n    \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n    \"report_id\": 10,\n    \"description\": \"Harassment in recipe comments\",\n    \"duration_days\": 30,\n    \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n    \"unbanned_at\": null,\n    \"unbanned_by_id\": null,\n    \"unban_reason\": null\n  },\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"user_id\": 42,\n    \"banned_by_id\": 1,\n    \"action\": \"ban\",\n    \"reason\": \"harassment_bullying\",\n    \"is_permanent\": false,\n    \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n    \"report_id\": 10,\n    \"description\": \"Harassment in recipe comments\",\n    \"duration_days\": 30,\n    \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n    \"unbanned_at\": null,\n    \"unbanned_by_id\": null,\n    \"unban_reason\": null\n  }\n]",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -23145,7 +23145,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -23408,7 +23408,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Italian chef passionate about sourdough and pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1990-01-01T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 1\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"recipes_count\": 5,\n  \"created_at\": \"2026-10-01T12:00:00.000Z\",\n  \"deleted_at\": null,\n  \"banned_until\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -24794,11 +24794,6 @@
                   "key": "lang",
                   "value": "it",
                   "description": "Preferred language locale for recipe title hydration"
-                },
-                {
-                  "disabled": false,
-                  "key": "_sort_by",
-                  "value": "created_at"
                 }
               ],
               "variable": []
@@ -24877,10 +24872,6 @@
                     {
                       "key": "lang",
                       "value": "it"
-                    },
-                    {
-                      "key": "_sort_by",
-                      "value": "created_at"
                     }
                   ],
                   "variable": []
@@ -24902,7 +24893,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -24971,10 +24962,6 @@
                     {
                       "key": "lang",
                       "value": "it"
-                    },
-                    {
-                      "key": "_sort_by",
-                      "value": "created_at"
                     }
                   ],
                   "variable": []
@@ -25065,10 +25052,6 @@
                     {
                       "key": "lang",
                       "value": "it"
-                    },
-                    {
-                      "key": "_sort_by",
-                      "value": "created_at"
                     }
                   ],
                   "variable": []
@@ -25159,10 +25142,6 @@
                     {
                       "key": "lang",
                       "value": "it"
-                    },
-                    {
-                      "key": "_sort_by",
-                      "value": "created_at"
                     }
                   ],
                   "variable": []
@@ -25546,7 +25525,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/uploads/recipes/carbonara_cover.webp\",\n      \"video_url\": \"/uploads/recipes/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/uploads/avatars/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -25987,8 +25966,8 @@
       "event": []
     },
     {
-      "id": "e3b9ce8a-ef95-410d-8603-bb068c78b45a",
-      "name": "Admin Catalog",
+      "id": "5522ba4e-39af-4a45-84f3-f47f2585d7de",
+      "name": "Administrative Catalog Management",
       "description": {
         "content": "",
         "type": "text/plain"

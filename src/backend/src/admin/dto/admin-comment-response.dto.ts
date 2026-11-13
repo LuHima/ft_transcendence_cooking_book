@@ -79,7 +79,7 @@ export class AdminCommentItemDto {
 
   @ApiProperty({
     description:
-      'Total number of moderation reports filed against this comment',
+      'Number of active pending moderation reports filed against this comment',
     example: 3,
   })
   reports_count: number;

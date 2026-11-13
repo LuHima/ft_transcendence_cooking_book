@@ -2703,7 +2703,7 @@
     },
     "/api/recipes/{id}/cover": {
       "post": {
-        "description": "Uploads and sets the primary hero cover photo for the recipe. Replaces any existing cover image.",
+        "description": "Uploads and sets the primary hero cover photo for the recipe. The image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio. Replaces any existing cover image.",
         "operationId": "RecipeController_uploadCoverImage",
         "parameters": [
           {
@@ -2727,7 +2727,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Image file (JPEG, PNG, or WebP; maximum 5MB)"
+                    "description": "Image file (JPEG, PNG, or WebP; maximum 10MB; transcoded to WebP)"
                   }
                 },
                 "required": [
@@ -2879,7 +2879,7 @@
     },
     "/api/recipes/{id}/steps/{stepNumber}/image": {
       "post": {
-        "description": "Uploads an illustration photo for a specific recipe preparation step (identified by step number).",
+        "description": "Uploads an illustration photo for a specific recipe preparation step (identified by step number). The image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio.",
         "operationId": "RecipeController_uploadStepImage",
         "parameters": [
           {
@@ -2913,7 +2913,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Step illustration photo (JPEG, PNG, or WebP; max 5MB)"
+                    "description": "Step illustration photo (JPEG, PNG, or WebP; max 10MB; transcoded to WebP)"
                   }
                 },
                 "required": [
@@ -3075,7 +3075,7 @@
     },
     "/api/recipes/{id}/gallery": {
       "post": {
-        "description": "Uploads supplementary plating photos to the recipe gallery. Enforces a maximum limit of 3 gallery photos per recipe.",
+        "description": "Uploads supplementary plating photos to the recipe gallery. Enforces a maximum limit of 3 gallery photos per recipe. Each image is automatically transcoded to WebP (quality 80), EXIF metadata is stripped, and dimensions exceeding 1920x1080 are downscaled preserving aspect ratio.",
         "operationId": "RecipeController_uploadGalleryMedia",
         "parameters": [
           {
@@ -3102,7 +3102,7 @@
                       "type": "string",
                       "format": "binary"
                     },
-                    "description": "Gallery photos (up to 3 files total, max 5MB each)"
+                    "description": "Gallery photos (up to 3 files total, max 10MB each; transcoded to WebP)"
                   }
                 },
                 "required": [
@@ -3180,7 +3180,7 @@
     },
     "/api/recipes/{id}/video": {
       "post": {
-        "description": "Uploads a single demonstration video for the recipe. Replaces any existing tutorial video.",
+        "description": "Uploads a single demonstration video for the recipe and synchronously compresses it via FFmpeg into a streaming-optimized MP4 (H.264/AAC, CRF 27, max 1920x1080 horizontal / 1080x1920 vertical without upscaling, +faststart). Replaces any existing tutorial video.",
         "operationId": "RecipeController_uploadVideo",
         "parameters": [
           {
@@ -3204,7 +3204,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Video file (MP4 or WebM format, max 100MB)"
+                    "description": "Video file (MP4, WebM, or MOV format, max 50MB; compressed to optimized MP4)"
                   }
                 },
                 "required": [
@@ -4911,6 +4911,21 @@
             }
           },
           {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
+          },
+          {
             "name": "status",
             "required": false,
             "in": "query",
@@ -4926,21 +4941,6 @@
             "description": "Filter reports by target entity type",
             "schema": {
               "$ref": "#/components/schemas/ReportSubject"
-            }
-          },
-          {
-            "name": "lang",
-            "required": false,
-            "in": "query",
-            "description": "Preferred language locale for recipe label localization",
-            "schema": {
-              "example": "it",
-              "type": "string",
-              "enum": [
-                "it",
-                "en",
-                "fr"
-              ]
             }
           }
         ],
@@ -6040,7 +6040,7 @@
     "/api/admin/users/{id}/ban-history": {
       "get": {
         "description": "Returns chronological sanction audit records for repeat offender investigation.",
-        "operationId": "AdminController_getUserBanHistory",
+        "operationId": "AdminController_getUserSanctionsHistory",
         "parameters": [
           {
             "name": "id",
@@ -6719,19 +6719,6 @@
               "example": "it",
               "type": "string"
             }
-          },
-          {
-            "name": "_sort_by",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "created_at",
-                "recipe",
-                "reports_count"
-              ]
-            }
           }
         ],
         "responses": {
@@ -7216,7 +7203,7 @@
         ],
         "summary": "Get curated ingredient detail by ID (admin)",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "patch": {
@@ -7306,7 +7293,7 @@
         ],
         "summary": "Update a curated ingredient",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "delete": {
@@ -7379,7 +7366,7 @@
         ],
         "summary": "Delete a curated ingredient",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -7451,7 +7438,7 @@
         ],
         "summary": "Get curated tag detail by ID (admin)",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "patch": {
@@ -7541,7 +7528,7 @@
         ],
         "summary": "Update a curated tag",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       },
       "delete": {
@@ -7614,7 +7601,7 @@
         ],
         "summary": "Delete a curated tag",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -7695,7 +7682,7 @@
         ],
         "summary": "Create a curated ingredient",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -7776,7 +7763,7 @@
         ],
         "summary": "Create a curated tag",
         "tags": [
-          "Admin Catalog"
+          "Administrative Catalog Management"
         ]
       }
     },
@@ -8863,7 +8850,7 @@
           "avatar_url": {
             "type": "string",
             "description": "Author avatar photo URL",
-            "example": "/uploads/avatars/chef_mario.webp",
+            "example": "/api/media/avatars/1/chef_mario.webp",
             "nullable": true
           }
         },
@@ -8993,13 +8980,13 @@
           "cover_image_url": {
             "type": "string",
             "description": "Recipe cover image URL",
-            "example": "/uploads/recipes/carbonara_cover.webp",
+            "example": "/api/media/recipes/42/carbonara_cover.webp",
             "nullable": true
           },
           "video_url": {
             "type": "string",
             "description": "Tutorial demonstration video URL",
-            "example": "/uploads/recipes/carbonara_tutorial.mp4",
+            "example": "/api/media/recipes/42/carbonara_tutorial.mp4",
             "nullable": true
           },
           "created_at": {
@@ -9768,8 +9755,8 @@
           },
           "image_url": {
             "type": "string",
-            "description": "Static URL path to step illustration photo",
-            "example": "/uploads/recipes/step_1_carbonara.webp",
+            "description": "Canonical API URL path to step illustration photo",
+            "example": "/api/media/recipes/42/step_1_carbonara.webp",
             "nullable": true
           }
         },
@@ -9879,8 +9866,8 @@
           },
           "url": {
             "type": "string",
-            "description": "Static URL path to media file",
-            "example": "/uploads/recipes/gallery_1_carbonara.webp"
+            "description": "Canonical API URL path to media file",
+            "example": "/api/media/recipes/42/gallery_1_carbonara.webp"
           },
           "media_type": {
             "type": "string",
@@ -9988,13 +9975,13 @@
           "cover_image_url": {
             "type": "string",
             "description": "Recipe cover image URL",
-            "example": "/uploads/recipes/carbonara_cover.webp",
+            "example": "/api/media/recipes/42/carbonara_cover.webp",
             "nullable": true
           },
           "video_url": {
             "type": "string",
             "description": "Tutorial demonstration video URL",
-            "example": "/uploads/recipes/carbonara_tutorial.mp4",
+            "example": "/api/media/recipes/42/carbonara_tutorial.mp4",
             "nullable": true
           },
           "created_at": {
@@ -10512,8 +10499,8 @@
         "properties": {
           "cover_image_url": {
             "type": "string",
-            "description": "Static URL path to uploaded recipe cover image",
-            "example": "/uploads/recipes/recipe_42_cover.webp"
+            "description": "Canonical API URL path to uploaded recipe cover image",
+            "example": "/api/media/recipes/42/recipe_42_cover.webp"
           }
         },
         "required": [
@@ -10530,8 +10517,8 @@
           },
           "image_url": {
             "type": "string",
-            "description": "Static URL path to uploaded step illustration photo",
-            "example": "/uploads/recipes/step_2_recipe_42.webp"
+            "description": "Canonical API URL path to uploaded step illustration photo",
+            "example": "/api/media/recipes/42/step_2_recipe_42.webp"
           }
         },
         "required": [
@@ -10544,8 +10531,8 @@
         "properties": {
           "video_url": {
             "type": "string",
-            "description": "Static URL path to uploaded tutorial demonstration video",
-            "example": "/uploads/recipes/recipe_42_video.mp4"
+            "description": "Canonical API URL path to uploaded tutorial demonstration video",
+            "example": "/api/media/recipes/42/recipe_42_video.mp4"
           }
         },
         "required": [
@@ -11057,7 +11044,9 @@
             "example": 2
           },
           "actor": {
-            "description": "Actor profile card who triggered the notification",
+            "nullable": true,
+            "description": "Actor profile card who triggered the notification (null for anonymous staff/moderation notices)",
+            "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/NotificationActorDto"
@@ -11123,7 +11112,6 @@
         "required": [
           "id",
           "user_id",
-          "actor",
           "subject",
           "action",
           "target",
@@ -11411,6 +11399,23 @@
               }
             ]
           },
+          "actions": {
+            "type": "array",
+            "description": "Executed moderation actions array",
+            "example": [
+              "warn"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "delete_content",
+                "ban",
+                "warn",
+                "dismiss"
+              ]
+            },
+            "default": []
+          },
           "resolution_notes": {
             "type": "string",
             "nullable": true,
@@ -11437,6 +11442,12 @@
             "type": "number",
             "nullable": true,
             "description": "Previous sanctions count for recidivism tracking",
+            "example": 0
+          },
+          "previous_warnings_count": {
+            "type": "number",
+            "nullable": true,
+            "description": "Previous warnings count for recidivism tracking",
             "example": 0
           },
           "resolved_by_id": {
@@ -11542,12 +11553,12 @@
             ]
           },
           "actions": {
+            "type": "array",
             "description": "Composite moderation actions (delete_content, ban, warn, dismiss)",
             "example": [
               "delete_content",
               "ban"
             ],
-            "type": "array",
             "items": {
               "type": "string",
               "enum": [
@@ -11585,32 +11596,11 @@
             "example": 30,
             "minimum": 1
           },
-          "is_permanent": {
+          "permanent": {
             "type": "boolean",
-            "description": "Permanent ban flag (restricted to administrators, rejected for moderators)",
-            "example": false
-          },
-          "resolution": {
-            "type": "string",
-            "description": "Specific moderation action executed when resolving the report with action_taken (delete_content, ban, warn, dismiss)",
-            "example": "delete_content",
-            "enum": [
-              "delete_content",
-              "ban",
-              "warn",
-              "dismiss"
-            ]
-          },
-          "action": {
-            "type": "string",
-            "description": "Alternative alias for resolution action (delete_content, ban, warn, dismiss)",
-            "example": "delete_content",
-            "enum": [
-              "delete_content",
-              "ban",
-              "warn",
-              "dismiss"
-            ]
+            "description": "Permanent ban flag (default false; restricted to administrators, rejected for moderators)",
+            "example": false,
+            "default": false
           }
         }
       },
@@ -11846,7 +11836,12 @@
           },
           "previous_bans_count": {
             "type": "number",
-            "description": "Total number of prior sanctions/bans recorded for this user",
+            "description": "Total number of prior bans recorded for this user",
+            "example": 0
+          },
+          "previous_warnings_count": {
+            "type": "number",
+            "description": "Total number of prior warnings recorded for this user",
             "example": 0
           },
           "deleted_at": {
@@ -11928,6 +11923,16 @@
           "has_prev_page"
         ]
       },
+      "ReportAction": {
+        "type": "string",
+        "enum": [
+          "delete_content",
+          "ban",
+          "warn",
+          "dismiss"
+        ],
+        "description": "Sanction type (ban or warn)"
+      },
       "BanHistoryItemDto": {
         "type": "object",
         "properties": {
@@ -11951,6 +11956,16 @@
             "nullable": true,
             "description": "Originating report ID if ban was issued via report resolution",
             "example": 10
+          },
+          "action": {
+            "description": "Sanction type (ban or warn)",
+            "example": "ban",
+            "default": "ban",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportAction"
+              }
+            ]
           },
           "reason": {
             "description": "Policy violation reason",
@@ -12015,6 +12030,7 @@
           "id",
           "user_id",
           "banned_by_id",
+          "action",
           "reason",
           "is_permanent",
           "banned_at"
@@ -12324,7 +12340,7 @@
           },
           "reports_count": {
             "type": "number",
-            "description": "Total number of moderation reports filed against this comment",
+            "description": "Number of active pending moderation reports filed against this comment",
             "example": 3
           },
           "pending_reports_count": {
@@ -12430,7 +12446,7 @@
           },
           "reports_count": {
             "type": "number",
-            "description": "Total number of moderation reports filed against this comment",
+            "description": "Number of active pending moderation reports filed against this comment",
             "example": 3
           },
           "pending_reports_count": {

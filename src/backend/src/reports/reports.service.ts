@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   ConflictException,
@@ -6,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
+import { RecipeProjection } from '../recipe/recipe.projection';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto, ReportAction } from './dto/update-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
@@ -15,6 +17,7 @@ import {
 } from './dto/report-response.dto';
 import {
   NotificationAction,
+  NotificationSubject,
   Prisma,
   ReportReason,
   ReportStatus,
@@ -29,6 +32,7 @@ import {
   getDefaultBanDuration,
   MAX_MODERATOR_BAN_DAYS,
 } from './constants/ban-duration-policy.constant';
+import { validateReportActions } from './helpers/report-actions.validator';
 
 @Injectable()
 export class ReportsService {
@@ -39,6 +43,7 @@ export class ReportsService {
     private readonly recipeService: RecipeService,
     private readonly banHistoryService: BanHistoryService,
     private readonly notificationEmit: NotificationEmit,
+    private readonly recipeProjection: RecipeProjection,
   ) {}
 
   /**
@@ -48,24 +53,33 @@ export class ReportsService {
     reporterId: number,
     dto: CreateReportDto,
   ): Promise<ReportItemDto> {
-    // 1. Verify that target resource exists
+    // 1. Verify that target resource exists and is not owned by the reporter
     if (dto.subject === ReportSubject.recipe) {
       const recipe = await this.prisma.recipe.findUnique({
         where: { id: dto.target_id },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       if (!recipe) {
         throw new NotFoundException('Target item not found');
       }
+      if (recipe.user_id === reporterId) {
+        throw new BadRequestException('You cannot report your own recipe');
+      }
     } else if (dto.subject === ReportSubject.comment) {
       const comment = await this.prisma.comment.findUnique({
         where: { id: dto.target_id },
-        select: { id: true },
+        select: { id: true, user_id: true },
       });
       if (!comment) {
         throw new NotFoundException('Target item not found');
       }
+      if (comment.user_id === reporterId) {
+        throw new BadRequestException('You cannot report your own comment');
+      }
     } else if (dto.subject === ReportSubject.user) {
+      if (dto.target_id === reporterId) {
+        throw new BadRequestException('You cannot report yourself');
+      }
       const user = await this.prisma.user.findFirst({
         where: { id: dto.target_id, deleted_at: null },
         select: { id: true },
@@ -103,7 +117,9 @@ export class ReportsService {
 
     return {
       ...created,
+      actions: created.actions ?? [],
       previous_bans_count: 0,
+      previous_warnings_count: 0,
     };
   }
 
@@ -248,21 +264,38 @@ export class ReportsService {
       ),
     );
 
-    const banCountsMap = new Map<number, number>();
+    const sanctionCountsMap = new Map<
+      number,
+      { bans: number; warnings: number }
+    >();
+    let ranBanBatch = false;
     if (allTargetUserIds.length > 0 && this.prisma.banHistory?.groupBy) {
       try {
-        const banGroups = await this.prisma.banHistory.groupBy({
-          by: ['user_id'],
+        const sanctionGroups = await this.prisma.banHistory.groupBy({
+          by: ['user_id', 'action'],
           _count: { id: true },
           where: { user_id: { in: allTargetUserIds } },
         });
-        if (Array.isArray(banGroups)) {
-          for (const bg of banGroups as any[]) {
+        if (Array.isArray(sanctionGroups)) {
+          ranBanBatch = true;
+          for (const uid of allTargetUserIds) {
+            sanctionCountsMap.set(uid, { bans: 0, warnings: 0 });
+          }
+          for (const bg of sanctionGroups as any[]) {
             const cnt =
               typeof bg._count === 'number'
                 ? bg._count
                 : (bg._count?.id ?? 0);
-            banCountsMap.set(bg.user_id, cnt);
+            const entry = sanctionCountsMap.get(bg.user_id) ?? {
+              bans: 0,
+              warnings: 0,
+            };
+            if (bg.action === ReportAction.warn) {
+              entry.warnings = cnt;
+            } else {
+              entry.bans = cnt;
+            }
+            sanctionCountsMap.set(bg.user_id, entry);
           }
         }
       } catch {
@@ -309,31 +342,14 @@ export class ReportsService {
           const r = targetRecipeMap.get(report.target_id);
           targetUserId = r?.user_id ?? r?.user?.id ?? null;
 
-          // 4-tier localization fallback:
-          // 1. Translation matching query.lang
-          // 2. Author's declared source_lang
-          // 3. English fallback ('en')
-          // 4. First available translation, or 'Recipe #{id}'
-          let title: string | undefined;
-          if (query?.lang) {
-            title = r?.translations?.find(
-              (t) => t.locale === query.lang,
-            )?.title;
-          }
-          if (!title && r?.source_lang) {
-            title = r?.translations?.find(
-              (t) => t.locale === r.source_lang,
-            )?.title;
-          }
-          if (!title) {
-            title = r?.translations?.find((t) => t.locale === 'en')?.title;
-          }
-          if (!title) {
-            title = r?.translations?.[0]?.title;
-          }
-          if (!title) {
-            title = `Recipe #${report.target_id}`;
-          }
+          const resolvedTrans = r?.translations
+            ? this.recipeProjection.resolveTranslation(
+                r.translations,
+                query?.lang ?? '',
+                r.source_lang,
+              )
+            : undefined;
+          const title = resolvedTrans?.title || `Recipe #${report.target_id}`;
 
           target = {
             label: title,
@@ -362,21 +378,34 @@ export class ReportsService {
           };
         }
 
-        let count =
-          targetUserId !== null ? banCountsMap.get(targetUserId) : 0;
-        if (
-          count === undefined &&
-          targetUserId !== null &&
-          this.banHistoryService?.getPreviousBansCount
-        ) {
-          count = await this.banHistoryService.getPreviousBansCount(targetUserId);
+        let banCount = 0;
+        let warningCount = 0;
+        if (targetUserId !== null) {
+          if (ranBanBatch) {
+            const counts = sanctionCountsMap.get(targetUserId);
+            banCount = counts?.bans ?? 0;
+            warningCount = counts?.warnings ?? 0;
+          } else {
+            if (this.banHistoryService?.getPreviousBansCount) {
+              banCount =
+                await this.banHistoryService.getPreviousBansCount(targetUserId);
+            }
+            if (this.banHistoryService?.getPreviousWarningsCount) {
+              warningCount =
+                await this.banHistoryService.getPreviousWarningsCount(
+                  targetUserId,
+                );
+            }
+          }
         }
 
         return {
           ...report,
+          actions: report.actions ?? [],
           reporter,
           target,
-          previous_bans_count: count ?? 0,
+          previous_bans_count: banCount,
+          previous_warnings_count: warningCount,
         };
       }),
     );
@@ -414,16 +443,7 @@ export class ReportsService {
     const callerRole = typeof caller === 'object' ? caller.role : undefined;
     const callerId = typeof caller === 'number' ? caller : caller?.id;
 
-    // Normalize resolution actions: supports actions array as well as legacy resolution/action string
-    let actions: ReportAction[] = [];
-    if (dto.actions && dto.actions.length > 0) {
-      actions = [...dto.actions];
-    } else if (dto.resolution || dto.action) {
-      const legacy = (dto.resolution || dto.action) as ReportAction;
-      if (Object.values(ReportAction).includes(legacy)) {
-        actions = [legacy];
-      }
-    }
+    const actions: ReportAction[] = [...(dto.actions ?? [])];
 
     // Automatically resolve status if not explicitly passed
     let targetStatus = dto.status;
@@ -437,15 +457,37 @@ export class ReportsService {
       }
     }
 
+    const actionValidation = validateReportActions(actions, targetStatus);
+    if (!actionValidation.valid) {
+      throw createHttpException(
+        errors.common.badRequest,
+        actionValidation.message,
+      );
+    }
+
+    if (
+      (actions.includes(ReportAction.ban) ||
+        actions.includes(ReportAction.warn)) &&
+      !callerId
+    ) {
+      throw createHttpException(
+        errors.common.unauthorized,
+        'Authenticated staff user ID is required to issue sanctions',
+      );
+    }
+
     const effectiveReason = dto.resolution_reason ?? report.reason;
 
     const result = await this.prisma.$transaction(async (tx) => {
       let resolvedTargetUserId: number | null = null;
+      let previousBansCount = 0;
+      let previousWarningsCount = 0;
 
       // Handle actions that require target author / content resolution
       if (
         actions.includes(ReportAction.delete_content) ||
-        actions.includes(ReportAction.ban)
+        actions.includes(ReportAction.ban) ||
+        actions.includes(ReportAction.warn)
       ) {
         let targetAuthorRole: Role | undefined;
 
@@ -481,8 +523,14 @@ export class ReportsService {
           targetAuthorRole = user.role;
         }
 
-        // Role hierarchy safeguard: Moderator cannot moderate or ban Administrator
+        // Role hierarchy safeguard: Moderator cannot moderate, delete content, ban, or warn Administrator
         if (callerRole === Role.moderator && targetAuthorRole === Role.admin) {
+          if (actions.includes(ReportAction.warn)) {
+            throw createHttpException(
+              errors.common.forbidden,
+              'Moderators cannot moderate or warn administrators',
+            );
+          }
           if (actions.includes(ReportAction.delete_content)) {
             throw createHttpException(
               errors.common.forbidden,
@@ -493,6 +541,41 @@ export class ReportsService {
             throw createHttpException(
               errors.moderation.cannotBanAdmin,
               'Moderators cannot moderate or ban administrator',
+            );
+          }
+        }
+
+        // Compute prior sanction counts before recording any new sanction
+        previousBansCount = resolvedTargetUserId
+          ? await this.banHistoryService.getPreviousBansCount(
+              resolvedTargetUserId,
+              tx,
+            )
+          : 0;
+        previousWarningsCount = resolvedTargetUserId
+          ? await this.banHistoryService.getPreviousWarningsCount(
+              resolvedTargetUserId,
+              tx,
+            )
+          : 0;
+
+        // Warning Action
+        if (actions.includes(ReportAction.warn)) {
+          if (resolvedTargetUserId) {
+            await this.banHistoryService.recordSanction(
+              {
+                userId: resolvedTargetUserId,
+                bannedById: callerId!,
+                reason: effectiveReason,
+                action: ReportAction.warn,
+                description: dto.resolution_description?.trim() || null,
+                reportId: report.id,
+              },
+              tx,
+            );
+
+            this.logger.log(
+              `Audit: Report #${reportId} resolved with warning for user #${resolvedTargetUserId} by staff #${callerId ?? 0}.`,
             );
           }
         }
@@ -512,6 +595,13 @@ export class ReportsService {
               where: { id: report.target_id },
               data: { is_active: false },
             });
+            await tx.notification.deleteMany({
+              where: {
+                subject: NotificationSubject.comment,
+                target_id: report.target_id,
+                is_read: false,
+              },
+            });
             this.logger.log(
               `Audit: Report #${reportId} resolved with delete_content. Comment #${report.target_id} deactivated.`,
             );
@@ -520,7 +610,7 @@ export class ReportsService {
 
         // Account Ban Action
         if (actions.includes(ReportAction.ban)) {
-          const isPermanent = Boolean(dto.is_permanent);
+          const isPermanent = Boolean(dto.permanent);
 
           // Moderator Cap Enforcement: maximum 180 days, no permanent bans
           if (callerRole === Role.moderator) {
@@ -573,11 +663,12 @@ export class ReportsService {
             });
 
             // Record in immutable BanHistory ledger
-            await this.banHistoryService.recordBan(
+            await this.banHistoryService.recordSanction(
               {
                 userId: resolvedTargetUserId,
-                bannedById: callerId ?? 0,
+                bannedById: callerId!,
                 reason: effectiveReason,
+                action: ReportAction.ban,
                 description: dto.resolution_description ?? null,
                 durationDays,
                 isPermanent,
@@ -599,6 +690,7 @@ export class ReportsService {
         where: { id: reportId },
         data: {
           status: targetStatus,
+          actions: actions,
           resolution_reason: effectiveReason,
           resolution_description: dto.resolution_description?.trim() || null,
           resolution_notes:
@@ -614,24 +706,18 @@ export class ReportsService {
         },
       });
 
-      const previousBansCount = resolvedTargetUserId
-        ? await this.banHistoryService.getPreviousBansCount(
-            resolvedTargetUserId,
-            tx,
-          )
-        : 0;
-
       return {
         ...updatedReport,
+        actions: updatedReport.actions ?? actions,
         previous_bans_count: previousBansCount,
+        previous_warnings_count: previousWarningsCount,
       };
     });
     // notify the author of the reported content. Done AFTER the transaction
     const shouldWarn =
       actions.includes(ReportAction.warn) &&
       !actions.includes(ReportAction.dismiss) &&
-      report.status !== ReportStatus.action_taken &&
-      report.status !== ReportStatus.dismissed;
+      !(report.actions ?? []).includes(ReportAction.warn);
 
     if (shouldWarn && callerId) {
       try {

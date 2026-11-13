@@ -33,7 +33,7 @@ describe('AdminController', () => {
     const mockAdminService = {
       getUsers: jest.fn(),
       getUserById: jest.fn(),
-      getUserBanHistory: jest.fn(),
+      getUserSanctionsHistory: jest.fn(),
       createUser: jest.fn(),
       updateUser: jest.fn(),
       deleteUser: jest.fn(),
@@ -182,8 +182,8 @@ describe('AdminController', () => {
     });
   });
 
-  describe('getUserBanHistory', () => {
-    it('delegates ban history lookup to service.getUserBanHistory', async () => {
+  describe('getUserSanctionsHistory', () => {
+    it('delegates sanctions history lookup to service.getUserSanctionsHistory', async () => {
       const mockBanHistory = [
         {
           id: 'ban-1',
@@ -195,13 +195,13 @@ describe('AdminController', () => {
           banned_at: new Date(),
         },
       ];
-      (service.getUserBanHistory as jest.Mock).mockResolvedValue(
+      (service.getUserSanctionsHistory as jest.Mock).mockResolvedValue(
         mockBanHistory,
       );
 
-      const result = await controller.getUserBanHistory(1);
+      const result = await controller.getUserSanctionsHistory(1);
 
-      expect(service.getUserBanHistory).toHaveBeenCalledWith(1);
+      expect(service.getUserSanctionsHistory).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockBanHistory);
     });
   });

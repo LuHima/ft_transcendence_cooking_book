@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ReportReason, ReportStatus, ReportSubject } from '@prisma/client';
+import {
+  ReportAction,
+  ReportReason,
+  ReportStatus,
+  ReportSubject,
+} from '@prisma/client';
 
 /**
  * Hydrated profile information for the reporter who submitted a report.
@@ -162,6 +167,19 @@ export class ReportItemDto {
   status: ReportStatus;
 
   /**
+   * Executed moderation actions array.
+   * @example [ReportAction.warn]
+   */
+  @ApiPropertyOptional({
+    description: 'Executed moderation actions array',
+    enum: ReportAction,
+    isArray: true,
+    example: [ReportAction.warn],
+    default: [],
+  })
+  actions?: ReportAction[];
+
+  /**
    * Internal resolution notes.
    * @example null
    */
@@ -202,13 +220,25 @@ export class ReportItemDto {
    * Total number of historical bans issued to the reported user or author.
    * @example 0
    */
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Number,
     nullable: true,
     description: 'Previous sanctions count for recidivism tracking',
     example: 0,
   })
   previous_bans_count?: number | null;
+
+  /**
+   * Total number of historical warnings issued to the reported user or author.
+   * @example 0
+   */
+  @ApiPropertyOptional({
+    type: Number,
+    nullable: true,
+    description: 'Previous warnings count for recidivism tracking',
+    example: 0,
+  })
+  previous_warnings_count?: number | null;
 
   /**
    * User identifier of staff member who resolved the report.

@@ -124,10 +124,10 @@ export class AdminController {
     type: ApiForbiddenResponseDto,
   })
   @Get(':id/ban-history')
-  async getUserBanHistory(
+  async getUserSanctionsHistory(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<BanHistoryItemDto[]> {
-    return await this.adminService.getUserBanHistory(id);
+    return await this.adminService.getUserSanctionsHistory(id);
   }
 
   /**

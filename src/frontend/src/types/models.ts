@@ -500,7 +500,7 @@ export interface UpdateReportDto {
 	// max 180 per i moderatori
 	ban_duration_days?: number
 	// solo admin
-	is_permanent?: boolean
+	permanent?: boolean
 }
 
 // utente idratato dal backend (segnalatore o autore del contenuto)

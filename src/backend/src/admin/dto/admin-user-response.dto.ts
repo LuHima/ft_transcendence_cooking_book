@@ -193,14 +193,24 @@ export class AdminUserResponseDto {
   banned_until?: Date | null;
 
   /**
-   * Total number of prior sanctions/bans recorded for this user.
+   * Total number of prior bans recorded for this user.
    * @example 0
    */
   @ApiProperty({
-    description: 'Total number of prior sanctions/bans recorded for this user',
+    description: 'Total number of prior bans recorded for this user',
     example: 0,
   })
   previous_bans_count?: number;
+
+  /**
+   * Total number of prior warnings recorded for this user.
+   * @example 0
+   */
+  @ApiProperty({
+    description: 'Total number of prior warnings recorded for this user',
+    example: 0,
+  })
+  previous_warnings_count?: number;
 
   /**
    * Deletion timestamp if soft deleted.
