@@ -11,10 +11,8 @@ import logo from '../assets/logo.png'
 
 const itemClass = 'block px-4 py-2 text-sm text-[var(--wc-text)] hover:bg-[var(--wc-surface-raised)]'
 
-// barra in alto, uguale per tutti: logo, Contatti, Chi siamo, ricerca, lingua;
-// se loggato anche campanella e menù utente, altrimenti Accedi / Registrati.
-// Il menù a tendina dell'utente contiene: [pannello moderatore | pannello amministratore], Profilo,
-// Le mie ricette, Preferiti, Meal plan, Amici, Anagrafica, Esci.
+// Top bar: logo, links, search and language; when signed in also notifications and the user menu,
+// otherwise sign in / sign up.
 function Navbar() {
 	const { t } = useTranslation()
 	const { user, signOut } = useAuth()
@@ -22,7 +20,7 @@ function Navbar() {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const menuRef = useRef<HTMLDivElement>(null)
 
-	// chiude il menù cliccando fuori o con Esc
+	// Close the menu on outside click or Esc
 	useEffect(() => {
 		if (!menuOpen) return
 		function onDown(e: MouseEvent) {
@@ -148,7 +146,7 @@ function Navbar() {
 				</div>
 			</div>
 
-			{/* su mobile la ricerca passa su una riga propria */}
+			{/* On mobile the search bar gets its own row */}
 			<div className="border-t border-[var(--wc-border)] px-4 py-2 md:hidden">
 				<SearchBar />
 			</div>

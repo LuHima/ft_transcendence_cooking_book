@@ -1,6 +1,6 @@
 import type { Lang } from '../types/models'
 
-// bandierine in SVG (le emoji bandiera non si vedono su Windows): IT, FR e UK per l'inglese
+// SVG flags (flag emojis do not render on Windows): IT, FR and UK for English
 function Flag({ lang, className = 'h-4 w-6' }: { lang: Lang; className?: string }) {
 	const common = { viewBox: '0 0 30 20', className: `${className} shrink-0 rounded-[2px] ring-1 ring-black/20`, 'aria-hidden': true as const }
 	if (lang === 'it')

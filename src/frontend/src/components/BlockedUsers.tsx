@@ -11,9 +11,7 @@ import type { BlockedUser, Paginated } from '../types/models'
 
 const PAGE_SIZE = 20
 
-// sezione "Utenti bloccati" nelle impostazioni del profilo:
-//   GET    /users/me/blocks?page=&limit=   -> PaginatedBlockedUsersResponseDto
-//   DELETE /users/:id/block                 sblocca
+// "Blocked users" section of the profile settings
 function BlockedUsers() {
 	const { t } = useTranslation()
 	const lang = useLang()

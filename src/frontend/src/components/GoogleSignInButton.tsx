@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GOOGLE_CLIENT_ID } from '../config'
 
-// Google Identity Services: lo script di Google mostra il pulsante e, dopo il consenso,
-// restituisce un ID token (JWT firmato da Google) che passiamo al backend /auth/signin/google.
+// Google Identity Services renders the button and, after consent, returns a Google-signed ID token
+// that is sent to /auth/signin/google.
 interface GoogleIdApi {
 	initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void
 	renderButton: (parent: HTMLElement, options: Record<string, string | number>) => void
@@ -37,11 +37,10 @@ function loadGoogleScript(): Promise<void> {
 }
 
 interface Props {
-	// riceve l'ID token di Google da inviare al backend
 	onCredential: (idToken: string) => void
 }
 
-// senza VITE_GOOGLE_CLIENT_ID il pulsante non viene mostrato
+// Hidden when VITE_GOOGLE_CLIENT_ID is not set
 function GoogleSignInButton({ onCredential }: Props) {
 	const { i18n } = useTranslation()
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -78,7 +77,7 @@ function GoogleSignInButton({ onCredential }: Props) {
 				})
 			})
 			.catch(() => {
-				// script bloccato (offline, adblock…): resta il login con email e password
+				// Script blocked (offline, ad blocker…): email/password sign-in still works
 			})
 		return () => {
 			cancelled = true

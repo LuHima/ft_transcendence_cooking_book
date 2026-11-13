@@ -1,9 +1,8 @@
-// Client ID OAuth di Google (pubblico, non è un segreto). Va impostato anche lato backend come GOOGLE_CLIENT_ID.
-// Se manca, il pulsante "Continua con Google" non viene mostrato.
+// Google OAuth client ID (public, not a secret); must match GOOGLE_CLIENT_ID on the backend.
+// Without it the "Continue with Google" button is hidden.
 export const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) || undefined
 
-// Limiti upload allineati al backend (ADR 0029): 
-// foto ricette e avatar 10MB, video 50MB.
+// Upload limits aligned with the backend (ADR 0029): recipe photos and avatars 10 MB, videos 50 MB
 export const UPLOAD_LIMITS = {
 	imageMaxMb: 10,
 	videoMaxMb: 50,

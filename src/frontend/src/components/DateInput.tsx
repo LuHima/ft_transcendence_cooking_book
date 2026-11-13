@@ -5,10 +5,10 @@ import { INPUT_CLASS } from '../lib/ui'
 interface DateInputProps {
 	id?: string
 	label: string
-	// data iniziale in formato ISO (YYYY-MM-DD) o vuota
+	// Initial date in ISO format (YYYY-MM-DD) or empty
 	value: string
-	// chiamato a ogni modifica: `iso` è YYYY-MM-DD solo se la data è completa e valida, altrimenti ''
-	// `valid` è false se il campo è compilato solo in parte o contiene una data inesistente
+	// Called on every change: `iso` is YYYY-MM-DD only when the date is complete and valid, otherwise ''.
+	// `valid` is false when the field is partially filled or the date does not exist.
 	onChange: (iso: string, valid: boolean) => void
 	minYear?: number
 }
@@ -28,12 +28,12 @@ function check(d: string, m: string, y: string, minYear: number): { iso: string;
 	const maxYear = new Date().getFullYear()
 	if (mn < 1 || mn > 12 || yn < minYear || yn > maxYear || dn < 1 || dn > daysIn(mn, yn)) return { iso: '', valid: false }
 	const iso = `${y}-${String(mn).padStart(2, '0')}-${String(dn).padStart(2, '0')}`
-	// non nel futuro
+	// Not in the future
 	if (new Date(iso).getTime() > Date.now()) return { iso: '', valid: false }
 	return { iso, valid: true }
 }
 
-// data di nascita senza calendario: tre caselle GG / MM / AAAA con salto automatico alla successiva
+// Birth date without a calendar: three DD / MM / YYYY boxes that auto-advance
 function DateInput({ id = 'date', label, value, onChange, minYear = 1900 }: DateInputProps) {
 	const { t } = useTranslation()
 	const [y0 = '', m0 = '', d0 = ''] = value ? value.split('-') : []
@@ -52,7 +52,7 @@ function DateInput({ id = 'date', label, value, onChange, minYear = 1900 }: Date
 
 	function onDay(e: ChangeEvent<HTMLInputElement>) {
 		let v = digits(e.target.value).slice(0, 2)
-		// prima cifra > 3: il giorno è di una cifra sola (es. 5 → 05)
+		// First digit > 3: single-digit day (e.g. 5 → 05)
 		if (v.length === 1 && Number(v) > 3) v = `0${v}`
 		setDay(v)
 		setTouched(true)
@@ -74,7 +74,7 @@ function DateInput({ id = 'date', label, value, onChange, minYear = 1900 }: Date
 		emit(day, month, v)
 	}
 
-	// "/" . - e spazio fanno passare alla casella successiva; Backspace su casella vuota torna alla precedente
+	// "/", ".", "-" and space move to the next box; Backspace on an empty box goes back
 	function handleKey(e: KeyboardEvent<HTMLInputElement>, field: 'day' | 'month' | 'year', current: string) {
 		const order = { day: [null, monthRef], month: [dayRef, yearRef], year: [monthRef, null] } as const
 		const [prev, next] = order[field]

@@ -7,9 +7,8 @@ import AdminComments from './admin/AdminComments'
 type Tab = 'reports' | 'recipes' | 'comments'
 const TABS: Tab[] = ['reports', 'recipes', 'comments']
 
-// pannello del moderatore: segnalazioni, ricette e commenti (il backend autorizza admin e moderatori).
-// Le azioni riservate agli admin (eliminazione definitiva, modifica e riattivazione di ricette altrui)
-// sono nascoste dentro i singoli componenti in base al ruolo.
+// Moderator panel: reports, recipes and comments (the backend allows both admins and moderators).
+// Admin-only actions (permanent deletion, editing and reactivating other users' recipes) are hidden by role inside each component.
 function Moderation() {
 	const { t } = useTranslation()
 	const [tab, setTab] = useState<Tab>('reports')

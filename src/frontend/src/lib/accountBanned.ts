@@ -1,7 +1,7 @@
 import { ApiError } from '../api/client'
 import type { AccountBannedDetails } from '../types/models'
 
-// riconosce la risposta 403 { code: 'ACCOUNT_BANNED', details } di /auth/signin e /auth/signin/google
+// Detects the 403 { code: 'ACCOUNT_BANNED', details } response of /auth/signin and /auth/signin/google
 export function getAccountBannedDetails(err: unknown): AccountBannedDetails | null {
 	if (!(err instanceof ApiError) || err.status !== 403) return null
 	const body = err.body as { code?: unknown; details?: Partial<AccountBannedDetails> } | null

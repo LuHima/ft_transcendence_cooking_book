@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext'
 import { api, ApiError, getErrorMessage } from '../api/client'
 import { REPORT_REASONS, type CreateReportDto, type ReportReason, type ReportSubject } from '../types/models'
 
-// CreateReportDto: description max 1000 caratteri
+// CreateReportDto: description is at most 1000 characters
 const MAX_DESCRIPTION = 1000
 
 interface ReportDialogProps {
@@ -17,7 +17,7 @@ interface ReportDialogProps {
 function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 	const { t } = useTranslation()
 	const toast = useToast()
-	// nessuna motivazione preselezionata: l'utente deve sceglierla esplicitamente
+	// No preselected reason: the user must pick one
 	const [reason, setReason] = useState<ReportReason | null>(null)
 	const [description, setDescription] = useState('')
 	const [submitting, setSubmitting] = useState(false)
@@ -27,7 +27,6 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 		if (!reason) return
 		setSubmitting(true)
 		try {
-			// POST /api/reports (CreateReportDto)
 			const body: CreateReportDto = {
 				subject: targetType,
 				target_id: targetId,
@@ -38,7 +37,7 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 			toast.success(t('report.sent'))
 			onClose()
 		} catch (err) {
-			// 409 = esiste già una segnalazione in attesa per questo contenuto
+			// 409 = a pending report already exists for this content
 			toast.error(err instanceof ApiError && err.status === 409 ? t('report.alreadyReported') : getErrorMessage(err, t('report.error')))
 			setSubmitting(false)
 		}
@@ -115,12 +114,12 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 interface ReportButtonProps {
 	targetType: ReportSubject
 	targetId: number
-	// id del proprietario del contenuto: non si segnalano i propri contenuti
+	// Content owner: users cannot report their own content
 	ownerId?: number | null
 	className?: string
 }
 
-// pulsante "Segnala": visibile solo agli utenti loggati che non sono i proprietari del contenuto
+// "Report" button: only for signed-in users who don't own the content
 export function ReportButton({ targetType, targetId, ownerId, className = '' }: ReportButtonProps) {
 	const { t } = useTranslation()
 	const { user } = useAuth()

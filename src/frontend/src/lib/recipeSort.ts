@@ -1,7 +1,7 @@
 import type { RecipeSortBy, SortOrder } from '../types/models'
 
-// ordinamenti accettati dal backend (sort_by + sort_order) per GET /recipes, /users/:id/recipes, /users/me/recipes.
-// Valore "campo:direzione"; il primo è il predefinito (created_at desc) e non va scritto nell'URL.
+// Sort options accepted by the backend (sort_by + sort_order) on GET /recipes, /users/:id/recipes and /users/me/recipes.
+// Values are "field:direction"; the first one is the default (created_at desc) and is not written to the URL.
 export const RECIPE_SORT_OPTIONS = [
 	{ value: 'created_at:desc', label: 'newest' },
 	{ value: 'created_at:asc', label: 'oldest' },
@@ -17,7 +17,7 @@ export const RECIPE_SORT_OPTIONS = [
 export type RecipeSortValue = (typeof RECIPE_SORT_OPTIONS)[number]['value']
 export const DEFAULT_RECIPE_SORT: RecipeSortValue = 'created_at:desc'
 
-// valida un valore arbitrario (es. da URL) e lo divide in sort_by / sort_order
+// Validates any value (e.g. from the URL) and splits it into sort_by / sort_order
 export function parseRecipeSort(value: string | null | undefined): {
 	value: RecipeSortValue
 	sortBy: RecipeSortBy

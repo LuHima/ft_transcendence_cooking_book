@@ -10,7 +10,7 @@ interface State {
 	error: Error | null
 }
 
-// rete di sicurezza: se una pagina va in errore mostra un messaggio invece di una pagina bianca
+// Safety net: shows a message instead of a blank page when a page crashes
 class ErrorBoundary extends Component<Props, State> {
 	state: State = { error: null }
 

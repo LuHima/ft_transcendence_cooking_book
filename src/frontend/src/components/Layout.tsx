@@ -9,7 +9,7 @@ function Layout() {
 		<div className="flex min-h-screen flex-col bg-[var(--wc-bg)] text-[var(--wc-text)]">
 			<Navbar />
 			<main className="flex-1">
-				{/* key sul percorso: dopo un errore, cambiando pagina il boundary si resetta */}
+				{/* Keyed by path: after an error, navigating away resets the boundary */}
 				<ErrorBoundary key={location.pathname}>
 					<Outlet />
 				</ErrorBoundary>

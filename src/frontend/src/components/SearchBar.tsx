@@ -35,20 +35,20 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 	const trimmed = value.trim()
 	const showList = open && trimmed.length >= MIN_CHARS && suggestions.length > 0
 
-	// suggerimenti: stessa rotta della ricerca, con debounce e annullamento delle richieste superate
+	// Suggestions: same endpoints as the search page, debounced, cancelling stale requests
 	useEffect(() => {
 		if (trimmed.length < MIN_CHARS) return
 
 		const controller = new AbortController()
 		const timer = setTimeout(() => {
 			const opts = { signal: controller.signal, retryOnUnauthorized: false }
-			// ricette e utenti in parallelo; se una delle due fallisce si mostra comunque l'altra
+			// Recipes and users in parallel: if one request fails the other is still shown
 			Promise.allSettled([
 				api.get<Paginated<RecipeSummary>>(
 					`/recipes${qs({ search: trimmed, limit: MAX_RECIPES, lang })}`,
 					opts,
 				),
-				// GET /users è paginata (PaginatedUsersResponseDto); search richiede almeno 2 caratteri
+				// GET /users is paginated; search needs at least 2 characters
 				api.get<unknown>(`/users${qs({ search: trimmed, page: 1, limit: MAX_USERS })}`, opts),
 			]).then(([recipes, users]) => {
 				if (controller.signal.aborted) return
@@ -71,7 +71,6 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 		}
 	}, [trimmed, lang])
 
-	// chiude la lista cliccando fuori dalla barra
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
 			if (containerRef.current && !containerRef.current.contains(e.target as Node)) {

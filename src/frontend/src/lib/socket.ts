@@ -1,8 +1,7 @@
 import { io, type Socket } from 'socket.io-client'
 
-// Un'unica connessione Socket.IO condivisa da tutta l'app (notifiche, stato online degli amici).
-// Ogni componente chiama acquireSocket() e alla fine releaseSocket(): la connessione
-// si chiude solo quando nessuno la usa più.
+// A single Socket.IO connection shared by the whole app (notifications, friends' online status).
+// Components call acquireSocket() and later releaseSocket(): the connection closes when nobody uses it.
 let socket: Socket | null = null
 let users = 0
 

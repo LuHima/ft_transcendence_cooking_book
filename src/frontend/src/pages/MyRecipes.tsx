@@ -51,7 +51,6 @@ function MyRecipes() {
 		try {
 			await api.delete(`/recipes/${id}`)
 			toast.success(t('recipe.deleted'))
-			// se si svuota l'ultima pagina si torna indietro
 			if (data && data.items.length === 1 && page > 1) setPage(page - 1)
 			else setReload((n) => n + 1)
 		} catch (err) {
@@ -73,7 +72,6 @@ function MyRecipes() {
 				</Link>
 			</div>
 
-			{/* ordinamento sotto il titolo "Le mie ricette", allineato a sinistra */}
 			<div className="mb-4">
 				<RecipeSortSelect
 					value={sort}
@@ -112,7 +110,7 @@ function MyRecipes() {
 											{recipe.title}
 										</Link>
 										<span className="flex flex-wrap items-center gap-1.5">
-											{/* in "Le mie ricette" si mostra sempre il livello di privacy, anche "Pubblica" */}
+											{/* "My recipes" always shows the privacy level, including "Public" */}
 											<PrivacyBadge privacy={recipe.privacy} showPublic />
 											{recipe.is_active === false && (
 												<span className="inline-block rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">

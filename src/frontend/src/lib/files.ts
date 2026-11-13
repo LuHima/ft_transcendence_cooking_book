@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import { UPLOAD_LIMITS } from '../config'
 
-// alcuni browser/sistemi lasciano vuoto file.type (es. .webp): in quel caso si guarda l'estensione
+// Some browsers/OSes leave file.type empty (e.g. .webp): fall back to the extension
 const IMAGE_EXTENSIONS: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }
 const VIDEO_EXTENSIONS: Record<string, string> = { mp4: 'video/mp4', webm: 'video/webm' }
 
@@ -11,12 +11,12 @@ function mimeOf(file: File, byExtension: Record<string, string>): string {
 	return byExtension[ext] ?? ''
 }
 
-// valore per l'attributo accept dei file picker: tipi MIME + estensioni (JPEG, PNG e WebP)
+// accept attribute for file pickers: MIME types + extensions (JPEG, PNG and WebP)
 export const IMAGE_ACCEPT = [...UPLOAD_LIMITS.imageTypes, '.jpg', '.jpeg', '.png', '.webp'].join(',')
 export const VIDEO_ACCEPT = [...UPLOAD_LIMITS.videoTypes, '.mp4', '.webm'].join(',')
 
-// validazione lato client (il backend ripete gli stessi controlli): restituisce il messaggio di errore o null.
-// maxMb: limite specifico (es. UPLOAD_LIMITS.avatarMaxMb), altrimenti quello delle foto delle ricette
+// Client-side validation (the backend repeats the same checks): returns the error message or null.
+// maxMb: specific limit (e.g. UPLOAD_LIMITS.avatarMaxMb), defaults to the recipe photo limit.
 export function validateImage(file: File, t: TFunction, maxMb: number = UPLOAD_LIMITS.imageMaxMb): string | null {
 	if (!UPLOAD_LIMITS.imageTypes.includes(mimeOf(file, IMAGE_EXTENSIONS))) {
 		return t('form.errors.imageType', { name: file.name })

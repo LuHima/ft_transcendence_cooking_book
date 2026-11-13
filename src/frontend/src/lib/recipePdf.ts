@@ -17,7 +17,7 @@ const STEP_COLOR = '#5f7a41'
 
 type PdfImage = { data: string; width: number; height: number }
 
-// le note dell'ingrediente sono Json lato backend: si mostrano solo se sono testo
+// Ingredient notes are JSON on the backend: show them only when they are plain text
 export function ingredientNote(notes: unknown): string | null {
 	return typeof notes === 'string' && notes.trim() ? notes.trim() : null
 }
@@ -26,7 +26,7 @@ export function formatQuantity(n: number): string {
 	return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2)))
 }
 
-// i font standard del PDF coprono solo Windows-1252: emoji e altri simboli verrebbero stampati come caratteri errati
+// Standard PDF fonts only cover Windows-1252: emojis and other symbols would print as garbage
 function printable(text: string): string {
 	return text
 		.normalize('NFC')
@@ -46,7 +46,7 @@ function fileName(title: string): string {
 	return `${slug || 'ricetta'}.pdf`
 }
 
-// una foto mancante non deve impedire l'esportazione: la ricetta si esporta comunque senza
+// A missing photo must not block the export: the recipe is exported without it
 async function loadImage(path: string | null | undefined, aspectRatio?: number): Promise<PdfImage | null> {
 	const url = assetUrl(path)
 	if (!url) return null
@@ -88,7 +88,7 @@ async function loadImage(path: string | null | undefined, aspectRatio?: number):
 }
 
 export async function exportRecipePdf(recipe: RecipeDetail, t: TFunction): Promise<void> {
-	// jsPDF si carica solo quando serve, così non appesantisce il resto del sito
+	// jsPDF is loaded lazily so it doesn't weigh on the rest of the site
 	const { jsPDF } = await import('jspdf')
 
 	const steps = [...recipe.steps].sort((a, b) => a.step_number - b.step_number)
@@ -120,7 +120,7 @@ export async function exportRecipePdf(recipe: RecipeDetail, t: TFunction): Promi
 		doc.setFontSize(size)
 		doc.setTextColor(color)
 		const height = lineHeight(size)
-		// splitTextToSize manda a capo anche le parole più larghe della riga
+		// splitTextToSize also wraps words wider than the line
 		for (const line of doc.splitTextToSize(clean, width) as string[]) {
 			ensureSpace(height)
 			doc.text(line, x, y + size * MM_PER_POINT)

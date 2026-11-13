@@ -9,7 +9,7 @@ import ShowPasswordToggle from './ShowPasswordToggle'
 
 type Step = 'idle' | 'password' | 'verify'
 
-// promemoria locale dello stato 2FA, usato solo se GET /users/me non restituisce is_two_factor_enabled
+// Local 2FA hint, used only when GET /users/me doesn't return is_two_factor_enabled
 const hintKey = (email: string) => `wecook.2fa.${email.toLowerCase()}`
 export function readTwoFactorHint(email?: string): boolean {
 	if (!email) return false
@@ -24,16 +24,15 @@ export function writeTwoFactorHint(email: string, value: boolean) {
 		if (value) localStorage.setItem(hintKey(email), '1')
 		else localStorage.removeItem(hintKey(email))
 	} catch {
-		// localStorage non disponibile: nessun promemoria
+		// localStorage unavailable: no hint
 	}
 }
 
-// attivazione / disattivazione dell'autenticazione a due fattori (TOTP):
+// Enable / disable two-factor authentication (TOTP):
 //   POST /auth/twofactor/enable  { password }  -> { qrCode (data URI), key (base32) }
-//   POST /auth/twofactor/verify  { code }      -> attiva la 2FA
+//   POST /auth/twofactor/verify  { code }      -> enables 2FA
 //   POST /auth/twofactor/disable { password }
-// Stato: si usa is_two_factor_enabled di GET /users/me; se il backend non lo restituisce si ripiega su un promemoria
-// locale (impostato quando si attiva/disattiva qui o quando il login ha richiesto il codice) e sulle risposte 409.
+// State comes from is_two_factor_enabled (GET /users/me); without it, falls back to the local hint and 409 responses.
 function TwoFactorSettings() {
 	const { t } = useTranslation()
 	const toast = useToast()
@@ -81,7 +80,7 @@ function TwoFactorSettings() {
 			}
 		} catch (err) {
 			if (err instanceof ApiError && err.status === 409) {
-				// stato locale non allineato con il server
+				// Local state out of sync with the server
 				setEnabled(!enabled)
 				toast.info(enabled ? t('twofa.alreadyDisabled') : t('twofa.alreadyEnabled'))
 				reset()

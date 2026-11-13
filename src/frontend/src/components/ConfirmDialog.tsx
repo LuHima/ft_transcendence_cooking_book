@@ -5,15 +5,14 @@ interface ConfirmDialogProps {
 	title: string
 	children?: ReactNode
 	confirmLabel: string
-	// stile rosso per le azioni distruttive / irreversibili
 	danger?: boolean
-	// se presente, l'utente deve digitare questo testo per abilitare la conferma (es. eliminazione definitiva)
+	// If set, the user must type this text to enable the confirm button
 	requireText?: string
 	onConfirm: () => Promise<void> | void
 	onClose: () => void
 }
 
-// finestra di conferma accessibile, usata al posto di window.confirm per le azioni importanti
+// Accessible confirmation dialog, used instead of window.confirm for important actions
 function ConfirmDialog({ title, children, confirmLabel, danger = false, requireText, onConfirm, onClose }: ConfirmDialogProps) {
 	const { t } = useTranslation()
 	const [busy, setBusy] = useState(false)

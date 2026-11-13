@@ -9,9 +9,8 @@ import type { FriendshipStatus } from '../types/models'
 interface FriendButtonProps {
 	userId: number
 	username: string
-	// friendship_status restituito da GET /users/:id o GET /users (null/undefined = sconosciuto o non loggato)
+	// friendship_status from GET /users/:id or GET /users (null/undefined = unknown or signed out)
 	status?: FriendshipStatus | null
-	// nuovo stato dopo l'azione, per aggiornare la pagina che contiene il pulsante
 	onChange: (next: FriendshipStatus) => void
 }
 
@@ -19,19 +18,19 @@ const BASE = 'rounded-full px-5 py-2 text-sm font-medium transition-colors disab
 const PRIMARY = `${BASE} bg-[var(--wc-basil)] text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)]`
 const OUTLINE = `${BASE} border border-[var(--wc-border)] text-[var(--wc-text)] hover:border-[var(--wc-paprika)] hover:text-[var(--wc-paprika)]`
 
-// pulsante amicizia. Tutte le rotte usano l'id dell'altro utente:
-//   POST   /friends/requests/:addresseeId           invia (se l'altro aveva già chiesto → amici subito)
-//   DELETE /friends/requests/:addresseeId           annulla la richiesta inviata
-//   POST   /friends/requests/:requesterId/accept    accetta
-//   POST   /friends/requests/:requesterId/reject    rifiuta (attiva il cooldown di 30 giorni per il mittente)
-//   DELETE /friends/:friendId                       rimuove l'amicizia
+// Every route takes the other user's ID:
+//   POST   /friends/requests/:addresseeId          send (instant friendship if they already asked)
+//   DELETE /friends/requests/:addresseeId          cancel the sent request
+//   POST   /friends/requests/:requesterId/accept   accept
+//   POST   /friends/requests/:requesterId/reject   reject (starts a 30-day cooldown for the sender)
+//   DELETE /friends/:friendId                      remove the friendship
 function FriendButton({ userId, username, status, onChange }: FriendButtonProps) {
 	const { t } = useTranslation()
 	const { user } = useAuth()
 	const toast = useToast()
 	const navigate = useNavigate()
 	const [busy, setBusy] = useState(false)
-	// avviso inline per il 409 (richiesta già esistente o cooldown attivo)
+	// Inline notice for 409 (request already exists or cooldown active)
 	const [notice, setNotice] = useState<string | null>(null)
 
 	async function run(action: () => Promise<FriendshipStatus>, successKey?: string) {
@@ -107,7 +106,6 @@ function FriendButton({ userId, username, status, onChange }: FriendButtonProps)
 	}
 
 	if (current === 'pending_sent') {
-		// stesso stile di "Rimuovi dagli amici": bianco, rosso al passaggio del mouse
 		return (
 			<button
 				disabled={busy}
@@ -124,13 +122,12 @@ function FriendButton({ userId, username, status, onChange }: FriendButtonProps)
 		)
 	}
 
-	// none: si può mandare la richiesta
 	async function sendRequest() {
 		setBusy(true)
 		setNotice(null)
 		try {
 			const res = await api.post<{ status?: 'pending' | 'accepted' }>(`/friends/requests/${userId}`)
-			// se l'altro utente aveva già inviato una richiesta, il backend crea subito l'amicizia
+			// If the other user had already sent a request, the backend creates the friendship immediately
 			if (res?.status === 'accepted') {
 				onChange('friends')
 				toast.success(t('friends.nowFriends', { name: username }))
@@ -140,7 +137,7 @@ function FriendButton({ userId, username, status, onChange }: FriendButtonProps)
 			}
 		} catch (err) {
 			if (err instanceof ApiError && err.status === 409) {
-				// richiesta già esistente o cooldown anti-molestie di 30 giorni dopo un rifiuto
+				// Existing request or 30-day anti-harassment cooldown after a rejection
 				const msg = t('friends.cooldown')
 				setNotice(msg)
 				toast.info(msg)

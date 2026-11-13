@@ -15,22 +15,22 @@ const FEED_SIZE = 8
 type FeedTab = 'friends' | 'community'
 const TABS: FeedTab[] = ['friends', 'community']
 
-// home con due feed:
-//   Community → GET /recipes?page=1&limit=8&lang=   (ricette pubbliche recenti)
-//   Amici     → GET /feed?page=1&limit=8&lang=      (ricette degli amici confermati, richiede login)
-// scheda predefinita: "Amici" se l'utente è loggato e ha almeno un amico, altrimenti "Community"
+// Home page with two feeds:
+//   Community → GET /recipes   (recent public recipes)
+//   Friends   → GET /feed      (recipes from confirmed friends, sign-in required)
+// Default tab: "Friends" when signed in with at least one friend, otherwise "Community".
 function Home() {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const { user, isLoading: authLoading } = useAuth()
 	const navigate = useNavigate()
-	// null = l'utente non ha ancora scelto: si usa la scheda predefinita
+	// null = no explicit choice yet: use the default tab
 	const [chosenTab, setChosenTab] = useState<FeedTab | null>(null)
-	// risposta di GET /friends legata all'utente che l'ha richiesta (evita setState sincroni nell'effetto)
+	// GET /friends result tied to the user who requested it (avoids synchronous setState in the effect)
 	const [friendsInfo, setFriendsInfo] = useState<{ userId: number; hasFriends: boolean } | null>(null)
 	const [result, setResult] = useState<{ key: string; recipes: RecipeSummary[]; error: string | null } | null>(null)
 
-	// per la scheda predefinita basta sapere se esiste almeno un amico
+	// The default tab only needs to know whether at least one friend exists
 	const userId = user?.id
 	useEffect(() => {
 		if (authLoading || userId == null) return
@@ -48,7 +48,7 @@ function Home() {
 		}
 	}, [authLoading, userId])
 
-	// null = non ancora noto (sessione o elenco amici in caricamento)
+	// null = unknown yet (session or friend list still loading)
 	const hasFriends: boolean | null = authLoading
 		? null
 		: userId == null
@@ -58,7 +58,7 @@ function Home() {
 				: null
 	const defaultTab: FeedTab | null = hasFriends === null ? null : hasFriends ? 'friends' : 'community'
 	const tab = chosenTab ?? defaultTab
-	// il feed amici richiede il login: per gli ospiti non si chiama il backend
+	// The friends feed requires sign-in: guests don't call the backend
 	const needsFetch = tab === 'community' || (tab === 'friends' && userId != null)
 	const requestKey = `${tab}|${lang}|${userId ?? ''}`
 
@@ -79,8 +79,8 @@ function Home() {
 		}
 	}, [tab, needsFetch, lang, requestKey, t])
 
-	// "Aggiungi ricetta": se loggato va al form, altrimenti al login che poi riporta al form
-	// (Login legge state.from e, dopo l'accesso riuscito, naviga lì)
+	// "Add recipe": signed-in users go to the form, guests go to sign-in first
+	// (Login reads state.from and navigates there after a successful sign-in).
 	function addRecipe() {
 		const target = '/my-recipes/new'
 		if (user) navigate(target)
@@ -100,7 +100,7 @@ function Home() {
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--wc-bg)] to-transparent p-8">
 					<h1 className="font-display text-4xl text-[var(--wc-text)] md:text-5xl">{t('home.heroTitle')}</h1>
 					<p className="mt-2 max-w-md text-[var(--wc-text-muted)]">{t('home.heroText')}</p>
-					{/* il contenitore ha pointer-events-none (per la scena 3D): il pulsante li riattiva */}
+					{/* The container has pointer-events-none (for the 3D scene): the button re-enables them */}
 					<button
 						type="button"
 						onClick={addRecipe}

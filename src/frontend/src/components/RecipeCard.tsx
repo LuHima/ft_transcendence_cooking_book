@@ -15,11 +15,10 @@ function RecipeCard({ recipe }: RecipeCardProps) {
 	const cover = assetUrl(recipe.cover_image_url)
 	const author = recipe.author
 
-	// niente <Link> annidati: il titolo copre tutta la card (after:absolute), l'autore sta sopra (z-10)
+	// No nested <Link>s: the title link covers the whole card (after:absolute), the author link sits above it (z-10)
 	return (
 		<div className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-surface)] transition-colors hover:border-[var(--wc-basil)]">
 			<div className="relative aspect-[4/3] w-full overflow-hidden bg-[var(--wc-surface-raised)]">
-				{/* solo-amici / privata: badge sopra la foto */}
 				<PrivacyBadge privacy={recipe.privacy} className="absolute left-2 top-2 z-[1] bg-[var(--wc-bg)]/90" />
 				{cover ? (
 					<img

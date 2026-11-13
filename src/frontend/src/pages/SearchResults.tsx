@@ -25,12 +25,11 @@ import type {
 
 const PAGE_SIZE = 12
 const USERS_PAGE_SIZE = 6
-// GET /users?search= rifiuta (400) ricerche più corte di 2 caratteri
+// GET /users?search= rejects (400) searches shorter than 2 characters
 const MIN_USER_SEARCH = 2
 const COURSES: Course[] = ['appetizer', 'first_course', 'main_course', 'dessert', 'side_dish', 'drink', 'snack']
 const DIFFICULTIES: RecipeDifficulty[] = ['easy', 'medium', 'hard']
 
-// ordinamento degli utenti (sort_by: username | recipes_count | created_at)
 const USER_SORT_OPTIONS = [
 	{ value: 'username:asc', label: 'usernameAsc' },
 	{ value: 'username:desc', label: 'usernameDesc' },
@@ -54,7 +53,7 @@ const idList = (raw: string | null) =>
 
 const nonNegInt = (raw: string | null) => (raw && /^\d+$/.test(raw) ? raw : '')
 
-// interruttore "tutti / almeno uno" per tag e ingredienti
+// "All / any" toggle for tags and ingredients
 function MatchModeToggle({ value, onChange, label }: { value: MatchMode; onChange: (v: MatchMode) => void; label: string }) {
 	const { t } = useTranslation()
 	return (
@@ -77,13 +76,13 @@ function MatchModeToggle({ value, onChange, label }: { value: MatchMode; onChang
 	)
 }
 
-// ricerca avanzata: filtri e ordinamento vivono nell'URL, così i risultati sono condivisibili e "indietro" funziona.
-// Parametri URL → API GET /recipes:
+// Advanced search: filters and sorting live in the URL, so results are shareable and Back works.
+// URL params → GET /recipes:
 //   q→search  course  difficulty  min_time  max_time  max_prep_time  curated→curated_only
 //   tags→tag_ids  xtags→exclude_tag_ids  tag_mode
 //   ings→ingredient_ids  xings→exclude_ingredient_ids  ing_mode→ingredient_mode
 //   src→source_lang  author→author_id
-//   sort→sort_by+sort_order  page   (usort = ordinamento utenti)
+//   sort→sort_by+sort_order  page   (usort = user sorting)
 function SearchResults() {
 	const { t } = useTranslation()
 	const lang = useLang()
@@ -97,7 +96,6 @@ function SearchResults() {
 	const maxTime = nonNegInt(params.get('max_time'))
 	const maxPrepTime = nonNegInt(params.get('max_prep_time'))
 	const curatedOnly = params.get('curated') === '1'
-	// lingua in cui l'autore ha scritto la ricetta e filtro per autore (id)
 	const sourceLangParam = params.get('src') ?? ''
 	const sourceLang = (SUPPORTED_LANGS as string[]).includes(sourceLangParam) ? sourceLangParam : ''
 	const authorId = nonNegInt(params.get('author'))
@@ -115,7 +113,7 @@ function SearchResults() {
 
 	const [tags, setTags] = useState<CatalogTag[]>([])
 	const [ingredients, setIngredients] = useState<CatalogIngredient[]>([])
-	// risultato associato alla richiesta che lo ha prodotto: se la chiave non coincide con i filtri correnti si sta ancora caricando
+	// Result tagged with the request that produced it: a key mismatch with the current filters means it is still loading
 	const [result, setResult] = useState<{
 		key: string
 		data: Paginated<RecipeSummary> | null
@@ -135,7 +133,7 @@ function SearchResults() {
 		setParams(next)
 	}
 
-	// tag a tre stati: nessuno → incluso → escluso → nessuno (così include ed exclude non si sovrappongono mai)
+	// Three-state tags: none → included → excluded → none (include and exclude never overlap)
 	function cycleTag(id: number) {
 		if (tagIds.includes(id)) {
 			update({ tags: tagIds.filter((x) => x !== id).join(',') || null, xtags: [...excludeTagIds, id].join(',') })
@@ -198,7 +196,7 @@ function SearchResults() {
 				min_time: minTime,
 				max_time: maxTime,
 				max_prep_time: maxPrepTime,
-				// curated_only richiede lang (sempre presente)
+				// curated_only requires lang (always sent)
 				curated_only: curatedOnly ? 'true' : undefined,
 				source_lang: sourceLang,
 				author_id: authorId && Number(authorId) > 0 ? authorId : undefined,
@@ -212,7 +210,8 @@ function SearchResults() {
 				sort_order: sortOrder,
 			})}`,
 		)
-		// utenti: GET /users (paginata) solo con almeno 2 caratteri e alla prima pagina; se fallisce si mostrano comunque le ricette
+		// Users: GET /users (paginated) only with at least 2 characters and on the first page;
+		// if it fails the recipes are still shown
 		const usersRequest = searchUsers
 			? api
 					.get<unknown>(
@@ -262,7 +261,7 @@ function SearchResults() {
 		t,
 	])
 
-	// "mostra altri utenti": pagina successiva di GET /users accodata alla lista
+	// "Show more users": next page of GET /users appended to the list
 	async function loadMoreUsers() {
 		const current = result?.users
 		if (!current || !current.has_next_page) return
@@ -282,7 +281,7 @@ function SearchResults() {
 				prev && prev.users ? { ...prev, users: { ...next, items: [...prev.users.items, ...next.items] } } : prev,
 			)
 		} catch {
-			// errore silenzioso: resta la lista già caricata
+			// Fail silently: keep the already loaded list
 		} finally {
 			setLoadingMoreUsers(false)
 		}

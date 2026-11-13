@@ -64,7 +64,6 @@ function App() {
 					<Route path="search" element={<SearchResults />} />
 					<Route path="recipes/:id" element={<RecipeDetail />} />
 					<Route path="users/:id" element={<UserProfile />} />
-					{/* link condivisibile al profilo con lo username (GET /users/by-username/:username) */}
 					<Route path="u/:username" element={<UserProfile />} />
 					<Route path="contacts" element={<Contacts />} />
 					<Route path="about" element={<About />} />

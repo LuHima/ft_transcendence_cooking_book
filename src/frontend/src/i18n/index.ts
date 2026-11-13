@@ -31,7 +31,7 @@ void i18n
 		},
 	})
 
-// tiene allineato <html lang> con la lingua scelta (accessibilità + traduzione del browser)
+// Keeps <html lang> in sync with the selected language (accessibility + browser translation)
 function syncHtmlLang(lng: string) {
 	if (typeof document !== 'undefined') document.documentElement.lang = normalizeLang(lng)
 }

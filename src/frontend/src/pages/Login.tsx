@@ -22,13 +22,13 @@ function Login() {
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
-	// se la 2FA è attiva il backend restituisce un token temporaneo da completare con il codice a 6 cifre
-	// (può arrivare già dalla pagina di registrazione, se l'accesso con Google richiede la 2FA)
+	// With 2FA enabled the backend returns a temporary token, completed with the 6-digit code
+	// (it can come from the sign-up page when Google sign-in requires 2FA).
 	const [tempToken, setTempToken] = useState<string | null>(locationState?.tempToken ?? null)
 	const [showPassword, setShowPassword] = useState(false)
 	const [code, setCode] = useState('')
 	const [error, setError] = useState<string | null>(null)
-	// 403 ACCOUNT_BANNED: dettagli strutturati della sospensione
+	// 403 ACCOUNT_BANNED: structured ban details
 	const [banned, setBanned] = useState<AccountBannedDetails | null>(locationState?.banned ?? null)
 	const [submitting, setSubmitting] = useState(false)
 	const passwordRef = useRef<HTMLInputElement>(null)
@@ -57,7 +57,7 @@ function Login() {
 			if (tempToken) {
 				setCode('')
 			} else {
-				// accesso fallito: si svuota la password (l'email resta) e si rimette il cursore sul campo
+				// Failed sign-in: clear the password (keep the email) and refocus the field
 				setPassword('')
 				passwordRef.current?.focus()
 			}

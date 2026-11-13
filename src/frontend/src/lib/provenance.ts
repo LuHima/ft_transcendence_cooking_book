@@ -1,14 +1,14 @@
 import type { AvailableLanguage, Lang, TranslationSource } from '../types/models'
 
-// colori del badge di provenienza della traduzione (usati in RecipeDetail e RecipeForm)
+// Translation provenance badge colours (RecipeDetail and RecipeForm)
 export const PROVENANCE_STYLE: Record<TranslationSource, string> = {
 	author_original: 'border-[var(--wc-basil)] text-[var(--wc-basil)]',
 	manual: 'border-[var(--wc-saffron)] text-[var(--wc-saffron)]',
 	machine: 'border-[var(--wc-border)] text-[var(--wc-text-muted)]',
 }
 
-// provenienza di una lingua: la lingua originale è sempre del testo dell'autore;
-// null = la lingua non è ancora stata tradotta
+// Provenance of a language: the source language is always the author's original text;
+// null = not translated yet
 export function provenanceOf(
 	locale: Lang,
 	sourceLang: Lang,

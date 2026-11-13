@@ -33,7 +33,7 @@ const UNITS: Unit[] = ['g', 'kg', 'ml', 'cl', 'l', 'oz', 'lb', 'fl_oz', 'cup', '
 
 const FIELD_BASE =
 	'rounded-lg border bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)] aria-[invalid=true]:border-[var(--wc-paprika)] border-[var(--wc-border)]'
-// i campi a larghezza fissa (quantità, unità) non devono ereditare w-full, altrimenti schiacciano il nome dell'ingrediente
+// Fixed-width fields (quantity, unit) must not inherit w-full, or they squeeze the ingredient name
 const FIELD = `w-full ${FIELD_BASE}`
 const SELECT = `${FIELD} h-[42px]`
 const LABEL = 'mb-1 block text-sm text-[var(--wc-text-muted)]'
@@ -41,7 +41,7 @@ const SECTION_TITLE = 'font-display text-xl text-[var(--wc-saffron)]'
 const SECONDARY_BTN =
 	'rounded-full border border-[var(--wc-border)] bg-[var(--wc-surface)] px-4 py-2 text-sm font-medium text-[var(--wc-text)] transition-colors hover:border-[var(--wc-basil)] hover:text-[var(--wc-basil)]'
 
-// nello stato del form i numeri sono stringhe: così il campo si può svuotare senza che venga rimesso uno zero
+// Numbers are stored as strings in form state, so a field can be emptied without a zero reappearing
 interface IngredientRow {
 	key: number
 	ingredient: CatalogIngredient | null
@@ -60,7 +60,7 @@ interface StepRow {
 	removeExistingImage: boolean
 }
 
-// impronta dei soli campi tradotti: serve a capire se ci sono modifiche non salvate prima di cambiare lingua
+// Fingerprint of the localized fields only: detects unsaved edits before switching language
 function localizedSnapshot(
 	title: string,
 	description: string,
@@ -71,7 +71,7 @@ function localizedSnapshot(
 	return JSON.stringify([title, description, tips, preservation, steps.map((st) => [st.title, st.description])])
 }
 
-// somma delle durate dei passaggi: i valori vuoti o non validi contano 0
+// Sum of step durations: empty or invalid values count as 0
 function sumStepDurations(steps: { duration: string }[]): number {
 	return steps.reduce((sum, st) => {
 		const d = st.duration.trim()
@@ -100,7 +100,7 @@ function Field({ label, htmlFor, error, children }: { label: string; htmlFor?: s
 	)
 }
 
-// anteprima + pulsanti per una singola immagine (copertina o foto di uno step)
+// Preview + buttons for a single image (cover or step photo)
 function ImagePicker({
 	label,
 	file,
@@ -137,7 +137,7 @@ function ImagePicker({
 				className="hidden"
 				onChange={(e) => {
 					const picked = e.target.files?.[0]
-					// permette di riselezionare lo stesso file dopo averlo rimosso
+					// Allows picking the same file again after removing it
 					e.target.value = ''
 					if (!picked) return
 					const err = validateImage(picked, t)
@@ -175,7 +175,7 @@ function GalleryThumb({ file, onRemove }: { file: File; onRemove: () => void }) 
 	)
 }
 
-// chiavi React stabili per le righe dinamiche (ingredienti, passaggi)
+// Stable React keys for dynamic rows (ingredients, steps)
 let keySeq = 1
 const nextKey = () => keySeq++
 
@@ -198,11 +198,11 @@ function RecipeForm() {
 		removeExistingImage: false,
 	})
 
-	// ─── stato del form ───
+	// ─── form state ───
 	const [title, setTitle] = useState('')
 	const [description, setDescription] = useState('')
 	const [sourceLang, setSourceLang] = useState<Lang>(uiLang)
-	// in modifica: lingua del testo che si sta modificando (di default quella originale; il backend la riceve come `locale`)
+	// Edit mode: language of the text being edited (defaults to the source language; sent to the backend as `locale`)
 	const [editLocale, setEditLocale] = useState<Lang>(uiLang)
 	const [switchingLocale, setSwitchingLocale] = useState(false)
 	const [course, setCourse] = useState<Course>('main_course')
@@ -217,19 +217,18 @@ function RecipeForm() {
 	const [tips, setTips] = useState('')
 	const [preservation, setPreservation] = useState('')
 
-	// ─── traduzioni (solo in modifica) ───
-	// provenienza di ogni lingua disponibile (author_original | machine | manual)
+	// ─── translations (edit mode only) ───
+	// Provenance of every available language (author_original | machine | manual)
 	const [availableLanguages, setAvailableLanguages] = useState<AvailableLanguage[]>([])
-	// scelta esplicita sulla ritraduzione automatica; null = valore predefinito
+	// Explicit retranslation choice; null = default
 	const [retranslateChoice, setRetranslateChoice] = useState<boolean | null>(null)
-	// istantanea dei testi tradotti (titolo, descrizione, consigli, conservazione, passaggi) all'ultimo caricamento
+	// Snapshot of the localized text (title, description, tips, storage, steps) at the last load
 	const [localizedBaseline, setLocalizedBaseline] = useState('')
-	// lingua verso cui l'utente vuole passare mentre ha modifiche non salvate (apre la conferma)
+	// Language the user wants to switch to while having unsaved edits (opens the confirmation)
 	const [pendingLocale, setPendingLocale] = useState<Lang | null>(null)
-	// avviso "somma durate passaggi > tempo totale" chiuso dall'utente per questa sessione
+	// Step-duration warning dismissed by the user for this session
 	const [durationWarningDismissed, setDurationWarningDismissed] = useState(false)
 
-	// media
 	const [coverFile, setCoverFile] = useState<File | null>(null)
 	const [existingCover, setExistingCover] = useState<string | null>(null)
 	const [removeCover, setRemoveCover] = useState(false)
@@ -242,7 +241,6 @@ function RecipeForm() {
 	const galleryInputRef = useRef<HTMLInputElement>(null)
 	const videoInputRef = useRef<HTMLInputElement>(null)
 
-	// catalogo (ingredienti e tag) e stato della pagina
 	const [catalog, setCatalog] = useState<CatalogIngredient[]>([])
 	const [tagCatalog, setTagCatalog] = useState<CatalogTag[]>([])
 	const [catalogError, setCatalogError] = useState(false)
@@ -251,10 +249,10 @@ function RecipeForm() {
 	const [loadError, setLoadError] = useState<string | null>(null)
 	const [forbidden, setForbidden] = useState(false)
 	const [saving, setSaving] = useState(false)
-	// avanzamento dei media dopo il salvataggio: n° operazione, file corrente e percentuale complessiva (in byte)
+	// Media upload progress after saving: job number, current file and overall percentage (by bytes)
 	const [progress, setProgress] = useState<{ done: number; total: number; label: string; percent: number } | null>(null)
 
-	// durante salvataggio e caricamento dei media: avviso del browser se si chiude o ricarica la pagina
+	// While saving and uploading media: the browser warns before closing or reloading the page
 	useEffect(() => {
 		if (!saving) return
 		const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -265,7 +263,7 @@ function RecipeForm() {
 		return () => window.removeEventListener('beforeunload', onBeforeUnload)
 	}, [saving])
 
-	// ─── caricamento catalogo ───
+	// ─── catalog ───
 	useEffect(() => {
 		let cancelled = false
 		Promise.all([
@@ -286,14 +284,14 @@ function RecipeForm() {
 		}
 	}, [uiLang])
 
-	// ─── caricamento ricetta in modifica ───
+	// ─── load the recipe to edit ───
 	useEffect(() => {
 		if (!id || !user) return
 		let cancelled = false
 
 		async function load() {
 			let recipe = await api.get<RecipeDetail>(`/recipes/${id}${qs({ lang: uiLang })}`)
-			// si modifica sempre nella lingua originale, così il testo salvato resta coerente con source_lang
+			// Always edit in the source language, so the saved text stays consistent with source_lang
 			if (recipe.resolved_lang !== recipe.source_lang) {
 				recipe = await api.get<RecipeDetail>(`/recipes/${id}${qs({ lang: recipe.source_lang })}`)
 			}
@@ -366,16 +364,16 @@ function RecipeForm() {
 		return () => {
 			cancelled = true
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- la ricetta si carica una volta per id/utente (non a ogni cambio lingua)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- load the recipe once per id/user, not on every language change
 	}, [id, user])
 
-	// i testi tradotti sono cambiati rispetto all'ultimo caricamento? (tempi, ingredienti, tag e media non contano)
+	// Did the localized text change since the last load? (times, ingredients, tags and media don't count)
 	const localizedDirty =
 		isEdit &&
 		localizedBaseline !== '' &&
 		localizedSnapshot(title, description, tips, preservation, steps) !== localizedBaseline
 
-	// cambio della lingua di modifica: con testi modificati e non salvati si chiede prima conferma
+	// Switching the edit language: ask for confirmation first when there are unsaved text edits
 	function switchEditLocale(next: Lang) {
 		if (!id || next === editLocale) return
 		if (localizedDirty) {
@@ -385,7 +383,7 @@ function RecipeForm() {
 		void loadEditLocale(next)
 	}
 
-	// si ricaricano i soli testi tradotti (titolo, descrizione, passaggi, consigli…) e si azzera la base di confronto
+	// Reloads only the localized text (title, description, steps, tips…) and resets the comparison baseline
 	async function loadEditLocale(next: Lang) {
 		setSwitchingLocale(true)
 		try {
@@ -414,7 +412,7 @@ function RecipeForm() {
 		}
 	}
 
-	// ─── helpers di aggiornamento ───
+	// ─── update helpers ───
 	const updateIngredient = (key: number, patch: Partial<IngredientRow>) =>
 		setIngredients((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)))
 	const updateStep = (key: number, patch: Partial<StepRow>) =>
@@ -451,7 +449,7 @@ function RecipeForm() {
 		setRemoveVideo(false)
 	}
 
-	// righe che ripetono un ingrediente già inserito sopra (il backend rifiuta gli ingredienti doppi)
+	// Rows repeating an ingredient already listed above (the backend rejects duplicate ingredients)
 	const duplicateKeys = new Set<number>()
 	{
 		const seen = new Set<number>()
@@ -462,7 +460,7 @@ function RecipeForm() {
 		}
 	}
 
-	// ─── validazione ───
+	// ─── validation ───
 	function validate(): FieldErrors {
 		const e: FieldErrors = {}
 		const num = (v: string) => (v.trim() === '' ? NaN : Number(v))
@@ -493,7 +491,7 @@ function RecipeForm() {
 		return e
 	}
 
-	// ─── invio ───
+	// ─── submit ───
 	async function handleSubmit(ev: FormEvent) {
 		ev.preventDefault()
 		const found = validate()
@@ -530,7 +528,6 @@ function RecipeForm() {
 				unit: r.unit,
 				...(r.notes != null ? { notes: r.notes } : {}),
 			})),
-			// privacy della ricetta (public | friends_only | private)
 			privacy,
 		}
 
@@ -544,17 +541,17 @@ function RecipeForm() {
 					})
 				: await api.post<RecipeDetail>('/recipes', body)
 		} catch (err) {
-			// 400 = validazione o lingua del testo non coerente con quella dichiarata (LibreTranslate)
+			// 400 = validation error, or text language not matching the declared one (LibreTranslate check)
 			toast.error(getErrorMessage(err, t('form.errors.saveFailed')))
 			setSaving(false)
 			return
 		}
 
-		// ─── media: chiamate dedicate dopo il salvataggio ───
-		// ogni operazione ha un'etichetta e un peso in byte (0 per le rimozioni) per calcolare la barra complessiva
+		// ─── media: dedicated requests after saving ───
+		// Each job has a label and a byte weight (0 for removals) to compute the overall progress
 		interface MediaJob {
 			label: string
-			// etichetta quando i byte sono già arrivati e il server sta ancora elaborando (compressione del video)
+			// Label shown once the bytes are sent while the server is still processing (video compression)
 			processingLabel?: string
 			bytes: number
 			run: (onBytes: (loaded: number) => void) => Promise<unknown>
@@ -586,7 +583,7 @@ function RecipeForm() {
 		}
 		if (coverFile) jobs.push(upload(t('form.cover'), `/recipes/${rid}/cover`, 'file', [coverFile]))
 		if (galleryFiles.length) jobs.push(upload(t('form.galleryLabel'), `/recipes/${rid}/gallery`, 'files', galleryFiles))
-		// il backend comprime il video con FFmpeg prima di rispondere: timeout lungo e messaggio dedicato
+		// The backend compresses the video with FFmpeg before replying: long timeout and a dedicated message
 		if (videoFile) {
 			jobs.push(
 				upload(t('form.uploadingVideo'), `/recipes/${rid}/video`, 'file', [videoFile], {
@@ -607,7 +604,7 @@ function RecipeForm() {
 		if (jobs.length) {
 			const totalBytes = jobs.reduce((sum, j) => sum + j.bytes, 0)
 			let finishedBytes = 0
-			// senza byte da inviare (solo rimozioni) la barra avanza per numero di operazioni
+			// With no bytes to send (removals only) progress advances by job count
 			const percentOf = (i: number, current: number) =>
 				totalBytes > 0 ? Math.min(100, Math.round(((finishedBytes + current) / totalBytes) * 100)) : Math.round((i / jobs.length) * 100)
 			for (let i = 0; i < jobs.length; i++) {
@@ -618,7 +615,7 @@ function RecipeForm() {
 						setProgress({
 							done: i,
 							total: jobs.length,
-							// invio completato ma risposta non ancora arrivata: il server sta elaborando
+							// Upload finished but no response yet: the server is processing
 							label: job.processingLabel && loaded >= job.bytes ? job.processingLabel : job.label,
 							percent: percentOf(i, Math.min(loaded, job.bytes)),
 						}),
@@ -638,7 +635,7 @@ function RecipeForm() {
 		navigate(`/recipes/${rid}`)
 	}
 
-	// ─── stati di pagina ───
+	// ─── page states ───
 	if (loading) {
 		return (
 			<div role="status" aria-busy="true" className="mx-auto max-w-2xl space-y-4 px-4 py-12">
@@ -665,19 +662,19 @@ function RecipeForm() {
 
 	const galleryRoom = UPLOAD_LIMITS.galleryMax - (existingGallery.length - removedGalleryIds.length) - galleryFiles.length
 	const totalTime = (Number(prepTime) || 0) + (Number(cookTime) || 0)
-	// avviso non bloccante: i passaggi possono svolgersi in parallelo, quindi si può salvare comunque
+	// Non-blocking warning: steps may run in parallel, so saving is still allowed
 	const stepsDurationSum = sumStepDurations(steps)
 	const showDurationWarning = !durationWarningDismissed && totalTime > 0 && stepsDurationSum > totalTime
 
-	// provenienza della lingua che si sta modificando e ritraduzione automatica (solo in modifica)
+	// Provenance of the language being edited (edit mode only)
 	const editProvenance = isEdit ? provenanceOf(editLocale, sourceLang, availableLanguages) : null
-	// lingue che una ritraduzione aggiornerebbe: tradotte automaticamente o non ancora tradotte
+	// Languages a retranslation would update: machine-translated or not translated yet
 	const retranslatable = SUPPORTED_LANGS.filter((l) => l !== sourceLang).filter((l) => {
 		const prov = provenanceOf(l, sourceLang, availableLanguages)
 		return prov === null || prov === 'machine'
 	})
 	const canRetranslate = retranslatable.length > 0
-	// predefinito: attivo se c'è qualcosa da ritradurre; disattivo (e bloccato) se tutte le altre lingue sono curate a mano
+	// Default: on when there is something to retranslate; off and disabled when every other language is manually curated
 	const retranslate = canRetranslate && (retranslateChoice ?? true)
 	const mediaAccept = VIDEO_ACCEPT
 
@@ -686,7 +683,7 @@ function RecipeForm() {
 			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{isEdit ? t('form.editTitle') : t('form.newTitle')}</h1>
 
 			<form onSubmit={handleSubmit} noValidate className="mt-8 space-y-8">
-				{/* ─── informazioni generali ─── */}
+				{/* ─── general info ─── */}
 				<section className="space-y-4">
 					<Field label={t('form.title')} htmlFor="rf-title" error={errors.title}>
 						<input
@@ -709,7 +706,7 @@ function RecipeForm() {
 								className={SELECT}
 							>
 								{SUPPORTED_LANGS.map((l) => {
-									// in modifica ogni lingua mostra la sua provenienza (originale, curata, automatica, non tradotta)
+									// In edit mode every language shows its provenance (original, curated, machine, not translated)
 									const prov = isEdit ? provenanceOf(l, sourceLang, availableLanguages) : undefined
 									return (
 										<option key={l} value={l}>
@@ -760,7 +757,7 @@ function RecipeForm() {
 						{isEdit ? t('form.editLanguageHelp', { lang: t(`lang.${sourceLang}`) }) : t('form.languageHelp')}
 					</p>
 
-					{/* provenienza della lingua in modifica e ritraduzione automatica */}
+					{/* Provenance of the edited language and automatic retranslation */}
 					{isEdit && (
 						<div className="space-y-3 rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-3 text-sm">
 							<div className="flex flex-wrap items-center gap-2">
@@ -849,7 +846,7 @@ function RecipeForm() {
 					</Field>
 				</section>
 
-				{/* ─── privacy della ricetta ─── */}
+				{/* ─── privacy ─── */}
 				<section>
 					<h2 className={SECTION_TITLE}>{t('form.visibility')}</h2>
 					<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t('form.visibility')}>
@@ -877,7 +874,7 @@ function RecipeForm() {
 					</div>
 				</section>
 
-				{/* ─── tag ─── */}
+				{/* ─── tags ─── */}
 				<section>
 					<h2 className={SECTION_TITLE}>{t('form.tags')}</h2>
 					{tagCatalog.length > 0 ? (
@@ -907,7 +904,7 @@ function RecipeForm() {
 					)}
 				</section>
 
-				{/* ─── ingredienti ─── */}
+				{/* ─── ingredients ─── */}
 				<section>
 					<h2 className={SECTION_TITLE}>{t('recipe.ingredients')}</h2>
 					{catalogError && <p className="mt-2 text-sm text-[var(--wc-paprika)]">{t('form.catalogError')}</p>}
@@ -973,7 +970,7 @@ function RecipeForm() {
 					</button>
 				</section>
 
-				{/* ─── passaggi ─── */}
+				{/* ─── steps ─── */}
 				<section>
 					<h2 className={SECTION_TITLE}>{t('recipe.preparation')}</h2>
 					{errors.steps && <p className="mt-1 text-xs text-[var(--wc-paprika)]">{errors.steps}</p>}
@@ -1044,7 +1041,7 @@ function RecipeForm() {
 							)
 						})}
 					</ol>
-					{/* avviso non bloccante: la somma delle durate supera il tempo totale (i passaggi possono essere paralleli) */}
+					{/* Non-blocking: shown when step durations exceed the total time (steps may run in parallel) */}
 					{showDurationWarning && (
 						<div
 							role="status"
@@ -1069,7 +1066,7 @@ function RecipeForm() {
 					</button>
 				</section>
 
-				{/* ─── consigli e conservazione ─── */}
+				{/* ─── tips and storage ─── */}
 				<section className="space-y-4">
 					<Field label={t('recipe.tips')} htmlFor="rf-tips">
 						<textarea id="rf-tips" rows={3} value={tips} onChange={(e) => setTips(e.target.value)} className={FIELD} />
@@ -1085,7 +1082,7 @@ function RecipeForm() {
 					</Field>
 				</section>
 
-				{/* ─── foto e video ─── */}
+				{/* ─── photos and video ─── */}
 				<section className="space-y-5">
 					<h2 className={SECTION_TITLE}>{t('form.media')}</h2>
 					<p className="text-xs text-[var(--wc-text-muted)]">
@@ -1212,8 +1209,7 @@ function RecipeForm() {
 
 			</form>
 
-			{/* caricamento di foto e video dopo il salvataggio: finestra che copre la pagina,
-			    così non si naviga altrove per errore mentre il server comprime i file */}
+			{/* Media upload after saving: an overlay covers the page so users don't navigate away while the server is still compressing the files */}
 			{progress && (
 				<div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/70 p-4" role="alertdialog" aria-modal="true" aria-label={t('form.uploadProgress')}>
 					<div className="w-full max-w-md space-y-3 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6" aria-live="polite">
@@ -1242,7 +1238,7 @@ function RecipeForm() {
 				</div>
 			)}
 
-			{/* conferma prima di cambiare lingua con testi modificati e non salvati */}
+			{/* Confirmation before switching language with unsaved text edits */}
 			{pendingLocale && (
 				<ConfirmDialog
 					title={t('form.discardTitle')}

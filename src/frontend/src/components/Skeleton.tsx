@@ -1,6 +1,6 @@
-// segnaposto animati mostrati durante i caricamenti.
-// .wc-skeleton (index.css) li tiene invisibili per i primi 250 ms: se i dati arrivano prima
-// (quasi sempre) non si vede il "lampo" grigio a ogni cambio pagina.
+// Animated placeholders shown while loading.
+// .wc-skeleton (index.css) keeps them invisible for the first 250 ms, so fast responses
+// don't flash a grey block on every page change.
 export function Skeleton({ className = '' }: { className?: string }) {
 	return <div aria-hidden="true" className={`wc-skeleton rounded-md bg-[var(--wc-surface-raised)] ${className}`} />
 }

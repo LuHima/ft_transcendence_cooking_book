@@ -21,7 +21,7 @@ const MAX_LENGTH = 1000
 
 interface CommentsProps {
 	recipeId: number
-	// l'autore della ricetta può rimuovere i commenti sotto la propria ricetta (regola del backend)
+	// The recipe author can also remove comments under their recipe (backend rule)
 	recipeAuthorId?: number | null
 }
 
@@ -48,7 +48,7 @@ function CommentForm({ initial = '', submitLabel, placeholder, autoFocus, onSubm
 			await onSubmit(text)
 			setContent('')
 		} catch {
-			// l'errore viene mostrato dal chiamante con un toast; il testo resta nel campo
+			// The caller shows the error in a toast; the text stays in the field
 		} finally {
 			setSubmitting(false)
 		}
@@ -119,7 +119,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 						setTotalCount(data.total)
 						setTotalPages(data.total_pages)
 					} else if (Array.isArray(data)) {
-						// Fallback if data is raw array
+						// Fallback for a plain array response
 						const arr = data as unknown as ThreadedComment[]
 						setThreads(arr)
 						setTotalCount(arr.length)
@@ -239,9 +239,9 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	async function deleteComment(comment: ApiComment) {
 		if (!confirm(t('comments.confirmDelete'))) return
 		try {
-			// eliminazione non distruttiva: il backend imposta is_active = false
+			// Soft delete: the backend sets is_active = false
 			await api.delete(`/recipes/${recipeId}/comments/${comment.id}`)
-			// lo staff continua a vedere testo e autore del commento disattivato (contesto per la moderazione)
+			// Staff keep seeing the text and author of a deactivated comment (moderation context)
 			const staff = isStaffUser(user)
 			const deactivate = <T extends ApiComment>(x: T): T =>
 				staff ? { ...x, is_active: false } : { ...x, content: null, user: null, user_id: null, is_active: false }
@@ -250,7 +250,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 					? prev
 							.filter((th) => {
 								if (th.id === comment.id) {
-									// Se ha risposte, resta per contesto; altrimenti viene rimosso
+									// Keep it for context if it has replies, otherwise remove it
 									return th.replies.length > 0
 								}
 								return true
@@ -273,9 +273,8 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 
 	function renderComment(c: ApiComment, rootId: number, isReply: boolean) {
 		const isAuthor = Boolean(user && c.user_id && c.user_id === user.id)
-		// disattivazione: autore del commento, autore della ricetta, admin o moderatore
 		const canDelete = c.is_active && canDeactivateComment(user, c.user_id, recipeAuthorId)
-		// lo staff riceve ancora testo e autore dei commenti disattivati: vanno distinti da quelli attivi
+		// Staff still receive the text and author of deactivated comments: mark them so they stand out
 		const deactivatedForStaff = !c.is_active && Boolean(c.content)
 
 		return (
@@ -373,7 +372,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 							autoFocus
 							submitLabel={t('comments.reply')}
 							placeholder={t('comments.replyPlaceholder')}
-							// le risposte a una risposta vengono agganciate al commento principale (thread a 2 livelli)
+							// Replies to a reply are attached to the root comment (two-level threads)
 							onSubmit={(content) => addComment(content, rootId)}
 							onCancel={() => setReplyingTo(null)}
 						/>

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useLang } from '../lib/useLang'
 import type { AccountBannedDetails } from '../types/models'
 
-// card mostrata sopra il form di login quando l'account è sospeso (403 ACCOUNT_BANNED)
+// Shown above the login form when the account is banned (403 ACCOUNT_BANNED)
 function BannedAccountNotice({ details }: { details: AccountBannedDetails }) {
 	const { t } = useTranslation()
 	const lang = useLang()

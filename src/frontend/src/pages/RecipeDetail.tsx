@@ -42,11 +42,11 @@ function RecipeDetail() {
 	const [exporting, setExporting] = useState(false)
 	const [reactivating, setReactivating] = useState(false)
 	const [confirmPurge, setConfirmPurge] = useState(false)
-	// ricetta "solo amici": 401 = ospite (deve accedere), 403 = utente non amico dell'autore
+	// Friends-only recipe: 401 = guest (must sign in), 403 = not a friend of the author
 	const [restricted, setRestricted] = useState<401 | 403 | null>(null)
 	const location = useLocation()
 
-	// si ricarica anche al cambio lingua dell'interfaccia: il backend restituisce i testi tradotti
+	// Reloads on interface language change: the backend returns translated text
 	useEffect(() => {
 		let cancelled = false
 		api
@@ -59,7 +59,7 @@ function RecipeDetail() {
 			})
 			.catch((err) => {
 				if (cancelled) return
-				// le ricette private restituiscono 404 a chi non è l'autore (non se ne rivela l'esistenza)
+				// Private recipes return 404 to non-authors, so their existence is not revealed
 				if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
 					setRestricted(err.status)
 					return
@@ -92,14 +92,14 @@ function RecipeDetail() {
 
 	async function handleDelete() {
 		if (!recipe) return
-		// sospensione da parte dello staff (admin o moderatore) su una ricetta altrui
+		// Staff (admin or moderator) suspending someone else's recipe
 		const moderation = isStaff && !isOwner
 		if (!confirm(moderation ? t('recipe.confirmDeleteAdmin') : t('recipe.confirmDelete'))) return
 		setDeleting(true)
 		try {
 			await api.delete(`/recipes/${recipe.id}`)
 			if (moderation) {
-				// lo staff resta sulla pagina: compare il banner "ricetta sospesa"
+				// Staff stay on the page, which now shows the "suspended" banner
 				setRecipe({ ...recipe, is_active: false })
 				toast.success(t('admin.recipes.suspended'))
 				setDeleting(false)
@@ -108,7 +108,7 @@ function RecipeDetail() {
 				navigate('/my-recipes')
 			}
 		} catch (err) {
-			// 403: un moderatore non può sospendere le ricette di un amministratore
+			// 403: moderators cannot suspend an administrator's recipes
 			toast.error(
 				err instanceof ApiError && err.status === 403 ? t('recipe.suspendForbidden') : getErrorMessage(err, t('recipe.deleteError')),
 			)
@@ -116,7 +116,7 @@ function RecipeDetail() {
 		}
 	}
 
-	// PATCH /recipes/:id { is_active: true }: solo moderatori e admin possono riattivare una ricetta sospesa
+	// Only the author or an admin can reactivate a suspended recipe
 	async function reactivate() {
 		if (!recipe) return
 		setReactivating(true)
@@ -131,7 +131,7 @@ function RecipeDetail() {
 		}
 	}
 
-	// DELETE /recipes/:id?hard=true: eliminazione definitiva, solo admin
+	// Permanent deletion, admins only
 	async function purge() {
 		if (!recipe) return
 		try {
@@ -216,7 +216,7 @@ function RecipeDetail() {
 	const canReactivate = canRestoreRecipe(user, recipe.author?.id)
 	const suspended = recipe.is_active === false
 	const provenance = recipe.translation_source
-	// modifica e ritraduzione: proprietario o admin; sospensione: proprietario o staff (admin e moderatori)
+	// Edit and retranslate: author or admin; suspend: author or staff
 	const canEdit = canEditRecipe(user, recipe.author?.id)
 	const canDelete = canDeleteRecipe(user, recipe.author?.id) && !suspended
 	const canManage = canEdit

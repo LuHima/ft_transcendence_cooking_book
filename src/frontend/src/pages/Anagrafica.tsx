@@ -37,7 +37,7 @@ function Anagrafica() {
 		if (!birthValid) return toast.error(t('personal.birthInvalid'))
 		setSaving(true)
 		try {
-			// una data di nascita vuota non è valida per il backend: si omette
+			// An empty birth date is invalid for the backend: omit it
 			const { birth_date, ...rest } = form
 			await api.patch('/users/me', { ...rest, ...(birth_date ? { birth_date } : {}) })
 			await refreshUser()

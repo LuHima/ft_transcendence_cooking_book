@@ -6,16 +6,15 @@ interface IngredientMultiPickerProps {
 	label: string
 	catalog: CatalogIngredient[]
 	selectedIds: number[]
-	// id già usati nell'altra lista (inclusi/esclusi): non selezionabili, il backend rifiuta insiemi sovrapposti
+	// IDs already used in the other list: the backend rejects overlapping include/exclude sets
 	disabledIds?: number[]
 	onChange: (ids: number[]) => void
-	// stile dei chip: verde per "deve contenere", rosso per "escludi"
 	tone?: 'include' | 'exclude'
 }
 
 const MAX_OPTIONS = 8
 
-// selezione multipla di ingredienti dal catalogo, con ricerca testuale e chip rimovibili
+// Multi-select over the ingredient catalog, with text search and removable chips
 function IngredientMultiPicker({ label, catalog, selectedIds, disabledIds = [], onChange, tone = 'include' }: IngredientMultiPickerProps) {
 	const { t } = useTranslation()
 	const listId = useId()
@@ -114,7 +113,7 @@ function IngredientMultiPicker({ label, catalog, selectedIds, disabledIds = [], 
 							<li key={i.id} role="option" aria-selected={index === activeIndex}>
 								<button
 									type="button"
-									// onMouseDown: si seleziona prima del blur dell'input
+									// onMouseDown: select before the input blur closes the list
 									onMouseDown={(e) => {
 										e.preventDefault()
 										add(i)

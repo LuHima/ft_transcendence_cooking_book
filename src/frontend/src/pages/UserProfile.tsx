@@ -21,17 +21,17 @@ const FRIENDS_PAGE_SIZE = 20
 
 type Tab = 'recipes' | 'friends'
 
-// accesso a una sezione del profilo negato dalla privacy: 401 = ospite (deve accedere), 403 = non autorizzato
+// Profile section hidden by privacy: 401 = guest (must sign in), 403 = not allowed
 type Restriction = 401 | 403
 
 function restrictionOf(err: unknown): Restriction | null {
 	return err instanceof ApiError && (err.status === 401 || err.status === 403) ? err.status : null
 }
 
-// profilo pubblico di un utente, raggiungibile da /users/:id oppure /u/:username (link condivisibile).
-// GET /users/:id o GET /users/by-username/:username restituiscono il profilo completo o ridotto (degraded)
-// in base a profile_privacy; ricettario e amici possono rispondere 401/403 (PROFILE_COOKBOOK_RESTRICTED,
-// PROFILE_FRIENDS_RESTRICTED). Wrapper: key rimonta il componente al cambio utente, così lo stato riparte pulito.
+// Public profile, reachable from /users/:id or the shareable /u/:username.
+// The backend returns a full or degraded profile depending on profile_privacy; cookbook and friends
+// may answer 401/403 (PROFILE_COOKBOOK_RESTRICTED, PROFILE_FRIENDS_RESTRICTED).
+// The key remounts the view when the user changes, so state starts clean.
 function UserProfile() {
 	const { id, username } = useParams()
 	return <UserProfileView key={id ?? `u:${username}`} id={id} username={username} />
@@ -49,20 +49,17 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 	const [tab, setTab] = useState<Tab>('recipes')
 	const [confirmBlock, setConfirmBlock] = useState(false)
 
-	// ricettario
 	const [recipes, setRecipes] = useState<Paginated<RecipeSummary> | null>(null)
 	const [recipesError, setRecipesError] = useState<string | null>(null)
 	const [recipesRestricted, setRecipesRestricted] = useState<Restriction | null>(null)
 	const [page, setPage] = useState(1)
 	const [sort, setSort] = useState<RecipeSortValue>(DEFAULT_RECIPE_SORT)
 
-	// amici confermati
 	const [friends, setFriends] = useState<Paginated<FriendItem> | null>(null)
 	const [friendsError, setFriendsError] = useState<string | null>(null)
 	const [friendsRestricted, setFriendsRestricted] = useState<Restriction | null>(null)
 	const [friendsPage, setFriendsPage] = useState(1)
 
-	// profilo: per id oppure per username
 	useEffect(() => {
 		let cancelled = false
 		const path = username ? `/users/by-username/${encodeURIComponent(username)}` : `/users/${id}`
@@ -70,7 +67,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 			.get<PublicUser>(path)
 			.then((p) => {
 				if (cancelled) return
-				// risposta vuota o non valida = utente inesistente
+				// Empty or invalid response = user does not exist
 				if (!p || typeof p.id !== 'number') throw new ApiError(404, t('profile.notFound'))
 				setProfile(p)
 			})
@@ -84,7 +81,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 
 	const profileId = profile?.id
 
-	// ricettario: GET /users/:id/recipes (si usa sempre l'id restituito dal profilo)
+	// Cookbook: always uses the ID returned by the profile (the route may be /u/:username)
 	const { sortBy, sortOrder } = parseRecipeSort(sort)
 	useEffect(() => {
 		if (profileId == null) return
@@ -111,7 +108,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 		}
 	}, [profileId, page, lang, sortBy, sortOrder, t])
 
-	// amici: GET /users/:id/friends, caricati solo aprendo la scheda
+	// Friends are loaded only when their tab is opened
 	useEffect(() => {
 		if (profileId == null || tab !== 'friends') return
 		let cancelled = false
@@ -149,7 +146,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 		})
 	}
 
-	// POST /users/:id/block: rimuove amicizie e richieste, nasconde profili e commenti in entrambe le direzioni
+	// Blocking removes friendships and requests and hides profiles and comments both ways
 	async function blockUser() {
 		if (!profile) return
 		try {
@@ -162,7 +159,6 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 		}
 	}
 
-	// link condivisibile con lo username: /u/:username
 	async function copyProfileLink() {
 		if (!profile) return
 		const url = `${window.location.origin}/u/${encodeURIComponent(profile.username)}`
@@ -170,7 +166,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 			await navigator.clipboard.writeText(url)
 			toast.success(t('profile.linkCopied'))
 		} catch {
-			// clipboard non disponibile (es. http): si mostra il link da copiare a mano
+			// Clipboard unavailable (e.g. plain http): show the link to copy manually
 			toast.info(url)
 		}
 	}
@@ -197,7 +193,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 		? new Date(profile.created_at).toLocaleDateString(lang, { month: 'long', year: 'numeric' })
 		: null
 
-	// riquadro per una sezione nascosta dalla privacy del profilo
+	// Box shown for a section hidden by the profile privacy
 	function renderRestricted(restriction: Restriction, kind: Tab) {
 		return (
 			<div className="mt-4 rounded-2xl border border-dashed border-[var(--wc-border)] p-8 text-center">
@@ -283,7 +279,6 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 
 			{profile.bio && <p className="mt-4 max-w-2xl whitespace-pre-line break-words text-[var(--wc-text)]">{profile.bio}</p>}
 
-			{/* condivisione del profilo + azioni di moderazione (segnala, blocca) */}
 			<div className="mt-3 flex flex-wrap items-center gap-4">
 				<button
 					type="button"

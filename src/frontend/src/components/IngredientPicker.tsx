@@ -11,7 +11,7 @@ interface IngredientPickerProps {
 
 const MAX_OPTIONS = 8
 
-// combobox sul catalogo ingredienti: il backend accetta solo ingredient_id presenti nel catalogo
+// Combobox over the ingredient catalog: the backend only accepts catalog ingredient IDs
 function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPickerProps) {
 	const { t } = useTranslation()
 	const listId = useId()
@@ -19,7 +19,7 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 	const [open, setOpen] = useState(false)
 	const [activeIndex, setActiveIndex] = useState(0)
 
-	// riallinea il testo se il valore cambia dall'esterno (es. caricamento di una ricetta in modifica)
+	// Sync the text when the value changes from outside (e.g. loading a recipe to edit)
 	const [prevValueId, setPrevValueId] = useState(value?.id ?? null)
 	if ((value?.id ?? null) !== prevValueId) {
 		setPrevValueId(value?.id ?? null)
@@ -46,7 +46,7 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 			if (exact.id !== value?.id) onChange(exact)
 			setText(exact.name)
 		} else if (value) {
-			// testo che non corrisponde a nessun ingrediente: si torna alla scelta precedente
+			// Text matching no ingredient: revert to the previous choice
 			setText(value.name)
 		} else {
 			setText('')
@@ -105,7 +105,7 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 					) : (
 						options.map((i, index) => (
 							<li key={i.id} role="option" aria-selected={index === activeIndex}>
-								{/* onMouseDown + preventDefault: la scelta avviene prima del blur dell'input */}
+								{/* onMouseDown + preventDefault: select before the input blur */}
 								<button
 									type="button"
 									onMouseDown={(e) => {

@@ -5,7 +5,7 @@ interface Section {
 	body: string
 }
 
-// Termini di servizio: testo in locales/*.json (chiave "terms.sections")
+// Terms of service: text lives in locales/*.json ("terms.sections")
 function Terms() {
 	const { t } = useTranslation()
 	const sections = t('terms.sections', { returnObjects: true }) as Section[]

@@ -7,4 +7,3 @@ import { PrismaService } from './prisma.service';
   exports: [PrismaService],
 })
 export class PrismaModule {} 
-//export si sua solo per permettere alle altre classi di importare il file?

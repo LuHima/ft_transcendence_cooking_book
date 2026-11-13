@@ -6,7 +6,6 @@ interface AvatarProps {
 	className?: string
 }
 
-// avatar tondo: immagine se presente, altrimenti iniziale dello username
 function Avatar({ username, url, className = 'h-8 w-8 text-sm' }: AvatarProps) {
 	if (url) {
 		return <img src={assetUrl(url)} alt="" className={`${className} shrink-0 rounded-full object-cover`} />

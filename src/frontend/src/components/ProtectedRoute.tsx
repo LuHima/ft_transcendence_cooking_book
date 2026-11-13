@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types/models'
 
 interface ProtectedRouteProps {
-	// se presente, l'utente deve avere uno di questi ruoli (es. ['admin'])
+	// If set, the user must have one of these roles (e.g. ['admin'])
 	roles?: UserRole[]
 }
 

@@ -10,12 +10,11 @@ const ICON: Record<RecipePrivacy, string> = { public: 'üåê', friends_only: 'üë
 
 interface PrivacyBadgeProps {
 	privacy?: RecipePrivacy | null
-	// false (predefinito): le ricette pubbliche non mostrano nulla; true: badge per ogni livello
+	// false (default): nothing for public recipes; true: a badge for every level
 	showPublic?: boolean
 	className?: string
 }
 
-// pillola con il livello di privacy di una ricetta (public | friends_only | private)
 function PrivacyBadge({ privacy, showPublic = false, className = '' }: PrivacyBadgeProps) {
 	const { t } = useTranslation()
 	if (!privacy || (privacy === 'public' && !showPublic)) return null

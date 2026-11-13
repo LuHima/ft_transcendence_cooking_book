@@ -6,7 +6,7 @@ interface PasswordInputProps {
 	label: string
 	value: string
 	onChange: (value: string) => void
-	// true = testo in chiaro (gestito dal checkbox "Mostra password" della pagina)
+	// true = plain text (driven by the page's "Show password" checkbox)
 	show: boolean
 	autoComplete?: string
 	minLength?: number
@@ -16,7 +16,7 @@ interface PasswordInputProps {
 	error?: string
 }
 
-// campo password con il tipo controllato da fuori: più campi (password + conferma) condividono un solo checkbox
+// Password field with an externally controlled type, so several fields share one "Show password" checkbox
 function PasswordInput({ id, label, value, onChange, show, autoComplete, minLength, invalid, inputRef, hint, error }: PasswordInputProps) {
 	return (
 		<div>

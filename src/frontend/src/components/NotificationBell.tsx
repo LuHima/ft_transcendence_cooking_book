@@ -11,9 +11,8 @@ import type { AppNotification, PaginatedNotifications } from '../types/models'
 const POLL_INTERVAL_MS = 60_000
 const PAGE_SIZE = 20
 
-// testo e destinazione di una notifica in base a subject + action (modello Notification del backend)
-// target.id è l'id della ricetta per subject 'recipe' e l'id del commento per subject 'comment':
-// per i commenti la ricetta arriva in target.recipe_id
+// Notification text and link from subject + action.
+// target.id is the recipe for 'recipe' and the comment for 'comment'; comments carry their recipe in target.recipe_id.
 function describe(n: AppNotification, currentUserId?: number): { textKey: string; to: string } {
 	const recipeId = n.target?.recipe_id ?? (n.subject === 'recipe' ? (n.target?.id ?? null) : null)
 	const actorPath = n.actor ? `/users/${n.actor.id}` : '/'
@@ -34,15 +33,15 @@ function describe(n: AppNotification, currentUserId?: number): { textKey: string
 		case 'update':
 			return { textKey: 'notifications.update', to: recipePath }
 		case 'warn':
-			// avviso di moderazione: mai verso il profilo del moderatore (identità dello staff protetta).
-			// ricetta o commento → la ricetta interessata; profilo → il proprio profilo
+			// Moderation warning: never link to the moderator (staff identity is hidden).
+			// Recipe or comment → that recipe; profile → the user's own profile.
 			if (n.subject === 'user') return { textKey: 'notifications.warn', to: currentUserId != null ? `/users/${currentUserId}` : '/' }
 			return { textKey: 'notifications.warn', to: recipeId != null ? `/recipes/${recipeId}` : '/' }
 		case 'delete':
-			// la ricetta non esiste più: nessun link
+			// The recipe no longer exists: no link
 			return { textKey: 'notifications.delete', to: '/' }
 		default:
-			// azioni nuove aggiunte dal backend: non far crashare il menu
+			// Actions added later by the backend must not break the menu
 			return { textKey: 'notifications.generic', to: n.subject === 'user' ? actorPath : recipePath }
 	}
 }
@@ -56,7 +55,7 @@ function timeAgo(iso: string, lang: string) {
 	return rtf.format(Math.round(hours / 24), 'day')
 }
 
-// icona "scudo" del team di moderazione, mostrata al posto dell'avatar negli avvisi
+// Moderation-team shield, shown instead of an avatar on warnings
 function ModerationBadge() {
 	return (
 		<span
@@ -77,13 +76,11 @@ function NotificationBell() {
 	const { user } = useAuth()
 	const lang = useLang()
 	const [items, setItems] = useState<AppNotification[]>([])
-	// contatore del server (copre anche le non lette oltre la prima pagina)
+	// Server-side counter (includes unread notifications beyond the first page)
 	const [unreadCount, setUnreadCount] = useState(0)
 	const [open, setOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
 
-	// GET /api/notifications?page=1&limit=20&lang=
-	// il backend risponde in forma paginata: { items, total, page, ..., unread_count }
 	const load = useCallback(() => {
 		api
 			.get<PaginatedNotifications>(`/notifications${qs({ page: 1, limit: PAGE_SIZE, lang })}`)
@@ -93,11 +90,11 @@ function NotificationBell() {
 				setUnreadCount(typeof data?.unread_count === 'number' ? data.unread_count : list.filter((n) => !n.is_read).length)
 			})
 			.catch(() => {
-				// le notifiche sono un extra: se falliscono non si mostra nessun errore
+				// Notifications are non-essential: fail silently
 			})
 	}, [lang])
 
-	// primo caricamento + aggiornamento periodico (solo con la scheda visibile)
+	// Initial load + periodic polling (only while the tab is visible)
 	useEffect(() => {
 		load()
 		const timer = setInterval(() => {
@@ -123,7 +120,7 @@ function NotificationBell() {
 		}
 	}, [load])
 
-	// PATCH /api/notifications/read-all (una sola chiamata per tutte le non lette)
+	// A single request marks every unread notification as read
 	const markAllRead = useCallback(
 		(hasUnread: boolean) => {
 			if (!hasUnread) return
@@ -134,7 +131,6 @@ function NotificationBell() {
 		[load],
 	)
 
-	// PATCH /api/notifications/:id/read (click su una singola notifica)
 	const markRead = useCallback(
 		(n: AppNotification) => {
 			if (n.is_read) return
@@ -147,7 +143,7 @@ function NotificationBell() {
 
 	const close = useCallback(() => {
 		setOpen(false)
-		// alla chiusura le notifiche visualizzate vengono segnate come lette
+		// Notifications seen while the menu was open are marked as read on close
 		markAllRead(unreadCount > 0 || items.some((n) => !n.is_read))
 	}, [items, unreadCount, markAllRead])
 
@@ -176,14 +172,13 @@ function NotificationBell() {
 		}
 	}
 
-	// DELETE /api/notifications/:id
 	function remove(n: AppNotification) {
 		setItems((prev) => prev.filter((x) => x.id !== n.id))
 		if (!n.is_read) setUnreadCount((c) => Math.max(0, c - 1))
 		api.delete(`/notifications/${n.id}`).catch(() => load())
 	}
 
-	// con il menu aperto il badge sparisce: le notifiche si stanno guardando
+	// Hide the badge while the menu is open
 	const badge = open ? 0 : unreadCount
 
 	return (
@@ -255,9 +250,9 @@ function NotificationBell() {
 											<span className="min-w-0 flex-1">
 												{isWarn ? (
 													<>
-														{/* nessun nome del moderatore: solo "Team di moderazione" */}
+														{/* Staff identity is hidden: no moderator name */}
 														<span className="font-semibold text-[var(--wc-paprika)]">{t('notifications.moderationTeam')}</span>
-														{/* messaggio già localizzato dal backend (?lang=) */}
+														{/* Already localized by the backend (?lang=) */}
 														<span className="block">{n.message || t('notifications.warnFallback')}</span>
 														{n.details && (
 															<span

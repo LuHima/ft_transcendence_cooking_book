@@ -1,25 +1,25 @@
-    import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
- 	import { PrismaClient } from '@prisma/client';
-    import { PrismaPg } from '@prisma/adapter-pg';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-    @Injectable()
-    export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-      constructor() {
-        // Inizializza l'adattatore PostgreSQL usando la variabile d'ambiente del container                            
-        const adapter = new PrismaPg({
-          connectionString: process.env.DATABASE_URL,
-        });
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  constructor() {
+    // Initialize the PostgreSQL adapter from the container's environment variable
+    const adapter = new PrismaPg({
+      connectionString: process.env.DATABASE_URL,
+    });
 
-        super({ adapter });                                                                                            
-      }
+    super({ adapter });
+  }
 
-      // Si connette al DB quando il modulo si avvia                                                                   
-      async onModuleInit() {                                                                                           
-        await this.$connect();                                                                                         
-      }                                                                                                                
-                                                                                                                       
-      // Chiude la connessione quando l'applicazione si spegne                                                         
-      async onModuleDestroy() {
-        await this.$disconnect();
-      }
-    }
+  // Connect to the database when the module starts
+  async onModuleInit() {
+    await this.$connect();
+  }
+
+  // Close the connection when the application shuts down
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+}

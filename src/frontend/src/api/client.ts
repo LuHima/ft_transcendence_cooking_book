@@ -1,13 +1,11 @@
-// Wrapper unico per tutte le chiamate verso il backend NestJS.
-// Il backend espone le rotte sotto /api ed è configurato con setGlobalPrefix('api'),
-// quindi qui basta passare il path relativo (es. "/recipes", "/auth/signin").
+// API client for the NestJS backend: every route lives under /api, so pass relative paths (e.g. "/recipes").
 
 import i18n from '../i18n'
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
-// le immagini/video caricati arrivano come path relativo (es. "/uploads/recipes/x.webp").
-// Se il backend è su un altro host, impostare VITE_ASSET_BASE_URL (es. "http://localhost:3000").
+// Uploaded media come back as relative paths (e.g. "/uploads/recipes/x.webp").
+// Set VITE_ASSET_BASE_URL when the backend runs on another host.
 const ASSET_BASE = (import.meta.env.VITE_ASSET_BASE_URL as string | undefined) ?? ''
 
 export function assetUrl(path?: string | null): string | undefined {
@@ -16,7 +14,7 @@ export function assetUrl(path?: string | null): string | undefined {
 	return `${ASSET_BASE}${path}`
 }
 
-// costruisce una query string saltando i valori vuoti: qs({ page: 1, search: '' }) -> "?page=1"
+// Builds a query string, skipping empty values: qs({ page: 1, search: '' }) -> "?page=1"
 export function qs(params: Record<string, string | number | boolean | null | undefined>): string {
 	const sp = new URLSearchParams()
 	for (const [key, value] of Object.entries(params)) {
@@ -44,7 +42,7 @@ export class ApiError extends Error {
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
 	body?: unknown
-	// se true, in caso di 401 tenta un refresh del token e ripete la richiesta una volta
+	// On 401, refresh the token once and retry the request
 	retryOnUnauthorized?: boolean
 }
 
@@ -101,19 +99,19 @@ export async function apiFetch<T = unknown>(path: string, options: RequestOption
 	return data as T
 }
 
-// tempo massimo di attesa di un upload: comprende l'invio e l'elaborazione sul server
-// (il backend comprime i video con FFmpeg in modo sincrono: anche 60-90 secondi su CPU lente)
+// Upload timeout covers both sending and server-side processing
+// (videos are transcoded synchronously with FFmpeg: up to 60-90 s on slow CPUs)
 export const UPLOAD_TIMEOUT_MS = 120_000
 export const VIDEO_UPLOAD_TIMEOUT_MS = 300_000
 
 interface UploadOptions {
 	retryOnUnauthorized?: boolean
-	// 0 = nessun limite
+	// 0 = no limit
 	timeoutMs?: number
 }
 
-// upload multipart con avanzamento (fetch non espone il progresso dell'invio): usa XMLHttpRequest.
-// onProgress riceve i byte inviati e il totale. Stessa gestione di apiFetch per 401 → refresh → nuovo tentativo.
+// Multipart upload with progress (fetch cannot report upload progress, hence XMLHttpRequest).
+// Same 401 → refresh → retry handling as apiFetch.
 export async function uploadWithProgress<T = unknown>(
 	path: string,
 	formData: FormData,
@@ -169,14 +167,12 @@ export const api = {
 	delete: <T = unknown>(path: string, options?: RequestOptions) => apiFetch<T>(path, { ...options, method: 'DELETE' }),
 }
 
-// il backend può rispondere con body vuoto / non JSON (api restituisce allora null):
-// questo helper garantisce sempre un array, così le pagine non vanno in crash
+// Some endpoints may reply with an empty or non-JSON body: always return an array
 export function asArray<T>(value: unknown): T[] {
 	return Array.isArray(value) ? (value as T[]) : []
 }
 
-// alcune rotte admin possono rispondere con un array semplice o con { items, total_pages… }:
-// questo helper le riporta sempre alla forma paginata
+// Normalizes plain arrays and paginated responses to the Paginated shape
 export function toPage<T>(data: unknown, fallbackLimit = 20): import('../types/models').Paginated<T> {
 	if (Array.isArray(data)) {
 		return {

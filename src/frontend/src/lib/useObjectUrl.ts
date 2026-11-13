@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-// anteprima locale di un File; l'URL viene revocato quando il file cambia o il componente si smonta
+// Local preview of a File; the URL is revoked when the file changes or the component unmounts
 export function useObjectUrl(file: File | null): string | null {
 	const [url, setUrl] = useState<string | null>(null)
 	useEffect(() => {

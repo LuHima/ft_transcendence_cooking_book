@@ -24,13 +24,13 @@ function Friends() {
 	const [receivedCount, setReceivedCount] = useState(0)
 	const [error, setError] = useState<string | null>(null)
 	const [busyId, setBusyId] = useState<number | null>(null)
-	// amici confermati: ricerca per username e paginazione (GET /friends?search=&page=&limit=20)
+	// Confirmed friends: username search and pagination (GET /friends?search=&page=&limit=20)
 	const [friendsSearch, setFriendsSearch] = useState('')
 	const [friendsQuery, setFriendsQuery] = useState('')
 	const [friendsPage, setFriendsPage] = useState(1)
 	const [friendsTotalPages, setFriendsTotalPages] = useState(1)
 
-	// la ricerca parte 300ms dopo l'ultimo tasto e riporta alla prima pagina
+	// Search runs 300 ms after the last keystroke and goes back to the first page
 	useEffect(() => {
 		const id = window.setTimeout(() => {
 			setFriendsQuery(friendsSearch.trim())
@@ -39,7 +39,7 @@ function Friends() {
 		return () => window.clearTimeout(id)
 	}, [friendsSearch])
 
-	// le richieste ricevute si caricano subito per mostrare il numero sulla scheda
+	// Incoming requests load right away to show the count on the tab
 	useEffect(() => {
 		api
 			.get<unknown>('/friends/requests?type=incoming')
@@ -75,9 +75,9 @@ function Friends() {
 		}
 	}, [tab, friendsQuery, friendsPage, t])
 
-	// req.id è l'id dell'altro utente (mittente per le ricevute, destinatario per le inviate):
-	//   accetta/rifiuta → POST /friends/requests/:requesterId/(accept|reject)
-	//   annulla         → DELETE /friends/requests/:addresseeId
+	// req.id is the other user's ID (sender for incoming, recipient for outgoing requests):
+	//   accept/reject → POST /friends/requests/:requesterId/(accept|reject)
+	//   cancel        → DELETE /friends/requests/:addresseeId
 	const answer = useCallback(
 		async (req: FriendRequest, action: 'accept' | 'reject' | 'cancel') => {
 			setBusyId(req.id)

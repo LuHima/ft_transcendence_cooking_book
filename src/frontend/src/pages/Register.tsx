@@ -14,7 +14,7 @@ function Register() {
 	const { t } = useTranslation()
 	const { signUp, signIn, signInWithGoogle } = useAuth()
 	const navigate = useNavigate()
-	// pagina da cui l'utente è arrivato (es. form "Aggiungi ricetta"), passata dalla pagina di login
+	// Page the user came from (e.g. the "Add recipe" form), forwarded by the login page
 	const fromState = (useLocation().state as { from?: { pathname: string } } | null)?.from
 	const from = fromState?.pathname ?? '/'
 
@@ -50,7 +50,7 @@ function Register() {
 		}
 	}
 
-	// registrazione/accesso con Google: serve comunque aver accettato termini e privacy
+	// Google sign-up/sign-in still requires accepting the terms and privacy policy
 	async function handleGoogle(idToken: string) {
 		setError(null)
 		if (!accepted) {
@@ -60,13 +60,13 @@ function Register() {
 		try {
 			const result = await signInWithGoogle(idToken)
 			if (result.twoFactor) {
-				// la 2FA si completa nella pagina di login
+				// 2FA is completed on the login page
 				navigate('/login', { state: { tempToken: result.tempToken, from: fromState } })
 				return
 			}
 			navigate(from, { replace: true })
 		} catch (err) {
-			// account Google sospeso: la card con i dettagli del ban si mostra nella pagina di login
+			// Banned Google account: the ban details card is shown on the login page
 			const banned = getAccountBannedDetails(err)
 			if (banned) {
 				navigate('/login', { state: { banned } })

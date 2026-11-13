@@ -42,7 +42,6 @@ function Favorites() {
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-12">
 			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('favorites.title')}</h1>
-			{/* ordinamento sotto il titolo, come in "Le mie ricette" */}
 			<div className="mt-4">
 				<RecipeSortSelect
 					value={sort}

@@ -5,7 +5,6 @@ type RecipeOption = Pick<Recipe, 'id' | 'title'>
 
 interface RecipeAutocompleteProps {
 	recipes: RecipeOption[]
-	// ricetta attualmente assegnata alla cella (se presente)
 	selected?: RecipeOption | null
 	disabled?: boolean
 	onSelect: (recipeId: number | null) => void
@@ -13,7 +12,7 @@ interface RecipeAutocompleteProps {
 
 const MAX_OPTIONS = 6
 
-// box testuale con suggerimenti: sostituisce la <select> con l'elenco di tutte le ricette
+// Text box with suggestions, replacing a <select> that listed every recipe
 function RecipeAutocomplete({ recipes, selected, disabled, onSelect }: RecipeAutocompleteProps) {
 	const selectedTitle = selected?.title ?? ''
 	const [text, setText] = useState(selectedTitle)
@@ -22,8 +21,8 @@ function RecipeAutocomplete({ recipes, selected, disabled, onSelect }: RecipeAut
 	const [rect, setRect] = useState<DOMRect | null>(null)
 	const inputRef = useRef<HTMLInputElement>(null)
 
-	// riallinea il testo quando la ricetta assegnata cambia dall'esterno (cambio settimana, salvataggio…):
-	// aggiornamento durante il render, pattern raccomandato da React al posto di un effect
+	// Sync the text when the assigned recipe changes from outside (week change, save…):
+	// updating during render is the pattern React recommends instead of an effect.
 	const [prevSelectedTitle, setPrevSelectedTitle] = useState(selectedTitle)
 	if (prevSelectedTitle !== selectedTitle) {
 		setPrevSelectedTitle(selectedTitle)
@@ -37,7 +36,7 @@ function RecipeAutocomplete({ recipes, selected, disabled, onSelect }: RecipeAut
 	}, [text, recipes, selectedTitle])
 
 	function openList() {
-		// il dropdown è position:fixed perché la tabella ha overflow-x:auto e lo taglierebbe
+		// The dropdown is position: fixed because the table's overflow-x: auto would clip it
 		if (inputRef.current) setRect(inputRef.current.getBoundingClientRect())
 		setActiveIndex(0)
 		setOpen(true)
@@ -61,7 +60,7 @@ function RecipeAutocomplete({ recipes, selected, disabled, onSelect }: RecipeAut
 		if (exact) {
 			choose(exact)
 		} else {
-			// testo che non corrisponde a nessuna ricetta: si torna al valore precedente
+			// Text matching no recipe: revert to the previous value
 			setText(selectedTitle)
 		}
 	}
@@ -112,7 +111,7 @@ function RecipeAutocomplete({ recipes, selected, disabled, onSelect }: RecipeAut
 				>
 					{options.map((r, index) => (
 						<li key={r.id} role="option" aria-selected={index === activeIndex}>
-							{/* onMouseDown + preventDefault: la scelta avviene prima del blur dell'input */}
+							{/* onMouseDown + preventDefault: select before the input blur */}
 							<button
 								type="button"
 								onMouseDown={(e) => {

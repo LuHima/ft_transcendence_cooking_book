@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
 
-// barra di avanzamento di un upload (0–100%)
 function UploadProgress({ percent, label, className = '' }: { percent: number; label?: string; className?: string }) {
 	const { t } = useTranslation()
 	const value = Math.max(0, Math.min(100, Math.round(percent)))

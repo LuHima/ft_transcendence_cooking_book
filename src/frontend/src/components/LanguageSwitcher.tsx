@@ -7,8 +7,8 @@ import type { Lang } from '../types/models'
 
 const CODES: Record<Lang, string> = { it: 'IT', en: 'EN', fr: 'FR' }
 
-// selettore della lingua dell'interfaccia (bandiera + sigla); la scelta è salvata in localStorage da i18next.
-// variant "compact" = barra in alto; "field" = campo a tutta larghezza (profilo). Mostra solo bandierina + sigla (IT, EN, FR).
+// Interface language selector (flag + code); i18next stores the choice in localStorage.
+// "compact" = top bar, "field" = full-width field (profile page).
 function LanguageSwitcher({ variant = 'compact', id }: { variant?: 'compact' | 'field'; id?: string }) {
 	const { t, i18n } = useTranslation()
 	const lang = useLang()
@@ -35,7 +35,7 @@ function LanguageSwitcher({ variant = 'compact', id }: { variant?: 'compact' | '
 	const label = (l: Lang) => CODES[l]
 
 	return (
-		// nei menu stretti (< md) il pannello si ancora all'header e occupa la larghezza della pagina: non esce dallo schermo
+		// On narrow screens (< md) the panel anchors to the header so it never overflows the viewport
 		<div ref={ref} className={`${field ? 'relative' : 'md:relative'} shrink-0`}>
 			<button
 				id={id}

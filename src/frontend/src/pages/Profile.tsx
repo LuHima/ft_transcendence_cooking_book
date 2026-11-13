@@ -14,7 +14,7 @@ import BlockedUsers from '../components/BlockedUsers'
 import UploadProgress from '../components/UploadProgress'
 import { PROFILE_PRIVACIES, type AvatarUploadResponseDto, type ProfilePrivacy, type UpdateUserDto } from '../types/models'
 
-// UpdateUserDto: bio al massimo 500 caratteri
+// UpdateUserDto: bio is at most 500 characters
 const BIO_MAX = 500
 
 function Profile() {
@@ -23,12 +23,11 @@ function Profile() {
 	const { user, refreshUser } = useAuth()
 	const [username, setUsername] = useState(user?.username ?? '')
 	const [email, setEmail] = useState(user?.email ?? '')
-	// biografia culinaria (max 500) e privacy del profilo
 	const [bio, setBio] = useState(user?.bio ?? '')
 	const [profilePrivacy, setProfilePrivacy] = useState<ProfilePrivacy>(user?.profile_privacy ?? 'public')
 	const [avatarFile, setAvatarFile] = useState<File | null>(null)
 	const [saving, setSaving] = useState(false)
-	// avanzamento dell'upload dell'avatar (null = nessun upload in corso)
+	// Avatar upload progress (null = no upload in progress)
 	const [avatarProgress, setAvatarProgress] = useState<number | null>(null)
 	const fileRef = useRef<HTMLInputElement>(null)
 	const preview = useObjectUrl(avatarFile)
@@ -37,7 +36,7 @@ function Profile() {
 
 	function pickAvatar(file: File | undefined) {
 		if (!file) return
-		// controllo prima dell'invio: tipo (jpeg/png/webp) e dimensione massima dell'avatar
+		// Pre-flight check: type (jpeg/png/webp) and maximum avatar size
 		const err = validateImage(file, t, UPLOAD_LIMITS.avatarMaxMb)
 		if (err) return toast.error(err)
 		setAvatarFile(file)
@@ -58,7 +57,6 @@ function Profile() {
 		e.preventDefault()
 		setSaving(true)
 		try {
-			// POST /users/me/avatar (multipart, campo "file") con barra di avanzamento
 			if (avatarFile) {
 				const formData = new FormData()
 				formData.append('file', avatarFile)
@@ -72,7 +70,7 @@ function Profile() {
 				}
 				setAvatarFile(null)
 			}
-			// PATCH /users/me: si inviano solo i campi cambiati
+			// PATCH /users/me: only the changed fields are sent
 			const patch: UpdateUserDto = {}
 			if (username !== user?.username) patch.username = username
 			if (email !== user?.email) patch.email = email
@@ -196,7 +194,7 @@ function Profile() {
 					<label htmlFor="ui-lang" className={LABEL_CLASS}>
 						{t('profile.language')}
 					</label>
-					{/* NB: il modello User non ha ancora un campo `lang`: per ora la preferenza vale solo su questo browser */}
+					{/* The User model has no `lang` field yet: the preference only applies to this browser */}
 					<LanguageSwitcher variant="field" id="ui-lang" />
 					<p className="mt-1 text-xs text-[var(--wc-text-muted)]">{t('profile.languageHelp')}</p>
 				</div>

@@ -5,8 +5,7 @@ const linkBase = 'px-3 py-2 text-sm rounded-full transition-colors whitespace-no
 const linkClass = ({ isActive }: { isActive: boolean }) =>
 	`${linkBase} ${isActive ? 'bg-[var(--wc-surface-raised)] text-[var(--wc-saffron)]' : 'text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]'}`
 
-// link fissi della barra in alto, uguali per tutti i ruoli: Contatti e Chi siamo.
-// Le voci personali (profilo, ricette, preferiti…) stanno nel menù a tendina dell'utente.
+// Fixed top-bar links, the same for every role; personal links live in the user menu
 function MainLinks() {
 	const { t } = useTranslation()
 	return (

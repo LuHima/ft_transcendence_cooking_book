@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { acquireSocket, releaseSocket } from './socket'
 
-// Insieme degli id degli amici online.
-// Stato iniziale: il gateway risponde a 'getOnlineFriends'; poi si segue l'evento 'userStatus'.
+// Set of online friends' IDs.
+// Initial state comes from 'getOnlineFriends', then the 'userStatus' event keeps it updated.
 export function useFriendsPresence(): Set<number> {
 	const [online, setOnline] = useState<Set<number>>(() => new Set())
 
 	useEffect(() => {
 		const socket = acquireSocket()
 
-		// va richiesto a ogni (ri)connessione, perché gli eventi persi durante una caduta non tornano
+		// Requested on every (re)connection, because events missed while disconnected are not replayed
 		const loadSnapshot = () => {
 			socket.emit('getOnlineFriends', (res?: { userIds?: number[] }) => {
 				setOnline(new Set(res?.userIds ?? []))

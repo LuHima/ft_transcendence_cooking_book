@@ -57,7 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 	return (
 		<ToastContext.Provider value={api}>
 			{children}
-			{/* aria-live: gli screen reader leggono i nuovi toast senza spostare il focus */}
+			{/* aria-live: screen readers announce new toasts without moving focus */}
 			<div
 				aria-live="polite"
 				className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex flex-col items-center gap-2 px-4 sm:items-end sm:pr-6"
