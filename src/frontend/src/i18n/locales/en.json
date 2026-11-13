@@ -93,14 +93,6 @@
 		"beverages_liquids": "Beverages & liquids",
 		"other": "Other"
 	},
-	"visibility": {
-		"public": "Public",
-		"publicHelp": "Visible to everyone",
-		"friends": "Friends only",
-		"friendsHelp": "Visible only to your friends",
-		"private": "Private",
-		"privateHelp": "Visible only to you"
-	},
 	"recipe": {
 		"detailDialog": "Recipe detail",
 		"noPhoto": "No photo",
@@ -163,7 +155,13 @@
 			"manualHelp": "Translation reviewed or written by a person.",
 			"machineHelp": "Automatic translation: it may contain mistakes.",
 			"machineActions": "Machine-translated text:"
-		}
+		},
+		"friendsOnly": {
+			"title": "Recipe shared with friends only",
+			"guest": "The author shares this recipe only with confirmed friends. Sign in to see it if you are friends.",
+			"notFriend": "The author shares this recipe only with confirmed friends. Send a friend request from their profile to see it."
+		},
+		"suspendForbidden": "You cannot suspend an administrator's recipes."
 	},
 	"comments": {
 		"title": "Comments",
@@ -188,7 +186,9 @@
 		"empty": "No comments yet. Be the first!",
 		"showMoreReplies": "Show more replies",
 		"showMoreRepliesCount": "Show remaining replies ({{count}})",
-		"loadingReplies": "Loading replies…"
+		"loadingReplies": "Loading replies…",
+		"deactivated": "Deactivated",
+		"deactivatedHelp": "Deactivated comment: only staff can see it, as moderation context."
 	},
 	"home": {
 		"loadError": "Recipes could not be loaded right now.",
@@ -210,7 +210,11 @@
 			"explore": "Explore community recipes",
 			"connect": "Find friends"
 		},
-		"addRecipe": "Add recipe"
+		"addRecipe": "Add recipe",
+		"scene": {
+			"loadError": "Could not load recipes.",
+			"pageError": "Could not load the requested recipes."
+		}
 	},
 	"myRecipes": {
 		"loadError": "Could not load your recipes.",
@@ -281,7 +285,9 @@
 		"excludeIngredients": "Exclude (e.g. allergies)",
 		"removeItem": "Remove {{name}}",
 		"userMinChars": "Type at least {{count}} characters to search users too.",
-		"moreUsers": "Show more users"
+		"moreUsers": "Show more users",
+		"sourceLang": "Original language",
+		"authorId": "Author ID"
 	},
 	"form": {
 		"newTitle": "New recipe",
@@ -293,7 +299,6 @@
 		"cookTimeMin": "Cooking (min)",
 		"description": "Description",
 		"visibility": "Who can see this recipe",
-		"visibilityNotReady": "The visibility choice will be active as soon as the server supports it: for now it is not saved yet.",
 		"tags": "Tags",
 		"noTags": "No tags available.",
 		"catalogError": "Could not load the ingredient and tag catalog. Please reload the page.",
@@ -350,7 +355,8 @@
 			"fixFields": "Please check the highlighted fields.",
 			"saveFailed": "Could not save the recipe.",
 			"duplicateIngredient": "\"{{name}}\" is already in the list: each ingredient can appear only once (edit the quantity of the existing row).",
-			"stepDuration": "The step duration must be a whole number of minutes (e.g. 10)."
+			"stepDuration": "The step duration must be a whole number of minutes (e.g. 10).",
+			"uploadTimeout": "The upload took too long. Try again with a smaller file or a faster connection."
 		},
 		"catalogEmpty": "The ingredient catalog is empty: ask the backend team to load it (seed).",
 		"editLanguage": "Language of the text to edit",
@@ -359,7 +365,32 @@
 		"galleryLabel": "Gallery",
 		"uploadingItem": "Uploading: {{label}} ({{done}}/{{total}})",
 		"uploadProgress": "Upload progress",
-		"uploadKeepOpen": "Keep this page open until the upload is complete."
+		"uploadKeepOpen": "Keep this page open until the upload is complete.",
+		"discardTitle": "Unsaved changes",
+		"discardConfirm": "Switch to {{lang}}",
+		"discardText": "You edited the {{from}} text without saving. Switching to {{to}} will discard these changes.",
+		"machinePromotionNote": "This language is machine-translated. Saving your edits will turn it into a manually curated translation, protected from future automatic retranslations.",
+		"optimizingVideo": "Optimizing the video on the server, this may take a moment…",
+		"uploadingVideo": "Uploading and optimizing video, this may take a moment…",
+		"provenanceLabel": "{{lang}} text:",
+		"provenanceOption": {
+			"author_original": "original",
+			"manual": "curated (protected)",
+			"machine": "machine",
+			"missing": "not translated"
+		},
+		"provenanceHelp": {
+			"author_original": "This is the language you wrote the recipe in: the other languages are translated from it.",
+			"manual": "Manually curated translation: it is protected and automatic retranslations do not overwrite it.",
+			"machine": "Machine translation: it is updated when you edit the source language and choose to retranslate."
+		},
+		"retranslate": "Automatically retranslate the other languages",
+		"retranslateHelp": "On save these will be retranslated: {{langs}}. Turn it off for small fixes that do not need a new translation.",
+		"retranslateAllManual": "All other languages are manually curated and protected: there is nothing to retranslate automatically.",
+		"warnings": {
+			"stepDurationExceedsTotal": "Step durations total {{stepsSum}} min, which exceeds the recipe total time ({{totalTime}} min). If steps run in parallel, you can ignore this and save anyway.",
+			"dismiss": "Dismiss warning"
+		}
 	},
 	"notFound": {
 		"text": "This page doesn't exist, or the recipe has been removed.",
@@ -391,7 +422,13 @@
 				"title": "Your rights",
 				"body": "You can update your data at any time from the Profile page, or ask for your account to be deleted by writing to wecook.support@gmail.com"
 			}
-		]
+		],
+		"public": "Public",
+		"publicHelp": "Visible to everyone, even without an account.",
+		"friends_only": "Friends only",
+		"friends_onlyHelp": "Visible only to your confirmed friends.",
+		"private": "Private",
+		"privateHelp": "Visible only to you."
 	},
 	"terms": {
 		"title": "Terms of service",
@@ -529,7 +566,10 @@
 			"banCap": "The maximum ban duration for moderators is {{max}} days."
 		},
 		"owner": "author:",
-		"confirmBanName": "Ban {{name}}, the author of this content?"
+		"confirmBanName": "Ban {{name}}, the author of this content?",
+		"exclusiveHelp": "Not combinable: warning and ban are mutually exclusive.",
+		"previousWarnings_one": "{{count}} previous warning",
+		"previousWarnings_other": "{{count}} previous warnings"
 	},
 	"admin": {
 		"subtitle": "Reports, users, roles and platform content.",
@@ -602,6 +642,19 @@
 				"usernameDesc": "Username Z–A",
 				"mostRecipes": "Most recipes",
 				"fewestRecipes": "Fewest recipes"
+			},
+			"detailError": "Could not load the full user record.",
+			"passwordReset": "New password (optional)",
+			"passwordResetHelp": "On save, the password will be reset and the user will be signed out of all devices.",
+			"passwordTooShort": "The password must be at least {{min}} characters.",
+			"fields": {
+				"first_name": "First name",
+				"last_name": "Last name",
+				"birth_date": "Date of birth",
+				"phone": "Phone",
+				"address": "Address",
+				"city": "City",
+				"postal_code": "Postal code"
 			}
 		},
 		"recipes": {
@@ -655,7 +708,8 @@
 			"threadPending_one": "{{count}} pending report in this conversation",
 			"threadPending_other": "{{count}} pending reports in this conversation",
 			"reportedReplies_one": "{{count}} reported reply",
-			"reportedReplies_other": "{{count}} reported replies"
+			"reportedReplies_other": "{{count}} reported replies",
+			"editedOnly": "Edited only"
 		},
 		"catalog": {
 			"title": "Catalog",
@@ -725,7 +779,9 @@
 			"friends": "Friend",
 			"pending_sent": "Request sent",
 			"pending_received": "Wants to be friends"
-		}
+		},
+		"searchPlaceholder": "Search your friends…",
+		"noSearchResults": "No friends match \"{{query}}\"."
 	},
 	"profile": {
 		"notFound": "User not found.",
@@ -746,7 +802,27 @@
 		"likesReceived_one": "{{count}} like received",
 		"likesReceived_other": "{{count}} likes received",
 		"avatarPending": "The new photo will be uploaded when you save (max {{max}} MB).",
-		"avatarUploading": "Uploading profile photo"
+		"avatarUploading": "Uploading profile photo",
+		"bio": "Culinary bio",
+		"bioPlaceholder": "Tell us how you cook: favourite dishes, traditions, kitchen philosophy…",
+		"privacy": "Profile privacy",
+		"copyLink": "Copy profile link",
+		"linkCopied": "Profile link copied.",
+		"memberSince": "Member since {{date}}",
+		"friendsSince": "Friends since {{date}}",
+		"noFriends": "No friends to show.",
+		"tabsLabel": "Profile sections",
+		"tabs": {
+			"recipes": "Recipes",
+			"friends": "Friends"
+		},
+		"restricted": {
+			"recipesTitle": "Private cookbook",
+			"friendsTitle": "Private friend list",
+			"guest": "Sign in to see this section: the profile is not public.",
+			"friendsOnly": "{{name}} only shows this section to confirmed friends.",
+			"private": "{{name}} has made the profile private: this section is not visible."
+		}
 	},
 	"notifications": {
 		"title": "Notifications",
@@ -763,7 +839,10 @@
 		"update": "updated the recipe",
 		"delete": "deleted a recipe",
 		"generic": "did something",
-		"warn": "sent you a moderation warning"
+		"warn": "sent you a moderation warning",
+		"moderationTeam": "Moderation team",
+		"moderatorNote": "Moderator note",
+		"warnFallback": "You received a warning from the moderation team."
 	},
 	"auth": {
 		"or": "or",
@@ -851,5 +930,13 @@
 		"confirmUnblock": "Unblock {{name}}?",
 		"unblockHelp": "You will be able to see each other's profile and comments again. Previous friendships are not restored.",
 		"unblocked": "{{name}} has been unblocked."
+	},
+	"profilePrivacy": {
+		"public": "Public",
+		"publicHelp": "Everyone can see your cookbook and friends.",
+		"friends_only": "Friends only",
+		"friends_onlyHelp": "Cookbook and friends visible only to confirmed friends.",
+		"private": "Private",
+		"privateHelp": "Cookbook and friends visible only to you."
 	}
 }

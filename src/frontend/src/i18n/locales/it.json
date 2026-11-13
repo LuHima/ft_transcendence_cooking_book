@@ -93,14 +93,6 @@
 		"beverages_liquids": "Bevande e liquidi",
 		"other": "Altro"
 	},
-	"visibility": {
-		"public": "Pubblica",
-		"publicHelp": "Visibile a tutti",
-		"friends": "Solo amici",
-		"friendsHelp": "Visibile solo ai tuoi amici",
-		"private": "Privata",
-		"privateHelp": "Visibile solo a te"
-	},
 	"recipe": {
 		"detailDialog": "Dettaglio ricetta",
 		"noPhoto": "Nessuna foto",
@@ -163,7 +155,13 @@
 			"manualHelp": "Traduzione revisionata o scritta da una persona.",
 			"machineHelp": "Traduzione automatica: potrebbe contenere errori.",
 			"machineActions": "Testo tradotto automaticamente:"
-		}
+		},
+		"friendsOnly": {
+			"title": "Ricetta riservata agli amici",
+			"guest": "L'autore condivide questa ricetta solo con i suoi amici confermati. Accedi per vederla, se siete amici.",
+			"notFriend": "L'autore condivide questa ricetta solo con i suoi amici confermati. Invia una richiesta di amicizia dal suo profilo per poterla vedere."
+		},
+		"suspendForbidden": "Non puoi sospendere le ricette di un amministratore."
 	},
 	"comments": {
 		"title": "Commenti",
@@ -188,7 +186,9 @@
 		"empty": "Ancora nessun commento. Scrivi tu il primo!",
 		"showMoreReplies": "Mostra altre risposte",
 		"showMoreRepliesCount": "Mostra le altre risposte ({{count}})",
-		"loadingReplies": "Caricamento risposte…"
+		"loadingReplies": "Caricamento risposte…",
+		"deactivated": "Disattivato",
+		"deactivatedHelp": "Commento disattivato: è visibile solo allo staff come contesto per la moderazione."
 	},
 	"home": {
 		"loadError": "Non è stato possibile caricare le ricette al momento.",
@@ -210,7 +210,11 @@
 			"explore": "Esplora le ricette della community",
 			"connect": "Trova amici"
 		},
-		"addRecipe": "Aggiungi ricetta"
+		"addRecipe": "Aggiungi ricetta",
+		"scene": {
+			"loadError": "Impossibile caricare le ricette.",
+			"pageError": "Impossibile caricare le ricette richieste."
+		}
 	},
 	"myRecipes": {
 		"loadError": "Impossibile caricare le ricette.",
@@ -281,7 +285,9 @@
 		"excludeIngredients": "Escludi (es. allergie)",
 		"removeItem": "Rimuovi {{name}}",
 		"userMinChars": "Scrivi almeno {{count}} caratteri per cercare anche gli utenti.",
-		"moreUsers": "Mostra altri utenti"
+		"moreUsers": "Mostra altri utenti",
+		"sourceLang": "Lingua originale",
+		"authorId": "ID autore"
 	},
 	"form": {
 		"newTitle": "Nuova ricetta",
@@ -293,7 +299,6 @@
 		"cookTimeMin": "Cottura (min)",
 		"description": "Descrizione",
 		"visibility": "Chi può vedere la ricetta",
-		"visibilityNotReady": "La scelta della visibilità sarà attiva appena il server la supporterà: per ora non viene ancora salvata.",
 		"tags": "Tag",
 		"noTags": "Nessun tag disponibile.",
 		"catalogError": "Impossibile caricare il catalogo di ingredienti e tag. Ricarica la pagina.",
@@ -350,7 +355,8 @@
 			"fixFields": "Controlla i campi evidenziati.",
 			"saveFailed": "Salvataggio non riuscito.",
 			"duplicateIngredient": "«{{name}}» è già nella lista: ogni ingrediente può comparire una sola volta (modifica la quantità della riga esistente).",
-			"stepDuration": "La durata del passaggio deve essere un numero intero di minuti (es. 10)."
+			"stepDuration": "La durata del passaggio deve essere un numero intero di minuti (es. 10).",
+			"uploadTimeout": "Il caricamento ha richiesto troppo tempo. Riprova con un file più leggero o una connessione più veloce."
 		},
 		"catalogEmpty": "Il catalogo ingredienti è vuoto: chiedi al backend di caricarlo (seed).",
 		"editLanguage": "Lingua del testo da modificare",
@@ -359,7 +365,32 @@
 		"galleryLabel": "Galleria",
 		"uploadingItem": "Caricamento: {{label}} ({{done}}/{{total}})",
 		"uploadProgress": "Avanzamento caricamento",
-		"uploadKeepOpen": "Non chiudere la pagina finché il caricamento non è completato."
+		"uploadKeepOpen": "Non chiudere la pagina finché il caricamento non è completato.",
+		"discardTitle": "Modifiche non salvate",
+		"discardConfirm": "Passa a {{lang}}",
+		"discardText": "Hai modificato i testi in {{from}} senza salvarli. Passando a {{to}} queste modifiche andranno perse.",
+		"machinePromotionNote": "Questa lingua è tradotta automaticamente. Salvando le tue modifiche diventerà una traduzione curata a mano e non verrà più sovrascritta dalle ritraduzioni automatiche.",
+		"optimizingVideo": "Ottimizzazione del video sul server, può richiedere qualche istante…",
+		"uploadingVideo": "Caricamento e ottimizzazione del video, può richiedere qualche istante…",
+		"provenanceLabel": "Testo in {{lang}}:",
+		"provenanceOption": {
+			"author_original": "originale",
+			"manual": "curata (protetta)",
+			"machine": "automatica",
+			"missing": "non tradotta"
+		},
+		"provenanceHelp": {
+			"author_original": "È la lingua in cui hai scritto la ricetta: le altre lingue vengono tradotte a partire da questa.",
+			"manual": "Traduzione curata a mano: è protetta e le ritraduzioni automatiche non la sovrascrivono.",
+			"machine": "Traduzione automatica: viene aggiornata quando modifichi la lingua originale e scegli di ritradurre."
+		},
+		"retranslate": "Ritraduci automaticamente le altre lingue",
+		"retranslateHelp": "Al salvataggio vengono ritradotte: {{langs}}. Disattivalo per piccole correzioni che non richiedono una nuova traduzione.",
+		"retranslateAllManual": "Tutte le altre lingue sono curate a mano e protette: non c'è niente da ritradurre automaticamente.",
+		"warnings": {
+			"stepDurationExceedsTotal": "La durata totale dei passaggi ({{stepsSum}} min) supera il tempo totale della ricetta ({{totalTime}} min). Se alcuni passaggi avvengono in parallelo, puoi ignorare questo avviso e salvare comunque.",
+			"dismiss": "Chiudi l'avviso"
+		}
 	},
 	"notFound": {
 		"text": "Questa pagina non esiste, o la ricetta è stata rimossa.",
@@ -391,7 +422,13 @@
 				"title": "I tuoi diritti",
 				"body": "Puoi in qualsiasi momento aggiornare i tuoi dati dalla pagina Profilo o richiedere la cancellazione dell'account scrivendo a wecook.support@gmail.com"
 			}
-		]
+		],
+		"public": "Pubblica",
+		"publicHelp": "Visibile a tutti, anche a chi non ha un account.",
+		"friends_only": "Solo amici",
+		"friends_onlyHelp": "Visibile solo ai tuoi amici confermati.",
+		"private": "Privata",
+		"privateHelp": "Visibile solo a te."
 	},
 	"terms": {
 		"title": "Termini di servizio",
@@ -529,7 +566,10 @@
 			"banCap": "La durata massima del ban per i moderatori è {{max}} giorni."
 		},
 		"owner": "autore:",
-		"confirmBanName": "Bannare {{name}}, autore di questo contenuto?"
+		"confirmBanName": "Bannare {{name}}, autore di questo contenuto?",
+		"exclusiveHelp": "Non combinabile: avviso e ban si escludono a vicenda.",
+		"previousWarnings_one": "{{count}} avviso precedente",
+		"previousWarnings_other": "{{count}} avvisi precedenti"
 	},
 	"admin": {
 		"subtitle": "Segnalazioni, utenti, ruoli e contenuti della piattaforma.",
@@ -602,6 +642,19 @@
 				"usernameDesc": "Username Z–A",
 				"mostRecipes": "Più ricette",
 				"fewestRecipes": "Meno ricette"
+			},
+			"detailError": "Impossibile caricare la scheda completa dell'utente.",
+			"passwordReset": "Nuova password (facoltativa)",
+			"passwordResetHelp": "Salvando, la password verrà reimpostata e l'utente sarà disconnesso da tutti i dispositivi.",
+			"passwordTooShort": "La password deve avere almeno {{min}} caratteri.",
+			"fields": {
+				"first_name": "Nome",
+				"last_name": "Cognome",
+				"birth_date": "Data di nascita",
+				"phone": "Telefono",
+				"address": "Indirizzo",
+				"city": "Città",
+				"postal_code": "CAP"
 			}
 		},
 		"recipes": {
@@ -655,7 +708,8 @@
 			"threadPending_one": "{{count}} segnalazione in attesa nella conversazione",
 			"threadPending_other": "{{count}} segnalazioni in attesa nella conversazione",
 			"reportedReplies_one": "{{count}} risposta segnalata",
-			"reportedReplies_other": "{{count}} risposte segnalate"
+			"reportedReplies_other": "{{count}} risposte segnalate",
+			"editedOnly": "Solo modificati"
 		},
 		"catalog": {
 			"title": "Catalogo",
@@ -725,7 +779,9 @@
 			"friends": "Amico",
 			"pending_sent": "Richiesta inviata",
 			"pending_received": "Vuole essere tuo amico"
-		}
+		},
+		"searchPlaceholder": "Cerca tra i tuoi amici…",
+		"noSearchResults": "Nessun amico corrisponde a \"{{query}}\"."
 	},
 	"profile": {
 		"notFound": "Utente non trovato.",
@@ -746,7 +802,27 @@
 		"likesReceived_one": "{{count}} like ricevuto",
 		"likesReceived_other": "{{count}} like ricevuti",
 		"avatarPending": "La nuova foto verrà caricata quando salvi (max {{max}} MB).",
-		"avatarUploading": "Caricamento della foto profilo"
+		"avatarUploading": "Caricamento della foto profilo",
+		"bio": "Biografia culinaria",
+		"bioPlaceholder": "Raccontaci come cucini: piatti preferiti, tradizioni, filosofia in cucina…",
+		"privacy": "Privacy del profilo",
+		"copyLink": "Copia link al profilo",
+		"linkCopied": "Link al profilo copiato.",
+		"memberSince": "Iscritto da {{date}}",
+		"friendsSince": "Amici dal {{date}}",
+		"noFriends": "Nessun amico da mostrare.",
+		"tabsLabel": "Sezioni del profilo",
+		"tabs": {
+			"recipes": "Ricette",
+			"friends": "Amici"
+		},
+		"restricted": {
+			"recipesTitle": "Ricettario riservato",
+			"friendsTitle": "Lista amici riservata",
+			"guest": "Accedi per vedere questa sezione: il profilo non è pubblico.",
+			"friendsOnly": "{{name}} mostra questa sezione solo ai suoi amici confermati.",
+			"private": "{{name}} ha reso privato il profilo: questa sezione non è visibile."
+		}
 	},
 	"notifications": {
 		"title": "Notifiche",
@@ -763,7 +839,10 @@
 		"update": "ha aggiornato la ricetta",
 		"delete": "ha eliminato una ricetta",
 		"generic": "ha eseguito un'azione",
-		"warn": "ti ha inviato un avviso di moderazione"
+		"warn": "ti ha inviato un avviso di moderazione",
+		"moderationTeam": "Team di moderazione",
+		"moderatorNote": "Nota del moderatore",
+		"warnFallback": "Hai ricevuto un avviso dal team di moderazione."
 	},
 	"auth": {
 		"or": "oppure",
@@ -851,5 +930,13 @@
 		"confirmUnblock": "Sbloccare {{name}}?",
 		"unblockHelp": "Potrete di nuovo vedere a vicenda profilo e commenti. Le amicizie precedenti non vengono ripristinate.",
 		"unblocked": "{{name}} è stato sbloccato."
+	},
+	"profilePrivacy": {
+		"public": "Pubblico",
+		"publicHelp": "Tutti vedono ricettario e amici.",
+		"friends_only": "Solo amici",
+		"friends_onlyHelp": "Ricettario e amici visibili solo agli amici confermati.",
+		"private": "Privato",
+		"privateHelp": "Ricettario e amici visibili solo a te."
 	}
 }
