@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { api, getErrorMessage, qs } from '../api/client'
 import { useLang } from '../lib/useLang'
 import Pagination from '../components/Pagination'
+import RecipeSortSelect from '../components/RecipeSortSelect'
+import { DEFAULT_RECIPE_SORT, parseRecipeSort, type RecipeSortValue } from '../lib/recipeSort'
 import RecipeCard from '../components/RecipeCard'
 import { RecipeGridSkeleton } from '../components/Skeleton'
 import type { Paginated, RecipeSummary } from '../types/models'
@@ -13,13 +15,17 @@ function Favorites() {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const [page, setPage] = useState(1)
+	const [sort, setSort] = useState<RecipeSortValue>(DEFAULT_RECIPE_SORT)
+	const { sortBy, sortOrder } = parseRecipeSort(sort)
 	const [data, setData] = useState<Paginated<RecipeSummary> | null>(null)
 	const [error, setError] = useState<string | null>(null)
 
 	useEffect(() => {
 		let cancelled = false
 		api
-			.get<Paginated<RecipeSummary>>(`/users/me/likes${qs({ page, limit: PAGE_SIZE, lang })}`)
+			.get<Paginated<RecipeSummary>>(
+				`/users/me/likes${qs({ page, limit: PAGE_SIZE, lang, sort_by: sortBy, sort_order: sortOrder })}`,
+			)
 			.then((res) => {
 				if (cancelled) return
 				setData(res)
@@ -31,11 +37,21 @@ function Favorites() {
 		return () => {
 			cancelled = true
 		}
-	}, [page, lang, t])
+	}, [page, lang, sortBy, sortOrder, t])
 
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-12">
 			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('favorites.title')}</h1>
+			{/* ordinamento sotto il titolo, come in "Le mie ricette" */}
+			<div className="mt-4">
+				<RecipeSortSelect
+					value={sort}
+					onChange={(v) => {
+						setSort(v)
+						setPage(1)
+					}}
+				/>
+			</div>
 
 			{error && <p className="mt-6 text-[var(--wc-paprika)]">{error}</p>}
 

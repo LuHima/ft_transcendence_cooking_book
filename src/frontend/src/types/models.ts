@@ -28,8 +28,13 @@ export type IngredientCategory =
 	| 'other'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
-// pubblica / privata / solo amici. NB: non ancora presente nelle API (vedi src/config.ts)
-export type RecipeVisibility = 'public' | 'private' | 'friends'
+// privacy di una ricetta (RecipePrivacy, ADR 0027): pubblica / solo amici confermati / privata
+export type RecipePrivacy = 'public' | 'friends_only' | 'private'
+export const RECIPE_PRIVACIES: RecipePrivacy[] = ['public', 'friends_only', 'private']
+
+// privacy del profilo (ProfilePrivacy): chi vede ricettario, amici e dati personali
+export type ProfilePrivacy = 'public' | 'friends_only' | 'private'
+export const PROFILE_PRIVACIES: ProfilePrivacy[] = ['public', 'friends_only', 'private']
 
 export type UserRole = 'admin' | 'moderator' | 'user'
 export type UserStatus = 'active' | 'disabled' | 'banned'
@@ -51,8 +56,25 @@ export interface User {
 	status?: UserStatus
 	// non è ancora nella risposta di GET /users/me: se assente la pagina Profilo ricava lo stato dalle risposte 409 di enable/disable
 	is_two_factor_enabled?: boolean
+	// biografia culinaria (max 500 caratteri)
 	bio?: string | null
+	profile_privacy?: ProfilePrivacy
 	created_at?: string
+}
+
+// body di PATCH /users/me (UpdateUserDto): si inviano solo i campi modificati
+export interface UpdateUserDto {
+	username?: string
+	email?: string
+	bio?: string
+	profile_privacy?: ProfilePrivacy
+	first_name?: string
+	last_name?: string
+	birth_date?: string
+	phone?: string
+	address?: string
+	city?: string
+	postal_code?: string
 }
 
 // ─── amicizie ───
@@ -73,6 +95,9 @@ export interface PublicUser {
 	friends_count?: number
 	total_likes_received?: number
 	friendship_status?: FriendshipStatus | null
+	profile_privacy?: ProfilePrivacy
+	// dati personali: null nel profilo ridotto (degraded) quando la privacy li nasconde
+	city?: string | null
 }
 
 // GET /friends → FriendItemDto
@@ -168,8 +193,7 @@ export interface RecipeSummary {
 	is_liked: boolean
 	resolved_lang: Lang
 	available_languages?: AvailableLanguage[]
-	// non ancora esposto dalle API
-	visibility?: RecipeVisibility
+	privacy?: RecipePrivacy
 }
 
 export interface RecipeStep {
@@ -293,7 +317,7 @@ export interface CreateRecipeBody {
 	steps: { step_number: number; title?: string; description: string; duration?: number }[]
 	ingredients: { ingredient_id: number; quantity: number; unit: Unit; notes?: unknown }[]
 	tag_ids?: number[]
-	visibility?: RecipeVisibility
+	privacy?: RecipePrivacy
 }
 
 // ─── commenti (GET /recipes/:id/comments → albero a 2 livelli) ───
@@ -431,6 +455,7 @@ export interface AdminUser extends User {
 	recipes_count?: number
 	banned_until?: string | null
 	previous_bans_count?: number
+	previous_warnings_count?: number
 	deleted_at?: string | null
 }
 
@@ -500,7 +525,7 @@ export interface UpdateReportDto {
 	// max 180 per i moderatori
 	ban_duration_days?: number
 	// solo admin
-	is_permanent?: boolean
+	permanent?: boolean
 }
 
 // utente idratato dal backend (segnalatore o autore del contenuto)
@@ -534,6 +559,10 @@ export interface ReportItem {
 	resolution_description: string | null
 	resolution_notes: string | null
 	previous_bans_count?: number | null
+	// avvisi già ricevuti dall'autore del contenuto (per riconoscere i recidivi)
+	previous_warnings_count?: number | null
+	// azioni eseguite alla risoluzione (es. ['delete_content', 'warn'])
+	actions?: ModerationAction[]
 	resolved_by_id: number | null
 	resolved_at: string | null
 	created_at: string

@@ -7,13 +7,13 @@ import { api, asArray, getErrorMessage, qs, toPage, uploadWithProgress } from '.
 import { UPLOAD_LIMITS } from '../../config'
 import UploadProgress from '../../components/UploadProgress'
 import { useLang } from '../../lib/useLang'
-import { validateImage } from '../../lib/files'
+import { IMAGE_ACCEPT, validateImage } from '../../lib/files'
 import { useObjectUrl } from '../../lib/useObjectUrl'
 import Avatar from '../../components/Avatar'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { ListSkeleton } from '../../components/Skeleton'
-import type { AdminUser, AvatarUploadResponseDto, BanHistoryItem, Paginated, SortOrder, User, UserRole, UserSortBy, UserStatus } from '../../types/models'
+import type { AdminUser, AvatarUploadResponseDto, BanHistoryItem, Paginated, SortOrder, UserRole, UserSortBy, UserStatus } from '../../types/models'
 
 // endpoint admin (guard: solo admin)
 //   GET    /admin/users?page=&limit=&search=&role=&status=&sort_by=&sort_order=  -> PaginatedAdminUsersResponseDto
@@ -417,34 +417,111 @@ interface UserDialogProps {
 	onAvatarChanged?: (id: number, avatarUrl: string | null) => void
 }
 
+// campi personali e di anagrafica modificabili dall'admin (UpdateAdminUserDto)
+const PERSONAL_FIELDS = ['first_name', 'last_name', 'birth_date', 'phone', 'address', 'city', 'postal_code'] as const
+type PersonalField = (typeof PERSONAL_FIELDS)[number]
+const PERSONAL_MAX: Record<PersonalField, number> = {
+	first_name: 100,
+	last_name: 100,
+	birth_date: 10,
+	phone: 30,
+	address: 255,
+	city: 100,
+	postal_code: 10,
+}
+const BIO_MAX = 500
+const PASSWORD_MIN = 8
+
+type Personal = Record<PersonalField, string>
+
+// valori del form a partire dall'utente (birth_date in formato YYYY-MM-DD per l'input date)
+function personalOf(u?: Partial<AdminUser> | null): Personal {
+	return {
+		first_name: u?.first_name ?? '',
+		last_name: u?.last_name ?? '',
+		birth_date: u?.birth_date ? String(u.birth_date).slice(0, 10) : '',
+		phone: u?.phone ?? '',
+		address: u?.address ?? '',
+		city: u?.city ?? '',
+		postal_code: u?.postal_code ?? '',
+	}
+}
+
+// creazione o modifica di un utente. In modifica si carica la scheda completa con GET /admin/users/:id
+// (bio e anagrafica) e PATCH /admin/users/:id invia solo i campi cambiati; la password, se compilata,
+// viene reimpostata e il backend chiude le sessioni attive dell'utente.
 function UserDialog({ title, initial, onClose, onSaved, onAvatarChanged }: UserDialogProps) {
 	const { t } = useTranslation()
 	const [username, setUsername] = useState(initial?.username ?? '')
 	const [email, setEmail] = useState(initial?.email ?? '')
 	const [password, setPassword] = useState('')
 	const [role, setRole] = useState<UserRole>(initial?.role ?? 'user')
+	const [bio, setBio] = useState(initial?.bio ?? '')
+	const [personal, setPersonal] = useState<Personal>(() => personalOf(initial))
+	// scheda completa caricata dal server: serve per confrontare i campi modificati
+	const [detail, setDetail] = useState<AdminUser | null>(null)
+	const [loadingDetail, setLoadingDetail] = useState(Boolean(initial))
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
+	useEffect(() => {
+		if (!initial) return
+		let cancelled = false
+		api
+			.get<AdminUser>(`/admin/users/${initial.id}`)
+			.then((u) => {
+				if (cancelled || !u) return
+				setDetail(u)
+				setUsername(u.username)
+				setEmail(u.email)
+				setRole(u.role)
+				setBio(u.bio ?? '')
+				setPersonal(personalOf(u))
+			})
+			.catch((err) => {
+				if (!cancelled) setError(getErrorMessage(err, t('admin.users.detailError')))
+			})
+			.finally(() => {
+				if (!cancelled) setLoadingDetail(false)
+			})
+		return () => {
+			cancelled = true
+		}
+	}, [initial, t])
+
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
-		setSubmitting(true)
 		setError(null)
+		if (password && password.length < PASSWORD_MIN) return setError(t('admin.users.passwordTooShort', { min: PASSWORD_MIN }))
+		setSubmitting(true)
 		try {
-			const saved = initial
-				? await api.patch<User>(`/admin/users/${initial.id}`, {
-						username,
-						email,
-						role,
-						...(password ? { password } : {}),
-					})
-				: await api.post<User>('/admin/users', { username, email, password, role })
-			onSaved({ ...(initial ?? ({} as AdminUser)), ...{ username, email, role }, ...(saved ?? {}) } as AdminUser)
+			let saved: AdminUser | null
+			if (initial) {
+				const base = detail ?? initial
+				const before = personalOf(base)
+				// solo i campi cambiati rispetto alla scheda caricata
+				const patch: Record<string, string> = {}
+				if (username !== base.username) patch.username = username
+				if (email !== base.email) patch.email = email
+				if (role !== base.role) patch.role = role
+				if (password) patch.password = password
+				if (bio.trim() !== (base.bio ?? '')) patch.bio = bio.trim()
+				for (const f of PERSONAL_FIELDS) {
+					if (personal[f].trim() !== before[f]) patch[f] = personal[f].trim()
+				}
+				saved = Object.keys(patch).length > 0 ? await api.patch<AdminUser>(`/admin/users/${initial.id}`, patch) : base
+			} else {
+				saved = await api.post<AdminUser>('/admin/users', { username, email, password, role })
+			}
+			// se il backend risponde senza body si usano i valori del form
+			onSaved(Object.assign({}, initial, { username, email, role, bio }, saved ?? {}) as AdminUser)
 		} catch (err) {
 			setError(getErrorMessage(err, t('form.errors.saveFailed')))
 			setSubmitting(false)
 		}
 	}
+
+	const label = 'mb-1 block text-sm text-[var(--wc-text-muted)]'
 
 	return (
 		<div
@@ -461,40 +538,82 @@ function UserDialog({ title, initial, onClose, onSaved, onAvatarChanged }: UserD
 		>
 			<form
 				onSubmit={handleSubmit}
-				className="w-full max-w-md space-y-4 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6"
+				className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6"
 			>
 				<h2 className="font-display text-2xl text-[var(--wc-saffron)]">{title}</h2>
-				{initial && <AvatarManager user={initial} onChanged={(avatar_url) => onAvatarChanged?.(initial.id, avatar_url)} />}
-				<div>
-					<label htmlFor="au-username" className="mb-1 block text-sm text-[var(--wc-text-muted)]">Username</label>
-					<input id="au-username" required value={username} onChange={(e) => setUsername(e.target.value)} className={`${inputClass} w-full`} />
-				</div>
-				<div>
-					<label htmlFor="au-email" className="mb-1 block text-sm text-[var(--wc-text-muted)]">Email</label>
-					<input id="au-email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputClass} w-full`} />
-				</div>
-				<div>
-					<label htmlFor="au-pass" className="mb-1 block text-sm text-[var(--wc-text-muted)]">Password</label>
-					<input
-						id="au-pass"
-						type="password"
-						required={!initial}
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						placeholder={initial ? t('admin.users.passwordKeep') : ''}
-						className={`${inputClass} w-full`}
-					/>
-				</div>
-				<div>
-					<label htmlFor="au-role" className="mb-1 block text-sm text-[var(--wc-text-muted)]">{t('admin.users.role')}</label>
-					<select id="au-role" value={role} onChange={(e) => setRole(e.target.value as UserRole)} className={`${inputClass} w-full`}>
-						{ROLES.map((r) => (
-							<option key={r} value={r}>
-								{t(`role.${r}`)}
-							</option>
-						))}
-					</select>
-				</div>
+				{initial && <AvatarManager user={detail ?? initial} onChanged={(avatar_url) => onAvatarChanged?.(initial.id, avatar_url)} />}
+
+				<fieldset disabled={loadingDetail} className="space-y-4">
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+						<div>
+							<label htmlFor="au-username" className={label}>Username</label>
+							<input id="au-username" required minLength={3} maxLength={30} value={username} onChange={(e) => setUsername(e.target.value)} className={`${inputClass} w-full`} />
+						</div>
+						<div>
+							<label htmlFor="au-email" className={label}>Email</label>
+							<input id="au-email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputClass} w-full`} />
+						</div>
+						<div>
+							<label htmlFor="au-role" className={label}>{t('admin.users.role')}</label>
+							<select id="au-role" value={role} onChange={(e) => setRole(e.target.value as UserRole)} className={`${inputClass} w-full`}>
+								{ROLES.map((r) => (
+									<option key={r} value={r}>
+										{t(`role.${r}`)}
+									</option>
+								))}
+							</select>
+						</div>
+						<div>
+							<label htmlFor="au-pass" className={label}>{initial ? t('admin.users.passwordReset') : 'Password'}</label>
+							<input
+								id="au-pass"
+								type="password"
+								autoComplete="new-password"
+								required={!initial}
+								minLength={PASSWORD_MIN}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								placeholder={initial ? t('admin.users.passwordKeep') : ''}
+								className={`${inputClass} w-full`}
+							/>
+						</div>
+					</div>
+					{initial && password && <p className="-mt-2 text-xs text-[var(--wc-saffron)]">{t('admin.users.passwordResetHelp')}</p>}
+
+					{initial && (
+						<>
+							<div>
+								<label htmlFor="au-bio" className={label}>{t('profile.bio')}</label>
+								<textarea id="au-bio" rows={3} maxLength={BIO_MAX} value={bio} onChange={(e) => setBio(e.target.value)} className={`${inputClass} w-full`} />
+								<p className="mt-1 text-right text-xs text-[var(--wc-text-muted)]">
+									{bio.length}/{BIO_MAX}
+								</p>
+							</div>
+
+							<fieldset className="rounded-xl border border-[var(--wc-border)] p-3">
+								<legend className="px-1 text-sm text-[var(--wc-text-muted)]">{t('nav.personalData')}</legend>
+								<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+									{PERSONAL_FIELDS.map((f) => (
+										<div key={f} className={f === 'address' ? 'sm:col-span-2' : ''}>
+											<label htmlFor={`au-${f}`} className={label}>
+												{t(`admin.users.fields.${f}`)}
+											</label>
+											<input
+												id={`au-${f}`}
+												type={f === 'birth_date' ? 'date' : f === 'phone' ? 'tel' : 'text'}
+												maxLength={PERSONAL_MAX[f]}
+												value={personal[f]}
+												onChange={(e) => setPersonal((prev) => ({ ...prev, [f]: e.target.value }))}
+												className={`${inputClass} w-full`}
+											/>
+										</div>
+									))}
+								</div>
+							</fieldset>
+						</>
+					)}
+				</fieldset>
+
 				{error && <p className="text-sm text-[var(--wc-paprika)]">{error}</p>}
 				<div className="flex justify-end gap-2">
 					<button
@@ -506,10 +625,10 @@ function UserDialog({ title, initial, onClose, onSaved, onAvatarChanged }: UserD
 					</button>
 					<button
 						type="submit"
-						disabled={submitting}
+						disabled={submitting || loadingDetail}
 						className="rounded-full bg-[var(--wc-basil)] px-5 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)] disabled:opacity-60"
 					>
-						{submitting ? t('common.saving') : t('common.save')}
+						{loadingDetail ? t('common.loading') : submitting ? t('common.saving') : t('common.save')}
 					</button>
 				</div>
 			</form>
@@ -580,7 +699,7 @@ function AvatarManager({ user, onChanged }: { user: AdminUser; onChanged: (avata
 				<input
 					ref={fileRef}
 					type="file"
-					accept="image/jpeg,image/png,image/webp"
+					accept={IMAGE_ACCEPT}
 					aria-label={t('profile.changeAvatar')}
 					className="hidden"
 					onChange={(e) => {

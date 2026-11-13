@@ -28,8 +28,8 @@ const INPUT =
 
 const positiveInt = (v: string) => (/^\d+$/.test(v.trim()) && Number(v) > 0 ? Number(v) : undefined)
 
-// flusso di audit dei commenti:
-// GET /admin/comments?page=&limit=&search=&status=&recipe_id=&user_id=&reported_only=&sort_by=&sort_order=&format=&lang=
+// flusso di audit dei commenti (admin e moderatori; l'eliminazione definitiva è solo per gli admin):
+// GET /admin/comments?page=&limit=&search=&status=&recipe_id=&user_id=&reported_only=&is_edited=&sort_by=&sort_order=&format=&lang=
 // reported_only=true: solo commenti con segnalazioni in attesa; se sort_by non viene inviato il backend
 // ordina per numero di segnalazioni. format = flat | threaded vale anche insieme a reported_only.
 // Eliminazione: DELETE /recipes/:recipeId/comments/:commentId (soft) | ?hard=true (solo admin, definitiva)
@@ -50,6 +50,8 @@ function AdminComments() {
 	const [status, setStatus] = useState<AdminCommentStatus>('all')
 	const [format, setFormat] = useState<AdminCommentFormat>('flat')
 	const [reportedOnly, setReportedOnly] = useState(false)
+	// solo commenti modificati dopo la pubblicazione (is_edited=true)
+	const [editedOnly, setEditedOnly] = useState(false)
 	const [sort, setSort] = useState<SortValue>('created_at:desc')
 	const [page, setPage] = useState(1)
 	const [reload, setReload] = useState(0)
@@ -82,6 +84,7 @@ function AdminComments() {
 					recipe_id: recipeId,
 					user_id: userId,
 					reported_only: reportedOnly ? 'true' : undefined,
+					is_edited: editedOnly ? 'true' : undefined,
 					sort_by: reportedOnly ? undefined : sortBy,
 					sort_order: reportedOnly ? undefined : sortOrder,
 					format,
@@ -101,7 +104,7 @@ function AdminComments() {
 		return () => {
 			cancelled = true
 		}
-	}, [page, debounced, status, recipeId, userId, reportedOnly, sortBy, sortOrder, format, lang, reload, t])
+	}, [page, debounced, status, recipeId, userId, reportedOnly, editedOnly, sortBy, sortOrder, format, lang, reload, t])
 
 	function refresh() {
 		if (data && data.items.length === 1 && page > 1) setPage(page - 1)
@@ -317,6 +320,17 @@ function AdminComments() {
 						}}
 					/>
 					{t('admin.comments.reportedOnly')}
+				</label>
+				<label className="flex cursor-pointer items-center gap-2 text-[var(--wc-text)]">
+					<input
+						type="checkbox"
+						checked={editedOnly}
+						onChange={(e) => {
+							setEditedOnly(e.target.checked)
+							setPage(1)
+						}}
+					/>
+					{t('admin.comments.editedOnly')}
 				</label>
 			</div>
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, qs } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { useLang } from '../lib/useLang'
 import Avatar from './Avatar'
 import { acquireSocket, releaseSocket } from '../lib/socket'
@@ -13,7 +14,7 @@ const PAGE_SIZE = 20
 // testo e destinazione di una notifica in base a subject + action (modello Notification del backend)
 // target.id è l'id della ricetta per subject 'recipe' e l'id del commento per subject 'comment':
 // per i commenti la ricetta arriva in target.recipe_id
-function describe(n: AppNotification): { textKey: string; to: string } {
+function describe(n: AppNotification, currentUserId?: number): { textKey: string; to: string } {
 	const recipeId = n.target?.recipe_id ?? (n.subject === 'recipe' ? (n.target?.id ?? null) : null)
 	const actorPath = n.actor ? `/users/${n.actor.id}` : '/'
 	const recipePath = recipeId != null ? `/recipes/${recipeId}` : actorPath
@@ -33,8 +34,10 @@ function describe(n: AppNotification): { textKey: string; to: string } {
 		case 'update':
 			return { textKey: 'notifications.update', to: recipePath }
 		case 'warn':
-			// avviso del moderatore: porta al contenuto se si conosce la ricetta
-			return { textKey: 'notifications.warn', to: recipeId != null ? recipePath : '/' }
+			// avviso di moderazione: mai verso il profilo del moderatore (identità dello staff protetta).
+			// ricetta o commento → la ricetta interessata; profilo → il proprio profilo
+			if (n.subject === 'user') return { textKey: 'notifications.warn', to: currentUserId != null ? `/users/${currentUserId}` : '/' }
+			return { textKey: 'notifications.warn', to: recipeId != null ? `/recipes/${recipeId}` : '/' }
 		case 'delete':
 			// la ricetta non esiste più: nessun link
 			return { textKey: 'notifications.delete', to: '/' }
@@ -53,8 +56,25 @@ function timeAgo(iso: string, lang: string) {
 	return rtf.format(Math.round(hours / 24), 'day')
 }
 
+// icona "scudo" del team di moderazione, mostrata al posto dell'avatar negli avvisi
+function ModerationBadge() {
+	return (
+		<span
+			aria-hidden="true"
+			className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--wc-paprika)] text-[var(--wc-bg)]"
+		>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+				<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+				<path d="M12 8v4" />
+				<path d="M12 16h.01" />
+			</svg>
+		</span>
+	)
+}
+
 function NotificationBell() {
 	const { t } = useTranslation()
+	const { user } = useAuth()
 	const lang = useLang()
 	const [items, setItems] = useState<AppNotification[]>([])
 	// contatore del server (copre anche le non lette oltre la prima pagina)
@@ -207,7 +227,8 @@ function NotificationBell() {
 					) : (
 						<ul className="max-h-96 overflow-y-auto">
 							{items.map((n) => {
-								const { textKey, to } = describe(n)
+								const { textKey, to } = describe(n, user?.id)
+								const isWarn = n.action === 'warn'
 								return (
 									<li
 										key={n.id}
@@ -221,20 +242,41 @@ function NotificationBell() {
 											}}
 											className="flex min-w-0 flex-1 items-start gap-3 px-4 py-3 text-sm text-[var(--wc-text)]"
 										>
-											{/* actor idratato dal backend (id, username, avatar_url); null = sistema / utente eliminato */}
-											<Avatar
-												username={n.actor?.username ?? '?'}
-												url={n.actor?.avatar_url}
-												className="mt-0.5 h-8 w-8 text-xs"
-											/>
+											{isWarn ? (
+												<ModerationBadge />
+											) : (
+												/* actor idratato dal backend (id, username, avatar_url); null = sistema / utente eliminato */
+												<Avatar
+													username={n.actor?.username ?? '?'}
+													url={n.actor?.avatar_url}
+													className="mt-0.5 h-8 w-8 text-xs"
+												/>
+											)}
 											<span className="min-w-0 flex-1">
-												<span className="font-semibold">{n.actor?.username ?? t('notifications.someone')}</span>{' '}
-												{t(textKey)}
-												{n.subject === 'recipe' && n.action !== 'delete' && n.target?.title_or_snippet && (
-													<span className="text-[var(--wc-saffron)]"> {n.target.title_or_snippet}</span>
-												)}
-												{n.action === 'warn' && n.details && (
-													<span className="mt-0.5 block whitespace-pre-line break-words text-[var(--wc-paprika)]">{n.details}</span>
+												{isWarn ? (
+													<>
+														{/* nessun nome del moderatore: solo "Team di moderazione" */}
+														<span className="font-semibold text-[var(--wc-paprika)]">{t('notifications.moderationTeam')}</span>
+														{/* messaggio già localizzato dal backend (?lang=) */}
+														<span className="block">{n.message || t('notifications.warnFallback')}</span>
+														{n.details && (
+															<span
+																role="note"
+																className="mt-1.5 block whitespace-pre-line break-words rounded-lg border-l-4 border-[var(--wc-paprika)] bg-[var(--wc-bg)] px-3 py-2 text-xs text-[var(--wc-text)]"
+															>
+																<span className="mb-0.5 block font-semibold text-[var(--wc-paprika)]">{t('notifications.moderatorNote')}</span>
+																{n.details}
+															</span>
+														)}
+													</>
+												) : (
+													<>
+														<span className="font-semibold">{n.actor?.username ?? t('notifications.someone')}</span>{' '}
+														{t(textKey)}
+														{n.subject === 'recipe' && n.action !== 'delete' && n.target?.title_or_snippet && (
+															<span className="text-[var(--wc-saffron)]"> {n.target.title_or_snippet}</span>
+														)}
+													</>
 												)}
 												{n.subject === 'comment' && n.target?.title_or_snippet && (
 													<span className="block truncate italic text-[var(--wc-text-muted)]">“{n.target.title_or_snippet}”</span>

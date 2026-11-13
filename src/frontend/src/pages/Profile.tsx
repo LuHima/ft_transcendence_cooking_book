@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { api, getErrorMessage, uploadWithProgress } from '../api/client'
 import { UPLOAD_LIMITS } from '../config'
-import { validateImage } from '../lib/files'
+import { IMAGE_ACCEPT, validateImage } from '../lib/files'
 import { useObjectUrl } from '../lib/useObjectUrl'
 import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
 import Avatar from '../components/Avatar'
@@ -12,7 +12,10 @@ import LanguageSwitcher from '../components/LanguageSwitcher'
 import TwoFactorSettings from '../components/TwoFactorSettings'
 import BlockedUsers from '../components/BlockedUsers'
 import UploadProgress from '../components/UploadProgress'
-import type { AvatarUploadResponseDto } from '../types/models'
+import { PROFILE_PRIVACIES, type AvatarUploadResponseDto, type ProfilePrivacy, type UpdateUserDto } from '../types/models'
+
+// UpdateUserDto: bio al massimo 500 caratteri
+const BIO_MAX = 500
 
 function Profile() {
 	const { t } = useTranslation()
@@ -20,6 +23,9 @@ function Profile() {
 	const { user, refreshUser } = useAuth()
 	const [username, setUsername] = useState(user?.username ?? '')
 	const [email, setEmail] = useState(user?.email ?? '')
+	// biografia culinaria (max 500) e privacy del profilo
+	const [bio, setBio] = useState(user?.bio ?? '')
+	const [profilePrivacy, setProfilePrivacy] = useState<ProfilePrivacy>(user?.profile_privacy ?? 'public')
 	const [avatarFile, setAvatarFile] = useState<File | null>(null)
 	const [saving, setSaving] = useState(false)
 	// avanzamento dell'upload dell'avatar (null = nessun upload in corso)
@@ -67,9 +73,11 @@ function Profile() {
 				setAvatarFile(null)
 			}
 			// PATCH /users/me: si inviano solo i campi cambiati
-			const patch: Record<string, string> = {}
+			const patch: UpdateUserDto = {}
 			if (username !== user?.username) patch.username = username
 			if (email !== user?.email) patch.email = email
+			if (bio.trim() !== (user?.bio ?? '')) patch.bio = bio.trim()
+			if (profilePrivacy !== (user?.profile_privacy ?? 'public')) patch.profile_privacy = profilePrivacy
 			if (Object.keys(patch).length > 0) await api.patch('/users/me', patch)
 			await refreshUser()
 			toast.success(t('profile.saved'))
@@ -96,7 +104,7 @@ function Profile() {
 						<input
 							ref={fileRef}
 							type="file"
-							accept="image/jpeg,image/png,image/webp"
+							accept={IMAGE_ACCEPT}
 							aria-label={t('profile.changeAvatar')}
 							className="hidden"
 							onChange={(e) => {
@@ -138,6 +146,51 @@ function Profile() {
 					</label>
 					<input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={INPUT_CLASS} />
 				</div>
+
+				<div>
+					<label htmlFor="bio" className={LABEL_CLASS}>
+						{t('profile.bio')}
+					</label>
+					<textarea
+						id="bio"
+						rows={4}
+						maxLength={BIO_MAX}
+						value={bio}
+						onChange={(e) => setBio(e.target.value)}
+						placeholder={t('profile.bioPlaceholder')}
+						className={INPUT_CLASS}
+					/>
+					<p className="mt-1 text-right text-xs text-[var(--wc-text-muted)]">
+						{bio.length}/{BIO_MAX}
+					</p>
+				</div>
+
+				<fieldset>
+					<legend className={LABEL_CLASS}>{t('profile.privacy')}</legend>
+					<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+						{PROFILE_PRIVACIES.map((v) => (
+							<label
+								key={v}
+								className={`cursor-pointer rounded-xl border px-3 py-2 text-sm transition-colors ${
+									profilePrivacy === v
+										? 'border-[var(--wc-basil)] bg-[var(--wc-surface-raised)]'
+										: 'border-[var(--wc-border)] hover:border-[var(--wc-basil)]'
+								}`}
+							>
+								<input
+									type="radio"
+									name="profile-privacy"
+									value={v}
+									checked={profilePrivacy === v}
+									onChange={() => setProfilePrivacy(v)}
+									className="sr-only"
+								/>
+								<span className="block font-medium text-[var(--wc-text)]">{t(`profilePrivacy.${v}`)}</span>
+								<span className="block text-xs text-[var(--wc-text-muted)]">{t(`profilePrivacy.${v}Help`)}</span>
+							</label>
+						))}
+					</div>
+				</fieldset>
 
 				<div>
 					<label htmlFor="ui-lang" className={LABEL_CLASS}>

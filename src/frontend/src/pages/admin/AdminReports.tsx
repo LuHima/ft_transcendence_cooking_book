@@ -44,6 +44,9 @@ const SELECT =
 const FIELD =
 	'w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--wc-basil)]'
 
+// avviso e ban si escludono a vicenda; delete_content si può abbinare a uno dei due
+const EXCLUSIVE: Partial<Record<ModerationAction, ModerationAction>> = { warn: 'ban', ban: 'warn' }
+
 // azioni "punitive" disponibili per tipo di contenuto (dismiss è una scelta a parte)
 function actionsFor(r: ReportItem): Exclude<ModerationAction, 'dismiss'>[] {
 	return r.subject === 'user' ? ['warn', 'ban'] : ['warn', 'delete_content', 'ban']
@@ -194,9 +197,19 @@ function AdminReports() {
 													<UserChip user={r.target.owner} />
 												</span>
 											)}
-											{r.previous_bans_count != null && r.previous_bans_count > 0 && (
-												<span className="mt-1 block text-xs text-[var(--wc-paprika)]">
-													{t('moderation.previousBans', { count: r.previous_bans_count })}
+											{/* precedenti dell'autore: avvisi e ban già ricevuti */}
+											{((r.previous_warnings_count ?? 0) > 0 || (r.previous_bans_count ?? 0) > 0) && (
+												<span className="mt-1 flex flex-wrap gap-1">
+													{(r.previous_warnings_count ?? 0) > 0 && (
+														<span className="rounded-full border border-[var(--wc-saffron)] px-2 py-0.5 text-[10px] text-[var(--wc-saffron)]">
+															{t('moderation.previousWarnings', { count: r.previous_warnings_count })}
+														</span>
+													)}
+													{(r.previous_bans_count ?? 0) > 0 && (
+														<span className="rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] text-[var(--wc-paprika)]">
+															{t('moderation.previousBans', { count: r.previous_bans_count })}
+														</span>
+													)}
 												</span>
 											)}
 										</td>
@@ -221,6 +234,18 @@ function AdminReports() {
 														{t(`moderation.statuses.${r.status}`)}
 														{r.resolution_reason && ` · ${t(`report.reasons.${r.resolution_reason}`)}`}
 													</p>
+													{/* azioni eseguite alla risoluzione */}
+													{r.actions && r.actions.some((a) => a !== 'dismiss') && (
+														<p className="flex flex-wrap gap-1">
+															{r.actions
+																.filter((a) => a !== 'dismiss')
+																.map((a) => (
+																	<span key={a} className="rounded-full bg-[var(--wc-surface-raised)] px-2 py-0.5 text-[10px]">
+																		{t(`moderation.actions.${a}`)}
+																	</span>
+																))}
+														</p>
+													)}
 													{r.resolution_description && (
 														<p className="break-words text-[var(--wc-text)]">
 															<span className="text-[var(--wc-text-muted)]">{t('moderation.userMessage')}: </span>
@@ -302,8 +327,18 @@ function ResolveDialog({ report, onClose, onDone }: { report: ReportItem; onClos
 	const banSelected = mode === 'action' && actions.includes('ban')
 	const maxDays = admin ? undefined : MODERATOR_MAX_BAN_DAYS
 
+	// scegliendo avviso si toglie il ban (e viceversa)
 	function toggleAction(a: Exclude<ModerationAction, 'dismiss'>) {
-		setActions((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))
+		setActions((prev) => {
+			if (prev.includes(a)) return prev.filter((x) => x !== a)
+			const other = EXCLUSIVE[a]
+			return [...prev.filter((x) => x !== other), a]
+		})
+	}
+	// un'azione è bloccata se è già scelta quella incompatibile
+	const isBlocked = (a: ModerationAction) => {
+		const other = EXCLUSIVE[a]
+		return other != null && (actions as ModerationAction[]).includes(other)
 	}
 
 	async function handleSubmit(e: FormEvent) {
@@ -333,7 +368,7 @@ function ResolveDialog({ report, onClose, onDone }: { report: ReportItem; onClos
 				resolution_reason: resolutionReason,
 				...(resolutionDescription.trim() ? { resolution_description: resolutionDescription.trim() } : {}),
 				...(resolutionNotes.trim() ? { resolution_notes: resolutionNotes.trim() } : {}),
-				...(banSelected && admin && isPermanent ? { is_permanent: true } : {}),
+				...(banSelected && admin && isPermanent ? { permanent: true } : {}),
 				...(banSelected && !isPermanent && days !== undefined ? { ban_duration_days: days } : {}),
 			}
 		}
@@ -378,7 +413,16 @@ function ResolveDialog({ report, onClose, onDone }: { report: ReportItem; onClos
 						{t('moderation.takeAction')}
 					</label>
 					<label className="flex cursor-pointer items-center gap-2">
-						<input type="radio" name="mode" checked={mode === 'dismiss'} onChange={() => setMode('dismiss')} />
+						<input
+							type="radio"
+							name="mode"
+							checked={mode === 'dismiss'}
+							onChange={() => {
+								// archiviando, le azioni punitive spariscono e non vengono inviate
+								setMode('dismiss')
+								setActions([])
+							}}
+						/>
 						{t('moderation.actions.dismiss')}
 					</label>
 				</fieldset>
@@ -388,13 +432,24 @@ function ResolveDialog({ report, onClose, onDone }: { report: ReportItem; onClos
 						<fieldset className="space-y-2">
 							<legend className="mb-1 text-sm text-[var(--wc-text-muted)]">{t('moderation.chooseAction')}</legend>
 							{available.map((a) => (
-								<label key={a} className="flex cursor-pointer items-start gap-2 text-sm text-[var(--wc-text)]">
-									<input type="checkbox" className="mt-1" checked={actions.includes(a)} onChange={() => toggleAction(a)} />
+								<label
+									key={a}
+									className={`flex items-start gap-2 text-sm text-[var(--wc-text)] ${isBlocked(a) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+								>
+									<input
+										type="checkbox"
+										className="mt-1"
+										checked={actions.includes(a)}
+										disabled={isBlocked(a)}
+										onChange={() => toggleAction(a)}
+									/>
 									<span>
 										<span className={`block font-medium ${a === 'ban' || a === 'delete_content' ? 'text-[var(--wc-paprika)]' : ''}`}>
 											{t(`moderation.actions.${a}`)}
 										</span>
-										<span className="block text-xs text-[var(--wc-text-muted)]">{t(`moderation.actionHelp.${a}`)}</span>
+										<span className="block text-xs text-[var(--wc-text-muted)]">
+											{isBlocked(a) ? t('moderation.exclusiveHelp') : t(`moderation.actionHelp.${a}`)}
+										</span>
 									</span>
 								</label>
 							))}

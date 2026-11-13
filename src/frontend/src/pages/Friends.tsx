@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api, getErrorMessage, toPage } from '../api/client'
+import { api, getErrorMessage, qs, toPage } from '../api/client'
 import { useToast } from '../context/ToastContext'
 import Avatar from '../components/Avatar'
 import OnlineDot from '../components/OnlineDot'
 import { useFriendsPresence } from '../lib/useFriendsPresence'
 import { ListSkeleton } from '../components/Skeleton'
+import Pagination from '../components/Pagination'
 import type { FriendItem, FriendRequest } from '../types/models'
 
 type Tab = 'friends' | 'received' | 'sent'
+const FRIENDS_PAGE_SIZE = 20
 const TABS: Tab[] = ['friends', 'received', 'sent']
 
 function Friends() {
@@ -22,6 +24,20 @@ function Friends() {
 	const [receivedCount, setReceivedCount] = useState(0)
 	const [error, setError] = useState<string | null>(null)
 	const [busyId, setBusyId] = useState<number | null>(null)
+	// amici confermati: ricerca per username e paginazione (GET /friends?search=&page=&limit=20)
+	const [friendsSearch, setFriendsSearch] = useState('')
+	const [friendsQuery, setFriendsQuery] = useState('')
+	const [friendsPage, setFriendsPage] = useState(1)
+	const [friendsTotalPages, setFriendsTotalPages] = useState(1)
+
+	// la ricerca parte 300ms dopo l'ultimo tasto e riporta alla prima pagina
+	useEffect(() => {
+		const id = window.setTimeout(() => {
+			setFriendsQuery(friendsSearch.trim())
+			setFriendsPage(1)
+		}, 300)
+		return () => window.clearTimeout(id)
+	}, [friendsSearch])
 
 	// le richieste ricevute si caricano subito per mostrare il numero sulla scheda
 	useEffect(() => {
@@ -35,8 +51,11 @@ function Friends() {
 		let cancelled = false
 		const request =
 			tab === 'friends'
-				? api.get<unknown>('/friends').then((d) => {
-						if (!cancelled) setFriends(toPage<FriendItem>(d).items)
+				? api.get<unknown>(`/friends${qs({ search: friendsQuery, page: friendsPage, limit: FRIENDS_PAGE_SIZE })}`).then((d) => {
+						if (cancelled) return
+						const pageData = toPage<FriendItem>(d, FRIENDS_PAGE_SIZE)
+						setFriends(pageData.items)
+						setFriendsTotalPages(pageData.total_pages)
 					})
 				: api.get<unknown>(`/friends/requests?type=${tab === 'received' ? 'incoming' : 'outgoing'}`).then((d) => {
 						if (!cancelled) setRequests(toPage<FriendRequest>(d).items)
@@ -54,7 +73,7 @@ function Friends() {
 		return () => {
 			cancelled = true
 		}
-	}, [tab, t])
+	}, [tab, friendsQuery, friendsPage, t])
 
 	// req.id è l'id dell'altro utente (mittente per le ricevute, destinatario per le inviate):
 	//   accetta/rifiuta → POST /friends/requests/:requesterId/(accept|reject)
@@ -119,9 +138,24 @@ function Friends() {
 				))}
 			</div>
 
+			{tab === 'friends' && (
+				<input
+					type="search"
+					value={friendsSearch}
+					onChange={(e) => setFriendsSearch(e.target.value)}
+					placeholder={t('friends.searchPlaceholder')}
+					aria-label={t('friends.searchPlaceholder')}
+					className="mt-4 w-full rounded-full border border-[var(--wc-border)] bg-[var(--wc-surface)] px-4 py-2 text-sm outline-none focus:border-[var(--wc-basil)]"
+				/>
+			)}
+
 			{error && <p className="mt-4 text-[var(--wc-paprika)]">{error}</p>}
 			{loading && <div className="mt-6"><ListSkeleton rows={3} /></div>}
-			{list && list.length === 0 && !error && <p className="mt-6 text-[var(--wc-text-muted)]">{t(`friends.empty.${tab}`)}</p>}
+			{list && list.length === 0 && !error && (
+				<p className="mt-6 text-[var(--wc-text-muted)]">
+					{tab === 'friends' && friendsQuery ? t('friends.noSearchResults', { query: friendsQuery }) : t(`friends.empty.${tab}`)}
+				</p>
+			)}
 
 			{tab === 'friends' && friends && friends.length > 0 && (
 				<ul className="mt-6 divide-y divide-[var(--wc-border)] rounded-2xl border border-[var(--wc-border)]">
@@ -139,6 +173,7 @@ function Friends() {
 					))}
 				</ul>
 			)}
+			{tab === 'friends' && <Pagination page={friendsPage} totalPages={friendsTotalPages} onChange={setFriendsPage} />}
 
 			{tab !== 'friends' && requests && requests.length > 0 && (
 				<ul className="mt-6 divide-y divide-[var(--wc-border)] rounded-2xl border border-[var(--wc-border)]">

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { api, getErrorMessage } from '../api/client'
 import { useLang } from '../lib/useLang'
+import { canDeactivateComment, isStaff as isStaffUser } from '../lib/permissions'
 import Avatar from './Avatar'
 import { ReportButton } from './ReportDialog'
 import { Skeleton } from './Skeleton'
@@ -240,6 +241,10 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 		try {
 			// eliminazione non distruttiva: il backend imposta is_active = false
 			await api.delete(`/recipes/${recipeId}/comments/${comment.id}`)
+			// lo staff continua a vedere testo e autore del commento disattivato (contesto per la moderazione)
+			const staff = isStaffUser(user)
+			const deactivate = <T extends ApiComment>(x: T): T =>
+				staff ? { ...x, is_active: false } : { ...x, content: null, user: null, user_id: null, is_active: false }
 			setThreads((prev) =>
 				prev
 					? prev
@@ -251,20 +256,8 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 								return true
 							})
 							.map((th) => {
-								if (th.id === comment.id) {
-									return {
-										...th,
-										content: null,
-										user: null,
-										user_id: null,
-										is_active: false,
-									}
-								}
-								const filteredReplies = th.replies.map((r) =>
-									r.id === comment.id
-										? { ...r, content: null, user: null, user_id: null, is_active: false }
-										: r,
-								)
+								if (th.id === comment.id) return deactivate(th)
+								const filteredReplies = th.replies.map((r) => (r.id === comment.id ? deactivate(r) : r))
 								return {
 									...th,
 									replies: filteredReplies,
@@ -280,12 +273,15 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 
 	function renderComment(c: ApiComment, rootId: number, isReply: boolean) {
 		const isAuthor = Boolean(user && c.user_id && c.user_id === user.id)
-		const canDelete = c.is_active && Boolean(user && (isAuthor || recipeAuthorId === user.id))
+		// disattivazione: autore del commento, autore della ricetta, admin o moderatore
+		const canDelete = c.is_active && canDeactivateComment(user, c.user_id, recipeAuthorId)
+		// lo staff riceve ancora testo e autore dei commenti disattivati: vanno distinti da quelli attivi
+		const deactivatedForStaff = !c.is_active && Boolean(c.content)
 
 		return (
 			<li
 				key={c.id}
-				className={`rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-4 ${isReply ? 'ml-6 sm:ml-10' : ''}`}
+				className={`rounded-xl border border-[var(--wc-border)] p-4 ${deactivatedForStaff ? 'border-dashed bg-[var(--wc-bg)] opacity-70' : 'bg-[var(--wc-surface)]'} ${isReply ? 'ml-6 sm:ml-10' : ''}`}
 			>
 				<div className="flex items-center justify-between gap-3 text-xs text-[var(--wc-text-muted)]">
 					<span className="flex min-w-0 items-center gap-2">
@@ -304,6 +300,14 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 						)}
 						<span>· {formatDate(c.created_at)}</span>
 						{c.is_edited && c.is_active && <span className="italic">({t('comments.edited')})</span>}
+						{deactivatedForStaff && (
+							<span
+								title={t('comments.deactivatedHelp')}
+								className="rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]"
+							>
+								{t('comments.deactivated')}
+							</span>
+						)}
 					</span>
 					{c.is_active && (
 						<span className="flex shrink-0 items-center gap-3">
@@ -342,7 +346,13 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 						/>
 					</div>
 				) : c.content ? (
-					<p className="mt-2 whitespace-pre-line break-words text-sm text-[var(--wc-text)]">{c.content}</p>
+					<p
+						className={`mt-2 whitespace-pre-line break-words text-sm ${
+							deactivatedForStaff ? 'text-[var(--wc-text-muted)] line-through' : 'text-[var(--wc-text)]'
+						}`}
+					>
+						{c.content}
+					</p>
 				) : (
 					<p className="mt-2 italic text-sm text-[var(--wc-text-muted)]">{t('comments.removed')}</p>
 				)}

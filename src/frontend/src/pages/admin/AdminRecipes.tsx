@@ -1,48 +1,83 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api, getErrorMessage, qs } from '../../api/client'
+import { api, ApiError, getErrorMessage, qs } from '../../api/client'
+import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { useLang } from '../../lib/useLang'
+import { canPurge, canRestoreRecipe } from '../../lib/permissions'
+import { DEFAULT_RECIPE_SORT, parseRecipeSort, type RecipeSortValue } from '../../lib/recipeSort'
+import { SUPPORTED_LANGS } from '../../i18n'
 import Pagination from '../../components/Pagination'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import PrivacyBadge from '../../components/PrivacyBadge'
+import RecipeSortSelect from '../../components/RecipeSortSelect'
 import { ListSkeleton } from '../../components/Skeleton'
-import type { AdminRecipeStatus, Paginated, RecipeSummary } from '../../types/models'
+import type { AdminRecipeStatus, Course, Paginated, RecipeDifficulty, RecipeSummary } from '../../types/models'
 
 const PAGE_SIZE = 15
 const STATUSES: AdminRecipeStatus[] = ['all', 'active', 'inactive']
+const COURSES: Course[] = ['appetizer', 'first_course', 'main_course', 'dessert', 'side_dish', 'drink', 'snack']
+const DIFFICULTIES: RecipeDifficulty[] = ['easy', 'medium', 'hard']
 
-// elenco ricette per lo staff:
-//   GET    /admin/recipes?page=&limit=&lang=&search=&status=all|active|inactive  (stessi filtri di GET /recipes)
-//   PATCH  /recipes/:id { is_active: true }   → riattiva una ricetta sospesa
-//   DELETE /recipes/:id                       → sospensione (soft delete)
-//   DELETE /recipes/:id?hard=true             → eliminazione definitiva (solo admin, con conferma)
+const SELECT =
+	'rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm text-[var(--wc-text)] outline-none focus:border-[var(--wc-basil)]'
+
+// elenco ricette per lo staff (admin e moderatori, anche dalla pagina /moderation):
+//   GET    /admin/recipes?page=&limit=&lang=&search=&status=&course=&difficulty=&source_lang=&author_id=&sort_by=&sort_order=
+//   DELETE /recipes/:id                       → sospensione (admin e moderatori; 403 sulle ricette degli admin per i moderatori)
+//   PATCH  /recipes/:id { is_active: true }   → riattivazione (autore o admin)
+//   DELETE /recipes/:id?hard=true             → eliminazione definitiva (solo admin)
 function AdminRecipes() {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const toast = useToast()
+	const { user } = useAuth()
 	const [data, setData] = useState<Paginated<RecipeSummary> | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [search, setSearch] = useState('')
 	const [debounced, setDebounced] = useState('')
 	const [status, setStatus] = useState<AdminRecipeStatus>('all')
+	const [course, setCourse] = useState<Course | ''>('')
+	const [difficulty, setDifficulty] = useState<RecipeDifficulty | ''>('')
+	const [sourceLang, setSourceLang] = useState('')
+	const [authorIdText, setAuthorIdText] = useState('')
+	const [authorId, setAuthorId] = useState<number | undefined>()
+	const [sort, setSort] = useState<RecipeSortValue>(DEFAULT_RECIPE_SORT)
 	const [page, setPage] = useState(1)
 	const [reload, setReload] = useState(0)
 	const [busyId, setBusyId] = useState<number | null>(null)
 	const [purging, setPurging] = useState<RecipeSummary | null>(null)
+	const { sortBy, sortOrder } = parseRecipeSort(sort)
 
+	// filtri testuali: partono 300ms dopo l'ultimo tasto
 	useEffect(() => {
 		const id = window.setTimeout(() => {
 			setDebounced(search.trim())
+			setAuthorId(/^\d+$/.test(authorIdText.trim()) && Number(authorIdText) > 0 ? Number(authorIdText) : undefined)
 			setPage(1)
 		}, 300)
 		return () => window.clearTimeout(id)
-	}, [search])
+	}, [search, authorIdText])
 
 	useEffect(() => {
 		let cancelled = false
 		api
-			.get<Paginated<RecipeSummary>>(`/admin/recipes${qs({ page, limit: PAGE_SIZE, lang, search: debounced, status })}`)
+			.get<Paginated<RecipeSummary>>(
+				`/admin/recipes${qs({
+					page,
+					limit: PAGE_SIZE,
+					lang,
+					search: debounced,
+					status,
+					course,
+					difficulty,
+					source_lang: sourceLang,
+					author_id: authorId,
+					sort_by: sortBy,
+					sort_order: sortOrder,
+				})}`,
+			)
 			.then((res) => {
 				if (cancelled) return
 				setData(res)
@@ -54,9 +89,15 @@ function AdminRecipes() {
 		return () => {
 			cancelled = true
 		}
-	}, [page, debounced, status, lang, reload, t])
+	}, [page, debounced, status, course, difficulty, sourceLang, authorId, sortBy, sortOrder, lang, reload, t])
 
-	// aggiorna la riga in locale; se il filtro attivo la esclude, ricarica la pagina
+	// cambia un filtro e riparte dalla prima pagina
+	function changeFilter(fn: () => void) {
+		fn()
+		setPage(1)
+	}
+
+	// aggiorna la riga in locale; se il filtro di stato la esclude, ricarica la pagina
 	function afterStatusChange(r: RecipeSummary, isActive: boolean) {
 		if (status === 'all') {
 			setData((prev) => (prev ? { ...prev, items: prev.items.map((x) => (x.id === r.id ? { ...x, is_active: isActive } : x)) } : prev))
@@ -75,7 +116,10 @@ function AdminRecipes() {
 			toast.success(t('admin.recipes.suspended'))
 			afterStatusChange(r, false)
 		} catch (err) {
-			toast.error(getErrorMessage(err, t('recipe.deleteError')))
+			// 403: un moderatore non può sospendere le ricette di un amministratore
+			toast.error(
+				err instanceof ApiError && err.status === 403 ? t('recipe.suspendForbidden') : getErrorMessage(err, t('recipe.deleteError')),
+			)
 		} finally {
 			setBusyId(null)
 		}
@@ -107,34 +151,98 @@ function AdminRecipes() {
 		}
 	}
 
+	const activeFilters = [course, difficulty, sourceLang, authorIdText.trim()].filter(Boolean).length
+
 	return (
 		<div>
-			<div className="flex flex-wrap items-center gap-3">
-				<input
-					type="search"
-					value={search}
-					onChange={(e) => setSearch(e.target.value)}
-					placeholder={t('admin.recipes.filter')}
-					aria-label={t('admin.recipes.filter')}
-					className="w-full max-w-xs rounded-full border border-[var(--wc-border)] bg-[var(--wc-surface)] px-4 py-2 text-sm outline-none focus:border-[var(--wc-basil)]"
-				/>
-				<div role="radiogroup" aria-label={t('admin.users.status')} className="inline-flex overflow-hidden rounded-full border border-[var(--wc-border)] text-sm">
-					{STATUSES.map((s) => (
+			<div className="space-y-3 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-3">
+				<div className="flex flex-wrap items-center gap-3">
+					<input
+						type="search"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						placeholder={t('admin.recipes.filter')}
+						aria-label={t('admin.recipes.filter')}
+						className="w-full max-w-xs rounded-full border border-[var(--wc-border)] bg-[var(--wc-bg)] px-4 py-2 text-sm outline-none focus:border-[var(--wc-basil)]"
+					/>
+					<div role="radiogroup" aria-label={t('admin.users.status')} className="inline-flex overflow-hidden rounded-full border border-[var(--wc-border)] text-sm">
+						{STATUSES.map((s) => (
+							<button
+								key={s}
+								type="button"
+								role="radio"
+								aria-checked={status === s}
+								onClick={() =>
+									changeFilter(() => {
+										setStatus(s)
+										setData(null)
+									})
+								}
+								className={`px-3 py-1.5 ${status === s ? 'bg-[var(--wc-basil)] text-[var(--wc-bg)]' : 'text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]'}`}
+							>
+								{t(`admin.recipes.statuses.${s}`)}
+							</button>
+						))}
+					</div>
+					<div className="ml-auto">
+						<RecipeSortSelect value={sort} onChange={(v) => changeFilter(() => setSort(v))} />
+					</div>
+				</div>
+
+				<div className="flex flex-wrap items-center gap-2">
+					<select value={course} aria-label={t('recipe.course')} onChange={(e) => changeFilter(() => setCourse(e.target.value as Course | ''))} className={SELECT}>
+						<option value="">{t('recipe.course')}: {t('search.any')}</option>
+						{COURSES.map((c) => (
+							<option key={c} value={c}>
+								{t(`course.${c}`)}
+							</option>
+						))}
+					</select>
+					<select
+						value={difficulty}
+						aria-label={t('recipe.difficulty')}
+						onChange={(e) => changeFilter(() => setDifficulty(e.target.value as RecipeDifficulty | ''))}
+						className={SELECT}
+					>
+						<option value="">{t('recipe.difficulty')}: {t('search.any')}</option>
+						{DIFFICULTIES.map((d) => (
+							<option key={d} value={d}>
+								{t(`difficulty.${d}`)}
+							</option>
+						))}
+					</select>
+					<select value={sourceLang} aria-label={t('search.sourceLang')} onChange={(e) => changeFilter(() => setSourceLang(e.target.value))} className={SELECT}>
+						<option value="">{t('search.sourceLang')}: {t('search.any')}</option>
+						{SUPPORTED_LANGS.map((l) => (
+							<option key={l} value={l}>
+								{t(`lang.${l}`)}
+							</option>
+						))}
+					</select>
+					<input
+						inputMode="numeric"
+						value={authorIdText}
+						onChange={(e) => setAuthorIdText(e.target.value.replace(/\D/g, ''))}
+						placeholder={t('search.authorId')}
+						aria-label={t('search.authorId')}
+						className={`${SELECT} w-32`}
+					/>
+					{activeFilters > 0 && (
 						<button
-							key={s}
 							type="button"
-							role="radio"
-							aria-checked={status === s}
-							onClick={() => {
-								setStatus(s)
-								setPage(1)
-								setData(null)
-							}}
-							className={`px-3 py-1.5 ${status === s ? 'bg-[var(--wc-basil)] text-[var(--wc-bg)]' : 'text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]'}`}
+							onClick={() =>
+								changeFilter(() => {
+									setCourse('')
+									setDifficulty('')
+									setSourceLang('')
+									setAuthorIdText('')
+								})
+							}
+							className="text-sm text-[var(--wc-saffron)] hover:underline"
 						>
-							{t(`admin.recipes.statuses.${s}`)}
+							{t('search.clearFilters')}
 						</button>
-					))}
+					)}
 				</div>
 			</div>
 
@@ -150,16 +258,19 @@ function AdminRecipes() {
 				<div className="mt-4 divide-y divide-[var(--wc-border)] rounded-2xl border border-[var(--wc-border)]">
 					{data.items.map((r) => {
 						const inactive = r.is_active === false
+						// modifica e riattivazione: autore o admin; eliminazione definitiva: solo admin
+						const canManage = canRestoreRecipe(user, r.author?.id)
 						return (
 							<div key={r.id} className={`flex flex-wrap items-center justify-between gap-4 p-4 ${inactive ? 'bg-[var(--wc-surface)]' : ''}`}>
 								<div className="min-w-0">
-									<div className="flex items-center gap-2">
+									<div className="flex flex-wrap items-center gap-2">
 										<Link
 											to={`/recipes/${r.id}`}
 											className={`truncate font-display text-lg hover:text-[var(--wc-saffron)] ${inactive ? 'text-[var(--wc-text-muted)]' : ''}`}
 										>
 											{r.title}
 										</Link>
+										<PrivacyBadge privacy={r.privacy} showPublic />
 										{inactive && (
 											<span className="shrink-0 rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
 												{t('recipe.suspendedBadge')}
@@ -167,40 +278,54 @@ function AdminRecipes() {
 										)}
 									</div>
 									<p className="text-xs text-[var(--wc-text-muted)]">
-										{t('recipe.by')} {r.author ? r.author.username : 'WeCook'}
+										{t('recipe.by')}{' '}
+										{r.author ? (
+											<Link to={`/users/${r.author.id}`} className="hover:text-[var(--wc-saffron)] hover:underline">
+												{r.author.username}
+											</Link>
+										) : (
+											'WeCook'
+										)}{' '}
+										· {t(`lang.${r.source_lang}`)} · {t(`course.${r.course}`)}
 									</p>
 								</div>
 								<div className="flex shrink-0 flex-wrap items-center gap-2 text-sm">
-									<Link
-										to={`/my-recipes/${r.id}/edit`}
-										className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 hover:border-[var(--wc-basil)]"
-									>
-										{t('common.edit')}
-									</Link>
-									{inactive ? (
-										<button
-											onClick={() => void reactivate(r)}
-											disabled={busyId === r.id}
-											className="rounded-full bg-[var(--wc-basil)] px-3 py-1.5 font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)] disabled:opacity-50"
+									{canManage && (
+										<Link
+											to={`/my-recipes/${r.id}/edit`}
+											className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 hover:border-[var(--wc-basil)]"
 										>
-											{t('admin.recipes.reactivate')}
-										</button>
-									) : (
+											{t('common.edit')}
+										</Link>
+									)}
+									{inactive
+										? canManage && (
+												<button
+													onClick={() => void reactivate(r)}
+													disabled={busyId === r.id}
+													className="rounded-full bg-[var(--wc-basil)] px-3 py-1.5 font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)] disabled:opacity-50"
+												>
+													{t('admin.recipes.reactivate')}
+												</button>
+											)
+										: (
+												<button
+													onClick={() => void suspend(r)}
+													disabled={busyId === r.id}
+													className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
+												>
+													{t('admin.recipes.suspend')}
+												</button>
+											)}
+									{canPurge(user) && (
 										<button
-											onClick={() => void suspend(r)}
+											onClick={() => setPurging(r)}
 											disabled={busyId === r.id}
-											className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
+											className="rounded-full border border-[var(--wc-paprika)] px-3 py-1.5 font-medium text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)] disabled:opacity-50"
 										>
-											{t('admin.recipes.suspend')}
+											{t('recipe.purge')}
 										</button>
 									)}
-									<button
-										onClick={() => setPurging(r)}
-										disabled={busyId === r.id}
-										className="rounded-full border border-[var(--wc-paprika)] px-3 py-1.5 font-medium text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)] disabled:opacity-50"
-									>
-										{t('recipe.purge')}
-									</button>
 								</div>
 							</div>
 						)
