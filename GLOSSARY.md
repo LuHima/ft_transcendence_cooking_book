@@ -144,6 +144,10 @@ _Avoid_: Follow status, relation type, connection state
 The public presentation of a community member showcasing their biographical note, culinary metrics, confirmed friends, and public recipes.
 _Avoid_: Account page, user card, bio sheet
 
+**Vanity Profile Route**:
+A human-readable frontend URL path (`/u/:username`) that resolves a community member's Culinary Profile by username via `GET /api/users/by-username/:username` so shared profile links carry the member's username instead of an opaque database ID.
+_Avoid_: Pretty link, custom slug, username redirect
+
 **Culinary Bio**:
 A brief self-written summary (up to 500 characters) describing a community member's cooking background, philosophy, or favorite cuisines.
 _Avoid_: About me, description, user status
