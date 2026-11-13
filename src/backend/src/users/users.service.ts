@@ -360,7 +360,11 @@ export class UsersService {
     ]);
 
     let friendship_status:
-      'none' | 'pending_sent' | 'pending_received' | 'friends' | null = null;
+      | 'none'
+      | 'pending_sent'
+      | 'pending_received'
+      | 'friends'
+      | null = null;
 
     if (currentUserId && currentUserId !== id) {
       const friendship = await this.prisma.friendship.findFirst({

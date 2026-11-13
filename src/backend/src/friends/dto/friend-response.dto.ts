@@ -50,10 +50,7 @@ export class PaginatedFriendsResponseDto {
   @ApiProperty({ type: [FriendItemDto], description: 'List of friends' })
   items: FriendItemDto[];
 
-  @ApiProperty({
-    description: 'Total number of confirmed friends',
-    example: 12,
-  })
+  @ApiProperty({ description: 'Total number of confirmed friends', example: 12 })
   total: number;
 
   @ApiProperty({ description: 'Current page number', example: 1 })
@@ -65,16 +62,10 @@ export class PaginatedFriendsResponseDto {
   @ApiProperty({ description: 'Total number of available pages', example: 1 })
   total_pages: number;
 
-  @ApiProperty({
-    description: 'Flag indicating if next page exists',
-    example: false,
-  })
+  @ApiProperty({ description: 'Flag indicating if next page exists', example: false })
   has_next_page: boolean;
 
-  @ApiProperty({
-    description: 'Flag indicating if previous page exists',
-    example: false,
-  })
+  @ApiProperty({ description: 'Flag indicating if previous page exists', example: false })
   has_prev_page: boolean;
 }
 

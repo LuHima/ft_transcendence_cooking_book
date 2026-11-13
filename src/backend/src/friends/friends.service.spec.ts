@@ -67,11 +67,7 @@ describe('FriendsService', () => {
           status: 'accepted',
           updated_at: mockDate,
           requester: { id: 1, username: 'mario', avatar_url: null },
-          addressee: {
-            id: 2,
-            username: 'giulia',
-            avatar_url: '/avatar_2.webp',
-          },
+          addressee: { id: 2, username: 'giulia', avatar_url: '/avatar_2.webp' },
         },
         {
           id: 2,
@@ -84,9 +80,7 @@ describe('FriendsService', () => {
         },
       ];
 
-      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue(
-        mockFriendships,
-      );
+      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue(mockFriendships);
       (prisma.friendship.count as jest.Mock<any>).mockResolvedValue(2);
 
       const result = await service.getFriends(1, { page: 1, limit: 20 });
@@ -121,15 +115,11 @@ describe('FriendsService', () => {
             OR: [
               {
                 requester_id: 1,
-                addressee: {
-                  username: { contains: 'giu', mode: 'insensitive' },
-                },
+                addressee: { username: { contains: 'giu', mode: 'insensitive' } },
               },
               {
                 addressee_id: 1,
-                requester: {
-                  username: { contains: 'giu', mode: 'insensitive' },
-                },
+                requester: { username: { contains: 'giu', mode: 'insensitive' } },
               },
             ],
           }),
@@ -172,25 +162,19 @@ describe('FriendsService', () => {
     it('should throw NotFoundException if friendship does not exist', async () => {
       (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValue(null);
 
-      await expect(service.removeFriend(1, 99)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.removeFriend(1, 99)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('sendFriendRequest', () => {
     it('should throw BadRequestException when sending request to self', async () => {
-      await expect(service.sendFriendRequest(1, 1)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.sendFriendRequest(1, 1)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when recipient does not exist or is inactive', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue(null);
 
-      await expect(service.sendFriendRequest(1, 99)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.sendFriendRequest(1, 99)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when either user has blocked the other', async () => {
@@ -213,9 +197,7 @@ describe('FriendsService', () => {
         status: 'accepted',
       });
 
-      await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException if pending request already sent', async () => {
@@ -224,9 +206,7 @@ describe('FriendsService', () => {
         .mockResolvedValueOnce(null) // no accepted
         .mockResolvedValueOnce({ id: 8, status: 'pending' }); // already sent
 
-      await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException if recipient rejected request within 30 days', async () => {
@@ -446,9 +426,7 @@ describe('FriendsService', () => {
           addressee: { id: 1, username: 'mario', avatar_url: null },
         },
       ];
-      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue(
-        mockPending,
-      );
+      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue(mockPending);
       (prisma.friendship.count as jest.Mock<any>).mockResolvedValue(1);
 
       const result = await service.getFriendRequests(1, { type: 'incoming' });
@@ -473,9 +451,7 @@ describe('FriendsService', () => {
           addressee: { id: 4, username: 'sophie', avatar_url: null },
         },
       ];
-      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue(
-        mockPending,
-      );
+      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue(mockPending);
       (prisma.friendship.count as jest.Mock<any>).mockResolvedValue(1);
 
       const result = await service.getFriendRequests(1, { type: 'outgoing' });
@@ -530,9 +506,7 @@ describe('FriendsService', () => {
     it('should throw NotFoundException if request does not exist', async () => {
       (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValue(null);
 
-      await expect(service.acceptFriendRequest(1, 99)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.acceptFriendRequest(1, 99)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -569,9 +543,7 @@ describe('FriendsService', () => {
     it('should throw NotFoundException if request not found', async () => {
       (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValue(null);
 
-      await expect(service.rejectFriendRequest(1, 99)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.rejectFriendRequest(1, 99)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -581,19 +553,13 @@ describe('FriendsService', () => {
         id: 30,
         status: 'pending',
       });
-      (prisma.friendship.delete as jest.Mock<any>).mockResolvedValue({
-        id: 30,
-      });
-      (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({
-        count: 1,
-      });
+      (prisma.friendship.delete as jest.Mock<any>).mockResolvedValue({ id: 30 });
+      (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({ count: 1 });
 
       const result = await service.cancelFriendRequest(1, 2);
 
       expect(result).toEqual({ message: 'Friend request cancelled' });
-      expect(prisma.friendship.delete).toHaveBeenCalledWith({
-        where: { id: 30 },
-      });
+      expect(prisma.friendship.delete).toHaveBeenCalledWith({ where: { id: 30 } });
       expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
         where: { user_id: 2, actor_id: 1, action: 'friend_request' },
       });
@@ -602,9 +568,7 @@ describe('FriendsService', () => {
     it('should throw NotFoundException if request not found', async () => {
       (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValue(null);
 
-      await expect(service.cancelFriendRequest(1, 99)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.cancelFriendRequest(1, 99)).rejects.toThrow(NotFoundException);
     });
   });
 });

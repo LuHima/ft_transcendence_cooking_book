@@ -1187,9 +1187,7 @@ describe('UsersService', () => {
     it('should throw NotFoundException if target user does not exist or is inactive', async () => {
       (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getUserFriends(999)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getUserFriends(999)).rejects.toThrow(NotFoundException);
     });
   });
 
