@@ -8,7 +8,13 @@ import { useLang } from '../lib/useLang'
 import Avatar from './Avatar'
 import { ReportButton } from './ReportDialog'
 import { Skeleton } from './Skeleton'
-import type { ApiComment, ThreadedComment } from '../types/models'
+import Pagination from './Pagination'
+import type {
+	ApiComment,
+	ThreadedComment,
+	PaginatedRecipeComments,
+	PaginatedCommentReplies,
+} from '../types/models'
 
 const MAX_LENGTH = 1000
 
@@ -86,28 +92,43 @@ function CommentForm({ initial = '', submitLabel, placeholder, autoFocus, onSubm
 	)
 }
 
-// i commenti eliminati non si mostrano: se il principale è eliminato sparisce l'intero thread,
-// se è eliminata una risposta sparisce solo quella
-function pruneThreads(list: ThreadedComment[]): ThreadedComment[] {
-	return list.filter((th) => th.is_active).map((th) => ({ ...th, replies: th.replies.filter((r) => r.is_active) }))
-}
-
 function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const toast = useToast()
 	const { user } = useAuth()
 	const [threads, setThreads] = useState<ThreadedComment[] | null>(null)
+	const [totalCount, setTotalCount] = useState<number>(0)
+	const [page, setPage] = useState<number>(1)
+	const [totalPages, setTotalPages] = useState<number>(1)
 	const [loadError, setLoadError] = useState<string | null>(null)
 	const [replyingTo, setReplyingTo] = useState<number | null>(null)
 	const [editing, setEditing] = useState<number | null>(null)
+	const [loadingReplies, setLoadingReplies] = useState<Record<number, boolean>>({})
+	const [replyPages, setReplyPages] = useState<Record<number, number>>({})
 
 	useEffect(() => {
 		let cancelled = false
 		api
-			.get<ThreadedComment[]>(`/recipes/${recipeId}/comments`)
+			.get<PaginatedRecipeComments>(`/recipes/${recipeId}/comments?page=${page}&limit=20`)
 			.then((data) => {
-				if (!cancelled) setThreads(Array.isArray(data) ? pruneThreads(data) : [])
+				if (!cancelled) {
+					if (data && Array.isArray(data.items)) {
+						setThreads(data.items)
+						setTotalCount(data.total)
+						setTotalPages(data.total_pages)
+					} else if (Array.isArray(data)) {
+						// Fallback if data is raw array
+						const arr = data as unknown as ThreadedComment[]
+						setThreads(arr)
+						setTotalCount(arr.length)
+						setTotalPages(1)
+					} else {
+						setThreads([])
+						setTotalCount(0)
+						setTotalPages(1)
+					}
+				}
 			})
 			.catch((err) => {
 				if (!cancelled) setLoadError(getErrorMessage(err, t('comments.loadError')))
@@ -115,10 +136,50 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 		return () => {
 			cancelled = true
 		}
-	}, [recipeId, t])
+	}, [recipeId, page, t])
 
 	function formatDate(iso: string) {
 		return new Date(iso).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' })
+	}
+
+	async function loadMoreReplies(thread: ThreadedComment) {
+		const threadId = thread.id
+		if (loadingReplies[threadId]) return
+		setLoadingReplies((prev) => ({ ...prev, [threadId]: true }))
+		try {
+			const currentPage = replyPages[threadId] || 1
+			const nextPage = currentPage + 1
+			const targetPage = replyPages[threadId] ? nextPage : 1
+			const res = await api.get<PaginatedCommentReplies>(
+				`/recipes/${recipeId}/comments/${threadId}/replies?page=${targetPage}&limit=20`,
+			)
+			setReplyPages((prev) => ({ ...prev, [threadId]: targetPage }))
+			setThreads((prev) =>
+				prev
+					? prev.map((t) => {
+							if (t.id !== threadId) return t
+							const existingMap = new Map<number, ApiComment>()
+							for (const r of t.replies) existingMap.set(r.id, r)
+							for (const r of res.items) existingMap.set(r.id, r)
+							const mergedReplies = Array.from(existingMap.values()).sort(
+								(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+							)
+							const hasMore =
+								res.has_next_page ||
+								(t.replies_count ? mergedReplies.length < t.replies_count : false)
+							return {
+								...t,
+								replies: mergedReplies,
+								has_more_replies: hasMore,
+							}
+						})
+					: null,
+			)
+		} catch (err) {
+			toast.error(getErrorMessage(err, t('comments.loadError')))
+		} finally {
+			setLoadingReplies((prev) => ({ ...prev, [threadId]: false }))
+		}
 	}
 
 	async function addComment(content: string, parentId?: number) {
@@ -129,9 +190,28 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 			})
 			setThreads((prev) => {
 				const list = prev ?? []
-				if (!parentId) return [{ ...created, replies: [] }, ...list]
-				return list.map((th) => (th.id === parentId ? { ...th, replies: [...th.replies, created] } : th))
+				if (!parentId) {
+					const newThread: ThreadedComment = {
+						...created,
+						replies: [],
+						replies_count: 0,
+						has_more_replies: false,
+					}
+					return [newThread, ...list]
+				}
+				return list.map((th) =>
+					th.id === parentId
+						? {
+								...th,
+								replies: [...th.replies, created],
+								replies_count: (th.replies_count || th.replies.length) + 1,
+							}
+						: th,
+				)
 			})
+			if (!parentId) {
+				setTotalCount((c) => c + 1)
+			}
 			setReplyingTo(null)
 			toast.success(t('comments.posted'))
 		} catch (err) {
@@ -160,12 +240,37 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 		try {
 			// eliminazione non distruttiva: il backend imposta is_active = false
 			await api.delete(`/recipes/${recipeId}/comments/${comment.id}`)
-			setThreads(
-				(prev) =>
-					prev
-						// commento principale eliminato → via anche le sue risposte; risposta eliminata → via solo lei
-						?.filter((th) => th.id !== comment.id)
-						.map((th) => ({ ...th, replies: th.replies.filter((r) => r.id !== comment.id) })) ?? null,
+			setThreads((prev) =>
+				prev
+					? prev
+							.filter((th) => {
+								if (th.id === comment.id) {
+									// Se ha risposte, resta per contesto; altrimenti viene rimosso
+									return th.replies.length > 0
+								}
+								return true
+							})
+							.map((th) => {
+								if (th.id === comment.id) {
+									return {
+										...th,
+										content: null,
+										user: null,
+										user_id: null,
+										is_active: false,
+									}
+								}
+								const filteredReplies = th.replies.map((r) =>
+									r.id === comment.id
+										? { ...r, content: null, user: null, user_id: null, is_active: false }
+										: r,
+								)
+								return {
+									...th,
+									replies: filteredReplies,
+								}
+							})
+					: null,
 			)
 			toast.success(t('comments.deleted'))
 		} catch (err) {
@@ -174,7 +279,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	}
 
 	function renderComment(c: ApiComment, rootId: number, isReply: boolean) {
-		const isAuthor = Boolean(user && c.user_id === user.id)
+		const isAuthor = Boolean(user && c.user_id && c.user_id === user.id)
 		const canDelete = c.is_active && Boolean(user && (isAuthor || recipeAuthorId === user.id))
 
 		return (
@@ -195,7 +300,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 								</Link>
 							</>
 						) : (
-							<span className="font-semibold">{t('comments.deletedUser')}</span>
+							<span className="font-semibold text-[var(--wc-text-muted)] italic">{t('comments.deletedUser')}</span>
 						)}
 						<span>· {formatDate(c.created_at)}</span>
 						{c.is_edited && c.is_active && <span className="italic">({t('comments.edited')})</span>}
@@ -211,7 +316,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 									{t('common.edit')}
 								</button>
 							)}
-							{c.is_active && !isAuthor && <ReportButton targetType="comment" targetId={c.id} ownerId={c.user_id} className="hover:text-[var(--wc-paprika)]" />}
+							{!isAuthor && <ReportButton targetType="comment" targetId={c.id} ownerId={c.user_id ?? undefined} className="hover:text-[var(--wc-paprika)]" />}
 							{canDelete && (
 								<button
 									type="button"
@@ -236,8 +341,10 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 							onCancel={() => setEditing(null)}
 						/>
 					</div>
-				) : (
+				) : c.content ? (
 					<p className="mt-2 whitespace-pre-line break-words text-sm text-[var(--wc-text)]">{c.content}</p>
+				) : (
+					<p className="mt-2 italic text-sm text-[var(--wc-text-muted)]">{t('comments.removed')}</p>
 				)}
 
 				{user && c.is_active && editing !== c.id && (
@@ -266,13 +373,11 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 		)
 	}
 
-	const activeCount = threads?.reduce((n, th) => n + (th.is_active ? 1 : 0) + th.replies.filter((r) => r.is_active).length, 0)
-
 	return (
 		<section className="mt-12 border-t border-[var(--wc-border)] pt-8">
 			<h2 className="font-display text-xl text-[var(--wc-saffron)]">
 				{t('comments.title')}
-				{threads ? ` (${activeCount})` : ''}
+				{threads ? ` (${totalCount})` : ''}
 			</h2>
 
 			{user ? (
@@ -311,10 +416,32 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 						<ul className="space-y-3">
 							{renderComment(th, th.id, false)}
 							{th.replies.map((r) => renderComment(r, th.id, true))}
+							{th.has_more_replies && (
+								<li className="ml-6 sm:ml-10 list-none">
+									<button
+										type="button"
+										disabled={loadingReplies[th.id]}
+										onClick={() => void loadMoreReplies(th)}
+										className="text-xs font-medium text-[var(--wc-saffron)] hover:underline disabled:opacity-60"
+									>
+										{loadingReplies[th.id]
+											? t('comments.loadingReplies')
+											: th.replies_count - th.replies.length > 0
+												? t('comments.showMoreRepliesCount', {
+														count: th.replies_count - th.replies.length,
+													})
+												: t('comments.showMoreReplies')}
+									</button>
+								</li>
+							)}
 						</ul>
 					</li>
 				))}
 			</ul>
+
+			{totalPages > 1 && (
+				<Pagination page={page} totalPages={totalPages} onChange={(p) => setPage(p)} />
+			)}
 		</section>
 	)
 }

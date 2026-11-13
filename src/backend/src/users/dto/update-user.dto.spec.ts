@@ -23,4 +23,53 @@ describe('UpdateUserDto', () => {
 
     expect(errors.length).toBeGreaterThan(0);
   });
+
+  it('should allow valid bio up to 500 characters', async () => {
+    const rawDto = {
+      bio: 'A'.repeat(500),
+    };
+    const dtoInstance = plainToInstance(UpdateUserDto, rawDto);
+    const errors = await validate(dtoInstance);
+
+    expect(errors.length).toBe(0);
+    expect(dtoInstance.bio).toBe('A'.repeat(500));
+  });
+
+  it('should fail validation when bio exceeds 500 characters', async () => {
+    const rawDto = {
+      bio: 'A'.repeat(501),
+    };
+    const dtoInstance = plainToInstance(UpdateUserDto, rawDto);
+    const errors = await validate(dtoInstance);
+
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].constraints).toHaveProperty('maxLength');
+  });
+
+  it('should fail validation when bio is not a string', async () => {
+    const rawDto = {
+      bio: 12345 as any,
+    };
+    const dtoInstance = plainToInstance(UpdateUserDto, rawDto);
+    const errors = await validate(dtoInstance);
+
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].constraints).toHaveProperty('isString');
+  });
+
+  it('should accept valid profile_privacy values', async () => {
+    for (const privacy of ['public', 'friends_only', 'private']) {
+      const dto = plainToInstance(UpdateUserDto, { profile_privacy: privacy });
+      const errors = await validate(dto);
+      expect(errors.length).toBe(0);
+      expect(dto.profile_privacy).toBe(privacy);
+    }
+  });
+
+  it('should reject invalid profile_privacy enum values', async () => {
+    const dto = plainToInstance(UpdateUserDto, { profile_privacy: 'invalid_tier' });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].constraints).toHaveProperty('isEnum');
+  });
 });

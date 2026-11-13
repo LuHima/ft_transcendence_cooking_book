@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { NotificationSubject, NotificationAction } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { NotificationEmit } from './notification-emit';
@@ -18,7 +17,7 @@ describe('NotificationEmit', () => {
           provide: PrismaService,
           useValue: {
             user: {
-              findUnique: jest.fn<() => Promise<any>>().mockResolvedValue({ username: 'Mario' }),
+              findUnique: jest.fn().mockResolvedValue({ username: 'Mario' }),
             },
             recipe: {
               findUnique: jest.fn(),
@@ -30,8 +29,8 @@ describe('NotificationEmit', () => {
               findMany: jest.fn(),
             },
             notification: {
-              create: jest.fn<() => Promise<any>>().mockResolvedValue({ id: 1 }),
-              createMany: jest.fn<() => Promise<any>>().mockResolvedValue({ count: 2 }),
+              create: jest.fn().mockResolvedValue({ id: 1 }),
+              createMany: jest.fn().mockResolvedValue({ count: 2 }),
             },
           },
         },
@@ -94,13 +93,21 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 2,
         message: 'Mario posted a new recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 100 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 100,
+          recipe_id: 100,
+        },
       });
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 3,
         message: 'Mario posted a new recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 100 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 100,
+          recipe_id: 100,
+        },
       });
     });
 
@@ -117,7 +124,11 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 2,
         message: 'Mario update a recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 50 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 50,
+          recipe_id: 50,
+        },
       });
     });
 
@@ -164,7 +175,11 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 99,
         message: 'Mario liked your recipe',
-        target: { subject: NotificationSubject.recipe, idTarget: 10 },
+        target: {
+          subject: NotificationSubject.recipe,
+          idTarget: 10,
+          recipe_id: 10,
+        },
       });
     });
 
@@ -172,6 +187,7 @@ describe('NotificationEmit', () => {
       (prisma.comment.findUnique as jest.Mock<any>).mockResolvedValue({
         id: 25,
         user_id: 77,
+        recipe_id: 12,
       });
 
       await service.notification(
@@ -181,13 +197,17 @@ describe('NotificationEmit', () => {
 
       expect(prisma.comment.findUnique).toHaveBeenCalledWith({
         where: { id: 25 },
-        select: { user_id: true },
+        select: { user_id: true, recipe_id: true },
       });
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 77,
         message: 'Mario replied to your comment',
-        target: { subject: NotificationSubject.comment, idTarget: 25 },
+        target: {
+          subject: NotificationSubject.comment,
+          idTarget: 25,
+          recipe_id: 12,
+        },
       });
     });
 
@@ -210,7 +230,11 @@ describe('NotificationEmit', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 42,
         message: 'Mario sent you a friend request',
-        target: { subject: NotificationSubject.user, idTarget: 42 },
+        target: {
+          subject: NotificationSubject.user,
+          idTarget: 42,
+          recipe_id: null,
+        },
       });
     });
 
@@ -239,6 +263,54 @@ describe('NotificationEmit', () => {
 
       expect(prisma.notification.create).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should save the moderator text in details for warn notifications', async () => {
+      await service.notification(
+        { id_user: 7, id_target: 42, details: 'Please keep it civil.' },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.warn,
+        },
+      );
+
+      expect(prisma.notification.create).toHaveBeenCalledWith({
+        data: {
+          user_id: 42,
+          actor_id: 7,
+          subject: NotificationSubject.user,
+          action: NotificationAction.warn,
+          target_id: 42,
+          details: 'Please keep it civil.',
+        },
+      });
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'newNotification',
+        expect.objectContaining({ idUser: 42 }),
+      );
+    });
+
+    it('should not write details when none is provided (undefined or null)', async () => {
+      await service.notification(
+        { id_user: 7, id_target: 42, details: null },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.warn,
+        },
+      );
+      await service.notification(
+        { id_user: 1, id_target: 42 },
+        {
+          subject: NotificationSubject.user,
+          action: NotificationAction.friend_request,
+        },
+      );
+
+      const calls = (prisma.notification.create as jest.Mock<any>).mock.calls;
+      expect(calls).toHaveLength(2);
+      for (const [arg] of calls) {
+        expect(arg.data.details).toBeUndefined();
+      }
     });
   });
 });

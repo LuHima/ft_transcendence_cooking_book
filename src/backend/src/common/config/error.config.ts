@@ -1,7 +1,5 @@
-import { ForbiddenError } from '@casl/ability';
 import { HttpStatus, HttpException } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { NotFoundError } from 'rxjs';
 
 export interface AppErrorDefinition {
   statusCode: HttpStatus; // numero dell'errore
@@ -37,6 +35,11 @@ export const errors = {
     forbidden: {
       statusCode: HttpStatus.FORBIDDEN,
       message: 'You do not have permission to perform this action',
+      error: 'Forbidden',
+    },
+    adminOnly: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'This action is restricted to administrators',
       error: 'Forbidden',
     },
     notFound: {
@@ -159,6 +162,24 @@ export const errors = {
   },
 
   // ─────────────────────────────────────────────────────────
+  // AMMINISTRAZIONE UTENTI (ADMIN)
+  // ─────────────────────────────────────────────────────────
+  admin: {
+    cannotModifySelf: {
+      statusCode: HttpStatus.BAD_REQUEST,
+      message:
+        'Administrators cannot demote, disable, or delete their own account',
+      error: 'Bad Request',
+    },
+    lastAdminRequired: {
+      statusCode: HttpStatus.CONFLICT,
+      message:
+        'Cannot demote, disable, or delete the last remaining active administrator',
+      error: 'Conflict',
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
   // RICETTE
   // ─────────────────────────────────────────────────────────
   recipes: {
@@ -218,6 +239,34 @@ export const errors = {
       message: 'Ingredient quantity must be greater than 0',
       error: 'Bad Request',
     },
+    inUse: {
+      statusCode: HttpStatus.CONFLICT,
+      message:
+        'Ingredient is used in one or more recipes and cannot be deleted',
+      error: 'Conflict',
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // TAG
+  // ─────────────────────────────────────────────────────────
+
+  tags: {
+    notFound: {
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Tag not found',
+      error: 'Not Found',
+    },
+    alreadyExists: {
+      statusCode: HttpStatus.CONFLICT,
+      message: 'Tag with this slug already exists',
+      error: 'Conflict',
+    },
+    inUse: {
+      statusCode: HttpStatus.CONFLICT,
+      message: 'Tag is used in one or more recipes and cannot be deleted',
+      error: 'Conflict',
+    },
   },
 
   // ─────────────────────────────────────────────────────────
@@ -238,6 +287,35 @@ export const errors = {
       statusCode: HttpStatus.FORBIDDEN,
       message: 'You can only edit or delete your own comments',
       error: 'Forbidden',
+    },
+    hasReplies: {
+      statusCode: HttpStatus.CONFLICT,
+      message:
+        'Comment has replies. Use soft-delete (default) or pass prune_replies=true to cascade deletion.',
+      error: 'Conflict',
+    },
+  },
+  comment: {
+    notFound: {
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Comment not found',
+      error: 'Not Found',
+    },
+    parentNotFound: {
+      statusCode: HttpStatus.NOT_FOUND,
+      message: 'Parent comment not found',
+      error: 'Not Found',
+    },
+    notOwner: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'You can only edit or delete your own comments',
+      error: 'Forbidden',
+    },
+    hasReplies: {
+      statusCode: HttpStatus.CONFLICT,
+      message:
+        'Comment has replies. Use soft-delete (default) or pass prune_replies=true to cascade deletion.',
+      error: 'Conflict',
     },
   },
 
@@ -340,6 +418,29 @@ export const errors = {
       statusCode: HttpStatus.FORBIDDEN,
       message: 'You do not have the permission to act on this notification',
       error: 'Forbidden',
+    },
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // MODERAZIONE E SEGNALAZIONI
+  // ─────────────────────────────────────────────────────────
+  moderation: {
+    banCapExceeded: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message:
+        'Moderator ban duration cannot exceed 180 days, and permanent bans are restricted to administrators',
+      error: 'Forbidden',
+    },
+    cannotBanAdmin: {
+      statusCode: HttpStatus.FORBIDDEN,
+      message: 'Moderators cannot moderate or ban administrator',
+      error: 'Forbidden',
+    },
+    resolutionReasonRequired: {
+      statusCode: HttpStatus.BAD_REQUEST,
+      message:
+        'Resolution reason is required when applying disciplinary actions',
+      error: 'Bad Request',
     },
   },
 } as const;

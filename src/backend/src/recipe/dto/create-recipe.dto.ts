@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Course, RecipeDifficulty, UnitOfMeasure } from '@prisma/client';
+import {
+  Course,
+  RecipeDifficulty,
+  RecipePrivacy,
+  UnitOfMeasure,
+} from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
@@ -154,7 +159,7 @@ export class CreateRecipeDto {
    */
   @ApiProperty({
     description:
-      'Introductory recipe description in source_lang (min 10 characters)',
+      'Introductory recipe description in source_lang (10-1000 characters)',
     minLength: 10,
     example:
       'Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.',
@@ -162,6 +167,7 @@ export class CreateRecipeDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(10, { message: 'Description must be at least 10 characters long' })
+  @MaxLength(1000, { message: 'Description cannot exceed 1000 characters' })
   description: string;
 
   /**
@@ -265,6 +271,19 @@ export class CreateRecipeDto {
   @IsString()
   @IsIn(['it', 'en', 'fr'], { message: 'source_lang must be it, en, or fr' })
   source_lang: string;
+
+  /**
+   * Optional privacy tier for recipe visibility. Defaults to public.
+   * @example RecipePrivacy.public
+   */
+  @ApiPropertyOptional({
+    enum: RecipePrivacy,
+    description: 'Privacy tier of the recipe (public, friends_only, private)',
+    example: RecipePrivacy.public,
+  })
+  @IsOptional()
+  @IsEnum(RecipePrivacy)
+  privacy?: RecipePrivacy;
 
   /**
    * Ordered sequence of preparation steps (at least one required).

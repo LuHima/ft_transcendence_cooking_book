@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { api, getErrorMessage, toPage } from '../api/client'
 import { useToast } from '../context/ToastContext'
 import Avatar from '../components/Avatar'
+import OnlineDot from '../components/OnlineDot'
+import { useFriendsPresence } from '../lib/useFriendsPresence'
 import { ListSkeleton } from '../components/Skeleton'
-import type { FriendRequest, PublicUser } from '../types/models'
+import type { FriendItem, FriendRequest } from '../types/models'
 
 type Tab = 'friends' | 'received' | 'sent'
 const TABS: Tab[] = ['friends', 'received', 'sent']
@@ -13,8 +15,9 @@ const TABS: Tab[] = ['friends', 'received', 'sent']
 function Friends() {
 	const { t } = useTranslation()
 	const toast = useToast()
+	const onlineIds = useFriendsPresence()
 	const [tab, setTab] = useState<Tab>('friends')
-	const [friends, setFriends] = useState<PublicUser[] | null>(null)
+	const [friends, setFriends] = useState<FriendItem[] | null>(null)
 	const [requests, setRequests] = useState<FriendRequest[] | null>(null)
 	const [receivedCount, setReceivedCount] = useState(0)
 	const [error, setError] = useState<string | null>(null)
@@ -33,7 +36,7 @@ function Friends() {
 		const request =
 			tab === 'friends'
 				? api.get<unknown>('/friends').then((d) => {
-						if (!cancelled) setFriends(toPage<PublicUser>(d).items)
+						if (!cancelled) setFriends(toPage<FriendItem>(d).items)
 					})
 				: api.get<unknown>(`/friends/requests?type=${tab === 'received' ? 'incoming' : 'outgoing'}`).then((d) => {
 						if (!cancelled) setRequests(toPage<FriendRequest>(d).items)
@@ -53,6 +56,9 @@ function Friends() {
 		}
 	}, [tab, t])
 
+	// req.id è l'id dell'altro utente (mittente per le ricevute, destinatario per le inviate):
+	//   accetta/rifiuta → POST /friends/requests/:requesterId/(accept|reject)
+	//   annulla         → DELETE /friends/requests/:addresseeId
 	const answer = useCallback(
 		async (req: FriendRequest, action: 'accept' | 'reject' | 'cancel') => {
 			setBusyId(req.id)
@@ -71,7 +77,7 @@ function Friends() {
 		[t, toast],
 	)
 
-	async function removeFriend(u: PublicUser) {
+	async function removeFriend(u: FriendItem) {
 		if (!confirm(t('friends.confirmRemove', { name: u.username }))) return
 		setBusyId(u.id)
 		try {
@@ -124,6 +130,7 @@ function Friends() {
 							<Link to={`/users/${u.id}`} className="flex min-w-0 items-center gap-3 hover:text-[var(--wc-saffron)]">
 								<Avatar username={u.username} url={u.avatar_url} className="h-10 w-10 text-base" />
 								<span className="truncate font-medium">{u.username}</span>
+								<OnlineDot online={onlineIds.has(u.id)} />
 							</Link>
 							<button className={`${outlineBtn} text-[var(--wc-paprika)]`} disabled={busyId === u.id} onClick={() => removeFriend(u)}>
 								{t('friends.remove')}

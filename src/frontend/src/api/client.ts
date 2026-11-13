@@ -2,6 +2,8 @@
 // Il backend espone le rotte sotto /api ed è configurato con setGlobalPrefix('api'),
 // quindi qui basta passare il path relativo (es. "/recipes", "/auth/signin").
 
+import i18n from '../i18n'
+
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 // le immagini/video caricati arrivano come path relativo (es. "/uploads/recipes/x.webp").
@@ -92,11 +94,57 @@ export async function apiFetch<T = unknown>(path: string, options: RequestOption
 	const data = contentType.includes('application/json') ? await response.json().catch(() => null) : null
 
 	if (!response.ok) {
-		const message = (data && (data.message as string)) || response.statusText || 'Errore di rete'
+		const message = (data && (data.message as string)) || response.statusText || i18n.t('common.networkError')
 		throw new ApiError(response.status, Array.isArray(message) ? message.join(', ') : message, data)
 	}
 
 	return data as T
+}
+
+// upload multipart con avanzamento (fetch non espone il progresso dell'invio): usa XMLHttpRequest.
+// onProgress riceve i byte inviati e il totale. Stessa gestione di apiFetch per 401 → refresh → nuovo tentativo.
+export async function uploadWithProgress<T = unknown>(
+	path: string,
+	formData: FormData,
+	onProgress?: (loaded: number, total: number) => void,
+	retryOnUnauthorized = true,
+): Promise<T> {
+	const send = () =>
+		new Promise<{ status: number; statusText: string; data: unknown }>((resolve, reject) => {
+			const xhr = new XMLHttpRequest()
+			xhr.open('POST', `${API_BASE}${path}`)
+			xhr.withCredentials = true
+			xhr.responseType = 'text'
+			xhr.upload.onprogress = (e) => {
+				if (e.lengthComputable) onProgress?.(e.loaded, e.total)
+			}
+			xhr.onload = () => {
+				let data: unknown = null
+				const type = xhr.getResponseHeader('content-type') ?? ''
+				if (type.includes('application/json')) {
+					try {
+						data = JSON.parse(xhr.responseText)
+					} catch {
+						data = null
+					}
+				}
+				resolve({ status: xhr.status, statusText: xhr.statusText, data })
+			}
+			xhr.onerror = () => reject(new ApiError(0, i18n.t('common.networkError')))
+			xhr.onabort = () => reject(new ApiError(0, i18n.t('common.networkError')))
+			xhr.send(formData)
+		})
+
+	let res = await send()
+	if (res.status === 401 && retryOnUnauthorized && (await tryRefresh())) {
+		res = await send()
+	}
+	if (res.status < 200 || res.status >= 300) {
+		const body = res.data as { message?: string | string[] } | null
+		const message = body?.message ?? res.statusText ?? i18n.t('common.networkError')
+		throw new ApiError(res.status, Array.isArray(message) ? message.join(', ') : message, res.data)
+	}
+	return res.data as T
 }
 
 export const api = {

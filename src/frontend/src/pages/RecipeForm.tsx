@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { api, ApiError, assetUrl, getErrorMessage, qs } from '../api/client'
+import { api, ApiError, assetUrl, getErrorMessage, qs, uploadWithProgress } from '../api/client'
 import { FEATURES, UPLOAD_LIMITS } from '../config'
 import { SUPPORTED_LANGS } from '../i18n'
 import { validateImage, validateVideo } from '../lib/files'
@@ -63,6 +63,8 @@ interface ExistingGalleryItem {
 }
 
 type FieldErrors = Record<string, string>
+
+const DESCRIPTION_MAX_LENGTH = 1000
 
 function Field({ label, htmlFor, error, children }: { label: string; htmlFor?: string; error?: string; children: ReactNode }) {
 	return (
@@ -215,7 +217,8 @@ function RecipeForm() {
 	const [loadError, setLoadError] = useState<string | null>(null)
 	const [forbidden, setForbidden] = useState(false)
 	const [saving, setSaving] = useState(false)
-	const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
+	// avanzamento dei media dopo il salvataggio: n° operazione, file corrente e percentuale complessiva (in byte)
+	const [progress, setProgress] = useState<{ done: number; total: number; label: string; percent: number } | null>(null)
 
 	// ─── caricamento catalogo ───
 	useEffect(() => {
@@ -393,6 +396,8 @@ function RecipeForm() {
 
 		if (title.trim().length < 3 || title.trim().length > 255) e.title = t('form.errors.title')
 		if (description.trim().length < 10) e.description = t('form.errors.description')
+		else if (description.trim().length > DESCRIPTION_MAX_LENGTH)
+			e.description = t('form.errors.descriptionMax', { max: DESCRIPTION_MAX_LENGTH })
 		if (!(num(servings) >= 1)) e.servings = t('form.errors.servings')
 		if (!(num(prepTime) >= 0)) e.prepTime = t('form.errors.time')
 		if (!(num(cookTime) >= 0)) e.cookTime = t('form.errors.time')
@@ -470,40 +475,60 @@ function RecipeForm() {
 		}
 
 		// ─── media: chiamate dedicate dopo il salvataggio ───
-		const jobs: (() => Promise<unknown>)[] = []
-		const rid = saved.id
-		const upload = (path: string, field: string, files: File[]) => () => {
-			const fd = new FormData()
-			files.forEach((f) => fd.append(field, f))
-			return api.post(path, fd)
+		// ogni operazione ha un'etichetta e un peso in byte (0 per le rimozioni) per calcolare la barra complessiva
+		interface MediaJob {
+			label: string
+			bytes: number
+			run: (onBytes: (loaded: number) => void) => Promise<unknown>
 		}
+		const jobs: MediaJob[] = []
+		const rid = saved.id
+		const upload = (label: string, path: string, field: string, files: File[]): MediaJob => ({
+			label,
+			bytes: files.reduce((sum, f) => sum + f.size, 0),
+			run: (onBytes) => {
+				const fd = new FormData()
+				files.forEach((f) => fd.append(field, f))
+				return uploadWithProgress(path, fd, (loaded) => onBytes(loaded))
+			},
+		})
+		const removal = (label: string, path: string): MediaJob => ({ label, bytes: 0, run: () => api.delete(path) })
 
 		if (isEdit) {
-			if (removeCover && !coverFile && existingCover) jobs.push(() => api.delete(`/recipes/${rid}/cover`))
-			if (removeVideo && !videoFile && existingVideo) jobs.push(() => api.delete(`/recipes/${rid}/video`))
-			removedGalleryIds.forEach((mid) => jobs.push(() => api.delete(`/recipes/${rid}/gallery/${mid}`)))
+			if (removeCover && !coverFile && existingCover) jobs.push(removal(t('form.cover'), `/recipes/${rid}/cover`))
+			if (removeVideo && !videoFile && existingVideo) jobs.push(removal(t('form.video'), `/recipes/${rid}/video`))
+			removedGalleryIds.forEach((mid) => jobs.push(removal(t('form.galleryLabel'), `/recipes/${rid}/gallery/${mid}`)))
 		}
-		if (coverFile) jobs.push(upload(`/recipes/${rid}/cover`, 'file', [coverFile]))
-		if (galleryFiles.length) jobs.push(upload(`/recipes/${rid}/gallery`, 'files', galleryFiles))
-		if (videoFile) jobs.push(upload(`/recipes/${rid}/video`, 'file', [videoFile]))
+		if (coverFile) jobs.push(upload(t('form.cover'), `/recipes/${rid}/cover`, 'file', [coverFile]))
+		if (galleryFiles.length) jobs.push(upload(t('form.galleryLabel'), `/recipes/${rid}/gallery`, 'files', galleryFiles))
+		if (videoFile) jobs.push(upload(t('form.video'), `/recipes/${rid}/video`, 'file', [videoFile]))
 		steps.forEach((s, i) => {
 			const n = i + 1
 			if (isEdit && s.removeExistingImage && !s.imageFile && s.existingImageUrl) {
-				jobs.push(() => api.delete(`/recipes/${rid}/steps/${n}/image`))
+				jobs.push(removal(t('form.stepN', { n }), `/recipes/${rid}/steps/${n}/image`))
 			}
-			if (s.imageFile) jobs.push(upload(`/recipes/${rid}/steps/${n}/image`, 'file', [s.imageFile]))
+			if (s.imageFile) jobs.push(upload(t('form.stepN', { n }), `/recipes/${rid}/steps/${n}/image`, 'file', [s.imageFile]))
 		})
 
 		let failed = 0
 		if (jobs.length) {
-			setProgress({ done: 0, total: jobs.length })
+			const totalBytes = jobs.reduce((sum, j) => sum + j.bytes, 0)
+			let finishedBytes = 0
+			// senza byte da inviare (solo rimozioni) la barra avanza per numero di operazioni
+			const percentOf = (i: number, current: number) =>
+				totalBytes > 0 ? Math.min(100, Math.round(((finishedBytes + current) / totalBytes) * 100)) : Math.round((i / jobs.length) * 100)
 			for (let i = 0; i < jobs.length; i++) {
+				const job = jobs[i]
+				setProgress({ done: i, total: jobs.length, label: job.label, percent: percentOf(i, 0) })
 				try {
-					await jobs[i]()
+					await job.run((loaded) =>
+						setProgress({ done: i, total: jobs.length, label: job.label, percent: percentOf(i, Math.min(loaded, job.bytes)) }),
+					)
 				} catch {
 					failed++
 				}
-				setProgress({ done: i + 1, total: jobs.length })
+				finishedBytes += job.bytes
+				setProgress({ done: i + 1, total: jobs.length, label: job.label, percent: percentOf(i + 1, 0) })
 			}
 		}
 
@@ -650,10 +675,14 @@ function RecipeForm() {
 							id="rf-desc"
 							rows={3}
 							value={description}
+							maxLength={DESCRIPTION_MAX_LENGTH}
 							aria-invalid={Boolean(errors.description)}
 							onChange={(e) => setDescription(e.target.value)}
 							className={FIELD}
 						/>
+						<p className="mt-1 text-right text-xs text-[var(--wc-text-muted)]">
+							{description.length}/{DESCRIPTION_MAX_LENGTH}
+						</p>
 					</Field>
 				</section>
 
@@ -991,7 +1020,7 @@ function RecipeForm() {
 						className="rounded-full bg-[var(--wc-basil)] px-6 py-2.5 font-medium text-[var(--wc-bg)] transition-colors hover:bg-[var(--wc-basil-dark)] disabled:opacity-60"
 					>
 						{progress
-							? t('form.uploading', { done: progress.done, total: progress.total })
+							? t('form.uploading', { done: Math.min(progress.done + 1, progress.total), total: progress.total })
 							: saving
 								? t('common.saving')
 								: isEdit
@@ -1000,6 +1029,32 @@ function RecipeForm() {
 					</button>
 					{saving && !progress && <span className="text-xs text-[var(--wc-text-muted)]">{t('form.translating')}</span>}
 				</div>
+
+				{/* barra di caricamento di foto e video (dopo il salvataggio della ricetta) */}
+				{progress && (
+					<div className="space-y-1" aria-live="polite">
+						<div className="flex justify-between gap-3 text-xs text-[var(--wc-text-muted)]">
+							<span className="truncate">
+								{t('form.uploadingItem', { label: progress.label, done: Math.min(progress.done + 1, progress.total), total: progress.total })}
+							</span>
+							<span className="shrink-0 font-medium text-[var(--wc-text)]">{progress.percent}%</span>
+						</div>
+						<div
+							role="progressbar"
+							aria-label={t('form.uploadProgress')}
+							aria-valuemin={0}
+							aria-valuemax={100}
+							aria-valuenow={progress.percent}
+							className="h-2 w-full overflow-hidden rounded-full bg-[var(--wc-surface-raised)]"
+						>
+							<div
+								className="h-full rounded-full bg-[var(--wc-basil)] transition-[width] duration-200"
+								style={{ width: `${progress.percent}%` }}
+							/>
+						</div>
+						<p className="text-xs text-[var(--wc-text-muted)]">{t('form.uploadKeepOpen')}</p>
+					</div>
+				)}
 			</form>
 		</div>
 	)

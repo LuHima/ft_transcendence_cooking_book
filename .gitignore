@@ -114,8 +114,6 @@ ehthumbs.db
 .superpowers/
 skills-lock.json
 AGENTS.md
-GLOSSARY.md
-docs/adr
 docs/agents
 docs/superpowers
 

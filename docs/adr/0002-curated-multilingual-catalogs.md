@@ -11,8 +11,15 @@ Allowing users to type arbitrary ingredient names or tags results in duplicate s
 3. Ingredients are classified into 9 standardized culinary categories.
 4. Recipe creation references existing curated ingredient and tag IDs only.
 5. Ingredient preparation notes on recipes use a JSON dictionary (`notes: Json?`) keyed by locale.
+6. Administrative Catalog Lifecycle & Update Governance:
+   - Administrators can add curated items (`POST /api/ingredients`, `POST /api/tags`) and update localized names (`PATCH /api/ingredients/:id`, `PATCH /api/tags/:id`).
+   - The canonical `slug` and ingredient `category` attributes are immutable on update to maintain integrity across seeds, search filters, and recipe associations.
+   - Updates apply relational upserts across all supported languages (`it`, `en`, `fr`), ensuring idempotent creation or modification.
+   - Deletions (`DELETE /api/ingredients/:id`, `DELETE /api/tags/:id`) enforce referential integrity guards, rejecting deletions with HTTP 409 Conflict if any recipes actively reference the item.
+   - All mutation actions are gated by CASL authorization (`Action.Create`, `Action.Update`, `Action.Delete` on `Ingredient` and `Tag`), strictly restricted to users with `Role.admin`.
 
 ## Consequences
 - 100% architectural consistency: all localized entities (`Recipe`, `RecipeStep`, `Ingredient`, `Tag`) follow the relational translation pattern.
 - Zero schema migrations when adding a 4th, 5th, or Nth language anywhere in the application.
 - Queries can select translations for the requested locale with automatic fallback to English and slug.
+- Administrators can safely adjust and refine translations in production without risking broken recipe dependencies or category drift.

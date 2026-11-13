@@ -6,10 +6,42 @@ import {
   UnitOfMeasure,
   IngredientCategory,
 } from '@prisma/client';
+import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-ability.factory';
+import { Action } from '../auth/casl/action.enum';
+import { ActiveUserData } from '../common/decorators/current-user.decorator';
+import { createHttpException, errors } from '../common/config/error.config';
+import { CreateIngredientDto } from './dto/create-ingredient.dto';
+import { UpdateIngredientDto } from './dto/update-ingredient.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateTagDto } from './dto/update-tag.dto';
+import {
+  IngredientDetailResponseDto,
+  IngredientResponseDto,
+  TagDetailResponseDto,
+  TagResponseDto,
+} from './dto/catalog-response.dto';
+
+/**
+ * Shared helper formatting an array of translation rows into a canonical multilingual dictionary.
+ */
+export function toTranslationDictionary(
+  translations: { locale: string; name: string }[],
+) {
+  const nameOf = (locale: string) =>
+    translations.find((t) => t.locale === locale)?.name ?? '';
+  return {
+    it: nameOf('it'),
+    en: nameOf('en'),
+    fr: nameOf('fr'),
+  };
+}
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly caslAbilityFactory: CaslAbilityFactory,
+  ) {}
 
   /*
   GET /api/recipes/metadata
@@ -65,6 +97,57 @@ export class CatalogService {
     });
     // Returns the array of tags ordered by name
     return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
+  }
+
+  /*
+  GET /api/tags/:id
+  Retrieves a single curated tag by ID, localized to the requested language (default 'en').
+  Public read access without authentication.
+  Throws 404 if not found.
+  */
+  async getTagById(
+    id: number,
+    params: { lang?: string } = {},
+  ): Promise<TagResponseDto> {
+    const locale =
+      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
+    const tag = await this.prisma.tag.findUnique({
+      where: { id },
+      include: {
+        translations: {
+          where: { locale: { in: [locale, 'en'] } },
+        },
+      },
+    });
+    if (!tag) {
+      throw createHttpException(errors.tags.notFound);
+    }
+    const trans =
+      tag.translations.find((tr) => tr.locale === locale) ??
+      tag.translations.find((tr) => tr.locale === 'en');
+    return {
+      id: tag.id,
+      slug: tag.slug,
+      name: trans?.name ?? tag.slug,
+      resolved_lang: trans?.locale ?? 'en',
+    };
+  }
+
+  /*
+  GET /api/admin/catalog/tags/:id
+  Retrieves a single curated tag by ID with all its translations (it, en, fr).
+  Restricted to administrators.
+  Throws 404 if not found.
+  */
+  async getTagDetail(id: number): Promise<TagDetailResponseDto> {
+    const tag = await this.prisma.tag.findUnique({
+      where: { id },
+      include: { translations: true },
+    });
+    if (!tag) {
+      throw createHttpException(errors.tags.notFound);
+    }
+    return this.toTagDetail(tag);
   }
 
   /* 
@@ -140,5 +223,371 @@ export class CatalogService {
     });
     // Returns the array of ingredients ordered by name
     return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
+  }
+
+  /*
+  GET /api/ingredients/:id
+  Retrieves a single curated ingredient by ID, localized to the requested language (default 'en').
+  Public read access without authentication.
+  Throws 404 if not found.
+  */
+  async getIngredientById(
+    id: number,
+    params: { lang?: string } = {},
+  ): Promise<IngredientResponseDto> {
+    const locale =
+      params.lang === 'it' || params.lang === 'fr' ? params.lang : 'en';
+    const ingredient = await this.prisma.ingredient.findUnique({
+      where: { id },
+      include: {
+        translations: {
+          where: { locale: { in: [locale, 'en'] } },
+        },
+      },
+    });
+    if (!ingredient) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+    const trans =
+      ingredient.translations.find((tr) => tr.locale === locale) ??
+      ingredient.translations.find((tr) => tr.locale === 'en');
+    return {
+      id: ingredient.id,
+      slug: ingredient.slug,
+      category: ingredient.category,
+      name: trans?.name ?? ingredient.slug,
+      resolved_lang: trans?.locale ?? 'en',
+    };
+  }
+
+  /*
+  GET /api/admin/catalog/ingredients/:id
+  Retrieves a single curated ingredient by ID with all its translations (it, en, fr).
+  Restricted to administrators.
+  Throws 404 if not found.
+  */
+  async getIngredientDetail(id: number): Promise<IngredientDetailResponseDto> {
+    const ingredient = await this.prisma.ingredient.findUnique({
+      where: { id },
+      include: { translations: true },
+    });
+    if (!ingredient) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+    return this.toIngredientDetail(ingredient);
+  }
+
+  /*
+  POST /api/ingredients
+  Adds a new ingredient to the curated catalog (admin only, enforced by CASL).
+  The ingredient row and its three translation rows (it, en, fr) are created
+  in a single nested write, so either everything is saved or nothing is.
+  @param user: Authenticated user performing the request.
+  @param dto: Slug, category and the name in each supported language.
+  */
+  async createIngredient(user: ActiveUserData, dto: CreateIngredientDto) {
+    // Only roles allowed to create Ingredients pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Create, 'Ingredient');
+
+    // Friendly 409 if the slug is already taken. A concurrent request that
+    // slips through is still caught by the DB unique constraint (P2002),
+    // which the global exception filter turns into a 409 as well.
+    const existing = await this.prisma.ingredient.findUnique({
+      where: { slug: dto.slug },
+      select: { id: true },
+    });
+    if (existing) {
+      throw createHttpException(
+        errors.ingredients.alreadyExists,
+        `Ingredient with slug '${dto.slug}' already exists`,
+      );
+    }
+
+    // Creates the ingredient together with its translations
+    const created = await this.prisma.ingredient.create({
+      data: {
+        slug: dto.slug,
+        category: dto.category,
+        translations: {
+          create: [
+            { locale: 'it', name: dto.translations.it },
+            { locale: 'en', name: dto.translations.en },
+            { locale: 'fr', name: dto.translations.fr },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    return this.toIngredientDetail(created);
+  }
+  /*
+  POST /api/tags
+  Adds a new tag to the curated catalog (admin only, enforced by CASL).
+  The tag row and its three translation rows (it, en, fr) are created in a
+  single nested write, so either everything is saved or nothing is.
+  @param user: Authenticated user performing the request.
+  @param dto: Slug and the display name in each supported language.
+  */
+  async createTag(user: ActiveUserData, dto: CreateTagDto) {
+    // Only roles allowed to create Tags pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Create, 'Tag');
+
+    // Friendly 409 if the slug is already taken. A concurrent request that
+    // slips through is still caught by the DB unique constraint (P2002),
+    // which the global exception filter turns into a 409 as well.
+    const existing = await this.prisma.tag.findUnique({
+      where: { slug: dto.slug },
+      select: { id: true },
+    });
+    if (existing) {
+      throw createHttpException(
+        errors.tags.alreadyExists,
+        `Tag with slug '${dto.slug}' already exists`,
+      );
+    }
+
+    // Creates the tag together with its translations
+    const created = await this.prisma.tag.create({
+      data: {
+        slug: dto.slug,
+        translations: {
+          create: [
+            { locale: 'it', name: dto.translations.it },
+            { locale: 'en', name: dto.translations.en },
+            { locale: 'fr', name: dto.translations.fr },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    return this.toTagDetail(created);
+  }
+  /*
+  PATCH /api/tags/:id
+  Updates the Italian, English and French names of an existing tag
+  (admin only, enforced by CASL). The slug is immutable: it is the stable
+  key used by seeds, filters and references, so it cannot be changed here.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the tag to update.
+  @param dto: The new display name in each supported language.
+  */
+  async updateTag(user: ActiveUserData, id: number, dto: UpdateTagDto) {
+    // Only roles allowed to update Tags pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Update, 'Tag');
+
+    // 404 if the tag does not exist
+    const existing = await this.prisma.tag.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.tags.notFound);
+    }
+
+    // Upserts the three translations in a single nested write, so a missing
+    // translation row (edge case) is created instead of failing the update.
+    const updated = await this.prisma.tag.update({
+      where: { id },
+      data: {
+        translations: {
+          upsert: [
+            {
+              where: { tag_id_locale: { tag_id: id, locale: 'it' } },
+              create: { locale: 'it', name: dto.translations.it },
+              update: { name: dto.translations.it },
+            },
+            {
+              where: { tag_id_locale: { tag_id: id, locale: 'en' } },
+              create: { locale: 'en', name: dto.translations.en },
+              update: { name: dto.translations.en },
+            },
+            {
+              where: { tag_id_locale: { tag_id: id, locale: 'fr' } },
+              create: { locale: 'fr', name: dto.translations.fr },
+              update: { name: dto.translations.fr },
+            },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    return this.toTagDetail(updated);
+  }
+
+  /*
+  PATCH /api/ingredients/:id
+  Updates the Italian, English and French names of an existing ingredient
+  (admin only, enforced by CASL). The slug and category are immutable: they
+  are the stable keys used by seeds, filters and references, so they cannot
+  be changed here.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the ingredient to update.
+  @param dto: The new display name in each supported language.
+  */
+  async updateIngredient(
+    user: ActiveUserData,
+    id: number,
+    dto: UpdateIngredientDto,
+  ) {
+    // Only roles allowed to update Ingredients pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Update, 'Ingredient');
+
+    // 404 if the ingredient does not exist
+    const existing = await this.prisma.ingredient.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+
+    // Upserts the three translations in a single nested write, so a missing
+    // translation row (edge case) is created instead of failing the update.
+    const updated = await this.prisma.ingredient.update({
+      where: { id },
+      data: {
+        translations: {
+          upsert: [
+            {
+              where: {
+                ingredient_id_locale: { ingredient_id: id, locale: 'it' },
+              },
+              create: { locale: 'it', name: dto.translations.it },
+              update: { name: dto.translations.it },
+            },
+            {
+              where: {
+                ingredient_id_locale: { ingredient_id: id, locale: 'en' },
+              },
+              create: { locale: 'en', name: dto.translations.en },
+              update: { name: dto.translations.en },
+            },
+            {
+              where: {
+                ingredient_id_locale: { ingredient_id: id, locale: 'fr' },
+              },
+              create: { locale: 'fr', name: dto.translations.fr },
+              update: { name: dto.translations.fr },
+            },
+          ],
+        },
+      },
+      include: { translations: true },
+    });
+
+    return this.toIngredientDetail(updated);
+  }
+
+  /*
+  Maps a stored Ingredient (with its translations) to the public response
+  shape { id, slug, category, translations: { it, en, fr } }.
+  */
+  private toIngredientDetail(ingredient: {
+    id: number;
+    slug: string;
+    category: IngredientCategory;
+    translations: { locale: string; name: string }[];
+  }): IngredientDetailResponseDto {
+    return {
+      id: ingredient.id,
+      slug: ingredient.slug,
+      category: ingredient.category,
+      translations: toTranslationDictionary(ingredient.translations),
+    };
+  }
+
+  /*
+  Maps a stored Tag (with its translations) to the public response shape
+  { id, slug, translations: { it, en, fr } }.
+  */
+  private toTagDetail(tag: {
+    id: number;
+    slug: string;
+    translations: { locale: string; name: string }[];
+  }): TagDetailResponseDto {
+    return {
+      id: tag.id,
+      slug: tag.slug,
+      translations: toTranslationDictionary(tag.translations),
+    };
+  }
+
+  /*
+  DELETE /api/ingredients/:id
+  Deletes a curated ingredient (admin only, enforced by CASL).
+  Refuses with 409 if the ingredient is referenced by at least one recipe,
+  so recipes are never left with dangling ingredient references.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the ingredient to delete.
+  */
+  async deleteIngredient(user: ActiveUserData, id: number) {
+    // Only roles allowed to delete Ingredients pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Delete, 'Ingredient');
+
+    // 404 if the ingredient does not exist
+    const existing = await this.prisma.ingredient.findUnique({
+      where: { id },
+      select: { id: true, slug: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.ingredients.notFound);
+    }
+
+    // 409 if the ingredient is referenced by at least one recipe
+    const usageCount = await this.prisma.recipeIngredient.count({
+      where: { ingredient_id: id },
+    });
+    if (usageCount > 0) {
+      throw createHttpException(
+        errors.ingredients.inUse,
+        `Ingredient '${existing.slug}' is used in ${usageCount} recipe(s) and cannot be deleted`,
+      );
+    }
+
+    // Deletes the ingredient; translations are removed by cascade
+    await this.prisma.ingredient.delete({ where: { id } });
+
+    return { message: `Ingredient '${existing.slug}' deleted successfully` };
+  }
+
+  /*
+  DELETE /api/tags/:id
+  Deletes a curated tag (admin only, enforced by CASL).
+  Refuses with 409 if the tag is referenced by at least one recipe, so
+  recipes are never silently stripped of a tag they use.
+  @param user: Authenticated user performing the request.
+  @param id: Primary key of the tag to delete.
+  */
+  async deleteTag(user: ActiveUserData, id: number) {
+    // Only roles allowed to delete Tags pass (admin); others get 403
+    this.caslAbilityFactory.check(user, Action.Delete, 'Tag');
+
+    // 404 if the tag does not exist
+    const existing = await this.prisma.tag.findUnique({
+      where: { id },
+      select: { id: true, slug: true },
+    });
+    if (!existing) {
+      throw createHttpException(errors.tags.notFound);
+    }
+
+    // 409 if the tag is referenced by at least one recipe
+    const usageCount = await this.prisma.recipeTag.count({
+      where: { tag_id: id },
+    });
+    if (usageCount > 0) {
+      throw createHttpException(
+        errors.tags.inUse,
+        `Tag '${existing.slug}' is used in ${usageCount} recipe(s) and cannot be deleted`,
+      );
+    }
+
+    // Deletes the tag; translations are removed by cascade
+    await this.prisma.tag.delete({ where: { id } });
+
+    return { message: `Tag '${existing.slug}' deleted successfully` };
   }
 }

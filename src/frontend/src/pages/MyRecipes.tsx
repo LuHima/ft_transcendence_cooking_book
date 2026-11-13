@@ -5,6 +5,8 @@ import { api, assetUrl, getErrorMessage, qs } from '../api/client'
 import { useToast } from '../context/ToastContext'
 import { useLang } from '../lib/useLang'
 import Pagination from '../components/Pagination'
+import RecipeSortSelect from '../components/RecipeSortSelect'
+import { DEFAULT_RECIPE_SORT, parseRecipeSort, type RecipeSortValue } from '../lib/recipeSort'
 import { ListSkeleton } from '../components/Skeleton'
 import type { Paginated, RecipeSummary } from '../types/models'
 
@@ -15,6 +17,8 @@ function MyRecipes() {
 	const lang = useLang()
 	const toast = useToast()
 	const [page, setPage] = useState(1)
+	const [sort, setSort] = useState<RecipeSortValue>(DEFAULT_RECIPE_SORT)
+	const { sortBy, sortOrder } = parseRecipeSort(sort)
 	const [data, setData] = useState<Paginated<RecipeSummary> | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -23,7 +27,9 @@ function MyRecipes() {
 	useEffect(() => {
 		let cancelled = false
 		api
-			.get<Paginated<RecipeSummary>>(`/users/me/recipes${qs({ page, limit: PAGE_SIZE, lang })}`)
+			.get<Paginated<RecipeSummary>>(
+				`/users/me/recipes${qs({ page, limit: PAGE_SIZE, lang, sort_by: sortBy, sort_order: sortOrder })}`,
+			)
 			.then((res) => {
 				if (cancelled) return
 				setData(res)
@@ -36,7 +42,7 @@ function MyRecipes() {
 		return () => {
 			cancelled = true
 		}
-	}, [page, lang, reload, t])
+	}, [page, lang, sortBy, sortOrder, reload, t])
 
 	async function handleDelete(id: number) {
 		if (!confirm(t('recipe.confirmDelete'))) return
@@ -66,6 +72,17 @@ function MyRecipes() {
 				</Link>
 			</div>
 
+			{/* ordinamento sotto il titolo "Le mie ricette", allineato a sinistra */}
+			<div className="mb-4">
+				<RecipeSortSelect
+					value={sort}
+					onChange={(v) => {
+						setSort(v)
+						setPage(1)
+					}}
+				/>
+			</div>
+
 			{error && <p className="mb-4 text-[var(--wc-paprika)]">{error}</p>}
 
 			{!data && !error && <ListSkeleton />}
@@ -93,6 +110,11 @@ function MyRecipes() {
 										>
 											{recipe.title}
 										</Link>
+										{recipe.is_active === false && (
+											<span className="mr-2 inline-block rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
+												{t('recipe.suspendedBadge')}
+											</span>
+										)}
 										<p className="text-xs text-[var(--wc-text-muted)]">
 											{t(`difficulty.${recipe.difficulty}`)} · {t('recipe.minutes', { count: recipe.total_time })} · ♥{' '}
 											{recipe.likes_count}

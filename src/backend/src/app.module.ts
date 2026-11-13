@@ -12,6 +12,7 @@ import { RecipeModule } from './recipe/recipe.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { TranslationModule } from './translation/translation.module';
 import { FriendsModule } from './friends/friends.module';
+import { FeedModule } from './feed/feed.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -19,6 +20,9 @@ import { CaslModule } from './auth/casl/casl-ability.factory/casl-ability.module
 import { CleanExpiredToken } from './common/task/clean-expired-token.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ReportsModule } from './reports/reports.module';
+import { AdminModule } from './admin/admin.module';
+import { MediaModule } from './media/media.module';
 import { ProductionConfigModule } from './common/config/production-config.module';
 
 @Module({
@@ -32,6 +36,10 @@ import { ProductionConfigModule } from './common/config/production-config.module
     RecipeModule,
     TranslationModule,
     FriendsModule,
+    FeedModule,
+    ReportsModule,
+    AdminModule,
+    MediaModule,
     // ScheduleModule cerca in tutti i provider per un @Cron vede quanto
     // manca al tempo stabilito e setta un timer per chiamare quella funzione
     // non appena finisce il sistemma setta in automatico un'altro timer per

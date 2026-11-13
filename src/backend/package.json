@@ -20,7 +20,12 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "node prisma/studio.js",
     "prisma:seed": "prisma db seed",
-    "postinstall": "prisma generate || true"
+    "postinstall": "prisma generate || true",
+    "openapi:generate": "nest build && node dist/src/generate-spec.js",
+    "postman:extract": "ts-node -r dotenv/config scripts/extract-postman-scripts.ts",
+    "postman:build": "ts-node scripts/build-postman-collection.ts",
+    "postman:test": "newman run test/wecook-api.postman_collection.json -e test/wecook-development.postman_environment.json --insecure",
+    "postman:sync": "npm run openapi:generate && npm run postman:build && ts-node -r dotenv/config sync-postman.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -60,6 +65,7 @@
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sharp": "^0.35.5",
     "socket.io": "^4.8.4",
     "swagger-ui-express": "^5.0.1"
   },
@@ -75,10 +81,12 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.3.0",
+    "@types/newman": "^5.3.6",
     "@types/node": "^24.13.3",
     "@types/passport-local": "^1.0.38",
     "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.6",
+    "@types/sharp": "^0.31.1",
     "@types/supertest": "^7.0.0",
     "dotenv": "^17.4.2",
     "eslint": "^9.18.0",
@@ -86,6 +94,8 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^17.0.0",
     "jest": "^30.0.0",
+    "newman": "^6.2.3",
+    "openapi-to-postmanv2": "^6.4.2",
     "pg": "^8.23.0",
     "prettier": "^3.4.2",
     "prisma": "^7.8.0",

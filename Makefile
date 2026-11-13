@@ -5,17 +5,36 @@
 # Name of the project
 NAME =			WeCook
 
+# Explicit shell definition for cross-platform bash features (e.g. read -s)
+SHELL := /bin/bash
+MAKEFLAGS += --no-print-directory
+
 # Docker compose file and environment configuration paths
-COMPOSE_FILE =	./docker/docker-compose.yml
 ENV_FILE =		./docker/.env
 ENV_EXAMPLE =	./docker/.env.example
+COMPOSE_BASE =	./docker/docker-compose.yml
+COMPOSE_DEV =	./docker/docker-compose.dev.yml
+COMPOSE_NOVAULT = ./docker/docker-compose.novault.yml
 
-# Vault flag: with USE_VAULT=false in the env file the stack runs in
-# development mode (secrets read straight from the env file, Vault unused).
-# Default: true.
+# Environment mode flags
+IS_PROD_ENV := $(shell grep -qiE '^[[:space:]]*PRODUCTION_FLAG[[:space:]]*=[^a-zA-Z0-9]*(true|1|yes|on)[^a-zA-Z0-9]*$$' $(ENV_FILE) 2>/dev/null && echo yes)
 USE_VAULT_OFF := $(shell grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' $(ENV_FILE) 2>/dev/null && echo yes)
+
+# Dynamic COMPOSE_FILE resolution:
+COMPOSE_FILE = $(COMPOSE_BASE)
+
+# Include development override for 'make dev', or for bare 'make' / other targets when PRODUCTION_FLAG is not true
+ifeq ($(firstword $(MAKECMDGOALS)),dev)
+COMPOSE_FILE += -f $(COMPOSE_DEV)
+else ifneq ($(firstword $(MAKECMDGOALS)),prod)
+ifneq ($(IS_PROD_ENV),yes)
+COMPOSE_FILE += -f $(COMPOSE_DEV)
+endif
+endif
+
+# If USE_VAULT=false, append novault override
 ifeq ($(USE_VAULT_OFF),yes)
-COMPOSE_FILE := ./docker/docker-compose.yml -f ./docker/docker-compose.novault.yml
+COMPOSE_FILE += -f $(COMPOSE_NOVAULT)
 endif
 BUILD_LOG =		build.log
 
@@ -63,8 +82,8 @@ RESETCOLOR =	"\e[0m"
 # **************************************************************************** #
 
 # Allow passing CLI args like: make exec backend-container
-ARG_TARGETS = build rebuild exec inspect logs logsf restart stats db-migrate \
-db-reset db-studio
+ARG_TARGETS = build rebuild down stop exec inspect logs logsf restart stats \
+db-migrate db-reset db-studio vault-unseal
 ifneq ($(filter $(firstword $(MAKECMDGOALS)), $(ARG_TARGETS)), )
 ARGS := $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 $(eval $(ARGS):;@:)
@@ -99,17 +118,41 @@ endif
 #    BUILD AND CLEAN COMMANDS                                                  #
 # **************************************************************************** #
 
-# Start docker-compose without rebuilding images every time
+# Start docker-compose respecting PRODUCTION_FLAG (default)
 .PHONY: all
-all: env-check ## |Start containers (detached mode)
+all: env-check ## |Start containers respecting PRODUCTION_FLAG (detached mode)
+	@$(MAKE) vault-check-auto-unseal
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
 	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
-	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
+	$(ENV_FILE) 2>/dev/null | cut -d '=' -f2 | tr -d ' "'\''\r'); \
 	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
 
-# Start docker-compose without rebuilding images every time (alias for all)
+# Start docker-compose in development mode (live reload + ports 5432/5555)
+.PHONY: dev
+dev: env-check ## |Start development stack (live reload + ports 5432/5555)
+	@$(MAKE) vault-check-auto-unseal
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
+	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
+	$(ENV_FILE) 2>/dev/null | cut -d '=' -f2 | tr -d ' "'\''\r'); \
+	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
+
+# Start docker-compose in production mode (hardened images, no host debug ports)
+.PHONY: prod
+prod: env-check ## |Start production stack (hardened images, no debug ports)
+	@$(MAKE) vault-check-auto-unseal
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
+	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
+	$(ENV_FILE) 2>/dev/null | cut -d '=' -f2 | tr -d ' "'\''\r'); \
+	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
+
+# Start docker-compose directly without extra initialization (unopinionated
+# compose launcher)
 .PHONY: up
-up: all ## |Alias for 'make all'
+up: ## |Start containers directly without extra initialization
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
+	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
+	$(ENV_FILE) 2>/dev/null | cut -d '=' -f2 | tr -d ' "'\''\r'); \
+	echo "Connect to: https://$${DOMAIN_NAME:-localhost}:8443"
 
 # Build docker-compose images without starting containers
 .PHONY: build
@@ -142,13 +185,13 @@ up-rebuild: env-check ## |Rebuild images (no-cache) and start containers
 
 # Stops and removes containers and networks, preserving volumes and images
 .PHONY: down
-down: ## |Stop and remove containers (keep volumes/data)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) down
+down: ## [name]|Stop and remove containers (keep volumes/data)
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) down $(ARGS)
 
 # Stops containers without removing them, preserving volumes and images
 .PHONY: stop
-stop: ## |Stop containers without removing them (keep volumes/data)
-	@$(SUDO) docker compose -f $(COMPOSE_FILE) stop
+stop: ## [name]|Stop containers without removing them (keep volumes/data)
+	@$(SUDO) docker compose -f $(COMPOSE_FILE) stop $(ARGS)
 
 # Rebuild stack from scratch (fclean + all)
 .PHONY: re
@@ -435,6 +478,113 @@ db-squash: env-check ## |Squash migrations into a single baseline init
 
 
 # **************************************************************************** #
+#    VAULT LIFECYCLE COMMANDS                                                  #
+# **************************************************************************** #
+
+# One-time initialization and secret provisioning for HashiCorp Vault
+.PHONY: vault-init
+vault-init: env-check ## |Init Vault, policies and AppRoles (keys: ~/vault-keys)
+	@chmod +x ./scripts/vault-setup.sh
+	@./scripts/vault-setup.sh
+
+# Unseal Vault using 3-tier precedence:
+# CLI args -> .env vars -> interactive prompt
+.PHONY: vault-unseal
+vault-unseal: ## [k1 k2 k3]|Unseal Vault via CLI args, .env keys, or prompt
+	@if [ "$(USE_VAULT_OFF)" = "yes" ]; then \
+		echo "USE_VAULT=false: Vault is disabled, skipping unseal."; \
+		exit 0; \
+	fi; \
+	if ! docker ps --format '{{.Names}}' | grep -qx "vault"; then \
+		echo "Starting Vault container..."; \
+		$(SUDO) docker compose -f $(COMPOSE_BASE) up -d vault; \
+		sleep 2; \
+	fi; \
+	STATUS_OUT=$$(docker exec -e VAULT_ADDR="http://127.0.0.1:8200" vault vault status 2>/dev/null || true); \
+	if [ -z "$$STATUS_OUT" ]; then \
+		echo "ERROR: Vault container is not responding."; \
+		exit 1; \
+	fi; \
+	INITIALIZED=$$(echo "$$STATUS_OUT" | awk '$$1=="Initialized" {print $$2}'); \
+	if [ "$$INITIALIZED" = "false" ]; then \
+		echo "ERROR: Vault is not initialized yet. Run 'make vault-init' first."; \
+		exit 1; \
+	fi; \
+	SEALED=$$(echo "$$STATUS_OUT" | awk '$$1=="Sealed" {print $$2}'); \
+	if [ "$$SEALED" = "false" ]; then \
+		echo "Vault is already unsealed."; \
+		exit 0; \
+	fi; \
+	echo "=== Vault Unseal Process ==="; \
+	K1=""; K2=""; K3=""; \
+	if [ "$$(echo "$(ARGS)" | wc -w)" -ge 3 ]; then \
+		echo "Using unseal keys from CLI arguments."; \
+		K1=$$(echo "$(ARGS)" | awk '{print $$1}'); \
+		K2=$$(echo "$(ARGS)" | awk '{print $$2}'); \
+		K3=$$(echo "$(ARGS)" | awk '{print $$3}'); \
+	fi; \
+	if [ -z "$$K1" ] && [ -f "$(ENV_FILE)" ]; then \
+		ENV_K1=$$(grep -E '^[[:space:]]*VAULT_UNSEAL_KEY_1[[:space:]]*=' "$(ENV_FILE)" | cut -d= -f2- | tr -d ' "'\''\r'); \
+		ENV_K2=$$(grep -E '^[[:space:]]*VAULT_UNSEAL_KEY_2[[:space:]]*=' "$(ENV_FILE)" | cut -d= -f2- | tr -d ' "'\''\r'); \
+		ENV_K3=$$(grep -E '^[[:space:]]*VAULT_UNSEAL_KEY_3[[:space:]]*=' "$(ENV_FILE)" | cut -d= -f2- | tr -d ' "'\''\r'); \
+		if [ -n "$$ENV_K1" ] && [ -n "$$ENV_K2" ] && [ -n "$$ENV_K3" ]; then \
+			echo "Using unseal keys from $(ENV_FILE)."; \
+			K1="$$ENV_K1"; \
+			K2="$$ENV_K2"; \
+			K3="$$ENV_K3"; \
+		fi; \
+	fi; \
+	if [ -z "$$K1" ]; then \
+		echo "Prompting for Vault unseal keys (input masked):"; \
+		printf "Enter Vault Unseal Key 1: "; \
+		read -s K1; echo ""; \
+		printf "Enter Vault Unseal Key 2: "; \
+		read -s K2; echo ""; \
+		printf "Enter Vault Unseal Key 3: "; \
+		read -s K3; echo ""; \
+	fi; \
+	if [ -z "$$K1" ] || [ -z "$$K2" ] || [ -z "$$K3" ]; then \
+		echo "ERROR: Three unseal keys are required."; \
+		exit 1; \
+	fi; \
+	echo "Submitting unseal keys..."; \
+	for k in "$$K1" "$$K2" "$$K3"; do \
+		docker exec -e VAULT_ADDR="http://127.0.0.1:8200" vault vault operator unseal "$$k" >/dev/null; \
+	done; \
+	FINAL_SEALED=$$(docker exec -e VAULT_ADDR="http://127.0.0.1:8200" vault vault status 2>/dev/null | awk '$$1=="Sealed" {print $$2}'); \
+	if [ "$$FINAL_SEALED" = "false" ]; then \
+		echo "Vault successfully unsealed!"; \
+	else \
+		echo "ERROR: Vault remains sealed. Check unseal keys."; \
+		exit 1; \
+	fi
+
+# Check Vault initialization and unseal automatically if sealed before stack
+# start
+.PHONY: vault-check-auto-unseal
+vault-check-auto-unseal:
+	@if [ "$(USE_VAULT_OFF)" = "yes" ]; then \
+		exit 0; \
+	fi; \
+	if ! docker ps --format '{{.Names}}' | grep -qx "vault"; then \
+		echo "Starting Vault service..."; \
+		$(SUDO) docker compose -f $(COMPOSE_BASE) up -d vault; \
+		sleep 2; \
+	fi; \
+	STATUS_OUT=$$(docker exec -e VAULT_ADDR="http://127.0.0.1:8200" vault vault status 2>/dev/null || true); \
+	INITIALIZED=$$(echo "$$STATUS_OUT" | awk '$$1=="Initialized" {print $$2}'); \
+	if [ "$$INITIALIZED" = "false" ]; then \
+		echo "WARNING: HashiCorp Vault is not initialized. Please run 'make vault-init' once."; \
+		exit 1; \
+	fi; \
+	SEALED=$$(echo "$$STATUS_OUT" | awk '$$1=="Sealed" {print $$2}'); \
+	if [ "$$SEALED" = "true" ]; then \
+		echo "Vault is sealed. Running unseal..."; \
+		$(MAKE) --no-print-directory vault-unseal; \
+	fi
+
+
+# **************************************************************************** #
 #    SETUP AND CHECK COMMANDS                                                  #
 # **************************************************************************** #
 
@@ -449,7 +599,7 @@ env-check: ## |Verify .env exists and required vars are present
 	fi; \
 	missing=0; \
 	if grep -qiE '^[[:space:]]*USE_VAULT[[:space:]]*=[^a-zA-Z0-9]*(false|0|no|off)[^a-zA-Z0-9]*$$' "$(ENV_FILE)"; then \
-		echo "USE_VAULT=false: Vault disabled, secrets are read from $(ENV_FILE)."; \
+		echo "Vault disabled, secrets are read from $(ENV_FILE)."; \
 		mode_vars="DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET \
 		TWO_FACTOR_AUTH"; \
 	else \
@@ -482,6 +632,35 @@ env-init: ## |Initialize .env from .env.example
 # Quick project setup rule
 .PHONY: setup
 setup: env-check all ## |Verify .env and launch the stack
+
+
+# **************************************************************************** #
+#    API & POSTMAN SYNCHRONIZATION                                             #
+# **************************************************************************** #
+
+.PHONY: openapi-generate
+openapi-generate: ## |Generate headless OpenAPI 3.0 specification
+	@echo $(YELLOW)"Generating headless OpenAPI specification..."$(RESETCOLOR)
+	@npm run openapi:generate
+
+.PHONY: postman-build
+postman-build: ## |Build Postman collection with test script overlay
+	@echo $(YELLOW)"Building local Postman collection..."$(RESETCOLOR)
+	@npm run postman:build
+
+.PHONY: api
+api: openapi-generate postman-build ## |Generate OpenAPI specification and build Postman collection
+	@echo $(GREEN)"API specification and Postman collection built successfully."$(RESETCOLOR)
+
+.PHONY: postman-test
+postman-test: ## |Run local Newman contract test suite
+	@echo $(YELLOW)"Running local Newman tests..."$(RESETCOLOR)
+	@npm run postman:test
+
+.PHONY: postman-sync
+postman-sync: api ## |Build and push collection to Postman Cloud
+	@echo $(YELLOW)"Synchronizing Postman collection to Postman Cloud..."$(RESETCOLOR)
+	@npm run postman:sync
 
 
 # **************************************************************************** #

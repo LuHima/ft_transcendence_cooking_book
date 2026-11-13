@@ -5,11 +5,6 @@ import { PrismaService } from 'prisma/prisma.service';
 import { NotifyData } from 'src/common/decorators/notify.decorator';
 import { NotificationStructDto } from 'src/common/dto/notification-struct.dto';
 
-interface targetnotification {
-  tableId: number;
-  userId: number;
-}
-
 @Injectable()
 export class NotificationEmit {
   constructor(
@@ -50,6 +45,13 @@ export class NotificationEmit {
         return `${senderName} delete a recipe`;
       case 'update':
         return `${senderName} update a recipe`;
+      case 'warn':
+        if (notifyData.subject === 'recipe') {
+          return 'You received a warning from the moderation team about your recipe';
+        } else if (notifyData.subject === 'comment') {
+          return 'You received a warning from the moderation team about your comment';
+        }
+        return 'You received a warning from the moderation team';
       default:
         return `New notification from ${senderName}`;
     }
@@ -81,58 +83,62 @@ export class NotificationEmit {
   private async findUser(
     idTarget: number,
     subject: NotificationSubject | string,
-  ): Promise<number | undefined> {
-    let targetnotification: targetnotification;
+  ): Promise<{ userId: number | undefined; recipeId: number | null }> {
     if (subject === NotificationSubject.recipe) {
       const target = await this.prisma.recipe.findUnique({
         where: { id: idTarget },
         select: { user_id: true },
       });
 
-      return target?.user_id ?? undefined;
+      return { userId: target?.user_id ?? undefined, recipeId: idTarget };
     }
     if (subject === NotificationSubject.comment) {
       const target = await this.prisma.comment.findUnique({
         where: { id: idTarget },
-        select: { user_id: true },
+        select: { user_id: true, recipe_id: true },
       });
 
-      return target?.user_id ?? undefined;
+      return {
+        userId: target?.user_id ?? undefined,
+        recipeId: target?.recipe_id ?? null,
+      };
     }
     if (subject === NotificationSubject.user) {
-      return idTarget;
+      return { userId: idTarget, recipeId: null };
     }
-    return undefined;
+    return { userId: undefined, recipeId: null };
   }
 
   private async writeToASingleUser(
     structNotify: NotificationStructDto,
     notifyData: NotifyData,
   ) {
-    const target = await this.findUser(
+    const { userId, recipeId } = await this.findUser(
       structNotify.id_target,
       notifyData.subject,
     );
 
-    if (!target || target === structNotify.id_user) return;
+    if (!userId || userId === structNotify.id_user) return;
     await this.prisma.notification.create({
       data: {
-        user_id: target,
+        user_id: userId,
         actor_id: structNotify.id_user,
         subject: notifyData.subject,
         action: notifyData.action,
         target_id: structNotify.id_target,
+        details: structNotify.details ?? undefined,
       },
     });
 
     const targetInfo = {
       subject: notifyData.subject,
       idTarget: structNotify.id_target,
+      recipe_id: recipeId,
     };
 
     const msg = await this.notificationString(structNotify.id_user, notifyData);
     this.eventEmitter.emit('newNotification', {
-      idUser: target,
+      idUser: userId,
       message: msg,
       target: targetInfo,
     });
@@ -155,9 +161,15 @@ export class NotificationEmit {
       })),
     });
 
+    const recipeId =
+      notifyData.subject === NotificationSubject.recipe
+        ? structNotify.id_target
+        : null;
+
     const targetInfo = {
       subject: notifyData.subject,
       idTarget: structNotify.id_target,
+      recipe_id: recipeId,
     };
 
     const msg = await this.notificationString(structNotify.id_user, notifyData);

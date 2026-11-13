@@ -23,6 +23,7 @@ export class FriendItemDto {
    * @example '/uploads/avatars/avatar_2.webp'
    */
   @ApiProperty({
+    type: String,
     description: 'Public avatar photo URL',
     example: '/uploads/avatars/avatar_2.webp',
     nullable: true,
@@ -34,6 +35,8 @@ export class FriendItemDto {
    * @example '2026-10-15T12:00:00.000Z'
    */
   @ApiProperty({
+    type: String,
+    format: 'date-time',
     description: 'Timestamp when friendship was established',
     example: '2026-10-15T12:00:00.000Z',
   })

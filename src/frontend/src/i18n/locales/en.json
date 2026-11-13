@@ -1,5 +1,6 @@
 {
 	"common": {
+		"networkError": "Network error",
 		"loading": "Loading…",
 		"prev": "Previous",
 		"next": "Next",
@@ -15,7 +16,13 @@
 		"save": "Save",
 		"remove": "Remove",
 		"accessDenied": "Access denied",
-		"noPermission": "You don't have permission to view this page."
+		"noPermission": "You don't have permission to view this page.",
+		"typeToConfirm": "Type \"{{text}}\" to confirm"
+	},
+	"errorBoundary": {
+		"title": "Something went wrong",
+		"text": "This page could not be displayed. Try again or go back to the home page.",
+		"home": "Back to home"
 	},
 	"nav": {
 		"home": "Home",
@@ -95,6 +102,7 @@
 		"privateHelp": "Visible only to you"
 	},
 	"recipe": {
+		"detailDialog": "Recipe detail",
 		"noPhoto": "No photo",
 		"minutes_one": "{{count}} minute",
 		"minutes_other": "{{count}} min",
@@ -105,8 +113,8 @@
 		"notFound": "Recipe not found.",
 		"backToRecipes": "Back to recipes",
 		"likeError": "Could not update the like.",
-		"confirmDeleteAdmin": "Remove this recipe as an administrator? This cannot be undone.",
-		"confirmDelete": "Delete this recipe? This cannot be undone.",
+		"confirmDeleteAdmin": "Suspend this recipe as administrator? It can be reactivated later.",
+		"confirmDelete": "Delete this recipe? It will be hidden from everyone.",
 		"deleted": "Recipe deleted.",
 		"deleteError": "Could not delete the recipe.",
 		"retryTranslationOk": "Translation completed.",
@@ -124,14 +132,38 @@
 		"translationFailed": "The automatic translation failed: some languages may show the original text.",
 		"retryTranslation": "Retry translation",
 		"edit": "Edit recipe",
-		"removeAdmin": "Remove recipe",
+		"exportPdf": "Download PDF",
+		"exportingPdf": "Creating PDF...",
+		"exportPdfError": "Unable to create the PDF.",
+		"removeAdmin": "Suspend recipe",
 		"ingredients": "Ingredients",
 		"noIngredients": "No ingredients listed for this recipe.",
 		"preparation": "Preparation",
 		"stepImageAlt": "Photo of step {{n}}",
 		"tips": "Tips",
 		"preservation": "Storage",
-		"platformName": "WeCook"
+		"platformName": "WeCook",
+		"suspendedBadge": "Suspended",
+		"suspendedTitle": "Suspended recipe.",
+		"suspendedText": "This recipe is currently suspended from public discovery.",
+		"reactivate": "Reactivate recipe",
+		"reactivated": "Recipe reactivated.",
+		"reactivateError": "Could not reactivate the recipe.",
+		"purge": "Delete permanently",
+		"purgeTitle": "Permanently delete recipe?",
+		"purgeText": "\"{{title}}\" will be erased with all its media, likes and comments. This cannot be undone.",
+		"purged": "Recipe permanently deleted.",
+		"retranslate": "Retranslate",
+		"suggestEdits": "Suggest edits",
+		"provenance": {
+			"author_original": "Original text by author",
+			"manual": "Curated / human-edited translation",
+			"machine": "Machine translation",
+			"author_originalHelp": "Written by the author in this language.",
+			"manualHelp": "Translation reviewed or written by a person.",
+			"machineHelp": "Automatic translation: it may contain mistakes.",
+			"machineActions": "Machine-translated text:"
+		}
 	},
 	"comments": {
 		"title": "Comments",
@@ -153,15 +185,32 @@
 		"placeholder": "Write a comment…",
 		"loginLink": "Sign in",
 		"loginToComment": "to leave a comment.",
-		"empty": "No comments yet. Be the first!"
+		"empty": "No comments yet. Be the first!",
+		"showMoreReplies": "Show more replies",
+		"showMoreRepliesCount": "Show remaining replies ({{count}})",
+		"loadingReplies": "Loading replies…"
 	},
 	"home": {
 		"loadError": "Recipes could not be loaded right now.",
 		"heroTitle": "Your kitchen, organized.",
-		"heroText": "Save your recipes, plan your week and find your favorite dishes in an instant.",
+		"heroText": "Save your recipes and find your favorite dishes in an instant.",
 		"recent": "Recent recipes",
 		"seeAll": "See all",
-		"empty": "No recipes published yet."
+		"empty": "No recipes published yet.",
+		"feedTabs": "Recipe feed",
+		"tabs": {
+			"friends": "Friends",
+			"community": "Community"
+		},
+		"friendsEmpty": {
+			"title": "Nothing from your friends yet",
+			"text": "When your friends publish recipes they will show up here. Explore the community and connect with other cooks!",
+			"guestTitle": "Sign in to see your friends' recipes",
+			"guestText": "Create an account or sign in, then add friends to build your personal feed.",
+			"explore": "Explore community recipes",
+			"connect": "Find friends"
+		},
+		"addRecipe": "Add recipe"
 	},
 	"myRecipes": {
 		"loadError": "Could not load your recipes.",
@@ -175,6 +224,18 @@
 		"empty": "You haven't liked any recipe yet. Explore recipes and save the ones you love."
 	},
 	"search": {
+		"sortBy": "Sort by",
+		"sort": {
+			"newest": "Newest",
+			"oldest": "Oldest",
+			"quickest": "Quickest",
+			"longest": "Longest",
+			"mostLiked": "Most liked",
+			"easiest": "Easiest",
+			"hardest": "Hardest",
+			"titleAsc": "Title A–Z",
+			"titleDesc": "Title Z–A"
+		},
 		"error": "Search failed.",
 		"resultsFor": "Results for \"{{query}}\"",
 		"allRecipes": "All recipes",
@@ -190,7 +251,37 @@
 		"placeholder": "Search recipes or users…",
 		"button": "Search",
 		"userLabel": "user",
-		"recipeLabel": "recipe"
+		"recipeLabel": "recipe",
+		"userSort": {
+			"usernameAsc": "Username A–Z",
+			"usernameDesc": "Username Z–A",
+			"mostRecipes": "Most recipes",
+			"newestMembers": "Newest members",
+			"oldestMembers": "Oldest members"
+		},
+		"minTime": "Min time (min)",
+		"maxPrepTime": "Max prep time (min)",
+		"timeRangeInvalid": "The minimum time is greater than the maximum time.",
+		"curatedOnly": "Curated translations only",
+		"curatedOnlyHelp": "Only recipes written by the author or translated by a person in {{lang}}.",
+		"tagHelp": "click once to include, twice to exclude",
+		"tagMode": "Tag matching mode",
+		"matchMode": {
+			"all": "Match all",
+			"any": "Match any"
+		},
+		"tagState": {
+			"none": "not used",
+			"included": "included",
+			"excluded": "excluded"
+		},
+		"pantry": "Ingredients",
+		"ingredientMode": "Ingredient matching mode",
+		"includeIngredients": "Must contain",
+		"excludeIngredients": "Exclude (e.g. allergies)",
+		"removeItem": "Remove {{name}}",
+		"userMinChars": "Type at least {{count}} characters to search users too.",
+		"moreUsers": "Show more users"
 	},
 	"form": {
 		"newTitle": "New recipe",
@@ -248,6 +339,7 @@
 			"galleryMax": "The gallery can hold at most {{max}} photos.",
 			"title": "The title must be between 3 and 255 characters.",
 			"description": "The description must be at least 10 characters.",
+			"descriptionMax": "The description can have at most {{max}} characters.",
 			"servings": "Enter at least 1 serving.",
 			"time": "Enter a number of minutes equal to or greater than 0.",
 			"noIngredients": "Add at least one ingredient.",
@@ -263,7 +355,11 @@
 		"catalogEmpty": "The ingredient catalog is empty: ask the backend team to load it (seed).",
 		"editLanguage": "Language of the text to edit",
 		"editLanguageHelp": "The recipe was written in {{lang}}. Changing language edits the translation in that language; unsaved text is replaced.",
-		"localeUnavailable": "The {{lang}} translation is not available yet."
+		"localeUnavailable": "The {{lang}} translation is not available yet.",
+		"galleryLabel": "Gallery",
+		"uploadingItem": "Uploading: {{label}} ({{done}}/{{total}})",
+		"uploadProgress": "Upload progress",
+		"uploadKeepOpen": "Keep this page open until the upload is complete."
 	},
 	"notFound": {
 		"text": "This page doesn't exist, or the recipe has been removed.",
@@ -289,7 +385,7 @@
 			},
 			{
 				"title": "How we use your data",
-				"body": "The recipes, favorites and meal plans you create are visible only to you, except for the recipes you choose to make public or visible to friends."
+				"body": "The recipes and favorites you create are visible only to you, except for the recipes you choose to make public or visible to friends."
 			},
 			{
 				"title": "Your rights",
@@ -355,16 +451,20 @@
 		},
 		"reason": "Reason",
 		"reasons": {
-			"spam": "Spam or advertising",
-			"offensive": "Offensive content",
-			"inappropriate": "Inappropriate content",
-			"copyright": "Copyright violation",
+			"spam_scam": "Spam or scam",
+			"harassment_bullying": "Harassment or bullying",
+			"hate_speech": "Hate speech",
+			"sexual_content": "Sexual content",
+			"violence_threats": "Violence or threats",
+			"copyright_infringement": "Copyright infringement",
+			"impersonation_misinformation": "Impersonation or misinformation",
 			"other": "Other"
 		},
 		"details": "Details (optional)",
 		"submit": "Send report",
 		"sent": "Report sent. Thank you!",
-		"error": "Could not send the report."
+		"error": "Could not send the report.",
+		"alreadyReported": "You have already reported this content: it is waiting for review."
 	},
 	"moderation": {
 		"title": "Moderation",
@@ -372,8 +472,8 @@
 		"loadError": "Could not load reports.",
 		"status": "Status",
 		"statuses": {
-			"open": "Open",
-			"resolved": "Resolved",
+			"pending": "Pending",
+			"action_taken": "Action taken",
 			"dismissed": "Dismissed"
 		},
 		"type": "Type",
@@ -384,29 +484,52 @@
 			"user": "User"
 		},
 		"empty": "No reports.",
-		"reportedBy": "reported by {{name}}",
-		"owner": "by",
 		"handle": "Handle",
 		"done": "Report handled.",
 		"chooseAction": "What do you want to do?",
 		"actions": {
 			"dismiss": "Dismiss",
 			"warn": "Send a warning",
-			"delete_content": "Delete the content",
+			"delete_content": "Suspend the content",
 			"ban": "Ban the user"
 		},
 		"actionHelp": {
 			"dismiss": "The report needs no action.",
-			"warn": "The author gets a notification with your message.",
-			"delete_content": "The recipe or comment is removed.",
+			"warn": "The author is notified with the message below.",
+			"delete_content": "The recipe or comment is hidden from the public (it can be restored).",
 			"ban": "The author's account is banned."
 		},
-		"note": "Internal note (optional)",
-		"warnMessage": "Message for the user",
+		"note": "Internal staff notes (optional)",
 		"confirm": "Confirm",
-		"confirmBan": "Ban {{name}}?",
-		"confirmDelete": "Delete the reported content? This cannot be undone.",
-		"actionError": "Action failed."
+		"confirmBan": "Ban the author of this content?",
+		"confirmDelete": "Suspend the reported content?",
+		"actionError": "Action failed.",
+		"columns": {
+			"target": "Reported content",
+			"reason": "Reason",
+			"reporter": "Reporter",
+			"created": "Date",
+			"resolution": "Resolution"
+		},
+		"takeAction": "Take action",
+		"resolutionReason": "Violated policy",
+		"banDuration": "Ban duration (days)",
+		"banDurationHelp": "Leave empty to use the default for this reason ({{days}} days).",
+		"banCapHelp": "Moderators can ban for at most {{max}} days.",
+		"permanentBan": "Permanent ban (administrators only)",
+		"userMessage": "Message for the user",
+		"userMessageHelp": "Shown to the penalized user (e.g. on the login screen if banned).",
+		"internalNotes": "Internal notes",
+		"resolvedBy": "by",
+		"previousBans_one": "{{count}} previous ban",
+		"previousBans_other": "{{count}} previous bans",
+		"errors": {
+			"noAction": "Choose at least one action.",
+			"banDays": "The ban duration must be a whole number of days (at least 1).",
+			"banCap": "The maximum ban duration for moderators is {{max}} days."
+		},
+		"owner": "author:",
+		"confirmBanName": "Ban {{name}}, the author of this content?"
 	},
 	"admin": {
 		"subtitle": "Reports, users, roles and platform content.",
@@ -414,13 +537,14 @@
 			"reports": "Reports",
 			"users": "Users",
 			"recipes": "Recipes",
-			"comments": "Comments"
+			"comments": "Comments",
+			"catalog": "Catalog"
 		},
 		"users": {
 			"loadError": "Could not load users.",
 			"updated": "User updated.",
 			"updateError": "Update failed.",
-			"confirmDelete": "Permanently delete user \"{{name}}\"? This cannot be undone.",
+			"confirmDelete": "The account \"{{name}}\" will be deactivated (soft delete): the data is kept.",
 			"deleted": "User deleted.",
 			"deleteError": "Deletion failed.",
 			"filter": "Filter by username or email…",
@@ -444,20 +568,134 @@
 			"confirmBan": "Ban \"{{name}}\"?",
 			"editTitle": "Edit {{name}}",
 			"created": "User created.",
-			"passwordKeep": "Leave empty to keep it"
+			"passwordKeep": "Leave empty to keep it",
+			"confirmDeleteTitle": "Deactivate {{name}}?",
+			"deactivateHelp": "Soft deactivation: the account can no longer sign in, data is kept.",
+			"purge": "Purge",
+			"confirmPurgeTitle": "Permanently delete {{name}}?",
+			"confirmPurge": "The account \"{{name}}\" and its data will be erased forever. This cannot be undone.",
+			"purged": "Account permanently deleted.",
+			"allStatuses": "All statuses",
+			"recipes": "Recipes",
+			"joined": "joined {{date}}",
+			"bannedUntil": "until {{date}}",
+			"bannedPermanent": "Permanent",
+			"banHistory": "Ban history",
+			"banHistoryTitle": "Ban history of {{name}}",
+			"banHistoryEmpty": "No previous bans.",
+			"banHistoryError": "Could not load the ban history.",
+			"banStart": "Start",
+			"banEnd": "Expires",
+			"unbannedAt": "Lifted",
+			"bannedBy": "Issued by",
+			"fromReport": "report #{{id}}",
+			"unbanReason": "Reason for lifting",
+			"banDays_one": "{{count}} day",
+			"banDays_other": "{{count}} days",
+			"uploadAvatar": "Upload photo",
+			"avatarUpdated": "Profile photo updated.",
+			"avatarError": "Could not update the profile photo.",
+			"sort": {
+				"newest": "Newest",
+				"oldest": "Oldest",
+				"usernameAsc": "Username A–Z",
+				"usernameDesc": "Username Z–A",
+				"mostRecipes": "Most recipes",
+				"fewestRecipes": "Fewest recipes"
+			}
 		},
 		"recipes": {
-			"confirmDelete": "Remove the recipe \"{{title}}\"? This cannot be undone.",
+			"confirmDelete": "Suspend the recipe \"{{title}}\"? It can be reactivated later.",
 			"filter": "Search recipe…",
-			"empty": "No recipes found."
+			"empty": "No recipes found.",
+			"suspend": "Suspend",
+			"reactivate": "Reactivate",
+			"suspended": "Recipe suspended.",
+			"statuses": {
+				"all": "All",
+				"active": "Active",
+				"inactive": "Suspended"
+			}
 		},
 		"comments": {
 			"filter": "Filter by text or author…",
 			"empty": "No comments found.",
-			"on": "on"
+			"on": "on",
+			"recipeId": "Recipe ID",
+			"userId": "User ID",
+			"threadMode": "Thread mode",
+			"format": {
+				"flat": "Flatten",
+				"threaded": "Roots only (threaded)"
+			},
+			"statuses": {
+				"all": "All",
+				"active": "Active",
+				"inactive": "Deactivated"
+			},
+			"sort": {
+				"newest": "Newest",
+				"oldest": "Oldest",
+				"mostReported": "Most reported",
+				"recipe": "By recipe"
+			},
+			"inactive": "Deactivated",
+			"deactivate": "Deactivate",
+			"purge": "Delete permanently",
+			"purgeTitle": "Permanently delete comment?",
+			"purgeText": "The comment will be erased from the database. This cannot be undone.",
+			"purgeWithReplies": "This comment has replies. Delete it together with all its replies?",
+			"purged": "Comment permanently deleted.",
+			"replyTo": "reply to #{{id}}",
+			"moreReplies_one": "+ {{count}} more reply",
+			"moreReplies_other": "+ {{count}} more replies",
+			"reported": "Reported",
+			"reportedOnly": "Reported only (pending)",
+			"totalReports": "Total reports (already handled)",
+			"threadPending_one": "{{count}} pending report in this conversation",
+			"threadPending_other": "{{count}} pending reports in this conversation",
+			"reportedReplies_one": "{{count}} reported reply",
+			"reportedReplies_other": "{{count}} reported replies"
+		},
+		"catalog": {
+			"title": "Catalog",
+			"ingredients": "Ingredients",
+			"tags": "Tags",
+			"search": "Search…",
+			"category": "Category",
+			"allCategories": "All categories",
+			"slug": "Slug",
+			"name": "Name",
+			"translations": "Names in each language",
+			"newIngredient": "New ingredient",
+			"newTag": "New tag",
+			"editTitle": "Edit \"{{slug}}\"",
+			"immutable": "Cannot be changed after creation.",
+			"slugHelp": "Lowercase letters, digits and single underscores (max {{max}} characters).",
+			"empty": "Nothing found.",
+			"loadError": "Could not load the catalog.",
+			"fallback": "Name not translated in this language",
+			"created": "Created.",
+			"updated": "Changes saved.",
+			"deleted": "\"{{name}}\" deleted.",
+			"deleteError": "Deletion failed.",
+			"confirmDeleteTitle": "Delete \"{{name}}\"?",
+			"confirmDelete": "The item \"{{slug}}\" will be removed from the catalog.",
+			"ingredientInUse": "\"{{name}}\" cannot be deleted because it is used in existing recipes.",
+			"tagInUse": "\"{{name}}\" cannot be deleted because it is used by existing recipes.",
+			"errors": {
+				"allNames": "Fill in the name in Italian, English and French.",
+				"slug": "Invalid slug: use lowercase letters, digits and single underscores (max {{max}}).",
+				"slugTaken": "An item with this slug already exists."
+			},
+			"allCategoriesShort": "All",
+			"count_one": "{{count}} item",
+			"count_other": "{{count}} items"
 		}
 	},
 	"friends": {
+		"online": "Online",
+		"offline": "Offline",
 		"actionError": "Action failed.",
 		"add": "Add friend",
 		"friends": "Friends",
@@ -481,6 +719,12 @@
 			"friends": "You have no friends yet.",
 			"received": "No incoming requests.",
 			"sent": "No pending requests."
+		},
+		"cooldown": "Friend request cannot be sent at this time. If a previous request was declined, please wait for the 30-day cooldown to expire.",
+		"status": {
+			"friends": "Friend",
+			"pending_sent": "Request sent",
+			"pending_received": "Wants to be friends"
 		}
 	},
 	"profile": {
@@ -498,7 +742,11 @@
 		"intro": "Manage your account information.",
 		"changeAvatar": "Change profile photo",
 		"language": "Profile language",
-		"languageHelp": "Language of the interface and of the recipes shown. For now it is only saved on this browser."
+		"languageHelp": "Language of the interface and of the recipes shown. For now it is only saved on this browser.",
+		"likesReceived_one": "{{count}} like received",
+		"likesReceived_other": "{{count}} likes received",
+		"avatarPending": "The new photo will be uploaded when you save (max {{max}} MB).",
+		"avatarUploading": "Uploading profile photo"
 	},
 	"notifications": {
 		"title": "Notifications",
@@ -510,9 +758,17 @@
 		"comment": "commented on your recipe",
 		"post": "published a new recipe",
 		"friend_request": "sent you a friend request",
-		"friend_accept": "accepted your friend request"
+		"friend_accept": "accepted your friend request",
+		"reply": "replied to your comment",
+		"update": "updated the recipe",
+		"delete": "deleted a recipe",
+		"generic": "did something",
+		"warn": "sent you a moderation warning"
 	},
 	"auth": {
+		"or": "or",
+		"googleError": "Google sign-in failed, please try again.",
+		"acceptTermsFirst": "Accept the terms and privacy policy to continue with Google.",
 		"loginError": "Sign-in failed, please try again.",
 		"welcomeBack": "Welcome back",
 		"loginIntro": "Sign in to your WeCook account.",
@@ -531,7 +787,15 @@
 		"haveAccount": "Already have an account?",
 		"showPassword": "Show password",
 		"confirmPassword": "Confirm password",
-		"passwordMismatch": "The passwords do not match."
+		"passwordMismatch": "The passwords do not match.",
+		"banned": {
+			"title": "Your account is suspended",
+			"titlePermanent": "Your account has been permanently banned",
+			"reason": "Violation",
+			"explanation": "Explanation",
+			"until": "The suspension ends on {{date}}.",
+			"permanent": "This ban is permanent."
+		}
 	},
 	"personal": {
 		"intro": "These details are optional and only visible to you.",
@@ -569,5 +833,23 @@
 		"alreadyDisabled": "2FA is already disabled.",
 		"passwordError": "Incorrect password.",
 		"codeError": "Invalid code, please try again."
+	},
+	"block": {
+		"button": "Block user",
+		"confirmTitle": "Block {{name}}?",
+		"confirm": "Block",
+		"confirmFriends": "Your friendship and any pending friend requests between you will be removed.",
+		"confirmHidden": "You will no longer see each other's profile and comments.",
+		"blocked": "{{name}} has been blocked.",
+		"error": "Action failed.",
+		"title": "Blocked users",
+		"intro": "People you blocked cannot see your profile or comments, and you cannot see theirs.",
+		"empty": "You have not blocked anyone.",
+		"loadError": "Could not load blocked users.",
+		"blockedOn": "Blocked on {{date}}",
+		"unblock": "Unblock",
+		"confirmUnblock": "Unblock {{name}}?",
+		"unblockHelp": "You will be able to see each other's profile and comments again. Previous friendships are not restored.",
+		"unblocked": "{{name}} has been unblocked."
 	}
 }

@@ -4,10 +4,11 @@ import AdminReports from './AdminReports'
 import AdminUsers from './AdminUsers'
 import AdminRecipes from './AdminRecipes'
 import AdminComments from './AdminComments'
+import AdminCatalog from './AdminCatalog'
 
-type Tab = 'reports' | 'users' | 'recipes' | 'comments'
+type Tab = 'reports' | 'users' | 'recipes' | 'comments' | 'catalog'
 
-const TABS: Tab[] = ['reports', 'users', 'recipes', 'comments']
+const TABS: Tab[] = ['reports', 'users', 'recipes', 'comments', 'catalog']
 
 // pannello admin: tutto ciò che vede il moderatore (segnalazioni) + gestione utenti, ruoli, ricette e commenti
 function Admin() {
@@ -42,6 +43,7 @@ function Admin() {
 				{tab === 'users' && <AdminUsers />}
 				{tab === 'recipes' && <AdminRecipes />}
 				{tab === 'comments' && <AdminComments />}
+				{tab === 'catalog' && <AdminCatalog />}
 			</div>
 		</div>
 	)

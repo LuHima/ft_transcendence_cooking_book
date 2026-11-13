@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FriendsController } from './friends.controller';
 import { FriendsService } from './friends.service';
 import { JwtService } from '@nestjs/jwt';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('FriendsController', () => {
   let controller: FriendsController;

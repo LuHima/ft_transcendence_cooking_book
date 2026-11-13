@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 
+export type SupportedLocale = 'it' | 'en' | 'fr';
+
 /**
  * Reusable query DTO for endpoints accepting an optional target locale.
  * Strictly validates that `lang` is one of the supported language codes: 'it', 'en', 'fr'.

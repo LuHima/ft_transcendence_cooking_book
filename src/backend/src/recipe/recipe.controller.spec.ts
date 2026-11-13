@@ -9,7 +9,9 @@ import {
   Course,
   RecipeDifficulty,
   TranslationStatus,
+  TranslationSource,
   UnitOfMeasure,
+  Role,
 } from '@prisma/client';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { FilterRecipeDto } from './dto/filter-recipe.dto';
@@ -43,6 +45,7 @@ describe('RecipeController', () => {
     unlikeRecipe: jest.fn(),
     createComment: jest.fn(),
     getComments: jest.fn(),
+    getCommentReplies: jest.fn(),
     deleteComment: jest.fn(),
     updateComment: jest.fn(),
   };
@@ -236,13 +239,35 @@ describe('RecipeController', () => {
         likes_count: 10,
         comments_count: 3,
         is_liked: true,
+        translation_source: TranslationSource.author_original,
+        available_languages: [
+          {
+            locale: 'it',
+            translation_source: TranslationSource.author_original,
+          },
+          { locale: 'en', translation_source: TranslationSource.machine },
+        ],
       };
       mockRecipeService.getRecipeById.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getRecipeById(1, { lang: 'it' }, 42);
+      const mockUser = {
+        id: 42,
+        username: 'test',
+        role: Role.user,
+        session: 1,
+      };
+      const result = await controller.getRecipeById(
+        1,
+        { lang: 'it' },
+        mockUser as any,
+      );
 
-      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', 42);
+      expect(service.getRecipeById).toHaveBeenCalledWith(1, 'it', mockUser);
       expect(result).toEqual(mockResult);
+      expect((result as any).translation_source).toBe(
+        TranslationSource.author_original,
+      );
+      expect((result as any).available_languages).toHaveLength(2);
     });
   });
 
@@ -264,9 +289,44 @@ describe('RecipeController', () => {
       mockRecipeService.updateRecipe.mockResolvedValueOnce(mockResult);
 
       const updateDto = { title: 'Updated Title' };
-      const result = await controller.updateRecipe(1, updateDto, 42, 'true');
+      const mockUser = {
+        id: 42,
+        username: 'test',
+        role: Role.user,
+        session: 1,
+      };
+      const result = await controller.updateRecipe(
+        1,
+        updateDto,
+        mockUser as any,
+        'true',
+      );
 
-      expect(service.updateRecipe).toHaveBeenCalledWith(42, 1, updateDto, true);
+      expect(service.updateRecipe).toHaveBeenCalledWith(
+        mockUser,
+        1,
+        updateDto,
+        true,
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('deleteRecipe', () => {
+    it('delegates to service.deleteRecipe with recipeId, user, and query', async () => {
+      const mockResult = { id: 1, is_active: false };
+      mockRecipeService.deleteRecipe.mockResolvedValueOnce(mockResult);
+
+      const mockUser = {
+        id: 42,
+        username: 'test',
+        role: Role.user,
+        session: 1,
+      };
+      const query = { hard: false };
+      const result = await controller.deleteRecipe(1, mockUser as any, query);
+
+      expect(service.deleteRecipe).toHaveBeenCalledWith(1, mockUser, query);
       expect(result).toEqual(mockResult);
     });
   });
@@ -427,25 +487,72 @@ describe('RecipeController', () => {
   });
 
   describe('getComments', () => {
-    it('delegates to service.getComments with recipeId', async () => {
-      const mockResult = [
-        {
-          id: 1,
-          recipe_id: 1,
-          user_id: 10,
-          parent_id: null,
-          content: 'Parent comment',
-          is_active: true,
-          created_at: new Date(),
-          user: { id: 10, username: 'marco', avatar_url: null },
-          replies: [],
-        },
-      ];
+    it('delegates to service.getComments with recipeId, query, and user', async () => {
+      const mockResult = {
+        items: [
+          {
+            id: 1,
+            recipe_id: 1,
+            user_id: 10,
+            parent_id: null,
+            content: 'Parent comment',
+            is_active: true,
+            is_edited: false,
+            created_at: new Date(),
+            updated_at: null,
+            user: { id: 10, username: 'marco', avatar_url: null },
+            replies: [],
+            replies_count: 0,
+            has_more_replies: false,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
       mockRecipeService.getComments.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.getComments(1);
+      const query = { page: 1, limit: 20, replies_limit: 5 };
+      const user = { id: 10, role: 'admin' } as any;
 
-      expect(service.getComments).toHaveBeenCalledWith(1);
+      const result = await controller.getComments(1, query as any, user);
+
+      expect(service.getComments).toHaveBeenCalledWith(1, query, user);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('getCommentReplies', () => {
+    it('delegates to service.getCommentReplies with recipeId, commentId, query, and user', async () => {
+      const mockResult = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      mockRecipeService.getCommentReplies.mockResolvedValueOnce(mockResult);
+
+      const query = { page: 1, limit: 20 };
+      const user = {
+        id: 42,
+        username: 'test',
+        role: 'user' as any,
+        session: 1,
+      };
+      const result = await controller.getCommentReplies(1, 10, query, user);
+
+      expect(service.getCommentReplies).toHaveBeenCalledWith(
+        1,
+        10,
+        query,
+        user,
+      );
       expect(result).toEqual(mockResult);
     });
   });
@@ -455,9 +562,28 @@ describe('RecipeController', () => {
       const mockResult = { message: 'Comment deactivated successfully' };
       mockRecipeService.deleteComment.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.deleteComment(1, 10, 42);
+      const result = await controller.deleteComment(1, 10, 42 as any);
 
       expect(service.deleteComment).toHaveBeenCalledWith(1, 10, 42);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('delegates to service.deleteComment with recipeId, commentId, user, and query when query provided', async () => {
+      const mockResult = {
+        message: 'Comment permanently deleted with replies',
+      };
+      mockRecipeService.deleteComment.mockResolvedValueOnce(mockResult);
+
+      const user = {
+        id: 1,
+        username: 'admin',
+        role: 'admin' as any,
+        session: 1,
+      };
+      const query = { hard: true, prune_replies: true };
+      const result = await controller.deleteComment(1, 10, user, query);
+
+      expect(service.deleteComment).toHaveBeenCalledWith(1, 10, user, query);
       expect(result).toEqual(mockResult);
     });
   });

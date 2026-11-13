@@ -38,6 +38,12 @@ enum TranslationStatus {
   failed
 }
 
+enum TranslationSource {
+  author_original
+  machine
+  manual
+}
+
 enum Course {
   appetizer
   first_course
@@ -88,6 +94,18 @@ enum UserStatus {
   banned
 }
 
+enum RecipePrivacy {
+  public
+  friends_only
+  private
+}
+
+enum ProfilePrivacy {
+  public
+  friends_only
+  private
+}
+
 enum NotificationSubject {
   recipe
   comment
@@ -102,6 +120,7 @@ enum NotificationAction {
   post
   delete
   update
+  warn
 }
 
 enum FriendshipStatus {
@@ -109,6 +128,30 @@ enum FriendshipStatus {
   accepted
   rejected
   none
+}
+
+enum ReportSubject {
+  recipe
+  comment
+  user
+}
+
+enum ReportReason {
+  spam_scam
+  harassment_bullying
+  hate_speech
+  sexual_content
+  violence_threats
+  copyright_infringement
+  impersonation_misinformation
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  dismissed
+  action_taken
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,6 +165,7 @@ model User {
   email         String    @unique @db.VarChar(255)
   password_hash String?    @db.VarChar(255)
   avatar_url    String?   @db.VarChar(255)
+  bio           String?   @db.VarChar(500)
   first_name    String?   @db.VarChar(100)
   last_name     String?   @db.VarChar(100)
   birth_date    DateTime? @db.Date
@@ -130,6 +174,8 @@ model User {
   city          String?   @db.VarChar(100)
   postal_code   String?   @db.VarChar(10)
   status 		UserStatus @default(active)
+  profile_privacy ProfilePrivacy @default(public)
+  banned_until  DateTime?
   deleted_at    DateTime?
   created_at    DateTime  @default(now())
   role          Role    @default(user)
@@ -147,6 +193,14 @@ model User {
   friendships_sent     Friendship[] @relation("FriendshipRequester")
   friendships_received Friendship[] @relation("FriendshipAddressee")
 
+  blocks_sent          UserBlock[]  @relation("BlocksSent")
+  blocks_received      UserBlock[]  @relation("BlocksReceived")
+  reports_submitted    Report[]     @relation("ReportsSubmitted")
+
+  ban_history          BanHistory[] @relation("UserBanHistory")
+  bans_issued          BanHistory[] @relation("StaffIssuedBans")
+  unbans_issued        BanHistory[] @relation("StaffUnbans")
+
   @@map("users")
 }
 
@@ -158,13 +212,15 @@ model Recipe {
   id                 Int                @id @default(autoincrement())
   user_id            Int?
   owner_type         OwnerType          @default(user)
+  is_active          Boolean            @default(true)
+  privacy            RecipePrivacy      @default(public)
   course             Course             @default(main_course)
   difficulty         RecipeDifficulty   @default(easy)
   prep_time          Int                @default(0)
   cook_time          Int                @default(0)
   total_time         Int                @default(0)
   servings           Int                @default(1)
-  source_lang        String             @default("it") @db.VarChar(5)
+  source_lang        String             @default("en") @db.VarChar(5)
   translation_status TranslationStatus  @default(completed)
   cover_image_url    String?            @db.VarChar(500)
   video_url          String?            @db.VarChar(500)
@@ -180,16 +236,18 @@ model Recipe {
   likes              Like[]
   recipe_media       RecipeMedia[]
 
+  @@index([privacy, is_active])
   @@map("recipes")
 }
 
 model RecipeTranslation {
-  recipe_id    Int
-  locale       String  @db.VarChar(5)
-  title        String  @db.VarChar(255)
-  description  String
-  preservation String?
-  tips         String?
+  recipe_id          Int
+  locale             String            @db.VarChar(5)
+  title              String            @db.VarChar(255)
+  description        String
+  preservation       String?
+  tips               String?
+  translation_source TranslationSource @default(machine)
 
   recipe       Recipe  @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
 
@@ -336,7 +394,7 @@ model Comment {
 
   recipe  Recipe    @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
   user    User?     @relation(fields: [user_id], references: [id])
-  parent  Comment?  @relation("CommentReplies", fields: [parent_id], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
   replies Comment[] @relation("CommentReplies")
 
   @@map("comments")
@@ -371,6 +429,7 @@ model Notification {
   action     NotificationAction
 
   target_id	Int?
+  details   String? @db.VarChar(1000)  // spiegazione del moderatore (solo per warn)
 
   is_read    Boolean          @default(false)
   created_at DateTime         @default(now())
@@ -414,3 +473,79 @@ model JwtSession {
 
   @@map("jwt_sessions")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER BLOCKS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model UserBlock {
+  id         Int      @id @default(autoincrement())
+  blocker_id Int
+  blocked_id Int
+  created_at DateTime @default(now())
+
+  blocker    User     @relation("BlocksSent", fields: [blocker_id], references: [id], onDelete: Cascade)
+  blocked    User     @relation("BlocksReceived", fields: [blocked_id], references: [id], onDelete: Cascade)
+
+  @@unique([blocker_id, blocked_id])
+  @@index([blocker_id])
+  @@index([blocked_id])
+  @@map("user_blocks")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REPORTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Report {
+  id                     Int           @id @default(autoincrement())
+  reporter_id            Int
+  subject                ReportSubject
+  target_id              Int
+  reason                 ReportReason
+  description            String?       @db.VarChar(1000)
+  status                 ReportStatus  @default(pending)
+  resolution_reason      ReportReason?
+  resolution_description String?       @db.VarChar(1000)
+  resolution_notes       String?       @db.VarChar(1000)
+  resolved_by_id         Int?
+  resolved_at            DateTime?
+  created_at             DateTime      @default(now())
+  updated_at             DateTime      @updatedAt
+
+  reporter               User          @relation("ReportsSubmitted", fields: [reporter_id], references: [id], onDelete: Cascade)
+  ban_history            BanHistory[]
+
+  @@index([status, created_at])
+  @@index([subject, target_id])
+  @@map("reports")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BAN HISTORY
+// ─────────────────────────────────────────────────────────────────────────────
+
+model BanHistory {
+  id             String       @id @default(uuid())
+  user_id        Int
+  user           User         @relation("UserBanHistory", fields: [user_id], references: [id], onDelete: Cascade)
+  banned_by_id   Int
+  banned_by      User         @relation("StaffIssuedBans", fields: [banned_by_id], references: [id])
+  report_id      Int?
+  report         Report?      @relation(fields: [report_id], references: [id], onDelete: SetNull)
+  reason         ReportReason
+  description    String?      @db.VarChar(1000)
+  duration_days  Int?
+  is_permanent   Boolean      @default(false)
+  banned_at      DateTime     @default(now())
+  expires_at     DateTime?
+  unbanned_at    DateTime?
+  unbanned_by_id Int?
+  unbanned_by    User?        @relation("StaffUnbans", fields: [unbanned_by_id], references: [id])
+  unban_reason   String?      @db.VarChar(1000)
+
+  @@index([user_id])
+  @@index([banned_at])
+  @@map("ban_history")
+}
+

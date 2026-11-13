@@ -18,9 +18,10 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
-  ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
   ApiParam,
   ApiQuery,
@@ -31,6 +32,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { Auth } from 'src/common/decorators/policies.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import { OptionalAuthGuard } from 'src/common/guards/optional-auth.guard';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { PaginatedFriendsResponseDto } from 'src/friends/dto/friend-response.dto';
@@ -42,17 +44,21 @@ import {
   UserSearchResultDto,
   AvatarUploadResponseDto,
   UserMessageResponseDto,
+  UserSearchItemDto,
+  PaginatedUsersResponseDto,
 } from './dto/user-profile-response.dto';
 import {
   ApiBadRequestResponseDto,
+  ApiUnauthorizedResponseDto,
+  ApiForbiddenResponseDto,
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
-  ApiUnauthorizedResponseDto,
   ApiInternalServerErrorResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { SearchUserQueryDto } from './dto/search-user-query.dto';
 import { UserCookbookQueryDto } from './dto/user-cookbook-query.dto';
 import { PaginatedRecipeResponseDto } from 'src/recipe/dto/recipe-response.dto';
+import { PaginatedBlockedUsersResponseDto } from './dto/blocked-user.dto';
 
 /**
  * Controller handling user profiles, account preferences, avatar uploads, and social interactions.
@@ -147,6 +153,10 @@ export class UsersController {
     description: 'File missing or invalid file format',
     type: ApiBadRequestResponseDto,
   })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
   @Auth()
   @Post('me/avatar')
   @UseInterceptors(FileInterceptor('file', avatarMulterOptions))
@@ -168,6 +178,10 @@ export class UsersController {
   @ApiOkResponse({
     description: 'Avatar successfully deleted',
     type: UserMessageResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
   })
   @Auth()
   @Delete('me/avatar')
@@ -206,7 +220,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get current user authored recipes',
     description:
-      'Returns recipes authored by the authenticated user, ordered by creation date.',
+      'Returns recipes authored by the authenticated user, supporting multi-metric sorting.',
   })
   @ApiOkResponse({
     description: 'Paginated recipes authored by the user',
@@ -226,24 +240,89 @@ export class UsersController {
   }
 
   /**
-   * Search users by username substring.
+   * Retrieve list of users currently blocked by the authenticated caller.
    */
   @ApiOperation({
-    summary: 'Search users by username',
+    summary: 'List blocked users',
     description:
-      'Searches users by username substring matching (case-insensitive).',
+      'Returns a paginated list of accounts currently blocked by the authenticated user.',
   })
   @ApiOkResponse({
-    description: 'List of matching usernames',
-    type: [UserSearchResultDto],
+    description: 'Paginated list of blocked user accounts',
+    type: PaginatedBlockedUsersResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Search parameter is missing or empty',
+    description: 'Invalid pagination query parameters',
     type: ApiBadRequestResponseDto,
   })
+  @Auth()
+  @Get('me/blocks')
+  async getBlockedUsers(
+    @CurrentUser('id') id: number,
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedBlockedUsersResponseDto> {
+    return await this.userService.getBlockedUsers(id, query);
+  }
+
+  /**
+   * Search and discover community members.
+   */
+  @ApiOperation({
+    summary: 'Search and discover community members',
+    description:
+      'Returns a paginated list of active community members.\n\n' +
+      '- When search is omitted: returns active members ordered by total published recipes (recipes_count_desc).\n' +
+      '- When search is provided: performs case-insensitive substring matching across username, first_name, and last_name (defaulting to username_asc).\n' +
+      '- When authenticated: caller is excluded from results and receives contextual friendship_status.\n' +
+      '- When unauthenticated: friendship_status is null.\n' +
+      '- Inactive, disabled, banned, and soft-deleted accounts are excluded.',
+  })
+  @ApiOkResponse({
+    description: 'Paginated user search and discovery results',
+    type: PaginatedUsersResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid query parameters (search query shorter than 2 non-whitespace characters, negative page index, limit exceeding 100, or invalid sort option)',
+    type: ApiBadRequestResponseDto,
+  })
+  @UseGuards(OptionalAuthGuard)
   @Get()
-  async searchUser(@Query() query: SearchUserQueryDto) {
-    return await this.userService.findUser(query.search);
+  async findUsers(
+    @Query() query: SearchUserQueryDto,
+    @CurrentUser('id') currentUserId?: number,
+  ): Promise<PaginatedUsersResponseDto> {
+    return await this.userService.findUsers(query, currentUserId);
+  }
+
+  /**
+   * Retrieve safe public profile by username handle.
+   */
+  @ApiOperation({
+    summary: 'Get public user profile by username',
+    description:
+      'Returns enriched public profile information (username, bio, names, avatar, join date, recipes count, friends count, total likes received) for the specified username handle, including contextual friendship status when requested by an authenticated user.',
+  })
+  @ApiParam({
+    name: 'username',
+    description: 'Target username handle',
+    example: 'mario_rossi',
+  })
+  @ApiOkResponse({
+    description: 'Public user profile',
+    type: PublicUserResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @UseGuards(OptionalAuthGuard)
+  @Get('by-username/:username')
+  async getUserByUsername(
+    @Param('username') username: string,
+    @CurrentUser() currentUser?: ActiveUserData,
+  ) {
+    return await this.userService.getUserByUsername(username, currentUser);
   }
 
   /**
@@ -252,7 +331,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get public user profile by ID',
     description:
-      'Returns public profile information (username, avatar, join date) for the specified user, including contextual friendship status when requested by an authenticated user.',
+      'Returns enriched public profile information (username, bio, names, avatar, join date, recipes count, friends count, total likes received) for the specified user ID, including contextual friendship status when requested by an authenticated user.',
   })
   @ApiParam({
     name: 'id',
@@ -275,9 +354,58 @@ export class UsersController {
   @Get(':id')
   async getUser(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser('id') currentUserId?: number,
+    @CurrentUser() currentUser?: ActiveUserData,
   ) {
-    return await this.userService.getUser(id, currentUserId);
+    return await this.userService.getUser(id, currentUser);
+  }
+
+  /**
+   * Retrieve public recipes authored by a specific user ID.
+   */
+  @ApiOperation({
+    summary: 'Get public recipes authored by user',
+    description:
+      'Returns paginated public recipes authored by the specified user, ordered descending by creation date.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Target author user ID',
+    example: 1,
+  })
+  @ApiOkResponse({
+    description: 'Paginated recipes authored by the user',
+    type: PaginatedRecipeResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid user ID format or invalid pagination/language query parameters',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication required to view restricted recipe collection',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Recipe collection is private or restricted to confirmed friends',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @UseGuards(OptionalAuthGuard)
+  @Get(':id/recipes')
+  async getUserPublicRecipes(
+    @Param('id', ParseIntPipe) targetUserId: number,
+    @Query() query: UserCookbookQueryDto,
+    @CurrentUser() currentUser?: ActiveUserData,
+  ) {
+    return await this.userService.getUserPublicRecipes(
+      targetUserId,
+      query,
+      currentUser,
+    );
   }
 
   /**
@@ -301,20 +429,93 @@ export class UsersController {
     description: 'Invalid user ID format or invalid pagination parameter',
     type: ApiBadRequestResponseDto,
   })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication required to view restricted friend list',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Friend list is private or restricted to confirmed friends',
+    type: ApiForbiddenResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'User not found',
     type: ApiNotFoundResponseDto,
   })
-  @ApiUnauthorizedResponse({
-    description: 'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
-  })
-  @Auth()
+  @UseGuards(OptionalAuthGuard)
   @Get(':id/friends')
   async getUserFriends(
     @Param('id', ParseIntPipe) id: number,
     @Query() query: PaginationQueryDto,
+    @CurrentUser() currentUser?: ActiveUserData,
   ) {
-    return await this.userService.getUserFriends(id, query);
+    return await this.userService.getUserFriends(id, query, currentUser);
+  }
+
+  /**
+   * Block target user account.
+   */
+  @ApiOperation({
+    summary: 'Block user',
+    description:
+      'Blocks specified user ID, dissolving any friendship and establishing mutual invisibility.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Target user ID to block',
+    example: 42,
+  })
+  @ApiOkResponse({
+    description: 'User blocked successfully',
+    type: UserMessageResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Cannot block yourself or invalid user ID',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Auth()
+  @Post(':id/block')
+  async blockUser(
+    @CurrentUser('id') blockerId: number,
+    @Param('id', ParseIntPipe) targetId: number,
+  ): Promise<UserMessageResponseDto> {
+    return await this.userService.blockUser(blockerId, targetId);
+  }
+
+  /**
+   * Unblock target user account.
+   */
+  @ApiOperation({
+    summary: 'Unblock user',
+    description:
+      'Removes user block, restoring profile visibility and searchability without restoring previous friendship.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Target user ID to unblock',
+    example: 42,
+  })
+  @ApiOkResponse({
+    description: 'User unblocked successfully',
+    type: UserMessageResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid user ID format',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User block not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Auth()
+  @Delete(':id/block')
+  async unblockUser(
+    @CurrentUser('id') blockerId: number,
+    @Param('id', ParseIntPipe) targetId: number,
+  ): Promise<UserMessageResponseDto> {
+    return await this.userService.unblockUser(blockerId, targetId);
   }
 }

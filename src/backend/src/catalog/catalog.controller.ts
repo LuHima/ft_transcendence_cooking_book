@@ -1,10 +1,12 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
 import {
@@ -14,12 +16,13 @@ import {
 import {
   ApiBadRequestResponseDto,
   ApiInternalServerErrorResponseDto,
+  ApiNotFoundResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { FilterIngredientDto } from './dto/filter-ingredient.dto';
 
 /**
- * Controller providing access to system metadata dictionaries, curated tags, and ingredient catalogs.
+ * Controller providing public localized access to curated tags and ingredient catalogs.
  */
 @ApiTags('Catalog')
 @ApiInternalServerErrorResponse({
@@ -52,6 +55,40 @@ export class CatalogController {
   }
 
   /**
+   * Retrieve a single curated tag by ID localized to the requested language.
+   */
+  @ApiOperation({
+    summary: 'Get curated tag by ID',
+    description:
+      'Returns a single curated catalog tag by its numeric ID, localized to the requested language (defaults to English if missing or unsupported). Public read access.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'Unique numeric tag ID',
+    example: 1,
+  })
+  @ApiOkResponse({
+    description: 'Single localized tag details',
+    type: TagResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Tag not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Get('tags/:id')
+  async getTagById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() localeDto: LocaleQueryDto,
+  ) {
+    return await this.catalogService.getTagById(id, { lang: localeDto?.lang });
+  }
+
+  /**
    * Retrieve curated ingredient catalog items with optional filtering and search.
    */
   @ApiOperation({
@@ -70,5 +107,41 @@ export class CatalogController {
   @Get('ingredients')
   async getIngredients(@Query() filterDto: FilterIngredientDto) {
     return await this.catalogService.getIngredients(filterDto);
+  }
+
+  /**
+   * Retrieve a single curated ingredient by ID localized to the requested language.
+   */
+  @ApiOperation({
+    summary: 'Get curated ingredient by ID',
+    description:
+      'Returns a single curated catalog ingredient by its numeric ID, localized to the requested language (defaults to English if missing or unsupported). Public read access.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'Unique numeric ingredient ID',
+    example: 12,
+  })
+  @ApiOkResponse({
+    description: 'Single localized ingredient details',
+    type: IngredientResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid category or language parameter',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Ingredient not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Get('ingredients/:id')
+  async getIngredientById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() localeDto: LocaleQueryDto,
+  ) {
+    return await this.catalogService.getIngredientById(id, {
+      lang: localeDto?.lang,
+    });
   }
 }

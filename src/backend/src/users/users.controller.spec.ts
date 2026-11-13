@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { JwtService } from '@nestjs/jwt';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { UserSortBy, SortOrder } from './dto/search-user-query.dto';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -31,14 +31,17 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: {
-            getMe: jest.fn<() => Promise<any>>().mockResolvedValue(mockUser),
+            getMe: jest.fn().mockResolvedValue(mockUser),
             updateMe: jest.fn(),
             updateAvatar: jest.fn(),
             deleteAvatar: jest.fn(),
             getLikedRecipes: jest.fn(),
             getMyRecipes: jest.fn(),
             findUser: jest.fn(),
+            findUsers: jest.fn(),
             getUser: jest.fn(),
+            getUserByUsername: jest.fn(),
+            getUserPublicRecipes: jest.fn(),
             getUserFriends: jest.fn(),
           },
         },
@@ -72,7 +75,7 @@ describe('UsersController', () => {
       };
       const updatedUser = { ...mockUser, ...updateDto };
       (service.updateMe as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(updatedUser);
 
       const result = await controller.updateMe(1, updateDto);
@@ -85,9 +88,11 @@ describe('UsersController', () => {
   describe('updateAvatar', () => {
     it('should upload avatar and return avatar_url', async () => {
       const mockFile = { filename: 'avatar-123.jpg' } as Express.Multer.File;
-      const mockResponse = { avatar_url: '/uploads/avatars/avatar-123.jpg' };
+      const mockResponse = {
+        avatar_url: '/api/media/avatars/1/avatar-123.jpg',
+      };
       (service.updateAvatar as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResponse);
 
       const result = await controller.updateAvatar(1, mockFile);
@@ -101,7 +106,7 @@ describe('UsersController', () => {
     it('should delete avatar and return success message', async () => {
       const mockResponse = { message: 'Avatar deleted successfully' };
       (service.deleteAvatar as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockResponse);
 
       const result = await controller.deleteAvatar(1);
@@ -123,7 +128,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getLikedRecipes as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockRecipes);
 
       const query = { page: 1, limit: 20, lang: 'it' as const };
@@ -146,7 +151,7 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getMyRecipes as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockRecipes);
 
       const query = { page: 1, limit: 20, lang: 'it' as const };
@@ -157,17 +162,117 @@ describe('UsersController', () => {
     });
   });
 
-  describe('searchUser', () => {
-    it('should delegate to service.findUser with search query parameter', async () => {
-      const mockResult = [{ username: 'mario' }, { username: 'mario_chef' }];
-      (service.findUser as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+  describe('findUsers', () => {
+    it('should delegate to service.findUsers with query and currentUserId', async () => {
+      const mockResult = {
+        items: [
+          {
+            id: 2,
+            username: 'giulia',
+            avatar_url: '/uploads/avatars/avatar_2.webp',
+            first_name: 'Giulia',
+            last_name: 'Bianchi',
+            created_at: new Date('2026-09-01T10:00:00Z'),
+            recipes_count: 5,
+            friendship_status: 'friends' as const,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.findUsers as jest.Mock<any>) = jest
+        .fn()
         .mockResolvedValue(mockResult);
 
-      const result = await controller.searchUser({ search: 'mario' });
+      const query = {
+        page: 1,
+        limit: 20,
+        search: 'giulia',
+        sort_by: UserSortBy.username,
+        sort_order: SortOrder.asc,
+      };
+      const result = await controller.findUsers(query, 1);
 
       expect(result).toEqual(mockResult);
-      expect(service.findUser).toHaveBeenCalledWith('mario');
+      expect(service.findUsers).toHaveBeenCalledWith(query, 1);
+    });
+
+    it('should delegate to service.findUsers without currentUserId for unauthenticated visitor', async () => {
+      const mockResult = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.findUsers as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const query = { page: 1, limit: 20 };
+      const result = await controller.findUsers(query, undefined);
+
+      expect(result).toEqual(mockResult);
+      expect(service.findUsers).toHaveBeenCalledWith(query, undefined);
+    });
+  });
+
+  describe('getUserByUsername', () => {
+    it('should delegate to service.getUserByUsername with username and currentUserId', async () => {
+      const publicUser = {
+        id: 2,
+        username: 'giulia',
+        first_name: 'Giulia',
+        last_name: 'Bianchi',
+        avatar_url: 'https://example.com/avatar.jpg',
+        bio: 'Passionate cook',
+        created_at: new Date('2026-09-01T10:00:00Z'),
+        recipes_count: 5,
+        friends_count: 10,
+        total_likes_received: 25,
+        friendship_status: 'friends',
+      };
+      (service.getUserByUsername as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue(publicUser);
+
+      const result = await controller.getUserByUsername('giulia', 1);
+
+      expect(result).toEqual(publicUser);
+      expect(service.getUserByUsername).toHaveBeenCalledWith('giulia', 1);
+    });
+
+    it('should delegate to service.getUserByUsername without currentUserId for unauthenticated caller', async () => {
+      const publicUser = {
+        id: 2,
+        username: 'giulia',
+        first_name: 'Giulia',
+        last_name: 'Bianchi',
+        avatar_url: 'https://example.com/avatar.jpg',
+        bio: null,
+        created_at: new Date('2026-09-01T10:00:00Z'),
+        recipes_count: 0,
+        friends_count: 0,
+        total_likes_received: 0,
+        friendship_status: null,
+      };
+      (service.getUserByUsername as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue(publicUser);
+
+      const result = await controller.getUserByUsername('giulia', undefined);
+
+      expect(result).toEqual(publicUser);
+      expect(service.getUserByUsername).toHaveBeenCalledWith(
+        'giulia',
+        undefined,
+      );
     });
   });
 
@@ -176,18 +281,78 @@ describe('UsersController', () => {
       const publicUser = {
         id: 2,
         username: 'giulia',
+        first_name: 'Giulia',
+        last_name: 'Bianchi',
         avatar_url: 'https://example.com/avatar.jpg',
+        bio: 'Passionate cook',
         created_at: new Date('2026-09-01T10:00:00Z'),
+        recipes_count: 5,
+        friends_count: 10,
+        total_likes_received: 25,
         friendship_status: 'friends',
       };
       (service.getUser as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(publicUser);
 
       const result = await controller.getUser(2, 1);
 
       expect(result).toEqual(publicUser);
       expect(service.getUser).toHaveBeenCalledWith(2, 1);
+    });
+  });
+
+  describe('getUserPublicRecipes', () => {
+    it('should delegate to service.getUserPublicRecipes with id, query, and currentUserId', async () => {
+      const mockResult = {
+        items: [
+          {
+            id: 10,
+            title: 'Pasta al Pesto',
+            is_liked: true,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.getUserPublicRecipes as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const query = { page: 1, limit: 20, lang: 'it' as const };
+      const result = await controller.getUserPublicRecipes(2, query, 1);
+
+      expect(result).toEqual(mockResult);
+      expect(service.getUserPublicRecipes).toHaveBeenCalledWith(2, query, 1);
+    });
+
+    it('should delegate to service.getUserPublicRecipes without currentUserId for unauthenticated caller', async () => {
+      const mockResult = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.getUserPublicRecipes as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const query = { page: 1, limit: 20 };
+      const result = await controller.getUserPublicRecipes(2, query, undefined);
+
+      expect(result).toEqual(mockResult);
+      expect(service.getUserPublicRecipes).toHaveBeenCalledWith(
+        2,
+        query,
+        undefined,
+      );
     });
   });
 
@@ -203,14 +368,63 @@ describe('UsersController', () => {
         has_prev_page: false,
       };
       (service.getUserFriends as jest.Mock<any>) = jest
-        .fn<() => Promise<any>>()
+        .fn()
         .mockResolvedValue(mockFriends);
 
       const query = { page: 1, limit: 20 };
       const result = await controller.getUserFriends(2, query);
 
       expect(result).toEqual(mockFriends);
-      expect(service.getUserFriends).toHaveBeenCalledWith(2, query);
+      expect(service.getUserFriends).toHaveBeenCalledWith(2, query, undefined);
+    });
+  });
+
+  describe('getBlockedUsers', () => {
+    it('should delegate to service.getBlockedUsers with current user id and query', async () => {
+      const mockEnvelope = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+      (service.getBlockedUsers as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue(mockEnvelope);
+
+      const query = { page: 1, limit: 20 };
+      const result = await controller.getBlockedUsers(1, query);
+
+      expect(result).toEqual(mockEnvelope);
+      expect(service.getBlockedUsers).toHaveBeenCalledWith(1, query);
+    });
+  });
+
+  describe('blockUser', () => {
+    it('should delegate to service.blockUser with blockerId and targetId', async () => {
+      (service.blockUser as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue({ message: 'User blocked successfully' });
+
+      const result = await controller.blockUser(1, 42);
+
+      expect(service.blockUser).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual({ message: 'User blocked successfully' });
+    });
+  });
+
+  describe('unblockUser', () => {
+    it('should delegate to service.unblockUser with blockerId and targetId', async () => {
+      (service.unblockUser as jest.Mock<any>) = jest
+        .fn()
+        .mockResolvedValue({ message: 'User unblocked successfully' });
+
+      const result = await controller.unblockUser(1, 42);
+
+      expect(service.unblockUser).toHaveBeenCalledWith(1, 42);
+      expect(result).toEqual({ message: 'User unblocked successfully' });
     });
   });
 });

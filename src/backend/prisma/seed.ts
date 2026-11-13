@@ -13,6 +13,7 @@ import {
   IngredientCategory,
   UnitOfMeasure,
   TranslationStatus,
+  TranslationSource,
   Course,
   NotificationSubject,
   NotificationAction,
@@ -928,6 +929,7 @@ async function main() {
               description: input.translations.it.description,
               tips: input.translations.it.tips,
               preservation: input.translations.it.preservation,
+              translation_source: TranslationSource.author_original,
             },
             {
               locale: 'en',
@@ -935,6 +937,7 @@ async function main() {
               description: input.translations.en.description,
               tips: input.translations.en.tips,
               preservation: input.translations.en.preservation,
+              translation_source: TranslationSource.machine,
             },
             {
               locale: 'fr',
@@ -942,6 +945,7 @@ async function main() {
               description: input.translations.fr.description,
               tips: input.translations.fr.tips,
               preservation: input.translations.fr.preservation,
+              translation_source: TranslationSource.machine,
             },
           ],
         },

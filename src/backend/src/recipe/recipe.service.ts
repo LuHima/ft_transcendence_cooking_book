@@ -2,28 +2,61 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
-  UnauthorizedException,
   ForbiddenException,
+  UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
-import { MediaType, OwnerType, TranslationStatus } from '@prisma/client';
-import type { Prisma, Recipe } from '@prisma/client';
+import {
+  MediaType,
+  OwnerType,
+  RecipePrivacy,
+  TranslationStatus,
+  TranslationSource,
+  NotificationSubject,
+  NotificationAction,
+  Role,
+  ReportSubject,
+  ReportStatus,
+  Prisma,
+} from '@prisma/client';
+import { NotificationEmit } from 'src/notifications/notification-emit';
+import {
+  AdminRecipeQueryDto,
+  AdminRecipeStatus,
+} from '../admin/dto/admin-recipe-query.dto';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
-import { FilterRecipeDto } from './dto/filter-recipe.dto';
+import {
+  FilterRecipeDto,
+  RecipeSortBy,
+  RecipeSortOrder,
+} from './dto/filter-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { ThreadedRecipeCommentResponseDto } from './dto/comment-response.dto';
+import { DeleteCommentQueryDto } from './dto/delete-comment-query.dto';
+import { DeleteRecipeQueryDto } from './dto/delete-recipe-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import {
-  LocalizedRecipeStepResponse,
-  LocalizedRecipeIngredientResponse,
-  LocalizedRecipeTagResponse,
-  RecipeMediaResponse,
-  LocalizedRecipeDetailResponse,
-  LocalizedRecipeSummaryResponse,
-} from './dto/localized-recipe.response';
+  ThreadedRecipeCommentResponseDto,
+  PaginatedRecipeCommentRepliesResponseDto,
+  PaginatedRecipeCommentsResponseDto,
+  RecipeCommentResponseDto,
+} from './dto/comment-response.dto';
+import {
+  RecipeCommentQueryDto,
+  RecipeCommentSortBy,
+} from './dto/recipe-comment-query.dto';
+import { getPendingCommentReportTargetIds } from '../reports/helpers/pending-reports.helper';
+import { SortOrder } from '../common/dto/sort-order.enum';
+import { LocalizedRecipeDetailResponse } from './dto/localized-recipe.response';
 import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
+import {
+  RecipeProjection,
+  RECIPE_SUMMARY_INCLUDE,
+  RECIPE_DETAIL_INCLUDE,
+} from './recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';
 import { resolveStoredUploadPath } from '../common/config/upload-paths';
 import * as fs from 'fs';
@@ -35,9 +68,457 @@ export class RecipeService {
     private readonly prisma: PrismaService,
     private readonly translationService: TranslationService,
     private readonly productionConfig: ProductionConfig,
+    private readonly notificationEmit: NotificationEmit,
+    private readonly recipeProjection: RecipeProjection,
   ) {}
 
+  private readonly logger = new Logger(RecipeService.name);
+
+  public logAudit(
+    event:
+      | 'ADMIN_PRIVATE_RECIPE_INSPECT'
+      | 'MODERATOR_PRIVATE_RECIPE_CONTEXT_INSPECT',
+    details: { userId?: number; recipeId: number; reportId?: number },
+  ) {
+    this.logger.log(
+      `[${event}] User #${details.userId} inspected private recipe #${details.recipeId}${
+        details.reportId ? ` for report #${details.reportId}` : ''
+      }`,
+    );
+  }
+
+  private async resolveCaller(
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
+  ): Promise<{ currentUserId?: number; currentUserRole?: Role | string }> {
+    const currentUserId =
+      typeof currentUserOrId === 'number'
+        ? currentUserOrId
+        : currentUserOrId?.id;
+    let currentUserRole =
+      roleOverride ??
+      (typeof currentUserOrId === 'object'
+        ? currentUserOrId?.role
+        : undefined);
+
+    if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { role: true },
+      });
+      currentUserRole = caller?.role;
+    }
+
+    return { currentUserId, currentUserRole };
+  }
+
   // ---------------------------------------------------------------------------
+
+  private applyCatalogFilters(
+    filterDto: FilterRecipeDto,
+    where: Prisma.RecipeWhereInput,
+    andConditions: Prisma.RecipeWhereInput[],
+  ): void {
+    if (filterDto.course) {
+      where.course = filterDto.course;
+    }
+
+    if (filterDto.difficulty) {
+      where.difficulty = filterDto.difficulty;
+    }
+
+    if (filterDto.author_id) {
+      where.user_id = filterDto.author_id;
+    }
+
+    if (filterDto.min_time !== undefined || filterDto.max_time !== undefined) {
+      where.total_time = {
+        ...(filterDto.min_time !== undefined
+          ? { gte: filterDto.min_time }
+          : {}),
+        ...(filterDto.max_time !== undefined
+          ? { lte: filterDto.max_time }
+          : {}),
+      };
+    }
+
+    if (filterDto.max_prep_time !== undefined) {
+      where.prep_time = { lte: filterDto.max_prep_time };
+    }
+
+    if (filterDto.source_lang) {
+      where.source_lang = filterDto.source_lang;
+    }
+
+    if (filterDto.curated_only && filterDto.lang) {
+      andConditions.push({
+        translations: {
+          some: {
+            locale: filterDto.lang,
+            translation_source: {
+              in: [TranslationSource.author_original, TranslationSource.manual],
+            },
+          },
+        },
+      });
+    }
+
+    if (filterDto.tag_ids && filterDto.tag_ids.length > 0) {
+      const mode = filterDto.tag_mode || 'all';
+      if (mode === 'any') {
+        andConditions.push({
+          recipe_tags: {
+            some: {
+              tag_id: { in: filterDto.tag_ids },
+            },
+          },
+        });
+      } else {
+        for (const tagId of filterDto.tag_ids) {
+          andConditions.push({
+            recipe_tags: {
+              some: {
+                tag_id: tagId,
+              },
+            },
+          });
+        }
+      }
+    }
+
+    if (filterDto.exclude_tag_ids && filterDto.exclude_tag_ids.length > 0) {
+      andConditions.push({
+        recipe_tags: {
+          none: {
+            tag_id: { in: filterDto.exclude_tag_ids },
+          },
+        },
+      });
+    }
+
+    if (filterDto.ingredient_ids && filterDto.ingredient_ids.length > 0) {
+      const mode = filterDto.ingredient_mode || 'all';
+      if (mode === 'any') {
+        andConditions.push({
+          recipe_ingredients: {
+            some: {
+              ingredient_id: { in: filterDto.ingredient_ids },
+            },
+          },
+        });
+      } else {
+        for (const ingredientId of filterDto.ingredient_ids) {
+          andConditions.push({
+            recipe_ingredients: {
+              some: {
+                ingredient_id: ingredientId,
+              },
+            },
+          });
+        }
+      }
+    }
+
+    if (
+      filterDto.exclude_ingredient_ids &&
+      filterDto.exclude_ingredient_ids.length > 0
+    ) {
+      andConditions.push({
+        recipe_ingredients: {
+          none: {
+            ingredient_id: { in: filterDto.exclude_ingredient_ids },
+          },
+        },
+      });
+    }
+
+    if (filterDto.search && filterDto.search.trim() !== '') {
+      const keyword = filterDto.search.trim();
+      andConditions.push({
+        translations: {
+          some: {
+            OR: [
+              { title: { contains: keyword, mode: 'insensitive' } },
+              { description: { contains: keyword, mode: 'insensitive' } },
+            ],
+          },
+        },
+      });
+    }
+  }
+
+  private buildRecipeWhere(
+    filterDto: FilterRecipeDto,
+    currentUserId?: number,
+    friendIds: number[] = [],
+    blockedIds: number[] = [],
+  ): Prisma.RecipeWhereInput {
+    const where: Prisma.RecipeWhereInput = {
+      is_active: true,
+    };
+
+    const andConditions: Prisma.RecipeWhereInput[] = [];
+
+    if (!currentUserId) {
+      where.privacy = RecipePrivacy.public;
+    } else {
+      const privacyOr: Prisma.RecipeWhereInput[] = [
+        { privacy: RecipePrivacy.public },
+        { user_id: currentUserId },
+      ];
+      if (friendIds.length > 0) {
+        privacyOr.push({
+          privacy: RecipePrivacy.friends_only,
+          user_id: { in: friendIds },
+        });
+      }
+      andConditions.push({ OR: privacyOr });
+    }
+
+    if (blockedIds.length > 0) {
+      andConditions.push({
+        OR: [
+          { user_id: null },
+          { user_id: { notIn: blockedIds } },
+        ],
+      });
+    }
+
+    this.applyCatalogFilters(filterDto, where, andConditions);
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
+    return where;
+  }
+
+  private resolveRecipeOrderBy(
+    sortBy: RecipeSortBy = RecipeSortBy.created_at,
+    sortOrder?: RecipeSortOrder,
+  ): Prisma.RecipeOrderByWithRelationInput {
+    let order: Prisma.SortOrder;
+    if (sortOrder) {
+      order = sortOrder as Prisma.SortOrder;
+    } else {
+      order =
+        sortBy === RecipeSortBy.created_at || sortBy === RecipeSortBy.likes_count
+          ? 'desc'
+          : 'asc';
+    }
+
+    switch (sortBy) {
+      case RecipeSortBy.total_time:
+        return { total_time: order };
+      case RecipeSortBy.difficulty:
+        return { difficulty: order };
+      case RecipeSortBy.likes_count:
+        return { likes: { _count: order } };
+      case RecipeSortBy.created_at:
+      default:
+        return { created_at: order };
+    }
+  }
+
+  private buildCatalogSqlFilters(filterDto: FilterRecipeDto): Prisma.Sql[] {
+    const sqlConditions: Prisma.Sql[] = [];
+
+    if (filterDto.course) {
+      sqlConditions.push(
+        Prisma.sql`r.course = ${filterDto.course}::"Course"`,
+      );
+    }
+
+    if (filterDto.difficulty) {
+      sqlConditions.push(
+        Prisma.sql`r.difficulty = ${filterDto.difficulty}::"RecipeDifficulty"`,
+      );
+    }
+
+    if (filterDto.author_id) {
+      sqlConditions.push(Prisma.sql`r.user_id = ${filterDto.author_id}`);
+    }
+
+    if (filterDto.min_time !== undefined) {
+      sqlConditions.push(Prisma.sql`r.total_time >= ${filterDto.min_time}`);
+    }
+
+    if (filterDto.max_time !== undefined) {
+      sqlConditions.push(Prisma.sql`r.total_time <= ${filterDto.max_time}`);
+    }
+
+    if (filterDto.max_prep_time !== undefined) {
+      sqlConditions.push(
+        Prisma.sql`r.prep_time <= ${filterDto.max_prep_time}`,
+      );
+    }
+
+    if (filterDto.source_lang) {
+      sqlConditions.push(Prisma.sql`r.source_lang = ${filterDto.source_lang}`);
+    }
+
+    if (filterDto.curated_only && filterDto.lang) {
+      sqlConditions.push(
+        Prisma.sql`EXISTS (
+          SELECT 1 FROM recipe_translations rt_curated
+          WHERE rt_curated.recipe_id = r.id
+            AND rt_curated.locale = ${filterDto.lang}
+            AND rt_curated.translation_source IN ('author_original', 'manual')
+        )`,
+      );
+    }
+
+    if (filterDto.tag_ids && filterDto.tag_ids.length > 0) {
+      const mode = filterDto.tag_mode || 'all';
+      if (mode === 'any') {
+        sqlConditions.push(
+          Prisma.sql`EXISTS (
+            SELECT 1 FROM recipe_tags rt
+            WHERE rt.recipe_id = r.id AND rt.tag_id IN (${Prisma.join(filterDto.tag_ids)})
+          )`,
+        );
+      } else {
+        for (const tagId of filterDto.tag_ids) {
+          sqlConditions.push(
+            Prisma.sql`EXISTS (
+              SELECT 1 FROM recipe_tags rt
+              WHERE rt.recipe_id = r.id AND rt.tag_id = ${tagId}
+            )`,
+          );
+        }
+      }
+    }
+
+    if (filterDto.exclude_tag_ids && filterDto.exclude_tag_ids.length > 0) {
+      sqlConditions.push(
+        Prisma.sql`NOT EXISTS (
+          SELECT 1 FROM recipe_tags rt
+          WHERE rt.recipe_id = r.id AND rt.tag_id IN (${Prisma.join(filterDto.exclude_tag_ids)})
+        )`,
+      );
+    }
+
+    if (filterDto.ingredient_ids && filterDto.ingredient_ids.length > 0) {
+      const mode = filterDto.ingredient_mode || 'all';
+      if (mode === 'any') {
+        sqlConditions.push(
+          Prisma.sql`EXISTS (
+            SELECT 1 FROM recipe_ingredients ri
+            WHERE ri.recipe_id = r.id AND ri.ingredient_id IN (${Prisma.join(filterDto.ingredient_ids)})
+          )`,
+        );
+      } else {
+        for (const ingredientId of filterDto.ingredient_ids) {
+          sqlConditions.push(
+            Prisma.sql`EXISTS (
+              SELECT 1 FROM recipe_ingredients ri
+              WHERE ri.recipe_id = r.id AND ri.ingredient_id = ${ingredientId}
+            )`,
+          );
+        }
+      }
+    }
+
+    if (
+      filterDto.exclude_ingredient_ids &&
+      filterDto.exclude_ingredient_ids.length > 0
+    ) {
+      sqlConditions.push(
+        Prisma.sql`NOT EXISTS (
+          SELECT 1 FROM recipe_ingredients ri
+          WHERE ri.recipe_id = r.id AND ri.ingredient_id IN (${Prisma.join(filterDto.exclude_ingredient_ids)})
+        )`,
+      );
+    }
+
+    if (filterDto.search && filterDto.search.trim() !== '') {
+      const pattern = `%${filterDto.search.trim()}%`;
+      sqlConditions.push(
+        Prisma.sql`EXISTS (
+          SELECT 1 FROM recipe_translations rt_search
+          WHERE rt_search.recipe_id = r.id
+            AND (rt_search.title ILIKE ${pattern} OR rt_search.description ILIKE ${pattern})
+        )`,
+      );
+    }
+
+    return sqlConditions;
+  }
+
+  private async resolveRecipesSortedByTitle(
+    filterDto: FilterRecipeDto,
+    where: Prisma.RecipeWhereInput,
+    skip: number,
+    limit: number,
+    currentUserId?: number,
+    friendIds: number[] = [],
+    blockedIds: number[] = [],
+    customBaseSqlConditions?: Prisma.Sql[],
+  ): Promise<{ recipes: any[]; total: number }> {
+    const targetLocale = filterDto.lang || null;
+    const sortOrder =
+      filterDto.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
+    const orderSql =
+      sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+
+    let sqlConditions: Prisma.Sql[];
+    if (customBaseSqlConditions) {
+      sqlConditions = [...customBaseSqlConditions];
+    } else {
+      sqlConditions = [Prisma.sql`r.is_active = true`];
+
+      if (!currentUserId) {
+        sqlConditions.push(Prisma.sql`r.privacy = 'public'::"RecipePrivacy"`);
+      } else {
+        if (friendIds.length > 0) {
+          sqlConditions.push(
+            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId} OR (r.privacy = 'friends_only'::"RecipePrivacy" AND r.user_id IN (${Prisma.join(friendIds)})))`,
+          );
+        } else {
+          sqlConditions.push(
+            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId})`,
+          );
+        }
+      }
+
+      if (blockedIds.length > 0) {
+        sqlConditions.push(
+          Prisma.sql`(r.user_id IS NULL OR r.user_id NOT IN (${Prisma.join(blockedIds)}))`,
+        );
+      }
+    }
+
+    sqlConditions.push(...this.buildCatalogSqlFilters(filterDto));
+
+    const whereSql = Prisma.join(sqlConditions, ' AND ');
+
+    const [rawRows, total] = await Promise.all([
+      this.prisma.$queryRaw<{ id: number }[]>`
+        SELECT r.id
+        FROM recipes r
+        LEFT JOIN recipe_translations t_target ON (t_target.recipe_id = r.id AND t_target.locale = ${targetLocale})
+        LEFT JOIN recipe_translations t_source ON (t_source.recipe_id = r.id AND t_source.locale = r.source_lang)
+        LEFT JOIN recipe_translations t_en ON (t_en.recipe_id = r.id AND t_en.locale = 'en')
+        WHERE ${whereSql}
+        ORDER BY LOWER(COALESCE(t_target.title, t_source.title, t_en.title)) ${orderSql}, r.id ${orderSql}
+        LIMIT ${limit} OFFSET ${skip}
+      `,
+      this.prisma.recipe.count({ where }),
+    ]);
+
+    const ids = rawRows.map((row) => row.id);
+    let recipes: any[] = [];
+    if (ids.length > 0) {
+      const hydrated = await this.prisma.recipe.findMany({
+        where: { id: { in: ids } },
+        include: RECIPE_SUMMARY_INCLUDE(currentUserId),
+      });
+      const recipeMap = new Map(hydrated.map((r) => [r.id, r]));
+      recipes = ids.map((id) => recipeMap.get(id)).filter(Boolean);
+    }
+
+    return { recipes, total };
+  }
 
   public async getAllRecipe(
     filters?: FilterRecipeDto | string,
@@ -51,174 +532,256 @@ export class RecipeService {
       Number(filterDto.limit) > 0 ? Math.min(Number(filterDto.limit), 100) : 20;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.RecipeWhereInput = {};
-
-    if (filterDto.course) {
-      where.course = filterDto.course;
-    }
-
-    if (filterDto.difficulty) {
-      where.difficulty = filterDto.difficulty;
-    }
-
-    if (filterDto.author_id) {
-      where.user_id = filterDto.author_id;
-    }
-
-    if (filterDto.max_time !== undefined) {
-      where.total_time = { lte: filterDto.max_time };
-    }
-
-    if (filterDto.tag_ids && filterDto.tag_ids.length > 0) {
-      where.recipe_tags = {
-        some: {
-          tag_id: { in: filterDto.tag_ids },
-        },
-      };
-    }
-
-    if (filterDto.search && filterDto.search.trim() !== '') {
-      const keyword = filterDto.search.trim();
-      where.translations = {
-        some: {
-          OR: [
-            { title: { contains: keyword, mode: 'insensitive' } },
-            { description: { contains: keyword, mode: 'insensitive' } },
-          ],
-        },
-      };
-    }
-
-    // Fetch recipes matching filter criteria together with translations and social metrics
-    const includeConfig: any = {
-      translations: true,
-      user: {
-        select: {
-          id: true,
-          username: true,
-          avatar_url: true,
-        },
-      },
-      recipe_tags: {
-        include: {
-          tag: {
-            include: {
-              translations: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: {
-            where: { is_active: true },
-          },
-        },
-      },
-    };
+    let friendIds: number[] = [];
+    let blockedIds: number[] = [];
 
     if (currentUserId) {
-      includeConfig.likes = {
-        where: { user_id: currentUserId },
-        select: { user_id: true },
-      };
+      const [friendships, userBlocks] = await Promise.all([
+        this.prisma.friendship?.findMany
+          ? this.prisma.friendship.findMany({
+              where: {
+                status: 'accepted',
+                OR: [
+                  { requester_id: currentUserId },
+                  { addressee_id: currentUserId },
+                ],
+              },
+              select: { requester_id: true, addressee_id: true },
+            })
+          : Promise.resolve([]),
+        this.prisma.userBlock?.findMany
+          ? this.prisma.userBlock.findMany({
+              where: {
+                OR: [
+                  { blocker_id: currentUserId },
+                  { blocked_id: currentUserId },
+                ],
+              },
+              select: { blocker_id: true, blocked_id: true },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      if (friendships && Array.isArray(friendships)) {
+        friendIds = friendships.map((f) =>
+          f.requester_id === currentUserId ? f.addressee_id : f.requester_id,
+        );
+      }
+
+      if (userBlocks && Array.isArray(userBlocks)) {
+        const blockedSet = new Set<number>();
+        for (const b of userBlocks) {
+          blockedSet.add(
+            b.blocker_id === currentUserId ? b.blocked_id : b.blocker_id,
+          );
+        }
+        blockedIds = Array.from(blockedSet);
+      }
     }
 
-    const [recipes, total] = await Promise.all([
-      this.prisma.recipe.findMany({
-        ...(Object.keys(where).length > 0 ? { where } : {}),
-        skip,
-        take: limit,
-        orderBy: { created_at: 'desc' },
-        include: includeConfig,
-      }),
-      this.prisma.recipe.count({
-        ...(Object.keys(where).length > 0 ? { where } : {}),
-      }),
-    ]);
-
-    const lang = filterDto.lang;
-    const items: LocalizedRecipeSummaryResponse[] = (recipes as any[]).map(
-      (recipe) => {
-        const targetLocale =
-          lang && (lang === 'it' || lang === 'en' || lang === 'fr')
-            ? lang
-            : recipe.source_lang;
-
-        const translation =
-          recipe.translations.find((t: any) => t.locale === targetLocale) ??
-          recipe.translations.find(
-            (t: any) => t.locale === recipe.source_lang,
-          ) ??
-          recipe.translations.find((t: any) => t.locale === 'en') ??
-          recipe.translations[0];
-
-        const resolved_lang = translation?.locale ?? recipe.source_lang;
-
-        const tags: LocalizedRecipeTagResponse[] = (
-          recipe.recipe_tags ?? []
-        ).map((rt: any) => {
-          const t = rt.tag;
-          const tagTrans =
-            t?.translations?.find((tr: any) => tr.locale === targetLocale) ??
-            t?.translations?.find(
-              (tr: any) => tr.locale === recipe.source_lang,
-            ) ??
-            t?.translations?.find((tr: any) => tr.locale === 'en');
-          return {
-            id: t.id,
-            slug: t.slug,
-            name: tagTrans?.name ?? t.slug,
-            resolved_lang: tagTrans?.locale ?? 'en',
-          };
-        });
-
-        return {
-          id: recipe.id,
-          course: recipe.course,
-          difficulty: recipe.difficulty,
-          prep_time: recipe.prep_time,
-          cook_time: recipe.cook_time,
-          total_time: recipe.total_time,
-          servings: recipe.servings,
-          source_lang: recipe.source_lang,
-          translation_status: recipe.translation_status,
-          cover_image_url: recipe.cover_image_url,
-          video_url: recipe.video_url,
-          created_at: recipe.created_at,
-          updated_at: recipe.updated_at,
-          author: recipe.user
-            ? {
-                id: recipe.user.id,
-                username: recipe.user.username,
-                avatar_url: recipe.user.avatar_url,
-              }
-            : null,
-          title: translation?.title ?? '',
-          description: translation?.description ?? '',
-          tags,
-          likes_count: recipe._count?.likes ?? 0,
-          comments_count: recipe._count?.comments ?? 0,
-          is_liked: currentUserId
-            ? Boolean(recipe.likes && recipe.likes.length > 0)
-            : false,
-          resolved_lang,
-        };
-      },
+    const where = this.buildRecipeWhere(
+      filterDto,
+      currentUserId,
+      friendIds,
+      blockedIds,
     );
 
-    const total_pages = Math.ceil(total / limit);
+    let recipes: any[];
+    let total: number;
 
-    return {
-      items,
+    if (filterDto.sort_by === RecipeSortBy.title) {
+      const titleResult = await this.resolveRecipesSortedByTitle(
+        filterDto,
+        where,
+        skip,
+        limit,
+        currentUserId,
+        friendIds,
+        blockedIds,
+      );
+      recipes = titleResult.recipes;
+      total = titleResult.total;
+    } else {
+      const orderBy = this.resolveRecipeOrderBy(
+        filterDto.sort_by,
+        filterDto.sort_order,
+      );
+
+      [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: RECIPE_SUMMARY_INCLUDE(currentUserId),
+        }),
+        this.prisma.recipe.count({
+          where,
+        }),
+      ]);
+    }
+
+    return this.recipeProjection.toPaginatedSummaryResponse(
+      recipes,
       total,
-      page,
-      limit,
-      total_pages,
-      has_next_page: page < total_pages,
-      has_prev_page: page > 1,
-    };
+      { ...filterDto, page, limit },
+      currentUserId,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+
+  public async getAdminRecipes(
+    query: AdminRecipeQueryDto,
+    caller: { id: number; role?: Role | string },
+  ): Promise<PaginatedRecipeResponseDto> {
+    const callerRole = String(caller?.role || '');
+    if (callerRole !== Role.admin && callerRole !== Role.moderator) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
+    const page = Number(query.page) > 0 ? Number(query.page) : 1;
+    const limit =
+      Number(query.limit) > 0 ? Math.min(Number(query.limit), 100) : 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.RecipeWhereInput = {};
+    const andConditions: Prisma.RecipeWhereInput[] = [];
+    const customBaseSqlConditions: Prisma.Sql[] = [];
+
+    // 1. Status lifecycle filter
+    if (query.status === AdminRecipeStatus.active) {
+      where.is_active = true;
+      customBaseSqlConditions.push(Prisma.sql`r.is_active = true`);
+    } else if (query.status === AdminRecipeStatus.inactive) {
+      where.is_active = false;
+      customBaseSqlConditions.push(Prisma.sql`r.is_active = false`);
+    }
+
+    // 2. Role-scoped visibility scoping per ADR 0027 & privacy-and-visibility-matrix
+    // Administrator: view all privacy tiers (public, friends_only, private)
+    // Moderator: view public + friends_only, and private ONLY IF an active pending report exists against the recipe (or its comments)
+    if (callerRole === Role.moderator) {
+      let allowedPrivateRecipeIds: number[] = [];
+      if (this.prisma.report) {
+        const recipeReports = await this.prisma.report.findMany({
+          where: {
+            status: ReportStatus.pending,
+            subject: ReportSubject.recipe,
+          },
+          select: { target_id: true },
+        });
+        const reportedRecipeIds = recipeReports.map((r) => r.target_id);
+
+        let commentRecipeIds: number[] = [];
+        if (this.prisma.comment) {
+          const reportedCommentIds = await getPendingCommentReportTargetIds(
+            this.prisma,
+          );
+          if (reportedCommentIds.length > 0) {
+            const reportedComments = await this.prisma.comment.findMany({
+              where: { id: { in: reportedCommentIds } },
+              select: { recipe_id: true },
+            });
+            commentRecipeIds = reportedComments.map((c) => c.recipe_id);
+          }
+        }
+
+        allowedPrivateRecipeIds = Array.from(
+          new Set([...reportedRecipeIds, ...commentRecipeIds]),
+        );
+      }
+
+      const privacyOr: Prisma.RecipeWhereInput[] = [
+        { privacy: RecipePrivacy.public },
+        { privacy: RecipePrivacy.friends_only },
+      ];
+      if (caller?.id) {
+        privacyOr.push({ user_id: caller.id });
+      }
+      if (allowedPrivateRecipeIds.length > 0) {
+        privacyOr.push({
+          privacy: RecipePrivacy.private,
+          id: { in: allowedPrivateRecipeIds },
+        });
+      }
+      andConditions.push({ OR: privacyOr });
+
+      if (allowedPrivateRecipeIds.length > 0) {
+        if (caller?.id) {
+          customBaseSqlConditions.push(
+            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR r.user_id = ${caller.id} OR (r.privacy = 'private'::"RecipePrivacy" AND r.id IN (${Prisma.join(allowedPrivateRecipeIds)})))`,
+          );
+        } else {
+          customBaseSqlConditions.push(
+            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR (r.privacy = 'private'::"RecipePrivacy" AND r.id IN (${Prisma.join(allowedPrivateRecipeIds)})))`,
+          );
+        }
+      } else {
+        if (caller?.id) {
+          customBaseSqlConditions.push(
+            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR r.user_id = ${caller.id})`,
+          );
+        } else {
+          customBaseSqlConditions.push(
+            Prisma.sql`r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy")`,
+          );
+        }
+      }
+    } else {
+      if (customBaseSqlConditions.length === 0) {
+        customBaseSqlConditions.push(Prisma.sql`1=1`);
+      }
+    }
+
+    this.applyCatalogFilters(query, where, andConditions);
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
+
+    let recipes: any[];
+    let total: number;
+
+    if (query.sort_by === RecipeSortBy.title) {
+      const titleResult = await this.resolveRecipesSortedByTitle(
+        query,
+        where,
+        skip,
+        limit,
+        caller.id,
+        [],
+        [],
+        customBaseSqlConditions,
+      );
+      recipes = titleResult.recipes;
+      total = titleResult.total;
+    } else {
+      const orderBy = this.resolveRecipeOrderBy(
+        query.sort_by,
+        query.sort_order,
+      );
+
+      [recipes, total] = await Promise.all([
+        this.prisma.recipe.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy,
+          include: RECIPE_SUMMARY_INCLUDE(caller.id),
+        }),
+        this.prisma.recipe.count({
+          where,
+        }),
+      ]);
+    }
+
+    return this.recipeProjection.toPaginatedSummaryResponse(
+      recipes,
+      total,
+      { ...query, page, limit },
+      caller.id,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -229,206 +792,139 @@ export class RecipeService {
   async getRecipeById(
     id: number,
     lang?: string,
-    currentUserId?: number,
+    currentUserOrId?: number | { id: number; role?: Role | string },
+    roleOverride?: Role | string,
   ): Promise<LocalizedRecipeDetailResponse> {
-    const includeConfig: any = {
-      translations: true,
-      steps: {
-        include: {
-          translations: true,
-        },
-        orderBy: {
-          step_number: 'asc',
-        },
-      },
-      recipe_ingredients: {
-        include: {
-          ingredient: {
-            include: {
-              translations: true,
-            },
-          },
-        },
-      },
-      recipe_tags: {
-        include: {
-          tag: {
-            include: {
-              translations: true,
-            },
-          },
-        },
-      },
-      recipe_media: {
-        orderBy: {
-          order: 'asc',
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          username: true,
-          avatar_url: true,
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          comments: {
-            where: { is_active: true },
-          },
-        },
-      },
-    };
-
-    if (currentUserId) {
-      includeConfig.likes = {
-        where: { user_id: currentUserId },
-        select: { user_id: true },
-      };
-    }
+    const { currentUserId, currentUserRole } = await this.resolveCaller(
+      currentUserOrId,
+      roleOverride,
+    );
 
     // Fetch the recipe from database, joining it with its translations
     const recipe: any = await this.prisma.recipe.findUnique({
       where: {
         id: id,
       },
-      include: includeConfig,
+      include: RECIPE_DETAIL_INCLUDE(currentUserId),
     });
 
     // If recipe is not found -> throw 404 Not Found
     if (!recipe) throw new NotFoundException('Recipe not found');
 
-    // Define requested language from query.
-    // Falls back to source language if lang is not supported or not defined.
-    const targetLocale =
-      lang === 'it' || lang === 'en' || lang === 'fr'
-        ? lang
-        : recipe.source_lang;
+    const isAuthor =
+      currentUserId !== undefined &&
+      recipe.user_id !== null &&
+      recipe.user_id === currentUserId;
 
-    // Define which translation to send as a response
-    const translation =
-      recipe.translations.find((t) => t.locale === targetLocale) ??
-      recipe.translations.find((t) => t.locale === recipe.source_lang) ??
-      recipe.translations[0];
+    const isStaff =
+      currentUserRole === Role.admin || currentUserRole === Role.moderator;
 
-    // Sort recipe steps by their number
-    const sortedSteps = [...recipe.steps].sort(
-      (a, b) => a.step_number - b.step_number,
-    );
+    if (recipe.is_active === false) {
+      if (!isAuthor && !isStaff) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
 
-    // Organize sorted steps as an array of LocalizedRecipeStepResponse
-    const steps: LocalizedRecipeStepResponse[] = sortedSteps.map((s) => {
-      const stepTrans =
-        s.translations.find((t) => t.locale === targetLocale) ??
-        s.translations.find((t) => t.locale === recipe.source_lang) ??
-        s.translations[0];
-      return {
-        id: s.id,
-        step_number: s.step_number,
-        title: stepTrans?.title ?? null,
-        description: stepTrans?.description ?? '',
-        duration: s.duration,
-        image_url: s.image_url,
-      };
-    });
-
-    // Organize recipe ingredients as an array of
-    // LocalizedRecipeIngredientResponse
-    const ingredients: LocalizedRecipeIngredientResponse[] =
-      recipe.recipe_ingredients.map((ri) => {
-        const ing = ri.ingredient;
-        const ingTrans =
-          ing.translations.find((t) => t.locale === targetLocale) ??
-          ing.translations.find((t) => t.locale === recipe.source_lang) ??
-          ing.translations.find((t) => t.locale === 'en');
-        let note: string | null = null;
-        if (ri.notes) {
-          if (typeof ri.notes === 'object' && !Array.isArray(ri.notes)) {
-            const notesObj = ri.notes as Record<string, string>;
-            note =
-              notesObj[targetLocale] ??
-              notesObj[recipe.source_lang] ??
-              notesObj['en'] ??
-              null;
-          } else if (typeof ri.notes === 'string') {
-            note = ri.notes;
-          }
-        }
-        return {
-          id: ing.id,
-          slug: ing.slug,
-          category: ing.category,
-          name: ingTrans?.name ?? ing.slug,
-          quantity: Number(ri.quantity),
-          unit: ri.unit,
-          notes: note,
-          resolved_lang: ingTrans?.locale ?? 'en',
-        };
+    // Mutual User Block Invariant
+    if (
+      currentUserId &&
+      recipe.user_id &&
+      currentUserId !== recipe.user_id &&
+      this.prisma.userBlock
+    ) {
+      const block = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: currentUserId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: currentUserId },
+          ],
+        },
       });
+      if (block) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
 
-    // Organize recipe tags as an array of LocalizedRecipeTagResponse
-    const tags: LocalizedRecipeTagResponse[] = recipe.recipe_tags.map((rt) => {
-      const t = rt.tag;
-      const tagTrans =
-        t.translations.find((tr) => tr.locale === targetLocale) ??
-        t.translations.find((tr) => tr.locale === recipe.source_lang) ??
-        t.translations.find((tr) => tr.locale === 'en');
-      return {
-        id: t.id,
-        slug: t.slug,
-        name: tagTrans?.name ?? t.slug,
-        resolved_lang: tagTrans?.locale ?? 'en',
-      };
-    });
+    // Privacy Access Control
+    const privacy = recipe.privacy ?? RecipePrivacy.public;
 
-    // Organize recipe media as an array of RecipeMediaResponse
-    const media: RecipeMediaResponse[] = (recipe.recipe_media ?? []).map(
-      (m) => ({
-        id: m.id,
-        url: m.url,
-        media_type: m.media_type,
-        order: m.order,
-      }),
-    );
+    if (privacy === RecipePrivacy.private) {
+      if (isAuthor) {
+        // Author can view own private recipe
+      } else if (currentUserRole === Role.admin) {
+        this.logAudit('ADMIN_PRIVATE_RECIPE_INSPECT', {
+          userId: currentUserId,
+          recipeId: recipe.id,
+        });
+      } else if (currentUserRole === Role.moderator) {
+        let hasActiveReport: any = null;
+        if (this.prisma.report) {
+          const recipeComments = this.prisma.comment
+            ? await this.prisma.comment.findMany({
+                where: { recipe_id: recipe.id },
+                select: { id: true },
+              })
+            : [];
+          const commentIds = recipeComments.map((c) => c.id);
 
-    // Return the recipe as an object of type LocalizedRecipeDetailResponse
-    return {
-      id: recipe.id,
-      course: recipe.course,
-      difficulty: recipe.difficulty,
-      prep_time: recipe.prep_time,
-      cook_time: recipe.cook_time,
-      total_time: recipe.total_time,
-      servings: recipe.servings,
-      source_lang: recipe.source_lang,
-      translation_status: recipe.translation_status,
-      cover_image_url: recipe.cover_image_url,
-      video_url: recipe.video_url,
-      created_at: recipe.created_at,
-      updated_at: recipe.updated_at,
-      author: recipe.user
-        ? {
-            id: recipe.user.id,
-            username: recipe.user.username,
-            avatar_url: recipe.user.avatar_url,
-          }
-        : null,
-      title: translation?.title ?? '',
-      description: translation?.description ?? '',
-      preservation: translation?.preservation ?? null,
-      tips: translation?.tips ?? null,
-      steps,
-      ingredients,
-      tags,
-      media,
-      likes_count: recipe._count?.likes ?? 0,
-      comments_count: recipe._count?.comments ?? 0,
-      is_liked: currentUserId
-        ? Boolean(recipe.likes && recipe.likes.length > 0)
-        : false,
-      resolved_lang: translation?.locale ?? (recipe.source_lang || 'en'),
-    };
+          hasActiveReport = await this.prisma.report.findFirst({
+            where: {
+              status: 'pending',
+              OR: [
+                { subject: 'recipe', target_id: recipe.id },
+                ...(commentIds.length > 0
+                  ? [
+                      {
+                        subject: 'comment' as const,
+                        target_id: { in: commentIds },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          });
+        }
+        if (hasActiveReport) {
+          this.logAudit('MODERATOR_PRIVATE_RECIPE_CONTEXT_INSPECT', {
+            userId: currentUserId,
+            recipeId: recipe.id,
+            reportId: hasActiveReport.id,
+          });
+        } else {
+          throw new NotFoundException('Recipe not found');
+        }
+      } else {
+        throw new NotFoundException('Recipe not found');
+      }
+    } else if (privacy === RecipePrivacy.friends_only) {
+      if (!currentUserId) {
+        throw new UnauthorizedException('Unauthorized');
+      }
+      if (isAuthor || isStaff) {
+        // Author and staff can view friends_only recipe
+      } else {
+        let isFriend = false;
+        if (this.prisma.friendship && recipe.user_id) {
+          const friendship = await this.prisma.friendship.findFirst({
+            where: {
+              status: 'accepted',
+              OR: [
+                { requester_id: currentUserId, addressee_id: recipe.user_id },
+                { requester_id: recipe.user_id, addressee_id: currentUserId },
+              ],
+            },
+          });
+          isFriend = Boolean(friendship);
+        }
+        if (!isFriend) {
+          throw new ForbiddenException(
+            'This recipe is only visible to confirmed friends of the author',
+          );
+        }
+      }
+    }
+
+    return this.recipeProjection.toLocalizedDetail(recipe, lang, currentUserId);
   }
 
   // ---------------------------------------------------------------------------
@@ -618,6 +1114,10 @@ export class RecipeService {
       description: translationsByLocale[locale].description,
       preservation: translationsByLocale[locale].preservation,
       tips: translationsByLocale[locale].tips,
+      translation_source:
+        locale === recipe.source_lang
+          ? TranslationSource.author_original
+          : TranslationSource.machine,
     }));
     const stepsData = recipe.steps.map((step, index) => ({
       step_number: step.step_number,
@@ -657,6 +1157,7 @@ export class RecipeService {
         data: {
           user_id: userId,
           owner_type: OwnerType.user,
+          privacy: recipe.privacy ?? RecipePrivacy.public,
           course: recipe.course,
           difficulty: recipe.difficulty,
           prep_time: recipe.prep_time,
@@ -692,18 +1193,25 @@ export class RecipeService {
   PATCH /api/recipes/:id
   */
   async updateRecipe(
-    userId: number,
+    userIdOrCaller: number | { id: number; role?: Role | string },
     recipeId: number,
     recipeUpdate: UpdateRecipeDto,
     retranslate?: boolean,
   ) {
-    // Fetch recipe with translations and steps to verify existence and
-    // ownership
+    const userId =
+      typeof userIdOrCaller === 'number' ? userIdOrCaller : userIdOrCaller.id;
+    let userRole =
+      typeof userIdOrCaller === 'object' && userIdOrCaller.role
+        ? (userIdOrCaller.role as Role)
+        : undefined;
+
+    // Fetch recipe with translations, steps, and author role
     const recipe = await this.prisma.recipe.findUnique({
       where: {
         id: recipeId,
       },
       include: {
+        user: { select: { id: true, role: true } },
         translations: true,
         steps: {
           include: { translations: true },
@@ -712,25 +1220,54 @@ export class RecipeService {
       },
     });
 
-    // Guard: Verify existence and ownership (only author can update recipe)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
+    if (!recipe) {
       throw createHttpException(errors.recipes.notFound, 'Recipe not found');
-    //new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId is not the author of the recipe');
+    }
 
-    // TODO implementa questi check quando abbiamo risolto caslCheckAbility !!!!!!
-    // Check if current user has permission to update the recipe
-    /* if (!(await this.caslCheckAbility.canAbility(recipeId)))
-      throw createHttpException(errors.common.forbidden); */
+    if (!userRole && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      userRole = caller?.role;
+    }
+
+    const isAuthor = recipe.user_id === userId;
+
+    if (userRole === Role.admin) {
+      // Administrator authorized to update or restore any recipe
+    } else if (userRole === Role.moderator) {
+      // Moderator cannot modify or restore recipes authored by administrators
+      if (recipe.user?.role === Role.admin) {
+        throw createHttpException(
+          errors.common.forbidden,
+          'Moderators cannot moderate or delete administrator content',
+        );
+      }
+    } else {
+      if (!isAuthor) {
+        if (this.productionConfig.isProduction()) {
+          throw createHttpException(errors.recipes.notFound, 'Recipe not found');
+        } else {
+          throw new NotFoundException('UserId is not the author of the recipe');
+        }
+      }
+
+      // Authors cannot modify is_active (restoration restricted to staff)
+      if (recipeUpdate.is_active !== undefined) {
+        throw createHttpException(
+          errors.common.forbidden,
+          'Only platform staff can modify recipe activation status',
+        );
+      }
+    }
 
     // Update locale-invariant data of the recipe
     const updateData: any = {};
+    if (recipeUpdate.privacy !== undefined)
+      updateData.privacy = recipeUpdate.privacy;
+    if (recipeUpdate.is_active !== undefined)
+      updateData.is_active = recipeUpdate.is_active;
     if (recipeUpdate.course !== undefined)
       updateData.course = recipeUpdate.course;
     if (recipeUpdate.difficulty !== undefined)
@@ -1058,6 +1595,27 @@ export class RecipeService {
           for (const [locale, translation] of Object.entries(
             translatedDataByLocale,
           )) {
+            const existingTrans = recipe.translations?.find(
+              (t) => t.locale === locale,
+            );
+            if (
+              existingTrans &&
+              (existingTrans.translation_source === TranslationSource.manual ||
+                existingTrans.translation_source ===
+                  TranslationSource.author_original)
+            ) {
+              const existingStepTrans = existingStep?.translations?.find(
+                (tr) => tr.locale === locale,
+              );
+              if (existingStepTrans) {
+                translations.push({
+                  locale,
+                  title: existingStepTrans.title,
+                  description: existingStepTrans.description,
+                });
+                continue;
+              }
+            }
             const translatedStep = translation.steps.find(
               (candidate) => candidate.stepNumber === step.step_number,
             );
@@ -1084,6 +1642,11 @@ export class RecipeService {
     await this.prisma.$transaction(async (tx) => {
       // Upsert direct translation modifications for the targeted locale
       if (Object.keys(transUpdate).length > 0) {
+        const isSourceLocale = targetLocale === recipe.source_lang;
+        if (!isSourceLocale) {
+          transUpdate.translation_source = TranslationSource.manual;
+        }
+
         await tx.recipeTranslation.upsert({
           where: {
             recipe_id_locale: {
@@ -1098,6 +1661,9 @@ export class RecipeService {
             description: recipeUpdate.description ?? '',
             preservation: recipeUpdate.preservation ?? null,
             tips: recipeUpdate.tips ?? null,
+            translation_source: isSourceLocale
+              ? TranslationSource.author_original
+              : TranslationSource.manual,
           },
           update: transUpdate,
         });
@@ -1107,6 +1673,18 @@ export class RecipeService {
       // succeeded
       if (retranslate && updateData.translation_status === 'completed') {
         for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+          const existingTrans = recipe.translations?.find(
+            (t) => t.locale === locale,
+          );
+          if (
+            existingTrans &&
+            (existingTrans.translation_source === TranslationSource.manual ||
+              existingTrans.translation_source ===
+                TranslationSource.author_original)
+          ) {
+            continue;
+          }
+
           await tx.recipeTranslation.upsert({
             where: {
               recipe_id_locale: {
@@ -1121,12 +1699,14 @@ export class RecipeService {
               description: trans.description,
               preservation: trans.preservation,
               tips: trans.tips,
+              translation_source: TranslationSource.machine,
             },
             update: {
               title: trans.title,
               description: trans.description,
               preservation: trans.preservation,
               tips: trans.tips,
+              translation_source: TranslationSource.machine,
             },
           });
 
@@ -1202,16 +1782,109 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
+  /**
+   * Suspend/deactivate a recipe following role hierarchy rules.
+   * - admin: can suspend any recipe
+   * - moderator: can suspend user/moderator recipes (403 on admin recipes)
+   * - user: can suspend own recipes
+   */
+  async deactivateRecipe(
+    recipeId: number,
+    caller: number | { id: number; role?: Role | string },
+  ) {
+    const callerId = typeof caller === 'number' ? caller : caller.id;
+    let callerRole =
+      typeof caller === 'object' && caller.role
+        ? (caller.role as Role)
+        : undefined;
+
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      include: {
+        user: { select: { id: true, role: true } },
+      },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    if (!callerRole && this.prisma.user?.findUnique) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: callerId },
+        select: { role: true },
+      });
+      callerRole = user?.role;
+    }
+
+    if (callerRole === Role.admin) {
+      // Admin authorized
+    } else if (callerRole === Role.moderator) {
+      if (recipe.user?.role === Role.admin) {
+        throw createHttpException(
+          errors.common.forbidden,
+          'Moderators cannot moderate or delete administrator content',
+        );
+      }
+    } else {
+      if (recipe.user_id !== callerId) {
+        if (this.productionConfig.isProduction()) {
+          throw new NotFoundException('Recipe not found');
+        } else {
+          throw new NotFoundException('UserId not the author of the recipe');
+        }
+      }
+    }
+
+    return await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { is_active: false },
+    });
+  }
+
   /* 
   DELETE /api/recipes/:id
   */
-  async deleteRecipe(recipeId: number, userId: number) {
-    // Verify that the recipe exists and belongs to the requesting user
+  async deleteRecipe(
+    recipeId: number,
+    userOrId: number | { id: number; role?: Role | string },
+    query?: DeleteRecipeQueryDto,
+  ) {
+    const isHard = Boolean(query?.hard);
+
+    // If soft suspension (default): delegate directly to deactivateRecipe
+    if (!isHard) {
+      return await this.deactivateRecipe(recipeId, userOrId);
+    }
+
+    // Hard deletion path: restricted strictly to platform administrators
+    const userId = typeof userOrId === 'number' ? userOrId : userOrId.id;
+    let userRole =
+      typeof userOrId === 'object' && userOrId.role
+        ? (userOrId.role as Role)
+        : undefined;
+
+    if (!userRole && this.prisma.user?.findUnique) {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      userRole = caller?.role;
+    }
+
+    if (userRole !== Role.admin) {
+      throw createHttpException(errors.common.adminOnly);
+    }
+
+    // Verify that the recipe exists and fetch associated media
     const recipe = await this.prisma.recipe.findUnique({
       where: {
         id: recipeId,
       },
       include: {
+        user: {
+          select: { id: true, role: true },
+        },
         steps: {
           select: { image_url: true },
         },
@@ -1221,16 +1894,9 @@ export class RecipeService {
       },
     });
 
-    // Guard: Verify existence and ownership (only author can delete recipe)
-    // In production, both return 404 (security through obscurity)
-    if (
-      !recipe ||
-      (recipe.user_id !== userId && this.productionConfig.isProduction())
-    )
+    if (!recipe) {
       throw new NotFoundException('Recipe not found');
-    else if (recipe.user_id !== userId)
-      // Development only
-      throw new NotFoundException('UserId not the author of the recipe');
+    }
 
     // Collect all media URLs to clean up from disk
     const mediaUrls: string[] = [];
@@ -1243,11 +1909,22 @@ export class RecipeService {
       if (media.url) mediaUrls.push(media.url);
     }
 
-    // Delete the verified recipe from database (cascades relational rows)
-    const deleted = await this.prisma.recipe.delete({
-      where: {
-        id: recipeId,
-      },
+    // Transactionally delete comments, notifications, and recipe
+    await this.prisma.$transaction(async (tx) => {
+      await tx.comment.deleteMany({
+        where: { recipe_id: recipeId },
+      });
+
+      await tx.notification.deleteMany({
+        where: {
+          subject: NotificationSubject.recipe,
+          target_id: recipeId,
+        },
+      });
+
+      await tx.recipe.delete({
+        where: { id: recipeId },
+      });
     });
 
     // Safely remove physical files from filesystem
@@ -1255,7 +1932,7 @@ export class RecipeService {
       await this.safeUnlink(url);
     }
 
-    return deleted;
+    return { message: 'Recipe permanently deleted successfully' };
   }
 
   // ---------------------------------------------------------------------------
@@ -1386,6 +2063,18 @@ export class RecipeService {
     return await this.prisma.$transaction(async (tx) => {
       // Upsert translations for each target locale
       for (const [locale, trans] of Object.entries(translatedDataByLocale)) {
+        const existingTrans = recipe.translations.find(
+          (t) => t.locale === locale,
+        );
+        if (
+          existingTrans &&
+          (existingTrans.translation_source === TranslationSource.manual ||
+            existingTrans.translation_source ===
+              TranslationSource.author_original)
+        ) {
+          continue;
+        }
+
         await tx.recipeTranslation.upsert({
           where: {
             recipe_id_locale: {
@@ -1400,12 +2089,14 @@ export class RecipeService {
             description: trans.description,
             preservation: trans.preservation,
             tips: trans.tips,
+            translation_source: TranslationSource.machine,
           },
           update: {
             title: trans.title,
             description: trans.description,
             preservation: trans.preservation,
             tips: trans.tips,
+            translation_source: TranslationSource.machine,
           },
         });
 
@@ -1474,7 +2165,8 @@ export class RecipeService {
       await this.safeUnlink(recipe.cover_image_url);
     }
 
-    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+    const filename = file.filename || file.originalname;
+    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update cover_image_url on recipe
     await this.prisma.recipe.update({
@@ -1531,7 +2223,8 @@ export class RecipeService {
       await this.safeUnlink(step.image_url);
     }
 
-    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+    const filename = file.filename || file.originalname;
+    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update image_url on step
     await this.prisma.recipeStep.update({
@@ -1593,7 +2286,8 @@ export class RecipeService {
     const startingOrder = existingMedia.length;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+      const filename = file.filename || file.originalname;
+      const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
       const media = await this.prisma.recipeMedia.create({
         data: {
           recipe_id: recipeId,
@@ -1642,7 +2336,8 @@ export class RecipeService {
       await this.safeUnlink(recipe.video_url);
     }
 
-    const fileUrl = `/uploads/recipes/${file.filename || file.originalname}`;
+    const filename = file.filename || file.originalname;
+    const fileUrl = `/api/media/recipes/${recipeId}/${filename}`;
 
     // Update video_url on recipe
     await this.prisma.recipe.update({
@@ -1823,37 +2518,71 @@ export class RecipeService {
   async likeRecipe(
     recipeId: number,
     userId: number,
-  ): Promise<{ message: string; liked: boolean }> {
+  ): Promise<{ message: string; liked: boolean; likes_count: number }> {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, user_id: true },
     });
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
     }
 
-    // Check if the like already exists
-    const existingLike = await this.prisma.like.findUnique({
-      where: {
-        user_id_recipe_id: {
-          user_id: userId,
-          recipe_id: recipeId,
+    if (recipe.user_id && this.prisma.userBlock) {
+      const isBlocked = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: userId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: userId },
+          ],
         },
-      },
-    });
+      });
+      if (isBlocked) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
 
-    // Create like record if it does not exist yet (idempotent)
-    if (!existingLike) {
+    let newlyCreated = false;
+    try {
       await this.prisma.like.create({
         data: {
           user_id: userId,
           recipe_id: recipeId,
         },
       });
+      newlyCreated = true;
+    } catch (error: any) {
+      if (
+        (error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002') ||
+        error?.code === 'P2002'
+      ) {
+        newlyCreated = false;
+      } else {
+        throw error;
+      }
     }
 
-    return { message: 'Recipe liked successfully', liked: true };
+    // Dispatch social notification to recipe author (unless self-like)
+    if (newlyCreated && recipe.user_id && recipe.user_id !== userId) {
+      await this.notificationEmit.notification(
+        { id_user: userId, id_target: recipeId },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+        },
+      );
+    }
+
+    const likesCount = await this.prisma.like.count({
+      where: { recipe_id: recipeId },
+    });
+
+    return {
+      message: 'Recipe liked successfully',
+      liked: true,
+      likes_count: likesCount,
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -1861,28 +2590,31 @@ export class RecipeService {
   async unlikeRecipe(
     recipeId: number,
     userId: number,
-  ): Promise<{ message: string; liked: boolean }> {
+  ): Promise<{ message: string; liked: boolean; likes_count: number }> {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, user_id: true },
     });
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
     }
 
-    // Check if the like exists
-    const existingLike = await this.prisma.like.findUnique({
-      where: {
-        user_id_recipe_id: {
-          user_id: userId,
-          recipe_id: recipeId,
+    if (recipe.user_id && this.prisma.userBlock) {
+      const isBlocked = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: userId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: userId },
+          ],
         },
-      },
-    });
+      });
+      if (isBlocked) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
 
-    // Remove like record if present (idempotent)
-    if (existingLike) {
+    try {
       await this.prisma.like.delete({
         where: {
           user_id_recipe_id: {
@@ -1891,9 +2623,39 @@ export class RecipeService {
           },
         },
       });
+    } catch (error: any) {
+      if (!(
+        (error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2025') ||
+        error?.code === 'P2025'
+      )) {
+        throw error;
+      }
     }
 
-    return { message: 'Recipe unliked successfully', liked: false };
+    // Prune unread like notification targeting the recipe author
+    if (recipe.user_id && recipe.user_id !== userId) {
+      await this.prisma.notification.deleteMany({
+        where: {
+          user_id: recipe.user_id,
+          actor_id: userId,
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.like,
+          target_id: recipeId,
+          is_read: false,
+        },
+      });
+    }
+
+    const likesCount = await this.prisma.like.count({
+      where: { recipe_id: recipeId },
+    });
+
+    return {
+      message: 'Recipe unliked successfully',
+      liked: false,
+      likes_count: likesCount,
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -1904,18 +2666,39 @@ export class RecipeService {
   async createComment(recipeId: number, userId: number, dto: CreateCommentDto) {
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true },
+      select: { id: true, user_id: true },
     });
 
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
     }
 
+    if (recipe.user_id && this.prisma.userBlock) {
+      const isBlocked = await this.prisma.userBlock.findFirst({
+        where: {
+          OR: [
+            { blocker_id: userId, blocked_id: recipe.user_id },
+            { blocker_id: recipe.user_id, blocked_id: userId },
+          ],
+        },
+      });
+      if (isBlocked) {
+        throw new NotFoundException('Recipe not found');
+      }
+    }
+
     let parentId: number | null = null;
+    let parentComment: {
+      id: number;
+      user_id: number | null;
+      parent_id: number | null;
+      recipe_id: number;
+    } | null = null;
 
     if (dto.parent_id !== undefined && dto.parent_id !== null) {
       const parent = await this.prisma.comment.findUnique({
         where: { id: dto.parent_id },
+        select: { id: true, user_id: true, parent_id: true, recipe_id: true },
       });
 
       if (!parent) {
@@ -1928,10 +2711,11 @@ export class RecipeService {
 
       // Enforce 2-level hierarchy: if parent is already a reply, normalize to
       // its root parent_id
+      parentComment = parent;
       parentId = parent.parent_id !== null ? parent.parent_id : parent.id;
     }
 
-    return await this.prisma.comment.create({
+    const comment = await this.prisma.comment.create({
       data: {
         recipe_id: recipeId,
         user_id: userId,
@@ -1949,17 +2733,46 @@ export class RecipeService {
         },
       },
     });
+
+    // Notification dispatch
+    if (parentComment) {
+      // Reply: strictly notify the parent comment author (unless self-reply)
+      if (parentComment.user_id && parentComment.user_id !== userId) {
+        await this.notificationEmit.notification(
+          { id_user: userId, id_target: parentComment.id },
+          {
+            subject: NotificationSubject.comment,
+            action: NotificationAction.comment,
+          },
+        );
+      }
+    } else {
+      // Top-level comment: notify recipe author (unless self-comment)
+      if (recipe.user_id && recipe.user_id !== userId) {
+        await this.notificationEmit.notification(
+          { id_user: userId, id_target: recipeId },
+          {
+            subject: NotificationSubject.recipe,
+            action: NotificationAction.comment,
+          },
+        );
+      }
+    }
+
+    return comment;
   }
 
   // ---------------------------------------------------------------------------
 
   /**
-   * Retrieve threaded comments for a recipe, preserving intermediate deactivated replies
-   * for conversational context and dropping trailing deactivated replies.
+   * Retrieve threaded comments for a recipe with pagination, windowed replies,
+   * activity-aware sorting, and role-based deactivation masking.
    */
   async getComments(
     recipeId: number,
-  ): Promise<ThreadedRecipeCommentResponseDto[]> {
+    query?: RecipeCommentQueryDto,
+    currentUser?: { id?: number; role?: string },
+  ): Promise<PaginatedRecipeCommentsResponseDto> {
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true },
@@ -1968,6 +2781,13 @@ export class RecipeService {
     if (!recipe) {
       throw new NotFoundException('Recipe not found');
     }
+
+    const page = Math.max(1, query?.page || 1);
+    const limit = Math.max(1, Math.min(100, query?.limit || 20));
+    const skip = (page - 1) * limit;
+    const repliesLimit = Math.max(1, Math.min(20, query?.replies_limit || 5));
+    const sortBy = query?.sort_by ?? RecipeCommentSortBy.latest_activity;
+    const sortOrder = query?.sort_order ?? SortOrder.desc;
 
     const rootComments = await this.prisma.comment.findMany({
       where: {
@@ -1998,45 +2818,90 @@ export class RecipeService {
       orderBy: { created_at: 'asc' },
     });
 
-    const result: ThreadedRecipeCommentResponseDto[] = [];
+    const isStaff =
+      currentUser?.role === Role.admin || currentUser?.role === Role.moderator;
+
+    const visibleThreads: {
+      item: ThreadedRecipeCommentResponseDto;
+      rootTime: number;
+      latestActivity: number;
+    }[] = [];
 
     for (const root of rootComments) {
-      const replies = root.replies || [];
-      const lastActiveIndex = replies.findLastIndex((r) => r.is_active);
+      const rawReplies = root.replies || [];
+      const hasActiveReplies = rawReplies.some((r) => r.is_active);
 
-      const keptReplies =
-        lastActiveIndex === -1
-          ? []
-          : replies.slice(0, lastActiveIndex + 1).map((r) =>
-              r.is_active
-                ? {
-                    id: r.id,
-                    recipe_id: r.recipe_id,
-                    user_id: r.user_id,
-                    parent_id: r.parent_id,
-                    content: r.content,
-                    is_active: r.is_active,
-                    is_edited: r.is_edited ?? false,
-                    created_at: r.created_at,
-                    updated_at: r.updated_at ?? null,
-                    user: r.user,
-                  }
-                : {
-                    id: r.id,
-                    recipe_id: r.recipe_id,
-                    user_id: null,
-                    parent_id: r.parent_id,
-                    content: null,
-                    is_active: false,
-                    is_edited: false,
-                    created_at: r.created_at,
-                    updated_at: null,
-                    user: null,
-                  },
-            );
+      // Inactive root comments with zero active replies are excluded from total and result items
+      if (!root.is_active && !hasActiveReplies) {
+        continue;
+      }
 
-      if (root.is_active) {
-        result.push({
+      let processedReplies: RecipeCommentResponseDto[];
+      if (isStaff) {
+        // Staff callers retain authentic inspection context for all replies
+        processedReplies = rawReplies.map((r) => ({
+          id: r.id,
+          recipe_id: r.recipe_id,
+          user_id: r.user_id,
+          parent_id: r.parent_id,
+          content: r.content,
+          is_active: r.is_active,
+          is_edited: r.is_edited ?? false,
+          created_at: r.created_at,
+          updated_at: r.updated_at ?? null,
+          user: r.user,
+        }));
+      } else {
+        // Public/guest callers: prune trailing deactivated replies
+        const lastActiveIndex = rawReplies.findLastIndex((r) => r.is_active);
+        const keptReplies =
+          lastActiveIndex === -1
+            ? []
+            : rawReplies.slice(0, lastActiveIndex + 1);
+
+        processedReplies = keptReplies.map((r) =>
+          r.is_active
+            ? {
+                id: r.id,
+                recipe_id: r.recipe_id,
+                user_id: r.user_id,
+                parent_id: r.parent_id,
+                content: r.content,
+                is_active: r.is_active,
+                is_edited: r.is_edited ?? false,
+                created_at: r.created_at,
+                updated_at: r.updated_at ?? null,
+                user: r.user,
+              }
+            : {
+                id: r.id,
+                recipe_id: r.recipe_id,
+                user_id: null,
+                parent_id: r.parent_id,
+                content: null,
+                is_active: false,
+                is_edited: false,
+                created_at: r.created_at,
+                updated_at: null,
+                user: null,
+              },
+        );
+      }
+
+      const repliesCount = processedReplies.length;
+      const windowedReplies = processedReplies.slice(0, repliesLimit);
+      const hasMoreReplies = repliesCount > windowedReplies.length;
+
+      const rootTime = new Date(root.created_at).getTime();
+      const replyTimes = processedReplies.map((r) =>
+        new Date(r.created_at).getTime(),
+      );
+      const latestActivity =
+        replyTimes.length > 0 ? Math.max(rootTime, ...replyTimes) : rootTime;
+
+      let rootItem: ThreadedRecipeCommentResponseDto;
+      if (isStaff || root.is_active) {
+        rootItem = {
           id: root.id,
           recipe_id: root.recipe_id,
           user_id: root.user_id,
@@ -2047,10 +2912,12 @@ export class RecipeService {
           created_at: root.created_at,
           updated_at: root.updated_at ?? null,
           user: root.user,
-          replies: keptReplies,
-        });
-      } else if (keptReplies.length > 0) {
-        result.push({
+          replies: windowedReplies,
+          replies_count: repliesCount,
+          has_more_replies: hasMoreReplies,
+        };
+      } else {
+        rootItem = {
           id: root.id,
           recipe_id: root.recipe_id,
           user_id: null,
@@ -2061,22 +2928,193 @@ export class RecipeService {
           created_at: root.created_at,
           updated_at: null,
           user: null,
-          replies: keptReplies,
-        });
+          replies: windowedReplies,
+          replies_count: repliesCount,
+          has_more_replies: hasMoreReplies,
+        };
       }
-      // If root is deactivated and has no kept replies, prune completely
+
+      visibleThreads.push({
+        item: rootItem,
+        rootTime,
+        latestActivity,
+      });
     }
 
-    return result;
+    if (sortBy === RecipeCommentSortBy.created_at) {
+      visibleThreads.sort((a, b) => {
+        if (a.rootTime !== b.rootTime) {
+          return sortOrder === SortOrder.asc
+            ? a.rootTime - b.rootTime
+            : b.rootTime - a.rootTime;
+        }
+        return sortOrder === SortOrder.asc
+          ? a.item.id - b.item.id
+          : b.item.id - a.item.id;
+      });
+    } else {
+      // Default: latest_activity
+      visibleThreads.sort((a, b) => {
+        if (a.latestActivity !== b.latestActivity) {
+          return sortOrder === SortOrder.asc
+            ? a.latestActivity - b.latestActivity
+            : b.latestActivity - a.latestActivity;
+        }
+        return sortOrder === SortOrder.asc
+          ? a.item.id - b.item.id
+          : b.item.id - a.item.id;
+      });
+    }
+
+    const total = visibleThreads.length;
+    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+    const pagedItems = visibleThreads
+      .slice(skip, skip + limit)
+      .map((entry) => entry.item);
+
+    return {
+      items: pagedItems,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: page > 1,
+    };
   }
 
   // ---------------------------------------------------------------------------
 
   /**
-   * Deactivate a comment non-destructively (is_active = false).
-   * Authorized only for the comment author or the recipe author.
+   * Retrieve paginated replies for a specific parent comment.
+   * Public callers receive masked deactivated replies (content and user set to null).
+   * Staff callers (admin and moderator) retain authentic inspection context.
    */
-  async deleteComment(recipeId: number, commentId: number, userId: number) {
+  async getCommentReplies(
+    recipeId: number,
+    commentId: number,
+    query?: PaginationQueryDto,
+    currentUser?: { id?: number; role?: string },
+  ): Promise<PaginatedRecipeCommentRepliesResponseDto> {
+    const recipe = await this.prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+
+    if (!recipe) {
+      throw new NotFoundException('Recipe not found');
+    }
+
+    const parentComment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!parentComment || parentComment.recipe_id !== recipeId) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    const page = Math.max(1, query?.page || 1);
+    const limit = Math.max(1, Math.min(100, query?.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const [rawReplies, total] = await Promise.all([
+      this.prisma.comment.findMany({
+        where: {
+          recipe_id: recipeId,
+          parent_id: commentId,
+        },
+        skip,
+        take: limit,
+        orderBy: { created_at: 'asc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+            },
+          },
+        },
+      }),
+      this.prisma.comment.count({
+        where: {
+          recipe_id: recipeId,
+          parent_id: commentId,
+        },
+      }),
+    ]);
+
+    const isStaff =
+      currentUser?.role === Role.admin || currentUser?.role === Role.moderator;
+
+    const items = rawReplies.map((r) => {
+      if (isStaff || r.is_active) {
+        return {
+          id: r.id,
+          recipe_id: r.recipe_id,
+          user_id: r.user_id,
+          parent_id: r.parent_id,
+          content: r.content,
+          is_active: r.is_active,
+          is_edited: r.is_edited ?? false,
+          created_at: r.created_at,
+          updated_at: r.updated_at ?? null,
+          user: r.user,
+        };
+      }
+
+      return {
+        id: r.id,
+        recipe_id: r.recipe_id,
+        user_id: null,
+        parent_id: r.parent_id,
+        content: null,
+        is_active: false,
+        is_edited: false,
+        created_at: r.created_at,
+        updated_at: null,
+        user: null,
+      };
+    });
+
+    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: page > 1,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Delete or deactivate a recipe comment.
+   * By default performs soft deletion (is_active = false) following role hierarchy:
+   * - admin: can deactivate any comment on any recipe.
+   * - moderator: can deactivate comments authored by users and moderators (403 on admin comments).
+   * - user: can deactivate own comments or comments on authored recipes.
+   *
+   * With hard = true (admin only):
+   * - requires prune_replies = true if comment has child replies (409 Conflict otherwise).
+   * - permanently purges comment (and child replies if prune_replies = true).
+   */
+  async deleteComment(
+    recipeId: number,
+    commentId: number,
+    userOrId: number | { id: number; role?: string },
+    query?: DeleteCommentQueryDto,
+  ): Promise<{ message: string }> {
+    const userId = typeof userOrId === 'number' ? userOrId : userOrId.id;
+    let userRole =
+      typeof userOrId === 'object' && userOrId.role
+        ? (userOrId.role as Role)
+        : undefined;
+
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
       select: { id: true, user_id: true },
@@ -2094,15 +3132,127 @@ export class RecipeService {
       throw new NotFoundException('Comment not found');
     }
 
-    if (comment.user_id !== userId && recipe.user_id !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to deactivate this comment',
-      );
+    // Hard deletion path (Admin only)
+    if (query?.hard) {
+      if (!userRole && this.prisma.user?.findUnique) {
+        const caller = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { role: true },
+        });
+        userRole = caller?.role;
+      }
+
+      if (userRole !== Role.admin) {
+        throw createHttpException(errors.common.adminOnly);
+      }
+
+      const childCount = await this.prisma.comment.count({
+        where: { parent_id: commentId },
+      });
+
+      if (childCount > 0 && !query.prune_replies) {
+        throw createHttpException(errors.comment.hasReplies);
+      }
+
+      if (childCount > 0 && query.prune_replies) {
+        const childReplies = await this.prisma.comment.findMany({
+          where: { parent_id: commentId },
+          select: { id: true },
+        });
+        const childIds = childReplies.map((c) => c.id);
+
+        await this.prisma.notification.deleteMany({
+          where: {
+            subject: NotificationSubject.comment,
+            target_id: { in: [commentId, ...childIds] },
+          },
+        });
+
+        await this.prisma.comment.deleteMany({
+          where: { parent_id: commentId },
+        });
+        await this.prisma.comment.delete({
+          where: { id: commentId },
+        });
+
+        return { message: 'Comment permanently deleted with replies' };
+      }
+
+      await this.prisma.notification.deleteMany({
+        where: {
+          subject: NotificationSubject.comment,
+          target_id: commentId,
+        },
+      });
+      await this.prisma.comment.delete({
+        where: { id: commentId },
+      });
+
+      return { message: 'Comment permanently deleted successfully' };
+    }
+
+    // Soft deletion path (Default)
+    // Role hierarchy authorization check
+    if (userRole === Role.admin) {
+      // Admin is authorized to deactivate any comment
+    } else if (userRole === Role.moderator) {
+      // Moderator cannot deactivate comments authored by administrators
+      if (comment.user_id && this.prisma.user?.findUnique) {
+        const author = await this.prisma.user.findUnique({
+          where: { id: comment.user_id },
+          select: { role: true },
+        });
+        if (author?.role === Role.admin) {
+          throw createHttpException(errors.common.forbidden);
+        }
+      }
+    } else {
+      // Check if user is comment author or recipe author
+      if (comment.user_id !== userId && recipe.user_id !== userId) {
+        if (!userRole && this.prisma.user?.findUnique) {
+          const caller = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true },
+          });
+          userRole = caller?.role;
+
+          if (userRole === Role.admin) {
+            // Admin permitted
+          } else if (userRole === Role.moderator) {
+            if (comment.user_id) {
+              const author = await this.prisma.user.findUnique({
+                where: { id: comment.user_id },
+                select: { role: true },
+              });
+              if (author?.role === Role.admin) {
+                throw createHttpException(errors.common.forbidden);
+              }
+            }
+          } else {
+            throw new ForbiddenException(
+              'You do not have permission to deactivate this comment',
+            );
+          }
+        } else {
+          throw new ForbiddenException(
+            'You do not have permission to deactivate this comment',
+          );
+        }
+      }
     }
 
     await this.prisma.comment.update({
       where: { id: commentId },
       data: { is_active: false },
+    });
+
+    // Prune unread reply notifications targeting this deactivated comment
+    await this.prisma.notification.deleteMany({
+      where: {
+        subject: NotificationSubject.comment,
+        target_id: commentId,
+        is_read: false,
+      },
     });
 
     return { message: 'Comment deactivated successfully' };

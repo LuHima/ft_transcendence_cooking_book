@@ -2,13 +2,17 @@ import { useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { api, getErrorMessage } from '../api/client'
+import { api, getErrorMessage, uploadWithProgress } from '../api/client'
+import { UPLOAD_LIMITS } from '../config'
 import { validateImage } from '../lib/files'
 import { useObjectUrl } from '../lib/useObjectUrl'
 import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
 import Avatar from '../components/Avatar'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import TwoFactorSettings from '../components/TwoFactorSettings'
+import BlockedUsers from '../components/BlockedUsers'
+import UploadProgress from '../components/UploadProgress'
+import type { AvatarUploadResponseDto } from '../types/models'
 
 function Profile() {
 	const { t } = useTranslation()
@@ -18,6 +22,8 @@ function Profile() {
 	const [email, setEmail] = useState(user?.email ?? '')
 	const [avatarFile, setAvatarFile] = useState<File | null>(null)
 	const [saving, setSaving] = useState(false)
+	// avanzamento dell'upload dell'avatar (null = nessun upload in corso)
+	const [avatarProgress, setAvatarProgress] = useState<number | null>(null)
 	const fileRef = useRef<HTMLInputElement>(null)
 	const preview = useObjectUrl(avatarFile)
 
@@ -25,7 +31,8 @@ function Profile() {
 
 	function pickAvatar(file: File | undefined) {
 		if (!file) return
-		const err = validateImage(file, t)
+		// controllo prima dell'invio: tipo (jpeg/png/webp) e dimensione massima dell'avatar
+		const err = validateImage(file, t, UPLOAD_LIMITS.avatarMaxMb)
 		if (err) return toast.error(err)
 		setAvatarFile(file)
 	}
@@ -45,11 +52,18 @@ function Profile() {
 		e.preventDefault()
 		setSaving(true)
 		try {
-			// POST /users/me/avatar (multipart, campo "file")
+			// POST /users/me/avatar (multipart, campo "file") con barra di avanzamento
 			if (avatarFile) {
 				const formData = new FormData()
 				formData.append('file', avatarFile)
-				await api.post('/users/me/avatar', formData)
+				setAvatarProgress(0)
+				try {
+					await uploadWithProgress<AvatarUploadResponseDto>('/users/me/avatar', formData, (loaded, total) =>
+						setAvatarProgress(total > 0 ? (loaded / total) * 100 : 0),
+					)
+				} finally {
+					setAvatarProgress(null)
+				}
 				setAvatarFile(null)
 			}
 			// PATCH /users/me: si inviano solo i campi cambiati
@@ -104,6 +118,12 @@ function Profile() {
 						)}
 					</div>
 				</div>
+				{avatarFile && avatarProgress === null && (
+					<p className="-mt-2 text-xs text-[var(--wc-text-muted)]">
+						{t('profile.avatarPending', { max: UPLOAD_LIMITS.avatarMaxMb })}
+					</p>
+				)}
+				{avatarProgress !== null && <UploadProgress percent={avatarProgress} label={t('profile.avatarUploading')} />}
 
 				<div>
 					<label htmlFor="username" className={LABEL_CLASS}>
@@ -134,6 +154,8 @@ function Profile() {
 			</form>
 
 			<TwoFactorSettings />
+
+			<BlockedUsers />
 		</div>
 	)
 }

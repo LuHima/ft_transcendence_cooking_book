@@ -34,6 +34,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     let status: number;
     let message: string | string[];
+    const extraFields: Record<string, any> = {};
 
     // Prisma client errors mapped to 404, 409, etc.
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
@@ -86,6 +87,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           // quindi mi serve che copra più tipi
           const errorObj = exeResponse as any;
           message = errorObj?.message || 'Bad request';
+          if (errorObj?.code) extraFields.code = errorObj.code;
+          if (errorObj?.details) extraFields.details = errorObj.details;
         }
       }
     }
@@ -105,6 +108,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       message,
+      ...extraFields,
     });
   }
 

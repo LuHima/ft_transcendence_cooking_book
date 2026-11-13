@@ -1,12 +1,11 @@
-# Base image: official Node.js 22 image based on Debian slim
-FROM node:22-slim
+# -----------------------------------------------------------------------------
+# Development stage: runs Vite development server with hot-module reload
+# -----------------------------------------------------------------------------
+FROM node:22-slim AS development
 
-# Set working directory inside the container
 WORKDIR /usr/src/app
 
-# Install system dependencies:
-#   - curl: used for healthcheck to verify Vite development server availability
-# Clean apt cache to keep the image minimal
+# Install curl for healthcheck probe
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
   && rm -rf /var/lib/apt/lists/*
@@ -14,27 +13,67 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy package descriptors first to leverage Docker layer caching
 COPY ./src/frontend/package*.json ./
 
-# Install frontend dependencies
+# Install all dependencies including devDependencies (vite, @types, etc.)
 RUN npm install
 
-# Copy the entrypoint script and make it executable
+# Copy entrypoint script
 COPY ./docker/frontend/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Copy frontend source code
+COPY ./src/frontend/ ./
 
 # Expose Vite development server port
 EXPOSE 5173
 
-# Health check: verifies that the Vite development server is serving pages.
-# Flags:
-#   --interval=10s:		check every 10 seconds
-#   --timeout=5s:		fail check if response exceeds 5 seconds
-#   --start-period=10s:	grace period allowing Vite to bundle and bind to port
-#   --retries=3:		mark unhealthy after 3 consecutive failures
+# Health check: verifies that the Vite development server is serving pages
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:5173/ || exit 1
+
+ENTRYPOINT ["entrypoint.sh"]
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+# -----------------------------------------------------------------------------
+# Builder stage: compiles React/Vite application into static assets (/dist)
+# -----------------------------------------------------------------------------
+FROM node:22-slim AS builder
+
+WORKDIR /usr/src/app
+
+COPY ./src/frontend/package*.json ./
+
+RUN npm ci || npm install
+
+COPY ./src/frontend/ ./
+
+RUN npm run build
+
+# -----------------------------------------------------------------------------
+# Production stage: lightweight Nginx server hosting static assets on port 5173
+# -----------------------------------------------------------------------------
+FROM nginx:alpine AS production
+
+# Install curl for consistent healthcheck
+RUN apk add --no-cache curl
+
+# Copy compiled static assets from builder
+COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
+
+# Configure Nginx to serve on port 5173 with SPA fallback routing
+RUN printf 'server {\n\
+    listen 5173;\n\
+    server_name localhost;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html;\n\
+    location / {\n\
+        try_files $uri $uri/ /index.html;\n\
+    }\n\
+}\n' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 5173
+
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:5173/ || exit 1
 
-# Define the entrypoint script
-ENTRYPOINT ["entrypoint.sh"]
-
-# Default command: start Vite dev server listening on all network interfaces
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["nginx", "-g", "daemon off;"]

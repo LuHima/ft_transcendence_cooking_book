@@ -1,4 +1,11 @@
-import { IsInt, IsNotEmpty, IsPositive } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsPositive,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class NotificationStructDto {
   @IsInt()
@@ -9,4 +16,9 @@ export class NotificationStructDto {
   @IsInt()
   @IsPositive()
   id_target: number; // ricetta, commento o un altro utente
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  details?: string | null; // testo extra, per ora usato solo dal warn
 }

@@ -14,7 +14,6 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
-  ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
   ApiParam,
 } from '@nestjs/swagger';
@@ -36,7 +35,6 @@ import {
   ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
   ApiNotFoundResponseDto,
-  ApiUnauthorizedResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 
 /**
@@ -64,10 +62,10 @@ export class FriendsController {
     description: 'Paginated collection of friends',
     type: PaginatedFriendsResponseDto,
   })
-  @ApiUnauthorizedResponse({
+  @ApiBadRequestResponse({
     description:
-      'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
+      'Invalid pagination query parameters (e.g. non-integer or out-of-range page/limit)',
+    type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Get()
@@ -90,10 +88,10 @@ export class FriendsController {
     description: 'Paginated collection of pending friend requests',
     type: PaginatedFriendRequestsResponseDto,
   })
-  @ApiUnauthorizedResponse({
+  @ApiBadRequestResponse({
     description:
-      'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
+      'Invalid friend request query parameters (unsupported type enum or invalid pagination format)',
+    type: ApiBadRequestResponseDto,
   })
   @Auth()
   @Get('requests')
@@ -110,7 +108,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Send friend request',
     description:
-      'Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship.',
+      'Sends a friend request to the target user. If the target user has already sent a pending request to caller, automatically resolves into accepted friendship and prunes the pending notification. Enforces a 30-day anti-harassment cooldown if caller was previously rejected by recipient. Idempotently handles concurrent duplicate requests.',
   })
   @ApiParam({
     name: 'addresseeId',
@@ -123,7 +121,8 @@ export class FriendsController {
     type: FriendRequestActionResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Cannot send friend request to yourself',
+    description:
+      'Cannot send friend request to yourself or invalid addressee ID format (must be an integer)',
     type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
@@ -132,13 +131,8 @@ export class FriendsController {
   })
   @ApiConflictResponse({
     description:
-      'Already friends with this user or friend request already sent',
+      'Already friends with this user, friend request already sent, or 30-day rejection cooldown active',
     type: ApiConflictResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
   })
   @Auth()
   @Post('requests/:addresseeId')
@@ -155,7 +149,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Accept incoming friend request',
     description:
-      'Accepts an incoming pending friend request from the specified user.',
+      'Accepts an incoming pending friend request from the specified user, establishes friendship, emits acceptance notification, and deletes incoming request notification from recipient inbox.',
   })
   @ApiParam({
     name: 'requesterId',
@@ -167,14 +161,13 @@ export class FriendsController {
     description: 'Friend request accepted',
     type: FriendRequestActionResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid requester ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Friend request not found',
     type: ApiNotFoundResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
   })
   @Auth()
   @Post('requests/:requesterId/accept')
@@ -191,7 +184,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Reject incoming friend request',
     description:
-      'Rejects an incoming pending friend request, hard deleting the request and cleaning up inbox notification.',
+      'Rejects an incoming pending friend request, updating relationship status to rejected to enforce a 30-day anti-harassment cooldown, and deletes incoming notification from recipient inbox.',
   })
   @ApiParam({
     name: 'requesterId',
@@ -203,14 +196,13 @@ export class FriendsController {
     description: 'Friend request rejected',
     type: FriendRequestActionResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid requester ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Friend request not found',
     type: ApiNotFoundResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
   })
   @Auth()
   @Post('requests/:requesterId/reject')
@@ -239,14 +231,13 @@ export class FriendsController {
     description: 'Friend request cancelled',
     type: FriendRequestActionResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid addressee ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Friend request not found',
     type: ApiNotFoundResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
   })
   @Auth()
   @Delete('requests/:addresseeId')
@@ -263,7 +254,7 @@ export class FriendsController {
   @ApiOperation({
     summary: 'Remove a friend',
     description:
-      'Silently removes an established friendship without notifying the other user.',
+      'Silently removes an established friendship without notifying the other user and prunes unread friend notifications between both parties.',
   })
   @ApiParam({
     name: 'friendId',
@@ -275,14 +266,13 @@ export class FriendsController {
     description: 'Friendship removed successfully',
     type: FriendMessageResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid friend ID format (must be an integer)',
+    type: ApiBadRequestResponseDto,
+  })
   @ApiNotFoundResponse({
     description: 'Friendship not found',
     type: ApiNotFoundResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      'Authentication required: missing or invalid accessToken cookie',
-    type: ApiUnauthorizedResponseDto,
   })
   @Auth()
   @Delete(':friendId')

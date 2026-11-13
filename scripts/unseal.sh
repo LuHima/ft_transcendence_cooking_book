@@ -24,7 +24,7 @@ if [ "$#" -ne 3 ]; then
 	exit 1
 fi
 
-VAULT_CONTAINER="${VAULT_CONTAINER:-vault-container}"
+VAULT_CONTAINER="${VAULT_CONTAINER:-vault}"
 VAULT_ADDR_LOCAL="${VAULT_ADDR_LOCAL:-http://127.0.0.1:8200}"
 
 echo "=== Unsealing Vault (${VAULT_CONTAINER}) ==="
