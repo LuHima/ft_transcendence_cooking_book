@@ -143,6 +143,9 @@ services:
       PORT: ${PORT:-3000}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLI_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLI_SECRET_KEY}
+    # Persistent volume for uploaded recipe media and user avatars
+    volumes:
+      - uploads_data:${UPLOADS_DIR:-/usr/src/app/uploads}
     # Connect to custom bridge network
     networks:
       - back-net
@@ -262,3 +265,5 @@ volumes:
   acme_data:
   # Persistent volume for secrets
   vault_data:
+  # Persistent volume for backend uploaded media (recipes and avatars)
+  uploads_data:
