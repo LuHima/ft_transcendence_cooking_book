@@ -141,7 +141,7 @@ function TwoFactorSettings() {
 						id="twofa-password"
 						label={t('twofa.confirmWithPassword')}
 						autoComplete="current-password"
-						minLength={9}
+						minLength={8}
 						value={password}
 						onChange={setPassword}
 						show={showPassword}

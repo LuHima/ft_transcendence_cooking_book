@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { assetUrl } from '../api/client'
 import type { RecipeSummary } from '../types/models'
+import PrivacyBadge from './PrivacyBadge'
 
 interface RecipeCardProps {
 	recipe: RecipeSummary
@@ -17,7 +18,9 @@ function RecipeCard({ recipe }: RecipeCardProps) {
 	// niente <Link> annidati: il titolo copre tutta la card (after:absolute), l'autore sta sopra (z-10)
 	return (
 		<div className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-surface)] transition-colors hover:border-[var(--wc-basil)]">
-			<div className="aspect-[4/3] w-full overflow-hidden bg-[var(--wc-surface-raised)]">
+			<div className="relative aspect-[4/3] w-full overflow-hidden bg-[var(--wc-surface-raised)]">
+				{/* solo-amici / privata: badge sopra la foto */}
+				<PrivacyBadge privacy={recipe.privacy} className="absolute left-2 top-2 z-[1] bg-[var(--wc-bg)]/90" />
 				{cover ? (
 					<img
 						src={cover}

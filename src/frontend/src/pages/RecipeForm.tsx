@@ -3,13 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { api, ApiError, assetUrl, getErrorMessage, qs, uploadWithProgress } from '../api/client'
-import { FEATURES, UPLOAD_LIMITS } from '../config'
+import { api, ApiError, assetUrl, getErrorMessage, qs, uploadWithProgress, VIDEO_UPLOAD_TIMEOUT_MS } from '../api/client'
+import { UPLOAD_LIMITS } from '../config'
 import { SUPPORTED_LANGS } from '../i18n'
-import { validateImage, validateVideo } from '../lib/files'
+import { IMAGE_ACCEPT, VIDEO_ACCEPT, validateImage, validateVideo } from '../lib/files'
 import { useLang } from '../lib/useLang'
 import { useObjectUrl } from '../lib/useObjectUrl'
 import IngredientPicker from '../components/IngredientPicker'
+import ConfirmDialog from '../components/ConfirmDialog'
+import { PROVENANCE_STYLE, provenanceOf } from '../lib/provenance'
 import { Skeleton } from '../components/Skeleton'
 import type {
 	CatalogIngredient,
@@ -19,14 +21,15 @@ import type {
 	Lang,
 	RecipeDetail,
 	RecipeDifficulty,
-	RecipeVisibility,
+	RecipePrivacy,
 	Unit,
+	AvailableLanguage,
 } from '../types/models'
+import { RECIPE_PRIVACIES } from '../types/models'
 
 const COURSES: Course[] = ['appetizer', 'first_course', 'main_course', 'dessert', 'side_dish', 'drink', 'snack']
 const DIFFICULTIES: RecipeDifficulty[] = ['easy', 'medium', 'hard']
 const UNITS: Unit[] = ['g', 'kg', 'ml', 'cl', 'l', 'oz', 'lb', 'fl_oz', 'cup', 'tbsp', 'tsp', 'piece', 'pinch']
-const VISIBILITIES: RecipeVisibility[] = ['public', 'friends', 'private']
 
 const FIELD_BASE =
 	'rounded-lg border bg-[var(--wc-surface)] px-3 py-2 outline-none focus:border-[var(--wc-basil)] aria-[invalid=true]:border-[var(--wc-paprika)] border-[var(--wc-border)]'
@@ -55,6 +58,25 @@ interface StepRow {
 	imageFile: File | null
 	existingImageUrl: string | null
 	removeExistingImage: boolean
+}
+
+// impronta dei soli campi tradotti: serve a capire se ci sono modifiche non salvate prima di cambiare lingua
+function localizedSnapshot(
+	title: string,
+	description: string,
+	tips: string,
+	preservation: string,
+	steps: { title: string; description: string }[],
+): string {
+	return JSON.stringify([title, description, tips, preservation, steps.map((st) => [st.title, st.description])])
+}
+
+// somma delle durate dei passaggi: i valori vuoti o non validi contano 0
+function sumStepDurations(steps: { duration: string }[]): number {
+	return steps.reduce((sum, st) => {
+		const d = st.duration.trim()
+		return /^\d+$/.test(d) ? sum + Number(d) : sum
+	}, 0)
 }
 
 interface ExistingGalleryItem {
@@ -110,7 +132,7 @@ function ImagePicker({
 			<input
 				ref={inputRef}
 				type="file"
-				accept={UPLOAD_LIMITS.imageTypes.join(',')}
+				accept={IMAGE_ACCEPT}
 				aria-label={label}
 				className="hidden"
 				onChange={(e) => {
@@ -188,12 +210,24 @@ function RecipeForm() {
 	const [servings, setServings] = useState('4')
 	const [prepTime, setPrepTime] = useState('15')
 	const [cookTime, setCookTime] = useState('15')
-	const [visibility, setVisibility] = useState<RecipeVisibility>('public')
+	const [privacy, setPrivacy] = useState<RecipePrivacy>('public')
 	const [tagIds, setTagIds] = useState<number[]>([])
 	const [ingredients, setIngredients] = useState<IngredientRow[]>(() => [newIngredient()])
 	const [steps, setSteps] = useState<StepRow[]>(() => [newStep()])
 	const [tips, setTips] = useState('')
 	const [preservation, setPreservation] = useState('')
+
+	// ─── traduzioni (solo in modifica) ───
+	// provenienza di ogni lingua disponibile (author_original | machine | manual)
+	const [availableLanguages, setAvailableLanguages] = useState<AvailableLanguage[]>([])
+	// scelta esplicita sulla ritraduzione automatica; null = valore predefinito
+	const [retranslateChoice, setRetranslateChoice] = useState<boolean | null>(null)
+	// istantanea dei testi tradotti (titolo, descrizione, consigli, conservazione, passaggi) all'ultimo caricamento
+	const [localizedBaseline, setLocalizedBaseline] = useState('')
+	// lingua verso cui l'utente vuole passare mentre ha modifiche non salvate (apre la conferma)
+	const [pendingLocale, setPendingLocale] = useState<Lang | null>(null)
+	// avviso "somma durate passaggi > tempo totale" chiuso dall'utente per questa sessione
+	const [durationWarningDismissed, setDurationWarningDismissed] = useState(false)
 
 	// media
 	const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -219,6 +253,17 @@ function RecipeForm() {
 	const [saving, setSaving] = useState(false)
 	// avanzamento dei media dopo il salvataggio: n° operazione, file corrente e percentuale complessiva (in byte)
 	const [progress, setProgress] = useState<{ done: number; total: number; label: string; percent: number } | null>(null)
+
+	// durante salvataggio e caricamento dei media: avviso del browser se si chiude o ricarica la pagina
+	useEffect(() => {
+		if (!saving) return
+		const onBeforeUnload = (e: BeforeUnloadEvent) => {
+			e.preventDefault()
+			e.returnValue = ''
+		}
+		window.addEventListener('beforeunload', onBeforeUnload)
+		return () => window.removeEventListener('beforeunload', onBeforeUnload)
+	}, [saving])
 
 	// ─── caricamento catalogo ───
 	useEffect(() => {
@@ -266,7 +311,8 @@ function RecipeForm() {
 			setServings(String(recipe.servings))
 			setPrepTime(String(recipe.prep_time))
 			setCookTime(String(recipe.cook_time))
-			if (recipe.visibility) setVisibility(recipe.visibility)
+			if (recipe.privacy) setPrivacy(recipe.privacy)
+			setAvailableLanguages(recipe.available_languages ?? [])
 			setTagIds(recipe.tags.map((tg) => tg.id))
 			setTips(recipe.tips ?? '')
 			setPreservation(recipe.preservation ?? '')
@@ -296,6 +342,15 @@ function RecipeForm() {
 							}))
 					: [newStep()],
 			)
+			setLocalizedBaseline(
+				localizedSnapshot(
+					recipe.title,
+					recipe.description,
+					recipe.tips ?? '',
+					recipe.preservation ?? '',
+					[...recipe.steps].sort((a, b) => a.step_number - b.step_number).map((st) => ({ title: st.title ?? '', description: st.description })),
+				),
+			)
 			setExistingCover(recipe.cover_image_url)
 			setExistingVideo(recipe.video_url)
 			setExistingGallery(
@@ -314,9 +369,24 @@ function RecipeForm() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- la ricetta si carica una volta per id/utente (non a ogni cambio lingua)
 	}, [id, user])
 
-	// cambio della lingua di modifica: si ricaricano i soli testi tradotti (titolo, descrizione, passaggi, consigli…)
-	async function switchEditLocale(next: Lang) {
+	// i testi tradotti sono cambiati rispetto all'ultimo caricamento? (tempi, ingredienti, tag e media non contano)
+	const localizedDirty =
+		isEdit &&
+		localizedBaseline !== '' &&
+		localizedSnapshot(title, description, tips, preservation, steps) !== localizedBaseline
+
+	// cambio della lingua di modifica: con testi modificati e non salvati si chiede prima conferma
+	function switchEditLocale(next: Lang) {
 		if (!id || next === editLocale) return
+		if (localizedDirty) {
+			setPendingLocale(next)
+			return
+		}
+		void loadEditLocale(next)
+	}
+
+	// si ricaricano i soli testi tradotti (titolo, descrizione, passaggi, consigli…) e si azzera la base di confronto
+	async function loadEditLocale(next: Lang) {
 		setSwitchingLocale(true)
 		try {
 			const r = await api.get<RecipeDetail>(`/recipes/${id}${qs({ lang: next })}`)
@@ -324,14 +394,17 @@ function RecipeForm() {
 				toast.info(t('form.localeUnavailable', { lang: t(`lang.${next}`) }))
 				return
 			}
+			const translated = [...r.steps].sort((a, b) => a.step_number - b.step_number)
+			const nextSteps = steps.map((row, i) =>
+				translated[i] ? { ...row, title: translated[i].title ?? '', description: translated[i].description } : row,
+			)
 			setTitle(r.title)
 			setDescription(r.description)
 			setTips(r.tips ?? '')
 			setPreservation(r.preservation ?? '')
-			const translated = [...r.steps].sort((a, b) => a.step_number - b.step_number)
-			setSteps((prev) =>
-				prev.map((row, i) => (translated[i] ? { ...row, title: translated[i].title ?? '', description: translated[i].description } : row)),
-			)
+			setSteps(nextSteps)
+			if (r.available_languages) setAvailableLanguages(r.available_languages)
+			setLocalizedBaseline(localizedSnapshot(r.title, r.description, r.tips ?? '', r.preservation ?? '', nextSteps))
 			setEditLocale(next)
 			setErrors({})
 		} catch (err) {
@@ -457,15 +530,18 @@ function RecipeForm() {
 				unit: r.unit,
 				...(r.notes != null ? { notes: r.notes } : {}),
 			})),
-			// il campo viene inviato solo quando il backend lo supporta (src/config.ts)
-			...(FEATURES.recipeVisibility ? { visibility } : {}),
+			// privacy della ricetta (public | friends_only | private)
+			privacy,
 		}
 
 		setSaving(true)
 		let saved: RecipeDetail
 		try {
 			saved = isEdit
-				? await api.patch<RecipeDetail>(`/recipes/${id}${editLocale === sourceLang ? qs({ retranslate: true }) : ''}`, { ...body, locale: editLocale })
+				? await api.patch<RecipeDetail>(`/recipes/${id}${editLocale === sourceLang && retranslate ? qs({ retranslate: true }) : ''}`, {
+						...body,
+						locale: editLocale,
+					})
 				: await api.post<RecipeDetail>('/recipes', body)
 		} catch (err) {
 			// 400 = validazione o lingua del testo non coerente con quella dichiarata (LibreTranslate)
@@ -478,18 +554,27 @@ function RecipeForm() {
 		// ogni operazione ha un'etichetta e un peso in byte (0 per le rimozioni) per calcolare la barra complessiva
 		interface MediaJob {
 			label: string
+			// etichetta quando i byte sono già arrivati e il server sta ancora elaborando (compressione del video)
+			processingLabel?: string
 			bytes: number
 			run: (onBytes: (loaded: number) => void) => Promise<unknown>
 		}
 		const jobs: MediaJob[] = []
 		const rid = saved.id
-		const upload = (label: string, path: string, field: string, files: File[]): MediaJob => ({
+		const upload = (
+			label: string,
+			path: string,
+			field: string,
+			files: File[],
+			opts: { timeoutMs?: number; processingLabel?: string } = {},
+		): MediaJob => ({
 			label,
+			processingLabel: opts.processingLabel,
 			bytes: files.reduce((sum, f) => sum + f.size, 0),
 			run: (onBytes) => {
 				const fd = new FormData()
 				files.forEach((f) => fd.append(field, f))
-				return uploadWithProgress(path, fd, (loaded) => onBytes(loaded))
+				return uploadWithProgress(path, fd, (loaded) => onBytes(loaded), { timeoutMs: opts.timeoutMs })
 			},
 		})
 		const removal = (label: string, path: string): MediaJob => ({ label, bytes: 0, run: () => api.delete(path) })
@@ -501,7 +586,15 @@ function RecipeForm() {
 		}
 		if (coverFile) jobs.push(upload(t('form.cover'), `/recipes/${rid}/cover`, 'file', [coverFile]))
 		if (galleryFiles.length) jobs.push(upload(t('form.galleryLabel'), `/recipes/${rid}/gallery`, 'files', galleryFiles))
-		if (videoFile) jobs.push(upload(t('form.video'), `/recipes/${rid}/video`, 'file', [videoFile]))
+		// il backend comprime il video con FFmpeg prima di rispondere: timeout lungo e messaggio dedicato
+		if (videoFile) {
+			jobs.push(
+				upload(t('form.uploadingVideo'), `/recipes/${rid}/video`, 'file', [videoFile], {
+					timeoutMs: VIDEO_UPLOAD_TIMEOUT_MS,
+					processingLabel: t('form.optimizingVideo'),
+				}),
+			)
+		}
 		steps.forEach((s, i) => {
 			const n = i + 1
 			if (isEdit && s.removeExistingImage && !s.imageFile && s.existingImageUrl) {
@@ -522,7 +615,13 @@ function RecipeForm() {
 				setProgress({ done: i, total: jobs.length, label: job.label, percent: percentOf(i, 0) })
 				try {
 					await job.run((loaded) =>
-						setProgress({ done: i, total: jobs.length, label: job.label, percent: percentOf(i, Math.min(loaded, job.bytes)) }),
+						setProgress({
+							done: i,
+							total: jobs.length,
+							// invio completato ma risposta non ancora arrivata: il server sta elaborando
+							label: job.processingLabel && loaded >= job.bytes ? job.processingLabel : job.label,
+							percent: percentOf(i, Math.min(loaded, job.bytes)),
+						}),
 					)
 				} catch {
 					failed++
@@ -566,7 +665,21 @@ function RecipeForm() {
 
 	const galleryRoom = UPLOAD_LIMITS.galleryMax - (existingGallery.length - removedGalleryIds.length) - galleryFiles.length
 	const totalTime = (Number(prepTime) || 0) + (Number(cookTime) || 0)
-	const mediaAccept = UPLOAD_LIMITS.videoTypes.join(',')
+	// avviso non bloccante: i passaggi possono svolgersi in parallelo, quindi si può salvare comunque
+	const stepsDurationSum = sumStepDurations(steps)
+	const showDurationWarning = !durationWarningDismissed && totalTime > 0 && stepsDurationSum > totalTime
+
+	// provenienza della lingua che si sta modificando e ritraduzione automatica (solo in modifica)
+	const editProvenance = isEdit ? provenanceOf(editLocale, sourceLang, availableLanguages) : null
+	// lingue che una ritraduzione aggiornerebbe: tradotte automaticamente o non ancora tradotte
+	const retranslatable = SUPPORTED_LANGS.filter((l) => l !== sourceLang).filter((l) => {
+		const prov = provenanceOf(l, sourceLang, availableLanguages)
+		return prov === null || prov === 'machine'
+	})
+	const canRetranslate = retranslatable.length > 0
+	// predefinito: attivo se c'è qualcosa da ritradurre; disattivo (e bloccato) se tutte le altre lingue sono curate a mano
+	const retranslate = canRetranslate && (retranslateChoice ?? true)
+	const mediaAccept = VIDEO_ACCEPT
 
 	return (
 		<div className="mx-auto max-w-2xl px-4 py-12">
@@ -595,11 +708,16 @@ function RecipeForm() {
 								onChange={(e) => (isEdit ? void switchEditLocale(e.target.value as Lang) : setSourceLang(e.target.value as Lang))}
 								className={SELECT}
 							>
-								{SUPPORTED_LANGS.map((l) => (
-									<option key={l} value={l}>
-										{t(`lang.${l}`)}
-									</option>
-								))}
+								{SUPPORTED_LANGS.map((l) => {
+									// in modifica ogni lingua mostra la sua provenienza (originale, curata, automatica, non tradotta)
+									const prov = isEdit ? provenanceOf(l, sourceLang, availableLanguages) : undefined
+									return (
+										<option key={l} value={l}>
+											{t(`lang.${l}`)}
+											{prov !== undefined && ` · ${t(`form.provenanceOption.${prov ?? 'missing'}`)}`}
+										</option>
+									)
+								})}
 							</select>
 						</Field>
 						<Field label={t('recipe.course')} htmlFor="rf-course">
@@ -641,6 +759,51 @@ function RecipeForm() {
 					<p className="-mt-2 text-xs text-[var(--wc-text-muted)]">
 						{isEdit ? t('form.editLanguageHelp', { lang: t(`lang.${sourceLang}`) }) : t('form.languageHelp')}
 					</p>
+
+					{/* provenienza della lingua in modifica e ritraduzione automatica */}
+					{isEdit && (
+						<div className="space-y-3 rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-3 text-sm">
+							<div className="flex flex-wrap items-center gap-2">
+								<span className="text-xs text-[var(--wc-text-muted)]">{t('form.provenanceLabel', { lang: t(`lang.${editLocale}`) })}</span>
+								{editProvenance ? (
+									<span
+										className={`inline-block rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${PROVENANCE_STYLE[editProvenance]}`}
+									>
+										{t(`recipe.provenance.${editProvenance}`)}
+									</span>
+								) : (
+									<span className="text-xs text-[var(--wc-text-muted)]">{t('form.provenanceOption.missing')}</span>
+								)}
+							</div>
+							{editProvenance && <p className="text-xs text-[var(--wc-text-muted)]">{t(`form.provenanceHelp.${editProvenance}`)}</p>}
+							{editLocale !== sourceLang && editProvenance === 'machine' && (
+								<p className="rounded-lg border-l-4 border-[var(--wc-saffron)] bg-[var(--wc-bg)] px-3 py-2 text-xs text-[var(--wc-text)]">
+									{t('form.machinePromotionNote')}
+								</p>
+							)}
+							{editLocale === sourceLang && (
+								<div>
+									<label className={`flex items-start gap-2 ${canRetranslate ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+										<input
+											type="checkbox"
+											className="mt-1"
+											checked={retranslate}
+											disabled={!canRetranslate}
+											onChange={(e) => setRetranslateChoice(e.target.checked)}
+										/>
+										<span>
+											<span className="block font-medium text-[var(--wc-text)]">{t('form.retranslate')}</span>
+											<span className="block text-xs text-[var(--wc-text-muted)]">
+												{canRetranslate
+													? t('form.retranslateHelp', { langs: retranslatable.map((l) => t(`lang.${l}`)).join(', ') })
+													: t('form.retranslateAllManual')}
+											</span>
+										</span>
+									</label>
+								</div>
+							)}
+						</div>
+					)}
 
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 						<Field label={t('form.prepTimeMin')} htmlFor="rf-prep" error={errors.prepTime}>
@@ -686,35 +849,32 @@ function RecipeForm() {
 					</Field>
 				</section>
 
-				{/* ─── visibilità ─── */}
+				{/* ─── privacy della ricetta ─── */}
 				<section>
 					<h2 className={SECTION_TITLE}>{t('form.visibility')}</h2>
 					<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t('form.visibility')}>
-						{VISIBILITIES.map((v) => (
+						{RECIPE_PRIVACIES.map((v) => (
 							<label
 								key={v}
 								className={`cursor-pointer rounded-xl border px-4 py-3 text-sm transition-colors ${
-									visibility === v
+									privacy === v
 										? 'border-[var(--wc-basil)] bg-[var(--wc-surface-raised)]'
 										: 'border-[var(--wc-border)] hover:border-[var(--wc-basil)]'
 								}`}
 							>
 								<input
 									type="radio"
-									name="visibility"
+									name="privacy"
 									value={v}
-									checked={visibility === v}
-									onChange={() => setVisibility(v)}
+									checked={privacy === v}
+									onChange={() => setPrivacy(v)}
 									className="sr-only"
 								/>
-								<span className="block font-medium text-[var(--wc-text)]">{t(`visibility.${v}`)}</span>
-								<span className="block text-xs text-[var(--wc-text-muted)]">{t(`visibility.${v}Help`)}</span>
+								<span className="block font-medium text-[var(--wc-text)]">{t(`privacy.${v}`)}</span>
+								<span className="block text-xs text-[var(--wc-text-muted)]">{t(`privacy.${v}Help`)}</span>
 							</label>
 						))}
 					</div>
-					{!FEATURES.recipeVisibility && (
-						<p className="mt-2 text-xs text-[var(--wc-text-muted)]">{t('form.visibilityNotReady')}</p>
-					)}
 				</section>
 
 				{/* ─── tag ─── */}
@@ -884,6 +1044,26 @@ function RecipeForm() {
 							)
 						})}
 					</ol>
+					{/* avviso non bloccante: la somma delle durate supera il tempo totale (i passaggi possono essere paralleli) */}
+					{showDurationWarning && (
+						<div
+							role="status"
+							className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--wc-saffron)] bg-[var(--wc-surface)] px-4 py-3 text-sm text-[var(--wc-text)]"
+						>
+							<span aria-hidden="true" className="text-[var(--wc-saffron)]">⏱</span>
+							<p className="flex-1">
+								{t('form.warnings.stepDurationExceedsTotal', { stepsSum: stepsDurationSum, totalTime })}
+							</p>
+							<button
+								type="button"
+								onClick={() => setDurationWarningDismissed(true)}
+								aria-label={t('form.warnings.dismiss')}
+								className="text-lg leading-none text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]"
+							>
+								×
+							</button>
+						</div>
+					)}
 					<button type="button" onClick={() => setSteps((prev) => [...prev, newStep()])} className={`mt-4 ${SECONDARY_BTN}`}>
 						+ {t('form.addStep')}
 					</button>
@@ -955,7 +1135,7 @@ function RecipeForm() {
 							ref={galleryInputRef}
 							type="file"
 							multiple
-							accept={UPLOAD_LIMITS.imageTypes.join(',')}
+							accept={IMAGE_ACCEPT}
 							className="hidden"
 							aria-label={t('form.addGallery')}
 							onChange={(e) => {
@@ -1030,14 +1210,19 @@ function RecipeForm() {
 					{saving && !progress && <span className="text-xs text-[var(--wc-text-muted)]">{t('form.translating')}</span>}
 				</div>
 
-				{/* barra di caricamento di foto e video (dopo il salvataggio della ricetta) */}
-				{progress && (
-					<div className="space-y-1" aria-live="polite">
-						<div className="flex justify-between gap-3 text-xs text-[var(--wc-text-muted)]">
-							<span className="truncate">
+			</form>
+
+			{/* caricamento di foto e video dopo il salvataggio: finestra che copre la pagina,
+			    così non si naviga altrove per errore mentre il server comprime i file */}
+			{progress && (
+				<div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/70 p-4" role="alertdialog" aria-modal="true" aria-label={t('form.uploadProgress')}>
+					<div className="w-full max-w-md space-y-3 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6" aria-live="polite">
+						<h2 className="font-display text-xl text-[var(--wc-saffron)]">{t('form.uploadProgress')}</h2>
+						<div className="flex justify-between gap-3 text-sm text-[var(--wc-text)]">
+							<span className="min-w-0">
 								{t('form.uploadingItem', { label: progress.label, done: Math.min(progress.done + 1, progress.total), total: progress.total })}
 							</span>
-							<span className="shrink-0 font-medium text-[var(--wc-text)]">{progress.percent}%</span>
+							<span className="shrink-0 font-medium">{progress.percent}%</span>
 						</div>
 						<div
 							role="progressbar"
@@ -1054,8 +1239,25 @@ function RecipeForm() {
 						</div>
 						<p className="text-xs text-[var(--wc-text-muted)]">{t('form.uploadKeepOpen')}</p>
 					</div>
-				)}
-			</form>
+				</div>
+			)}
+
+			{/* conferma prima di cambiare lingua con testi modificati e non salvati */}
+			{pendingLocale && (
+				<ConfirmDialog
+					title={t('form.discardTitle')}
+					confirmLabel={t('form.discardConfirm', { lang: t(`lang.${pendingLocale}`) })}
+					danger
+					onConfirm={() => {
+						const next = pendingLocale
+						setPendingLocale(null)
+						void loadEditLocale(next)
+					}}
+					onClose={() => setPendingLocale(null)}
+				>
+					<p>{t('form.discardText', { from: t(`lang.${editLocale}`), to: t(`lang.${pendingLocale}`) })}</p>
+				</ConfirmDialog>
+			)}
 		</div>
 	)
 }

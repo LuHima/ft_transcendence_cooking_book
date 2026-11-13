@@ -9,6 +9,7 @@ import IngredientMultiPicker from '../components/IngredientMultiPicker'
 import { RecipeGridSkeleton } from '../components/Skeleton'
 import { api, asArray, getErrorMessage, qs, toPage } from '../api/client'
 import { useLang } from '../lib/useLang'
+import { SUPPORTED_LANGS } from '../i18n'
 import { DEFAULT_RECIPE_SORT, parseRecipeSort } from '../lib/recipeSort'
 import type {
 	CatalogIngredient,
@@ -81,6 +82,7 @@ function MatchModeToggle({ value, onChange, label }: { value: MatchMode; onChang
 //   q→search  course  difficulty  min_time  max_time  max_prep_time  curated→curated_only
 //   tags→tag_ids  xtags→exclude_tag_ids  tag_mode
 //   ings→ingredient_ids  xings→exclude_ingredient_ids  ing_mode→ingredient_mode
+//   src→source_lang  author→author_id
 //   sort→sort_by+sort_order  page   (usort = ordinamento utenti)
 function SearchResults() {
 	const { t } = useTranslation()
@@ -95,6 +97,10 @@ function SearchResults() {
 	const maxTime = nonNegInt(params.get('max_time'))
 	const maxPrepTime = nonNegInt(params.get('max_prep_time'))
 	const curatedOnly = params.get('curated') === '1'
+	// lingua in cui l'autore ha scritto la ricetta e filtro per autore (id)
+	const sourceLangParam = params.get('src') ?? ''
+	const sourceLang = (SUPPORTED_LANGS as string[]).includes(sourceLangParam) ? sourceLangParam : ''
+	const authorId = nonNegInt(params.get('author'))
 	const tagIds = idList(params.get('tags'))
 	const excludeTagIds = idList(params.get('xtags')).filter((id) => !tagIds.includes(id))
 	const tagMode: MatchMode = params.get('tag_mode') === 'any' ? 'any' : 'all'
@@ -164,6 +170,8 @@ function SearchResults() {
 		maxTime,
 		maxPrepTime,
 		curatedOnly,
+		sourceLang,
+		authorId,
 		tagKey,
 		xTagKey,
 		tagMode,
@@ -192,6 +200,8 @@ function SearchResults() {
 				max_prep_time: maxPrepTime,
 				// curated_only richiede lang (sempre presente)
 				curated_only: curatedOnly ? 'true' : undefined,
+				source_lang: sourceLang,
+				author_id: authorId && Number(authorId) > 0 ? authorId : undefined,
 				tag_ids: tagKey,
 				tag_mode: tagKey ? tagMode : undefined,
 				exclude_tag_ids: xTagKey,
@@ -233,6 +243,8 @@ function SearchResults() {
 		maxTime,
 		maxPrepTime,
 		curatedOnly,
+		sourceLang,
+		authorId,
 		tagKey,
 		xTagKey,
 		tagMode,
@@ -277,7 +289,7 @@ function SearchResults() {
 	}
 
 	const activeFilters =
-		[course, difficulty, minTime, maxTime, maxPrepTime].filter(Boolean).length +
+		[course, difficulty, minTime, maxTime, maxPrepTime, sourceLang, authorId].filter(Boolean).length +
 		(curatedOnly ? 1 : 0) +
 		tagIds.length +
 		excludeTagIds.length +
@@ -383,6 +395,30 @@ function SearchResults() {
 					</div>
 					{timeRangeInvalid && <p className="text-xs text-[var(--wc-paprika)]">{t('search.timeRangeInvalid')}</p>}
 
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+						<label className="text-xs text-[var(--wc-text-muted)]">
+							{t('search.sourceLang')}
+							<select value={sourceLang} onChange={(e) => update({ src: e.target.value || null })} className={`${SELECT} mt-1 w-full`}>
+								<option value="">{t('search.any')}</option>
+								{SUPPORTED_LANGS.map((l) => (
+									<option key={l} value={l}>
+										{t(`lang.${l}`)}
+									</option>
+								))}
+							</select>
+						</label>
+						<label className="text-xs text-[var(--wc-text-muted)]">
+							{t('search.authorId')}
+							<input
+								inputMode="numeric"
+								value={authorId}
+								placeholder="42"
+								onChange={(e) => update({ author: e.target.value.replace(/\D/g, '') || null })}
+								className={`${SELECT} mt-1 w-full`}
+							/>
+						</label>
+					</div>
+
 					<label className="flex cursor-pointer items-start gap-2 text-sm text-[var(--wc-text)]">
 						<input
 							type="checkbox"
@@ -481,6 +517,8 @@ function SearchResults() {
 									max_time: null,
 									max_prep_time: null,
 									curated: null,
+									src: null,
+									author: null,
 									tags: null,
 									xtags: null,
 									tag_mode: null,

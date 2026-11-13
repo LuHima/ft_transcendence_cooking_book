@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext'
 import { useLang } from '../lib/useLang'
 import Pagination from '../components/Pagination'
 import RecipeSortSelect from '../components/RecipeSortSelect'
+import PrivacyBadge from '../components/PrivacyBadge'
 import { DEFAULT_RECIPE_SORT, parseRecipeSort, type RecipeSortValue } from '../lib/recipeSort'
 import { ListSkeleton } from '../components/Skeleton'
 import type { Paginated, RecipeSummary } from '../types/models'
@@ -110,11 +111,15 @@ function MyRecipes() {
 										>
 											{recipe.title}
 										</Link>
-										{recipe.is_active === false && (
-											<span className="mr-2 inline-block rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
-												{t('recipe.suspendedBadge')}
-											</span>
-										)}
+										<span className="flex flex-wrap items-center gap-1.5">
+											{/* in "Le mie ricette" si mostra sempre il livello di privacy, anche "Pubblica" */}
+											<PrivacyBadge privacy={recipe.privacy} showPublic />
+											{recipe.is_active === false && (
+												<span className="inline-block rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
+													{t('recipe.suspendedBadge')}
+												</span>
+											)}
+										</span>
 										<p className="text-xs text-[var(--wc-text-muted)]">
 											{t(`difficulty.${recipe.difficulty}`)} · {t('recipe.minutes', { count: recipe.total_time })} · ♥{' '}
 											{recipe.likes_count}

@@ -101,13 +101,24 @@ export async function apiFetch<T = unknown>(path: string, options: RequestOption
 	return data as T
 }
 
+// tempo massimo di attesa di un upload: comprende l'invio e l'elaborazione sul server
+// (il backend comprime i video con FFmpeg in modo sincrono: anche 60-90 secondi su CPU lente)
+export const UPLOAD_TIMEOUT_MS = 120_000
+export const VIDEO_UPLOAD_TIMEOUT_MS = 300_000
+
+interface UploadOptions {
+	retryOnUnauthorized?: boolean
+	// 0 = nessun limite
+	timeoutMs?: number
+}
+
 // upload multipart con avanzamento (fetch non espone il progresso dell'invio): usa XMLHttpRequest.
 // onProgress riceve i byte inviati e il totale. Stessa gestione di apiFetch per 401 → refresh → nuovo tentativo.
 export async function uploadWithProgress<T = unknown>(
 	path: string,
 	formData: FormData,
 	onProgress?: (loaded: number, total: number) => void,
-	retryOnUnauthorized = true,
+	{ retryOnUnauthorized = true, timeoutMs = UPLOAD_TIMEOUT_MS }: UploadOptions = {},
 ): Promise<T> {
 	const send = () =>
 		new Promise<{ status: number; statusText: string; data: unknown }>((resolve, reject) => {
@@ -115,6 +126,7 @@ export async function uploadWithProgress<T = unknown>(
 			xhr.open('POST', `${API_BASE}${path}`)
 			xhr.withCredentials = true
 			xhr.responseType = 'text'
+			xhr.timeout = timeoutMs
 			xhr.upload.onprogress = (e) => {
 				if (e.lengthComputable) onProgress?.(e.loaded, e.total)
 			}
@@ -132,6 +144,7 @@ export async function uploadWithProgress<T = unknown>(
 			}
 			xhr.onerror = () => reject(new ApiError(0, i18n.t('common.networkError')))
 			xhr.onabort = () => reject(new ApiError(0, i18n.t('common.networkError')))
+			xhr.ontimeout = () => reject(new ApiError(408, i18n.t('form.errors.uploadTimeout')))
 			xhr.send(formData)
 		})
 

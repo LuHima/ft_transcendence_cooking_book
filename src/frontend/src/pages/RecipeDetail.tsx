@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -8,17 +8,15 @@ import { useLang } from '../lib/useLang'
 import Comments from '../components/Comments'
 import Avatar from '../components/Avatar'
 import { ReportButton } from '../components/ReportDialog'
-import { canDeleteRecipe, canEditRecipe, isAdmin as isAdminUser, isStaff as isStaffUser } from '../lib/permissions'
+import { canDeleteRecipe, canEditRecipe, canPurge, canRestoreRecipe, isStaff as isStaffUser } from '../lib/permissions'
 import ConfirmDialog from '../components/ConfirmDialog'
+import PrivacyBadge from '../components/PrivacyBadge'
 import { RecipeDetailSkeleton } from '../components/Skeleton'
 import { exportRecipePdf, formatQuantity, ingredientNote } from '../lib/recipePdf'
-import type { RecipeDetail as RecipeDetailType, TranslationSource } from '../types/models'
+import type { RecipeDetail as RecipeDetailType } from '../types/models'
+import { PROVENANCE_STYLE } from '../lib/provenance'
 
-const PROVENANCE_STYLE: Record<TranslationSource, string> = {
-	author_original: 'border-[var(--wc-basil)] text-[var(--wc-basil)]',
-	manual: 'border-[var(--wc-saffron)] text-[var(--wc-saffron)]',
-	machine: 'border-[var(--wc-border)] text-[var(--wc-text-muted)]',
-}
+
 
 function InfoBox({ label, children }: { label: string; children: ReactNode }) {
 	return (
@@ -44,6 +42,9 @@ function RecipeDetail() {
 	const [exporting, setExporting] = useState(false)
 	const [reactivating, setReactivating] = useState(false)
 	const [confirmPurge, setConfirmPurge] = useState(false)
+	// ricetta "solo amici": 401 = ospite (deve accedere), 403 = utente non amico dell'autore
+	const [restricted, setRestricted] = useState<401 | 403 | null>(null)
+	const location = useLocation()
 
 	// si ricarica anche al cambio lingua dell'interfaccia: il backend restituisce i testi tradotti
 	useEffect(() => {
@@ -54,9 +55,15 @@ function RecipeDetail() {
 				if (cancelled) return
 				setRecipe(data)
 				setError(null)
+				setRestricted(null)
 			})
 			.catch((err) => {
 				if (cancelled) return
+				// le ricette private restituiscono 404 a chi non è l'autore (non se ne rivela l'esistenza)
+				if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+					setRestricted(err.status)
+					return
+				}
 				setError(err instanceof ApiError && err.status !== 404 ? err.message : t('recipe.notFound'))
 			})
 		return () => {
@@ -85,15 +92,26 @@ function RecipeDetail() {
 
 	async function handleDelete() {
 		if (!recipe) return
-		const moderation = isAdmin && !isOwner
+		// sospensione da parte dello staff (admin o moderatore) su una ricetta altrui
+		const moderation = isStaff && !isOwner
 		if (!confirm(moderation ? t('recipe.confirmDeleteAdmin') : t('recipe.confirmDelete'))) return
 		setDeleting(true)
 		try {
 			await api.delete(`/recipes/${recipe.id}`)
-			toast.success(t('recipe.deleted'))
-			navigate(moderation ? '/admin' : '/my-recipes')
+			if (moderation) {
+				// lo staff resta sulla pagina: compare il banner "ricetta sospesa"
+				setRecipe({ ...recipe, is_active: false })
+				toast.success(t('admin.recipes.suspended'))
+				setDeleting(false)
+			} else {
+				toast.success(t('recipe.deleted'))
+				navigate('/my-recipes')
+			}
 		} catch (err) {
-			toast.error(getErrorMessage(err, t('recipe.deleteError')))
+			// 403: un moderatore non può sospendere le ricette di un amministratore
+			toast.error(
+				err instanceof ApiError && err.status === 403 ? t('recipe.suspendForbidden') : getErrorMessage(err, t('recipe.deleteError')),
+			)
 			setDeleting(false)
 		}
 	}
@@ -153,6 +171,34 @@ function RecipeDetail() {
 		}
 	}
 
+	if (restricted && !recipe) {
+		return (
+			<div className="mx-auto max-w-xl px-4 py-16">
+				<div className="rounded-2xl border border-[var(--wc-saffron)] bg-[var(--wc-surface)] p-8 text-center">
+					<p aria-hidden="true" className="text-4xl">👥</p>
+					<h1 className="mt-3 font-display text-2xl text-[var(--wc-saffron)]">{t('recipe.friendsOnly.title')}</h1>
+					<p className="mt-2 text-sm text-[var(--wc-text-muted)]">
+						{restricted === 401 ? t('recipe.friendsOnly.guest') : t('recipe.friendsOnly.notFriend')}
+					</p>
+					<div className="mt-6 flex flex-wrap justify-center gap-3">
+						{restricted === 401 && (
+							<Link
+								to="/login"
+								state={{ from: location }}
+								className="rounded-full bg-[var(--wc-basil)] px-5 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)]"
+							>
+								{t('nav.signIn')}
+							</Link>
+						)}
+						<Link to="/search" className="rounded-full border border-[var(--wc-border)] px-5 py-2 text-sm hover:border-[var(--wc-basil)]">
+							{t('recipe.backToRecipes')}
+						</Link>
+					</div>
+				</div>
+			</div>
+		)
+	}
+
 	if (error && !recipe) {
 		return (
 			<div className="mx-auto max-w-2xl px-4 py-16">
@@ -166,14 +212,14 @@ function RecipeDetail() {
 	if (!recipe) return <RecipeDetailSkeleton />
 
 	const isOwner = Boolean(user && recipe.author && recipe.author.id === user.id)
-	const isAdmin = isAdminUser(user)
 	const isStaff = isStaffUser(user)
+	const canReactivate = canRestoreRecipe(user, recipe.author?.id)
 	const suspended = recipe.is_active === false
 	const provenance = recipe.translation_source
-	// proprietario o admin modificano / eliminano; il moderatore elimina solo dalla coda segnalazioni
+	// modifica e ritraduzione: proprietario o admin; sospensione: proprietario o staff (admin e moderatori)
 	const canEdit = canEditRecipe(user, recipe.author?.id)
-	const canDelete = canDeleteRecipe(user, recipe.author?.id)
-	const canManage = canEdit || canDelete
+	const canDelete = canDeleteRecipe(user, recipe.author?.id) && !suspended
+	const canManage = canEdit
 	const author = recipe.author
 
 	const cover = assetUrl(recipe.cover_image_url)
@@ -193,7 +239,7 @@ function RecipeDetail() {
 						<span className="font-semibold text-[var(--wc-paprika)]">⚠ {t('recipe.suspendedTitle')}</span>{' '}
 						{t('recipe.suspendedText')}
 					</span>
-					{isStaff && (
+					{canReactivate && (
 						<button
 							onClick={reactivate}
 							disabled={reactivating}
@@ -222,7 +268,10 @@ function RecipeDetail() {
 			)}
 
 			<div className="flex items-start justify-between gap-4">
-				<h1 className="font-display text-4xl text-[var(--wc-text)]">{recipe.title}</h1>
+				<div className="min-w-0">
+					<h1 className="font-display text-4xl text-[var(--wc-text)]">{recipe.title}</h1>
+					<PrivacyBadge privacy={recipe.privacy} className="mt-2" />
+				</div>
 				<button
 					onClick={toggleLike}
 					disabled={liking}
@@ -342,9 +391,9 @@ function RecipeDetail() {
 					disabled={deleting}
 					className="rounded-full border border-[var(--wc-border)] px-4 py-1.5 text-sm text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
 				>
-					{isAdmin && !isOwner ? t('recipe.removeAdmin') : t('common.delete')}
+					{isStaff && !isOwner ? t('recipe.removeAdmin') : t('common.delete')}
 				</button>}
-				{isAdmin && (
+				{canPurge(user) && (
 					<button
 						onClick={() => setConfirmPurge(true)}
 						className="rounded-full border border-[var(--wc-paprika)] px-4 py-1.5 text-sm font-medium text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)]"
