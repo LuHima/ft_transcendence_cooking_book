@@ -2,6 +2,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Environment } from "@react-three/drei";
 import { Group, PCFShadowMap, SpotLight } from "three";
+import { useLang } from "../../lib/useLang";
 
 import KitchenModel from "./KitchenModel.tsx";
 import LoadingOverlay from "./LoadingOverlay.tsx";
@@ -69,6 +70,7 @@ function SceneContent({
 }
 
 export default function Scene() {
+  const lang = useLang();
   const initialApiPage = 1;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
@@ -95,7 +97,7 @@ export default function Scene() {
   const [isBullseyeOn, setIsBullseyeOn] = useState(true);
 
   useEffect(() => {
-    fetchData(`/api/recipes?page=${initialApiPage}&limit=30&lang=it`)
+    fetchData(`/api/recipes?page=${initialApiPage}&limit=30&lang=${lang}`)
       .then((loadedRecipes) => {
         setRecipes(mapRecipes(loadedRecipes));
         setHasPreviousPage(loadedRecipes.has_prev_page);
@@ -108,7 +110,7 @@ export default function Scene() {
       .finally(() => {
         setRecipesLoaded(true);
       });
-  }, []);
+  }, [lang]);
 
   // Functions to handle API page changes
   // This function fetches the recipes for a given page and updates the state accordingly
@@ -122,7 +124,7 @@ export default function Scene() {
     // Fetch the recipes for the specified page
     try {
       const loadedRecipes = await fetchData(
-        `/api/recipes?page=${page}&limit=30&lang=it`,
+        `/api/recipes?page=${page}&limit=30&lang=${lang}`,
       );
       setRecipes(mapRecipes(loadedRecipes));
       setHasPreviousPage(loadedRecipes.has_prev_page);
