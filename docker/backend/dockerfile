@@ -61,7 +61,7 @@ COPY ./src/backend/ ./
 
 RUN npx prisma generate
 
-RUN npm run build && ( [ -f dist/main.js ] || echo "require('./src/main.js');" > dist/main.js )
+RUN npm run build
 
 # -----------------------------------------------------------------------------
 # Production stage: stripped runtime container with only production dependencies
@@ -80,4 +80,4 @@ COPY --from=builder /usr/src/app/prisma/seed/data/*.json ./dist/prisma/seed/data
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
