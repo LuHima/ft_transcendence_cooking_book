@@ -39,13 +39,19 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
   it('seeds ~3,000 ingredients and 12+ tags with complete it/en/fr translations', async () => {
     const ingredientCount = await prisma.ingredient.count();
     const tagCount = await prisma.tag.count();
-    expect(ingredientCount).toBeGreaterThanOrEqual(2900);
+    expect(ingredientCount).toBeGreaterThanOrEqual(2800);
     expect(tagCount).toBeGreaterThanOrEqual(12);
   });
 
-  it('seeds 30 users with valid 2FA encryption, deleted_at, and ban states', async () => {
-    const userCount = await prisma.user.count();
-    expect(userCount).toBe(30);
+  it('seeds 30 curated users with valid 2FA encryption, deleted_at, and ban states', async () => {
+    const users = await prisma.user.findMany();
+    expect(users).toHaveLength(30);
+    for (const u of users) {
+      expect(u.username).not.toMatch(/^demo_cook_/);
+      expect(`${u.first_name ?? ''} ${u.last_name ?? ''}`).not.toMatch(
+        /Chef Demo/,
+      );
+    }
 
     const alex = await prisma.user.findUniqueOrThrow({
       where: { username: 'alex_secure' },
@@ -67,11 +73,11 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     expect(spamBot.banned_until).toBeNull();
   });
 
-  it('seeds 50 recipes with platform custody, local media files, and zero external URLs', async () => {
+  it('seeds 32 curated recipes with platform custody, local media files, and zero external URLs', async () => {
     const recipes = await prisma.recipe.findMany({
       include: { steps: true, recipe_media: true },
     });
-    expect(recipes.length).toBe(50);
+    expect(recipes.length).toBe(32);
 
     const exUtente = await prisma.user.findUniqueOrThrow({
       where: { username: 'ex_utente' },
@@ -90,14 +96,15 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     expect(recipes.some((r) => r.privacy === RecipePrivacy.private)).toBe(true);
 
     for (const recipe of recipes) {
-      if (recipe.cover_image_url) {
-        expect(recipe.cover_image_url).toMatch(
-          new RegExp(`^/api/media/recipes/${recipe.id}/r${recipe.id}-`),
-        );
-        const resolved = resolveStoredUploadPath(recipe.cover_image_url);
-        expect(resolved).not.toBeNull();
-        expect(fs.existsSync(resolved!)).toBe(true);
-      }
+      expect(recipe.cover_image_url).not.toBeNull();
+      expect(recipe.cover_image_url).toMatch(
+        new RegExp(`^/api/media/recipes/${recipe.id}/r${recipe.id}-`),
+      );
+      const resolvedCover = resolveStoredUploadPath(recipe.cover_image_url!);
+      expect(resolvedCover).not.toBeNull();
+      expect(fs.existsSync(resolvedCover!)).toBe(true);
+      expect(fs.statSync(resolvedCover!).size).toBeGreaterThan(2048);
+
       if (recipe.video_url) {
         expect(recipe.video_url).toMatch(
           new RegExp(`^/api/media/recipes/${recipe.id}/r${recipe.id}-`),
@@ -108,14 +115,21 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
       }
     }
 
-    // Showcase recipes (not generated) must appear on Page 1 under ORDER BY created_at DESC
+    // Showcase recipes (1..20) on Page 1 and curated recipes (21..32) on Page 2 under ORDER BY created_at DESC
     const page1 = await prisma.recipe.findMany({
       orderBy: { created_at: 'desc' },
       take: 20,
       include: { translations: { where: { locale: 'en' } } },
     });
+    const page2 = await prisma.recipe.findMany({
+      orderBy: { created_at: 'desc' },
+      skip: 20,
+      take: 20,
+      include: { translations: { where: { locale: 'en' } } },
+    });
     expect(page1).toHaveLength(20);
-    for (const r of page1) {
+    expect(page2).toHaveLength(12);
+    for (const r of [...page1, ...page2]) {
       expect(r.translations[0].title).not.toMatch(/#\d+$/);
     }
   });
@@ -149,7 +163,13 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     expect(blocks.length).toBeGreaterThanOrEqual(2);
 
     const totalComments = await prisma.comment.count();
-    expect(totalComments).toBeGreaterThanOrEqual(55);
+    expect(totalComments).toBeGreaterThanOrEqual(65);
+
+    const recipesWithComments = await prisma.comment.findMany({
+      select: { recipe_id: true },
+      distinct: ['recipe_id'],
+    });
+    expect(recipesWithComments).toHaveLength(32);
 
     const pizza = await prisma.recipe.findFirstOrThrow({
       where: {
@@ -274,7 +294,7 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     expect(marioAfter.bio).toBe(
       'Runtime bio mutation preserved across restart',
     );
-    expect(await prisma.recipe.count()).toBe(50);
+    expect(await prisma.recipe.count()).toBe(32);
     expect(await prisma.report.count()).toBe(reportsBefore);
   }, 30000);
 });

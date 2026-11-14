@@ -18,12 +18,17 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
   describe('buildSeedUsers', () => {
     const users = buildSeedUsers();
 
-    it('generates 30 unique users covering all roles, statuses, and privacy tiers', () => {
+    it('generates 30 unique curated personas covering all roles, statuses, and privacy tiers', () => {
       expect(users.length).toBe(30);
       const emails = new Set(users.map((u) => u.email));
       const usernames = new Set(users.map((u) => u.username));
       expect(emails.size).toBe(30);
       expect(usernames.size).toBe(30);
+
+      for (const u of users) {
+        expect(u.username).not.toMatch(/^demo_cook_/);
+        expect(`${u.first_name} ${u.last_name}`).not.toMatch(/Chef Demo/);
+      }
 
       expect(users.some((u) => u.role === Role.admin)).toBe(true);
       expect(users.some((u) => u.role === Role.moderator)).toBe(true);

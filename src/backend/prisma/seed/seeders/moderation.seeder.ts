@@ -38,7 +38,7 @@ export async function seedModeration(
 
   const privateRecipe =
     recipes.all.find((r) => r.privacy === RecipePrivacy.private) ??
-    recipes.byKey['generated_recipe_25'];
+    recipes.byKey['gnocchi'];
   const suspendedRecipes = recipes.all.filter((r) => !r.is_active);
   const publicRecipe = recipes.byKey['carbonara'];
 
@@ -166,7 +166,7 @@ export async function seedModeration(
     {
       reporter_id: kenji.id,
       subject: ReportSubject.user,
-      target_id: usersByKey['demo_cook_14'].id,
+      target_id: usersByKey['hannah_fischer'].id,
       reason: ReportReason.spam_scam,
       description: 'Suspicious external link in bio.',
       status: ReportStatus.pending,
@@ -174,7 +174,7 @@ export async function seedModeration(
     {
       reporter_id: elena.id,
       subject: ReportSubject.user,
-      target_id: usersByKey['demo_cook_15'].id,
+      target_id: usersByKey['tiago_silva'].id,
       reason: ReportReason.impersonation_misinformation,
       description: 'Possible duplicate account.',
       status: ReportStatus.dismissed,

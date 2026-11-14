@@ -78,8 +78,8 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 15,
     cookTime: 10,
     servings: 4,
-    coverAsset: 'seed-cover-1.webp',
-    galleryAssets: ['seed-gallery-1.webp'],
+    coverAsset: 'carbonara.webp',
+    galleryAssets: ['carbonara-gallery.webp'],
     tagSlugs: ['quick_easy', 'traditional', 'comfort_food'],
     translations: {
       it: {
@@ -223,9 +223,9 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 25,
     cookTime: 0,
     servings: 6,
-    coverAsset: 'seed-cover-2.webp',
+    coverAsset: 'tiramisu.webp',
     videoAsset: 'seed-tutorial-2.mp4',
-    galleryAssets: ['seed-gallery-1.webp'],
+    galleryAssets: ['tiramisu-gallery.webp'],
     tagSlugs: ['traditional', 'vegetarian', 'comfort_food'],
     translations: {
       it: {
@@ -345,7 +345,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 1440,
     cookTime: 15,
     servings: 4,
-    coverAsset: 'seed-cover-3.webp',
+    coverAsset: 'pizza.webp',
     videoAsset: 'seed-tutorial-1.mp4',
     tagSlugs: ['traditional', 'vegetarian', 'comfort_food'],
     translations: {
@@ -465,7 +465,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 7,
     cookTime: 3,
     servings: 4,
-    coverAsset: 'seed-cover-4.webp',
+    coverAsset: 'bruschetta.webp',
     tagSlugs: [
       'quick_easy',
       'vegan',
@@ -591,7 +591,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 12,
     cookTime: 0,
     servings: 4,
-    coverAsset: 'seed-cover-1.webp',
+    coverAsset: 'guacamole.webp',
     tagSlugs: [
       'vegan',
       'vegetarian',
@@ -720,7 +720,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 10,
     cookTime: 25,
     servings: 4,
-    coverAsset: 'seed-cover-2.webp',
+    coverAsset: 'risotto.webp',
     tagSlugs: [
       'traditional',
       'vegetarian',
@@ -870,7 +870,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 10,
     cookTime: 35,
     servings: 4,
-    coverAsset: 'seed-cover-3.webp',
+    coverAsset: 'lentils-soup.webp',
     tagSlugs: [
       'vegan',
       'vegetarian',
@@ -1004,7 +1004,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 10,
     cookTime: 15,
     servings: 2,
-    coverAsset: 'seed-cover-4.webp',
+    coverAsset: 'salmon.webp',
     tagSlugs: ['gluten_free', 'dairy_free', 'low_carb', 'quick_easy', 'summer'],
     translations: {
       it: {
@@ -1118,7 +1118,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 15,
     cookTime: 25,
     servings: 4,
-    coverAsset: 'seed-cover-1.webp',
+    coverAsset: 'chicken-curry.webp',
     tagSlugs: ['dairy_free', 'gluten_free', 'comfort_food', 'winter'],
     translations: {
       it: {
@@ -1239,7 +1239,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 30,
     cookTime: 165,
     servings: 6,
-    coverAsset: 'seed-cover-2.webp',
+    coverAsset: 'boeuf-bourguignon.webp',
     tagSlugs: ['traditional', 'comfort_food', 'dairy_free', 'winter'],
     translations: {
       it: {
@@ -1389,7 +1389,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 10,
     cookTime: 0,
     servings: 4,
-    coverAsset: 'seed-cover-3.webp',
+    coverAsset: 'caprese.webp',
     tagSlugs: ['vegetarian', 'gluten_free', 'quick_easy', 'summer', 'low_carb'],
     translations: {
       it: {
@@ -1478,7 +1478,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 10,
     cookTime: 40,
     servings: 4,
-    coverAsset: 'seed-cover-4.webp',
+    coverAsset: 'baked-potatoes.webp',
     tagSlugs: [
       'vegan',
       'vegetarian',
@@ -1599,7 +1599,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 25,
     cookTime: 40,
     servings: 4,
-    coverAsset: 'seed-cover-1.webp',
+    coverAsset: 'ratatouille.webp',
     tagSlugs: [
       'vegan',
       'vegetarian',
@@ -1732,7 +1732,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 15,
     cookTime: 10,
     servings: 4,
-    coverAsset: 'seed-cover-2.webp',
+    coverAsset: 'fondant.webp',
     tagSlugs: ['vegetarian', 'comfort_food', 'nut_free'],
     translations: {
       it: {
@@ -1841,7 +1841,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 15,
     cookTime: 0,
     servings: 2,
-    coverAsset: 'seed-cover-3.webp',
+    coverAsset: 'chia-pudding.webp',
     tagSlugs: [
       'vegan',
       'vegetarian',
@@ -1959,7 +1959,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 5,
     cookTime: 0,
     servings: 2,
-    coverAsset: 'seed-cover-4.webp',
+    coverAsset: 'smoothie.webp',
     tagSlugs: ['vegetarian', 'quick_easy', 'budget_friendly', 'summer'],
     translations: {
       it: {
@@ -2043,7 +2043,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 7,
     cookTime: 0,
     servings: 2,
-    coverAsset: 'seed-cover-1.webp',
+    coverAsset: 'espresso-martini.webp',
     tagSlugs: [
       'dairy_free',
       'gluten_free',
@@ -2138,7 +2138,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 5,
     cookTime: 10,
     servings: 2,
-    coverAsset: 'seed-cover-2.webp',
+    coverAsset: 'avocado-toast.webp',
     tagSlugs: ['vegetarian', 'quick_easy', 'nut_free', 'summer'],
     translations: {
       it: {
@@ -2257,7 +2257,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 15,
     cookTime: 0,
     servings: 4,
-    coverAsset: 'seed-cover-3.webp',
+    coverAsset: 'hummus.webp',
     tagSlugs: [
       'vegan',
       'vegetarian',
@@ -2361,7 +2361,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     prepTime: 680,
     cookTime: 40,
     servings: 8,
-    coverAsset: 'seed-cover-4.webp',
+    coverAsset: 'croissants.webp',
     videoAsset: 'seed-tutorial-2.mp4',
     tagSlugs: ['traditional', 'vegetarian', 'comfort_food'],
     translations: {
@@ -2475,3 +2475,1021 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     ],
   },
 ] as SeedRecipeFixture[];
+
+export const PAGE_TWO_CURATED_RECIPES: SeedRecipeFixture[] = [
+  {
+    key: 'pastaPesto',
+    authorKey: 'lorenzo_ferri',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.public,
+    isActive: true,
+    sourceLang: 'it',
+    translationStatus: TranslationStatus.failed,
+    translationSource: TranslationSource.machine,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.easy,
+    prepTime: 15,
+    cookTime: 10,
+    servings: 4,
+    coverAsset: 'pasta-pesto.webp',
+    tagSlugs: ['vegetarian', 'traditional', 'quick_easy'],
+    translations: {
+      it: {
+        title: 'Trofie al Pesto Genovese',
+        description:
+          'Pasta fresca condita con pesto di basilico, pinoli tostati, aglio e Parmigiano.',
+        tips: 'Diluisci il pesto con un mestolo di acqua di cottura prima di mantecare.',
+        preservation:
+          'Consumare subito; il pesto si conserva in frigo coperto d’olio per 3 giorni.',
+      },
+      en: {
+        title: 'Trofie Pasta with Basil Pesto',
+        description:
+          'Fresh pasta tossed in fragrant Genovese basil pesto with pine nuts and Parmesan.',
+        tips: 'Loosen the pesto with starchy pasta water off the heat so the basil stays bright green.',
+        preservation:
+          'Best served immediately; store extra pesto under olive oil for 3 days.',
+      },
+      fr: {
+        title: 'Trofie au Pesto Génois',
+        description:
+          'Pâtes fraîches nappées de pesto au basilic, pignons de pin, ail et parmesan.',
+        tips: 'Détendez le pesto avec une louche d’eau de cuisson hors du feu.',
+        preservation: 'À déguster immédiatement.',
+      },
+    },
+    steps: [
+      {
+        duration: 15,
+        translations: {
+          it: {
+            title: 'Preparazione del pesto',
+            description:
+              'Frulla o pesta basilico, pinoli, aglio, formaggio e olio extravergine.',
+          },
+          en: {
+            title: 'Make the pesto',
+            description:
+              'Blend or pound basil, pine nuts, garlic, Parmesan, and olive oil until emulsified.',
+          },
+          fr: {
+            title: 'Préparer le pesto',
+            description:
+              'Mixer ou piler basilic, pignons, ail, parmesan et huile d’olive.',
+          },
+        },
+      },
+      {
+        duration: 10,
+        translations: {
+          it: {
+            title: 'Cottura e mantecatura',
+            description:
+              'Cuoci la pasta al dente e manteca lontano dal fuoco con il pesto.',
+          },
+          en: {
+            title: 'Boil and toss',
+            description:
+              'Cook pasta al dente and toss off the heat with pesto and pasta water.',
+          },
+          fr: {
+            title: 'Cuire et enrober',
+            description:
+              'Cuire les pâtes al dente et mélanger hors du feu avec le pesto.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'pasta', quantity: 360, unit: UnitOfMeasure.g },
+      { slug: 'basil', quantity: 60, unit: UnitOfMeasure.g },
+      { slug: 'pine-nuts', quantity: 30, unit: UnitOfMeasure.g },
+      { slug: 'parmesan', quantity: 70, unit: UnitOfMeasure.g },
+      { slug: 'olive-oil', quantity: 80, unit: UnitOfMeasure.ml },
+      { slug: 'garlic', quantity: 1, unit: UnitOfMeasure.piece },
+    ],
+  },
+  {
+    key: 'shakshuka',
+    authorKey: 'chiara_bellini',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.public,
+    isActive: true,
+    sourceLang: 'en',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.manual,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.easy,
+    prepTime: 10,
+    cookTime: 20,
+    servings: 3,
+    coverAsset: 'shakshuka.webp',
+    tagSlugs: ['vegetarian', 'gluten_free', 'comfort_food'],
+    translations: {
+      it: {
+        title: 'Shakshuka Speziata',
+        description:
+          'Uova in camicia cotte in una padella di pomodori, peperoni, cumino e paprika.',
+        tips: 'Copri la padella negli ultimi minuti per cuocere l’albume lasciando il tuorlo morbido.',
+      },
+      en: {
+        title: 'Spiced Skillet Shakshuka',
+        description:
+          'Poached eggs simmered in a smoky tomato and bell pepper sauce with cumin and paprika.',
+        tips: 'Cover the skillet briefly at the end to set the whites while keeping yolks runny.',
+      },
+      fr: {
+        title: 'Shakshuka aux Épices',
+        description:
+          'Œufs pochés dans une sauce tomate aux poivrons, cumin et paprika fumé.',
+        tips: 'Couvrez la poêle en fin de cuisson pour garder les jaunes coulants.',
+      },
+    },
+    steps: [
+      {
+        duration: 10,
+        translations: {
+          it: {
+            title: 'Soffritto di verdure',
+            description:
+              'Taglia cipolla e peperone e rosola con aglio, cumino e paprika.',
+          },
+          en: {
+            title: 'Sauté aromatics',
+            description:
+              'Dice onion and bell pepper, then sauté with garlic, cumin, and paprika.',
+          },
+          fr: {
+            title: 'Faire revenir',
+            description:
+              'Faire revenir oignon, poivron, ail, cumin et paprika.',
+          },
+        },
+      },
+      {
+        duration: 20,
+        translations: {
+          it: {
+            title: 'Salsa e uova',
+            description:
+              'Aggiungi i pomodori, restringi la salsa e cuoci le uova nei nidi.',
+          },
+          en: {
+            title: 'Simmer & poach',
+            description:
+              'Simmer crushed tomatoes, crack eggs into wells, and poach until set.',
+          },
+          fr: {
+            title: 'Mijoter et pocher',
+            description:
+              'Ajouter les tomates, creuser des puits et pocher les œufs.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'eggs', quantity: 6, unit: UnitOfMeasure.piece },
+      { slug: 'tomato', quantity: 500, unit: UnitOfMeasure.g },
+      { slug: 'bell_pepper', quantity: 150, unit: UnitOfMeasure.g },
+      { slug: 'onion', quantity: 1, unit: UnitOfMeasure.piece },
+      { slug: 'cumin', quantity: 1, unit: UnitOfMeasure.tsp },
+      { slug: 'paprika', quantity: 1, unit: UnitOfMeasure.tsp },
+    ],
+  },
+  {
+    key: 'padThai',
+    authorKey: 'kenji_noodles',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.public,
+    isActive: true,
+    sourceLang: 'en',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.author_original,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.medium,
+    prepTime: 15,
+    cookTime: 15,
+    servings: 2,
+    coverAsset: 'pad-thai.webp',
+    tagSlugs: ['dairy_free', 'quick_easy'],
+    translations: {
+      it: {
+        title: 'Pad Thai con Gamberi',
+        description:
+          'Spaghetti di riso saltati al wok con gamberi, uova, salsa di soia, lime e arachidi.',
+      },
+      en: {
+        title: 'Classic Shrimp Pad Thai',
+        description:
+          'Wok-tossed rice noodles with prawns, scrambled egg, tangy lime, and crushed peanuts.',
+      },
+      fr: {
+        title: 'Pad Thaï aux Crevettes',
+        description:
+          'Nouilles de riz sautées au wok avec crevettes, œuf, citron vert et cacahuètes.',
+      },
+    },
+    steps: [
+      {
+        duration: 15,
+        translations: {
+          it: {
+            title: 'Ammollo dei noodles',
+            description:
+              'Ammolla i noodles di riso in acqua tiepida e prepara gli ingredienti.',
+          },
+          en: {
+            title: 'Soak & prep',
+            description:
+              'Soak rice noodles in warm water and prep prawns, garlic, and peanuts.',
+          },
+          fr: {
+            title: 'Trempage et préparation',
+            description:
+              'Faire tremper les nouilles de riz et préparer les crevettes.',
+          },
+        },
+      },
+      {
+        duration: 15,
+        translations: {
+          it: {
+            title: 'Salto al wok',
+            description:
+              'Rosola i gamberi, aggiungi uova, noodles e salsa, poi guarnisci con lime e arachidi.',
+          },
+          en: {
+            title: 'Wok stir-fry',
+            description:
+              'Sear prawns, scramble egg, toss noodles with sauce, and finish with lime and peanuts.',
+          },
+          fr: {
+            title: 'Sauter au wok',
+            description:
+              'Saisir les crevettes, ajouter œuf, nouilles, sauce et cacahuètes.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'rice-noodles', quantity: 200, unit: UnitOfMeasure.g },
+      { slug: 'prawns', quantity: 220, unit: UnitOfMeasure.g },
+      { slug: 'eggs', quantity: 2, unit: UnitOfMeasure.piece },
+      { slug: 'peanut', quantity: 40, unit: UnitOfMeasure.g },
+      { slug: 'lime', quantity: 1, unit: UnitOfMeasure.piece },
+      { slug: 'dark-soy-sauce', quantity: 2, unit: UnitOfMeasure.tbsp },
+    ],
+  },
+  {
+    key: 'ramen',
+    authorKey: 'kenji_noodles',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.friends_only,
+    isActive: true,
+    sourceLang: 'en',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.manual,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.hard,
+    prepTime: 25,
+    cookTime: 35,
+    servings: 2,
+    coverAsset: 'ramen.webp',
+    tagSlugs: ['comfort_food', 'winter'],
+    translations: {
+      it: {
+        title: 'Ramen Fumante con Uovo Marinato',
+        description:
+          'Brodo saporito con zenzero, funghi shiitake, pollo arrosto, noodles e uovo morbido.',
+      },
+      en: {
+        title: 'Savory Miso & Ginger Ramen',
+        description:
+          'Rich aromatic broth with ginger, mushrooms, sliced chicken, springy noodles, and soft egg.',
+      },
+      fr: {
+        title: 'Ramen au Gingembre et Œuf Mollet',
+        description:
+          'Bouillon parfumé au gingembre, champignons, poulet rôti, nouilles et œuf mollet.',
+      },
+    },
+    steps: [
+      {
+        duration: 25,
+        translations: {
+          it: {
+            title: 'Base aromatica',
+            description:
+              'Prepara aglio, zenzero, cipollotto, funghi e cuoci le uova per 6 minuti e mezzo.',
+          },
+          en: {
+            title: 'Prep aromatics & soft eggs',
+            description:
+              'Slice ginger, garlic, mushrooms, and boil eggs for 6.5 minutes.',
+          },
+          fr: {
+            title: 'Préparer garnitures et œufs',
+            description:
+              'Émincer gingembre, champignons et cuire les œufs mollets 6 min 30.',
+          },
+        },
+      },
+      {
+        duration: 35,
+        translations: {
+          it: {
+            title: 'Brodo e assemblaggio',
+            description:
+              'Sobbolli il brodo, cuoci i noodles e componi la ciotola ben calda.',
+          },
+          en: {
+            title: 'Simmer broth & assemble',
+            description:
+              'Simmer broth with soy and mushrooms, cook noodles, and assemble hot bowls.',
+          },
+          fr: {
+            title: 'Mijoter et dresser',
+            description:
+              'Laisser mijoter le bouillon, cuire les nouilles et dresser.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'noodle', quantity: 200, unit: UnitOfMeasure.g },
+      { slug: 'chicken_breast', quantity: 250, unit: UnitOfMeasure.g },
+      { slug: 'eggs', quantity: 2, unit: UnitOfMeasure.piece },
+      { slug: 'mushroom', quantity: 120, unit: UnitOfMeasure.g },
+      { slug: 'ginger', quantity: 20, unit: UnitOfMeasure.g },
+      { slug: 'spring-onion', quantity: 2, unit: UnitOfMeasure.piece },
+      { slug: 'dark-soy-sauce', quantity: 3, unit: UnitOfMeasure.tbsp },
+    ],
+  },
+  {
+    key: 'paella',
+    authorKey: 'giuly_cooks',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.friends_only,
+    isActive: true,
+    sourceLang: 'en',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.machine,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.hard,
+    prepTime: 20,
+    cookTime: 35,
+    servings: 4,
+    coverAsset: 'paella.webp',
+    tagSlugs: ['gluten_free', 'dairy_free', 'traditional'],
+    translations: {
+      it: {
+        title: 'Paella ai Frutti di Mare',
+        description:
+          'Riso dorato cotto in padella larga con gamberi, cozze, peperoni e curcuma.',
+      },
+      en: {
+        title: 'Coastal Seafood Paella',
+        description:
+          'Crisp-bottomed golden rice simmered with prawns, mussels, sweet peppers, and garlic.',
+      },
+      fr: {
+        title: 'Paella aux Fruits de Mer',
+        description:
+          'Riz doré cuit à la poêle avec crevettes, moules, poivrons doux et ail.',
+      },
+    },
+    steps: [
+      {
+        duration: 20,
+        translations: {
+          it: {
+            title: 'Pulizia e soffritto',
+            description:
+              'Pulisci cozze e gamberi, poi prepara il soffritto di cipolla, aglio e peperone.',
+          },
+          en: {
+            title: 'Clean seafood & sofrito',
+            description:
+              'Clean mussels and prawns, then sauté onion, garlic, and bell pepper.',
+          },
+          fr: {
+            title: 'Préparer les fruits de mer',
+            description:
+              'Nettoyer moules et crevettes, puis faire revenir le sofrito.',
+          },
+        },
+      },
+      {
+        duration: 35,
+        translations: {
+          it: {
+            title: 'Cottura del riso',
+            description:
+              'Tosta il riso, aggiungi il brodo e disponi i frutti di mare senza mescolare.',
+          },
+          en: {
+            title: 'Simmer rice & seafood',
+            description:
+              'Toast rice, add warm stock, and nestle seafood on top until socarrat forms.',
+          },
+          fr: {
+            title: 'Cuire le riz',
+            description:
+              'Nacrer le riz, mouiller au bouillon et disposer les fruits de mer.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'rice', quantity: 350, unit: UnitOfMeasure.g },
+      { slug: 'prawns', quantity: 250, unit: UnitOfMeasure.g },
+      { slug: 'mussel', quantity: 300, unit: UnitOfMeasure.g },
+      { slug: 'bell_pepper', quantity: 150, unit: UnitOfMeasure.g },
+      { slug: 'tomato', quantity: 200, unit: UnitOfMeasure.g },
+      { slug: 'garlic', quantity: 3, unit: UnitOfMeasure.piece },
+    ],
+  },
+  {
+    key: 'falafel',
+    authorKey: 'hannah_fischer',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.friends_only,
+    isActive: true,
+    sourceLang: 'en',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.manual,
+    course: Course.appetizer,
+    difficulty: RecipeDifficulty.medium,
+    prepTime: 20,
+    cookTime: 15,
+    servings: 4,
+    coverAsset: 'falafel.webp',
+    tagSlugs: ['vegan', 'dairy_free', 'budget_friendly'],
+    translations: {
+      it: {
+        title: 'Falafel Croccanti alle Erbe',
+        description:
+          'Polpettine di ceci speziate con prezzemolo, coriandolo, aglio e cumino.',
+      },
+      en: {
+        title: 'Crispy Herb Chickpea Falafel',
+        description:
+          'Golden chickpea fritters packed with fresh parsley, cilantro, garlic, and warm cumin.',
+      },
+      fr: {
+        title: 'Falafels Croustillants aux Herbes',
+        description:
+          'Boulettes de pois chiches dorées au persil, coriandre, ail et cumin.',
+      },
+    },
+    steps: [
+      {
+        duration: 20,
+        translations: {
+          it: {
+            title: 'Impasto di ceci',
+            description:
+              'Frulla grossolanamente ceci, erbe, cipolla, aglio e spezie e forma le polpette.',
+          },
+          en: {
+            title: 'Blend & shape',
+            description:
+              'Pulse chickpeas, herbs, onion, garlic, and cumin, then form small patties.',
+          },
+          fr: {
+            title: 'Mixer et façonner',
+            description:
+              'Mixer pois chiches, herbes, ail et cumin puis former des boulettes.',
+          },
+        },
+      },
+      {
+        duration: 15,
+        translations: {
+          it: {
+            title: 'Cottura dorata',
+            description:
+              'Cuoci in padella o al forno finché non risultano croccanti fuori.',
+          },
+          en: {
+            title: 'Crisp until golden',
+            description:
+              'Pan-fry or bake in olive oil until crisp and deeply golden outside.',
+          },
+          fr: {
+            title: 'Dorer',
+            description:
+              'Cuire à la poêle ou au four jusqu’à ce qu’ils soient bien dorés.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'chickpeas', quantity: 400, unit: UnitOfMeasure.g },
+      { slug: 'parsley', quantity: 30, unit: UnitOfMeasure.g },
+      { slug: 'garlic', quantity: 3, unit: UnitOfMeasure.piece },
+      { slug: 'onion', quantity: 1, unit: UnitOfMeasure.piece },
+      { slug: 'cumin', quantity: 2, unit: UnitOfMeasure.tsp },
+      { slug: 'olive-oil', quantity: 4, unit: UnitOfMeasure.tbsp },
+    ],
+  },
+  {
+    key: 'lasagna',
+    authorKey: 'tiago_silva',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.friends_only,
+    isActive: true,
+    sourceLang: 'it',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.author_original,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.medium,
+    prepTime: 30,
+    cookTime: 45,
+    servings: 6,
+    coverAsset: 'lasagna.webp',
+    tagSlugs: ['traditional', 'comfort_food'],
+    translations: {
+      it: {
+        title: 'Lasagne alla Bolognese',
+        description:
+          'Strati di pasta all’uovo con ragù di manzo, besciamella vellutata e Parmigiano gratinato.',
+      },
+      en: {
+        title: 'Classic Beef Lasagna al Forno',
+        description:
+          'Layered pasta sheets baked with slow-simmered beef ragù, creamy béchamel, and Parmesan.',
+      },
+      fr: {
+        title: 'Lasagnes à la Bolognaise',
+        description:
+          'Couches de pâtes, ragoût de bœuf mijoté, béchamel onctueuse et parmesan gratiné.',
+      },
+    },
+    steps: [
+      {
+        duration: 30,
+        translations: {
+          it: {
+            title: 'Ragù e besciamella',
+            description:
+              'Prepara il ragù di manzo con pomodoro e la besciamella con burro, farina e latte.',
+          },
+          en: {
+            title: 'Ragù & béchamel',
+            description:
+              'Simmer beef ragù with tomatoes and whisk butter, flour, and milk into béchamel.',
+          },
+          fr: {
+            title: 'Ragoût et béchamel',
+            description: 'Préparer le ragoût de bœuf et la sauce béchamel.',
+          },
+        },
+      },
+      {
+        duration: 45,
+        translations: {
+          it: {
+            title: 'Assemblaggio e forno',
+            description:
+              'Alterna pasta, ragù, besciamella e Parmigiano, poi inforna fino a gratinatura.',
+          },
+          en: {
+            title: 'Layer & bake',
+            description:
+              'Layer pasta, ragù, béchamel, and Parmesan, then bake until bubbling and golden.',
+          },
+          fr: {
+            title: 'Monter et gratiner',
+            description:
+              'Alterner les couches et enfourner jusqu’à belle coloration.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'pasta', quantity: 350, unit: UnitOfMeasure.g },
+      { slug: 'beef_mince', quantity: 500, unit: UnitOfMeasure.g },
+      { slug: 'tomato', quantity: 600, unit: UnitOfMeasure.g },
+      { slug: 'milk', quantity: 500, unit: UnitOfMeasure.ml },
+      { slug: 'butter', quantity: 50, unit: UnitOfMeasure.g },
+      { slug: 'flour', quantity: 50, unit: UnitOfMeasure.g },
+      { slug: 'parmesan', quantity: 100, unit: UnitOfMeasure.g },
+    ],
+  },
+  {
+    key: 'gnocchi',
+    authorKey: 'hannah_fischer',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.private,
+    isActive: true,
+    sourceLang: 'it',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.manual,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.medium,
+    prepTime: 25,
+    cookTime: 20,
+    servings: 4,
+    coverAsset: 'gnocchi.webp',
+    tagSlugs: ['vegetarian', 'comfort_food', 'traditional'],
+    translations: {
+      it: {
+        title: 'Gnocchi alla Sorrentina',
+        description:
+          'Morbidi gnocchi di patate al forno con salsa di pomodoro, basilico fresco e mozzarella filante.',
+      },
+      en: {
+        title: 'Baked Gnocchi alla Sorrentina',
+        description:
+          'Pillow-soft potato gnocchi baked in sweet tomato sauce with fresh basil and melted mozzarella.',
+      },
+      fr: {
+        title: 'Gnocchi à la Sorrentina',
+        description:
+          'Gnocchis de pommes de terre gratinés à la sauce tomate, basilic et mozzarella fondante.',
+      },
+    },
+    steps: [
+      {
+        duration: 25,
+        translations: {
+          it: {
+            title: 'Impasto degli gnocchi',
+            description:
+              'Lessa e schiaccia le patate, impasta con farina e forma i bocconcini.',
+          },
+          en: {
+            title: 'Shape potato gnocchi',
+            description:
+              'Boil and mash potatoes, knead lightly with flour, and roll into gnocchi.',
+          },
+          fr: {
+            title: 'Façonner les gnocchis',
+            description:
+              'Écraser les pommes de terre cuites avec la farine et découper les gnocchis.',
+          },
+        },
+      },
+      {
+        duration: 20,
+        translations: {
+          it: {
+            title: 'Salsa e gratinatura',
+            description:
+              'Cuoci gli gnocchi, condisci con sugo e mozzarella e gratina in forno.',
+          },
+          en: {
+            title: 'Sauce & bake',
+            description:
+              'Boil gnocchi until they float, toss with tomato sauce and mozzarella, and broil.',
+          },
+          fr: {
+            title: 'Napper et gratiner',
+            description:
+              'Pocher les gnocchis, napper de sauce tomate et mozzarella puis gratiner.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'potato', quantity: 800, unit: UnitOfMeasure.g },
+      { slug: 'flour', quantity: 220, unit: UnitOfMeasure.g },
+      { slug: 'tomato', quantity: 450, unit: UnitOfMeasure.g },
+      { slug: 'mozzarella', quantity: 200, unit: UnitOfMeasure.g },
+      { slug: 'basil', quantity: 15, unit: UnitOfMeasure.g },
+    ],
+  },
+  {
+    key: 'focaccia',
+    authorKey: 'matteo_galli',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.private,
+    isActive: true,
+    sourceLang: 'it',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.author_original,
+    course: Course.side_dish,
+    difficulty: RecipeDifficulty.medium,
+    prepTime: 25,
+    cookTime: 25,
+    servings: 6,
+    coverAsset: 'focaccia.webp',
+    tagSlugs: ['vegan', 'traditional'],
+    translations: {
+      it: {
+        title: 'Focaccia Genovese al Rosmarino',
+        description:
+          'Impasto soffice e alveolato con emulsione di acqua, olio extravergine, sale grosso e rosmarino.',
+      },
+      en: {
+        title: 'Rosemary & Olive Oil Focaccia',
+        description:
+          'Crisp-edged, airy Italian flatbread dimpled with extra-virgin olive oil and rosemary.',
+      },
+      fr: {
+        title: 'Focaccia au Romarin',
+        description:
+          'Pain plat moelleux et doré à l’huile d’olive vierge extra, fleur de sel et romarin.',
+      },
+    },
+    steps: [
+      {
+        duration: 25,
+        translations: {
+          it: {
+            title: 'Impasto e stesura',
+            description:
+              'Impasta farina, acqua, lievito e olio, fai lievitare e stendi in teglia.',
+          },
+          en: {
+            title: 'Knead & dimple',
+            description:
+              'Knead flour, water, yeast, and olive oil, proof, and dimple into an oiled pan.',
+          },
+          fr: {
+            title: 'Pétrir et étaler',
+            description:
+              'Pétrir la pâte, laisser lever et former les alvéoles dans le plat huilé.',
+          },
+        },
+      },
+      {
+        duration: 25,
+        translations: {
+          it: {
+            title: 'Cottura croccante',
+            description:
+              'Distribuisci rosmarino e salamoia, poi cuoci a 220°C fino a doratura.',
+          },
+          en: {
+            title: 'Bake until golden',
+            description:
+              'Scatter rosemary and sea salt, then bake at 220°C until crisp and golden.',
+          },
+          fr: {
+            title: 'Cuire au four',
+            description:
+              'Parsemer de romarin et cuire à 220°C jusqu’à belle croûte dorée.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'flour', quantity: 500, unit: UnitOfMeasure.g },
+      { slug: 'olive-oil', quantity: 60, unit: UnitOfMeasure.ml },
+      { slug: 'yeast', quantity: 7, unit: UnitOfMeasure.g },
+      { slug: 'rosemary', quantity: 10, unit: UnitOfMeasure.g },
+      { slug: 'salt', quantity: 10, unit: UnitOfMeasure.g },
+    ],
+  },
+  {
+    key: 'cremeBrulee',
+    authorKey: 'sophie_pastry',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.private,
+    isActive: true,
+    sourceLang: 'fr',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.manual,
+    course: Course.dessert,
+    difficulty: RecipeDifficulty.medium,
+    prepTime: 15,
+    cookTime: 40,
+    servings: 4,
+    coverAsset: 'creme-brulee.webp',
+    tagSlugs: ['gluten_free', 'traditional'],
+    translations: {
+      it: {
+        title: 'Crème Brûlée alla Vaniglia',
+        description:
+          'Crema cotta vellutata alla vaniglia con crosticina croccante di zucchero caramellato.',
+      },
+      en: {
+        title: 'Classic Vanilla Crème Brûlée',
+        description:
+          'Silky baked vanilla bean custard topped with a shattering caramelized sugar crust.',
+      },
+      fr: {
+        title: 'Crème Brûlée à la Vanille',
+        description:
+          'Crème onctueuse infusée à la vanille recouverte d’une fine couche de caramel craquant.',
+      },
+    },
+    steps: [
+      {
+        duration: 15,
+        translations: {
+          it: {
+            title: 'Infusione e crema',
+            description:
+              'Scalda panna e vaniglia, poi incorpora i tuorli sbattuti con lo zucchero.',
+          },
+          en: {
+            title: 'Infuse & whisk',
+            description:
+              'Steep vanilla in warm cream, then temper into whisked egg yolks and sugar.',
+          },
+          fr: {
+            title: 'Infuser et mélanger',
+            description:
+              'Chauffer crème et vanille, puis verser sur les jaunes blanchis.',
+          },
+        },
+      },
+      {
+        duration: 40,
+        translations: {
+          it: {
+            title: 'Bagnomaria e caramello',
+            description:
+              'Cuoci a bagnomaria in forno, raffredda e caramella lo zucchero in superficie.',
+          },
+          en: {
+            title: 'Water bath & torch',
+            description:
+              'Bake in a water bath until gently set, chill, and torch sugar until crisp.',
+          },
+          fr: {
+            title: 'Bain-marie et caramélisation',
+            description:
+              'Cuire au bain-marie, refroidir et caraméliser au chalumeau.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'cream', quantity: 400, unit: UnitOfMeasure.ml },
+      { slug: 'eggs', quantity: 5, unit: UnitOfMeasure.piece },
+      { slug: 'sugar', quantity: 80, unit: UnitOfMeasure.g },
+      { slug: 'vanilla', quantity: 1, unit: UnitOfMeasure.tsp },
+    ],
+  },
+  {
+    key: 'pancakes',
+    authorKey: 'repeat_offender_active',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.public,
+    isActive: false,
+    sourceLang: 'en',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.machine,
+    course: Course.snack,
+    difficulty: RecipeDifficulty.easy,
+    prepTime: 10,
+    cookTime: 15,
+    servings: 3,
+    coverAsset: 'pancakes.webp',
+    tagSlugs: ['vegetarian', 'quick_easy', 'comfort_food'],
+    translations: {
+      it: {
+        title: 'Pancake Soffici al Miele',
+        description:
+          'Torretta di pancake dorati serviti con burro fuso e miele millefiori.',
+      },
+      en: {
+        title: 'Fluffy Golden Pancakes',
+        description:
+          'Light and airy griddle pancakes stacked high with melted butter and warm honey.',
+      },
+      fr: {
+        title: 'Pancakes Moelleux au Miel',
+        description:
+          'Pile de pancakes dorés servis avec du beurre fondant et du miel.',
+      },
+    },
+    steps: [
+      {
+        duration: 10,
+        translations: {
+          it: {
+            title: 'Pastella veloce',
+            description:
+              'Mescola farina, lievito, zucchero, latte, uovo e burro fuso.',
+          },
+          en: {
+            title: 'Whisk batter',
+            description:
+              'Combine flour, baking powder, sugar, milk, egg, and melted butter.',
+          },
+          fr: {
+            title: 'Préparer la pâte',
+            description:
+              'Mélanger farine, levure, sucre, lait, œuf et beurre fondu.',
+          },
+        },
+      },
+      {
+        duration: 15,
+        translations: {
+          it: {
+            title: 'Cottura in padella',
+            description:
+              'Cuoci i pancake un paio di minuti per lato fino a doratura.',
+          },
+          en: {
+            title: 'Griddle until golden',
+            description:
+              'Cook ladlefuls on a warm skillet until bubbles form, flip, and serve with honey.',
+          },
+          fr: {
+            title: 'Cuire à la poêle',
+            description: 'Cuire chaque face jusqu’à belle coloration dorée.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'flour', quantity: 200, unit: UnitOfMeasure.g },
+      { slug: 'baking-powder', quantity: 2, unit: UnitOfMeasure.tsp },
+      { slug: 'milk', quantity: 250, unit: UnitOfMeasure.ml },
+      { slug: 'eggs', quantity: 1, unit: UnitOfMeasure.piece },
+      { slug: 'butter', quantity: 30, unit: UnitOfMeasure.g },
+      { slug: 'honey', quantity: 3, unit: UnitOfMeasure.tbsp },
+    ],
+  },
+  {
+    key: 'minestrone',
+    authorKey: 'lukas_weber',
+    ownerType: OwnerType.user,
+    privacy: RecipePrivacy.public,
+    isActive: false,
+    sourceLang: 'it',
+    translationStatus: TranslationStatus.completed,
+    translationSource: TranslationSource.manual,
+    course: Course.main_course,
+    difficulty: RecipeDifficulty.easy,
+    prepTime: 15,
+    cookTime: 35,
+    servings: 4,
+    coverAsset: 'minestrone.webp',
+    tagSlugs: ['vegan', 'gluten_free', 'winter', 'budget_friendly'],
+    translations: {
+      it: {
+        title: 'Minestrone della Tradizione',
+        description:
+          'Zuppa ricca di verdure di stagione, fagioli e patate profumata al rosmarino.',
+      },
+      en: {
+        title: 'Hearty Garden Minestrone',
+        description:
+          'Wholesome vegetable soup simmered with carrots, celery, zucchini, potatoes, and beans.',
+      },
+      fr: {
+        title: 'Minestrone Traditionnel aux Légumes',
+        description:
+          'Soupe généreuse aux légumes de saison, haricots et pommes de terre.',
+      },
+    },
+    steps: [
+      {
+        duration: 15,
+        translations: {
+          it: {
+            title: 'Taglio delle verdure',
+            description:
+              'Taglia a dadini carote, sedano, zucchine, patate e cipolla.',
+          },
+          en: {
+            title: 'Chop vegetables',
+            description:
+              'Dice carrots, celery, zucchini, potatoes, and onion evenly.',
+          },
+          fr: {
+            title: 'Couper les légumes',
+            description:
+              'Tailler carottes, céleri, courgettes, pommes de terre et oignon en dés.',
+          },
+        },
+      },
+      {
+        duration: 35,
+        translations: {
+          it: {
+            title: 'Lenta cottura',
+            description:
+              'Rosola il soffritto, aggiungi verdure, fagioli e acqua e sobbolli per 35 minuti.',
+          },
+          en: {
+            title: 'Simmer slowly',
+            description:
+              'Sauté aromatics, add diced vegetables, beans, and water, and simmer gently.',
+          },
+          fr: {
+            title: 'Mijoter doucement',
+            description:
+              'Faire revenir les aromates, ajouter légumes et haricots et laisser mijoter.',
+          },
+        },
+      },
+    ],
+    ingredients: [
+      { slug: 'carrot', quantity: 150, unit: UnitOfMeasure.g },
+      { slug: 'celery', quantity: 100, unit: UnitOfMeasure.g },
+      { slug: 'zucchini', quantity: 180, unit: UnitOfMeasure.g },
+      { slug: 'potato', quantity: 200, unit: UnitOfMeasure.g },
+      { slug: 'beans', quantity: 200, unit: UnitOfMeasure.g },
+      { slug: 'olive-oil', quantity: 2, unit: UnitOfMeasure.tbsp },
+    ],
+  },
+];

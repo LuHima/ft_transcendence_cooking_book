@@ -71,6 +71,7 @@ const EXTRA_RECIPE_COMMENTS = [
   'Fragrant spices without overpowering the dish; paired it with steamed basmati.',
   'Slow braising made the beef melt-in-your-mouth tender.',
   'Sweet summer tomatoes and creamy buffalo mozzarella need nothing else.',
+  'Rosemary and flaky sea salt gave the roasted potatoes an incredible crunch.',
   'Thinly sliced vegetables baked evenly and looked gorgeous on the table.',
   'Molten chocolate center came out right at the 11-minute mark!',
   'Prepped three jars on Sunday night for quick weekday breakfasts.',
@@ -79,6 +80,18 @@ const EXTRA_RECIPE_COMMENTS = [
   'Refreshing morning boost without any added sugar.',
   'Thick crema on top—shaking vigorously with plenty of ice is key.',
   'Flaky laminated layers took patience but were worth every fold.',
+  'Adding a splash of pasta cooking water kept the basil pesto vibrant and glossy.',
+  'Runny yolks in the spiced tomato sauce—served straight from the skillet with crusty bread.',
+  'Tamarind tang and toasted peanuts balanced the rice noodles beautifully.',
+  'Six-minute marinated egg and ginger broth hit the spot on a rainy evening.',
+  'The crispy rice layer at the bottom of the pan was the highlight of dinner.',
+  'Crisp exterior and herb-packed green interior without feeling heavy.',
+  'Rich ragù and silky béchamel—worth every minute in the oven.',
+  'Bubbling mozzarella and sweet basil over pillowy potato gnocchi.',
+  'Olive oil brine gave the focaccia a golden crust and airy crumb.',
+  'Shattering caramelized sugar top over cold vanilla bean custard.',
+  'Light, fluffy stack—warm honey and melted butter made breakfast special.',
+  'Loaded with seasonal vegetables and beans; tastes like Sunday at nonna’s.',
 ];
 
 /**
@@ -106,7 +119,7 @@ export async function seedSocial(
   const repeatActive = usersByKey['repeat_offender_active'];
   const tempBanned = usersByKey['temp_banned_user'];
 
-  // 1. Friendships: 12 accepted for mario_bianchi (keeping demo_cook_14/15 & repeat_offender_active as non-friends)
+  // 1. Friendships: 12 accepted for mario_bianchi (keeping hannah_fischer/tiago_silva & repeat_offender_active as non-friends)
   const marioFriendKeys = [
     'giuly_cooks',
     'chef_marco',
@@ -114,12 +127,12 @@ export async function seedSocial(
     'kenji_noodles',
     'elena_vegan',
     'carlos_mex',
-    'demo_cook_01',
-    'demo_cook_02',
-    'demo_cook_03',
-    'demo_cook_04',
-    'demo_cook_05',
-    'demo_cook_06',
+    'lorenzo_ferri',
+    'chiara_bellini',
+    'matteo_galli',
+    'federica_serra',
+    'alessio_greco',
+    'martina_leone',
   ];
 
   const acceptedFriendships: Array<{
@@ -160,9 +173,9 @@ export async function seedSocial(
   }
 
   const pendingPairs: Array<[User, User]> = [
-    [usersByKey['demo_cook_07'], mario],
-    [mario, usersByKey['demo_cook_08']],
-    [usersByKey['demo_cook_10'], giulia],
+    [usersByKey['davide_rinaldi'], mario],
+    [mario, usersByKey['valentina_orsi']],
+    [usersByKey['camille_laurent'], giulia],
   ];
   for (const [req, addr] of pendingPairs) {
     await prisma.friendship.create({
@@ -178,7 +191,7 @@ export async function seedSocial(
   await prisma.friendship.create({
     data: {
       requester_id: mario.id,
-      addressee_id: usersByKey['demo_cook_09'].id,
+      addressee_id: usersByKey['nicola_bruno'].id,
       status: FriendshipStatus.rejected,
       created_at: new Date(now.getTime() - 7 * DAY_MS),
       updated_at: new Date(now.getTime() - 5 * DAY_MS),
@@ -189,11 +202,11 @@ export async function seedSocial(
   await prisma.userBlock.createMany({
     data: [
       { blocker_id: mario.id, blocked_id: spamBot.id },
-      { blocker_id: giulia.id, blocked_id: usersByKey['demo_cook_15'].id },
+      { blocker_id: giulia.id, blocked_id: usersByKey['tiago_silva'].id },
     ],
   });
 
-  // 3. Comments (~55+ total)
+  // 3. Comments (~65+ total across all 32 curated recipes)
   const pizza = recipes.byKey['pizzaPlatform'];
   const carbonara = recipes.byKey['carbonara'];
   const tiramisu = recipes.byKey['tiramisu'];
@@ -208,11 +221,11 @@ export async function seedSocial(
     kenji,
     elena,
     carlos,
-    usersByKey['demo_cook_01'],
-    usersByKey['demo_cook_02'],
-    usersByKey['demo_cook_03'],
-    usersByKey['demo_cook_04'],
-    usersByKey['demo_cook_05'],
+    usersByKey['lorenzo_ferri'],
+    usersByKey['chiara_bellini'],
+    usersByKey['matteo_galli'],
+    usersByKey['federica_serra'],
+    usersByKey['alessio_greco'],
   ];
 
   const allCommentIds: number[] = [];
@@ -313,7 +326,7 @@ export async function seedSocial(
   const offTopicComment = await prisma.comment.create({
     data: {
       recipe_id: risotto.id,
-      user_id: usersByKey['demo_cook_14'].id,
+      user_id: usersByKey['hannah_fischer'].id,
       content:
         'Does anyone know what time the local farmers market closes today?',
       is_active: true,
@@ -324,7 +337,7 @@ export async function seedSocial(
   const hateSpeechPendingComment = await prisma.comment.create({
     data: {
       recipe_id: guacamole.id,
-      user_id: usersByKey['demo_cook_15'].id,
+      user_id: usersByKey['tiago_silva'].id,
       content: 'Hostile and derogatory remark awaiting moderator review.',
       is_active: true,
     },
@@ -334,14 +347,14 @@ export async function seedSocial(
   const promoSpamPendingComment = await prisma.comment.create({
     data: {
       recipe_id: carbonara.id,
-      user_id: usersByKey['demo_cook_14'].id,
+      user_id: usersByKey['hannah_fischer'].id,
       content: 'Use promo code CHEAPKNIVES50 on my storefront for 50% off!',
       is_active: true,
     },
   });
   allCommentIds.push(promoSpamPendingComment.id);
 
-  // Additional realistic comments across other showcase recipes
+  // Additional realistic comments across all remaining 31 curated recipes
   const extraCommentTargets = [
     carbonara,
     tiramisu,
@@ -353,6 +366,7 @@ export async function seedSocial(
     recipes.byKey['chickenCurry'],
     recipes.byKey['boeufBourguignon'],
     recipes.byKey['caprese'],
+    recipes.byKey['bakedPotatoes'],
     recipes.byKey['ratatouille'],
     recipes.byKey['fondant'],
     recipes.byKey['chiaPudding'],
@@ -361,12 +375,28 @@ export async function seedSocial(
     recipes.byKey['smoothie'],
     recipes.byKey['espressoMartini'],
     recipes.byKey['croissants'],
+    recipes.byKey['pastaPesto'],
+    recipes.byKey['shakshuka'],
+    recipes.byKey['padThai'],
+    recipes.byKey['ramen'],
+    recipes.byKey['paella'],
+    recipes.byKey['falafel'],
+    recipes.byKey['lasagna'],
+    recipes.byKey['gnocchi'],
+    recipes.byKey['focaccia'],
+    recipes.byKey['cremeBrulee'],
+    recipes.byKey['pancakes'],
+    recipes.byKey['minestrone'],
   ];
 
   for (let i = 0; i < extraCommentTargets.length; i++) {
     const target = extraCommentTargets[i];
     if (!target) continue;
-    const author = commenters.find((c) => c.id !== target.user_id) ?? mario;
+    const rotated = [
+      ...commenters.slice(i % commenters.length),
+      ...commenters.slice(0, i % commenters.length),
+    ];
+    const author = rotated.find((c) => c.id !== target.user_id) ?? mario;
     const created = await prisma.comment.create({
       data: {
         recipe_id: target.id,

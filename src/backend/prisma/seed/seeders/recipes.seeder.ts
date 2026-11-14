@@ -1,25 +1,20 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  Course,
   MediaType,
   OwnerType,
   Prisma,
   PrismaClient,
-  RecipeDifficulty,
   RecipePrivacy,
   TranslationSource,
   TranslationStatus,
-  UnitOfMeasure,
   User,
 } from '@prisma/client';
 import { resolveSeedUploadsDir } from '../config';
-import { SHOWCASE_RECIPES, type SeedRecipeFixture } from '../data/recipes.data';
 import {
-  loadSeedJson,
-  type CatalogIngredientSeed,
-  type CatalogTagSeed,
-} from './catalog.seeder';
+  PAGE_TWO_CURATED_RECIPES,
+  SHOWCASE_RECIPES,
+} from '../data/recipes.data';
 
 export interface SeededRecipeRef {
   id: number;
@@ -87,248 +82,8 @@ function stageRecipeAsset(
 }
 
 /**
- * Deterministic Mulberry32 PRNG for reproducible paginated recipe generation.
- */
-function createPrng(seed: number): () => number {
-  let state = seed >>> 0;
-  return () => {
-    state += 0x6d2b79f5;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
- * Deterministically builds 30 additional recipes covering all privacy tiers,
- * suspension states, and translation provenance combinations.
- */
-export function buildGeneratedRecipes(
-  ingredientsCatalog: CatalogIngredientSeed[],
-  tagsCatalog: CatalogTagSeed[],
-): SeedRecipeFixture[] {
-  const rand = createPrng(422026);
-  const courses = Object.values(Course);
-  const difficulties = Object.values(RecipeDifficulty);
-  const units = [
-    UnitOfMeasure.g,
-    UnitOfMeasure.ml,
-    UnitOfMeasure.tbsp,
-    UnitOfMeasure.tsp,
-    UnitOfMeasure.piece,
-  ];
-  const coverAssets = [
-    'seed-cover-1.webp',
-    'seed-cover-2.webp',
-    'seed-cover-3.webp',
-    'seed-cover-4.webp',
-  ];
-  const stepAssets = ['seed-step-1.webp', 'seed-step-2.webp'];
-  const sourceLangs = ['it', 'en', 'fr'] as const;
-
-  const friendAuthorKeys = [
-    'giuly_cooks',
-    'chef_marco',
-    'sophie_pastry',
-    'kenji_noodles',
-  ];
-  const nonFriendAuthorKeys = [
-    'demo_cook_14',
-    'demo_cook_15',
-    'repeat_offender_active',
-  ];
-  const generalAuthorKeys = [
-    'mario_bianchi',
-    'giuly_cooks',
-    'chef_marco',
-    'sophie_pastry',
-    'kenji_noodles',
-    'elena_vegan',
-    'carlos_mex',
-    'demo_cook_01',
-    'demo_cook_02',
-    'demo_cook_03',
-    'demo_cook_04',
-    'demo_cook_05',
-  ];
-
-  const recipeTemplates = [
-    { it: 'Zuppa Rustica', en: 'Rustic Soup', fr: 'Soupe Rustique' },
-    { it: 'Pasta al Forno', en: 'Baked Pasta', fr: 'Pâtes au Four' },
-    {
-      it: 'Insalata Mediterranea',
-      en: 'Mediterranean Salad',
-      fr: 'Salade Méditerranéenne',
-    },
-    {
-      it: 'Pollo alle Erbe',
-      en: 'Herb Roasted Chicken',
-      fr: 'Poulet aux Herbes',
-    },
-    { it: 'Torta Salata', en: 'Savory Tart', fr: 'Tarte Salée' },
-    { it: 'Risotto Cremoso', en: 'Creamy Risotto', fr: 'Risotto Crémeux' },
-    {
-      it: 'Crema di Verdure',
-      en: 'Velvety Vegetable Soup',
-      fr: 'Velouté de Légumes',
-    },
-    { it: 'Biscotti Speziati', en: 'Spiced Cookies', fr: 'Biscuits Épicés' },
-    {
-      it: 'Frittata alle Verdure',
-      en: 'Garden Frittata',
-      fr: 'Frittata aux Légumes',
-    },
-    {
-      it: 'Filetto al Limone',
-      en: 'Lemon Glazed Fillet',
-      fr: 'Filet au Citron',
-    },
-  ];
-
-  const generated: SeedRecipeFixture[] = [];
-
-  for (let i = 0; i < 30; i++) {
-    const num = i + 1;
-    const key = `generated_recipe_${num.toString().padStart(2, '0')}`;
-
-    let privacy: RecipePrivacy = RecipePrivacy.public;
-    let authorKey = generalAuthorKeys[i % generalAuthorKeys.length];
-    let isActive = true;
-    let translationStatus: TranslationStatus = TranslationStatus.completed;
-    const translationSource: TranslationSource =
-      i % 3 === 0
-        ? TranslationSource.author_original
-        : i % 3 === 1
-          ? TranslationSource.manual
-          : TranslationSource.machine;
-
-    if (i >= 16 && i < 20) {
-      privacy = RecipePrivacy.friends_only;
-      authorKey = friendAuthorKeys[(i - 16) % friendAuthorKeys.length];
-    } else if (i >= 20 && i < 24) {
-      privacy = RecipePrivacy.friends_only;
-      authorKey = nonFriendAuthorKeys[(i - 20) % nonFriendAuthorKeys.length];
-    } else if (i >= 24 && i < 28) {
-      privacy = RecipePrivacy.private;
-      authorKey =
-        i === 24
-          ? 'demo_cook_14'
-          : generalAuthorKeys[i % generalAuthorKeys.length];
-    } else if (i >= 28) {
-      isActive = false;
-      authorKey = i === 28 ? 'repeat_offender_active' : 'demo_cook_13';
-    }
-
-    if (i === 15) {
-      translationStatus = TranslationStatus.failed;
-    }
-
-    const prepTime = 10 + Math.floor(rand() * 20);
-    const cookTime = 10 + Math.floor(rand() * 35);
-    const totalTime = prepTime + cookTime;
-    const step1Dur = Math.floor(totalTime / 2);
-    const step2Dur = totalTime - step1Dur;
-
-    const template = recipeTemplates[i % recipeTemplates.length];
-    const pickedIngredients: SeedRecipeFixture['ingredients'] = [];
-    const usedSlugs = new Set<string>();
-    while (pickedIngredients.length < 4) {
-      const idx = Math.floor(rand() * ingredientsCatalog.length);
-      const ing = ingredientsCatalog[idx];
-      if (!usedSlugs.has(ing.slug)) {
-        usedSlugs.add(ing.slug);
-        pickedIngredients.push({
-          slug: ing.slug,
-          quantity: 50 + Math.floor(rand() * 250),
-          unit: units[Math.floor(rand() * units.length)],
-        });
-      }
-    }
-
-    const tag1 = tagsCatalog[i % tagsCatalog.length].slug;
-    const tag2 = tagsCatalog[(i + 3) % tagsCatalog.length].slug;
-    const tagSlugs = tag1 === tag2 ? [tag1] : [tag1, tag2];
-
-    generated.push({
-      key,
-      authorKey,
-      ownerType: OwnerType.user,
-      privacy,
-      isActive,
-      sourceLang: sourceLangs[i % sourceLangs.length],
-      translationStatus,
-      translationSource,
-      course: courses[i % courses.length],
-      difficulty: difficulties[i % difficulties.length],
-      prepTime,
-      cookTime,
-      servings: 2 + (i % 5),
-      coverAsset: coverAssets[i % coverAssets.length],
-      videoAsset: i % 10 === 0 ? 'seed-tutorial-1.mp4' : undefined,
-      galleryAssets: i % 5 === 0 ? ['seed-gallery-1.webp'] : undefined,
-      tagSlugs,
-      translations: {
-        it: {
-          title: `${template.it} #${num}`,
-          description: `Preparazione casalinga di ${template.it.toLowerCase()} con ingredienti selezionati.`,
-        },
-        en: {
-          title: `${template.en} #${num}`,
-          description: `Homemade ${template.en.toLowerCase()} prepared with fresh pantry ingredients.`,
-        },
-        fr: {
-          title: `${template.fr} #${num}`,
-          description: `Recette maison de ${template.fr.toLowerCase()} avec des ingrédients sélectionnés.`,
-        },
-      },
-      steps: [
-        {
-          duration: step1Dur,
-          imageAsset: stepAssets[i % stepAssets.length],
-          translations: {
-            it: {
-              title: 'Preparazione',
-              description: 'Preparare e pesare tutti gli ingredienti.',
-            },
-            en: {
-              title: 'Prep',
-              description: 'Prepare and measure all ingredients.',
-            },
-            fr: {
-              title: 'Préparation',
-              description: 'Préparer et peser tous les ingrédients.',
-            },
-          },
-        },
-        {
-          duration: step2Dur,
-          translations: {
-            it: {
-              title: 'Cottura',
-              description: 'Cuocere fino a doratura e servire caldo.',
-            },
-            en: {
-              title: 'Cook',
-              description: 'Cook until golden and serve warm.',
-            },
-            fr: {
-              title: 'Cuisson',
-              description: 'Cuire jusqu’à coloration et servir chaud.',
-            },
-          },
-        },
-      ],
-      ingredients: pickedIngredients,
-    });
-  }
-
-  return generated;
-}
-
-/**
  * Seeds the 20 showcase recipes (newest `created_at` so they appear on Page 1)
- * + 30 deterministic generated recipes (older `created_at` on Pages 2–3),
+ * + 12 curated Page 2 recipes (older `created_at`),
  * staging per-recipe unique local media files under `UPLOADS_DIR/recipes`.
  */
 export async function seedRecipes(
@@ -341,10 +96,6 @@ export async function seedRecipes(
   const targetDir = path.join(resolveSeedUploadsDir(env), 'recipes');
   fs.mkdirSync(targetDir, { recursive: true });
 
-  const ingredientsCatalog =
-    loadSeedJson<CatalogIngredientSeed[]>('ingredients.json');
-  const tagsCatalog = loadSeedJson<CatalogTagSeed[]>('tags.json');
-
   const dbIngredients = await prisma.ingredient.findMany({
     select: { id: true, slug: true },
   });
@@ -355,17 +106,13 @@ export async function seedRecipes(
   });
   const tagIdBySlug = new Map(dbTags.map((t) => [t.slug, t.id]));
 
-  const generatedFixtures = buildGeneratedRecipes(
-    ingredientsCatalog,
-    tagsCatalog,
-  );
-  // Showcase recipes receive newer timestamps (idx 0..19) than generated (idx 24..53)
+  // Showcase recipes receive newer timestamps (idx 0..19) than Page 2 curated (idx 24..35)
   const timestampedFixtures = [
     ...SHOWCASE_RECIPES.map((fixture, idx) => ({
       fixture,
       createdAt: new Date(now.getTime() - idx * HOUR_MS),
     })),
-    ...generatedFixtures.map((fixture, idx) => ({
+    ...PAGE_TWO_CURATED_RECIPES.map((fixture, idx) => ({
       fixture,
       createdAt: new Date(now.getTime() - (24 + idx) * HOUR_MS),
     })),
