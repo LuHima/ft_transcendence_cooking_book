@@ -8,6 +8,7 @@ import {
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -35,6 +36,7 @@ import {
 import type { Request, Response } from 'express';
 
 @ApiTags('Media')
+@Throttle({ default: { limit: 100, ttl: 1000 } })
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
