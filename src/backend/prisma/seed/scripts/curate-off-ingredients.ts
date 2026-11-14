@@ -14,6 +14,44 @@ export interface OffTaxonomyEntry {
 const E_NUMBER_REGEX = /^(?:en:)?e[-\s]?\d{3,4}[a-z]?$/i;
 const GARBAGE_NAME_REGEX = /(?:^[a-z]{2}:|https?:\/\/|[[\]{}<>]|^\d+$|\?\?)/i;
 
+const CULINARY_ALLOWLIST_PATTERNS = [
+  /^butter$/i,
+  /^salted butter$/i,
+  /^unsalted butter$/i,
+  /^clarified butter$/i,
+  /^ghee$/i,
+  /^baking powder$/i,
+  /^(?:raw\s+)?(?:cocoa|cacao) powder$/i,
+  /^(?:mild\s+)?curry powder$/i,
+  /^garlic powder$/i,
+  /^onion powder$/i,
+  /^chill?i powder$/i,
+  /^ginger powder$/i,
+  /^turmeric powder$/i,
+  /^cinnamon powder$/i,
+  /^paprika powder$/i,
+  /^mustard powder$/i,
+  /^matcha(?:\s+powder)?$/i,
+  /^(?:(?:bourbon|natural|pure)\s+)?vanilla extract$/i,
+  /^(?:bitter\s+)?almond extract$/i,
+  /^(?:pepper)?mint extract$/i,
+  /^(?:natural\s+)?(?:lemon|orange) extract$/i,
+  /^dark chocolate(?:\s*\(\d+%\))?$/i,
+];
+
+export const FAT_AND_SPREAD_NOISE_REGEX =
+  /\b(?:\d+\s*%(?:\s*(?:fat|mg|matiere|matieres|grasso|grassi))?|easy-to-spread|reduced[- ]fat|low[- ]fat|fat[- ]reduced|butterfat|milkfat|animal fat)\b|\blightly salted\b.*\bbutter\b/i;
+
+export const FOOD_LABEL_NOISE_REGEX =
+  /\b(?:preparation|blend of|concentrate|from concentrate|hydrolysate|isolate|hydrogenated|aroma|aromas|ci natural|ci \d{4,5}|pectin|extract|powder|powdered cellulose|maltodextrin|solids)\b/i;
+
+export function isCulinaryAllowlisted(englishName: string): boolean {
+  const normalized = englishName.trim().toLowerCase();
+  return CULINARY_ALLOWLIST_PATTERNS.some((pattern) =>
+    pattern.test(normalized),
+  );
+}
+
 const INDUSTRIAL_KEYWORDS = [
   'additive',
   'emulsifier',
@@ -119,6 +157,9 @@ export function isAdditiveOrIndustrial(
   entry: OffTaxonomyEntry,
   names: { it: string; en: string; fr: string },
 ): boolean {
+  if (isCulinaryAllowlisted(names.en)) {
+    return false;
+  }
   if (entry.mandatory_additive_class?.en || entry.e_number?.en) {
     return true;
   }
@@ -145,6 +186,12 @@ export function isAdditiveOrIndustrial(
 
   const combined =
     `${keySlug} ${names.en} ${names.it} ${names.fr}`.toLowerCase();
+  if (
+    FAT_AND_SPREAD_NOISE_REGEX.test(combined) ||
+    FOOD_LABEL_NOISE_REGEX.test(combined)
+  ) {
+    return true;
+  }
   return INDUSTRIAL_KEYWORDS.some((kw) => combined.includes(kw));
 }
 
