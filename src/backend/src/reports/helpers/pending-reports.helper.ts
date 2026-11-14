@@ -1,5 +1,5 @@
 import { ReportSubject, ReportStatus } from '@prisma/client';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 /**
  * Retrieves the unique target IDs of all active pending comment reports.

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogService, toTranslationDictionary } from './catalog.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-ability.factory';
 import { Action } from '../auth/casl/action.enum';
 import { Role } from '@prisma/client';

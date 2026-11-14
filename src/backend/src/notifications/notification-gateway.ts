@@ -16,7 +16,7 @@ import {
 } from 'src/common/config/error.config';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationAction } from '@prisma/client';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 /*
  * Quando si usa WebSocket si aggancia allo stesso server e utilizza la stessa

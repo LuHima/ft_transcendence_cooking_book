@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { AdminCommentsController } from './admin-comments.controller';
 import { AdminService } from './admin.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { BanHistoryService } from '../reports/ban-history.service';
 import {

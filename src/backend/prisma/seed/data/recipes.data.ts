@@ -7,10 +7,49 @@ import {
   TranslationStatus,
   UnitOfMeasure,
 } from '@prisma/client';
+import type { SeedUserKey } from './users.data';
+
+export const SEED_RECIPE_KEYS = {
+  CARBONARA: 'carbonara',
+  TIRAMISU: 'tiramisu',
+  PIZZA_PLATFORM: 'pizzaPlatform',
+  BRUSCHETTA: 'bruschetta',
+  GUACAMOLE: 'guacamole',
+  RISOTTO: 'risotto',
+  LENTILS_SOUP: 'lentilsSoup',
+  SALMON_DISH: 'salmonDish',
+  CHICKEN_CURRY: 'chickenCurry',
+  BOEUF_BOURGUIGNON: 'boeufBourguignon',
+  CAPRESE: 'caprese',
+  BAKED_POTATOES: 'bakedPotatoes',
+  RATATOUILLE: 'ratatouille',
+  FONDANT: 'fondant',
+  CHIA_PUDDING: 'chiaPudding',
+  SMOOTHIE: 'smoothie',
+  ESPRESSO_MARTINI: 'espressoMartini',
+  AVOCADO_TOAST: 'avocadoToast',
+  HUMMUS: 'hummus',
+  CROISSANTS: 'croissants',
+  PASTA_PESTO: 'pastaPesto',
+  SHAKSHUKA: 'shakshuka',
+  PAD_THAI: 'padThai',
+  RAMEN: 'ramen',
+  PAELLA: 'paella',
+  FALAFEL: 'falafel',
+  LASAGNA: 'lasagna',
+  GNOCCHI: 'gnocchi',
+  FOCACCIA: 'focaccia',
+  CREME_BRULEE: 'cremeBrulee',
+  PANCAKES: 'pancakes',
+  MINESTRONE: 'minestrone',
+} as const;
+
+export type SeedRecipeKey =
+  (typeof SEED_RECIPE_KEYS)[keyof typeof SEED_RECIPE_KEYS];
 
 export interface SeedRecipeFixture {
-  key: string;
-  authorKey: string | null;
+  key: SeedRecipeKey;
+  authorKey: SeedUserKey | null;
   ownerType: OwnerType;
   privacy: RecipePrivacy;
   isActive: boolean;

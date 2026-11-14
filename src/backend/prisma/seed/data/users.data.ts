@@ -1,7 +1,42 @@
 import { ProfilePrivacy, Role, UserStatus } from '@prisma/client';
 
+export const SEED_USER_KEYS = {
+  MARGHE_ADMIN: 'marghe_admin',
+  SARAH_MOD: 'sarah_mod',
+  MARIO_BIANCHI: 'mario_bianchi',
+  GIULY_COOKS: 'giuly_cooks',
+  CHEF_MARCO: 'chef_marco',
+  SOPHIE_PASTRY: 'sophie_pastry',
+  KENJI_NOODLES: 'kenji_noodles',
+  ELENA_VEGAN: 'elena_vegan',
+  CARLOS_MEX: 'carlos_mex',
+  ALEX_SECURE: 'alex_secure',
+  LUCA_DISATTIVATO: 'luca_disattivato',
+  EX_UTENTE: 'ex_utente',
+  SPAM_BOT: 'spam_bot',
+  TEMP_BANNED_USER: 'temp_banned_user',
+  REPEAT_OFFENDER_ACTIVE: 'repeat_offender_active',
+  LORENZO_FERRI: 'lorenzo_ferri',
+  CHIARA_BELLINI: 'chiara_bellini',
+  MATTEO_GALLI: 'matteo_galli',
+  FEDERICA_SERRA: 'federica_serra',
+  ALESSIO_GRECO: 'alessio_greco',
+  MARTINA_LEONE: 'martina_leone',
+  DAVIDE_RINALDI: 'davide_rinaldi',
+  VALENTINA_ORSI: 'valentina_orsi',
+  NICOLA_BRUNO: 'nicola_bruno',
+  CAMILLE_LAURENT: 'camille_laurent',
+  ANTOINE_MOREAU: 'antoine_moreau',
+  ELENA_NAVARRO: 'elena_navarro',
+  LUKAS_WEBER: 'lukas_weber',
+  HANNAH_FISCHER: 'hannah_fischer',
+  TIAGO_SILVA: 'tiago_silva',
+} as const;
+
+export type SeedUserKey = (typeof SEED_USER_KEYS)[keyof typeof SEED_USER_KEYS];
+
 export interface SeedUserFixture {
-  key: string;
+  key: SeedUserKey;
   username: string;
   email: string;
   first_name: string;

@@ -1,8 +1,7 @@
 import { IngredientCategory } from '@prisma/client';
 import {
   curateOpenFoodFactsIngredients,
-  FAT_AND_SPREAD_NOISE_REGEX,
-  FOOD_LABEL_NOISE_REGEX,
+  hasIndustrialOrFatLabelNoise,
   hasValidMultilingualNames,
   isAdditiveOrIndustrial,
   isCulinaryAllowlisted,
@@ -205,10 +204,9 @@ describe('Open Food Facts Catalog Curation & Bulk Upsert (#199)', () => {
         expect(item.translations.fr.trim().length).toBeGreaterThan(0);
 
         if (!isCulinaryAllowlisted(item.translations.en)) {
-          const combined =
-            `${item.slug} ${item.translations.en} ${item.translations.it} ${item.translations.fr}`.toLowerCase();
-          expect(FAT_AND_SPREAD_NOISE_REGEX.test(combined)).toBe(false);
-          expect(FOOD_LABEL_NOISE_REGEX.test(combined)).toBe(false);
+          expect(
+            hasIndustrialOrFatLabelNoise(item.slug, item.translations),
+          ).toBe(false);
         }
       }
       // Spot-check baseline slugs preserved

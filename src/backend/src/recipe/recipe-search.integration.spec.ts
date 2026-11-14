@@ -3,7 +3,7 @@ import { RecipeService } from './recipe.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { VideoProcessingService } from '../common/services/video-processing.service';
 import { RecipeProjection } from './recipe.projection';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { ProductionConfig } from '../common/config/production.config';
 import { NotificationEmit } from '../notifications/notification-emit';

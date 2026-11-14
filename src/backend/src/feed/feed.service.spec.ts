@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FeedService } from './feed.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Course, RecipeDifficulty, RecipePrivacy, TranslationStatus } from '@prisma/client';
 
 describe('FeedService', () => {

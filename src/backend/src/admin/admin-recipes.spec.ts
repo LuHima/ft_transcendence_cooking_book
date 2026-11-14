@@ -11,7 +11,7 @@ import { AdminRecipeQueryDto, AdminRecipeStatus } from './dto/admin-recipe-query
 import { RecipeService } from '../recipe/recipe.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { VideoProcessingService } from '../common/services/video-processing.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
 import { ProductionConfig } from '../common/config/production.config';

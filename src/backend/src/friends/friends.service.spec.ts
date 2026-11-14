@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FriendsService } from './friends.service';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationEmit } from 'src/notifications/notification-emit';
 import {
   NotFoundException,

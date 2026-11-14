@@ -14,11 +14,13 @@ import { resolveSeedUploadsDir } from '../config';
 import {
   PAGE_TWO_CURATED_RECIPES,
   SHOWCASE_RECIPES,
+  type SeedRecipeKey,
 } from '../data/recipes.data';
+import type { SeedUserKey } from '../data/users.data';
 
 export interface SeededRecipeRef {
   id: number;
-  key: string;
+  key: SeedRecipeKey;
   user_id: number | null;
   owner_type: OwnerType;
   privacy: RecipePrivacy;
@@ -26,7 +28,7 @@ export interface SeededRecipeRef {
 }
 
 export interface SeedRecipesResult {
-  byKey: Record<string, SeededRecipeRef>;
+  byKey: Partial<Record<SeedRecipeKey, SeededRecipeRef>>;
   all: SeededRecipeRef[];
 }
 
@@ -88,7 +90,7 @@ function stageRecipeAsset(
  */
 export async function seedRecipes(
   prisma: PrismaClient,
-  usersByKey: Record<string, User> = {},
+  usersByKey: Partial<Record<SeedUserKey, User>> = {},
   env: NodeJS.ProcessEnv = process.env,
   now: Date = new Date(),
 ): Promise<SeedRecipesResult> {
@@ -118,7 +120,7 @@ export async function seedRecipes(
     })),
   ];
 
-  const byKey: Record<string, SeededRecipeRef> = {};
+  const byKey: Partial<Record<SeedRecipeKey, SeededRecipeRef>> = {};
   const all: SeededRecipeRef[] = [];
 
   for (const { fixture, createdAt } of timestampedFixtures) {

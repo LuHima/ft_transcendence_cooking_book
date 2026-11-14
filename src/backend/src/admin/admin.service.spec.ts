@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminService } from './admin.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { BanHistoryService } from '../reports/ban-history.service';
 import { OwnerType, Role, UserStatus } from '@prisma/client';

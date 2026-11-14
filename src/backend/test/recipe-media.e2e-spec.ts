@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { execFileSync } from 'child_process';
 import { AppModule } from '../src/app.module';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthGuard } from '../src/common/guards/auth.guard';
 import { OptionalAuthGuard } from '../src/common/guards/optional-auth.guard';
 import { RECIPE_UPLOADS_DIR } from '../src/common/config/upload-paths';

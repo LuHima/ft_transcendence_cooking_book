@@ -7,6 +7,8 @@ import {
   ReportSubject,
   User,
 } from '@prisma/client';
+import { SEED_RECIPE_KEYS } from '../data/recipes.data';
+import { SEED_USER_KEYS } from '../data/users.data';
 import type { SeedRecipesResult } from './recipes.seeder';
 import type { SeedSocialResult } from './social.seeder';
 
@@ -24,23 +26,23 @@ export async function seedModeration(
   social: SeedSocialResult,
   now: Date = new Date(),
 ): Promise<void> {
-  const mario = usersByKey['mario_bianchi'];
-  const giulia = usersByKey['giuly_cooks'];
-  const marco = usersByKey['chef_marco'];
-  const sophie = usersByKey['sophie_pastry'];
-  const kenji = usersByKey['kenji_noodles'];
-  const elena = usersByKey['elena_vegan'];
-  const modSarah = usersByKey['sarah_mod'];
-  const adminMarghe = usersByKey['marghe_admin'];
-  const spamBot = usersByKey['spam_bot'];
-  const tempBanned = usersByKey['temp_banned_user'];
-  const repeatActive = usersByKey['repeat_offender_active'];
+  const mario = usersByKey[SEED_USER_KEYS.MARIO_BIANCHI];
+  const giulia = usersByKey[SEED_USER_KEYS.GIULY_COOKS];
+  const marco = usersByKey[SEED_USER_KEYS.CHEF_MARCO];
+  const sophie = usersByKey[SEED_USER_KEYS.SOPHIE_PASTRY];
+  const kenji = usersByKey[SEED_USER_KEYS.KENJI_NOODLES];
+  const elena = usersByKey[SEED_USER_KEYS.ELENA_VEGAN];
+  const modSarah = usersByKey[SEED_USER_KEYS.SARAH_MOD];
+  const adminMarghe = usersByKey[SEED_USER_KEYS.MARGHE_ADMIN];
+  const spamBot = usersByKey[SEED_USER_KEYS.SPAM_BOT];
+  const tempBanned = usersByKey[SEED_USER_KEYS.TEMP_BANNED_USER];
+  const repeatActive = usersByKey[SEED_USER_KEYS.REPEAT_OFFENDER_ACTIVE];
 
   const privateRecipe =
     recipes.all.find((r) => r.privacy === RecipePrivacy.private) ??
-    recipes.byKey['gnocchi'];
+    recipes.byKey[SEED_RECIPE_KEYS.GNOCCHI]!;
   const suspendedRecipes = recipes.all.filter((r) => !r.is_active);
-  const publicRecipe = recipes.byKey['carbonara'];
+  const publicRecipe = recipes.byKey[SEED_RECIPE_KEYS.CARBONARA]!;
 
   // 1. Reports (~18+)
   const spamUserReport = await prisma.report.create({
@@ -166,7 +168,7 @@ export async function seedModeration(
     {
       reporter_id: kenji.id,
       subject: ReportSubject.user,
-      target_id: usersByKey['hannah_fischer'].id,
+      target_id: usersByKey[SEED_USER_KEYS.HANNAH_FISCHER].id,
       reason: ReportReason.spam_scam,
       description: 'Suspicious external link in bio.',
       status: ReportStatus.pending,
@@ -174,7 +176,7 @@ export async function seedModeration(
     {
       reporter_id: elena.id,
       subject: ReportSubject.user,
-      target_id: usersByKey['tiago_silva'].id,
+      target_id: usersByKey[SEED_USER_KEYS.TIAGO_SILVA].id,
       reason: ReportReason.impersonation_misinformation,
       description: 'Possible duplicate account.',
       status: ReportStatus.dismissed,
@@ -187,7 +189,7 @@ export async function seedModeration(
     {
       reporter_id: giulia.id,
       subject: ReportSubject.recipe,
-      target_id: recipes.byKey['risotto'].id,
+      target_id: recipes.byKey[SEED_RECIPE_KEYS.RISOTTO]!.id,
       reason: ReportReason.other,
       description: 'Duplicate submission check.',
       status: ReportStatus.dismissed,
@@ -200,7 +202,7 @@ export async function seedModeration(
     {
       reporter_id: mario.id,
       subject: ReportSubject.recipe,
-      target_id: recipes.byKey['guacamole'].id,
+      target_id: recipes.byKey[SEED_RECIPE_KEYS.GUACAMOLE]!.id,
       reason: ReportReason.copyright_infringement,
       description: 'Needs attribution check.',
       status: ReportStatus.pending,

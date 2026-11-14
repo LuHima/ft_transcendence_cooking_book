@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import {
   MediaType,

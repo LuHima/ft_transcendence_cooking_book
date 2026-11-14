@@ -17,7 +17,7 @@ import {
   Role,
 } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { TranslationService } from '../translation/translation.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';

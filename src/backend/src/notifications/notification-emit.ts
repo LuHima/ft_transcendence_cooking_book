@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationSubject, NotificationAction } from '@prisma/client';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { NotifyData } from 'src/common/decorators/notify.decorator';
 import { NotificationStructDto } from 'src/common/dto/notification-struct.dto';
 

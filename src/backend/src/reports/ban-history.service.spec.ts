@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BanHistoryService } from './ban-history.service';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { ReportAction, ReportReason } from '@prisma/client';
 
 describe('BanHistoryService', () => {

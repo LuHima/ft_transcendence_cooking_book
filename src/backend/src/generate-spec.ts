@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { createSwaggerConfig } from './common/config/swagger.config';
 
 // 1. Stub Prisma lifecycle hooks to prevent database connections during headless generation

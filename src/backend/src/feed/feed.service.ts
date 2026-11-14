@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { FeedQueryDto } from './dto/feed-query.dto';
 import { PaginatedRecipeResponseDto } from '../recipe/dto/recipe-response.dto';
 import {

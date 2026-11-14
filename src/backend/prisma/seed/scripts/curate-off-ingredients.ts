@@ -148,6 +148,26 @@ export function hasValidMultilingualNames(
   return true;
 }
 
+function buildCombinedSearchText(
+  keyOrSlug: string,
+  names: { it: string; en: string; fr: string },
+): string {
+  const keySlug = keyOrSlug.replace(/^[a-z]{2}:/i, '');
+  return `${keySlug} ${names.en} ${names.it} ${names.fr}`.toLowerCase();
+}
+
+export function hasIndustrialOrFatLabelNoise(
+  keyOrSlug: string,
+  names: { it: string; en: string; fr: string },
+  combinedText?: string,
+): boolean {
+  const combined = combinedText ?? buildCombinedSearchText(keyOrSlug, names);
+  return (
+    FAT_AND_SPREAD_NOISE_REGEX.test(combined) ||
+    FOOD_LABEL_NOISE_REGEX.test(combined)
+  );
+}
+
 /**
  * Returns true if the taxonomy entry represents a food additive, E-number,
  * processing aid, or non-culinary industrial chemical.
@@ -184,12 +204,8 @@ export function isAdditiveOrIndustrial(
     return true;
   }
 
-  const combined =
-    `${keySlug} ${names.en} ${names.it} ${names.fr}`.toLowerCase();
-  if (
-    FAT_AND_SPREAD_NOISE_REGEX.test(combined) ||
-    FOOD_LABEL_NOISE_REGEX.test(combined)
-  ) {
+  const combined = buildCombinedSearchText(keySlug, names);
+  if (hasIndustrialOrFatLabelNoise(keySlug, names, combined)) {
     return true;
   }
   return INDUSTRIAL_KEYWORDS.some((kw) => combined.includes(kw));

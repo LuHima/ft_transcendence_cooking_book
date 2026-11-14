@@ -4,7 +4,7 @@ import { ExecutionContext } from '@nestjs/common';
 import { NotifyData } from '../decorators/notify.decorator';
 import { map, Observable } from 'rxjs';
 import { NotificationStructDto } from '../dto/notification-struct.dto';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationGateway } from 'src/notifications/notification-gateway';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotificationEmit } from 'src/notifications/notification-emit';

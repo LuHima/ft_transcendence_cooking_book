@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { FriendsController } from './friends.controller';
 import { FriendsService } from './friends.service';
-import { PrismaModule } from 'prisma/prisma.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({

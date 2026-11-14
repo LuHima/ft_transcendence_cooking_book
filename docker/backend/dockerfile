@@ -80,4 +80,4 @@ COPY --from=builder /usr/src/app/prisma/seed/data/*.json ./dist/prisma/seed/data
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
 
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]

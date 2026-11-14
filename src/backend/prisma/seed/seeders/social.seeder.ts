@@ -6,6 +6,8 @@ import {
   RecipePrivacy,
   User,
 } from '@prisma/client';
+import { SEED_RECIPE_KEYS } from '../data/recipes.data';
+import { SEED_USER_KEYS, type SeedUserKey } from '../data/users.data';
 import type { SeedRecipesResult } from './recipes.seeder';
 
 export interface SeedSocialResult {
@@ -106,33 +108,33 @@ export async function seedSocial(
   recipes: SeedRecipesResult,
   now: Date = new Date(),
 ): Promise<SeedSocialResult> {
-  const mario = usersByKey['mario_bianchi'];
-  const giulia = usersByKey['giuly_cooks'];
-  const marco = usersByKey['chef_marco'];
-  const sophie = usersByKey['sophie_pastry'];
-  const kenji = usersByKey['kenji_noodles'];
-  const elena = usersByKey['elena_vegan'];
-  const carlos = usersByKey['carlos_mex'];
-  const spamBot = usersByKey['spam_bot'];
-  const exUtente = usersByKey['ex_utente'];
-  const modSarah = usersByKey['sarah_mod'];
-  const repeatActive = usersByKey['repeat_offender_active'];
-  const tempBanned = usersByKey['temp_banned_user'];
+  const mario = usersByKey[SEED_USER_KEYS.MARIO_BIANCHI];
+  const giulia = usersByKey[SEED_USER_KEYS.GIULY_COOKS];
+  const marco = usersByKey[SEED_USER_KEYS.CHEF_MARCO];
+  const sophie = usersByKey[SEED_USER_KEYS.SOPHIE_PASTRY];
+  const kenji = usersByKey[SEED_USER_KEYS.KENJI_NOODLES];
+  const elena = usersByKey[SEED_USER_KEYS.ELENA_VEGAN];
+  const carlos = usersByKey[SEED_USER_KEYS.CARLOS_MEX];
+  const spamBot = usersByKey[SEED_USER_KEYS.SPAM_BOT];
+  const exUtente = usersByKey[SEED_USER_KEYS.EX_UTENTE];
+  const modSarah = usersByKey[SEED_USER_KEYS.SARAH_MOD];
+  const repeatActive = usersByKey[SEED_USER_KEYS.REPEAT_OFFENDER_ACTIVE];
+  const tempBanned = usersByKey[SEED_USER_KEYS.TEMP_BANNED_USER];
 
   // 1. Friendships: 12 accepted for mario_bianchi (keeping hannah_fischer/tiago_silva & repeat_offender_active as non-friends)
-  const marioFriendKeys = [
-    'giuly_cooks',
-    'chef_marco',
-    'sophie_pastry',
-    'kenji_noodles',
-    'elena_vegan',
-    'carlos_mex',
-    'lorenzo_ferri',
-    'chiara_bellini',
-    'matteo_galli',
-    'federica_serra',
-    'alessio_greco',
-    'martina_leone',
+  const marioFriendKeys: SeedUserKey[] = [
+    SEED_USER_KEYS.GIULY_COOKS,
+    SEED_USER_KEYS.CHEF_MARCO,
+    SEED_USER_KEYS.SOPHIE_PASTRY,
+    SEED_USER_KEYS.KENJI_NOODLES,
+    SEED_USER_KEYS.ELENA_VEGAN,
+    SEED_USER_KEYS.CARLOS_MEX,
+    SEED_USER_KEYS.LORENZO_FERRI,
+    SEED_USER_KEYS.CHIARA_BELLINI,
+    SEED_USER_KEYS.MATTEO_GALLI,
+    SEED_USER_KEYS.FEDERICA_SERRA,
+    SEED_USER_KEYS.ALESSIO_GRECO,
+    SEED_USER_KEYS.MARTINA_LEONE,
   ];
 
   const acceptedFriendships: Array<{
@@ -173,9 +175,9 @@ export async function seedSocial(
   }
 
   const pendingPairs: Array<[User, User]> = [
-    [usersByKey['davide_rinaldi'], mario],
-    [mario, usersByKey['valentina_orsi']],
-    [usersByKey['camille_laurent'], giulia],
+    [usersByKey[SEED_USER_KEYS.DAVIDE_RINALDI], mario],
+    [mario, usersByKey[SEED_USER_KEYS.VALENTINA_ORSI]],
+    [usersByKey[SEED_USER_KEYS.CAMILLE_LAURENT], giulia],
   ];
   for (const [req, addr] of pendingPairs) {
     await prisma.friendship.create({
@@ -191,7 +193,7 @@ export async function seedSocial(
   await prisma.friendship.create({
     data: {
       requester_id: mario.id,
-      addressee_id: usersByKey['nicola_bruno'].id,
+      addressee_id: usersByKey[SEED_USER_KEYS.NICOLA_BRUNO].id,
       status: FriendshipStatus.rejected,
       created_at: new Date(now.getTime() - 7 * DAY_MS),
       updated_at: new Date(now.getTime() - 5 * DAY_MS),
@@ -202,16 +204,19 @@ export async function seedSocial(
   await prisma.userBlock.createMany({
     data: [
       { blocker_id: mario.id, blocked_id: spamBot.id },
-      { blocker_id: giulia.id, blocked_id: usersByKey['tiago_silva'].id },
+      {
+        blocker_id: giulia.id,
+        blocked_id: usersByKey[SEED_USER_KEYS.TIAGO_SILVA].id,
+      },
     ],
   });
 
   // 3. Comments (~65+ total across all 32 curated recipes)
-  const pizza = recipes.byKey['pizzaPlatform'];
-  const carbonara = recipes.byKey['carbonara'];
-  const tiramisu = recipes.byKey['tiramisu'];
-  const risotto = recipes.byKey['risotto'];
-  const guacamole = recipes.byKey['guacamole'];
+  const pizza = recipes.byKey[SEED_RECIPE_KEYS.PIZZA_PLATFORM]!;
+  const carbonara = recipes.byKey[SEED_RECIPE_KEYS.CARBONARA]!;
+  const tiramisu = recipes.byKey[SEED_RECIPE_KEYS.TIRAMISU]!;
+  const risotto = recipes.byKey[SEED_RECIPE_KEYS.RISOTTO]!;
+  const guacamole = recipes.byKey[SEED_RECIPE_KEYS.GUACAMOLE]!;
 
   const commenters = [
     mario,
@@ -221,11 +226,11 @@ export async function seedSocial(
     kenji,
     elena,
     carlos,
-    usersByKey['lorenzo_ferri'],
-    usersByKey['chiara_bellini'],
-    usersByKey['matteo_galli'],
-    usersByKey['federica_serra'],
-    usersByKey['alessio_greco'],
+    usersByKey[SEED_USER_KEYS.LORENZO_FERRI],
+    usersByKey[SEED_USER_KEYS.CHIARA_BELLINI],
+    usersByKey[SEED_USER_KEYS.MATTEO_GALLI],
+    usersByKey[SEED_USER_KEYS.FEDERICA_SERRA],
+    usersByKey[SEED_USER_KEYS.ALESSIO_GRECO],
   ];
 
   const allCommentIds: number[] = [];
@@ -326,7 +331,7 @@ export async function seedSocial(
   const offTopicComment = await prisma.comment.create({
     data: {
       recipe_id: risotto.id,
-      user_id: usersByKey['hannah_fischer'].id,
+      user_id: usersByKey[SEED_USER_KEYS.HANNAH_FISCHER].id,
       content:
         'Does anyone know what time the local farmers market closes today?',
       is_active: true,
@@ -337,7 +342,7 @@ export async function seedSocial(
   const hateSpeechPendingComment = await prisma.comment.create({
     data: {
       recipe_id: guacamole.id,
-      user_id: usersByKey['tiago_silva'].id,
+      user_id: usersByKey[SEED_USER_KEYS.TIAGO_SILVA].id,
       content: 'Hostile and derogatory remark awaiting moderator review.',
       is_active: true,
     },
@@ -347,7 +352,7 @@ export async function seedSocial(
   const promoSpamPendingComment = await prisma.comment.create({
     data: {
       recipe_id: carbonara.id,
-      user_id: usersByKey['hannah_fischer'].id,
+      user_id: usersByKey[SEED_USER_KEYS.HANNAH_FISCHER].id,
       content: 'Use promo code CHEAPKNIVES50 on my storefront for 50% off!',
       is_active: true,
     },
@@ -360,33 +365,33 @@ export async function seedSocial(
     tiramisu,
     risotto,
     guacamole,
-    recipes.byKey['bruschetta'],
-    recipes.byKey['lentilsSoup'],
-    recipes.byKey['salmonDish'],
-    recipes.byKey['chickenCurry'],
-    recipes.byKey['boeufBourguignon'],
-    recipes.byKey['caprese'],
-    recipes.byKey['bakedPotatoes'],
-    recipes.byKey['ratatouille'],
-    recipes.byKey['fondant'],
-    recipes.byKey['chiaPudding'],
-    recipes.byKey['avocadoToast'],
-    recipes.byKey['hummus'],
-    recipes.byKey['smoothie'],
-    recipes.byKey['espressoMartini'],
-    recipes.byKey['croissants'],
-    recipes.byKey['pastaPesto'],
-    recipes.byKey['shakshuka'],
-    recipes.byKey['padThai'],
-    recipes.byKey['ramen'],
-    recipes.byKey['paella'],
-    recipes.byKey['falafel'],
-    recipes.byKey['lasagna'],
-    recipes.byKey['gnocchi'],
-    recipes.byKey['focaccia'],
-    recipes.byKey['cremeBrulee'],
-    recipes.byKey['pancakes'],
-    recipes.byKey['minestrone'],
+    recipes.byKey[SEED_RECIPE_KEYS.BRUSCHETTA],
+    recipes.byKey[SEED_RECIPE_KEYS.LENTILS_SOUP],
+    recipes.byKey[SEED_RECIPE_KEYS.SALMON_DISH],
+    recipes.byKey[SEED_RECIPE_KEYS.CHICKEN_CURRY],
+    recipes.byKey[SEED_RECIPE_KEYS.BOEUF_BOURGUIGNON],
+    recipes.byKey[SEED_RECIPE_KEYS.CAPRESE],
+    recipes.byKey[SEED_RECIPE_KEYS.BAKED_POTATOES],
+    recipes.byKey[SEED_RECIPE_KEYS.RATATOUILLE],
+    recipes.byKey[SEED_RECIPE_KEYS.FONDANT],
+    recipes.byKey[SEED_RECIPE_KEYS.CHIA_PUDDING],
+    recipes.byKey[SEED_RECIPE_KEYS.AVOCADO_TOAST],
+    recipes.byKey[SEED_RECIPE_KEYS.HUMMUS],
+    recipes.byKey[SEED_RECIPE_KEYS.SMOOTHIE],
+    recipes.byKey[SEED_RECIPE_KEYS.ESPRESSO_MARTINI],
+    recipes.byKey[SEED_RECIPE_KEYS.CROISSANTS],
+    recipes.byKey[SEED_RECIPE_KEYS.PASTA_PESTO],
+    recipes.byKey[SEED_RECIPE_KEYS.SHAKSHUKA],
+    recipes.byKey[SEED_RECIPE_KEYS.PAD_THAI],
+    recipes.byKey[SEED_RECIPE_KEYS.RAMEN],
+    recipes.byKey[SEED_RECIPE_KEYS.PAELLA],
+    recipes.byKey[SEED_RECIPE_KEYS.FALAFEL],
+    recipes.byKey[SEED_RECIPE_KEYS.LASAGNA],
+    recipes.byKey[SEED_RECIPE_KEYS.GNOCCHI],
+    recipes.byKey[SEED_RECIPE_KEYS.FOCACCIA],
+    recipes.byKey[SEED_RECIPE_KEYS.CREME_BRULEE],
+    recipes.byKey[SEED_RECIPE_KEYS.PANCAKES],
+    recipes.byKey[SEED_RECIPE_KEYS.MINESTRONE],
   ];
 
   for (let i = 0; i < extraCommentTargets.length; i++) {

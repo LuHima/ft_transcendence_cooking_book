@@ -15,6 +15,7 @@ import {
 } from '@prisma/client';
 import { EncryptionService } from 'src/auth/encryption.service';
 import { resolveStoredUploadPath } from 'src/common/config/upload-paths';
+import { SEED_COUNTS } from 'prisma/seed/config';
 import { runSeed } from 'prisma/seed/index';
 
 describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
@@ -45,7 +46,7 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
 
   it('seeds 30 curated users with valid 2FA encryption, deleted_at, and ban states', async () => {
     const users = await prisma.user.findMany();
-    expect(users).toHaveLength(30);
+    expect(users).toHaveLength(SEED_COUNTS.USERS);
     for (const u of users) {
       expect(u.username).not.toMatch(/^demo_cook_/);
       expect(`${u.first_name ?? ''} ${u.last_name ?? ''}`).not.toMatch(
@@ -77,7 +78,7 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     const recipes = await prisma.recipe.findMany({
       include: { steps: true, recipe_media: true },
     });
-    expect(recipes.length).toBe(32);
+    expect(recipes.length).toBe(SEED_COUNTS.TOTAL_RECIPES);
 
     const exUtente = await prisma.user.findUniqueOrThrow({
       where: { username: 'ex_utente' },
@@ -127,8 +128,8 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
       take: 20,
       include: { translations: { where: { locale: 'en' } } },
     });
-    expect(page1).toHaveLength(20);
-    expect(page2).toHaveLength(12);
+    expect(page1).toHaveLength(SEED_COUNTS.SHOWCASE_RECIPES);
+    expect(page2).toHaveLength(SEED_COUNTS.PAGE_TWO_RECIPES);
     for (const r of [...page1, ...page2]) {
       expect(r.translations[0].title).not.toMatch(/#\d+$/);
     }
@@ -169,7 +170,7 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
       select: { recipe_id: true },
       distinct: ['recipe_id'],
     });
-    expect(recipesWithComments).toHaveLength(32);
+    expect(recipesWithComments).toHaveLength(SEED_COUNTS.TOTAL_RECIPES);
 
     const pizza = await prisma.recipe.findFirstOrThrow({
       where: {
@@ -294,7 +295,7 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     expect(marioAfter.bio).toBe(
       'Runtime bio mutation preserved across restart',
     );
-    expect(await prisma.recipe.count()).toBe(32);
+    expect(await prisma.recipe.count()).toBe(SEED_COUNTS.TOTAL_RECIPES);
     expect(await prisma.report.count()).toBe(reportsBefore);
   }, 30000);
 });

@@ -4,7 +4,7 @@ import { AdminCommentsController } from './admin-comments.controller';
 import { AdminRecipesController } from './admin-recipes.controller';
 import { AdminCatalogController } from './admin-catalog.controller';
 import { AdminService } from './admin.service';
-import { PrismaModule } from '../../prisma/prisma.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { ReportsModule } from '../reports/reports.module';
 import { RecipeModule } from '../recipe/recipe.module';

@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { ProfilePrivacy, Role, UserStatus } from '@prisma/client';
 import { EncryptionService } from 'src/auth/encryption.service';
+import { SEED_COUNTS } from 'prisma/seed/config';
 import { buildSeedUsers } from 'prisma/seed/data/users.data';
 import {
   encryptTwoFactorSecret,
@@ -19,11 +20,11 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
     const users = buildSeedUsers();
 
     it('generates 30 unique curated personas covering all roles, statuses, and privacy tiers', () => {
-      expect(users.length).toBe(30);
+      expect(users.length).toBe(SEED_COUNTS.USERS);
       const emails = new Set(users.map((u) => u.email));
       const usernames = new Set(users.map((u) => u.username));
-      expect(emails.size).toBe(30);
-      expect(usernames.size).toBe(30);
+      expect(emails.size).toBe(SEED_COUNTS.USERS);
+      expect(usernames.size).toBe(SEED_COUNTS.USERS);
 
       for (const u of users) {
         expect(u.username).not.toMatch(/^demo_cook_/);
@@ -85,7 +86,7 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
       const mockPrisma = { user: { upsert } };
 
       await seedUsers(mockPrisma as never);
-      expect(upsert).toHaveBeenCalledTimes(30);
+      expect(upsert).toHaveBeenCalledTimes(SEED_COUNTS.USERS);
       const calls = upsert.mock.calls as Array<
         [{ update: Record<string, unknown> }]
       >;

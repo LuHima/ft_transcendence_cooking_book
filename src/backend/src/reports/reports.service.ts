@@ -5,7 +5,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
 import { CreateReportDto } from './dto/create-report.dto';

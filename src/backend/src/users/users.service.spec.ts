@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
 import { ImageProcessingService } from '../common/services/image-processing.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import {
   NotFoundException,
   ConflictException,

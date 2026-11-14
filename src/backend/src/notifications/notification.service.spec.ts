@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationService } from './notification.service';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CaslAbilityFactory } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
 import { NotificationAction, NotificationSubject, Role } from '@prisma/client';
 import { ActiveUserData } from 'src/common/decorators/current-user.decorator';

@@ -8,6 +8,7 @@ import {
   TranslationStatus,
 } from '@prisma/client';
 import { resolveStoredUploadPath } from 'src/common/config/upload-paths';
+import { SEED_COUNTS } from 'prisma/seed/config';
 import {
   PAGE_TWO_CURATED_RECIPES,
   SHOWCASE_RECIPES,
@@ -18,12 +19,12 @@ describe('Local Protected Media Assets & 32-Recipe Curated Dataset (#206)', () =
   const allRecipes = [...SHOWCASE_RECIPES, ...PAGE_TWO_CURATED_RECIPES];
 
   it('produces 32 curated recipes (20 showcase + 12 page-2) with zero clones or external URLs', () => {
-    expect(SHOWCASE_RECIPES).toHaveLength(20);
-    expect(PAGE_TWO_CURATED_RECIPES).toHaveLength(12);
-    expect(allRecipes).toHaveLength(32);
+    expect(SHOWCASE_RECIPES).toHaveLength(SEED_COUNTS.SHOWCASE_RECIPES);
+    expect(PAGE_TWO_CURATED_RECIPES).toHaveLength(SEED_COUNTS.PAGE_TWO_RECIPES);
+    expect(allRecipes).toHaveLength(SEED_COUNTS.TOTAL_RECIPES);
 
     const keys = new Set(allRecipes.map((r) => r.key));
-    expect(keys.size).toBe(32);
+    expect(keys.size).toBe(SEED_COUNTS.TOTAL_RECIPES);
 
     for (const r of allRecipes) {
       expect(r.translations.en.title).not.toMatch(/#\d+$/);

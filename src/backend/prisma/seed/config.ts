@@ -2,6 +2,13 @@ import * as path from 'path';
 
 export type SeedEnv = 'dev' | 'prod';
 
+export const SEED_COUNTS = {
+  USERS: 30,
+  SHOWCASE_RECIPES: 20,
+  PAGE_TWO_RECIPES: 12,
+  TOTAL_RECIPES: 32,
+} as const;
+
 const PRODUCTION_TRUE_VALUES = new Set(['true', '1']);
 const PRODUCTION_FALSE_VALUES = new Set(['false', '0']);
 
