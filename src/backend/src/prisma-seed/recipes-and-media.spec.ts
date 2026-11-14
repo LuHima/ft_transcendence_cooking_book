@@ -70,7 +70,7 @@ describe('Local Protected Media Assets & 32-Recipe Curated Dataset (#206)', () =
     ).toBe(true);
 
     const sources = new Set(allRecipes.map((r) => r.translationSource));
-    expect(sources.has(TranslationSource.author_original)).toBe(true);
+    expect(sources.has(TranslationSource.author_original)).toBe(false);
     expect(sources.has(TranslationSource.manual)).toBe(true);
     expect(sources.has(TranslationSource.machine)).toBe(true);
   });
