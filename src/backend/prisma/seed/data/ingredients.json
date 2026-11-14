@@ -1,0 +1,515 @@
+[
+  {
+    "slug": "tomato",
+    "category": "produce",
+    "translations": {
+      "it": "Pomodoro",
+      "en": "Tomato",
+      "fr": "Tomate"
+    }
+  },
+  {
+    "slug": "basil",
+    "category": "produce",
+    "translations": {
+      "it": "Basilico",
+      "en": "Basil",
+      "fr": "Basilic"
+    }
+  },
+  {
+    "slug": "garlic",
+    "category": "produce",
+    "translations": {
+      "it": "Aglio",
+      "en": "Garlic",
+      "fr": "Ail"
+    }
+  },
+  {
+    "slug": "onion",
+    "category": "produce",
+    "translations": {
+      "it": "Cipolla",
+      "en": "Onion",
+      "fr": "Oignon"
+    }
+  },
+  {
+    "slug": "lemon",
+    "category": "produce",
+    "translations": {
+      "it": "Limone",
+      "en": "Lemon",
+      "fr": "Citron"
+    }
+  },
+  {
+    "slug": "avocado",
+    "category": "produce",
+    "translations": {
+      "it": "Avocado",
+      "en": "Avocado",
+      "fr": "Avocat"
+    }
+  },
+  {
+    "slug": "lime",
+    "category": "produce",
+    "translations": {
+      "it": "Lime",
+      "en": "Lime",
+      "fr": "Citron Vert"
+    }
+  },
+  {
+    "slug": "cilantro",
+    "category": "produce",
+    "translations": {
+      "it": "Coriandolo Fresco",
+      "en": "Fresh Cilantro",
+      "fr": "Coriandre Fraîche"
+    }
+  },
+  {
+    "slug": "mushrooms",
+    "category": "produce",
+    "translations": {
+      "it": "Funghi Porcini",
+      "en": "Porcini Mushrooms",
+      "fr": "Cèpes"
+    }
+  },
+  {
+    "slug": "potatoes",
+    "category": "produce",
+    "translations": {
+      "it": "Patate",
+      "en": "Potatoes",
+      "fr": "Pommes de Terre"
+    }
+  },
+  {
+    "slug": "rosemary",
+    "category": "produce",
+    "translations": {
+      "it": "Rosmarino Fresco",
+      "en": "Fresh Rosemary",
+      "fr": "Romarin Frais"
+    }
+  },
+  {
+    "slug": "eggplant",
+    "category": "produce",
+    "translations": {
+      "it": "Melanzane",
+      "en": "Eggplant",
+      "fr": "Aubergine"
+    }
+  },
+  {
+    "slug": "zucchini",
+    "category": "produce",
+    "translations": {
+      "it": "Zucchine",
+      "en": "Zucchini",
+      "fr": "Courgettes"
+    }
+  },
+  {
+    "slug": "bell_pepper",
+    "category": "produce",
+    "translations": {
+      "it": "Peperoni",
+      "en": "Bell Peppers",
+      "fr": "Poivrons"
+    }
+  },
+  {
+    "slug": "carrots",
+    "category": "produce",
+    "translations": {
+      "it": "Carote",
+      "en": "Carrots",
+      "fr": "Carottes"
+    }
+  },
+  {
+    "slug": "banana",
+    "category": "produce",
+    "translations": {
+      "it": "Banana",
+      "en": "Banana",
+      "fr": "Banane"
+    }
+  },
+  {
+    "slug": "berries",
+    "category": "produce",
+    "translations": {
+      "it": "Frutti di Bosco",
+      "en": "Mixed Berries",
+      "fr": "Fruits des Bois"
+    }
+  },
+  {
+    "slug": "cucumber",
+    "category": "produce",
+    "translations": {
+      "it": "Cetriolo",
+      "en": "Cucumber",
+      "fr": "Concombre"
+    }
+  },
+  {
+    "slug": "eggs",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Uova",
+      "en": "Eggs",
+      "fr": "Œufs"
+    }
+  },
+  {
+    "slug": "butter",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Burro",
+      "en": "Butter",
+      "fr": "Beurre"
+    }
+  },
+  {
+    "slug": "milk",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Latte",
+      "en": "Milk",
+      "fr": "Lait"
+    }
+  },
+  {
+    "slug": "parmesan",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Parmigiano Reggiano",
+      "en": "Parmesan",
+      "fr": "Parmesan"
+    }
+  },
+  {
+    "slug": "pecorino",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Pecorino Romano",
+      "en": "Pecorino Romano",
+      "fr": "Pecorino Romano"
+    }
+  },
+  {
+    "slug": "mascarpone",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Mascarpone",
+      "en": "Mascarpone",
+      "fr": "Mascarpone"
+    }
+  },
+  {
+    "slug": "mozzarella",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Mozzarella di Bufala",
+      "en": "Buffalo Mozzarella",
+      "fr": "Mozzarella de Bufflonne"
+    }
+  },
+  {
+    "slug": "cream",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Panna Fresca",
+      "en": "Heavy Cream",
+      "fr": "Crème Fraîche"
+    }
+  },
+  {
+    "slug": "guanciale",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Guanciale",
+      "en": "Cured Pork Cheek",
+      "fr": "Guanciale"
+    }
+  },
+  {
+    "slug": "chicken_breast",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Petto di Pollo",
+      "en": "Chicken Breast",
+      "fr": "Blanc de Poulet"
+    }
+  },
+  {
+    "slug": "beef_mince",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Macinato di Manzo",
+      "en": "Minced Beef",
+      "fr": "Bœuf Haché"
+    }
+  },
+  {
+    "slug": "beef_chuck",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Spezzatino di Manzo",
+      "en": "Beef Chuck Roast",
+      "fr": "Bœuf Bourguignon"
+    }
+  },
+  {
+    "slug": "salmon",
+    "category": "seafood",
+    "translations": {
+      "it": "Salmone Fresco",
+      "en": "Fresh Salmon",
+      "fr": "Saumon Frais"
+    }
+  },
+  {
+    "slug": "prawns",
+    "category": "seafood",
+    "translations": {
+      "it": "Gamberi",
+      "en": "Prawns",
+      "fr": "Crevettes"
+    }
+  },
+  {
+    "slug": "pasta",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Pasta",
+      "en": "Pasta",
+      "fr": "Pâtes"
+    }
+  },
+  {
+    "slug": "flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina",
+      "en": "Flour",
+      "fr": "Farine"
+    }
+  },
+  {
+    "slug": "rice",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Riso Carnaroli",
+      "en": "Carnaroli Rice",
+      "fr": "Riz Carnaroli"
+    }
+  },
+  {
+    "slug": "ladyfingers",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Savoiardi",
+      "en": "Ladyfingers",
+      "fr": "Biscuits Cuillère"
+    }
+  },
+  {
+    "slug": "bread",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Pane Rustico",
+      "en": "Crusty Bread",
+      "fr": "Pain Rustique"
+    }
+  },
+  {
+    "slug": "chia_seeds",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Semi di Chia",
+      "en": "Chia Seeds",
+      "fr": "Graines de Chia"
+    }
+  },
+  {
+    "slug": "yeast",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Lievito di Birra",
+      "en": "Brewer Yeast",
+      "fr": "Levure de Boulanger"
+    }
+  },
+  {
+    "slug": "olive_oil",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Olio Extravergine d’Oliva",
+      "en": "Extra Virgin Olive Oil",
+      "fr": "Huile d'Olive Extra Vierge"
+    }
+  },
+  {
+    "slug": "salt",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Sale Marino",
+      "en": "Sea Salt",
+      "fr": "Sel Marin"
+    }
+  },
+  {
+    "slug": "black_pepper",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Pepe Nero",
+      "en": "Black Pepper",
+      "fr": "Poivre Noir"
+    }
+  },
+  {
+    "slug": "sugar",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Zucchero Semolato",
+      "en": "Sugar",
+      "fr": "Sucre"
+    }
+  },
+  {
+    "slug": "cocoa",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Cacao Amaro",
+      "en": "Cocoa Powder",
+      "fr": "Cacao en Poudre"
+    }
+  },
+  {
+    "slug": "dark_chocolate",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Cioccolato Fondente",
+      "en": "Dark Chocolate (70%)",
+      "fr": "Chocolat Noir (70%)"
+    }
+  },
+  {
+    "slug": "curry_powder",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Curry Dolce in Polvere",
+      "en": "Mild Curry Powder",
+      "fr": "Poudre de Curry Doux"
+    }
+  },
+  {
+    "slug": "tahini",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Salsa Tahina",
+      "en": "Tahini Paste",
+      "fr": "Pâte de Sésame (Tahini)"
+    }
+  },
+  {
+    "slug": "lentils",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Lenticchie Secche",
+      "en": "Dry Lentils",
+      "fr": "Lentilles Sèches"
+    }
+  },
+  {
+    "slug": "walnuts",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Gherigli di Noce",
+      "en": "Walnut Halves",
+      "fr": "Cerneaux de Noix"
+    }
+  },
+  {
+    "slug": "chickpeas",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Ceci Lessati",
+      "en": "Cooked Chickpeas",
+      "fr": "Pois Chiches Cuits"
+    }
+  },
+  {
+    "slug": "coffee",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Caffè Espresso",
+      "en": "Espresso Coffee",
+      "fr": "Café Espresso"
+    }
+  },
+  {
+    "slug": "white_wine",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Vino Bianco Secco",
+      "en": "Dry White Wine",
+      "fr": "Vin Blanc Sec"
+    }
+  },
+  {
+    "slug": "red_wine",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Vino Rosso Corposo",
+      "en": "Dry Red Wine",
+      "fr": "Vin Rouge Corsé"
+    }
+  },
+  {
+    "slug": "coconut_milk",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Latte di Cocco",
+      "en": "Coconut Milk",
+      "fr": "Lait de Coco"
+    }
+  },
+  {
+    "slug": "vodka",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Vodka",
+      "en": "Vodka",
+      "fr": "Vodka"
+    }
+  },
+  {
+    "slug": "coffee_liqueur",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Liquore al Caffè",
+      "en": "Coffee Liqueur",
+      "fr": "Liqueur de Café"
+    }
+  },
+  {
+    "slug": "vanilla",
+    "category": "other",
+    "translations": {
+      "it": "Estratto Naturale di Vaniglia",
+      "en": "Vanilla Extract",
+      "fr": "Extrait Naturel de Vanille"
+    }
+  }
+]

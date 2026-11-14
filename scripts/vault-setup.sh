@@ -246,18 +246,21 @@ JWT_SECRET_V="$(get_env_var JWT_SECRET)"
 JWT_REFRESH_V="$(get_env_var JWT_REFRESH_SECRET)"
 COOKIE_V="$(get_env_var COOKIE_SECRET)"
 TWOFA_V="$(get_env_var TWO_FACTOR_AUTH)"
+SEED_ADMIN_PASS_V="$(get_env_var SEED_ADMIN_PASSWORD)"
 [ -n "$JWT_SECRET_V" ]  || { JWT_SECRET_V="$(gen_secret)";  log "JWT_SECRET not in .env: generated."; }
 [ -n "$JWT_REFRESH_V" ] || { JWT_REFRESH_V="$(gen_secret)"; log "JWT_REFRESH_SECRET not in .env: generated."; }
 [ -n "$COOKIE_V" ]      || { COOKIE_V="$(gen_secret)";      log "COOKIE_SECRET not in .env: generated."; }
 [ -n "$TWOFA_V" ]       || { TWOFA_V="$(gen_secret)";       log "TWO_FACTOR_AUTH not in .env: generated."; }
+[ -n "$SEED_ADMIN_PASS_V" ] || { SEED_ADMIN_PASS_V="$(gen_secret)"; log "SEED_ADMIN_PASSWORD not in .env: generated."; }
 
 vexec kv put secret/backend \
         DATABASE_URL="$DB_URL" \
         JWT_SECRET="$JWT_SECRET_V" \
         JWT_REFRESH_SECRET="$JWT_REFRESH_V" \
         COOKIE_SECRET="$COOKIE_V" \
-        TWO_FACTOR_AUTH="$TWOFA_V" >/dev/null
-log "secret/backend written (DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH)."
+        TWO_FACTOR_AUTH="$TWOFA_V" \
+        SEED_ADMIN_PASSWORD="$SEED_ADMIN_PASS_V" >/dev/null
+log "secret/backend written (DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH, SEED_ADMIN_PASSWORD)."
 
 # ---------------------------------------------------------------------------
 step "role_id / secret_id -> $ENV_FILE"

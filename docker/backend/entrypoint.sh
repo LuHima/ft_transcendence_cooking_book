@@ -63,9 +63,14 @@ if [ -x "./node_modules/.bin/prisma" ]; then
 
   # Run database seed (idempotent initial data)
   echo "Seeding database..."
-  npx prisma db seed
+  if [ -x "./node_modules/.bin/tsx" ]; then
+    npx prisma db seed
+  else
+    node dist/prisma/seed/index.js
+  fi
 else
-  echo "Production mode: using pre-built Prisma client."
+  echo "ERROR: Prisma CLI not found in ./node_modules/.bin/prisma."
+  exit 1
 fi
 
 echo "Backend initialization complete! Starting application..."

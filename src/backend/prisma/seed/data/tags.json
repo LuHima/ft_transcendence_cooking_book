@@ -1,0 +1,98 @@
+[
+  {
+    "slug": "vegetarian",
+    "translations": {
+      "it": "Vegetariano",
+      "en": "Vegetarian",
+      "fr": "Végétarien"
+    }
+  },
+  {
+    "slug": "vegan",
+    "translations": {
+      "it": "Vegano",
+      "en": "Vegan",
+      "fr": "Végétalien"
+    }
+  },
+  {
+    "slug": "gluten_free",
+    "translations": {
+      "it": "Senza Glutine",
+      "en": "Gluten-Free",
+      "fr": "Sans Gluten"
+    }
+  },
+  {
+    "slug": "dairy_free",
+    "translations": {
+      "it": "Senza Lattosio",
+      "en": "Dairy-Free",
+      "fr": "Sans Produits Laitiers"
+    }
+  },
+  {
+    "slug": "nut_free",
+    "translations": {
+      "it": "Senza Frutta a Guscio",
+      "en": "Nut-Free",
+      "fr": "Sans Fruits à Coque"
+    }
+  },
+  {
+    "slug": "low_carb",
+    "translations": {
+      "it": "A Basso Contenuto di Carboidrati",
+      "en": "Low-Carb",
+      "fr": "Faible en Glucides"
+    }
+  },
+  {
+    "slug": "quick_easy",
+    "translations": {
+      "it": "Veloce e Facile",
+      "en": "Quick & Easy",
+      "fr": "Rapide et Facile"
+    }
+  },
+  {
+    "slug": "traditional",
+    "translations": {
+      "it": "Tradizionale",
+      "en": "Traditional",
+      "fr": "Traditionnel"
+    }
+  },
+  {
+    "slug": "comfort_food",
+    "translations": {
+      "it": "Comfort Food",
+      "en": "Comfort Food",
+      "fr": "Plat Réconfortant"
+    }
+  },
+  {
+    "slug": "budget_friendly",
+    "translations": {
+      "it": "Economico",
+      "en": "Budget-Friendly",
+      "fr": "Économique"
+    }
+  },
+  {
+    "slug": "summer",
+    "translations": {
+      "it": "Estivo",
+      "en": "Summer",
+      "fr": "Estival"
+    }
+  },
+  {
+    "slug": "winter",
+    "translations": {
+      "it": "Invernale",
+      "en": "Winter",
+      "fr": "Hivernal"
+    }
+  }
+]
