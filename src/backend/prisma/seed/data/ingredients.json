@@ -621,15 +621,6 @@
     }
   },
   {
-    "slug": "acerola-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di acerola concentrato",
-      "en": "Acerola juice from concentrate",
-      "fr": "Jus d'acérola concentré"
-    }
-  },
-  {
     "slug": "acerola-powder",
     "category": "produce",
     "translations": {
@@ -1152,24 +1143,6 @@
     }
   },
   {
-    "slug": "apple-fiber",
-    "category": "produce",
-    "translations": {
-      "it": "Fibra di mela",
-      "en": "Apple fiber",
-      "fr": "Fibre de pomme"
-    }
-  },
-  {
-    "slug": "apple-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma (mela)",
-      "en": "Apple flavouring",
-      "fr": "Arôme de pomme"
-    }
-  },
-  {
     "slug": "apple-jam",
     "category": "produce",
     "translations": {
@@ -1185,24 +1158,6 @@
       "it": "Succo di mela",
       "en": "Apple juice",
       "fr": "Jus de pomme"
-    }
-  },
-  {
-    "slug": "apple-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di mele a base di concentrato",
-      "en": "Apple juice from concentrate",
-      "fr": "Jus de pomme à base de concentré"
-    }
-  },
-  {
-    "slug": "apple-pectin",
-    "category": "produce",
-    "translations": {
-      "it": "Pectina di mela",
-      "en": "Apple pectin",
-      "fr": "Pectine de pomme"
     }
   },
   {
@@ -1275,24 +1230,6 @@
       "it": "Succo e polpa di albicocca",
       "en": "Apricot juice and puree",
       "fr": "Jus et purée d'abricot"
-    }
-  },
-  {
-    "slug": "apricot-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di albicocche da concentrato",
-      "en": "Apricot juice from concentrate",
-      "fr": "Jus d'abricot à partir de concentré"
-    }
-  },
-  {
-    "slug": "apricot-juice-from-concentrate-and-puree",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di albicocca da concentrato e purea",
-      "en": "Apricot juice from concentrate and puree",
-      "fr": "Jus d'abricot à partir de cremé et concentré"
     }
   },
   {
@@ -1419,15 +1356,6 @@
       "it": "Cuori di carciofo",
       "en": "Artichoke heart",
       "fr": "Cœurs d'artichauts"
-    }
-  },
-  {
-    "slug": "artificial-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma artificiale",
-      "en": "Artificial flavouring",
-      "fr": "Arôme artificiel"
     }
   },
   {
@@ -1620,15 +1548,6 @@
     }
   },
   {
-    "slug": "bacon-flavouring",
-    "category": "meat_poultry",
-    "translations": {
-      "it": "Aroma di bacon",
-      "en": "Bacon flavouring",
-      "fr": "Arôme bacon"
-    }
-  },
-  {
     "slug": "baguette",
     "category": "bakery_grains",
     "translations": {
@@ -1719,24 +1638,6 @@
     }
   },
   {
-    "slug": "banana-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di banana",
-      "en": "Banana flavouring",
-      "fr": "Arôme de banane"
-    }
-  },
-  {
-    "slug": "barbecue-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma barbecue",
-      "en": "Barbecue flavouring",
-      "fr": "Base aromatisante barbecue"
-    }
-  },
-  {
     "slug": "barbecue-seasoning",
     "category": "pantry_spices",
     "translations": {
@@ -1779,15 +1680,6 @@
       "it": "Estratto di malto d'orzo",
       "en": "Barley malt extract",
       "fr": "Extrait de malte d'orge"
-    }
-  },
-  {
-    "slug": "barley-malt-flavouring",
-    "category": "bakery_grains",
-    "translations": {
-      "it": "Aroma di malto d'orzo",
-      "en": "Barley malt flavouring",
-      "fr": "Arôme de malt d'orge"
     }
   },
   {
@@ -1977,15 +1869,6 @@
       "it": "Grasso di manzo",
       "en": "Beef fat",
       "fr": "Gras de bœuf"
-    }
-  },
-  {
-    "slug": "beef-flavouring",
-    "category": "meat_poultry",
-    "translations": {
-      "it": "Aroma al manzo",
-      "en": "Beef flavouring",
-      "fr": "Arôme de boeuf"
     }
   },
   {
@@ -2223,15 +2106,6 @@
     }
   },
   {
-    "slug": "bergamot-orange-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di bergamotto",
-      "en": "Bergamot orange flavouring",
-      "fr": "Arôme de bergamote"
-    }
-  },
-  {
     "slug": "bergeron-apricot",
     "category": "produce",
     "translations": {
@@ -2364,15 +2238,6 @@
       "it": "Citrus × aurantium",
       "en": "Bitter orange",
       "fr": "Bigaradier"
-    }
-  },
-  {
-    "slug": "bitter-orange-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di arancia amara",
-      "en": "Bitter orange flavouring",
-      "fr": "Arôme d'orange amère"
     }
   },
   {
@@ -2691,24 +2556,6 @@
     }
   },
   {
-    "slug": "blackcurrant-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di ribes nero",
-      "en": "Blackcurrant flavouring",
-      "fr": "Arôme cassis"
-    }
-  },
-  {
-    "slug": "blackcurrant-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di ribes nero da concentrato",
-      "en": "Blackcurrant juice from concentrate",
-      "fr": "Jus de cassis à base de concentré"
-    }
-  },
-  {
     "slug": "blanches-almonds",
     "category": "legumes_nuts",
     "translations": {
@@ -2925,24 +2772,6 @@
     }
   },
   {
-    "slug": "blueberry-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di mirtillo",
-      "en": "Blueberry flavouring",
-      "fr": "Arôme de myrtille"
-    }
-  },
-  {
-    "slug": "blueberry-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di mirtillo da concentrato",
-      "en": "Blueberry juice from concentrate",
-      "fr": "Jus de myrtille à base de concentré"
-    }
-  },
-  {
     "slug": "bogue",
     "category": "seafood",
     "translations": {
@@ -3060,24 +2889,6 @@
     }
   },
   {
-    "slug": "bourbon-vanilla-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma di vaniglia di bourbon",
-      "en": "Bourbon vanilla flavouring",
-      "fr": "Arôme de vanille bourbon"
-    }
-  },
-  {
-    "slug": "bourbon-vanilla-natural-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di vaniglia Bourbon",
-      "en": "Bourbon vanilla natural flavouring",
-      "fr": "Arôme naturel de vanille bourbon"
-    }
-  },
-  {
     "slug": "bourbon-vanilla-powder",
     "category": "pantry_spices",
     "translations": {
@@ -3138,15 +2949,6 @@
       "it": "Brandy",
       "en": "Brandy",
       "fr": "Brandy"
-    }
-  },
-  {
-    "slug": "brandy-flavouring",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Aroma di brandy",
-      "en": "Brandy flavouring",
-      "fr": "Arôme de brandy"
     }
   },
   {
@@ -3636,24 +3438,6 @@
     }
   },
   {
-    "slug": "butter-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma di burro",
-      "en": "Butter flavouring",
-      "fr": "Arôme de beurre"
-    }
-  },
-  {
-    "slug": "butter-natural-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma di burro naturale",
-      "en": "Butter natural flavouring",
-      "fr": "Arôme naturel de beurre"
-    }
-  },
-  {
     "slug": "butterfat",
     "category": "pantry_spices",
     "translations": {
@@ -3759,15 +3543,6 @@
       "it": "Bisglicinato di calcio",
       "en": "Calcium bisglycinate",
       "fr": "Bisglycinate de calcium"
-    }
-  },
-  {
-    "slug": "calcium-caseinate",
-    "category": "other",
-    "translations": {
-      "it": "Caseinato di calcio",
-      "en": "Calcium caseinate",
-      "fr": "Caséinate de calcium"
     }
   },
   {
@@ -4167,15 +3942,6 @@
     }
   },
   {
-    "slug": "caramel-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di caramello",
-      "en": "Caramel flavouring",
-      "fr": "Arôme caramel"
-    }
-  },
-  {
     "slug": "caramel-malt",
     "category": "bakery_grains",
     "translations": {
@@ -4419,15 +4185,6 @@
     }
   },
   {
-    "slug": "carrot-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di carota da concentrato",
-      "en": "Carrot juice from concentrate",
-      "fr": "Jus de carotte à base de concentré"
-    }
-  },
-  {
     "slug": "carrot-powder",
     "category": "produce",
     "translations": {
@@ -4443,15 +4200,6 @@
       "it": "Caseina",
       "en": "Casein",
       "fr": "Caséine"
-    }
-  },
-  {
-    "slug": "caseinate",
-    "category": "other",
-    "translations": {
-      "it": "Caseinato",
-      "en": "Caseinate",
-      "fr": "Caséinate"
     }
   },
   {
@@ -4596,15 +4344,6 @@
       "it": "Sedano",
       "en": "Celery",
       "fr": "Céleri"
-    }
-  },
-  {
-    "slug": "celery-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di sedano",
-      "en": "Celery flavouring",
-      "fr": "Arôme de céleri"
     }
   },
   {
@@ -4914,15 +4653,6 @@
     }
   },
   {
-    "slug": "cheese-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma di formaggio",
-      "en": "Cheese flavouring",
-      "fr": "Goût fromage"
-    }
-  },
-  {
     "slug": "cheese-made-from-pasteurized-milk",
     "category": "dairy_eggs",
     "translations": {
@@ -5202,15 +4932,6 @@
     }
   },
   {
-    "slug": "chicken-flavouring",
-    "category": "meat_poultry",
-    "translations": {
-      "it": "Aroma di pollo",
-      "en": "Chicken flavouring",
-      "fr": "Arôme de poulet"
-    }
-  },
-  {
     "slug": "chicken-heart",
     "category": "meat_poultry",
     "translations": {
@@ -5298,15 +5019,6 @@
       "it": "Cece",
       "en": "Chickpea",
       "fr": "Pois chiche"
-    }
-  },
-  {
-    "slug": "chickpea-fiber",
-    "category": "legumes_nuts",
-    "translations": {
-      "it": "Fibra di ceci",
-      "en": "Chickpea fiber",
-      "fr": "Fibre de pois chiche"
     }
   },
   {
@@ -5496,15 +5208,6 @@
       "it": "Ripieno al cioccolato",
       "en": "Chocolate filling",
       "fr": "Fourrage au chocolat"
-    }
-  },
-  {
-    "slug": "chocolate-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma di cioccolato",
-      "en": "Chocolate flavouring",
-      "fr": "Arôme de chocolat"
     }
   },
   {
@@ -5796,24 +5499,6 @@
     }
   },
   {
-    "slug": "citrus-fibre",
-    "category": "produce",
-    "translations": {
-      "it": "Fibra di agrumi",
-      "en": "Citrus fibre",
-      "fr": "Fibre d'agrume"
-    }
-  },
-  {
-    "slug": "citrus-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di agrumi",
-      "en": "Citrus flavouring",
-      "fr": "Arôme d'agrume"
-    }
-  },
-  {
     "slug": "citrus-fruit",
     "category": "produce",
     "translations": {
@@ -5838,15 +5523,6 @@
       "it": "Succo di agrumi",
       "en": "Citrus fruit juice",
       "fr": "Jus d'agrumes à base de concentrés"
-    }
-  },
-  {
-    "slug": "citrus-pectin",
-    "category": "produce",
-    "translations": {
-      "it": "Pectina di agrumi",
-      "en": "Citrus pectin",
-      "fr": "Pectine d'agrumes"
     }
   },
   {
@@ -5985,15 +5661,6 @@
     }
   },
   {
-    "slug": "cocoa-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma di cacao",
-      "en": "Cocoa flavouring",
-      "fr": "Arôme de cacao"
-    }
-  },
-  {
     "slug": "cocoa-mass-and-cocoa-butter",
     "category": "dairy_eggs",
     "translations": {
@@ -6117,15 +5784,6 @@
       "it": "Fiocchi di cocco",
       "en": "Coconut flakes",
       "fr": "Flocons de coco"
-    }
-  },
-  {
-    "slug": "coconut-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di cocco",
-      "en": "Coconut flavouring",
-      "fr": "Arôme de noix de coco"
     }
   },
   {
@@ -6630,15 +6288,6 @@
       "it": "Succo di lampone concentrato",
       "en": "Concentrated raspberry juice",
       "fr": "Jus de framboise concentré"
-    }
-  },
-  {
-    "slug": "concentrated-raspberry-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di lampone concentrato da concentrato",
-      "en": "Concentrated raspberry juice from concentrate",
-      "fr": "Concentré de jus de framboise"
     }
   },
   {
@@ -7191,15 +6840,6 @@
     }
   },
   {
-    "slug": "corn-dextrose",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Destrosio di mais",
-      "en": "Corn dextrose",
-      "fr": "Dextrose de maïs"
-    }
-  },
-  {
     "slug": "corn-ear",
     "category": "bakery_grains",
     "translations": {
@@ -7233,15 +6873,6 @@
       "it": "Farina di mais",
       "en": "Corn flour",
       "fr": "Farine de maïs"
-    }
-  },
-  {
-    "slug": "corn-glucose-syrup",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Sciroppo di glucosio di mais",
-      "en": "Corn glucose syrup",
-      "fr": "Sirop de glucose de maïs"
     }
   },
   {
@@ -7524,15 +7155,6 @@
     }
   },
   {
-    "slug": "cream-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma di panna",
-      "en": "Cream flavouring",
-      "fr": "Arôme de crème"
-    }
-  },
-  {
     "slug": "cream-from-normandy",
     "category": "dairy_eggs",
     "translations": {
@@ -7677,30 +7299,12 @@
     }
   },
   {
-    "slug": "crustaceans-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di crostacei",
-      "en": "Crustaceans flavouring",
-      "fr": "Arôme de crustacés"
-    }
-  },
-  {
     "slug": "cucumber-juice",
     "category": "beverages_liquids",
     "translations": {
       "it": "Succo di cocomero",
       "en": "Cucumber juice",
       "fr": "Jus de concombre"
-    }
-  },
-  {
-    "slug": "cucumber-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di cetriolo da concentrato",
-      "en": "Cucumber juice from concentrate",
-      "fr": "Jus de concombre à base de concentré"
     }
   },
   {
@@ -8082,15 +7686,6 @@
     }
   },
   {
-    "slug": "dehydrated-glucose-syrup",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Sciroppo di glucosio disidratato",
-      "en": "Dehydrated glucose syrup",
-      "fr": "Sirop de glucose déshydraté"
-    }
-  },
-  {
     "slug": "dehydrated-onion",
     "category": "produce",
     "translations": {
@@ -8316,24 +7911,6 @@
     }
   },
   {
-    "slug": "dextrose",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Destrosio",
-      "en": "Dextrose",
-      "fr": "Dextrose"
-    }
-  },
-  {
-    "slug": "dextrose-monohydrate",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Destrosio monoidrato",
-      "en": "Dextrose monohydrate",
-      "fr": "Dextrose monohydraté"
-    }
-  },
-  {
     "slug": "dijon-mustard",
     "category": "pantry_spices",
     "translations": {
@@ -8349,15 +7926,6 @@
       "it": "Aneto",
       "en": "Dill",
       "fr": "Aneth"
-    }
-  },
-  {
-    "slug": "dill-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di aneto",
-      "en": "Dill flavouring",
-      "fr": "Arôme d'aneth"
     }
   },
   {
@@ -9090,15 +8658,6 @@
     }
   },
   {
-    "slug": "elderberry-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di sambuco",
-      "en": "Elderberry flavouring",
-      "fr": "Arôme de sureau"
-    }
-  },
-  {
     "slug": "elderberry-juice",
     "category": "beverages_liquids",
     "translations": {
@@ -9114,15 +8673,6 @@
       "it": "Sciroppo di sambuco concentrato",
       "en": "Elderberry juice concentrate",
       "fr": "Jus de sureau concentré"
-    }
-  },
-  {
-    "slug": "elderberry-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di sambuco a base di concentrato",
-      "en": "Elderberry juice from concentrate",
-      "fr": "Jus de sureau à base de concentré"
     }
   },
   {
@@ -9294,15 +8844,6 @@
       "it": "Etilvanillina",
       "en": "Ethylvanillin",
       "fr": "Éthylvanilline"
-    }
-  },
-  {
-    "slug": "eucalyptus-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di eucalipto",
-      "en": "Eucalyptus flavouring",
-      "fr": "Arôme d'eucalyptus"
     }
   },
   {
@@ -9810,15 +9351,6 @@
     }
   },
   {
-    "slug": "filtered-whey-powder",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Filtrato di siero di latte in polvere",
-      "en": "Filtered whey powder",
-      "fr": "Petit-lait filtré en poudre"
-    }
-  },
-  {
     "slug": "fine-salt-from-guerande",
     "category": "pantry_spices",
     "translations": {
@@ -9960,24 +9492,6 @@
       "it": "Fondo di pollame aromatizzato",
       "en": "Flavored poultry fond",
       "fr": "Fond de volaille aromatisé"
-    }
-  },
-  {
-    "slug": "flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma",
-      "en": "Flavouring",
-      "fr": "Arôme"
-    }
-  },
-  {
-    "slug": "flavouring-preparation",
-    "category": "other",
-    "translations": {
-      "it": "Preparazione di spezie",
-      "en": "Flavouring preparation",
-      "fr": "Préparation aromatisante"
     }
   },
   {
@@ -10269,15 +9783,6 @@
     }
   },
   {
-    "slug": "french-pomelo-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di pompelmo francese da concentrato",
-      "en": "French pomelo juice from concentrate",
-      "fr": "Jus de pomelo de France à base de concentré"
-    }
-  },
-  {
     "slug": "fresh-basil",
     "category": "pantry_spices",
     "translations": {
@@ -10530,15 +10035,6 @@
     }
   },
   {
-    "slug": "fruit-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di frutta",
-      "en": "Fruit flavouring",
-      "fr": "Arôme de fruit"
-    }
-  },
-  {
     "slug": "fruit-juice",
     "category": "beverages_liquids",
     "translations": {
@@ -10554,33 +10050,6 @@
       "it": "Concentrato di succo di frutta",
       "en": "Fruit juice concentrate",
       "fr": "Jus concentré de fruits"
-    }
-  },
-  {
-    "slug": "fruit-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succhi di frutta a base di concentrato",
-      "en": "Fruit juice from concentrate",
-      "fr": "Jus de fruits à base de concentré"
-    }
-  },
-  {
-    "slug": "fruit-juices-and-purees-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succhi e puree di frutta da concentrato",
-      "en": "Fruit juices and purees from concentrate",
-      "fr": "Jus et purées de fruits à base de concentrés"
-    }
-  },
-  {
-    "slug": "fruit-pectin",
-    "category": "produce",
-    "translations": {
-      "it": "Pectina di frutta",
-      "en": "Fruit pectin",
-      "fr": "Pectine de fruit"
     }
   },
   {
@@ -10788,15 +10257,6 @@
       "it": "Estratto d'aglio",
       "en": "Garlic extract",
       "fr": "Extrait d'ail"
-    }
-  },
-  {
-    "slug": "garlic-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di aglio",
-      "en": "Garlic flavouring",
-      "fr": "Arôme d'ail"
     }
   },
   {
@@ -11079,15 +10539,6 @@
     }
   },
   {
-    "slug": "glucose-syrup",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Sciroppo di glucosio",
-      "en": "Glucose syrup",
-      "fr": "Sirop de glucose"
-    }
-  },
-  {
     "slug": "glucuronolactone",
     "category": "other",
     "translations": {
@@ -11358,15 +10809,6 @@
     }
   },
   {
-    "slug": "grape-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo d'uva da concentrato",
-      "en": "Grape juice from concentrate",
-      "fr": "Jus de raisin à base de concentré"
-    }
-  },
-  {
     "slug": "grape-must",
     "category": "beverages_liquids",
     "translations": {
@@ -11403,15 +10845,6 @@
     }
   },
   {
-    "slug": "grapefruit-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di pompelmo",
-      "en": "Grapefruit flavouring",
-      "fr": "Arôme de pamplemousse"
-    }
-  },
-  {
     "slug": "grapefruit-juice",
     "category": "beverages_liquids",
     "translations": {
@@ -11427,15 +10860,6 @@
       "it": "Succo di pompelmo a base di concentrato",
       "en": "Grapefruit juice based on concentrate",
       "fr": "Jus de pamplemousse à base de concentré"
-    }
-  },
-  {
-    "slug": "grapefruit-natural-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di pompelmo",
-      "en": "Grapefruit natural flavouring",
-      "fr": "Arôme naturel de pamplemousse"
     }
   },
   {
@@ -11499,15 +10923,6 @@
       "it": "Grande capesante",
       "en": "Great scallop",
       "fr": "Gros pétoncle"
-    }
-  },
-  {
-    "slug": "greek-salad-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma per insalata greca",
-      "en": "Greek salad flavouring",
-      "fr": "Arôme de salade grecque"
     }
   },
   {
@@ -12528,15 +11943,6 @@
     }
   },
   {
-    "slug": "horseradish-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di rafano",
-      "en": "Horseradish flavouring",
-      "fr": "Arôme de raifort"
-    }
-  },
-  {
     "slug": "hot-chili-peppers",
     "category": "pantry_spices",
     "translations": {
@@ -12915,24 +12321,6 @@
     }
   },
   {
-    "slug": "invert-sugar",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Zucchero invertito",
-      "en": "Invert sugar",
-      "fr": "Sucre inverti"
-    }
-  },
-  {
-    "slug": "invert-sugar-syrup",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Sciroppo di zucchero invertito",
-      "en": "Invert sugar syrup",
-      "fr": "Sirop de sucre inverti"
-    }
-  },
-  {
     "slug": "iodine",
     "category": "other",
     "translations": {
@@ -13263,15 +12651,6 @@
       "it": "Ketchup",
       "en": "Ketchup",
       "fr": "Ketchup"
-    }
-  },
-  {
-    "slug": "ketchup-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di ketchup",
-      "en": "Ketchup flavouring",
-      "fr": "Arôme de ketchup"
     }
   },
   {
@@ -13788,15 +13167,6 @@
     }
   },
   {
-    "slug": "laurel-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di alloro",
-      "en": "Laurel flavouring",
-      "fr": "Arôme de laurier"
-    }
-  },
-  {
     "slug": "lavander-honey",
     "category": "pantry_spices",
     "translations": {
@@ -13923,30 +13293,12 @@
     }
   },
   {
-    "slug": "lemon-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di limone",
-      "en": "Lemon flavouring",
-      "fr": "Arôme de citron"
-    }
-  },
-  {
     "slug": "lemon-juice",
     "category": "beverages_liquids",
     "translations": {
       "it": "Succo di limone",
       "en": "Lemon juice",
       "fr": "Jus de citron"
-    }
-  },
-  {
-    "slug": "lemon-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di limone da concentrato",
-      "en": "Lemon juice from concentrate",
-      "fr": "Jus de citron à base de concentré"
     }
   },
   {
@@ -13965,15 +13317,6 @@
       "it": "Essenza di limone",
       "en": "Lemon oil",
       "fr": "Essence de citron"
-    }
-  },
-  {
-    "slug": "lemon-pectin",
-    "category": "produce",
-    "translations": {
-      "it": "Pectina di limone",
-      "en": "Lemon pectin",
-      "fr": "Pectine de citron"
     }
   },
   {
@@ -14118,15 +13461,6 @@
       "it": "Fagiolo di Lima",
       "en": "Lima bean",
       "fr": "Haricot de Lima"
-    }
-  },
-  {
-    "slug": "lime-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di lime",
-      "en": "Lime flavouring",
-      "fr": "Arôme de citron vert"
     }
   },
   {
@@ -14769,15 +14103,6 @@
     }
   },
   {
-    "slug": "malt-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di malto",
-      "en": "Malt flavouring",
-      "fr": "Arôme de malt"
-    }
-  },
-  {
     "slug": "malt-flour",
     "category": "bakery_grains",
     "translations": {
@@ -14886,15 +14211,6 @@
     }
   },
   {
-    "slug": "mandarin-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di mandarino da concentrato",
-      "en": "Mandarin juice from concentrate",
-      "fr": "Jus de mandarine à base de concentré"
-    }
-  },
-  {
     "slug": "mandarin-peel",
     "category": "produce",
     "translations": {
@@ -14976,15 +14292,6 @@
     }
   },
   {
-    "slug": "mango-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di mango",
-      "en": "Mango flavouring",
-      "fr": "Arôme de mangue"
-    }
-  },
-  {
     "slug": "mango-juice",
     "category": "beverages_liquids",
     "translations": {
@@ -15012,24 +14319,6 @@
     }
   },
   {
-    "slug": "mango-puree-from-concentrate",
-    "category": "produce",
-    "translations": {
-      "it": "Purea di mango da concentrato",
-      "en": "Mango puree from concentrate",
-      "fr": "Purée de mangue à base de purée concentrée"
-    }
-  },
-  {
-    "slug": "mango-puree-partially-from-concentrate",
-    "category": "produce",
-    "translations": {
-      "it": "Purea di mango parzialmente da concentrato",
-      "en": "Mango puree partially from concentrate",
-      "fr": "Purée de mangue partiellement à base de concentré"
-    }
-  },
-  {
     "slug": "manuka-honey",
     "category": "pantry_spices",
     "translations": {
@@ -15045,15 +14334,6 @@
       "it": "Estratto d'acero",
       "en": "Maple extract",
       "fr": "Extrait d'érable"
-    }
-  },
-  {
-    "slug": "maple-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di acero",
-      "en": "Maple flavouring",
-      "fr": "Arôme d'érable"
     }
   },
   {
@@ -15678,15 +14958,6 @@
     }
   },
   {
-    "slug": "milk-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma di latte",
-      "en": "Milk flavouring",
-      "fr": "Arôme de lait"
-    }
-  },
-  {
     "slug": "milk-from-france",
     "category": "dairy_eggs",
     "translations": {
@@ -15729,15 +15000,6 @@
       "it": "Proteine del latte concentrate",
       "en": "Milk protein concentrate",
       "fr": "Protéine de lait concentré"
-    }
-  },
-  {
-    "slug": "milk-protein-isolate",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Proteine isolate del latte",
-      "en": "Milk protein isolate",
-      "fr": "Isolat de protéines du lait"
     }
   },
   {
@@ -15846,15 +15108,6 @@
       "it": "Menta",
       "en": "Mint",
       "fr": "Menthe"
-    }
-  },
-  {
-    "slug": "mint-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di menta",
-      "en": "Mint flavouring",
-      "fr": "Arôme de menthe"
     }
   },
   {
@@ -16272,15 +15525,6 @@
     }
   },
   {
-    "slug": "mushroom-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di funghi",
-      "en": "Mushroom flavouring",
-      "fr": "Arôme champignon"
-    }
-  },
-  {
     "slug": "mushroom-powder",
     "category": "produce",
     "translations": {
@@ -16443,48 +15687,12 @@
     }
   },
   {
-    "slug": "natural-almond-flavouring",
-    "category": "legumes_nuts",
-    "translations": {
-      "it": "Aroma naturale di mandorle",
-      "en": "Natural almond flavouring",
-      "fr": "Arôme naturel d'amande"
-    }
-  },
-  {
-    "slug": "natural-and-artificial-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale ed artificiale",
-      "en": "Natural and artificial flavouring",
-      "fr": "Arômes naturels et artificiels"
-    }
-  },
-  {
     "slug": "natural-aniseed-aroma",
     "category": "other",
     "translations": {
       "it": "Aroma naturale di anice",
       "en": "Natural aniseed aroma",
       "fr": "Arôme naturel d'anis"
-    }
-  },
-  {
-    "slug": "natural-apple-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di mela",
-      "en": "Natural apple flavouring",
-      "fr": "Arôme naturel de pomme"
-    }
-  },
-  {
-    "slug": "natural-apricot-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale all'albicocca",
-      "en": "Natural apricot flavouring",
-      "fr": "Arôme naturel d'abricot"
     }
   },
   {
@@ -16497,183 +15705,12 @@
     }
   },
   {
-    "slug": "natural-banana-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale alla banana",
-      "en": "Natural banana flavouring",
-      "fr": "Arôme naturel de banane"
-    }
-  },
-  {
-    "slug": "natural-basil-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale del basilico",
-      "en": "Natural basil flavouring",
-      "fr": "Arôme naturel de basilic"
-    }
-  },
-  {
-    "slug": "natural-bergamot-orange-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di bergamotto",
-      "en": "Natural bergamot orange flavouring",
-      "fr": "Arôme naturel de bergamote"
-    }
-  },
-  {
-    "slug": "natural-bitter-almond-flavouring",
-    "category": "legumes_nuts",
-    "translations": {
-      "it": "Aroma naturale di mandorle amare",
-      "en": "Natural bitter almond flavouring",
-      "fr": "Arôme naturel d'amande amère"
-    }
-  },
-  {
-    "slug": "natural-bitter-orange-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di arancia amara",
-      "en": "Natural bitter orange flavouring",
-      "fr": "Arôme naturel d'orange amère"
-    }
-  },
-  {
-    "slug": "natural-blackcurrant-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di ribes nero",
-      "en": "Natural blackcurrant flavouring",
-      "fr": "Arôme naturel de cassis"
-    }
-  },
-  {
-    "slug": "natural-blueberry-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di mirtillo",
-      "en": "Natural blueberry flavouring",
-      "fr": "Arôme naturel de myrtille"
-    }
-  },
-  {
-    "slug": "natural-caramel-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di caramello",
-      "en": "Natural caramel flavouring",
-      "fr": "Arôme naturel de caramel"
-    }
-  },
-  {
-    "slug": "natural-carrot-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di carota",
-      "en": "Natural carrot flavouring",
-      "fr": "Arôme naturel de carotte"
-    }
-  },
-  {
     "slug": "natural-casing",
     "category": "other",
     "translations": {
       "it": "Budello naturale",
       "en": "Natural casing",
       "fr": "Boyau naturel"
-    }
-  },
-  {
-    "slug": "natural-cheddar-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma naturale di cheddar",
-      "en": "Natural cheddar flavouring",
-      "fr": "Arôme naturel de cheddar"
-    }
-  },
-  {
-    "slug": "natural-cheese-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma naturale di formaggio",
-      "en": "Natural cheese flavouring",
-      "fr": "Arôme naturel de fromage"
-    }
-  },
-  {
-    "slug": "natural-cherry-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di ciliegia",
-      "en": "Natural cherry flavouring",
-      "fr": "Arôme naturel de cerise"
-    }
-  },
-  {
-    "slug": "natural-chicken-flavouring",
-    "category": "meat_poultry",
-    "translations": {
-      "it": "Aroma naturale di pollo",
-      "en": "Natural chicken flavouring",
-      "fr": "Arôme naturel de poulet"
-    }
-  },
-  {
-    "slug": "natural-chocolate-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di cioccolato",
-      "en": "Natural chocolate flavouring",
-      "fr": "Arôme naturel de chocolat"
-    }
-  },
-  {
-    "slug": "natural-cinammon-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di cannella",
-      "en": "Natural cinammon flavouring",
-      "fr": "Arôme naturel de cannelle"
-    }
-  },
-  {
-    "slug": "natural-citrus-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di agrumi",
-      "en": "Natural citrus flavouring",
-      "fr": "Arôme naturel d'agrumes"
-    }
-  },
-  {
-    "slug": "natural-clove-flavoring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di chiodo di garofano",
-      "en": "Natural clove flavoring",
-      "fr": "Arôme naturel de clou de girofle"
-    }
-  },
-  {
-    "slug": "natural-cocoa-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di cacao",
-      "en": "Natural cocoa flavouring",
-      "fr": "Arôme naturel de cacao"
-    }
-  },
-  {
-    "slug": "natural-coconut-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di cocco",
-      "en": "Natural coconut flavouring",
-      "fr": "Arôme naturel de noix de coco"
     }
   },
   {
@@ -16686,48 +15723,12 @@
     }
   },
   {
-    "slug": "natural-cola-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di cola",
-      "en": "Natural cola flavouring",
-      "fr": "Arôme naturel de cola"
-    }
-  },
-  {
-    "slug": "natural-crustaceans-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di crostacei",
-      "en": "Natural crustaceans flavouring",
-      "fr": "Arôme naturel de crustacés"
-    }
-  },
-  {
-    "slug": "natural-dill-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di aneto",
-      "en": "Natural dill flavouring",
-      "fr": "Arôme naturel d'aneth"
-    }
-  },
-  {
     "slug": "natural-elderberry-extract",
     "category": "produce",
     "translations": {
       "it": "Estratto naturale di sambuco",
       "en": "Natural elderberry extract",
       "fr": "Extrait naturel de sureau"
-    }
-  },
-  {
-    "slug": "natural-eucalyptus-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di eucalipto",
-      "en": "Natural eucalyptus flavouring",
-      "fr": "Arôme naturel d'eucalyptus"
     }
   },
   {
@@ -16740,159 +15741,6 @@
     }
   },
   {
-    "slug": "natural-fig-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di fichi",
-      "en": "Natural fig flavouring",
-      "fr": "Arôme naturel de figue"
-    }
-  },
-  {
-    "slug": "natural-fish-flavouring",
-    "category": "seafood",
-    "translations": {
-      "it": "Aroma naturale di pesce",
-      "en": "Natural fish flavouring",
-      "fr": "Arôme naturel de poisson"
-    }
-  },
-  {
-    "slug": "natural-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale",
-      "en": "Natural flavouring",
-      "fr": "Arôme naturel"
-    }
-  },
-  {
-    "slug": "natural-flavouring-of-aromatic-plants",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di piante aromatiche",
-      "en": "Natural flavouring of aromatic plants",
-      "fr": "Arôme naturel de plantes aromatiques"
-    }
-  },
-  {
-    "slug": "natural-fruits-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di frutta",
-      "en": "Natural fruits flavouring",
-      "fr": "Arôme naturel de fruit"
-    }
-  },
-  {
-    "slug": "natural-garlic-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale d'aglio",
-      "en": "Natural garlic flavouring",
-      "fr": "Arôme naturel d'ail"
-    }
-  },
-  {
-    "slug": "natural-ginger-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di zenzero",
-      "en": "Natural ginger flavouring",
-      "fr": "Arôme naturel de gingembre"
-    }
-  },
-  {
-    "slug": "natural-goat-cheese-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma di formaggio di capra naturale",
-      "en": "Natural goat cheese flavouring",
-      "fr": "Arôme naturel de fromage de chèvre"
-    }
-  },
-  {
-    "slug": "natural-herbs-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di erbe",
-      "en": "Natural herbs flavouring",
-      "fr": "Arôme naturel d'herbes"
-    }
-  },
-  {
-    "slug": "natural-honey-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di miele",
-      "en": "Natural honey flavouring",
-      "fr": "Arôme naturel de miel"
-    }
-  },
-  {
-    "slug": "natural-hops-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Luppolo naturale",
-      "en": "Natural hops flavouring",
-      "fr": "Arôme naturel de houblon"
-    }
-  },
-  {
-    "slug": "natural-hot-pepper-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di peperoncino piccante",
-      "en": "Natural hot pepper flavouring",
-      "fr": "Arôme naturel de piment"
-    }
-  },
-  {
-    "slug": "natural-jasmine-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di gelsomino",
-      "en": "Natural jasmine flavouring",
-      "fr": "Arôme naturel de jasmin"
-    }
-  },
-  {
-    "slug": "natural-laurel-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di alloro",
-      "en": "Natural laurel flavouring",
-      "fr": "Arôme naturel de laurier"
-    }
-  },
-  {
-    "slug": "natural-lemon-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di limone",
-      "en": "Natural lemon flavouring",
-      "fr": "Arôme naturel de citron"
-    }
-  },
-  {
-    "slug": "natural-lime-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di lime",
-      "en": "Natural lime flavouring",
-      "fr": "Arôme naturel de citron vert"
-    }
-  },
-  {
-    "slug": "natural-malt-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di malto",
-      "en": "Natural malt flavouring",
-      "fr": "Arôme naturel de malt"
-    }
-  },
-  {
     "slug": "natural-mandarin-orange-flavour",
     "category": "produce",
     "translations": {
@@ -16902,39 +15750,12 @@
     }
   },
   {
-    "slug": "natural-mango-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di mango",
-      "en": "Natural mango flavouring",
-      "fr": "Arôme naturel de mangue"
-    }
-  },
-  {
     "slug": "natural-maple-extract",
     "category": "produce",
     "translations": {
       "it": "Estratto naturale di acero",
       "en": "Natural maple extract",
       "fr": "Extrait naturel d'érable"
-    }
-  },
-  {
-    "slug": "natural-maple-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale d'acero",
-      "en": "Natural maple flavouring",
-      "fr": "Arôme naturel d'érable"
-    }
-  },
-  {
-    "slug": "natural-milk-flavouring",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Aroma naturale di latte",
-      "en": "Natural milk flavouring",
-      "fr": "Arôme naturel de lait"
     }
   },
   {
@@ -16956,60 +15777,6 @@
     }
   },
   {
-    "slug": "natural-mint-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di menta",
-      "en": "Natural mint flavouring",
-      "fr": "Arômes naturels de menthe"
-    }
-  },
-  {
-    "slug": "natural-nut-flavouring",
-    "category": "legumes_nuts",
-    "translations": {
-      "it": "Aroma naturale di noci",
-      "en": "Natural nut flavouring",
-      "fr": "Arôme naturel de noix"
-    }
-  },
-  {
-    "slug": "natural-onion-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di cipolla naturale",
-      "en": "Natural onion flavouring",
-      "fr": "Arôme naturel d'oignon"
-    }
-  },
-  {
-    "slug": "natural-orange-blossom-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di fiori d'arancio",
-      "en": "Natural orange blossom flavouring",
-      "fr": "Arôme naturel de fleur d'oranger"
-    }
-  },
-  {
-    "slug": "natural-orange-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di arancia",
-      "en": "Natural orange flavouring",
-      "fr": "Arôme naturel d'orange"
-    }
-  },
-  {
-    "slug": "natural-oregano-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di origano",
-      "en": "Natural oregano flavouring",
-      "fr": "Arôme naturel d'origan"
-    }
-  },
-  {
     "slug": "natural-paprika-extract",
     "category": "pantry_spices",
     "translations": {
@@ -17028,129 +15795,12 @@
     }
   },
   {
-    "slug": "natural-parsley-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di prezzemolo",
-      "en": "Natural parsley flavouring",
-      "fr": "Arôme naturel de persil"
-    }
-  },
-  {
-    "slug": "natural-peach-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di pesca",
-      "en": "Natural peach flavouring",
-      "fr": "Arôme naturel de pêche"
-    }
-  },
-  {
-    "slug": "natural-pear-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di pera",
-      "en": "Natural pear flavouring",
-      "fr": "Arôme naturel de poire"
-    }
-  },
-  {
-    "slug": "natural-pepper-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di pepe",
-      "en": "Natural pepper flavouring",
-      "fr": "Arôme naturel de poivre"
-    }
-  },
-  {
-    "slug": "natural-peppermint-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di menta piperita",
-      "en": "Natural peppermint flavouring",
-      "fr": "Arôme naturel de menthe poivrée"
-    }
-  },
-  {
-    "slug": "natural-pork-flavouring",
-    "category": "meat_poultry",
-    "translations": {
-      "it": "Aroma naturale di maiale",
-      "en": "Natural pork flavouring",
-      "fr": "Arôme naturel de porc"
-    }
-  },
-  {
-    "slug": "natural-poultry-flavouring",
-    "category": "meat_poultry",
-    "translations": {
-      "it": "Aroma naturale di pollame",
-      "en": "Natural poultry flavouring",
-      "fr": "Arôme naturel de volaille"
-    }
-  },
-  {
-    "slug": "natural-raspberry-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di lampone",
-      "en": "Natural raspberry flavouring",
-      "fr": "Arôme naturel de framboise"
-    }
-  },
-  {
     "slug": "natural-rice-sourdough",
     "category": "bakery_grains",
     "translations": {
       "it": "Lievito madre naturale di riso",
       "en": "Natural rice sourdough",
       "fr": "Levain naturel de riz"
-    }
-  },
-  {
-    "slug": "natural-rose-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di rosa",
-      "en": "Natural rose flavouring",
-      "fr": "Arôme naturel de rose"
-    }
-  },
-  {
-    "slug": "natural-rum-flavouring",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Aroma naturale di rum",
-      "en": "Natural rum flavouring",
-      "fr": "Arôme naturel de rhum"
-    }
-  },
-  {
-    "slug": "natural-sage-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di salvia",
-      "en": "Natural sage flavouring",
-      "fr": "Arôme naturel de sauge"
-    }
-  },
-  {
-    "slug": "natural-salmon-flavouring",
-    "category": "seafood",
-    "translations": {
-      "it": "Aroma naturale di salmone",
-      "en": "Natural salmon flavouring",
-      "fr": "Arôme naturel de saumon"
-    }
-  },
-  {
-    "slug": "natural-shallot-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di scalogno",
-      "en": "Natural shallot flavouring",
-      "fr": "Arôme naturel d'échalote"
     }
   },
   {
@@ -17163,30 +15813,12 @@
     }
   },
   {
-    "slug": "natural-smoke-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di fumo naturale",
-      "en": "Natural smoke flavouring",
-      "fr": "Arôme naturel de fumée"
-    }
-  },
-  {
     "slug": "natural-spice-extract",
     "category": "pantry_spices",
     "translations": {
       "it": "Estratto naturale di spezie",
       "en": "Natural spice extract",
       "fr": "Extrait naturel d'épice"
-    }
-  },
-  {
-    "slug": "natural-spice-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma di spezie naturali",
-      "en": "Natural spice flavouring",
-      "fr": "Arôme naturel d'épices"
     }
   },
   {
@@ -17217,66 +15849,12 @@
     }
   },
   {
-    "slug": "natural-strawberry-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di fragola",
-      "en": "Natural strawberry flavouring",
-      "fr": "Arôme naturel de fraise"
-    }
-  },
-  {
-    "slug": "natural-sweet-lime-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma naturale di lime dolce",
-      "en": "Natural sweet lime flavouring",
-      "fr": "Arôme naturel de limette"
-    }
-  },
-  {
     "slug": "natural-sweet-wine",
     "category": "beverages_liquids",
     "translations": {
       "it": "Vino dolce naturale",
       "en": "Natural sweet wine",
       "fr": "Vin doux naturel"
-    }
-  },
-  {
-    "slug": "natural-tarragon-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di dragoncello",
-      "en": "Natural tarragon flavouring",
-      "fr": "Arôme naturel d'estragon"
-    }
-  },
-  {
-    "slug": "natural-tea-flavouring",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Aroma naturale di tè",
-      "en": "Natural tea flavouring",
-      "fr": "Arôme naturel de thé"
-    }
-  },
-  {
-    "slug": "natural-thyme-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di timo",
-      "en": "Natural thyme flavouring",
-      "fr": "Arôme naturel de thym"
-    }
-  },
-  {
-    "slug": "natural-turmeric-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di curcuma",
-      "en": "Natural turmeric flavouring",
-      "fr": "Arôme naturel de curcuma"
     }
   },
   {
@@ -17295,24 +15873,6 @@
       "it": "Estratto naturale di vaniglia",
       "en": "Natural vanilla extract",
       "fr": "Extrait naturel de vanille"
-    }
-  },
-  {
-    "slug": "natural-vanilla-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di vaniglia",
-      "en": "Natural vanilla flavouring",
-      "fr": "Arôme naturel de vanille"
-    }
-  },
-  {
-    "slug": "natural-vanilla-flavouring-with-other-natural-flavourings",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma naturale di vaniglia con altri aromi naturali",
-      "en": "Natural vanilla flavouring with other natural flavourings",
-      "fr": "Arôme naturel de vanille avec d'autres arômes naturels"
     }
   },
   {
@@ -17874,15 +16434,6 @@
     }
   },
   {
-    "slug": "onion-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di cipolla",
-      "en": "Onion flavouring",
-      "fr": "Arôme d'oignon"
-    }
-  },
-  {
     "slug": "onion-powder",
     "category": "produce",
     "translations": {
@@ -17907,15 +16458,6 @@
       "it": "Zagara",
       "en": "Orange blossom",
       "fr": "Fleur d'oranger"
-    }
-  },
-  {
-    "slug": "orange-blossom-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di fiori d'arancio",
-      "en": "Orange blossom flavouring",
-      "fr": "Arôme fleur d'oranger"
     }
   },
   {
@@ -17973,30 +16515,12 @@
     }
   },
   {
-    "slug": "orange-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di arancia",
-      "en": "Orange flavouring",
-      "fr": "Arôme d'orange"
-    }
-  },
-  {
     "slug": "orange-juice",
     "category": "beverages_liquids",
     "translations": {
       "it": "Succo d'arancia",
       "en": "Orange juice",
       "fr": "Jus d'orange"
-    }
-  },
-  {
-    "slug": "orange-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo d'arancia a base di concentrato",
-      "en": "Orange juice from concentrate",
-      "fr": "Jus d'orange à base de concentré"
     }
   },
   {
@@ -18222,15 +16746,6 @@
       "it": "Datteri bio",
       "en": "Organic dates",
       "fr": "Dattes bio"
-    }
-  },
-  {
-    "slug": "organic-dextrose",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Destrosio biologico",
-      "en": "Organic dextrose",
-      "fr": "Dextrose biologique"
     }
   },
   {
@@ -18819,15 +17334,6 @@
     }
   },
   {
-    "slug": "paprika-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma di paprika",
-      "en": "Paprika flavouring",
-      "fr": "Arôme de paprika"
-    }
-  },
-  {
     "slug": "paprika-paste",
     "category": "pantry_spices",
     "translations": {
@@ -19014,15 +17520,6 @@
       "it": "Pernice",
       "en": "Partridge",
       "fr": "Perdrix"
-    }
-  },
-  {
-    "slug": "passion-fruit-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di frutto della passione",
-      "en": "Passion fruit flavouring",
-      "fr": "Arôme naturel de fruit de la passion"
     }
   },
   {
@@ -19233,15 +17730,6 @@
     }
   },
   {
-    "slug": "pea-fiber",
-    "category": "legumes_nuts",
-    "translations": {
-      "it": "Fibra di pisello",
-      "en": "Pea fiber",
-      "fr": "Fibre de pois"
-    }
-  },
-  {
     "slug": "pea-flour",
     "category": "legumes_nuts",
     "translations": {
@@ -19260,15 +17748,6 @@
     }
   },
   {
-    "slug": "pea-protein-isolate",
-    "category": "legumes_nuts",
-    "translations": {
-      "it": "Proteine isolate del pisello",
-      "en": "Pea protein isolate",
-      "fr": "Isolat de protéines de pois"
-    }
-  },
-  {
     "slug": "pea-starch",
     "category": "legumes_nuts",
     "translations": {
@@ -19284,15 +17763,6 @@
       "it": "Pesca",
       "en": "Peach",
       "fr": "Pêche"
-    }
-  },
-  {
-    "slug": "peach-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di pesca",
-      "en": "Peach flavouring",
-      "fr": "Arôme de pêche"
     }
   },
   {
@@ -19377,15 +17847,6 @@
     }
   },
   {
-    "slug": "pear-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di pera",
-      "en": "Pear flavouring",
-      "fr": "Arôme de poire"
-    }
-  },
-  {
     "slug": "pear-juice",
     "category": "beverages_liquids",
     "translations": {
@@ -19410,15 +17871,6 @@
       "it": "Succo di pere concentrato",
       "en": "Pear juice concentrate",
       "fr": "Jus de poire concentré"
-    }
-  },
-  {
-    "slug": "pear-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di pera da concentrato",
-      "en": "Pear juice from concentrate",
-      "fr": "Jus de poire à base de concentré"
     }
   },
   {
@@ -19539,15 +17991,6 @@
     }
   },
   {
-    "slug": "pepper-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma di pepe",
-      "en": "Pepper flavouring",
-      "fr": "Arôme de poivre"
-    }
-  },
-  {
     "slug": "pepper-jack",
     "category": "dairy_eggs",
     "translations": {
@@ -19572,15 +18015,6 @@
       "it": "Menta piperita",
       "en": "Peppermint",
       "fr": "Menthe poivrée"
-    }
-  },
-  {
-    "slug": "peppermint-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di menta piperita",
-      "en": "Peppermint flavouring",
-      "fr": "Arôme de menthe poivrée"
     }
   },
   {
@@ -19746,39 +18180,12 @@
     }
   },
   {
-    "slug": "pineapple-fibre",
-    "category": "produce",
-    "translations": {
-      "it": "Fibre d'ananas",
-      "en": "Pineapple fibre",
-      "fr": "Fibres d'ananas"
-    }
-  },
-  {
-    "slug": "pineapple-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di ananas",
-      "en": "Pineapple flavouring",
-      "fr": "Arôme d'ananas"
-    }
-  },
-  {
     "slug": "pineapple-juice",
     "category": "beverages_liquids",
     "translations": {
       "it": "Succo di ananas",
       "en": "Pineapple juice",
       "fr": "Jus d'ananas"
-    }
-  },
-  {
-    "slug": "pineapple-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo d'ananas a base di concentrato",
-      "en": "Pineapple juice from concentrate",
-      "fr": "Jus d'ananas à base de concentré"
     }
   },
   {
@@ -19824,24 +18231,6 @@
       "it": "Succo di pompelmo rosa",
       "en": "Pink grapefruit juice",
       "fr": "Jus de pamplemousse rose"
-    }
-  },
-  {
-    "slug": "pink-grapefruit-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di pompelmo rosa ricavata di concentrato",
-      "en": "Pink grapefruit juice from concentrate",
-      "fr": "Jus de pamplemousse rose à base de concentré"
-    }
-  },
-  {
-    "slug": "pink-grapefruit-natural-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma naturale di pompelmo rosa",
-      "en": "Pink grapefruit natural flavouring",
-      "fr": "Arôme naturel de pamplemousse rose"
     }
   },
   {
@@ -20160,15 +18549,6 @@
     }
   },
   {
-    "slug": "pomegranate-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di melagrana a base di succo concentrato",
-      "en": "Pomegranate juice from concentrate",
-      "fr": "Jus de grenade à base de concentré"
-    }
-  },
-  {
     "slug": "pomegranate-seeds",
     "category": "legumes_nuts",
     "translations": {
@@ -20184,15 +18564,6 @@
       "it": "Pomelo",
       "en": "Pomelo",
       "fr": "Pomelo"
-    }
-  },
-  {
-    "slug": "pomelo-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di pomelo da concentrato",
-      "en": "Pomelo juice from concentrate",
-      "fr": "Jus de pomelo à base de concentré"
     }
   },
   {
@@ -21483,15 +19854,6 @@
     }
   },
   {
-    "slug": "raspberry-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di lampone",
-      "en": "Raspberry flavouring",
-      "fr": "Arôme framboise"
-    }
-  },
-  {
     "slug": "raspberry-jam",
     "category": "other",
     "translations": {
@@ -21507,15 +19869,6 @@
       "it": "Succo di lamponi",
       "en": "Raspberry juice",
       "fr": "Jus de framboise"
-    }
-  },
-  {
-    "slug": "raspberry-juice-from-concentrated-juice",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di lamponi a base di concentrato",
-      "en": "Raspberry juice from concentrated juice",
-      "fr": "Jus de framboise à base de concentré"
     }
   },
   {
@@ -22095,15 +20448,6 @@
     }
   },
   {
-    "slug": "red-grape-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Uva rossa da concentrato",
-      "en": "Red grape from concentrate",
-      "fr": "Raisin rouge à base de concentré"
-    }
-  },
-  {
     "slug": "red-grape-juice",
     "category": "beverages_liquids",
     "translations": {
@@ -22614,15 +20958,6 @@
       "it": "Riso italiano",
       "en": "Rice from Italy",
       "fr": "Riz d'Italie"
-    }
-  },
-  {
-    "slug": "rice-glucose-syrup",
-    "category": "bakery_grains",
-    "translations": {
-      "it": "Sciroppo di glucosio di riso",
-      "en": "Rice glucose syrup",
-      "fr": "Sirop de glucose de riz"
     }
   },
   {
@@ -23580,15 +21915,6 @@
     }
   },
   {
-    "slug": "seafood-flavouring",
-    "category": "seafood",
-    "translations": {
-      "it": "Aroma di frutti di mare",
-      "en": "Seafood flavouring",
-      "fr": "Arôme de fruits de mer"
-    }
-  },
-  {
     "slug": "seaweed",
     "category": "produce",
     "translations": {
@@ -23967,15 +22293,6 @@
     }
   },
   {
-    "slug": "shrimp-flavouring",
-    "category": "seafood",
-    "translations": {
-      "it": "Aroma di gamberetto",
-      "en": "Shrimp flavouring",
-      "fr": "Arôme de crevette"
-    }
-  },
-  {
     "slug": "shrimp-paste",
     "category": "seafood",
     "translations": {
@@ -24174,15 +22491,6 @@
     }
   },
   {
-    "slug": "smoke-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di affumicato",
-      "en": "Smoke flavouring",
-      "fr": "Arôme de fumée"
-    }
-  },
-  {
     "slug": "smoked-atlantic-salmon",
     "category": "seafood",
     "translations": {
@@ -24369,15 +22677,6 @@
       "it": "Sodio",
       "en": "Sodium",
       "fr": "Sodium"
-    }
-  },
-  {
-    "slug": "sodium-caseinate",
-    "category": "other",
-    "translations": {
-      "it": "Caseinato di sodio",
-      "en": "Sodium caseinate",
-      "fr": "Caséinate de sodium"
     }
   },
   {
@@ -24720,15 +23019,6 @@
       "it": "Proteine di soia",
       "en": "Soy protein",
       "fr": "Protéine de soja"
-    }
-  },
-  {
-    "slug": "soy-protein-isolate",
-    "category": "legumes_nuts",
-    "translations": {
-      "it": "Proteine isolate di soia",
-      "en": "Soy protein isolate",
-      "fr": "Isolat de protéine de soja"
     }
   },
   {
@@ -25290,15 +23580,6 @@
     }
   },
   {
-    "slug": "strawberry-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di fragola",
-      "en": "Strawberry flavouring",
-      "fr": "Arôme de fraise"
-    }
-  },
-  {
     "slug": "strawberry-jam",
     "category": "produce",
     "translations": {
@@ -25323,15 +23604,6 @@
       "it": "Succo concentrato di fragola",
       "en": "Strawberry juice concentrate",
       "fr": "Concentré de jus de fraise"
-    }
-  },
-  {
-    "slug": "strawberry-juice-from-concentrate",
-    "category": "beverages_liquids",
-    "translations": {
-      "it": "Succo di fragola da concentrato",
-      "en": "Strawberry juice from concentrate",
-      "fr": "Jus de fraise à base de concentré"
     }
   },
   {
@@ -25794,15 +24066,6 @@
     }
   },
   {
-    "slug": "sweet-lime-flavouring",
-    "category": "produce",
-    "translations": {
-      "it": "Aroma di lime dolce",
-      "en": "Sweet lime flavouring",
-      "fr": "Arôme de limette"
-    }
-  },
-  {
     "slug": "sweet-peas",
     "category": "legumes_nuts",
     "translations": {
@@ -25845,15 +24108,6 @@
       "it": "Siero di latte dolce",
       "en": "Sweet whey",
       "fr": "Lactosérum doux"
-    }
-  },
-  {
-    "slug": "sweet-whey-powder",
-    "category": "dairy_eggs",
-    "translations": {
-      "it": "Siero di latte dolce in polvere",
-      "en": "Sweet whey powder",
-      "fr": "Lactosérum doux en poudre"
     }
   },
   {
@@ -26097,15 +24351,6 @@
       "it": "Dragoncello",
       "en": "Tarragon",
       "fr": "Estragon"
-    }
-  },
-  {
-    "slug": "tarragon-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di dragoncello",
-      "en": "Tarragon flavouring",
-      "fr": "Arôme d'estragon"
     }
   },
   {
@@ -26523,15 +24768,6 @@
     }
   },
   {
-    "slug": "truffle-flavouring",
-    "category": "other",
-    "translations": {
-      "it": "Aroma di tartufo",
-      "en": "Truffle flavouring",
-      "fr": "Arôme de truffe"
-    }
-  },
-  {
     "slug": "tub-gurnard",
     "category": "seafood",
     "translations": {
@@ -26865,15 +25101,6 @@
     }
   },
   {
-    "slug": "vanilla-flavouring",
-    "category": "pantry_spices",
-    "translations": {
-      "it": "Aroma di vaniglia",
-      "en": "Vanilla flavouring",
-      "fr": "Arôme vanille"
-    }
-  },
-  {
     "slug": "vanilla-ice-cream",
     "category": "dairy_eggs",
     "translations": {
@@ -26997,6 +25224,1779 @@
       "it": "Fermenti lattici vegani",
       "en": "Vegan lactic ferments",
       "fr": "Cultures lactiques véganes"
+    }
+  },
+  {
+    "slug": "vegetable",
+    "category": "produce",
+    "translations": {
+      "it": "Vegetale",
+      "en": "Vegetable",
+      "fr": "Légume"
+    }
+  },
+  {
+    "slug": "vegetable-blend",
+    "category": "produce",
+    "translations": {
+      "it": "Mix di verdure",
+      "en": "Vegetable blend",
+      "fr": "Mélange de légumes"
+    }
+  },
+  {
+    "slug": "vegetable-broth",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Brodo vegetale",
+      "en": "Vegetable broth",
+      "fr": "Bouillon végétal"
+    }
+  },
+  {
+    "slug": "vegetable-concentrate",
+    "category": "produce",
+    "translations": {
+      "it": "Concentrato vegetale",
+      "en": "Vegetable concentrate",
+      "fr": "Concentré de légumes"
+    }
+  },
+  {
+    "slug": "vegetable-extract",
+    "category": "produce",
+    "translations": {
+      "it": "Estratto vegetale",
+      "en": "Vegetable extract",
+      "fr": "Extraits végétaux"
+    }
+  },
+  {
+    "slug": "vegetable-fat",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Grasso vegetale",
+      "en": "Vegetable fat",
+      "fr": "Matière grasse végétale"
+    }
+  },
+  {
+    "slug": "vegetable-fiber",
+    "category": "produce",
+    "translations": {
+      "it": "Fibre vegetali",
+      "en": "Vegetable fiber",
+      "fr": "Fibre végétale"
+    }
+  },
+  {
+    "slug": "vegetable-juice",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Succo di verdura",
+      "en": "Vegetable juice",
+      "fr": "Jus de légumes"
+    }
+  },
+  {
+    "slug": "vegetable-margarine",
+    "category": "produce",
+    "translations": {
+      "it": "Margarina vegetale",
+      "en": "Vegetable margarine",
+      "fr": "Margarine végétale"
+    }
+  },
+  {
+    "slug": "vegetable-oil",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Olio vegetale",
+      "en": "Vegetable oil",
+      "fr": "Huile végétale"
+    }
+  },
+  {
+    "slug": "vegetable-oil-and-fat",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Oli e grassi vegetali",
+      "en": "Vegetable oil and fat",
+      "fr": "Huiles et graisses végétales"
+    }
+  },
+  {
+    "slug": "vegetable-oil-blend",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Miscela di oli vegetali",
+      "en": "Vegetable oil blend",
+      "fr": "Mélanges des huiles végétales"
+    }
+  },
+  {
+    "slug": "vegetable-stearin",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Stearina vegetale",
+      "en": "Vegetable stearin",
+      "fr": "Stéarines végétales"
+    }
+  },
+  {
+    "slug": "vegetables-in-variable-proportion",
+    "category": "produce",
+    "translations": {
+      "it": "Verdure in proporzione variabile",
+      "en": "Vegetables in variable proportion",
+      "fr": "Légumes en proportions variables"
+    }
+  },
+  {
+    "slug": "vegetarian-rennet",
+    "category": "other",
+    "translations": {
+      "it": "Caglio vegetale",
+      "en": "Vegetarian rennet",
+      "fr": "Présure végétarienne"
+    }
+  },
+  {
+    "slug": "venison",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Carne di cervo",
+      "en": "Venison",
+      "fr": "Viande de cerf"
+    }
+  },
+  {
+    "slug": "verbena",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Verbena",
+      "en": "Verbena",
+      "fr": "Verveine"
+    }
+  },
+  {
+    "slug": "vermicelli",
+    "category": "other",
+    "translations": {
+      "it": "Vermicelli",
+      "en": "Vermicelli",
+      "fr": "Vermicelle"
+    }
+  },
+  {
+    "slug": "very-fine-green-beans",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Fagiolini verdi molto fini",
+      "en": "Very fine green beans",
+      "fr": "Haricots verts très fins"
+    }
+  },
+  {
+    "slug": "vinaigrette",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Vinaigrette",
+      "en": "Vinaigrette",
+      "fr": "Vinaigrette"
+    }
+  },
+  {
+    "slug": "vine-leaf",
+    "category": "produce",
+    "translations": {
+      "it": "Foglie di vite",
+      "en": "Vine leaf",
+      "fr": "Feuilles de vigne"
+    }
+  },
+  {
+    "slug": "vinegar",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Aceto",
+      "en": "Vinegar",
+      "fr": "Vinaigre"
+    }
+  },
+  {
+    "slug": "vinegar-cucumbers",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Cetrioli all'aceto",
+      "en": "Vinegar cucumbers",
+      "fr": "Concombres au vinaigre"
+    }
+  },
+  {
+    "slug": "vinegar-gherkin",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Aceto di cetriolino",
+      "en": "Vinegar gherkin",
+      "fr": "Cornichon au vinaigre"
+    }
+  },
+  {
+    "slug": "vintage-cheddar",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Cheddar vintage",
+      "en": "Vintage cheddar",
+      "fr": "Cheddar extra vieux"
+    }
+  },
+  {
+    "slug": "violet-asparagus",
+    "category": "produce",
+    "translations": {
+      "it": "Asparagi violetti",
+      "en": "Violet asparagus",
+      "fr": "Asperge violette"
+    }
+  },
+  {
+    "slug": "violet-carrot",
+    "category": "produce",
+    "translations": {
+      "it": "Carota viola",
+      "en": "Violet carrot",
+      "fr": "Carotte violette"
+    }
+  },
+  {
+    "slug": "virgin-coconut-oil",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Olio di cocco vergine",
+      "en": "Virgin coconut oil",
+      "fr": "Huile vierge de noix de coco"
+    }
+  },
+  {
+    "slug": "virgin-hazelnut-oil",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Olio vergine di nocciole",
+      "en": "Virgin hazelnut oil",
+      "fr": "Huile vierge de noisette"
+    }
+  },
+  {
+    "slug": "virgin-olive-oil",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Olio d'oliva vergine",
+      "en": "Virgin olive oil",
+      "fr": "Huile d'olive vierge"
+    }
+  },
+  {
+    "slug": "virgin-sesame-oil",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Olio di sesamo vergine",
+      "en": "Virgin sesame oil",
+      "fr": "Huile vierge de sésame"
+    }
+  },
+  {
+    "slug": "vitamin-a",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina A",
+      "en": "Vitamin A",
+      "fr": "Vitamine A"
+    }
+  },
+  {
+    "slug": "vitamin-b12",
+    "category": "other",
+    "translations": {
+      "it": "Cobalamina",
+      "en": "Vitamin B12",
+      "fr": "Cobalamine"
+    }
+  },
+  {
+    "slug": "vitamin-b6",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina B6",
+      "en": "Vitamin B6",
+      "fr": "Vitamine B6"
+    }
+  },
+  {
+    "slug": "vitamin-b8",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina B8",
+      "en": "Vitamin B8",
+      "fr": "Vitamine B8"
+    }
+  },
+  {
+    "slug": "vitamin-c",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina C",
+      "en": "Vitamin C",
+      "fr": "Vitamine C"
+    }
+  },
+  {
+    "slug": "vitamin-d",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina D",
+      "en": "Vitamin D",
+      "fr": "Vitamine D"
+    }
+  },
+  {
+    "slug": "vitamin-d-yeast",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Lievito di vitamina D",
+      "en": "Vitamin D yeast",
+      "fr": "Levure enrichie en vitamine D"
+    }
+  },
+  {
+    "slug": "vitamin-e",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina E",
+      "en": "Vitamin E",
+      "fr": "Tocophérol"
+    }
+  },
+  {
+    "slug": "vitamin-k",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina K",
+      "en": "Vitamin K",
+      "fr": "Vitamine K"
+    }
+  },
+  {
+    "slug": "vitamin-k3",
+    "category": "other",
+    "translations": {
+      "it": "Vitamina K3",
+      "en": "Vitamin K3",
+      "fr": "Vitamine K3"
+    }
+  },
+  {
+    "slug": "vitamins",
+    "category": "other",
+    "translations": {
+      "it": "Vitamine",
+      "en": "Vitamins",
+      "fr": "Vitamines"
+    }
+  },
+  {
+    "slug": "volvic-natural-mineral-water",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Acqua minerale naturale Volvic",
+      "en": "Volvic natural mineral water",
+      "fr": "Eau minérale naturelle volvic"
+    }
+  },
+  {
+    "slug": "wafer",
+    "category": "other",
+    "translations": {
+      "it": "Cialda",
+      "en": "Wafer",
+      "fr": "Pain azyme"
+    }
+  },
+  {
+    "slug": "waffle",
+    "category": "other",
+    "translations": {
+      "it": "Gaufre",
+      "en": "Waffle",
+      "fr": "Gaufre"
+    }
+  },
+  {
+    "slug": "waffle-with-cocoa",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Cialda al cacao",
+      "en": "Waffle with cocoa",
+      "fr": "Gaufre au cacao"
+    }
+  },
+  {
+    "slug": "walnut",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Noce",
+      "en": "Walnut",
+      "fr": "Noix"
+    }
+  },
+  {
+    "slug": "walnut-kernel",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Gherigli di noci",
+      "en": "Walnut kernel",
+      "fr": "Cerneaux de noix"
+    }
+  },
+  {
+    "slug": "walnut-oil",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Olio di noci",
+      "en": "Walnut oil",
+      "fr": "Huile de noix"
+    }
+  },
+  {
+    "slug": "walnuts-from-grenoble",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Noci di Grenoble",
+      "en": "Walnuts from Grenoble",
+      "fr": "Noix de Grenoble"
+    }
+  },
+  {
+    "slug": "wasabi",
+    "category": "other",
+    "translations": {
+      "it": "Wasabi",
+      "en": "Wasabi",
+      "fr": "Wasabi"
+    }
+  },
+  {
+    "slug": "water",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Acqua",
+      "en": "Water",
+      "fr": "Eau"
+    }
+  },
+  {
+    "slug": "water-chestnut",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Castagne d'acqua",
+      "en": "Water chestnut",
+      "fr": "Châtaigne d'eau"
+    }
+  },
+  {
+    "slug": "water-like-ice-wrap",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Acqua come involucro di ghiaccio",
+      "en": "Water like ice wrap",
+      "fr": "Eau comme glaçure d'enrobage"
+    }
+  },
+  {
+    "slug": "watercress",
+    "category": "produce",
+    "translations": {
+      "it": "Crescione d'acqua",
+      "en": "Watercress",
+      "fr": "Cresson de fontaine"
+    }
+  },
+  {
+    "slug": "watermelon",
+    "category": "produce",
+    "translations": {
+      "it": "Anguria",
+      "en": "Watermelon",
+      "fr": "Pastèque"
+    }
+  },
+  {
+    "slug": "watermelon-pulp",
+    "category": "produce",
+    "translations": {
+      "it": "Polpa di anguria",
+      "en": "Watermelon pulp",
+      "fr": "Pulpe de pastèque"
+    }
+  },
+  {
+    "slug": "wax-bean",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Fagiolo giallo",
+      "en": "Wax bean",
+      "fr": "Haricot beurre"
+    }
+  },
+  {
+    "slug": "wax-gourd",
+    "category": "produce",
+    "translations": {
+      "it": "Benincasa hispida",
+      "en": "Wax gourd",
+      "fr": "Courge cireuse"
+    }
+  },
+  {
+    "slug": "waxy-corn",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Maïs ceroso",
+      "en": "Waxy corn",
+      "fr": "Maïs cireux"
+    }
+  },
+  {
+    "slug": "waxy-maize-starch",
+    "category": "other",
+    "translations": {
+      "it": "Amido di mais ceroso",
+      "en": "Waxy maize starch",
+      "fr": "Amidon de maïs cireux"
+    }
+  },
+  {
+    "slug": "weeping-bolete",
+    "category": "produce",
+    "translations": {
+      "it": "Boleto piangente",
+      "en": "Weeping bolete",
+      "fr": "Cèpe jaune des pins"
+    }
+  },
+  {
+    "slug": "weever",
+    "category": "seafood",
+    "translations": {
+      "it": "Tracina",
+      "en": "Weever",
+      "fr": "Vive"
+    }
+  },
+  {
+    "slug": "welsh-onion",
+    "category": "produce",
+    "translations": {
+      "it": "Cipolla d'inverno",
+      "en": "Welsh onion",
+      "fr": "Ciboule"
+    }
+  },
+  {
+    "slug": "wensleydale",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Wensleydale",
+      "en": "Wensleydale",
+      "fr": "Wensleydale"
+    }
+  },
+  {
+    "slug": "wheat",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Frumento",
+      "en": "Wheat",
+      "fr": "Blé"
+    }
+  },
+  {
+    "slug": "wheat-bran",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Crusca di frumento",
+      "en": "Wheat bran",
+      "fr": "Son de blé"
+    }
+  },
+  {
+    "slug": "wheat-bran-fiber",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fibra di crusca di grano",
+      "en": "Wheat bran fiber",
+      "fr": "Fibre de son de blé"
+    }
+  },
+  {
+    "slug": "wheat-bulgur",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Grano bulgur",
+      "en": "Wheat bulgur",
+      "fr": "Boulgour de blé"
+    }
+  },
+  {
+    "slug": "wheat-cakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Torte di grano",
+      "en": "Wheat cakes",
+      "fr": "Galette de blé"
+    }
+  },
+  {
+    "slug": "wheat-fiber",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fibra di frumento",
+      "en": "Wheat fiber",
+      "fr": "Fibre de blé"
+    }
+  },
+  {
+    "slug": "wheat-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi di frumento",
+      "en": "Wheat flakes",
+      "fr": "Flocons de blé"
+    }
+  },
+  {
+    "slug": "wheat-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di frumento",
+      "en": "Wheat flour",
+      "fr": "Farine de blé"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-0",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 0",
+      "en": "Wheat flour type 0",
+      "fr": "Farine de blé tendre type 0"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-00",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 00",
+      "en": "Wheat flour type 00",
+      "fr": "Farine de blé tendre type 00"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-1",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 1",
+      "en": "Wheat flour type 1",
+      "fr": "Farine de blé tendre type 1"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-110",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 110",
+      "en": "Wheat flour type 110",
+      "fr": "Farine de blé tendre T110"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-150",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 150",
+      "en": "Wheat flour type 150",
+      "fr": "Farine de blé tendre T150"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-2",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 2",
+      "en": "Wheat flour type 2",
+      "fr": "Farine de blé tendre type 2"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-55",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 55",
+      "en": "Wheat flour type 55",
+      "fr": "Farine de blé tendre T55"
+    }
+  },
+  {
+    "slug": "wheat-flour-type-65",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di grano tenero tipo 65",
+      "en": "Wheat flour type 65",
+      "fr": "Farine de blé tendre T65"
+    }
+  },
+  {
+    "slug": "wheat-germ",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Germe di frumento",
+      "en": "Wheat germ",
+      "fr": "Germe de blé"
+    }
+  },
+  {
+    "slug": "wheat-gluten",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Glutine di grano",
+      "en": "Wheat gluten",
+      "fr": "Gluten de blé"
+    }
+  },
+  {
+    "slug": "wheat-groats",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Semola di grano",
+      "en": "Wheat groats",
+      "fr": "Gruau de blé"
+    }
+  },
+  {
+    "slug": "wheat-malt",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Malto di frumento",
+      "en": "Wheat malt",
+      "fr": "Malt de blé"
+    }
+  },
+  {
+    "slug": "wheat-protein",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Proteine del grano",
+      "en": "Wheat protein",
+      "fr": "Protéine de blé"
+    }
+  },
+  {
+    "slug": "wheat-semolina",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Semolino di frumento",
+      "en": "Wheat semolina",
+      "fr": "Semoule de blé"
+    }
+  },
+  {
+    "slug": "wheat-sourdough",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Lievito madre di frumento",
+      "en": "Wheat sourdough",
+      "fr": "Levain de blé"
+    }
+  },
+  {
+    "slug": "wheat-starch",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Amido di frumento",
+      "en": "Wheat starch",
+      "fr": "Amidon de froment"
+    }
+  },
+  {
+    "slug": "wheat-syrup",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Sciroppo di grano",
+      "en": "Wheat syrup",
+      "fr": "Sirop de blé"
+    }
+  },
+  {
+    "slug": "wheat-tortilla",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Tortilla di grano",
+      "en": "Wheat tortilla",
+      "fr": "Tortillas de blé"
+    }
+  },
+  {
+    "slug": "whey",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Siero di latte",
+      "en": "Whey",
+      "fr": "Petit-lait"
+    }
+  },
+  {
+    "slug": "whey-permeate",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Permeato di siero di latte",
+      "en": "Whey permeate",
+      "fr": "Perméat de petit lait"
+    }
+  },
+  {
+    "slug": "whey-permeate-powder",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Permeato di siero di latte in polvere",
+      "en": "Whey permeate powder",
+      "fr": "Poudre de perméat de lactosérum"
+    }
+  },
+  {
+    "slug": "whey-product",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Derivati del siero di latte",
+      "en": "Whey product",
+      "fr": "Produit de lactosérum"
+    }
+  },
+  {
+    "slug": "whey-protein",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Proteine del siero del latte",
+      "en": "Whey protein",
+      "fr": "Protéine de lactosérum"
+    }
+  },
+  {
+    "slug": "whipped-cream",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Panna montata",
+      "en": "Whipped cream",
+      "fr": "Crème fouettée"
+    }
+  },
+  {
+    "slug": "whipping-cream",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Panna da montare",
+      "en": "Whipping cream",
+      "fr": "Crème à fouetter"
+    }
+  },
+  {
+    "slug": "white-and-red-grape-juice",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Succo d'uva bianca e rossa",
+      "en": "White and red grape juice",
+      "fr": "Jus de raisin blanc et rouge"
+    }
+  },
+  {
+    "slug": "white-asparagus",
+    "category": "produce",
+    "translations": {
+      "it": "Asparagi bianchi",
+      "en": "White asparagus",
+      "fr": "Asperges blanches"
+    }
+  },
+  {
+    "slug": "white-balsamic-vinegar",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Aceto balsamico bianco",
+      "en": "White balsamic vinegar",
+      "fr": "Vinaigre balsamique blanc"
+    }
+  },
+  {
+    "slug": "white-basmati-rice",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Riso basmati bianco",
+      "en": "White basmati rice",
+      "fr": "Riz basmati blanc"
+    }
+  },
+  {
+    "slug": "white-beans",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Fagioli bianchi",
+      "en": "White beans",
+      "fr": "Haricots blancs"
+    }
+  },
+  {
+    "slug": "white-brugnon",
+    "category": "produce",
+    "translations": {
+      "it": "Nucipesca",
+      "en": "White brugnon",
+      "fr": "Brugnon"
+    }
+  },
+  {
+    "slug": "white-cabbage",
+    "category": "produce",
+    "translations": {
+      "it": "Cavolo bianco",
+      "en": "White cabbage",
+      "fr": "Chou blanc"
+    }
+  },
+  {
+    "slug": "white-cane-sugar",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Zucchero di canna bianco",
+      "en": "White cane sugar",
+      "fr": "Sucre de canne blanc"
+    }
+  },
+  {
+    "slug": "white-cane-sugar-from-brazil",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Zucchero di canna bianco dal Brasile",
+      "en": "White cane sugar from Brazil",
+      "fr": "Sucre de canne blond du Brésil"
+    }
+  },
+  {
+    "slug": "white-cheddar",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Cheddar bianco",
+      "en": "White cheddar",
+      "fr": "Cheddar blanc"
+    }
+  },
+  {
+    "slug": "white-chicken-meat",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Carne di pollo bianca",
+      "en": "White chicken meat",
+      "fr": "Viande blanche de poulet"
+    }
+  },
+  {
+    "slug": "white-chocolate",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Cioccolato bianco",
+      "en": "White chocolate",
+      "fr": "Chocolat blanc"
+    }
+  },
+  {
+    "slug": "white-chocolate-coating",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Rivestimento di cioccolato bianco",
+      "en": "White chocolate coating",
+      "fr": "Chocolat blanc de couverture"
+    }
+  },
+  {
+    "slug": "white-corn",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Mais crudo",
+      "en": "White corn",
+      "fr": "Maïs blanc"
+    }
+  },
+  {
+    "slug": "white-corn-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di mais bianco",
+      "en": "White corn flour",
+      "fr": "Farine de maïs blanc"
+    }
+  },
+  {
+    "slug": "white-distilled-vinegar",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Aceto bianco distillato",
+      "en": "White distilled vinegar",
+      "fr": "Vinaigre blanc distillé"
+    }
+  },
+  {
+    "slug": "white-fish",
+    "category": "seafood",
+    "translations": {
+      "it": "Pesce bianco",
+      "en": "White fish",
+      "fr": "Poisson blanc"
+    }
+  },
+  {
+    "slug": "white-grape",
+    "category": "produce",
+    "translations": {
+      "it": "Uva bianca",
+      "en": "White grape",
+      "fr": "Raisin blanc"
+    }
+  },
+  {
+    "slug": "white-grape-juice",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Succo d'uva bianca",
+      "en": "White grape juice",
+      "fr": "Jus de raisin blanc"
+    }
+  },
+  {
+    "slug": "white-lupin",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Lupino bianco",
+      "en": "White lupin",
+      "fr": "Lupin blanc"
+    }
+  },
+  {
+    "slug": "white-mulberry",
+    "category": "produce",
+    "translations": {
+      "it": "Gelso bianco",
+      "en": "White mulberry",
+      "fr": "Mûre blanche"
+    }
+  },
+  {
+    "slug": "white-onion",
+    "category": "produce",
+    "translations": {
+      "it": "Cipolla bianca",
+      "en": "White onion",
+      "fr": "Oignon blanc"
+    }
+  },
+  {
+    "slug": "white-peach",
+    "category": "produce",
+    "translations": {
+      "it": "Pesca bianca",
+      "en": "White peach",
+      "fr": "Pêche blanche"
+    }
+  },
+  {
+    "slug": "white-pepper",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Pepe bianco",
+      "en": "White pepper",
+      "fr": "Poivre blanc"
+    }
+  },
+  {
+    "slug": "white-quinoa",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Quinoa bianca",
+      "en": "White quinoa",
+      "fr": "Quinoa blanc"
+    }
+  },
+  {
+    "slug": "white-quinoa-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di quinoa bianca",
+      "en": "White quinoa flour",
+      "fr": "Farine de quinoa blanche"
+    }
+  },
+  {
+    "slug": "white-rice",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Riso bianco",
+      "en": "White rice",
+      "fr": "Riz blanc"
+    }
+  },
+  {
+    "slug": "white-rice-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di riso bianco",
+      "en": "White rice flour",
+      "fr": "Farine de riz blanc"
+    }
+  },
+  {
+    "slug": "white-rum",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Rum bianco",
+      "en": "White rum",
+      "fr": "Rhum blanc"
+    }
+  },
+  {
+    "slug": "white-scallop",
+    "category": "seafood",
+    "translations": {
+      "it": "Capesante bianche",
+      "en": "White scallop",
+      "fr": "Pétoncle blanc"
+    }
+  },
+  {
+    "slug": "white-seedless-grape",
+    "category": "produce",
+    "translations": {
+      "it": "Uva bianca senza semi",
+      "en": "White seedless grape",
+      "fr": "Raisin blanc sans pépin"
+    }
+  },
+  {
+    "slug": "white-sesame",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Sesamo bianco",
+      "en": "White sesame",
+      "fr": "Sésame blanc"
+    }
+  },
+  {
+    "slug": "white-sesame-seeds",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Semi di sesamo bianchi",
+      "en": "White sesame seeds",
+      "fr": "Graine de sésame blanc"
+    }
+  },
+  {
+    "slug": "white-stilton",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Stilton bianco",
+      "en": "White Stilton",
+      "fr": "White Stilton"
+    }
+  },
+  {
+    "slug": "white-sugar",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Zucchero bianco",
+      "en": "White sugar",
+      "fr": "Sucre blanc"
+    }
+  },
+  {
+    "slug": "white-tea",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Tè bianco",
+      "en": "White tea",
+      "fr": "Thé blanc"
+    }
+  },
+  {
+    "slug": "white-vinegar",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Aceto bianco",
+      "en": "White vinegar",
+      "fr": "Vinaigre blanc"
+    }
+  },
+  {
+    "slug": "white-wine",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Vino bianco",
+      "en": "White wine",
+      "fr": "Vin blanc"
+    }
+  },
+  {
+    "slug": "white-wine-extract",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Estratto di vino bianco",
+      "en": "White wine extract",
+      "fr": "Extrait de vin blanc"
+    }
+  },
+  {
+    "slug": "white-wine-from-france",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Vino bianco dalla Francia",
+      "en": "White wine from France",
+      "fr": "Vin blanc de France"
+    }
+  },
+  {
+    "slug": "white-wine-vinegar",
+    "category": "beverages_liquids",
+    "translations": {
+      "it": "Aceto di vino bianco",
+      "en": "White wine vinegar",
+      "fr": "Vinaigre de vin blanc"
+    }
+  },
+  {
+    "slug": "whitecurrant",
+    "category": "produce",
+    "translations": {
+      "it": "Ribes bianco",
+      "en": "Whitecurrant",
+      "fr": "Groseille blanche"
+    }
+  },
+  {
+    "slug": "whiteleg-shrimp",
+    "category": "seafood",
+    "translations": {
+      "it": "Gamberetti bianchi",
+      "en": "Whiteleg shrimp",
+      "fr": "Crevette à pattes blanches"
+    }
+  },
+  {
+    "slug": "whiting",
+    "category": "seafood",
+    "translations": {
+      "it": "Merlango",
+      "en": "Whiting",
+      "fr": "Merlan"
+    }
+  },
+  {
+    "slug": "whole-almonds",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Mandorle intere",
+      "en": "Whole almonds",
+      "fr": "Amandes entières"
+    }
+  },
+  {
+    "slug": "whole-buckwheat-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi integrali di grano saraceno",
+      "en": "Whole buckwheat flakes",
+      "fr": "Flocons de sarrasin complets"
+    }
+  },
+  {
+    "slug": "whole-cane-sugar",
+    "category": "pantry_spices",
+    "translations": {
+      "it": "Zucchero di canna integrale",
+      "en": "Whole cane sugar",
+      "fr": "Sucre de canne complet"
+    }
+  },
+  {
+    "slug": "whole-chicken",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Pollo intero",
+      "en": "Whole chicken",
+      "fr": "Poulet entier"
+    }
+  },
+  {
+    "slug": "whole-cream",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Panna intera",
+      "en": "Whole cream",
+      "fr": "Crème entière"
+    }
+  },
+  {
+    "slug": "whole-durum-wheat-semolina",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Semola di grano duro integrale",
+      "en": "Whole durum wheat semolina",
+      "fr": "Semoule de blé dur complète"
+    }
+  },
+  {
+    "slug": "whole-egg",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Uova intere",
+      "en": "Whole egg",
+      "fr": "Œuf entier"
+    }
+  },
+  {
+    "slug": "whole-fresh-eggs",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Uova fresche intere",
+      "en": "Whole fresh eggs",
+      "fr": "Œuf entier frais"
+    }
+  },
+  {
+    "slug": "whole-goat-milk",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Latte intero di capra",
+      "en": "Whole goat milk",
+      "fr": "Lait entier de chèvre"
+    }
+  },
+  {
+    "slug": "whole-goat-milk-uht",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Latte intero di capra UHT",
+      "en": "Whole goat milk UHT",
+      "fr": "Lait de chèvre entier UHT"
+    }
+  },
+  {
+    "slug": "whole-grain-barley-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi d'orzo integrale",
+      "en": "Whole grain barley flakes",
+      "fr": "Flocons d'orge complète"
+    }
+  },
+  {
+    "slug": "whole-grain-buckwheat-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina integrale di grano saraceno",
+      "en": "Whole grain buckwheat flour",
+      "fr": "Farine de sarrasin complète"
+    }
+  },
+  {
+    "slug": "whole-grain-corn-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di mais integrale",
+      "en": "Whole grain corn flour",
+      "fr": "Farine de mais compléte"
+    }
+  },
+  {
+    "slug": "whole-grain-durum-wheat",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Grano duro integrale",
+      "en": "Whole grain durum wheat",
+      "fr": "Blé dur complet"
+    }
+  },
+  {
+    "slug": "whole-grain-khorasan-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina integrale di kamut",
+      "en": "Whole grain khorasan flour",
+      "fr": "Farine de kamut complète"
+    }
+  },
+  {
+    "slug": "whole-grain-millet-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di miglio integrale",
+      "en": "Whole grain millet flour",
+      "fr": "Farine de millet complète"
+    }
+  },
+  {
+    "slug": "whole-grain-oat-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi di avena integrale",
+      "en": "Whole grain oat flakes",
+      "fr": "Flocon d'avoine complet"
+    }
+  },
+  {
+    "slug": "whole-grain-rye-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi di segale integrali",
+      "en": "Whole grain rye flakes",
+      "fr": "Flocons de seigle complet"
+    }
+  },
+  {
+    "slug": "whole-grain-spelt-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi di farro integrale",
+      "en": "Whole grain spelt flakes",
+      "fr": "Flocons d'épeautre complet"
+    }
+  },
+  {
+    "slug": "whole-kefir",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Kefir intero",
+      "en": "Whole kefir",
+      "fr": "Kéfir entier"
+    }
+  },
+  {
+    "slug": "whole-liquid-pasteurised-egg",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Uovo intero liquido pastorizzato",
+      "en": "Whole liquid pasteurised egg",
+      "fr": "Œuf entier liquide pasteurisé"
+    }
+  },
+  {
+    "slug": "whole-milk",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Latte intero",
+      "en": "Whole milk",
+      "fr": "Lait entier"
+    }
+  },
+  {
+    "slug": "whole-milk-mozzarella",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Mozzarella di latte intero",
+      "en": "Whole milk mozzarella",
+      "fr": "Mozzarella au lait entier"
+    }
+  },
+  {
+    "slug": "whole-milk-powder",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Latte intero in polvere",
+      "en": "Whole milk powder",
+      "fr": "Lait entier en poudre"
+    }
+  },
+  {
+    "slug": "whole-milk-yogurt-powder",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Yogurt intero in polvere",
+      "en": "Whole milk yogurt powder",
+      "fr": "Poudre de yaourt au lait entier"
+    }
+  },
+  {
+    "slug": "whole-powdered-chicken-egg",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Uova di gallina intere in polvere",
+      "en": "Whole powdered chicken egg",
+      "fr": "Poudre d'œuf de poules"
+    }
+  },
+  {
+    "slug": "whole-raspberry",
+    "category": "produce",
+    "translations": {
+      "it": "Lampone intero",
+      "en": "Whole raspberry",
+      "fr": "Framboises entières"
+    }
+  },
+  {
+    "slug": "whole-round-rice",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Riso tondo integrale",
+      "en": "Whole round rice",
+      "fr": "Riz rond complet"
+    }
+  },
+  {
+    "slug": "whole-sheep-milk",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Latte intero di pecora",
+      "en": "Whole sheep milk",
+      "fr": "Lait entier de brebis"
+    }
+  },
+  {
+    "slug": "whole-sorghum-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di sorgo integrale",
+      "en": "Whole sorghum flour",
+      "fr": "Farine complète de sorgo/Farine complète de sorgho"
+    }
+  },
+  {
+    "slug": "whole-walnuts",
+    "category": "legumes_nuts",
+    "translations": {
+      "it": "Noci in guscio",
+      "en": "Whole walnuts",
+      "fr": "Noix en coques"
+    }
+  },
+  {
+    "slug": "whole-wheat",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Frumento integrale",
+      "en": "Whole wheat",
+      "fr": "Blé complet"
+    }
+  },
+  {
+    "slug": "whole-wheat-bulgur",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Grano bulgur integrale",
+      "en": "Whole wheat bulgur",
+      "fr": "Boulgour de blé complet"
+    }
+  },
+  {
+    "slug": "whole-wheat-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi di grano interi",
+      "en": "Whole wheat flakes",
+      "fr": "Pétales de blé complet"
+    }
+  },
+  {
+    "slug": "whole-wheat-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina integrale di frumento",
+      "en": "Whole wheat flour",
+      "fr": "Farine de blé complète"
+    }
+  },
+  {
+    "slug": "whole-wheat-groats",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Cruschello di frumento integrale",
+      "en": "Whole wheat groats",
+      "fr": "Blé complet égrugé"
+    }
+  },
+  {
+    "slug": "whole-yogurt",
+    "category": "dairy_eggs",
+    "translations": {
+      "it": "Yogurt intero",
+      "en": "Whole yogurt",
+      "fr": "Yaourt entier"
+    }
+  },
+  {
+    "slug": "wholegrain-maize-semolina",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Semolino di mais integrale",
+      "en": "Wholegrain maize semolina",
+      "fr": "Semoule de maïs complet"
+    }
+  },
+  {
+    "slug": "wholemeal-barley",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Orzo integrale",
+      "en": "Wholemeal barley",
+      "fr": "Orge complète"
+    }
+  },
+  {
+    "slug": "wholemeal-barley-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina integrale d'orzo",
+      "en": "Wholemeal barley flour",
+      "fr": "Farine complète d'orge"
+    }
+  },
+  {
+    "slug": "wholemeal-buckwheat",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Saraceno integrale",
+      "en": "Wholemeal buckwheat",
+      "fr": "Sarrasin complet"
+    }
+  },
+  {
+    "slug": "wholemeal-cereal",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Cereali integrali",
+      "en": "Wholemeal cereal",
+      "fr": "Céréale complète"
+    }
+  },
+  {
+    "slug": "wholemeal-cereal-flakes",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Fiocchi di cereali integrali",
+      "en": "Wholemeal cereal flakes",
+      "fr": "Flocons de céréales complètes"
+    }
+  },
+  {
+    "slug": "wholemeal-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina integrale",
+      "en": "Wholemeal flour",
+      "fr": "Farine complète"
+    }
+  },
+  {
+    "slug": "wholemeal-oat",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Avena integrale",
+      "en": "Wholemeal oat",
+      "fr": "Avoine complète"
+    }
+  },
+  {
+    "slug": "wholemeal-oat-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di avena integrale",
+      "en": "Wholemeal oat flour",
+      "fr": "Farine d'avoine complète"
+    }
+  },
+  {
+    "slug": "wholemeal-rye",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Segale integrale",
+      "en": "Wholemeal rye",
+      "fr": "Seigle complet"
+    }
+  },
+  {
+    "slug": "wholemeal-rye-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina di segale integrale",
+      "en": "Wholemeal rye flour",
+      "fr": "Farine de seigle complète"
+    }
+  },
+  {
+    "slug": "wholemeal-spelt-flour",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Farina integrale di spelta",
+      "en": "Wholemeal spelt flour",
+      "fr": "Farine complète d'épeautre"
+    }
+  },
+  {
+    "slug": "wild-blueberry",
+    "category": "produce",
+    "translations": {
+      "it": "Mirtilli selvatici",
+      "en": "Wild blueberry",
+      "fr": "Myrtille sauvage"
+    }
+  },
+  {
+    "slug": "wild-boar",
+    "category": "other",
+    "translations": {
+      "it": "Cinghiale",
+      "en": "Wild boar",
+      "fr": "Sanglier"
+    }
+  },
+  {
+    "slug": "wild-boar-meat",
+    "category": "meat_poultry",
+    "translations": {
+      "it": "Carne di cinghiale",
+      "en": "Wild boar meat",
+      "fr": "Viande de sanglier"
+    }
+  },
+  {
+    "slug": "wild-cherry",
+    "category": "produce",
+    "translations": {
+      "it": "Ciliegia selvatica",
+      "en": "Wild cherry",
+      "fr": "Cerise sauvage"
+    }
+  },
+  {
+    "slug": "wild-garlic",
+    "category": "produce",
+    "translations": {
+      "it": "Aglio orsino",
+      "en": "Wild garlic",
+      "fr": "Ail des ours"
+    }
+  },
+  {
+    "slug": "wild-rice",
+    "category": "bakery_grains",
+    "translations": {
+      "it": "Riso selvatico",
+      "en": "Wild rice",
+      "fr": "Riz sauvage"
     }
   }
 ]

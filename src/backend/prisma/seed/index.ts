@@ -3,21 +3,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
-import { isSeedResetEnabled, resolveSeedEnv } from './config';
+import {
+  isSeedResetEnabled,
+  resolveSeedEnv,
+  resolveSeedUploadsDir,
+} from './config';
 import { seedCatalog } from './seeders/catalog.seeder';
 import { bootstrapProdAdmin, seedUsers } from './seeders/users.seeder';
 import { seedRecipes } from './seeders/recipes.seeder';
 import { seedSocial } from './seeders/social.seeder';
 import { seedModeration } from './seeders/moderation.seeder';
-
-export function resolveSeedUploadsDir(
-  env: NodeJS.ProcessEnv = process.env,
-): string {
-  const configured = env.UPLOADS_DIR?.trim();
-  return configured
-    ? path.resolve(configured)
-    : path.resolve(process.cwd(), 'uploads');
-}
 
 /**
  * Deletes all domain tables in strict foreign-key order (including polymorphic
@@ -49,7 +44,9 @@ export async function resetDatabaseAndMedia(
   const recipeUploadsDir = path.join(resolveSeedUploadsDir(env), 'recipes');
   if (fs.existsSync(recipeUploadsDir)) {
     fs.rmSync(recipeUploadsDir, { recursive: true, force: true });
-    console.log(`[seed:reset] Cleaned seeded media directory: ${recipeUploadsDir}`);
+    console.log(
+      `[seed:reset] Cleaned seeded media directory: ${recipeUploadsDir}`,
+    );
   }
 }
 
@@ -72,7 +69,7 @@ export async function runSeed(
     await resetDatabaseAndMedia(prisma, env);
   }
 
-  const usersByKey = await seedUsers(prisma, env);
+  const usersByKey = await seedUsers(prisma);
 
   const existingRecipes = await prisma.recipe.count();
   if (existingRecipes > 0) {

@@ -91,7 +91,20 @@ describe('Seed Environment & Production Admin Bootstrap (#198)', () => {
 
       expect(result).toEqual({ created: true, username: 'wecook_admin' });
       expect(prisma.user.create).toHaveBeenCalledTimes(1);
-      const createArg = prisma.user.create.mock.calls[0][0].data;
+      const createCalls = prisma.user.create.mock.calls as Array<
+        [
+          {
+            data: {
+              email: string;
+              username: string;
+              role: Role;
+              status: UserStatus;
+              password_hash: string;
+            };
+          },
+        ]
+      >;
+      const createArg = createCalls[0][0].data;
       expect(createArg.email).toBe('admin@wecook.local');
       expect(createArg.username).toBe('wecook_admin');
       expect(createArg.role).toBe(Role.admin);

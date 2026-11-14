@@ -1,3 +1,5 @@
+import * as path from 'path';
+
 export type SeedEnv = 'dev' | 'prod';
 
 const PRODUCTION_TRUE_VALUES = new Set(['true', '1']);
@@ -44,4 +46,16 @@ export function isSeedResetEnabled(
 ): boolean {
   const raw = env.DB_SEED_RESET?.trim().toLowerCase();
   return raw === 'true' || raw === '1';
+}
+
+/**
+ * Resolves the root uploads directory matching `src/common/config/upload-paths.ts`.
+ */
+export function resolveSeedUploadsDir(
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const configured = env.UPLOADS_DIR?.trim();
+  return configured
+    ? path.resolve(configured)
+    : path.resolve(process.cwd(), 'uploads');
 }

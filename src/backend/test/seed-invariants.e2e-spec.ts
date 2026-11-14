@@ -4,6 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import {
   FriendshipStatus,
   NotificationAction,
+  NotificationSubject,
   OwnerType,
   PrismaClient,
   RecipePrivacy,
@@ -24,7 +25,11 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
       connectionString: process.env.DATABASE_URL ?? '',
     });
     prisma = new PrismaClient({ adapter });
-    await runSeed(prisma, { ...process.env, DB_SEED_ENV: 'dev', DB_SEED_RESET: 'true' });
+    await runSeed(prisma, {
+      ...process.env,
+      DB_SEED_ENV: 'dev',
+      DB_SEED_RESET: 'true',
+    });
   }, 30000);
 
   afterAll(async () => {
@@ -76,16 +81,18 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     );
     expect(custodyRecipes.length).toBeGreaterThanOrEqual(3);
 
-    expect(recipes.filter((r) => !r.is_active).length).toBeGreaterThanOrEqual(2);
-    expect(
-      recipes.some((r) => r.privacy === RecipePrivacy.friends_only),
-    ).toBe(true);
+    expect(recipes.filter((r) => !r.is_active).length).toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(recipes.some((r) => r.privacy === RecipePrivacy.friends_only)).toBe(
+      true,
+    );
     expect(recipes.some((r) => r.privacy === RecipePrivacy.private)).toBe(true);
 
     for (const recipe of recipes) {
       if (recipe.cover_image_url) {
         expect(recipe.cover_image_url).toMatch(
-          new RegExp(`^/api/media/recipes/${recipe.id}/`),
+          new RegExp(`^/api/media/recipes/${recipe.id}/r${recipe.id}-`),
         );
         const resolved = resolveStoredUploadPath(recipe.cover_image_url);
         expect(resolved).not.toBeNull();
@@ -93,12 +100,23 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
       }
       if (recipe.video_url) {
         expect(recipe.video_url).toMatch(
-          new RegExp(`^/api/media/recipes/${recipe.id}/`),
+          new RegExp(`^/api/media/recipes/${recipe.id}/r${recipe.id}-`),
         );
         const resolved = resolveStoredUploadPath(recipe.video_url);
         expect(resolved).not.toBeNull();
         expect(fs.existsSync(resolved!)).toBe(true);
       }
+    }
+
+    // Showcase recipes (not generated) must appear on Page 1 under ORDER BY created_at DESC
+    const page1 = await prisma.recipe.findMany({
+      orderBy: { created_at: 'desc' },
+      take: 20,
+      include: { translations: { where: { locale: 'en' } } },
+    });
+    expect(page1).toHaveLength(20);
+    for (const r of page1) {
+      expect(r.translations[0].title).not.toMatch(/#\d+$/);
     }
   });
 
@@ -151,7 +169,11 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     const notifications = await prisma.notification.findMany();
     expect(notifications.length).toBeGreaterThanOrEqual(30);
     expect(
-      notifications.some((n) => n.action === NotificationAction.warn),
+      notifications.some(
+        (n) =>
+          n.action === NotificationAction.warn &&
+          n.subject === NotificationSubject.user,
+      ),
     ).toBe(true);
 
     const reports = await prisma.report.findMany();
@@ -160,11 +182,17 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     // Polymorphic target integrity
     for (const r of reports) {
       if (r.subject === ReportSubject.user) {
-        expect(await prisma.user.findUnique({ where: { id: r.target_id } })).not.toBeNull();
+        expect(
+          await prisma.user.findUnique({ where: { id: r.target_id } }),
+        ).not.toBeNull();
       } else if (r.subject === ReportSubject.recipe) {
-        expect(await prisma.recipe.findUnique({ where: { id: r.target_id } })).not.toBeNull();
+        expect(
+          await prisma.recipe.findUnique({ where: { id: r.target_id } }),
+        ).not.toBeNull();
       } else {
-        expect(await prisma.comment.findUnique({ where: { id: r.target_id } })).not.toBeNull();
+        expect(
+          await prisma.comment.findUnique({ where: { id: r.target_id } }),
+        ).not.toBeNull();
       }
     }
 
@@ -196,7 +224,9 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
         );
       }
     }
-    expect(Math.max(...pendingCommentCounts.values())).toBeGreaterThanOrEqual(3);
+    expect(Math.max(...pendingCommentCounts.values())).toBeGreaterThanOrEqual(
+      3,
+    );
 
     // BanHistory alignment
     const spamBot = await prisma.user.findUniqueOrThrow({
@@ -217,9 +247,9 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
     expect(tempHistory.length).toBeGreaterThanOrEqual(4);
     expect(tempHistory[0].action).toBe(ReportAction.warn);
     expect(tempHistory.some((h) => h.unbanned_at !== null)).toBe(true);
-    expect(
-      tempHistory[tempHistory.length - 1].expires_at?.getTime(),
-    ).toBe(tempBanned.banned_until?.getTime());
+    expect(tempHistory[tempHistory.length - 1].expires_at?.getTime()).toBe(
+      tempBanned.banned_until?.getTime(),
+    );
   });
 
   it('remains idempotent on repeated dev startup without overwriting runtime user changes', async () => {
@@ -232,12 +262,18 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
       data: { bio: 'Runtime bio mutation preserved across restart' },
     });
 
-    await runSeed(prisma, { ...process.env, DB_SEED_ENV: 'dev', DB_SEED_RESET: 'false' });
+    await runSeed(prisma, {
+      ...process.env,
+      DB_SEED_ENV: 'dev',
+      DB_SEED_RESET: 'false',
+    });
 
     const marioAfter = await prisma.user.findUniqueOrThrow({
       where: { id: marioBefore.id },
     });
-    expect(marioAfter.bio).toBe('Runtime bio mutation preserved across restart');
+    expect(marioAfter.bio).toBe(
+      'Runtime bio mutation preserved across restart',
+    );
     expect(await prisma.recipe.count()).toBe(50);
     expect(await prisma.report.count()).toBe(reportsBefore);
   }, 30000);

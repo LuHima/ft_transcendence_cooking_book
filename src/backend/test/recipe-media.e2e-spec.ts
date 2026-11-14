@@ -237,7 +237,10 @@ describe('Recipe Media Optimization & Retrieval (e2e)', () => {
   });
 
   it('POST /api/recipes/1/video compresses vertical video to 1080x1920 MP4 with faststart and streams 206 Partial Content', async () => {
-    const tempVideoPath = join(RECIPE_UPLOADS_DIR, `e2e-input-${Date.now()}.mp4`);
+    const tempVideoPath = join(
+      RECIPE_UPLOADS_DIR,
+      `e2e-input-${Date.now()}.mp4`,
+    );
     await fs.promises.mkdir(RECIPE_UPLOADS_DIR, { recursive: true });
     createdFiles.push(tempVideoPath);
 

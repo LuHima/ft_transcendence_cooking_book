@@ -1,6 +1,6 @@
-import * as crypto from 'crypto';
 import { PrismaClient, Role, User, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { EncryptionService } from '../../../src/auth/encryption.service';
 import { buildSeedUsers } from '../data/users.data';
 
 export interface ProdAdminBootstrapResult {
@@ -8,25 +8,13 @@ export interface ProdAdminBootstrapResult {
   username?: string;
 }
 
-const DEFAULT_FALLBACK_2FA_KEY =
-  '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
-
 /**
- * Encrypts a 2FA secret using AES-256-GCM in the exact `ivHex:authTagHex:cipherHex`
- * format expected by `EncryptionService.decrypting()`.
+ * Encrypts a 2FA secret using the backend's `EncryptionService` so seeded
+ * secrets match runtime decryption byte-for-byte.
  */
-export function encryptTwoFactorSecret(
-  secret: string,
-  env: NodeJS.ProcessEnv = process.env,
-): string {
-  const keyHex = env.TWO_FACTOR_AUTH?.trim() || DEFAULT_FALLBACK_2FA_KEY;
-  const encryptionKey = Buffer.from(keyHex, 'hex');
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', encryptionKey, iv);
-  let encrypted = cipher.update(secret, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  const authTag = cipher.getAuthTag().toString('hex');
-  return `${iv.toString('hex')}:${authTag}:${encrypted}`;
+export function encryptTwoFactorSecret(secret: string): string {
+  const encryptionService = new EncryptionService();
+  return encryptionService.encrypting(secret);
 }
 
 /**
@@ -85,7 +73,6 @@ export async function bootstrapProdAdmin(
  */
 export async function seedUsers(
   prisma: PrismaClient,
-  env: NodeJS.ProcessEnv = process.env,
 ): Promise<Record<string, User>> {
   const fixtures = buildSeedUsers();
   const passwordHash = await bcrypt.hash('Password123', 10);
@@ -93,7 +80,7 @@ export async function seedUsers(
 
   for (const fixture of fixtures) {
     const encryptedTwoFactor = fixture.plainTwoFactorSecret
-      ? encryptTwoFactorSecret(fixture.plainTwoFactorSecret, env)
+      ? encryptTwoFactorSecret(fixture.plainTwoFactorSecret)
       : null;
 
     const user = await prisma.user.upsert({

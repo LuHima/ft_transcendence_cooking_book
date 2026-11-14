@@ -59,7 +59,11 @@ describe('Open Food Facts Catalog Curation & Bulk Upsert (#199)', () => {
         isAdditiveOrIndustrial(
           'en:e300',
           { mandatory_additive_class: { en: 'en:antioxidant' } },
-          { it: 'Acido ascorbico', en: 'Ascorbic acid', fr: 'Acide ascorbique' },
+          {
+            it: 'Acido ascorbico',
+            en: 'Ascorbic acid',
+            fr: 'Acide ascorbique',
+          },
         ),
       ).toBe(true);
 
@@ -134,7 +138,8 @@ describe('Open Food Facts Catalog Curation & Bulk Upsert (#199)', () => {
   });
 
   describe('committed catalog datasets', () => {
-    const ingredients = loadSeedJson<CatalogIngredientSeed[]>('ingredients.json');
+    const ingredients =
+      loadSeedJson<CatalogIngredientSeed[]>('ingredients.json');
     const tags = loadSeedJson<CatalogTagSeed[]>('tags.json');
     const validCategories = new Set(Object.values(IngredientCategory));
 

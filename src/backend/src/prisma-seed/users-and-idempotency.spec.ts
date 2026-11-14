@@ -69,15 +69,22 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
 
   describe('seedUsers idempotency', () => {
     it('upserts users with update: {} so runtime mutations are never overwritten', async () => {
-      const upsert = jest.fn().mockImplementation(async ({ create }) => ({
-        id: 1,
-        ...create,
-      }));
+      const upsert = jest
+        .fn()
+        .mockImplementation(({ create }: { create: Record<string, unknown> }) =>
+          Promise.resolve({
+            id: 1,
+            ...create,
+          }),
+        );
       const mockPrisma = { user: { upsert } };
 
-      await seedUsers(mockPrisma as any);
+      await seedUsers(mockPrisma as never);
       expect(upsert).toHaveBeenCalledTimes(30);
-      for (const call of upsert.mock.calls) {
+      const calls = upsert.mock.calls as Array<
+        [{ update: Record<string, unknown> }]
+      >;
+      for (const call of calls) {
         expect(call[0].update).toEqual({});
       }
     });
@@ -104,12 +111,15 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
         user: {
           upsert: jest
             .fn()
-            .mockImplementation(async ({ create }) => ({ id: 1, ...create })),
+            .mockImplementation(
+              ({ create }: { create: Record<string, unknown> }) =>
+                Promise.resolve({ id: 1, ...create }),
+            ),
         },
         recipe: { count: jest.fn().mockResolvedValue(50) },
       };
 
-      await runSeed(mockPrisma as any, { DB_SEED_ENV: 'dev' });
+      await runSeed(mockPrisma as never, { DB_SEED_ENV: 'dev' });
 
       expect(recipesSpy).not.toHaveBeenCalled();
       expect(socialSpy).not.toHaveBeenCalled();
@@ -124,9 +134,9 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
 
       const order: string[] = [];
       const mkDel = (name: string) => ({
-        deleteMany: jest.fn().mockImplementation(async () => {
+        deleteMany: jest.fn().mockImplementation(() => {
           order.push(name);
-          return { count: 0 };
+          return Promise.resolve({ count: 0 });
         }),
       });
 

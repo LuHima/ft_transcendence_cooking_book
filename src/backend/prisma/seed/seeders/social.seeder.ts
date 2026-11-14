@@ -12,15 +12,80 @@ export interface SeedSocialResult {
   spamCommentId: number;
   exUtenteCommentId: number;
   multiReportedCommentId: number;
+  offTopicCommentId: number;
+  hateSpeechPendingCommentId: number;
+  promoSpamPendingCommentId: number;
   allCommentIds: number[];
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const PIZZA_ROOT_COMMENTS = [
+  'The 48-hour cold fermentation really gives the cornicione those airy leopard spots!',
+  'Used San Marzano DOP crushed by hand with a pinch of sea salt—pure magic.',
+  'Baking it on a preheated pizza stone at max oven temperature worked wonders.',
+  'Fresh fior di latte drained overnight prevented any sogginess in the center.',
+  'Drizzling extra virgin olive oil right before serving elevates the basil aroma.',
+  'Tried this with tipo 00 flour and 65% hydration; easiest dough to stretch so far.',
+  'My family finished two pies in ten minutes flat. Definitely making this Friday night.',
+  'Tip: tear the basil leaves instead of slicing them so they do not bruise.',
+  'Even without a wood-fired oven, the broiler trick gave a fantastic char.',
+  'Balanced acidity from the tomatoes and rich creaminess from the mozzarella.',
+  'Halved the yeast because my kitchen was warm and the rise was spot on.',
+  'Simple ingredients, zero shortcuts, and restaurant-level results at home.',
+  'Leftover dough balls froze great and thawed cleanly a week later.',
+  'Added a tiny dusting of semolina on the peel—slid onto the stone effortlessly.',
+  'Great step-by-step instructions for beginners learning how to shape Neapolitan dough.',
+  'The video tutorial helped me nail the slap-and-fold technique on my first try.',
+  'Tried grating a light touch of aged Parmigiano underneath the mozzarella—delicious.',
+  'Resting the dough balls at room temperature for two hours made stretching effortless.',
+  'Best Margherita ratio I have tested on this platform so far.',
+  'Loved how clear the prep and fermentation timings are in this recipe.',
+  'Turned out crisp on the bottom and pillowy soft around the edges.',
+  'Made three variations from the same dough batch and Margherita still won.',
+  'Appreciate the preservation notes—reheating in a covered skillet keeps the crust crisp.',
+  'Clean, authentic, and reliable every single time.',
+  'Bookmarked for our weekend pizza night with friends!',
+];
+
+const THREAD_REPLIES = [
+  'Completely agree—cold fermentation develops so much depth of flavor.',
+  'Did you use fresh cake yeast or instant dry yeast for the 48-hour rise?',
+  'I used 1.5g instant dry yeast per kilo of flour and it stayed super light.',
+  'Same here! Keeping the fridge around 4°C prevents over-proofing.',
+  'Also make sure to take the dough out 2 hours before shaping so the gluten relaxes.',
+  'Good call—cold dough snaps right back if you rush the stretching.',
+  'Do you preheat the baking steel for a full 45 minutes beforehand?',
+  'Yes, 45 to 60 minutes at 250°C plus 2 minutes under the grill at the end.',
+  'Thanks for the tips everyone, trying this exact method tonight!',
+];
+
+const EXTRA_RECIPE_COMMENTS = [
+  'Silky emulsion without a single drop of cream—just pasta water and pecorino.',
+  'Resting the mascarpone cream overnight made the layers slice cleanly.',
+  'Toasted the rice for two minutes before adding broth and the texture was perfect.',
+  'Fresh lime zest and ripe avocados made this disappear before dinner was even ready.',
+  'Garlic rubbed onto warm grilled bread while it is still crisp is unbeatable.',
+  'Hearty, comforting, and even better the next day for lunch.',
+  'Crispy skin on the salmon with tender flaky centers—worked on the first try.',
+  'Fragrant spices without overpowering the dish; paired it with steamed basmati.',
+  'Slow braising made the beef melt-in-your-mouth tender.',
+  'Sweet summer tomatoes and creamy buffalo mozzarella need nothing else.',
+  'Thinly sliced vegetables baked evenly and looked gorgeous on the table.',
+  'Molten chocolate center came out right at the 11-minute mark!',
+  'Prepped three jars on Sunday night for quick weekday breakfasts.',
+  'Poached egg + chili flakes on sourdough never misses.',
+  'Ice water while blending tahini made this hummus extraordinarily smooth.',
+  'Refreshing morning boost without any added sugar.',
+  'Thick crema on top—shaking vigorously with plenty of ice is key.',
+  'Flaky laminated layers took patience but were worth every fold.',
+];
+
 /**
  * Seeds friendships (12+ accepted for mario_bianchi, pending, and recent rejected
- * cooldown), user blocks, ~55+ comments (25+ roots on pizzaPlatform + 9-reply
- * thread), zero-self-like recipe likes, and ~30+ consistent notifications.
+ * cooldown), user blocks, ~55+ realistic comments (25+ roots on pizzaPlatform +
+ * 9-reply thread + dedicated moderation targets), zero-self-like recipe likes,
+ * and ~30+ consistent notifications.
  */
 export async function seedSocial(
   prisma: PrismaClient,
@@ -78,7 +143,6 @@ export async function seedSocial(
     });
   }
 
-  // Extra accepted links across demo personas
   const extraAcceptedPairs: Array<[User, User]> = [
     [giulia, marco],
     [sophie, elena],
@@ -95,7 +159,6 @@ export async function seedSocial(
     });
   }
 
-  // Pending incoming & outgoing requests
   const pendingPairs: Array<[User, User]> = [
     [usersByKey['demo_cook_07'], mario],
     [mario, usersByKey['demo_cook_08']],
@@ -130,7 +193,7 @@ export async function seedSocial(
     ],
   });
 
-  // 3. Comments (~55+ total: 25+ roots on pizzaPlatform + 9-reply thread)
+  // 3. Comments (~55+ total)
   const pizza = recipes.byKey['pizzaPlatform'];
   const carbonara = recipes.byKey['carbonara'];
   const tiramisu = recipes.byKey['tiramisu'];
@@ -166,15 +229,15 @@ export async function seedSocial(
 
   // 25 root comments on pizzaPlatform (page 2 triggers at limit=20)
   const pizzaRootComments: Array<{ id: number; user_id: number }> = [];
-  for (let i = 1; i <= 25; i++) {
-    const author = commenters[(i - 1) % commenters.length];
-    const isEdited = i === 2 || i === 5;
+  for (let i = 0; i < PIZZA_ROOT_COMMENTS.length; i++) {
+    const author = commenters[i % commenters.length];
+    const isEdited = i === 1 || i === 4;
     const createdAt = new Date(now.getTime() - (30 - i) * 60 * 60 * 1000);
     const created = await prisma.comment.create({
       data: {
         recipe_id: pizza.id,
         user_id: author.id,
-        content: `Pizza comment #${i}: crisp crust and balanced San Marzano sauce!`,
+        content: PIZZA_ROOT_COMMENTS[i],
         is_active: true,
         is_edited: isEdited,
         created_at: createdAt,
@@ -189,14 +252,14 @@ export async function seedSocial(
 
   // 9 replies on pizzaRootComments[0] to trigger has_more_replies at replies_limit=5
   const threadRoot = pizzaRootComments[0];
-  for (let r = 1; r <= 9; r++) {
-    const replier = commenters[r % commenters.length];
+  for (let r = 0; r < THREAD_REPLIES.length; r++) {
+    const replier = commenters[(r + 1) % commenters.length];
     const reply = await prisma.comment.create({
       data: {
         recipe_id: pizza.id,
         user_id: replier.id,
         parent_id: threadRoot.id,
-        content: `Reply #${r} to thread: totally agree, 48h fermentation makes all the difference!`,
+        content: THREAD_REPLIES[r],
         is_active: true,
       },
     });
@@ -208,13 +271,13 @@ export async function seedSocial(
         subject: NotificationSubject.comment,
         action: NotificationAction.comment,
         target_id: reply.id,
-        is_read: r <= 4,
-        created_at: new Date(now.getTime() - r * 30 * 60 * 1000),
+        is_read: r < 4,
+        created_at: new Date(now.getTime() - (r + 1) * 30 * 60 * 1000),
       });
     }
   }
 
-  // Deactivated comments tied to spam_bot and ex_utente + multi-reported active comment
+  // Dedicated moderation target comments with matching content
   const spamComment = await prisma.comment.create({
     data: {
       recipe_id: carbonara.id,
@@ -229,7 +292,8 @@ export async function seedSocial(
     data: {
       recipe_id: tiramisu.id,
       user_id: exUtente.id,
-      content: 'Old comment from a deleted account preserved for thread integrity.',
+      content:
+        'Old comment from a deleted account preserved for thread integrity.',
       is_active: false,
     },
   });
@@ -239,13 +303,45 @@ export async function seedSocial(
     data: {
       recipe_id: carbonara.id,
       user_id: repeatActive.id,
-      content: 'Controversial off-topic rant that received multiple community reports.',
+      content:
+        'Nobody asked for your amateur opinion—stop posting recipes if you cannot cook.',
       is_active: true,
     },
   });
   allCommentIds.push(multiReportedComment.id);
 
-  // Additional comments across other showcase recipes to reach 55+ total
+  const offTopicComment = await prisma.comment.create({
+    data: {
+      recipe_id: risotto.id,
+      user_id: usersByKey['demo_cook_14'].id,
+      content:
+        'Does anyone know what time the local farmers market closes today?',
+      is_active: true,
+    },
+  });
+  allCommentIds.push(offTopicComment.id);
+
+  const hateSpeechPendingComment = await prisma.comment.create({
+    data: {
+      recipe_id: guacamole.id,
+      user_id: usersByKey['demo_cook_15'].id,
+      content: 'Hostile and derogatory remark awaiting moderator review.',
+      is_active: true,
+    },
+  });
+  allCommentIds.push(hateSpeechPendingComment.id);
+
+  const promoSpamPendingComment = await prisma.comment.create({
+    data: {
+      recipe_id: carbonara.id,
+      user_id: usersByKey['demo_cook_14'].id,
+      content: 'Use promo code CHEAPKNIVES50 on my storefront for 50% off!',
+      is_active: true,
+    },
+  });
+  allCommentIds.push(promoSpamPendingComment.id);
+
+  // Additional realistic comments across other showcase recipes
   const extraCommentTargets = [
     carbonara,
     tiramisu,
@@ -270,13 +366,12 @@ export async function seedSocial(
   for (let i = 0; i < extraCommentTargets.length; i++) {
     const target = extraCommentTargets[i];
     if (!target) continue;
-    const author =
-      commenters.find((c) => c.id !== target.user_id) ?? mario;
+    const author = commenters.find((c) => c.id !== target.user_id) ?? mario;
     const created = await prisma.comment.create({
       data: {
         recipe_id: target.id,
         user_id: author.id,
-        content: `Tried this recipe at home (#${i + 1}) and the flavors were spot on!`,
+        content: EXTRA_RECIPE_COMMENTS[i % EXTRA_RECIPE_COMMENTS.length],
         is_active: true,
         is_edited: i % 4 === 0,
       },
@@ -356,14 +451,14 @@ export async function seedSocial(
     });
   }
 
-  // Warn notifications (actor_id stored as moderator in DB; API masks actor to null for warn)
+  // Warn notifications aligned with resolved ReportSubject.user warn reports
   notificationRows.push(
     {
       user_id: repeatActive.id,
       actor_id: modSarah.id,
-      subject: NotificationSubject.comment,
+      subject: NotificationSubject.user,
       action: NotificationAction.warn,
-      target_id: multiReportedComment.id,
+      target_id: repeatActive.id,
       details:
         'Please keep recipe comments constructive and respectful of community guidelines.',
       is_read: false,
@@ -393,6 +488,9 @@ export async function seedSocial(
     spamCommentId: spamComment.id,
     exUtenteCommentId: exUtenteComment.id,
     multiReportedCommentId: multiReportedComment.id,
+    offTopicCommentId: offTopicComment.id,
+    hateSpeechPendingCommentId: hateSpeechPendingComment.id,
+    promoSpamPendingCommentId: promoSpamPendingComment.id,
     allCommentIds,
   };
 }

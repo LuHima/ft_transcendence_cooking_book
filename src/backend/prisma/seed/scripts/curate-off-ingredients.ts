@@ -12,8 +12,7 @@ export interface OffTaxonomyEntry {
 }
 
 const E_NUMBER_REGEX = /^(?:en:)?e[-\s]?\d{3,4}[a-z]?$/i;
-const GARBAGE_NAME_REGEX =
-  /(?:^[a-z]{2}:|https?:\/\/|[\[\]{}<>]|^\d+$|\?\?)/i;
+const GARBAGE_NAME_REGEX = /(?:^[a-z]{2}:|https?:\/\/|[[\]{}<>]|^\d+$|\?\?)/i;
 
 const INDUSTRIAL_KEYWORDS = [
   'additive',
@@ -59,6 +58,26 @@ const INDUSTRIAL_KEYWORDS = [
   'triphosphate',
   'diphosphate',
   'polysorbate',
+  'flavouring',
+  'flavoring',
+  'pectin',
+  'from concentrate',
+  'from-concentrate',
+  'dextrose',
+  'glucose syrup',
+  'glucose-syrup',
+  'invert sugar',
+  'caseinate',
+  'hydrolysate',
+  'protein isolate',
+  'whey powder',
+  'apple fiber',
+  'apple fibre',
+  'citrus fiber',
+  'citrus fibre',
+  'bamboo fiber',
+  'pea fiber',
+  'oat fiber',
 ];
 
 /**
@@ -124,7 +143,8 @@ export function isAdditiveOrIndustrial(
     return true;
   }
 
-  const combined = `${keySlug} ${names.en} ${names.it} ${names.fr}`.toLowerCase();
+  const combined =
+    `${keySlug} ${names.en} ${names.it} ${names.fr}`.toLowerCase();
   return INDUSTRIAL_KEYWORDS.some((kw) => combined.includes(kw));
 }
 
@@ -291,16 +311,15 @@ export function curateOpenFoodFactsIngredients(
 
 if (require.main === module) {
   const inputPath =
-    process.argv[2] ??
-    path.resolve('/tmp/off-ingredients.json');
+    process.argv[2] ?? path.resolve('/tmp/off-ingredients.json');
   const outputPath =
-    process.argv[3] ??
-    path.resolve(__dirname, '../data/ingredients.json');
+    process.argv[3] ?? path.resolve(__dirname, '../data/ingredients.json');
   const baselinePath = path.resolve(__dirname, '../data/ingredients.json');
 
-  const rawTaxonomy = JSON.parse(
-    fs.readFileSync(inputPath, 'utf8'),
-  ) as Record<string, OffTaxonomyEntry>;
+  const rawTaxonomy = JSON.parse(fs.readFileSync(inputPath, 'utf8')) as Record<
+    string,
+    OffTaxonomyEntry
+  >;
   const existing = JSON.parse(
     fs.readFileSync(baselinePath, 'utf8'),
   ) as CatalogIngredientSeed[];

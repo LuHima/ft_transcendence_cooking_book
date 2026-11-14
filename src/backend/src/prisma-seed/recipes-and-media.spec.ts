@@ -47,8 +47,7 @@ describe('Local Protected Media Assets & Hybrid 50-Recipe Dataset (#201)', () =>
 
   it('covers platform custody (ex_utente), privacy tiers, suspended recipes, and translation provenance', () => {
     const platformCustody = allRecipes.filter(
-      (r) =>
-        r.ownerType === OwnerType.platform && r.authorKey === 'ex_utente',
+      (r) => r.ownerType === OwnerType.platform && r.authorKey === 'ex_utente',
     );
     expect(platformCustody.length).toBeGreaterThanOrEqual(3);
     expect(platformCustody.some((r) => r.key === 'pizzaPlatform')).toBe(true);
@@ -63,9 +62,7 @@ describe('Local Protected Media Assets & Hybrid 50-Recipe Dataset (#201)', () =>
       2,
     );
     expect(
-      allRecipes.some(
-        (r) => r.translationStatus === TranslationStatus.failed,
-      ),
+      allRecipes.some((r) => r.translationStatus === TranslationStatus.failed),
     ).toBe(true);
 
     const sources = new Set(allRecipes.map((r) => r.translationSource));
@@ -87,10 +84,12 @@ describe('Local Protected Media Assets & Hybrid 50-Recipe Dataset (#201)', () =>
     const prevUploads = process.env.UPLOADS_DIR;
     process.env.UPLOADS_DIR = tmpDir;
     // Direct path check matching upload-paths.ts contract
+    expect(fs.existsSync(path.join(targetDir, 'seed-tutorial-1.mp4'))).toBe(
+      true,
+    );
     expect(
-      fs.existsSync(path.join(targetDir, 'seed-tutorial-1.mp4')),
-    ).toBe(true);
-    expect(resolveStoredUploadPath('/api/media/recipes/42/seed-cover-1.webp')).not.toBeNull();
+      resolveStoredUploadPath('/api/media/recipes/42/seed-cover-1.webp'),
+    ).not.toBeNull();
     process.env.UPLOADS_DIR = prevUploads;
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
