@@ -230,3 +230,79 @@ export class TagDetailResponseDto {
   })
   translations: TranslationDto;
 }
+
+/**
+ * Paginated collection envelope for administrative curated ingredient listings.
+ */
+export class PaginatedAdminIngredientsResponseDto {
+  @ApiProperty({
+    type: [IngredientDetailResponseDto],
+    description: 'Curated ingredient records with full translation dictionaries',
+  })
+  items: IngredientDetailResponseDto[];
+
+  @ApiProperty({
+    description: 'Total number of ingredients matching query',
+    example: 42,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total available pages', example: 3 })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Indicates whether a next page exists',
+    example: true,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Indicates whether a previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
+}
+
+/**
+ * Paginated collection envelope for administrative curated tag listings.
+ */
+export class PaginatedAdminTagsResponseDto {
+  @ApiProperty({
+    type: [TagDetailResponseDto],
+    description: 'Curated tag records with full translation dictionaries',
+  })
+  items: TagDetailResponseDto[];
+
+  @ApiProperty({
+    description: 'Total number of tags matching query',
+    example: 18,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total available pages', example: 1 })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Indicates whether a next page exists',
+    example: false,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Indicates whether a previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
+}

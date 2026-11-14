@@ -24,6 +24,45 @@ describe('AdminCatalogController', () => {
         {
           provide: CatalogService,
           useValue: {
+            getAdminIngredients: jest.fn().mockResolvedValue({
+              items: [
+                {
+                  id: 9,
+                  slug: 'bell_pepper',
+                  category: IngredientCategory.produce,
+                  translations: {
+                    it: 'Peperone',
+                    en: 'Bell pepper',
+                    fr: 'Poivron',
+                  },
+                },
+              ],
+              total: 1,
+              page: 1,
+              limit: 20,
+              total_pages: 1,
+              has_next_page: false,
+              has_prev_page: false,
+            }),
+            getAdminTags: jest.fn().mockResolvedValue({
+              items: [
+                {
+                  id: 5,
+                  slug: 'gluten_free',
+                  translations: {
+                    it: 'Senza glutine',
+                    en: 'Gluten free',
+                    fr: 'Sans gluten',
+                  },
+                },
+              ],
+              total: 1,
+              page: 1,
+              limit: 20,
+              total_pages: 1,
+              has_next_page: false,
+              has_prev_page: false,
+            }),
             getIngredientDetail: jest.fn().mockResolvedValue({
               id: 9,
               slug: 'bell_pepper',
@@ -100,6 +139,28 @@ describe('AdminCatalogController', () => {
 
     controller = module.get<AdminCatalogController>(AdminCatalogController);
     service = module.get<CatalogService>(CatalogService);
+  });
+
+  describe('getIngredients', () => {
+    it('delegates to service.getAdminIngredients with query params', async () => {
+      const query = { page: 1, limit: 20, search: 'bell' };
+      const result = await controller.getIngredients(query);
+
+      expect(service.getAdminIngredients).toHaveBeenCalledWith(query);
+      expect(result.total).toBe(1);
+      expect(result.items[0].slug).toBe('bell_pepper');
+    });
+  });
+
+  describe('getTags', () => {
+    it('delegates to service.getAdminTags with query params', async () => {
+      const query = { page: 1, limit: 20, search: 'gluten' };
+      const result = await controller.getTags(query);
+
+      expect(service.getAdminTags).toHaveBeenCalledWith(query);
+      expect(result.total).toBe(1);
+      expect(result.items[0].slug).toBe('gluten_free');
+    });
   });
 
   describe('getIngredientById', () => {

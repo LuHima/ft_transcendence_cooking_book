@@ -17,10 +17,15 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 import {
   IngredientDetailResponseDto,
   IngredientResponseDto,
+  PaginatedAdminIngredientsResponseDto,
+  PaginatedAdminTagsResponseDto,
   TagDetailResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
+import { AdminIngredientQueryDto } from './dto/admin-ingredient-query.dto';
+import { AdminTagQueryDto } from './dto/admin-tag-query.dto';
 import { SupportedLocale } from '../common/dto/locale-query.dto';
+import { SortOrder } from '../common/dto/sort-order.enum';
 
 /**
  * Shared helper formatting an array of translation rows into a canonical multilingual dictionary.
@@ -107,6 +112,123 @@ export class CatalogService {
       units: Object.values(UnitOfMeasure),
       categories: Object.values(IngredientCategory),
     };
+  }
+
+  /**
+   * Builds a shared Prisma `where` clause for catalog search and optional ingredient category filtering.
+   */
+  private buildCatalogWhere(params: {
+    search?: string;
+    category?: IngredientCategory;
+  }): Record<string, any> {
+    const where: Record<string, any> = {};
+    if (params.category) {
+      where.category = params.category;
+    }
+    if (params.search && params.search.trim()) {
+      const term = params.search.trim();
+      where.OR = [
+        { slug: { contains: term, mode: 'insensitive' } },
+        {
+          translations: {
+            some: {
+              name: { contains: term, mode: 'insensitive' },
+            },
+          },
+        },
+      ];
+    }
+    return where;
+  }
+
+  /**
+   * Wraps a slice of items with standard 7-field pagination metadata.
+   */
+  private buildPaginatedResponse<T>(
+    items: T[],
+    total: number,
+    page: number,
+    limit: number,
+  ) {
+    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: page > 1,
+    };
+  }
+
+  /*
+  GET /api/admin/catalog/ingredients
+  Returns paginated curated ingredients with full multilingual dictionaries (it, en, fr).
+  Restricted to administrators.
+  */
+  async getAdminIngredients(
+    query: AdminIngredientQueryDto = {},
+  ): Promise<PaginatedAdminIngredientsResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const sortBy = query.sort_by ?? 'id';
+    const sortOrder = query.sort_order ?? SortOrder.asc;
+    const where = this.buildCatalogWhere({
+      search: query.search,
+      category: query.category,
+    });
+
+    const [rows, total] = await Promise.all([
+      this.prisma.ingredient.findMany({
+        where,
+        include: { translations: true },
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.ingredient.count({ where }),
+    ]);
+
+    return this.buildPaginatedResponse(
+      rows.map((row) => this.toIngredientDetail(row)),
+      total,
+      page,
+      limit,
+    );
+  }
+
+  /*
+  GET /api/admin/catalog/tags
+  Returns paginated curated tags with full multilingual dictionaries (it, en, fr).
+  Restricted to administrators.
+  */
+  async getAdminTags(
+    query: AdminTagQueryDto = {},
+  ): Promise<PaginatedAdminTagsResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const sortBy = query.sort_by ?? 'id';
+    const sortOrder = query.sort_order ?? SortOrder.asc;
+    const where = this.buildCatalogWhere({ search: query.search });
+
+    const [rows, total] = await Promise.all([
+      this.prisma.tag.findMany({
+        where,
+        include: { translations: true },
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.tag.count({ where }),
+    ]);
+
+    return this.buildPaginatedResponse(
+      rows.map((row) => this.toTagDetail(row)),
+      total,
+      page,
+      limit,
+    );
   }
 
   /*

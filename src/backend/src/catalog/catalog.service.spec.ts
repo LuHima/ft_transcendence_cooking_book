@@ -29,6 +29,7 @@ describe('CatalogService', () => {
             ingredient: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
+              count: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               delete: jest.fn(),
@@ -36,6 +37,7 @@ describe('CatalogService', () => {
             tag: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
+              count: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               delete: jest.fn(),
@@ -944,6 +946,159 @@ describe('CatalogService', () => {
 
       await expect(service.getTagById(999, { lang: 'it' })).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
+      });
+    });
+  });
+
+  describe('getAdminIngredients', () => {
+    it('returns paginated ingredients with full multilingual dictionaries and default sorting', async () => {
+      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 1,
+          slug: 'bell_pepper',
+          category: IngredientCategory.produce,
+          translations: [
+            { locale: 'it', name: 'Peperone' },
+            { locale: 'en', name: 'Bell pepper' },
+            { locale: 'fr', name: 'Poivron' },
+          ],
+        },
+      ]);
+      (prisma.ingredient.count as jest.Mock).mockResolvedValue(25);
+
+      const result = await service.getAdminIngredients();
+
+      expect(prisma.ingredient.findMany).toHaveBeenCalledWith({
+        where: {},
+        include: { translations: true },
+        orderBy: { id: 'asc' },
+        skip: 0,
+        take: 20,
+      });
+      expect(prisma.ingredient.count).toHaveBeenCalledWith({ where: {} });
+      expect(result).toEqual({
+        items: [
+          {
+            id: 1,
+            slug: 'bell_pepper',
+            category: IngredientCategory.produce,
+            translations: {
+              it: 'Peperone',
+              en: 'Bell pepper',
+              fr: 'Poivron',
+            },
+          },
+        ],
+        total: 25,
+        page: 1,
+        limit: 20,
+        total_pages: 2,
+        has_next_page: true,
+        has_prev_page: false,
+      });
+    });
+
+    it('applies category, search, custom page/limit, and slug desc sorting', async () => {
+      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.ingredient.count as jest.Mock).mockResolvedValue(0);
+
+      const result = await service.getAdminIngredients({
+        page: 2,
+        limit: 10,
+        category: IngredientCategory.dairy_eggs,
+        search: '  milk ',
+        sort_by: 'slug',
+        sort_order: 'desc' as any,
+      });
+
+      const expectedWhere = {
+        category: IngredientCategory.dairy_eggs,
+        OR: [
+          { slug: { contains: 'milk', mode: 'insensitive' } },
+          {
+            translations: {
+              some: { name: { contains: 'milk', mode: 'insensitive' } },
+            },
+          },
+        ],
+      };
+
+      expect(prisma.ingredient.findMany).toHaveBeenCalledWith({
+        where: expectedWhere,
+        include: { translations: true },
+        orderBy: { slug: 'desc' },
+        skip: 10,
+        take: 10,
+      });
+      expect(result).toEqual({
+        items: [],
+        total: 0,
+        page: 2,
+        limit: 10,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: true,
+      });
+    });
+  });
+
+  describe('getAdminTags', () => {
+    it('returns paginated tags with full multilingual dictionaries', async () => {
+      (prisma.tag.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 5,
+          slug: 'gluten_free',
+          translations: [
+            { locale: 'it', name: 'Senza glutine' },
+            { locale: 'en', name: 'Gluten free' },
+            { locale: 'fr', name: 'Sans gluten' },
+          ],
+        },
+      ]);
+      (prisma.tag.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.getAdminTags({
+        page: 1,
+        limit: 20,
+        search: 'glutine',
+        sort_by: 'slug',
+        sort_order: 'asc' as any,
+      });
+
+      expect(prisma.tag.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { slug: { contains: 'glutine', mode: 'insensitive' } },
+            {
+              translations: {
+                some: { name: { contains: 'glutine', mode: 'insensitive' } },
+              },
+            },
+          ],
+        },
+        include: { translations: true },
+        orderBy: { slug: 'asc' },
+        skip: 0,
+        take: 20,
+      });
+      expect(result).toEqual({
+        items: [
+          {
+            id: 5,
+            slug: 'gluten_free',
+            translations: {
+              it: 'Senza glutine',
+              en: 'Gluten free',
+              fr: 'Sans gluten',
+            },
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
       });
     });
   });

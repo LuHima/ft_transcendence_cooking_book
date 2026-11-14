@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,8 +24,12 @@ import {
 import { CatalogService } from '../catalog/catalog.service';
 import {
   IngredientDetailResponseDto,
+  PaginatedAdminIngredientsResponseDto,
+  PaginatedAdminTagsResponseDto,
   TagDetailResponseDto,
 } from '../catalog/dto/catalog-response.dto';
+import { AdminIngredientQueryDto } from '../catalog/dto/admin-ingredient-query.dto';
+import { AdminTagQueryDto } from '../catalog/dto/admin-tag-query.dto';
 import { CreateIngredientDto } from '../catalog/dto/create-ingredient.dto';
 import { UpdateIngredientDto } from '../catalog/dto/update-ingredient.dto';
 import { CreateTagDto } from '../catalog/dto/create-tag.dto';
@@ -53,6 +58,56 @@ import {
 @Controller('admin/catalog')
 export class AdminCatalogController {
   constructor(private readonly catalogService: CatalogService) {}
+
+  /**
+   * List curated ingredients with pagination, search, category filter, and full translations (admin).
+   */
+  @ApiOperation({
+    summary: 'List curated ingredients (admin)',
+    description:
+      'Returns a paginated list of curated catalog ingredients with complete translation dictionaries across all supported locales (Italian, English, French). Supports category filtering, substring search across slugs and translations, and sorting by id or slug. Restricted to administrators.',
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of curated ingredients with full translation maps',
+    type: PaginatedAdminIngredientsResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination, filter, or sort parameters',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can list administrative catalog entries',
+    type: ApiForbiddenResponseDto,
+  })
+  @Get('ingredients')
+  async getIngredients(@Query() query: AdminIngredientQueryDto) {
+    return await this.catalogService.getAdminIngredients(query);
+  }
+
+  /**
+   * List curated tags with pagination, search, and full translations (admin).
+   */
+  @ApiOperation({
+    summary: 'List curated tags (admin)',
+    description:
+      'Returns a paginated list of curated catalog tags with complete translation dictionaries across all supported locales (Italian, English, French). Supports substring search across slugs and translations, and sorting by id or slug. Restricted to administrators.',
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of curated tags with full translation maps',
+    type: PaginatedAdminTagsResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination, search, or sort parameters',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Only administrators can list administrative catalog entries',
+    type: ApiForbiddenResponseDto,
+  })
+  @Get('tags')
+  async getTags(@Query() query: AdminTagQueryDto) {
+    return await this.catalogService.getAdminTags(query);
+  }
 
   /**
    * Retrieve a single curated ingredient by ID with all its translations (admin inspection).
