@@ -72,7 +72,7 @@ export async function runSeed(
     await resetDatabaseAndMedia(prisma, env);
   }
 
-  await seedUsers(prisma, env);
+  const usersByKey = await seedUsers(prisma, env);
 
   const existingRecipes = await prisma.recipe.count();
   if (existingRecipes > 0) {
@@ -82,7 +82,7 @@ export async function runSeed(
     return;
   }
 
-  await seedRecipes(prisma);
+  await seedRecipes(prisma, usersByKey, env);
   await seedSocial(prisma);
   await seedModeration(prisma);
   console.log('[seed] Development seed completed.');
