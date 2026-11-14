@@ -4157,14 +4157,39 @@
     },
     "/api/tags": {
       "get": {
-        "description": "Returns all curated tags (e.g. vegetarian, gluten-free), ordered alphabetically by localized name. Falls back to English if requested locale is missing.",
+        "description": "Returns paginated curated tags (e.g. vegetarian, gluten-free), supporting search, sorting by localized name or slug, and pagination. Falls back to English if requested locale is missing.",
         "operationId": "CatalogController_getTags",
         "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
           {
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "description": "Target localization language (it, en, fr). Defaults to English if omitted.",
             "schema": {
               "example": "it",
               "type": "string",
@@ -4174,24 +4199,61 @@
                 "fr"
               ]
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring search across tag slugs and translations",
+            "schema": {
+              "example": "vegan",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort results by",
+            "schema": {
+              "default": "name",
+              "example": "name",
+              "type": "string",
+              "enum": [
+                "slug",
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "asc",
+              "example": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Alphabetically ordered list of localized tags",
+            "description": "Paginated list of localized tags",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TagResponseDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedTagsResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid language parameter (must be one of: it, en, fr)",
+            "description": "Invalid query parameters (page, limit, lang, sort_by, sort_order)",
             "content": {
               "application/json": {
                 "schema": {
@@ -4298,14 +4360,39 @@
     },
     "/api/ingredients": {
       "get": {
-        "description": "Returns curated catalog ingredients matching the given category or text query, ordered alphabetically by localized name.",
+        "description": "Returns paginated curated catalog ingredients matching the given category or text query, ordered by localized name or canonical slug.",
         "operationId": "CatalogController_getIngredients",
         "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
           {
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "description": "Target localization language (it, en, fr). Defaults to English if omitted.",
             "schema": {
               "example": "it",
               "type": "string",
@@ -4313,6 +4400,46 @@
                 "it",
                 "en",
                 "fr"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring search across tag slugs and translations",
+            "schema": {
+              "example": "vegan",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort results by",
+            "schema": {
+              "default": "name",
+              "example": "name",
+              "type": "string",
+              "enum": [
+                "slug",
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "asc",
+              "example": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
               ]
             }
           },
@@ -4336,34 +4463,21 @@
                 "other"
               ]
             }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "Case-insensitive substring search across ingredient slugs and translations",
-            "schema": {
-              "example": "pomodoro",
-              "type": "string"
-            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Alphabetically ordered list of matching curated ingredients",
+            "description": "Paginated list of matching curated ingredients",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/IngredientResponseDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedIngredientsResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid category or language parameter",
+            "description": "Invalid query parameters (page, limit, category, lang, sort_by, sort_order)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6051,18 +6165,65 @@
               "example": 42,
               "type": "number"
             }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction on banned_at timestamp",
+            "schema": {
+              "default": "desc",
+              "example": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "List of historical ban events",
+            "description": "Paginated list of historical ban events",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BanHistoryItemDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedBanHistoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination or sort parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
                 }
               }
             }
@@ -7135,6 +7296,439 @@
         ]
       }
     },
+    "/api/admin/catalog/ingredients": {
+      "get": {
+        "description": "Returns a paginated list of curated catalog ingredients with complete translation dictionaries across all supported locales (Italian, English, French). Supports category filtering, substring search across slugs and translations, and sorting by id or slug. Restricted to administrators.",
+        "operationId": "AdminCatalogController_getIngredients",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "description": "Filter ingredients by culinary category",
+            "schema": {
+              "example": "dairy_eggs",
+              "type": "string",
+              "enum": [
+                "produce",
+                "dairy_eggs",
+                "meat_poultry",
+                "seafood",
+                "bakery_grains",
+                "pantry_spices",
+                "legumes_nuts",
+                "beverages_liquids",
+                "other"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring search across ingredient slugs and translations (it, en, fr)",
+            "schema": {
+              "example": "pomodoro",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort results by",
+            "schema": {
+              "default": "id",
+              "example": "id",
+              "type": "string",
+              "enum": [
+                "id",
+                "slug"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "asc",
+              "example": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of curated ingredients with full translation maps",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAdminIngredientsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination, filter, or sort parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can list administrative catalog entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "List curated ingredients (admin)",
+        "tags": [
+          "Administrative Catalog Management"
+        ]
+      },
+      "post": {
+        "description": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
+        "operationId": "AdminCatalogController_createIngredient",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIngredientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ingredient created with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid slug, category or translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can create catalog ingredients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An ingredient with this slug already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Create a curated ingredient",
+        "tags": [
+          "Administrative Catalog Management"
+        ]
+      }
+    },
+    "/api/admin/catalog/tags": {
+      "get": {
+        "description": "Returns a paginated list of curated catalog tags with complete translation dictionaries across all supported locales (Italian, English, French). Supports substring search across slugs and translations, and sorting by id or slug. Restricted to administrators.",
+        "operationId": "AdminCatalogController_getTags",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1-based page window index",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page window (1 to 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring search across tag slugs and translations (it, en, fr)",
+            "schema": {
+              "example": "vegan",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort results by",
+            "schema": {
+              "default": "id",
+              "example": "id",
+              "type": "string",
+              "enum": [
+                "id",
+                "slug"
+              ]
+            }
+          },
+          {
+            "name": "sort_order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "asc",
+              "example": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of curated tags with full translation maps",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAdminTagsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination, search, or sort parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can list administrative catalog entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "List curated tags (admin)",
+        "tags": [
+          "Administrative Catalog Management"
+        ]
+      },
+      "post": {
+        "description": "Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.",
+        "operationId": "AdminCatalogController_createTag",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tag created with all its translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagDetailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid slug or translations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only administrators can create catalog tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A tag with this slug already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiConflictResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Create a curated tag",
+        "tags": [
+          "Administrative Catalog Management"
+        ]
+      }
+    },
     "/api/admin/catalog/ingredients/{id}": {
       "get": {
         "description": "Returns a single curated catalog ingredient by its numeric ID with complete translation maps across all supported locales (Italian, English, French). Restricted to administrators.",
@@ -7600,168 +8194,6 @@
           }
         ],
         "summary": "Delete a curated tag",
-        "tags": [
-          "Administrative Catalog Management"
-        ]
-      }
-    },
-    "/api/admin/catalog/ingredients": {
-      "post": {
-        "description": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
-        "operationId": "AdminCatalogController_createIngredient",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateIngredientDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Ingredient created with all its translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IngredientDetailResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid slug, category or translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can create catalog ingredients",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "An ingredient with this slug already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          },
-          {
-            "JWT": []
-          }
-        ],
-        "summary": "Create a curated ingredient",
-        "tags": [
-          "Administrative Catalog Management"
-        ]
-      }
-    },
-    "/api/admin/catalog/tags": {
-      "post": {
-        "description": "Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.",
-        "operationId": "AdminCatalogController_createTag",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTagDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Tag created with all its translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagDetailResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid slug or translations",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required: missing or invalid accessToken cookie",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Only administrators can create catalog tags",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "A tag with this slug already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiConflictResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "accessToken": []
-          },
-          {
-            "JWT": []
-          }
-        ],
-        "summary": "Create a curated tag",
         "tags": [
           "Administrative Catalog Management"
         ]
@@ -10914,6 +11346,57 @@
           "resolved_lang"
         ]
       },
+      "PaginatedTagsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Localized curated tag records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of tags matching query",
+            "example": 18
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
       "IngredientResponseDto": {
         "type": "object",
         "properties": {
@@ -10965,6 +11448,57 @@
           "category",
           "name",
           "resolved_lang"
+        ]
+      },
+      "PaginatedIngredientsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Localized curated ingredient records",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngredientResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of ingredients matching query",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 3
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
         ]
       },
       "NotificationActorDto": {
@@ -12036,6 +12570,57 @@
           "banned_at"
         ]
       },
+      "PaginatedBanHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Chronological sanction audit records for the target user",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BanHistoryItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of sanction records for the user",
+            "example": 3
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
       "CreateAdminUserDto": {
         "type": "object",
         "properties": {
@@ -12660,6 +13245,57 @@
           "translations"
         ]
       },
+      "PaginatedAdminIngredientsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Curated ingredient records with full translation dictionaries",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngredientDetailResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of ingredients matching query",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 3
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
       "TagDetailResponseDto": {
         "type": "object",
         "properties": {
@@ -12686,6 +13322,57 @@
           "id",
           "slug",
           "translations"
+        ]
+      },
+      "PaginatedAdminTagsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Curated tag records with full translation dictionaries",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagDetailResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of tags matching query",
+            "example": 18
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 1
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": false
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
         ]
       },
       "CreateIngredientDto": {

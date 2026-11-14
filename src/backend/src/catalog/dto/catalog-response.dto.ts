@@ -237,7 +237,8 @@ export class TagDetailResponseDto {
 export class PaginatedAdminIngredientsResponseDto {
   @ApiProperty({
     type: [IngredientDetailResponseDto],
-    description: 'Curated ingredient records with full translation dictionaries',
+    description:
+      'Curated ingredient records with full translation dictionaries',
   })
   items: IngredientDetailResponseDto[];
 

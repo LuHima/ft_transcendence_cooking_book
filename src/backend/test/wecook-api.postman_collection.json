@@ -17457,7 +17457,7 @@
           "request": {
             "name": "List curated tags",
             "description": {
-              "content": "Returns all curated tags (e.g. vegetarian, gluten-free), ordered alphabetically by localized name. Falls back to English if requested locale is missing.",
+              "content": "Returns paginated curated tags (e.g. vegetarian, gluten-free), supporting search, sorting by localized name or slug, and pagination. Falls back to English if requested locale is missing.",
               "type": "text/plain"
             },
             "url": {
@@ -17471,9 +17471,39 @@
               "query": [
                 {
                   "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
                   "key": "lang",
                   "value": "it",
-                  "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted."
+                  "description": "Target localization language (it, en, fr). Defaults to English if omitted."
+                },
+                {
+                  "disabled": false,
+                  "key": "search",
+                  "value": "vegan",
+                  "description": "Case-insensitive substring search across tag slugs and translations"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_by",
+                  "value": "name",
+                  "description": "Field to sort results by"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "Sort direction"
                 }
               ],
               "variable": []
@@ -17489,8 +17519,8 @@
           },
           "response": [
             {
-              "id": "177dda91-58c7-4329-8f4c-76e2c56210c4",
-              "name": "Alphabetically ordered list of localized tags",
+              "id": "03acd8ee-b54f-4ffa-8b5a-2b95d156de74",
+              "name": "Paginated list of localized tags",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -17502,8 +17532,28 @@
                   ],
                   "query": [
                     {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
+                    },
+                    {
+                      "key": "search",
+                      "value": "vegan"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "name"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
                     }
                   ],
                   "variable": []
@@ -17525,13 +17575,13 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": 1,\n    \"slug\": \"vegetarian\",\n    \"name\": \"Vegetariano\",\n    \"resolved_lang\": \"it\"\n  },\n  {\n    \"id\": 1,\n    \"slug\": \"vegetarian\",\n    \"name\": \"Vegetariano\",\n    \"resolved_lang\": \"it\"\n  }\n]",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"slug\": \"vegetarian\",\n      \"name\": \"Vegetariano\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"vegetarian\",\n      \"name\": \"Vegetariano\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"total\": 18,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "a24a0740-592d-46b3-8da4-15db77053057",
-              "name": "Invalid language parameter (must be one of: it, en, fr)",
+              "id": "3f22eb10-b536-4c7c-82f1-b82f971759c0",
+              "name": "Invalid query parameters (page, limit, lang, sort_by, sort_order)",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -17543,8 +17593,28 @@
                   ],
                   "query": [
                     {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
+                    },
+                    {
+                      "key": "search",
+                      "value": "vegan"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "name"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
                     }
                   ],
                   "variable": []
@@ -17584,8 +17654,28 @@
                   ],
                   "query": [
                     {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
+                    },
+                    {
+                      "key": "search",
+                      "value": "vegan"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "name"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
                     }
                   ],
                   "variable": []
@@ -17623,14 +17713,22 @@
                   "  pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Response adheres to TagResponseDto array schema\", function () {",
+                  "pm.test(\"Response adheres to PaginatedTagsResponseDto schema\", function () {",
                   "  const jsonData = pm.response.json();",
-                  "  pm.expect(jsonData).to.be.an(\"array\");",
-                  "  if (jsonData.length > 0) {",
-                  "    const item = jsonData[0];",
+                  "  pm.expect(jsonData).to.have.property(\"items\").that.is.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
+                  "",
+                  "  if (jsonData.items.length > 0) {",
+                  "    const item = jsonData.items[0];",
                   "    pm.expect(item).to.have.property(\"id\").that.is.a(\"number\");",
                   "    pm.expect(item).to.have.property(\"slug\").that.is.a(\"string\");",
                   "    pm.expect(item).to.have.property(\"name\").that.is.a(\"string\");",
+                  "    pm.expect(item).to.have.property(\"resolved_lang\").that.is.a(\"string\");",
                   "  }",
                   "});",
                   ""
@@ -17913,7 +18011,7 @@
           "request": {
             "name": "List and search curated ingredients",
             "description": {
-              "content": "Returns curated catalog ingredients matching the given category or text query, ordered alphabetically by localized name.",
+              "content": "Returns paginated curated catalog ingredients matching the given category or text query, ordered by localized name or canonical slug.",
               "type": "text/plain"
             },
             "url": {
@@ -17927,21 +18025,45 @@
               "query": [
                 {
                   "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
                   "key": "lang",
                   "value": "it",
-                  "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted."
+                  "description": "Target localization language (it, en, fr). Defaults to English if omitted."
+                },
+                {
+                  "disabled": false,
+                  "key": "search",
+                  "value": "vegan",
+                  "description": "Case-insensitive substring search across tag slugs and translations"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_by",
+                  "value": "name",
+                  "description": "Field to sort results by"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "Sort direction"
                 },
                 {
                   "disabled": false,
                   "key": "category",
                   "value": "dairy_eggs",
                   "description": "Filter ingredients by culinary category"
-                },
-                {
-                  "disabled": false,
-                  "key": "search",
-                  "value": "pomodoro",
-                  "description": "Case-insensitive substring search across ingredient slugs and translations"
                 }
               ],
               "variable": []
@@ -17957,8 +18079,8 @@
           },
           "response": [
             {
-              "id": "20da0733-5a36-4189-8c9a-4a3e8418428a",
-              "name": "Alphabetically ordered list of matching curated ingredients",
+              "id": "aea46bae-4d61-4191-8c9f-faf6d43ba76f",
+              "name": "Paginated list of matching curated ingredients",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -17970,16 +18092,32 @@
                   ],
                   "query": [
                     {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
                     },
                     {
-                      "key": "category",
-                      "value": "dairy_eggs"
+                      "key": "search",
+                      "value": "vegan"
                     },
                     {
-                      "key": "search",
-                      "value": "pomodoro"
+                      "key": "sort_by",
+                      "value": "name"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    },
+                    {
+                      "key": "category",
+                      "value": "dairy_eggs"
                     }
                   ],
                   "variable": []
@@ -18001,13 +18139,13 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": 12,\n    \"slug\": \"parmigiano-reggiano\",\n    \"category\": \"dairy_eggs\",\n    \"name\": \"Parmigiano Reggiano DOP\",\n    \"resolved_lang\": \"it\"\n  },\n  {\n    \"id\": 12,\n    \"slug\": \"parmigiano-reggiano\",\n    \"category\": \"dairy_eggs\",\n    \"name\": \"Parmigiano Reggiano DOP\",\n    \"resolved_lang\": \"it\"\n  }\n]",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 12,\n      \"slug\": \"parmigiano-reggiano\",\n      \"category\": \"dairy_eggs\",\n      \"name\": \"Parmigiano Reggiano DOP\",\n      \"resolved_lang\": \"it\"\n    },\n    {\n      \"id\": 12,\n      \"slug\": \"parmigiano-reggiano\",\n      \"category\": \"dairy_eggs\",\n      \"name\": \"Parmigiano Reggiano DOP\",\n      \"resolved_lang\": \"it\"\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "ba2b31d2-9257-495e-80d2-2e578b6eddec",
-              "name": "Invalid category or language parameter",
+              "id": "8fb0e45d-5ff5-4975-8478-bb084ce73ab0",
+              "name": "Invalid query parameters (page, limit, category, lang, sort_by, sort_order)",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -18019,16 +18157,32 @@
                   ],
                   "query": [
                     {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
                     },
                     {
-                      "key": "category",
-                      "value": "dairy_eggs"
+                      "key": "search",
+                      "value": "vegan"
                     },
                     {
-                      "key": "search",
-                      "value": "pomodoro"
+                      "key": "sort_by",
+                      "value": "name"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    },
+                    {
+                      "key": "category",
+                      "value": "dairy_eggs"
                     }
                   ],
                   "variable": []
@@ -18068,16 +18222,32 @@
                   ],
                   "query": [
                     {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
                       "key": "lang",
                       "value": "it"
                     },
                     {
-                      "key": "category",
-                      "value": "dairy_eggs"
+                      "key": "search",
+                      "value": "vegan"
                     },
                     {
-                      "key": "search",
-                      "value": "pomodoro"
+                      "key": "sort_by",
+                      "value": "name"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    },
+                    {
+                      "key": "category",
+                      "value": "dairy_eggs"
                     }
                   ],
                   "variable": []
@@ -18115,15 +18285,23 @@
                   "  pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test(\"Response adheres to IngredientResponseDto array schema\", function () {",
+                  "pm.test(\"Response adheres to PaginatedIngredientsResponseDto schema\", function () {",
                   "  const jsonData = pm.response.json();",
-                  "  pm.expect(jsonData).to.be.an(\"array\");",
-                  "  if (jsonData.length > 0) {",
-                  "    const item = jsonData[0];",
+                  "  pm.expect(jsonData).to.have.property(\"items\").that.is.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
+                  "",
+                  "  if (jsonData.items.length > 0) {",
+                  "    const item = jsonData.items[0];",
                   "    pm.expect(item).to.have.property(\"id\").that.is.a(\"number\");",
                   "    pm.expect(item).to.have.property(\"slug\").that.is.a(\"string\");",
                   "    pm.expect(item).to.have.property(\"name\").that.is.a(\"string\");",
                   "    pm.expect(item).to.have.property(\"category\").that.is.a(\"string\");",
+                  "    pm.expect(item).to.have.property(\"resolved_lang\").that.is.a(\"string\");",
                   "  }",
                   "});",
                   ""
@@ -21155,7 +21333,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"violence_threats\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"spam_scam\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21437,7 +21615,7 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "dismissed",
+                  "value": "pending",
                   "description": "Filter reports by current review status"
                 },
                 {
@@ -21511,7 +21689,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"violence_threats\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"copyright_infringement\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"other\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21862,7 +22040,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"other\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22837,7 +23015,26 @@
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_order",
+                  "value": "desc",
+                  "description": "Sort direction on banned_at timestamp"
+                }
+              ],
               "variable": [
                 {
                   "disabled": false,
@@ -22858,8 +23055,8 @@
           },
           "response": [
             {
-              "id": "69f13202-b657-4f92-848f-988ece8c4a10",
-              "name": "List of historical ban events",
+              "id": "b72cd172-035d-4769-8ae9-280ca17e827f",
+              "name": "Paginated list of historical ban events",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -22872,7 +23069,20 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -22900,7 +23110,67 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"user_id\": 42,\n    \"banned_by_id\": 1,\n    \"action\": \"ban\",\n    \"reason\": \"harassment_bullying\",\n    \"is_permanent\": false,\n    \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n    \"report_id\": 10,\n    \"description\": \"Harassment in recipe comments\",\n    \"duration_days\": 30,\n    \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n    \"unbanned_at\": null,\n    \"unbanned_by_id\": null,\n    \"unban_reason\": null\n  },\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"user_id\": 42,\n    \"banned_by_id\": 1,\n    \"action\": \"ban\",\n    \"reason\": \"harassment_bullying\",\n    \"is_permanent\": false,\n    \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n    \"report_id\": 10,\n    \"description\": \"Harassment in recipe comments\",\n    \"duration_days\": 30,\n    \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n    \"unbanned_at\": null,\n    \"unbanned_by_id\": null,\n    \"unban_reason\": null\n  }\n]",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"user_id\": 42,\n      \"banned_by_id\": 1,\n      \"action\": \"ban\",\n      \"reason\": \"harassment_bullying\",\n      \"is_permanent\": false,\n      \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n      \"report_id\": 10,\n      \"description\": \"Harassment in recipe comments\",\n      \"duration_days\": 30,\n      \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n      \"unbanned_at\": null,\n      \"unbanned_by_id\": null,\n      \"unban_reason\": null\n    },\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"user_id\": 42,\n      \"banned_by_id\": 1,\n      \"action\": \"ban\",\n      \"reason\": \"harassment_bullying\",\n      \"is_permanent\": false,\n      \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n      \"report_id\": 10,\n      \"description\": \"Harassment in recipe comments\",\n      \"duration_days\": 30,\n      \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n      \"unbanned_at\": null,\n      \"unbanned_by_id\": null,\n      \"unban_reason\": null\n    }\n  ],\n  \"total\": 3,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d3aa5f88-8a7d-42d8-8116-2031d26d7e03",
+              "name": "Invalid pagination or sort parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "users",
+                    ":id",
+                    "ban-history"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Numeric user identifier"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22919,7 +23189,20 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -22966,7 +23249,20 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -23013,7 +23309,20 @@
                   "host": [
                     "{{baseUrl}}"
                   ],
-                  "query": [],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "desc"
+                    }
+                  ],
                   "variable": [
                     {
                       "disabled": false,
@@ -23054,8 +23363,20 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response adheres to PaginatedBanHistoryResponseDto schema\", function () {",
+                  "  const jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property(\"items\").that.is.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
+                  "});",
+                  ""
                 ]
               }
             }
@@ -25974,6 +26295,1293 @@
       },
       "item": [
         {
+          "id": "462da52e-b43a-4a29-8256-6f59637b8c56",
+          "name": "List curated ingredients (admin)",
+          "request": {
+            "name": "List curated ingredients (admin)",
+            "description": {
+              "content": "Returns a paginated list of curated catalog ingredients with complete translation dictionaries across all supported locales (Italian, English, French). Supports category filtering, substring search across slugs and translations, and sorting by id or slug. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "admin",
+                "catalog",
+                "ingredients"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
+                  "key": "category",
+                  "value": "dairy_eggs",
+                  "description": "Filter ingredients by culinary category"
+                },
+                {
+                  "disabled": false,
+                  "key": "search",
+                  "value": "pomodoro",
+                  "description": "Case-insensitive substring search across ingredient slugs and translations (it, en, fr)"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_by",
+                  "value": "id",
+                  "description": "Field to sort results by"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "Sort direction"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "bb34096d-bd88-44ef-8eac-e21d587108b7",
+              "name": "Paginated list of curated ingredients with full translation maps",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "category",
+                      "value": "dairy_eggs"
+                    },
+                    {
+                      "key": "search",
+                      "value": "pomodoro"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 12,\n      \"slug\": \"bell_pepper\",\n      \"category\": \"produce\",\n      \"translations\": {\n        \"it\": \"Pomodoro\",\n        \"en\": \"Tomato\",\n        \"fr\": \"Tomate\"\n      }\n    },\n    {\n      \"id\": 12,\n      \"slug\": \"bell_pepper\",\n      \"category\": \"produce\",\n      \"translations\": {\n        \"it\": \"Pomodoro\",\n        \"en\": \"Tomato\",\n        \"fr\": \"Tomate\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2798b1d4-4d60-4de6-833e-ca3de4bad0fe",
+              "name": "Invalid pagination, filter, or sort parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "category",
+                      "value": "dairy_eggs"
+                    },
+                    {
+                      "key": "search",
+                      "value": "pomodoro"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d489845a-01f5-490c-8093-a972a9e75fc1",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "category",
+                      "value": "dairy_eggs"
+                    },
+                    {
+                      "key": "search",
+                      "value": "pomodoro"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "3ff6299b-ebf9-4060-8261-d35ffc702ecd",
+              "name": "Only administrators can list administrative catalog entries",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "category",
+                      "value": "dairy_eggs"
+                    },
+                    {
+                      "key": "search",
+                      "value": "pomodoro"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "10076766-8ade-40cc-86ef-293dc26062ed",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response adheres to PaginatedAdminIngredientsResponseDto schema\", function () {",
+                  "  const jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property(\"items\").that.is.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
+                  "",
+                  "  if (jsonData.items.length > 0) {",
+                  "    const item = jsonData.items[0];",
+                  "    pm.expect(item).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(item).to.have.property(\"slug\").that.is.a(\"string\");",
+                  "    pm.expect(item).to.have.property(\"category\").that.is.a(\"string\");",
+                  "    pm.expect(item).to.have.property(\"translations\").that.is.an(\"object\");",
+                  "    pm.expect(item.translations).to.have.property(\"it\").that.is.a(\"string\");",
+                  "    pm.expect(item.translations).to.have.property(\"en\").that.is.a(\"string\");",
+                  "    pm.expect(item.translations).to.have.property(\"fr\").that.is.a(\"string\");",
+                  "  }",
+                  "});",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "93d96cb2-2696-41a8-85d2-cc01448e14e4",
+          "name": "Create a curated ingredient",
+          "request": {
+            "name": "Create a curated ingredient",
+            "description": {
+              "content": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "admin",
+                "catalog",
+                "ingredients"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "021ac3a7-4451-4cc1-8010-baf953e37650",
+              "name": "Ingredient created with all its translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 12,\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "558f0f66-293c-4c3a-8d33-78a7f89dfed8",
+              "name": "Invalid slug, category or translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f909e336-b12c-433d-8027-851e9d1d39a5",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c876c816-9a17-4f4f-8432-6b98794f0f81",
+              "name": "Only administrators can create catalog ingredients",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8d01d5ce-8bd5-48b7-8f71-ef990b8e04b2",
+              "name": "An ingredient with this slug already exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "ingredients"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "fdc2747a-e636-42e5-8389-edc0f56709d6",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "e62dfb81-004a-4802-8284-1903a7fa6f61",
+          "name": "List curated tags (admin)",
+          "request": {
+            "name": "List curated tags (admin)",
+            "description": {
+              "content": "Returns a paginated list of curated catalog tags with complete translation dictionaries across all supported locales (Italian, English, French). Supports substring search across slugs and translations, and sorting by id or slug. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "admin",
+                "catalog",
+                "tags"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "page",
+                  "value": "1",
+                  "description": "1-based page window index"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Number of items per page window (1 to 100)"
+                },
+                {
+                  "disabled": false,
+                  "key": "search",
+                  "value": "vegan",
+                  "description": "Case-insensitive substring search across tag slugs and translations (it, en, fr)"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_by",
+                  "value": "id",
+                  "description": "Field to sort results by"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "Sort direction"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "3a5fc50e-1a4c-44df-8caf-2b0d36ef012c",
+              "name": "Paginated list of curated tags with full translation maps",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "vegan"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"slug\": \"gluten_free\",\n      \"translations\": {\n        \"it\": \"Pomodoro\",\n        \"en\": \"Tomato\",\n        \"fr\": \"Tomate\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"slug\": \"gluten_free\",\n      \"translations\": {\n        \"it\": \"Pomodoro\",\n        \"en\": \"Tomato\",\n        \"fr\": \"Tomate\"\n      }\n    }\n  ],\n  \"total\": 18,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2a9bc276-c961-47b1-80e5-5794ab328706",
+              "name": "Invalid pagination, search, or sort parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "vegan"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e4d49e6a-82f8-4716-89aa-5b51b45b322e",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "vegan"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "365dcba0-54a2-42d4-8f91-1e342638d954",
+              "name": "Only administrators can list administrative catalog entries",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": "vegan"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sort_order",
+                      "value": "asc"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "cfc0f6f8-b2d6-4cbd-8d27-221ba1783585",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response adheres to PaginatedAdminTagsResponseDto schema\", function () {",
+                  "  const jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property(\"items\").that.is.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"total\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"page\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"limit\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"total_pages\").that.is.a(\"number\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_next_page\").that.is.a(\"boolean\");",
+                  "  pm.expect(jsonData).to.have.property(\"has_prev_page\").that.is.a(\"boolean\");",
+                  "",
+                  "  if (jsonData.items.length > 0) {",
+                  "    const item = jsonData.items[0];",
+                  "    pm.expect(item).to.have.property(\"id\").that.is.a(\"number\");",
+                  "    pm.expect(item).to.have.property(\"slug\").that.is.a(\"string\");",
+                  "    pm.expect(item).to.have.property(\"translations\").that.is.an(\"object\");",
+                  "    pm.expect(item.translations).to.have.property(\"it\").that.is.a(\"string\");",
+                  "    pm.expect(item.translations).to.have.property(\"en\").that.is.a(\"string\");",
+                  "    pm.expect(item.translations).to.have.property(\"fr\").that.is.a(\"string\");",
+                  "  }",
+                  "});",
+                  ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "38f321c6-399e-49df-8905-ced0640fef9e",
+          "name": "Create a curated tag",
+          "request": {
+            "name": "Create a curated tag",
+            "description": {
+              "content": "Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "admin",
+                "catalog",
+                "tags"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "e82d55f3-85de-4697-8d8e-22a875ba5cde",
+              "name": "Tag created with all its translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "461a5f1a-f417-4761-82f8-8f88dfc2bb07",
+              "name": "Invalid slug or translations",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "23b0c52d-9e09-40bd-8f9c-b98b3739c8c1",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d067a5ca-32f2-4070-818c-44b309630e9a",
+              "name": "Only administrators can create catalog tags",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "fe20e5cc-1221-4b04-8b68-9e43834599eb",
+              "name": "A tag with this slug already exists",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "admin",
+                    "catalog",
+                    "tags"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "58eff5b0-b3ac-4a4e-8976-d81b58e1b067",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
           "id": "f84ecf5d-b433-4286-8959-9f301aa24fb9",
           "name": "Get curated ingredient detail by ID (admin)",
           "request": {
@@ -27728,592 +29336,6 @@
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "id": "93d96cb2-2696-41a8-85d2-cc01448e14e4",
-          "name": "Create a curated ingredient",
-          "request": {
-            "name": "Create a curated ingredient",
-            "description": {
-              "content": "Adds a new ingredient to the catalog with its Italian, English and French names. Restricted to administrators.",
-              "type": "text/plain"
-            },
-            "url": {
-              "path": [
-                "api",
-                "admin",
-                "catalog",
-                "ingredients"
-              ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": []
-            },
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "id": "021ac3a7-4451-4cc1-8010-baf953e37650",
-              "name": "Ingredient created with all its translations",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "ingredients"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"id\": 12,\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "558f0f66-293c-4c3a-8d33-78a7f89dfed8",
-              "name": "Invalid slug, category or translations",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "ingredients"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "f909e336-b12c-433d-8027-851e9d1d39a5",
-              "name": "Authentication required: missing or invalid accessToken cookie",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "ingredients"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "c876c816-9a17-4f4f-8432-6b98794f0f81",
-              "name": "Only administrators can create catalog ingredients",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "ingredients"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Forbidden",
-              "code": 403,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "8d01d5ce-8bd5-48b7-8f71-ef990b8e04b2",
-              "name": "An ingredient with this slug already exists",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "ingredients"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"bell_pepper\",\n  \"category\": \"produce\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Conflict",
-              "code": 409,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "fdc2747a-e636-42e5-8389-edc0f56709d6",
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "id": "38f321c6-399e-49df-8905-ced0640fef9e",
-          "name": "Create a curated tag",
-          "request": {
-            "name": "Create a curated tag",
-            "description": {
-              "content": "Adds a new tag to the catalog with its Italian, English and French names. Restricted to administrators.",
-              "type": "text/plain"
-            },
-            "url": {
-              "path": [
-                "api",
-                "admin",
-                "catalog",
-                "tags"
-              ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": []
-            },
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "id": "e82d55f3-85de-4697-8d8e-22a875ba5cde",
-              "name": "Tag created with all its translations",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "tags"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"id\": 1,\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "461a5f1a-f417-4761-82f8-8f88dfc2bb07",
-              "name": "Invalid slug or translations",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "tags"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "23b0c52d-9e09-40bd-8f9c-b98b3739c8c1",
-              "name": "Authentication required: missing or invalid accessToken cookie",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "tags"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "d067a5ca-32f2-4070-818c-44b309630e9a",
-              "name": "Only administrators can create catalog tags",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "tags"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Forbidden",
-              "code": 403,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            },
-            {
-              "id": "fe20e5cc-1221-4b04-8b68-9e43834599eb",
-              "name": "A tag with this slug already exists",
-              "originalRequest": {
-                "url": {
-                  "path": [
-                    "api",
-                    "admin",
-                    "catalog",
-                    "tags"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slug\": \"gluten_free\",\n  \"translations\": {\n    \"it\": \"Pomodoro\",\n    \"en\": \"Tomato\",\n    \"fr\": \"Tomate\"\n  }\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Conflict",
-              "code": 409,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"statusCode\": 409,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/auth/signup\",\n  \"message\": \"Username or email is already taken\"\n}",
-              "cookie": [],
-              "_postman_previewlanguage": "json"
-            }
-          ],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "id": "58eff5b0-b3ac-4a4e-8976-d81b58e1b067",
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
-                  "    pm.response.to.have.status(201);",
                   "});"
                 ]
               }

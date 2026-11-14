@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
-import { SupportedLocale } from '../../common/dto/locale-query.dto';
+import type { SupportedLocale } from '../../common/dto/locale-query.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SortOrder } from '../../common/dto/sort-order.enum';
 

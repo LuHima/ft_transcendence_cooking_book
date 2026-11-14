@@ -68,7 +68,8 @@ export class AdminCatalogController {
       'Returns a paginated list of curated catalog ingredients with complete translation dictionaries across all supported locales (Italian, English, French). Supports category filtering, substring search across slugs and translations, and sorting by id or slug. Restricted to administrators.',
   })
   @ApiOkResponse({
-    description: 'Paginated list of curated ingredients with full translation maps',
+    description:
+      'Paginated list of curated ingredients with full translation maps',
     type: PaginatedAdminIngredientsResponseDto,
   })
   @ApiBadRequestResponse({
@@ -128,7 +129,8 @@ export class AdminCatalogController {
     type: IngredientDetailResponseDto,
   })
   @ApiForbiddenResponse({
-    description: 'Only administrators can inspect administrative catalog details',
+    description:
+      'Only administrators can inspect administrative catalog details',
     type: ApiForbiddenResponseDto,
   })
   @ApiNotFoundResponse({
@@ -159,7 +161,8 @@ export class AdminCatalogController {
     type: TagDetailResponseDto,
   })
   @ApiForbiddenResponse({
-    description: 'Only administrators can inspect administrative catalog details',
+    description:
+      'Only administrators can inspect administrative catalog details',
     type: ApiForbiddenResponseDto,
   })
   @ApiNotFoundResponse({

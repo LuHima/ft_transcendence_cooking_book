@@ -73,7 +73,9 @@ export function resolveCatalogTranslation<
   if (!translations || translations.length === 0) {
     return { name: slug, resolved_lang: 'en' };
   }
-  const matchRequested = translations.find((tr) => tr.locale === requestedLocale);
+  const matchRequested = translations.find(
+    (tr) => tr.locale === requestedLocale,
+  );
   if (matchRequested) {
     return {
       name: matchRequested.name,
@@ -276,7 +278,11 @@ export class CatalogService {
       slug: string;
       translations: { locale: string; name: string }[];
     }): TagResponseDto => {
-      const resolved = resolveCatalogTranslation(t.translations, locale, t.slug);
+      const resolved = resolveCatalogTranslation(
+        t.translations,
+        locale,
+        t.slug,
+      );
       return {
         id: t.id,
         slug: t.slug,
@@ -336,7 +342,11 @@ export class CatalogService {
     if (!tag) {
       throw createHttpException(errors.tags.notFound);
     }
-    const resolved = resolveCatalogTranslation(tag.translations, locale, tag.slug);
+    const resolved = resolveCatalogTranslation(
+      tag.translations,
+      locale,
+      tag.slug,
+    );
     return {
       id: tag.id,
       slug: tag.slug,
@@ -386,7 +396,11 @@ export class CatalogService {
       category: IngredientCategory;
       translations: { locale: string; name: string }[];
     }): IngredientResponseDto => {
-      const resolved = resolveCatalogTranslation(i.translations, locale, i.slug);
+      const resolved = resolveCatalogTranslation(
+        i.translations,
+        locale,
+        i.slug,
+      );
       return {
         id: i.id,
         slug: i.slug,

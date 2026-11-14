@@ -49,7 +49,8 @@ export class CatalogController {
     type: PaginatedTagsResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid query parameters (page, limit, lang, sort_by, sort_order)',
+    description:
+      'Invalid query parameters (page, limit, lang, sort_by, sort_order)',
     type: ApiBadRequestResponseDto,
   })
   @Get('tags')
