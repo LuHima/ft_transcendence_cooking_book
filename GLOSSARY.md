@@ -271,7 +271,7 @@ The administrative triage query filter (`reported_only=true` on `GET /api/admin/
 _Avoid_: Flagged comment filter, dirty comments, report list
 
 **Administrative Catalog Management**:
-The dedicated administrative API namespace (`/api/admin/catalog`) and workflows restricted to administrators (`@Roles('admin')`) for creating, updating, inspecting full multilingual translation dictionaries, and deleting curated ingredients and tags.
+The dedicated administrative API namespace (`/api/admin/catalog`) and workflows restricted to administrators (`@Roles('admin')`) for listing, searching, creating, updating, inspecting full multilingual translation dictionaries, and deleting curated ingredients and tags.
 _Avoid_: Catalog admin, tag manager, ingredient editor, public catalog CRUD
 
 ## API Governance & Documentation
