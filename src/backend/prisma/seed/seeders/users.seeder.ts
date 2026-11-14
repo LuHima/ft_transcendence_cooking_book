@@ -1,9 +1,32 @@
-import { PrismaClient, Role, UserStatus } from '@prisma/client';
+import * as crypto from 'crypto';
+import { PrismaClient, Role, User, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { buildSeedUsers } from '../data/users.data';
 
 export interface ProdAdminBootstrapResult {
   created: boolean;
   username?: string;
+}
+
+const DEFAULT_FALLBACK_2FA_KEY =
+  '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+/**
+ * Encrypts a 2FA secret using AES-256-GCM in the exact `ivHex:authTagHex:cipherHex`
+ * format expected by `EncryptionService.decrypting()`.
+ */
+export function encryptTwoFactorSecret(
+  secret: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const keyHex = env.TWO_FACTOR_AUTH?.trim() || DEFAULT_FALLBACK_2FA_KEY;
+  const encryptionKey = Buffer.from(keyHex, 'hex');
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', encryptionKey, iv);
+  let encrypted = cipher.update(secret, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  return `${iv.toString('hex')}:${authTag}:${encrypted}`;
 }
 
 /**
@@ -57,8 +80,48 @@ export async function bootstrapProdAdmin(
 }
 
 /**
- * Seeds development users (expanded in #200).
+ * Non-destructively upserts the ~30 deterministic development users (`update: {}`)
+ * so runtime profile edits, password resets, or 2FA state changes are preserved.
  */
-export async function seedUsers(_prisma: PrismaClient): Promise<void> {
-  console.log('[seed:users] Development users seeder placeholder.');
+export async function seedUsers(
+  prisma: PrismaClient,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<Record<string, User>> {
+  const fixtures = buildSeedUsers();
+  const passwordHash = await bcrypt.hash('Password123', 10);
+  const usersByKey: Record<string, User> = {};
+
+  for (const fixture of fixtures) {
+    const encryptedTwoFactor = fixture.plainTwoFactorSecret
+      ? encryptTwoFactorSecret(fixture.plainTwoFactorSecret, env)
+      : null;
+
+    const user = await prisma.user.upsert({
+      where: { email: fixture.email },
+      update: {},
+      create: {
+        username: fixture.username,
+        email: fixture.email,
+        password_hash: passwordHash,
+        first_name: fixture.first_name,
+        last_name: fixture.last_name,
+        role: fixture.role,
+        status: fixture.status,
+        profile_privacy: fixture.profile_privacy,
+        bio: fixture.bio,
+        city: fixture.city,
+        birth_date: fixture.birth_date,
+        avatar_url: fixture.avatar_url,
+        is_two_factor_enabled: fixture.is_two_factor_enabled ?? false,
+        two_factor: encryptedTwoFactor,
+        banned_until: fixture.banned_until ?? null,
+        deleted_at: fixture.deleted_at ?? null,
+      },
+    });
+
+    usersByKey[fixture.key] = user;
+  }
+
+  console.log(`[seed:users] Ensured ${fixtures.length} development users.`);
+  return usersByKey;
 }

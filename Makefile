@@ -373,6 +373,9 @@ db-migrate: env-check ## [name]|Create or apply database migrations
 # Resets database schema, drops data, reapplies migrations, and seeds
 .PHONY: db-reset
 db-reset: env-check ## [force]|Reset database and re-seed
+	@if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running -q backend 2>/dev/null)" ]; then \
+		$(SUDO) docker compose -f $(COMPOSE_FILE) exec -T backend sh -c 'rm -rf "$${UPLOADS_DIR:-/usr/src/app/uploads}/recipes"'; \
+	fi
 	@CMD="migrate reset"; \
 	if [ "$(ARGS)" = "force" ]; then \
 		CMD="migrate reset --force"; \
