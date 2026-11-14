@@ -376,7 +376,7 @@ export const SHOWCASE_RECIPES: SeedRecipeFixture[] = [
     ownerType: 'platform',
     privacy: 'public',
     isActive: true,
-    sourceLang: 'fr',
+    sourceLang: 'it',
     translationStatus: 'completed',
     translationSource: TranslationSource.manual,
     course: 'main_course',
