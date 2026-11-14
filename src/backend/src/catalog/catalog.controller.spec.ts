@@ -15,18 +15,39 @@ describe('CatalogController', () => {
         {
           provide: CatalogService,
           useValue: {
-            getTags: jest.fn().mockResolvedValue([
-              { id: 1, slug: 'vegetarian', name: 'Vegetariano', resolved_lang: 'it' },
-            ]),
-            getIngredients: jest.fn().mockResolvedValue([
-              {
-                id: 1,
-                slug: 'tomato',
-                category: IngredientCategory.produce,
-                name: 'Pomodoro',
-                resolved_lang: 'it',
-              },
-            ]),
+            getTags: jest.fn().mockResolvedValue({
+              items: [
+                {
+                  id: 1,
+                  slug: 'vegetarian',
+                  name: 'Vegetariano',
+                  resolved_lang: 'it',
+                },
+              ],
+              total: 1,
+              page: 1,
+              limit: 20,
+              total_pages: 1,
+              has_next_page: false,
+              has_prev_page: false,
+            }),
+            getIngredients: jest.fn().mockResolvedValue({
+              items: [
+                {
+                  id: 1,
+                  slug: 'tomato',
+                  category: IngredientCategory.produce,
+                  name: 'Pomodoro',
+                  resolved_lang: 'it',
+                },
+              ],
+              total: 1,
+              page: 1,
+              limit: 20,
+              total_pages: 1,
+              has_next_page: false,
+              has_prev_page: false,
+            }),
             getTagById: jest.fn().mockResolvedValue({
               id: 5,
               slug: 'gluten_free',
@@ -51,25 +72,30 @@ describe('CatalogController', () => {
   });
 
   describe('getTags', () => {
-    it('should delegate to service.getTags with lang parameter', async () => {
-      const result = await controller.getTags({ lang: 'it' });
+    it('should delegate to service.getTags with FilterTagDto parameters', async () => {
+      const query = { page: 1, limit: 20, lang: 'it' as const, search: 'veg' };
+      const result = await controller.getTags(query);
 
-      expect(result).toEqual([
+      expect(result.items).toEqual([
         { id: 1, slug: 'vegetarian', name: 'Vegetariano', resolved_lang: 'it' },
       ]);
-      expect(service.getTags).toHaveBeenCalledWith({ lang: 'it' });
+      expect(result.total).toBe(1);
+      expect(service.getTags).toHaveBeenCalledWith(query);
     });
   });
 
   describe('getIngredients', () => {
     it('should delegate to service.getIngredients with query parameters', async () => {
-      const result = await controller.getIngredients({
-        lang: 'it',
+      const query = {
+        page: 1,
+        limit: 20,
+        lang: 'it' as const,
         category: IngredientCategory.produce,
         search: 'pomo',
-      });
+      };
+      const result = await controller.getIngredients(query);
 
-      expect(result).toEqual([
+      expect(result.items).toEqual([
         {
           id: 1,
           slug: 'tomato',
@@ -78,11 +104,8 @@ describe('CatalogController', () => {
           resolved_lang: 'it',
         },
       ]);
-      expect(service.getIngredients).toHaveBeenCalledWith({
-        lang: 'it',
-        category: IngredientCategory.produce,
-        search: 'pomo',
-      });
+      expect(result.total).toBe(1);
+      expect(service.getIngredients).toHaveBeenCalledWith(query);
     });
   });
 

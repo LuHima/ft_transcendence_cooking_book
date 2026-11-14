@@ -11,6 +11,8 @@ import {
 import { CatalogService } from './catalog.service';
 import {
   IngredientResponseDto,
+  PaginatedIngredientsResponseDto,
+  PaginatedTagsResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
 import {
@@ -20,6 +22,7 @@ import {
 } from 'src/common/dto/api-error-response.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { FilterIngredientDto } from './dto/filter-ingredient.dto';
+import { FilterTagDto } from './dto/filter-tag.dto';
 
 /**
  * Controller providing public localized access to curated tags and ingredient catalogs.
@@ -34,24 +37,24 @@ export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
   /**
-   * Retrieve curated dietary and culinary tags.
+   * Retrieve paginated curated dietary and culinary tags.
    */
   @ApiOperation({
     summary: 'List curated tags',
     description:
-      'Returns all curated tags (e.g. vegetarian, gluten-free), ordered alphabetically by localized name. Falls back to English if requested locale is missing.',
+      'Returns paginated curated tags (e.g. vegetarian, gluten-free), supporting search, sorting by localized name or slug, and pagination. Falls back to English if requested locale is missing.',
   })
   @ApiOkResponse({
-    description: 'Alphabetically ordered list of localized tags',
-    type: [TagResponseDto],
+    description: 'Paginated list of localized tags',
+    type: PaginatedTagsResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid language parameter (must be one of: it, en, fr)',
+    description: 'Invalid query parameters (page, limit, lang, sort_by, sort_order)',
     type: ApiBadRequestResponseDto,
   })
   @Get('tags')
-  async getTags(@Query() localeDto: LocaleQueryDto) {
-    return await this.catalogService.getTags({ lang: localeDto?.lang });
+  async getTags(@Query() filterDto: FilterTagDto) {
+    return await this.catalogService.getTags(filterDto);
   }
 
   /**
@@ -89,19 +92,20 @@ export class CatalogController {
   }
 
   /**
-   * Retrieve curated ingredient catalog items with optional filtering and search.
+   * Retrieve paginated curated ingredient catalog items with optional filtering and search.
    */
   @ApiOperation({
     summary: 'List and search curated ingredients',
     description:
-      'Returns curated catalog ingredients matching the given category or text query, ordered alphabetically by localized name.',
+      'Returns paginated curated catalog ingredients matching the given category or text query, ordered by localized name or canonical slug.',
   })
   @ApiOkResponse({
-    description: 'Alphabetically ordered list of matching curated ingredients',
-    type: [IngredientResponseDto],
+    description: 'Paginated list of matching curated ingredients',
+    type: PaginatedIngredientsResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Invalid category or language parameter',
+    description:
+      'Invalid query parameters (page, limit, category, lang, sort_by, sort_order)',
     type: ApiBadRequestResponseDto,
   })
   @Get('ingredients')

@@ -19,11 +19,15 @@ import {
   IngredientResponseDto,
   PaginatedAdminIngredientsResponseDto,
   PaginatedAdminTagsResponseDto,
+  PaginatedIngredientsResponseDto,
+  PaginatedTagsResponseDto,
   TagDetailResponseDto,
   TagResponseDto,
 } from './dto/catalog-response.dto';
 import { AdminIngredientQueryDto } from './dto/admin-ingredient-query.dto';
 import { AdminTagQueryDto } from './dto/admin-tag-query.dto';
+import { FilterIngredientDto } from './dto/filter-ingredient.dto';
+import { FilterTagDto } from './dto/filter-tag.dto';
 import { SupportedLocale } from '../common/dto/locale-query.dto';
 import { SortOrder } from '../common/dto/sort-order.enum';
 
@@ -231,18 +235,47 @@ export class CatalogService {
     );
   }
 
+  /**
+   * Sorts localized catalog items by `name` in the active locale with deterministic `id` tie-breaking,
+   * then slices the requested page window and wraps it in a paginated envelope.
+   */
+  private paginateLocalizedByName<T extends { id: number; name: string }>(
+    mapped: T[],
+    locale: SupportedLocale,
+    sortOrder: SortOrder,
+    page: number,
+    limit: number,
+  ) {
+    const dir = sortOrder === SortOrder.desc ? -1 : 1;
+    const sorted = [...mapped].sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name, locale);
+      return cmp !== 0 ? cmp * dir : a.id - b.id;
+    });
+    const total = sorted.length;
+    const items = sorted.slice((page - 1) * limit, page * limit);
+    return this.buildPaginatedResponse(items, total, page, limit);
+  }
+
   /*
   GET /api/tags
-  Returns all the possible tags for a recipe (vegetarian, vegan, etc.),
-  ordered alphabetically by name.
+  Returns paginated tags for a recipe (vegetarian, vegan, etc.),
+  supporting search, localized name sorting, or DB-level slug sorting.
   */
-  async getTags(params: { lang?: SupportedLocale } = {}) {
-    const locale = normalizeSupportedLocale(params.lang);
-    const tags = await this.prisma.tag.findMany({
-      include: { translations: true },
-      orderBy: { slug: 'asc' },
-    });
-    const mapped = tags.map((t) => {
+  async getTags(
+    filterDto: FilterTagDto = {},
+  ): Promise<PaginatedTagsResponseDto> {
+    const locale = normalizeSupportedLocale(filterDto.lang);
+    const page = filterDto.page ?? 1;
+    const limit = filterDto.limit ?? 20;
+    const sortBy = filterDto.sort_by ?? 'name';
+    const sortOrder = filterDto.sort_order ?? SortOrder.asc;
+    const where = this.buildCatalogWhere({ search: filterDto.search });
+
+    const toTagDto = (t: {
+      id: number;
+      slug: string;
+      translations: { locale: string; name: string }[];
+    }): TagResponseDto => {
       const resolved = resolveCatalogTranslation(t.translations, locale, t.slug);
       return {
         id: t.id,
@@ -250,8 +283,39 @@ export class CatalogService {
         name: resolved.name,
         resolved_lang: resolved.resolved_lang,
       };
+    };
+
+    if (sortBy === 'slug') {
+      const [rows, total] = await Promise.all([
+        this.prisma.tag.findMany({
+          where,
+          include: { translations: true },
+          orderBy: { slug: sortOrder },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        this.prisma.tag.count({ where }),
+      ]);
+      return this.buildPaginatedResponse(
+        rows.map(toTagDto),
+        total,
+        page,
+        limit,
+      );
+    }
+
+    const tags = await this.prisma.tag.findMany({
+      where,
+      include: { translations: true },
+      orderBy: { id: 'asc' },
     });
-    return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
+    return this.paginateLocalizedByName(
+      tags.map(toTagDto),
+      locale,
+      sortOrder,
+      page,
+      limit,
+    );
   }
 
   /*
@@ -298,58 +362,30 @@ export class CatalogService {
     return this.toTagDetail(tag);
   }
 
-  /* 
+  /*
   GET /api/ingredients
-  Returns a list of ingredients for a recipe, ordered alphabetically by name.
-  @param lang: Language of returned ingredients (default 'en').
-  @param category: Limit the list to a specific category of ingredients.
-  @param search: Search ingredients containing this term in the name/slug.
+  Returns paginated ingredients for a recipe, supporting category filtering,
+  search, localized name sorting, or DB-level slug sorting.
   */
   async getIngredients(
-    params: {
-      lang?: SupportedLocale;
-      category?: IngredientCategory;
-      search?: string;
-    } = {},
-  ) {
-    const locale = normalizeSupportedLocale(params.lang);
-    // Prisma filter used to select only specific ingredients
-    const where: any = {};
-    // Filter ingredients by 'category' parameter
-    if (params.category) {
-      where.category = params.category;
-    }
-    // Filter ingredients by 'search' parameter
-    if (params.search && params.search.trim()) {
-      // Trims spaces from the searched parameter
-      const term = params.search.trim();
-      // Builds a Prisma OR filter: selects all objects that satisfy at
-      // least one condition.
-      where.OR = [
-        // Condition: select if slug contains term (case-insensitive)
-        { slug: { contains: term, mode: 'insensitive' } },
-        // Condition: select if at least one translation row for this
-        // ingredient has a name containing term (case-insensitive)
-        {
-          translations: {
-            some: {
-              name: { contains: term, mode: 'insensitive' },
-            },
-          },
-        },
-      ];
-    }
-    // Fetches all rows of the Ingredient table
-    const ingredients = await this.prisma.ingredient.findMany({
-      // Select rows that respect the 'where' filter
-      where,
-      include: { translations: true },
-      // Order the ingredients alphabetically by slug in ascending order
-      orderBy: { slug: 'asc' },
+    filterDto: FilterIngredientDto = {},
+  ): Promise<PaginatedIngredientsResponseDto> {
+    const locale = normalizeSupportedLocale(filterDto.lang);
+    const page = filterDto.page ?? 1;
+    const limit = filterDto.limit ?? 20;
+    const sortBy = filterDto.sort_by ?? 'name';
+    const sortOrder = filterDto.sort_order ?? SortOrder.asc;
+    const where = this.buildCatalogWhere({
+      search: filterDto.search,
+      category: filterDto.category,
     });
-    // Maps the fetch data to return an array of ingredients objects formatted
-    // as { id, slug, name }
-    const mapped = ingredients.map((i) => {
+
+    const toIngredientDto = (i: {
+      id: number;
+      slug: string;
+      category: IngredientCategory;
+      translations: { locale: string; name: string }[];
+    }): IngredientResponseDto => {
       const resolved = resolveCatalogTranslation(i.translations, locale, i.slug);
       return {
         id: i.id,
@@ -358,9 +394,39 @@ export class CatalogService {
         name: resolved.name,
         resolved_lang: resolved.resolved_lang,
       };
+    };
+
+    if (sortBy === 'slug') {
+      const [rows, total] = await Promise.all([
+        this.prisma.ingredient.findMany({
+          where,
+          include: { translations: true },
+          orderBy: { slug: sortOrder },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        this.prisma.ingredient.count({ where }),
+      ]);
+      return this.buildPaginatedResponse(
+        rows.map(toIngredientDto),
+        total,
+        page,
+        limit,
+      );
+    }
+
+    const ingredients = await this.prisma.ingredient.findMany({
+      where,
+      include: { translations: true },
+      orderBy: { id: 'asc' },
     });
-    // Returns the array of ingredients ordered by name
-    return mapped.sort((a, b) => a.name.localeCompare(b.name, locale));
+    return this.paginateLocalizedByName(
+      ingredients.map(toIngredientDto),
+      locale,
+      sortOrder,
+      page,
+      limit,
+    );
   }
 
   /*

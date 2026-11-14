@@ -306,3 +306,79 @@ export class PaginatedAdminTagsResponseDto {
   })
   has_prev_page: boolean;
 }
+
+/**
+ * Paginated collection envelope for public localized ingredient listings.
+ */
+export class PaginatedIngredientsResponseDto {
+  @ApiProperty({
+    type: [IngredientResponseDto],
+    description: 'Localized curated ingredient records',
+  })
+  items: IngredientResponseDto[];
+
+  @ApiProperty({
+    description: 'Total number of ingredients matching query',
+    example: 42,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total available pages', example: 3 })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Indicates whether a next page exists',
+    example: true,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Indicates whether a previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
+}
+
+/**
+ * Paginated collection envelope for public localized tag listings.
+ */
+export class PaginatedTagsResponseDto {
+  @ApiProperty({
+    type: [TagResponseDto],
+    description: 'Localized curated tag records',
+  })
+  items: TagResponseDto[];
+
+  @ApiProperty({
+    description: 'Total number of tags matching query',
+    example: 18,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total available pages', example: 1 })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Indicates whether a next page exists',
+    example: false,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Indicates whether a previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
+}

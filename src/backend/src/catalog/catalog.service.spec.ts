@@ -101,28 +101,36 @@ describe('CatalogService', () => {
       },
     ];
 
-    it('should return tags localized in Italian when lang=it', async () => {
+    it('should return paginated tags localized in Italian when lang=it', async () => {
       (prisma.tag.findMany as jest.Mock).mockResolvedValue(mockDbTags);
 
       const result = await service.getTags({ lang: 'it' });
 
-      expect(result).toEqual([
-        { id: 1, slug: 'vegetarian', name: 'Vegetariano', resolved_lang: 'it' },
-        {
-          id: 2,
-          slug: 'quick_easy',
-          name: 'Veloce e Facile',
-          resolved_lang: 'it',
-        },
-      ]);
+      expect(result).toEqual({
+        items: [
+          { id: 1, slug: 'vegetarian', name: 'Vegetariano', resolved_lang: 'it' },
+          {
+            id: 2,
+            slug: 'quick_easy',
+            name: 'Veloce e Facile',
+            resolved_lang: 'it',
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      });
     });
 
-    it('should default to English when lang is not provided or unsupported', async () => {
+    it('should default to English and name asc sorting when parameters are omitted', async () => {
       (prisma.tag.findMany as jest.Mock).mockResolvedValue(mockDbTags);
 
       const result = await service.getTags({});
 
-      expect(result).toEqual([
+      expect(result.items).toEqual([
         {
           id: 2,
           slug: 'quick_easy',
@@ -131,6 +139,7 @@ describe('CatalogService', () => {
         },
         { id: 1, slug: 'vegetarian', name: 'Vegetarian', resolved_lang: 'en' },
       ]);
+      expect(result.total).toBe(2);
     });
 
     it('should fall back to English if requested locale translation is missing', async () => {
@@ -145,7 +154,7 @@ describe('CatalogService', () => {
 
       const result = await service.getTags({ lang: 'it' });
 
-      expect(result).toEqual([
+      expect(result.items).toEqual([
         {
           id: 3,
           slug: 'comfort_food',
@@ -153,6 +162,82 @@ describe('CatalogService', () => {
           resolved_lang: 'en',
         },
       ]);
+    });
+
+    it('supports localized name desc sorting and page slicing', async () => {
+      (prisma.tag.findMany as jest.Mock).mockResolvedValue(mockDbTags);
+
+      const result = await service.getTags({
+        lang: 'en',
+        sort_by: 'name',
+        sort_order: 'desc' as any,
+        page: 2,
+        limit: 1,
+      });
+
+      expect(result).toEqual({
+        items: [
+          {
+            id: 2,
+            slug: 'quick_easy',
+            name: 'Quick & Easy',
+            resolved_lang: 'en',
+          },
+        ],
+        total: 2,
+        page: 2,
+        limit: 1,
+        total_pages: 2,
+        has_next_page: false,
+        has_prev_page: true,
+      });
+    });
+
+    it('supports search and DB-level slug pagination when sort_by=slug', async () => {
+      (prisma.tag.findMany as jest.Mock).mockResolvedValue([mockDbTags[1]]);
+      (prisma.tag.count as jest.Mock).mockResolvedValue(2);
+
+      const result = await service.getTags({
+        lang: 'fr',
+        search: 'facile',
+        sort_by: 'slug',
+        sort_order: 'asc' as any,
+        page: 1,
+        limit: 1,
+      });
+
+      expect(prisma.tag.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { slug: { contains: 'facile', mode: 'insensitive' } },
+            {
+              translations: {
+                some: { name: { contains: 'facile', mode: 'insensitive' } },
+              },
+            },
+          ],
+        },
+        include: { translations: true },
+        orderBy: { slug: 'asc' },
+        skip: 0,
+        take: 1,
+      });
+      expect(result).toEqual({
+        items: [
+          {
+            id: 2,
+            slug: 'quick_easy',
+            name: 'Rapide et Facile',
+            resolved_lang: 'fr',
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 1,
+        total_pages: 2,
+        has_next_page: true,
+        has_prev_page: false,
+      });
     });
   });
 
@@ -180,29 +265,37 @@ describe('CatalogService', () => {
       },
     ];
 
-    it('should return ingredients localized in the requested language', async () => {
+    it('should return paginated ingredients localized and sorted alphabetically in the requested language', async () => {
       (prisma.ingredient.findMany as jest.Mock).mockResolvedValue(
         mockDbIngredients,
       );
 
       const result = await service.getIngredients({ lang: 'it' });
 
-      expect(result).toEqual([
-        {
-          id: 2,
-          slug: 'parmesan',
-          category: IngredientCategory.dairy_eggs,
-          name: 'Parmigiano Reggiano',
-          resolved_lang: 'it',
-        },
-        {
-          id: 1,
-          slug: 'tomato',
-          category: IngredientCategory.produce,
-          name: 'Pomodoro',
-          resolved_lang: 'it',
-        },
-      ]);
+      expect(result).toEqual({
+        items: [
+          {
+            id: 2,
+            slug: 'parmesan',
+            category: IngredientCategory.dairy_eggs,
+            name: 'Parmigiano Reggiano',
+            resolved_lang: 'it',
+          },
+          {
+            id: 1,
+            slug: 'tomato',
+            category: IngredientCategory.produce,
+            name: 'Pomodoro',
+            resolved_lang: 'it',
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      });
     });
 
     it('should filter by category and search term in relational translations', async () => {
@@ -216,7 +309,7 @@ describe('CatalogService', () => {
         search: 'pomo',
       });
 
-      expect(result).toEqual([
+      expect(result.items).toEqual([
         {
           id: 1,
           slug: 'tomato',
@@ -225,6 +318,7 @@ describe('CatalogService', () => {
           resolved_lang: 'it',
         },
       ]);
+      expect(result.total).toBe(1);
       expect(prisma.ingredient.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -242,6 +336,78 @@ describe('CatalogService', () => {
           }),
         }),
       );
+    });
+
+    it('supports localized name desc sorting and page slicing', async () => {
+      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue(
+        mockDbIngredients,
+      );
+
+      const result = await service.getIngredients({
+        lang: 'it',
+        sort_by: 'name',
+        sort_order: 'desc' as any,
+        page: 1,
+        limit: 1,
+      });
+
+      expect(result).toEqual({
+        items: [
+          {
+            id: 1,
+            slug: 'tomato',
+            category: IngredientCategory.produce,
+            name: 'Pomodoro',
+            resolved_lang: 'it',
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 1,
+        total_pages: 2,
+        has_next_page: true,
+        has_prev_page: false,
+      });
+    });
+
+    it('supports DB-level slug pagination when sort_by=slug', async () => {
+      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([
+        mockDbIngredients[1],
+      ]);
+      (prisma.ingredient.count as jest.Mock).mockResolvedValue(2);
+
+      const result = await service.getIngredients({
+        lang: 'en',
+        sort_by: 'slug',
+        sort_order: 'asc' as any,
+        page: 1,
+        limit: 1,
+      });
+
+      expect(prisma.ingredient.findMany).toHaveBeenCalledWith({
+        where: {},
+        include: { translations: true },
+        orderBy: { slug: 'asc' },
+        skip: 0,
+        take: 1,
+      });
+      expect(result).toEqual({
+        items: [
+          {
+            id: 2,
+            slug: 'parmesan',
+            category: IngredientCategory.dairy_eggs,
+            name: 'Parmesan',
+            resolved_lang: 'en',
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 1,
+        total_pages: 2,
+        has_next_page: true,
+        has_prev_page: false,
+      });
     });
   });
 

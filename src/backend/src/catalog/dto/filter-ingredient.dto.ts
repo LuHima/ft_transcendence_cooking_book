@@ -1,12 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IngredientCategory } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { LocaleQueryDto } from '../../common/dto/locale-query.dto';
+import { IsEnum, IsOptional } from 'class-validator';
+import { FilterTagDto } from './filter-tag.dto';
 
 /**
- * Query parameter data transfer object for filtering and searching the ingredient catalog.
+ * Query parameter data transfer object for filtering, searching, sorting, and paginating the ingredient catalog.
  */
-export class FilterIngredientDto extends LocaleQueryDto {
+export class FilterIngredientDto extends FilterTagDto {
   /**
    * Filter ingredients by culinary category.
    * @example IngredientCategory.dairy_eggs
@@ -19,17 +19,4 @@ export class FilterIngredientDto extends LocaleQueryDto {
   @IsOptional()
   @IsEnum(IngredientCategory)
   category?: IngredientCategory;
-
-  /**
-   * Case-insensitive substring search across ingredient slugs and translations.
-   * @example 'pomodoro'
-   */
-  @ApiPropertyOptional({
-    description:
-      'Case-insensitive substring search across ingredient slugs and translations',
-    example: 'pomodoro',
-  })
-  @IsOptional()
-  @IsString()
-  search?: string;
 }
