@@ -82,9 +82,9 @@ export async function runSeed(
     return;
   }
 
-  await seedRecipes(prisma, usersByKey, env);
-  await seedSocial(prisma);
-  await seedModeration(prisma);
+  const recipesResult = await seedRecipes(prisma, usersByKey, env);
+  const socialResult = await seedSocial(prisma, usersByKey, recipesResult);
+  await seedModeration(prisma, usersByKey, recipesResult, socialResult);
   console.log('[seed] Development seed completed.');
 }
 
