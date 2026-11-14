@@ -41,7 +41,10 @@ import {
   AdminUserResponseDto,
   PaginatedAdminUsersResponseDto,
 } from './dto/admin-user-response.dto';
-import { BanHistoryItemDto } from '../reports/dto/ban-history.dto';
+import {
+  BanHistoryQueryDto,
+  PaginatedBanHistoryResponseDto,
+} from '../reports/dto/ban-history.dto';
 import { avatarMulterOptions } from '../users/avatar.multer';
 import {
   ApiBadRequestResponseDto,
@@ -108,8 +111,12 @@ export class AdminController {
     example: 42,
   })
   @ApiOkResponse({
-    description: 'List of historical ban events',
-    type: [BanHistoryItemDto],
+    description: 'Paginated list of historical ban events',
+    type: PaginatedBanHistoryResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination or sort parameters',
+    type: ApiBadRequestResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'User not found',
@@ -126,8 +133,9 @@ export class AdminController {
   @Get(':id/ban-history')
   async getUserSanctionsHistory(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<BanHistoryItemDto[]> {
-    return await this.adminService.getUserSanctionsHistory(id);
+    @Query() query: BanHistoryQueryDto,
+  ): Promise<PaginatedBanHistoryResponseDto> {
+    return await this.adminService.getUserSanctionsHistory(id, query);
   }
 
   /**

@@ -1,7 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { Prisma, ReportAction, ReportReason } from '@prisma/client';
-import { BanHistoryItemDto } from './dto/ban-history.dto';
+import {
+  BanHistoryItemDto,
+  BanHistoryQueryDto,
+  PaginatedBanHistoryResponseDto,
+} from './dto/ban-history.dto';
+import { SortOrder } from '../common/dto/sort-order.enum';
 
 export interface RecordBanParams {
   userId: number;
@@ -128,17 +133,40 @@ export class BanHistoryService {
   }
 
   /**
-   * Retrieve chronological ban and warning sanctions history audit trail for a user.
+   * Retrieve paginated chronological ban and warning sanctions history audit trail for a user.
    */
   async getUserSanctionsHistory(
     userId: number,
+    query: BanHistoryQueryDto = {},
     tx?: Prisma.TransactionClient,
-  ): Promise<BanHistoryItemDto[]> {
+  ): Promise<PaginatedBanHistoryResponseDto> {
     const client = tx ?? this.prisma;
-    return await client.banHistory.findMany({
-      where: { user_id: userId },
-      orderBy: { banned_at: 'desc' },
-    });
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const sortOrder = query.sort_order ?? SortOrder.desc;
+    const where = { user_id: userId };
+
+    const [items, total] = await Promise.all([
+      client.banHistory.findMany({
+        where,
+        orderBy: { banned_at: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      client.banHistory.count({ where }),
+    ]);
+
+    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: page > 1,
+    };
   }
 
   /**

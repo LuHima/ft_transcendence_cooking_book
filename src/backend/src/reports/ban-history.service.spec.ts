@@ -225,7 +225,7 @@ describe('BanHistoryService', () => {
   });
 
   describe('getUserSanctionsHistory', () => {
-    it('returns chronological list of bans and warnings ordered desc', async () => {
+    it('returns paginated chronological list of bans and warnings ordered desc by default', async () => {
       const historyList = [
         {
           id: 'ban-2',
@@ -241,14 +241,72 @@ describe('BanHistoryService', () => {
         },
       ];
       mockPrisma.banHistory.findMany.mockResolvedValueOnce(historyList);
+      mockPrisma.banHistory.count.mockResolvedValueOnce(2);
 
       const result = await service.getUserSanctionsHistory(10);
 
       expect(mockPrisma.banHistory.findMany).toHaveBeenCalledWith({
         where: { user_id: 10 },
         orderBy: { banned_at: 'desc' },
+        skip: 0,
+        take: 20,
       });
-      expect(result).toEqual(historyList);
+      expect(mockPrisma.banHistory.count).toHaveBeenCalledWith({
+        where: { user_id: 10 },
+      });
+      expect(result).toEqual({
+        items: historyList,
+        total: 2,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      });
+    });
+
+    it('supports custom page, limit, and asc sort_order', async () => {
+      mockPrisma.banHistory.findMany.mockResolvedValueOnce([]);
+      mockPrisma.banHistory.count.mockResolvedValueOnce(25);
+
+      const result = await service.getUserSanctionsHistory(10, {
+        page: 2,
+        limit: 10,
+        sort_order: 'asc' as any,
+      });
+
+      expect(mockPrisma.banHistory.findMany).toHaveBeenCalledWith({
+        where: { user_id: 10 },
+        orderBy: { banned_at: 'asc' },
+        skip: 10,
+        take: 10,
+      });
+      expect(result).toEqual({
+        items: [],
+        total: 25,
+        page: 2,
+        limit: 10,
+        total_pages: 3,
+        has_next_page: true,
+        has_prev_page: true,
+      });
+    });
+
+    it('returns empty envelope metadata when user has no history', async () => {
+      mockPrisma.banHistory.findMany.mockResolvedValueOnce([]);
+      mockPrisma.banHistory.count.mockResolvedValueOnce(0);
+
+      const result = await service.getUserSanctionsHistory(10);
+
+      expect(result).toEqual({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      });
     });
   });
 

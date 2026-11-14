@@ -64,7 +64,10 @@ interface CommentPayload {
 }
 
 import { BanHistoryService } from '../reports/ban-history.service';
-import { BanHistoryItemDto } from '../reports/dto/ban-history.dto';
+import {
+  BanHistoryQueryDto,
+  PaginatedBanHistoryResponseDto,
+} from '../reports/dto/ban-history.dto';
 import { ReportReason } from '@prisma/client';
 import { getDefaultBanDuration } from '../reports/constants/ban-duration-policy.constant';
 
@@ -279,11 +282,12 @@ export class AdminService {
   }
 
   /**
-   * Retrieve chronological sanctions history audit trail for a specific user.
+   * Retrieve paginated chronological sanctions history audit trail for a specific user.
    */
   async getUserSanctionsHistory(
     targetUserId: number,
-  ): Promise<BanHistoryItemDto[]> {
+    query: BanHistoryQueryDto = {},
+  ): Promise<PaginatedBanHistoryResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: targetUserId },
       select: { id: true },
@@ -291,7 +295,10 @@ export class AdminService {
     if (!user) {
       throw createHttpException(errors.users.notFound);
     }
-    return await this.banHistoryService.getUserSanctionsHistory(targetUserId);
+    return await this.banHistoryService.getUserSanctionsHistory(
+      targetUserId,
+      query,
+    );
   }
 
   /**

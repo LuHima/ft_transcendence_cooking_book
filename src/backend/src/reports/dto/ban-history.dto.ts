@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReportAction, ReportReason } from '@prisma/client';
+import { IsEnum, IsOptional } from 'class-validator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { SortOrder } from '../../common/dto/sort-order.enum';
 
 export class BanHistoryItemDto {
   @ApiProperty({
@@ -101,4 +104,61 @@ export class BanHistoryItemDto {
     nullable: true,
   })
   unban_reason: string | null;
+}
+
+/**
+ * Query parameters for paginated user ban history retrieval.
+ */
+export class BanHistoryQueryDto extends PaginationQueryDto {
+  /**
+   * Sort direction on banned_at timestamp (asc or desc).
+   * @example SortOrder.desc
+   */
+  @ApiPropertyOptional({
+    description: 'Sort direction on banned_at timestamp',
+    enum: SortOrder,
+    default: SortOrder.desc,
+    example: SortOrder.desc,
+  })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sort_order?: SortOrder = SortOrder.desc;
+}
+
+/**
+ * Paginated collection envelope for user sanction history records.
+ */
+export class PaginatedBanHistoryResponseDto {
+  @ApiProperty({
+    type: [BanHistoryItemDto],
+    description: 'Chronological sanction audit records for the target user',
+  })
+  items: BanHistoryItemDto[];
+
+  @ApiProperty({
+    description: 'Total number of sanction records for the user',
+    example: 3,
+  })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number', example: 1 })
+  page: number;
+
+  @ApiProperty({ description: 'Items per page', example: 20 })
+  limit: number;
+
+  @ApiProperty({ description: 'Total available pages', example: 1 })
+  total_pages: number;
+
+  @ApiProperty({
+    description: 'Indicates whether a next page exists',
+    example: false,
+  })
+  has_next_page: boolean;
+
+  @ApiProperty({
+    description: 'Indicates whether a previous page exists',
+    example: false,
+  })
+  has_prev_page: boolean;
 }

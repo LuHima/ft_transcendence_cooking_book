@@ -184,24 +184,33 @@ describe('AdminController', () => {
 
   describe('getUserSanctionsHistory', () => {
     it('delegates sanctions history lookup to service.getUserSanctionsHistory', async () => {
-      const mockBanHistory = [
-        {
-          id: 'ban-1',
-          user_id: 1,
-          banned_by_id: 2,
-          reason: 'spam_scam',
-          duration_days: 7,
-          is_permanent: false,
-          banned_at: new Date(),
-        },
-      ];
+      const mockBanHistory = {
+        items: [
+          {
+            id: 'ban-1',
+            user_id: 1,
+            banned_by_id: 2,
+            reason: 'spam_scam',
+            duration_days: 7,
+            is_permanent: false,
+            banned_at: new Date(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      };
       (service.getUserSanctionsHistory as jest.Mock).mockResolvedValue(
         mockBanHistory,
       );
 
-      const result = await controller.getUserSanctionsHistory(1);
+      const query = { page: 1, limit: 20 };
+      const result = await controller.getUserSanctionsHistory(1, query);
 
-      expect(service.getUserSanctionsHistory).toHaveBeenCalledWith(1);
+      expect(service.getUserSanctionsHistory).toHaveBeenCalledWith(1, query);
       expect(result).toEqual(mockBanHistory);
     });
   });
