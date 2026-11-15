@@ -25,8 +25,13 @@ import {
 import { NotificationEmit } from 'src/notifications/notification-emit';
 import {
   AdminRecipeQueryDto,
+  AdminRecipeSortBy,
   AdminRecipeStatus,
 } from '../admin/dto/admin-recipe-query.dto';
+import {
+  AdminRecipeItemDto,
+  PaginatedAdminRecipesResponseDto,
+} from '../admin/dto/admin-recipe-response.dto';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import {
@@ -49,7 +54,12 @@ import {
   RecipeCommentQueryDto,
   RecipeCommentSortBy,
 } from './dto/recipe-comment-query.dto';
-import { getPendingCommentReportTargetIds } from '../reports/helpers/pending-reports.helper';
+import {
+  getBatchReportMetrics,
+  getPendingCommentReportTargetIds,
+  getPendingReportTargetIds,
+  ReportMetricsMaps,
+} from '../reports/helpers/pending-reports.helper';
 import { SortOrder } from '../common/dto/sort-order.enum';
 import { LocalizedRecipeDetailResponse } from './dto/localized-recipe.response';
 import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
@@ -648,7 +658,7 @@ export class RecipeService {
   public async getAdminRecipes(
     query: AdminRecipeQueryDto,
     caller: { id: number; role?: Role | string },
-  ): Promise<PaginatedRecipeResponseDto> {
+  ): Promise<PaginatedAdminRecipesResponseDto> {
     const callerRole = String(caller?.role || '');
     if (callerRole !== Role.admin && callerRole !== Role.moderator) {
       throw new ForbiddenException('Insufficient permissions');
@@ -658,6 +668,21 @@ export class RecipeService {
     const limit =
       Number(query.limit) > 0 ? Math.min(Number(query.limit), 100) : 20;
     const skip = (page - 1) * limit;
+
+    const isReportedOnly = query.reported_only === true;
+    const sortBy =
+      query.sort_by ??
+      (isReportedOnly
+        ? AdminRecipeSortBy.pending_reports_count
+        : AdminRecipeSortBy.created_at);
+    const sortOrder =
+      query.sort_order ??
+      (sortBy === AdminRecipeSortBy.pending_reports_count ||
+      sortBy === AdminRecipeSortBy.reports_count ||
+      sortBy === AdminRecipeSortBy.created_at ||
+      sortBy === AdminRecipeSortBy.likes_count
+        ? RecipeSortOrder.desc
+        : RecipeSortOrder.asc);
 
     const where: Prisma.RecipeWhereInput = {};
     const andConditions: Prisma.RecipeWhereInput[] = [];
@@ -678,14 +703,10 @@ export class RecipeService {
     if (callerRole === Role.moderator) {
       let allowedPrivateRecipeIds: number[] = [];
       if (this.prisma.report) {
-        const recipeReports = await this.prisma.report.findMany({
-          where: {
-            status: ReportStatus.pending,
-            subject: ReportSubject.recipe,
-          },
-          select: { target_id: true },
-        });
-        const reportedRecipeIds = recipeReports.map((r) => r.target_id);
+        const reportedRecipeIds = await getPendingReportTargetIds(
+          this.prisma,
+          ReportSubject.recipe,
+        );
 
         let commentRecipeIds: number[] = [];
         if (this.prisma.comment) {
@@ -748,7 +769,30 @@ export class RecipeService {
       }
     }
 
-    this.applyCatalogFilters(query, where, andConditions);
+    // 3. Optional reported_only filter (strictly subject = 'recipe' pending reports)
+    if (isReportedOnly) {
+      const pendingRecipeIds = await getPendingReportTargetIds(
+        this.prisma,
+        ReportSubject.recipe,
+      );
+      if (pendingRecipeIds.length === 0) {
+        return {
+          items: [],
+          total: 0,
+          page,
+          limit,
+          total_pages: 0,
+          has_next_page: false,
+          has_prev_page: false,
+        };
+      }
+      andConditions.push({ id: { in: pendingRecipeIds } });
+      customBaseSqlConditions.push(
+        Prisma.sql`r.id IN (${Prisma.join(pendingRecipeIds)})`,
+      );
+    }
+
+    this.applyCatalogFilters(query as unknown as FilterRecipeDto, where, andConditions);
 
     if (andConditions.length > 0) {
       where.AND = andConditions;
@@ -756,10 +800,50 @@ export class RecipeService {
 
     let recipes: any[];
     let total: number;
+    let precomputedMetrics: ReportMetricsMaps | undefined;
 
-    if (query.sort_by === RecipeSortBy.title) {
+    if (
+      sortBy === AdminRecipeSortBy.pending_reports_count ||
+      sortBy === AdminRecipeSortBy.reports_count
+    ) {
+      const allRecipes = await this.prisma.recipe.findMany({
+        where,
+        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+        include: RECIPE_SUMMARY_INCLUDE(caller.id),
+      });
+
+      precomputedMetrics = await getBatchReportMetrics(
+        this.prisma,
+        ReportSubject.recipe,
+        allRecipes.map((r) => r.id),
+      );
+
+      const targetCountMap =
+        sortBy === AdminRecipeSortBy.pending_reports_count
+          ? precomputedMetrics.pending
+          : precomputedMetrics.total;
+
+      allRecipes.sort((a, b) => {
+        const countA = targetCountMap.get(a.id) || 0;
+        const countB = targetCountMap.get(b.id) || 0;
+        if (countB !== countA) {
+          return sortOrder === RecipeSortOrder.asc
+            ? countA - countB
+            : countB - countA;
+        }
+        const timeDiff =
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        if (timeDiff !== 0) {
+          return timeDiff;
+        }
+        return b.id - a.id;
+      });
+
+      total = allRecipes.length;
+      recipes = allRecipes.slice(skip, skip + limit);
+    } else if (sortBy === AdminRecipeSortBy.title) {
       const titleResult = await this.resolveRecipesSortedByTitle(
-        query,
+        { ...(query as unknown as FilterRecipeDto), sort_by: RecipeSortBy.title },
         where,
         skip,
         limit,
@@ -772,8 +856,8 @@ export class RecipeService {
       total = titleResult.total;
     } else {
       const orderBy = this.resolveRecipeOrderBy(
-        query.sort_by,
-        query.sort_order,
+        sortBy as unknown as RecipeSortBy,
+        sortOrder,
       );
 
       [recipes, total] = await Promise.all([
@@ -790,12 +874,42 @@ export class RecipeService {
       ]);
     }
 
-    return this.recipeProjection.toPaginatedSummaryResponse(
+    const reportMetrics =
+      precomputedMetrics ??
+      (await getBatchReportMetrics(
+        this.prisma,
+        ReportSubject.recipe,
+        recipes.map((r) => r.id),
+      ));
+
+    const summaryPage = this.recipeProjection.toPaginatedSummaryResponse(
       recipes,
       total,
-      { ...query, page, limit },
+      { ...(query as unknown as FilterRecipeDto), page, limit },
       caller.id,
     );
+
+    const items: AdminRecipeItemDto[] = summaryPage.items.map((item) => {
+      const totalCount = reportMetrics.total.get(item.id) || 0;
+      const pendingCount = reportMetrics.pending.get(item.id) || 0;
+      const latestPendingReportId =
+        pendingCount > 0
+          ? (reportMetrics.latestPendingId.get(item.id) ?? null)
+          : null;
+
+      return {
+        ...item,
+        reports_count: totalCount,
+        pending_reports_count: pendingCount,
+        has_pending_reports: pendingCount > 0,
+        latest_pending_report_id: latestPendingReportId,
+      };
+    });
+
+    return {
+      ...summaryPage,
+      items,
+    };
   }
 
   // ---------------------------------------------------------------------------

@@ -15,7 +15,7 @@ import {
   type ActiveUserData,
 } from '../common/decorators/current-user.decorator';
 import { AdminRecipeQueryDto } from './dto/admin-recipe-query.dto';
-import { PaginatedRecipeResponseDto } from '../recipe/dto/recipe-response.dto';
+import { PaginatedAdminRecipesResponseDto } from './dto/admin-recipe-response.dto';
 import {
   ApiBadRequestResponseDto,
   ApiForbiddenResponseDto,
@@ -42,8 +42,9 @@ export class AdminRecipesController {
       'Provides a dedicated administrative recipe stream supporting status filtering (active, inactive, all) and search capabilities, enforcing platform privacy visibility boundaries (Admins access all privacy tiers; Moderators access public and friends-only recipes, plus private recipes only if actively reported).',
   })
   @ApiOkResponse({
-    description: 'Paginated recipe records conforming to platform visibility matrix',
-    type: PaginatedRecipeResponseDto,
+    description:
+      'Paginated administrative recipe records with recipe-level report counters',
+    type: PaginatedAdminRecipesResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Validation failed on query parameters',
@@ -58,7 +59,7 @@ export class AdminRecipesController {
   async getAdminRecipes(
     @Query() query: AdminRecipeQueryDto,
     @CurrentUser() caller: ActiveUserData,
-  ): Promise<PaginatedRecipeResponseDto> {
+  ): Promise<PaginatedAdminRecipesResponseDto> {
     return await this.recipeService.getAdminRecipes(query, caller);
   }
 }
