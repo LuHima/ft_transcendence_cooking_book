@@ -213,5 +213,31 @@ describe('AdminController', () => {
       expect(service.getUserSanctionsHistory).toHaveBeenCalledWith(1, query);
       expect(result).toEqual(mockBanHistory);
     });
+
+    it('grants access to admin and moderator roles while blocking standard user role via RolesGuard', () => {
+      const { Reflector } = require('@nestjs/core');
+      const { RolesGuard } = require('../common/guards/roles.guard');
+      const { ForbiddenException } = require('@nestjs/common');
+      const reflector = new Reflector();
+      const guard = new RolesGuard(reflector);
+
+      const createContext = (role?: string) =>
+        ({
+          getHandler: () => AdminController.prototype.getUserSanctionsHistory,
+          getClass: () => AdminController,
+          switchToHttp: () => ({
+            getRequest: () => ({ user: role ? { id: 99, role } : undefined }),
+          }),
+        }) as any;
+
+      expect(guard.canActivate(createContext('admin'))).toBe(true);
+      expect(guard.canActivate(createContext('moderator'))).toBe(true);
+      expect(() => guard.canActivate(createContext('user'))).toThrow(
+        ForbiddenException,
+      );
+      expect(() => guard.canActivate(createContext(undefined))).toThrow(
+        ForbiddenException,
+      );
+    });
   });
 });

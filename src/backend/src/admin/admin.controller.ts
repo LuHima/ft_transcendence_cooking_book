@@ -98,10 +98,10 @@ export class AdminController {
   }
 
   /**
-   * Retrieve full chronological sanction audit trail for a user (Admin only).
+   * Retrieve full chronological sanction audit trail for a user (Admin and Moderator).
    */
   @ApiOperation({
-    summary: 'Get user ban history (Admin only)',
+    summary: 'Get user ban history (Admin and Moderator)',
     description:
       'Returns chronological sanction audit records for repeat offender investigation.',
   })
@@ -127,9 +127,10 @@ export class AdminController {
     type: ApiUnauthorizedResponseDto,
   })
   @ApiForbiddenResponse({
-    description: 'Forbidden: Requires administrator privileges',
+    description: 'Forbidden: Requires administrator or moderator privileges',
     type: ApiForbiddenResponseDto,
   })
+  @Roles('admin', 'moderator')
   @Get(':id/ban-history')
   async getUserSanctionsHistory(
     @Param('id', ParseIntPipe) id: number,
