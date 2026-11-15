@@ -21333,7 +21333,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"sexual_content\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"sexual_content\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21615,7 +21615,7 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "dismissed",
+                  "value": "pending",
                   "description": "Filter reports by current review status"
                 },
                 {
@@ -21689,7 +21689,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"hate_speech\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22040,7 +22040,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"sexual_content\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"sexual_content\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22997,9 +22997,9 @@
         },
         {
           "id": "cc1bf390-f27a-4c75-809d-806ae1efd92f",
-          "name": "Get user ban history (Admin only)",
+          "name": "Get user ban history (Admin and Moderator)",
           "request": {
-            "name": "Get user ban history (Admin only)",
+            "name": "Get user ban history (Admin and Moderator)",
             "description": {
               "content": "Returns chronological sanction audit records for repeat offender investigation.",
               "type": "text/plain"
@@ -23110,7 +23110,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"user_id\": 42,\n      \"banned_by_id\": 1,\n      \"action\": \"ban\",\n      \"reason\": \"harassment_bullying\",\n      \"is_permanent\": false,\n      \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n      \"report_id\": 10,\n      \"description\": \"Harassment in recipe comments\",\n      \"duration_days\": 30,\n      \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n      \"unbanned_at\": null,\n      \"unbanned_by_id\": null,\n      \"unban_reason\": null\n    },\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"user_id\": 42,\n      \"banned_by_id\": 1,\n      \"action\": \"ban\",\n      \"reason\": \"harassment_bullying\",\n      \"is_permanent\": false,\n      \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n      \"report_id\": 10,\n      \"description\": \"Harassment in recipe comments\",\n      \"duration_days\": 30,\n      \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n      \"unbanned_at\": null,\n      \"unbanned_by_id\": null,\n      \"unban_reason\": null\n    }\n  ],\n  \"total\": 3,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"user_id\": 42,\n      \"banned_by_id\": 1,\n      \"action\": \"ban\",\n      \"reason\": \"harassment_bullying\",\n      \"is_permanent\": false,\n      \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n      \"banned_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"report_id\": 10,\n      \"description\": \"Harassment in recipe comments\",\n      \"internal_notes\": \"Escalated after repeated spam reports\",\n      \"duration_days\": 30,\n      \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n      \"unbanned_at\": null,\n      \"unbanned_by_id\": null,\n      \"unbanned_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"unban_reason\": null\n    },\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"user_id\": 42,\n      \"banned_by_id\": 1,\n      \"action\": \"ban\",\n      \"reason\": \"harassment_bullying\",\n      \"is_permanent\": false,\n      \"banned_at\": \"2026-11-04T12:00:00.000Z\",\n      \"banned_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"report_id\": 10,\n      \"description\": \"Harassment in recipe comments\",\n      \"internal_notes\": \"Escalated after repeated spam reports\",\n      \"duration_days\": 30,\n      \"expires_at\": \"2026-12-04T12:00:00.000Z\",\n      \"unbanned_at\": null,\n      \"unbanned_by_id\": null,\n      \"unbanned_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"unban_reason\": null\n    }\n  ],\n  \"total\": 3,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -23235,8 +23235,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "d21089ac-624f-4a92-81e3-e83dc21fc051",
-              "name": "Forbidden: Requires administrator privileges",
+              "id": "9bde45fd-fa59-43d0-8c30-19b45697fb76",
+              "name": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Requires administrator or moderator privileges",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -23651,7 +23651,7 @@
           "request": {
             "name": "Update user account or status (Admin only)",
             "description": {
-              "content": "Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling status mutations. Atomically restores platform-custody content on reactivation to active status.",
+              "content": "Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling/banning status mutations. Disabling suspends login and profile discovery without altering authored content; reactivating a soft-deleted account restores platform-custody public recipes and comments.",
               "type": "text/plain"
             },
             "url": {
@@ -23688,7 +23688,7 @@
             "method": "PATCH",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
+              "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"internal_notes\": \"Repeat spammer across multiple recipe threads.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -23731,7 +23731,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
+                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"internal_notes\": \"Repeat spammer across multiple recipe threads.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -23752,8 +23752,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "90c5e199-d383-4305-8e6f-3f7f97926b6c",
-              "name": "Validation failed or attempt to demote/disable own account (anti-self-sabotage)",
+              "id": "0b0e536f-594f-4ca1-8942-a8d28f9a72b5",
+              "name": "Validation failed, contradictory ban/unban payload, or attempt to demote/disable own account (anti-self-sabotage)",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -23785,7 +23785,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
+                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"internal_notes\": \"Repeat spammer across multiple recipe threads.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -23839,7 +23839,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
+                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"internal_notes\": \"Repeat spammer across multiple recipe threads.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -23893,7 +23893,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
+                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"internal_notes\": \"Repeat spammer across multiple recipe threads.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -23947,7 +23947,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
+                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"internal_notes\": \"Repeat spammer across multiple recipe threads.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -23968,8 +23968,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "430c808c-13e7-4ebb-8fea-0ac034e832ed",
-              "name": "Last administrator safeguard conflict or unique username/email collision",
+              "id": "0310417f-f2af-405d-8554-c51d740236f5",
+              "name": "Last administrator safeguard conflict, unique username/email collision, or banning a soft-deleted account",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -24001,7 +24001,7 @@
                 "method": "PATCH",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
+                  "raw": "{\n  \"username\": \"moderator_chef_updated\",\n  \"email\": \"new.moderator@wecook.com\",\n  \"password\": \"NewSecurePassword456!\",\n  \"role\": \"admin\",\n  \"status\": \"active\",\n  \"ban_reason\": \"harassment_bullying\",\n  \"ban_description\": \"Repeated violations of community conduct policies.\",\n  \"internal_notes\": \"Repeat spammer across multiple recipe threads.\",\n  \"ban_duration_days\": 30,\n  \"is_permanent\": false,\n  \"unban_reason\": \"Ban appeal reviewed and granted by trust & safety staff.\",\n  \"avatar_url\": \"/api/media/avatars/1/chef.webp\",\n  \"bio\": \"Senior community moderator and culinary instructor.\",\n  \"first_name\": \"Luca\",\n  \"last_name\": \"Bianchi\",\n  \"birth_date\": {},\n  \"phone\": \"+39 02 1234567\",\n  \"address\": \"Corso Buenos Aires 45\",\n  \"city\": \"Milano\",\n  \"postal_code\": \"20124\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -24046,7 +24046,7 @@
           "request": {
             "name": "Deactivate or delete user (Admin only)",
             "description": {
-              "content": "By default performs soft deletion: disables account, purges active JWT sessions, transfers public recipes to platform custody, and deactivates authored comments. With ?hard=true, disassociates recipes and permanently deletes user row.",
+              "content": "By default performs soft deletion: disables account, sets deleted_at, purges active JWT sessions, transfers public recipes to platform custody (hiding non-public recipes at query time), and deactivates authored comments. Returns 409 Conflict if already soft-deleted. With ?hard=true, disassociates recipes and permanently deletes user row.",
               "type": "text/plain"
             },
             "url": {
@@ -24342,8 +24342,8 @@
               "_postman_previewlanguage": "json"
             },
             {
-              "id": "ba035030-0689-4029-8b16-c71947539d07",
-              "name": "Attempt to delete the sole remaining platform administrator",
+              "id": "38249cf8-bcc6-42ac-802b-d7a69d496785",
+              "name": "User is already soft-deleted or attempt to delete the sole remaining platform administrator",
               "originalRequest": {
                 "url": {
                   "path": [

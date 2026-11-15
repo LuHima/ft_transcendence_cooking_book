@@ -6239,7 +6239,7 @@
             }
           },
           "403": {
-            "description": "Forbidden: Requires administrator privileges",
+            "description": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Requires administrator or moderator privileges",
             "content": {
               "application/json": {
                 "schema": {
@@ -6267,7 +6267,7 @@
             "JWT": []
           }
         ],
-        "summary": "Get user ban history (Admin only)",
+        "summary": "Get user ban history (Admin and Moderator)",
         "tags": [
           "Admin Users"
         ]
@@ -6345,7 +6345,7 @@
         ]
       },
       "patch": {
-        "description": "Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling status mutations. Atomically restores platform-custody content on reactivation to active status.",
+        "description": "Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling/banning status mutations. Disabling suspends login and profile discovery without altering authored content; reactivating a soft-deleted account restores platform-custody public recipes and comments.",
         "operationId": "AdminController_updateUser",
         "parameters": [
           {
@@ -6381,7 +6381,7 @@
             }
           },
           "400": {
-            "description": "Validation failed or attempt to demote/disable own account (anti-self-sabotage)",
+            "description": "Validation failed, contradictory ban/unban payload, or attempt to demote/disable own account (anti-self-sabotage)",
             "content": {
               "application/json": {
                 "schema": {
@@ -6421,7 +6421,7 @@
             }
           },
           "409": {
-            "description": "Last administrator safeguard conflict or unique username/email collision",
+            "description": "Last administrator safeguard conflict, unique username/email collision, or banning a soft-deleted account",
             "content": {
               "application/json": {
                 "schema": {
@@ -6445,7 +6445,7 @@
         ]
       },
       "delete": {
-        "description": "By default performs soft deletion: disables account, purges active JWT sessions, transfers public recipes to platform custody, and deactivates authored comments. With ?hard=true, disassociates recipes and permanently deletes user row.",
+        "description": "By default performs soft deletion: disables account, sets deleted_at, purges active JWT sessions, transfers public recipes to platform custody (hiding non-public recipes at query time), and deactivates authored comments. Returns 409 Conflict if already soft-deleted. With ?hard=true, disassociates recipes and permanently deletes user row.",
         "operationId": "AdminController_deleteUser",
         "parameters": [
           {
@@ -6521,7 +6521,7 @@
             }
           },
           "409": {
-            "description": "Attempt to delete the sole remaining platform administrator",
+            "description": "User is already soft-deleted or attempt to delete the sole remaining platform administrator",
             "content": {
               "application/json": {
                 "schema": {
@@ -11862,6 +11862,32 @@
         ],
         "description": "Current moderation triage status"
       },
+      "StaffActorSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Numeric user ID of the staff actor",
+            "example": 1
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the staff actor",
+            "example": "mod_alice"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Avatar image URL of the staff actor",
+            "example": "/uploads/avatars/avatar_1.webp"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "avatar_url"
+        ]
+      },
       "ReportItemDto": {
         "type": "object",
         "properties": {
@@ -11989,6 +12015,16 @@
             "nullable": true,
             "description": "Staff member who resolved the report",
             "example": null
+          },
+          "resolved_by": {
+            "nullable": true,
+            "description": "Hydrated profile summary of the staff member who resolved the report",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffActorSummaryDto"
+              }
+            ]
           },
           "resolved_at": {
             "type": "string",
@@ -12482,8 +12518,19 @@
           },
           "banned_by_id": {
             "type": "number",
-            "description": "Staff user ID who issued the ban",
+            "nullable": true,
+            "description": "Staff user ID who issued the ban (null if staff account was hard-deleted)",
             "example": 1
+          },
+          "banned_by": {
+            "nullable": true,
+            "description": "Hydrated profile summary of the staff member who issued the sanction",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffActorSummaryDto"
+              }
+            ]
           },
           "report_id": {
             "type": "number",
@@ -12515,6 +12562,13 @@
             "nullable": true,
             "description": "User-facing explanation of the sanction",
             "example": "Harassment in recipe comments"
+          },
+          "internal_notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Confidential staff-only internal notes (never exposed to sanctioned users)",
+            "example": "Escalated after repeated spam reports",
+            "maxLength": 1000
           },
           "duration_days": {
             "type": "number",
@@ -12552,6 +12606,16 @@
             "nullable": true,
             "description": "Staff user ID who lifted the ban",
             "example": null
+          },
+          "unbanned_by": {
+            "nullable": true,
+            "description": "Hydrated profile summary of the staff member who lifted the ban",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffActorSummaryDto"
+              }
+            ]
           },
           "unban_reason": {
             "type": "string",
@@ -12778,6 +12842,12 @@
             "type": "string",
             "description": "User-facing explanation for the ban",
             "example": "Repeated violations of community conduct policies.",
+            "maxLength": 1000
+          },
+          "internal_notes": {
+            "type": "string",
+            "description": "Confidential staff-only internal notes (only allowed when status is banned)",
+            "example": "Repeat spammer across multiple recipe threads.",
             "maxLength": 1000
           },
           "ban_duration_days": {
