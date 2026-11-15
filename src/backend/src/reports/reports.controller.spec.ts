@@ -139,8 +139,8 @@ describe('ReportsController', () => {
   describe('updateReport', () => {
     it('delegates report status modification to reportsService.updateReport', async () => {
       const dto = {
-        status: ReportStatus.reviewed,
-        resolution_notes: 'Reviewed and closed',
+        status: ReportStatus.dismissed,
+        resolution_notes: 'Dismissed after review',
       };
       const caller = { id: 2, role: 'moderator' as any };
       const expectedResult = {
@@ -150,8 +150,8 @@ describe('ReportsController', () => {
         target_id: 10,
         reason: ReportReason.harassment_bullying,
         description: null,
-        status: ReportStatus.reviewed,
-        resolution_notes: 'Reviewed and closed',
+        status: ReportStatus.dismissed,
+        resolution_notes: 'Dismissed after review',
         created_at: new Date(),
         updated_at: new Date(),
       };

@@ -26,7 +26,7 @@ We decided to introduce dedicated `UserBlock` and `Report` relational models, im
      - `target_id`: Int
      - `reason`: `ReportReason` (`spam`, `harassment`, `inappropriate_content`, `hate_speech`, `copyright`, `other`)
      - `description`: String? @db.VarChar(1000)
-     - `status`: `ReportStatus` (`pending`, `reviewed`, `dismissed`, `action_taken`) @default(pending)
+     - `status`: `ReportStatus` (`pending`, `dismissed`, `action_taken`) @default(pending)
      - `resolution_notes`: String? @db.VarChar(1000)
      - `created_at`: DateTime @default(now())
      - `updated_at`: DateTime @updatedAt

@@ -50,6 +50,21 @@ describe('AdminRecipeQueryDto', () => {
     expect(dto.sort_by).toBe(AdminRecipeSortBy.created_at);
   });
 
+  it('omits empty-string reported_only and rejects invalid non-boolean strings', async () => {
+    const emptyDto = plainToInstance(AdminRecipeQueryDto, {
+      reported_only: '',
+    });
+    expect(await validate(emptyDto)).toHaveLength(0);
+    expect(emptyDto.reported_only).toBeUndefined();
+
+    const invalidDto = plainToInstance(AdminRecipeQueryDto, {
+      reported_only: 'abc',
+    });
+    const errors = await validate(invalidDto);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].property).toBe('reported_only');
+  });
+
   it.each([
     AdminRecipeSortBy.created_at,
     AdminRecipeSortBy.total_time,

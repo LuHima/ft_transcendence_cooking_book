@@ -495,8 +495,7 @@ export const REPORT_REASONS: ReportReason[] = [
 	'impersonation_misinformation',
 	'other',
 ]
-// 'reviewed' exists on the backend but is not used by the panel
-export type ReportStatus = 'pending' | 'reviewed' | 'action_taken' | 'dismissed'
+export type ReportStatus = 'pending' | 'action_taken' | 'dismissed'
 // dismiss = archive; warn = warning; delete_content = suspend recipe/comment; ban = ban the owner
 export type ModerationAction = 'dismiss' | 'warn' | 'delete_content' | 'ban'
 

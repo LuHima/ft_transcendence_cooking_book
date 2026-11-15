@@ -11982,7 +11982,6 @@
         "type": "string",
         "enum": [
           "pending",
-          "reviewed",
           "dismissed",
           "action_taken"
         ],
@@ -13549,7 +13548,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "reports_count": {

@@ -359,7 +359,7 @@ describe('RecipeProjection', () => {
       likes: [],
     };
 
-    it('handles empty collection edge case', () => {
+    it('handles empty collection edge case including page > 1', () => {
       const res = projection.toPaginatedSummaryResponse([], 0, {
         page: 1,
         limit: 20,
@@ -371,6 +371,14 @@ describe('RecipeProjection', () => {
       expect(res.total_pages).toBe(0);
       expect(res.has_next_page).toBe(false);
       expect(res.has_prev_page).toBe(false);
+
+      const pageTwoRes = projection.toPaginatedSummaryResponse([], 0, {
+        page: 2,
+        limit: 20,
+      });
+      expect(pageTwoRes.total_pages).toBe(0);
+      expect(pageTwoRes.has_next_page).toBe(false);
+      expect(pageTwoRes.has_prev_page).toBe(false);
     });
 
     it('handles single page collection', () => {

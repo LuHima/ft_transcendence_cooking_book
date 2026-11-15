@@ -55,10 +55,13 @@ import {
   RecipeCommentSortBy,
 } from './dto/recipe-comment-query.dto';
 import {
+  extractTargetReportCounters,
   getBatchReportMetrics,
   getPendingCommentReportTargetIds,
   getPendingReportTargetIds,
+  populateLatestPendingReportIds,
   ReportMetricsMaps,
+  sortByReportMetric,
 } from '../reports/helpers/pending-reports.helper';
 import { SortOrder } from '../common/dto/sort-order.enum';
 import { LocalizedRecipeDetailResponse } from './dto/localized-recipe.response';
@@ -137,7 +140,7 @@ export class RecipeService {
   // ---------------------------------------------------------------------------
 
   private applyCatalogFilters(
-    filterDto: FilterRecipeDto,
+    filterDto: FilterRecipeDto | AdminRecipeQueryDto,
     where: Prisma.RecipeWhereInput,
     andConditions: Prisma.RecipeWhereInput[],
   ): void {
@@ -317,7 +320,7 @@ export class RecipeService {
   }
 
   private resolveRecipeOrderBy(
-    sortBy: RecipeSortBy = RecipeSortBy.created_at,
+    sortBy: RecipeSortBy | AdminRecipeSortBy = RecipeSortBy.created_at,
     sortOrder?: RecipeSortOrder,
   ): Prisma.RecipeOrderByWithRelationInput {
     let order: Prisma.SortOrder;
@@ -343,7 +346,9 @@ export class RecipeService {
     }
   }
 
-  private buildCatalogSqlFilters(filterDto: FilterRecipeDto): Prisma.Sql[] {
+  private buildCatalogSqlFilters(
+    filterDto: FilterRecipeDto | AdminRecipeQueryDto,
+  ): Prisma.Sql[] {
     const sqlConditions: Prisma.Sql[] = [];
 
     if (filterDto.course) {
@@ -469,7 +474,7 @@ export class RecipeService {
   }
 
   private async resolveRecipesSortedByTitle(
-    filterDto: FilterRecipeDto,
+    filterDto: FilterRecipeDto | AdminRecipeQueryDto,
     where: Prisma.RecipeWhereInput,
     skip: number,
     limit: number,
@@ -655,6 +660,114 @@ export class RecipeService {
 
   // ---------------------------------------------------------------------------
 
+  private async resolveModeratorAllowedPrivateRecipeIds(): Promise<number[]> {
+    if (!this.prisma.report) {
+      return [];
+    }
+
+    const reportedRecipeIds = await getPendingReportTargetIds(
+      this.prisma,
+      ReportSubject.recipe,
+    );
+
+    let commentRecipeIds: number[] = [];
+    if (this.prisma.comment) {
+      const reportedCommentIds = await getPendingCommentReportTargetIds(
+        this.prisma,
+      );
+      if (reportedCommentIds.length > 0) {
+        const reportedComments = await this.prisma.comment.findMany({
+          where: { id: { in: reportedCommentIds } },
+          select: { recipe_id: true },
+        });
+        commentRecipeIds = reportedComments.map((c) => c.recipe_id);
+      }
+    }
+
+    return Array.from(new Set([...reportedRecipeIds, ...commentRecipeIds]));
+  }
+
+  private buildModeratorPrivacySqlCondition(
+    callerId: number | undefined,
+    allowedPrivateRecipeIds: number[],
+  ): Prisma.Sql {
+    const clauses: Prisma.Sql[] = [
+      Prisma.sql`r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy")`,
+    ];
+    if (callerId) {
+      clauses.push(Prisma.sql`r.user_id = ${callerId}`);
+    }
+    if (allowedPrivateRecipeIds.length > 0) {
+      clauses.push(
+        Prisma.sql`(r.privacy = 'private'::"RecipePrivacy" AND r.id IN (${Prisma.join(allowedPrivateRecipeIds)}))`,
+      );
+    }
+    return Prisma.sql`(${Prisma.join(clauses, ' OR ')})`;
+  }
+
+  private async fetchReportSortedAdminRecipes(
+    where: Prisma.RecipeWhereInput,
+    sortBy: AdminRecipeSortBy,
+    sortOrder: RecipeSortOrder,
+    skip: number,
+    limit: number,
+    callerId: number,
+  ): Promise<{
+    recipes: any[];
+    total: number;
+    reportMetrics: ReportMetricsMaps;
+  }> {
+    // Sort lightweight `{ id, created_at }` rows first so only the final page pays full relation hydration.
+    const candidateRecipes = await this.prisma.recipe.findMany({
+      where,
+      select: { id: true, created_at: true },
+    });
+
+    const reportMetrics = await getBatchReportMetrics(
+      this.prisma,
+      ReportSubject.recipe,
+      candidateRecipes.map((r) => r.id),
+      { includeLatestPendingId: false },
+    );
+
+    const targetCountMap =
+      sortBy === AdminRecipeSortBy.pending_reports_count
+        ? reportMetrics.pending
+        : reportMetrics.total;
+
+    const sortedCandidates = sortByReportMetric(
+      candidateRecipes,
+      targetCountMap,
+      sortOrder === RecipeSortOrder.asc ? 'asc' : 'desc',
+    );
+
+    const total = sortedCandidates.length;
+    const pagedIds = sortedCandidates.slice(skip, skip + limit).map((r) => r.id);
+    if (pagedIds.length === 0) {
+      return { recipes: [], total, reportMetrics };
+    }
+
+    const [hydrated] = await Promise.all([
+      this.prisma.recipe.findMany({
+        where: { id: { in: pagedIds } },
+        include: RECIPE_SUMMARY_INCLUDE(callerId),
+      }),
+      populateLatestPendingReportIds(
+        this.prisma,
+        ReportSubject.recipe,
+        reportMetrics,
+        pagedIds,
+      ),
+    ]);
+
+    const byId = new Map(hydrated.map((r) => [r.id, r]));
+    const recipes = pagedIds
+      .map((id) => byId.get(id))
+      .filter((r): r is NonNullable<typeof r> => Boolean(r));
+
+    return { recipes, total, reportMetrics };
+  }
+
   public async getAdminRecipes(
     query: AdminRecipeQueryDto,
     caller: { id: number; role?: Role | string },
@@ -684,11 +797,27 @@ export class RecipeService {
         ? RecipeSortOrder.desc
         : RecipeSortOrder.asc);
 
+    // Fetch pending reported recipe IDs once when reported_only=true so moderator scoping reuses them.
+    const pendingRecipeIds = isReportedOnly
+      ? await getPendingReportTargetIds(this.prisma, ReportSubject.recipe)
+      : undefined;
+
+    if (pendingRecipeIds && pendingRecipeIds.length === 0) {
+      return {
+        items: [],
+        total: 0,
+        page,
+        limit,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      };
+    }
+
     const where: Prisma.RecipeWhereInput = {};
     const andConditions: Prisma.RecipeWhereInput[] = [];
     const customBaseSqlConditions: Prisma.Sql[] = [];
 
-    // 1. Status lifecycle filter
     if (query.status === AdminRecipeStatus.active) {
       where.is_active = true;
       customBaseSqlConditions.push(Prisma.sql`r.is_active = true`);
@@ -697,35 +826,11 @@ export class RecipeService {
       customBaseSqlConditions.push(Prisma.sql`r.is_active = false`);
     }
 
-    // 2. Role-scoped visibility scoping per ADR 0027 & privacy-and-visibility-matrix
-    // Administrator: view all privacy tiers (public, friends_only, private)
-    // Moderator: view public + friends_only, and private ONLY IF an active pending report exists against the recipe (or its comments)
+    // Administrator sees all privacy tiers; Moderator sees public + friends_only + authored + private with pending reports.
     if (callerRole === Role.moderator) {
-      let allowedPrivateRecipeIds: number[] = [];
-      if (this.prisma.report) {
-        const reportedRecipeIds = await getPendingReportTargetIds(
-          this.prisma,
-          ReportSubject.recipe,
-        );
-
-        let commentRecipeIds: number[] = [];
-        if (this.prisma.comment) {
-          const reportedCommentIds = await getPendingCommentReportTargetIds(
-            this.prisma,
-          );
-          if (reportedCommentIds.length > 0) {
-            const reportedComments = await this.prisma.comment.findMany({
-              where: { id: { in: reportedCommentIds } },
-              select: { recipe_id: true },
-            });
-            commentRecipeIds = reportedComments.map((c) => c.recipe_id);
-          }
-        }
-
-        allowedPrivateRecipeIds = Array.from(
-          new Set([...reportedRecipeIds, ...commentRecipeIds]),
-        );
-      }
+      const allowedPrivateRecipeIds =
+        pendingRecipeIds ??
+        (await this.resolveModeratorAllowedPrivateRecipeIds());
 
       const privacyOr: Prisma.RecipeWhereInput[] = [
         { privacy: RecipePrivacy.public },
@@ -741,58 +846,24 @@ export class RecipeService {
         });
       }
       andConditions.push({ OR: privacyOr });
-
-      if (allowedPrivateRecipeIds.length > 0) {
-        if (caller?.id) {
-          customBaseSqlConditions.push(
-            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR r.user_id = ${caller.id} OR (r.privacy = 'private'::"RecipePrivacy" AND r.id IN (${Prisma.join(allowedPrivateRecipeIds)})))`,
-          );
-        } else {
-          customBaseSqlConditions.push(
-            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR (r.privacy = 'private'::"RecipePrivacy" AND r.id IN (${Prisma.join(allowedPrivateRecipeIds)})))`,
-          );
-        }
-      } else {
-        if (caller?.id) {
-          customBaseSqlConditions.push(
-            Prisma.sql`(r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy") OR r.user_id = ${caller.id})`,
-          );
-        } else {
-          customBaseSqlConditions.push(
-            Prisma.sql`r.privacy IN ('public'::"RecipePrivacy", 'friends_only'::"RecipePrivacy")`,
-          );
-        }
-      }
-    } else {
-      if (customBaseSqlConditions.length === 0) {
-        customBaseSqlConditions.push(Prisma.sql`1=1`);
-      }
+      customBaseSqlConditions.push(
+        this.buildModeratorPrivacySqlCondition(
+          caller?.id,
+          allowedPrivateRecipeIds,
+        ),
+      );
+    } else if (customBaseSqlConditions.length === 0) {
+      customBaseSqlConditions.push(Prisma.sql`1=1`);
     }
 
-    // 3. Optional reported_only filter (strictly subject = 'recipe' pending reports)
-    if (isReportedOnly) {
-      const pendingRecipeIds = await getPendingReportTargetIds(
-        this.prisma,
-        ReportSubject.recipe,
-      );
-      if (pendingRecipeIds.length === 0) {
-        return {
-          items: [],
-          total: 0,
-          page,
-          limit,
-          total_pages: 0,
-          has_next_page: false,
-          has_prev_page: false,
-        };
-      }
+    if (pendingRecipeIds) {
       andConditions.push({ id: { in: pendingRecipeIds } });
       customBaseSqlConditions.push(
         Prisma.sql`r.id IN (${Prisma.join(pendingRecipeIds)})`,
       );
     }
 
-    this.applyCatalogFilters(query as unknown as FilterRecipeDto, where, andConditions);
+    this.applyCatalogFilters(query, where, andConditions);
 
     if (andConditions.length > 0) {
       where.AND = andConditions;
@@ -806,44 +877,20 @@ export class RecipeService {
       sortBy === AdminRecipeSortBy.pending_reports_count ||
       sortBy === AdminRecipeSortBy.reports_count
     ) {
-      const allRecipes = await this.prisma.recipe.findMany({
+      const sortedResult = await this.fetchReportSortedAdminRecipes(
         where,
-        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
-        include: RECIPE_SUMMARY_INCLUDE(caller.id),
-      });
-
-      precomputedMetrics = await getBatchReportMetrics(
-        this.prisma,
-        ReportSubject.recipe,
-        allRecipes.map((r) => r.id),
+        sortBy,
+        sortOrder,
+        skip,
+        limit,
+        caller.id,
       );
-
-      const targetCountMap =
-        sortBy === AdminRecipeSortBy.pending_reports_count
-          ? precomputedMetrics.pending
-          : precomputedMetrics.total;
-
-      allRecipes.sort((a, b) => {
-        const countA = targetCountMap.get(a.id) || 0;
-        const countB = targetCountMap.get(b.id) || 0;
-        if (countB !== countA) {
-          return sortOrder === RecipeSortOrder.asc
-            ? countA - countB
-            : countB - countA;
-        }
-        const timeDiff =
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        if (timeDiff !== 0) {
-          return timeDiff;
-        }
-        return b.id - a.id;
-      });
-
-      total = allRecipes.length;
-      recipes = allRecipes.slice(skip, skip + limit);
+      recipes = sortedResult.recipes;
+      total = sortedResult.total;
+      precomputedMetrics = sortedResult.reportMetrics;
     } else if (sortBy === AdminRecipeSortBy.title) {
       const titleResult = await this.resolveRecipesSortedByTitle(
-        { ...(query as unknown as FilterRecipeDto), sort_by: RecipeSortBy.title },
+        query,
         where,
         skip,
         limit,
@@ -855,10 +902,7 @@ export class RecipeService {
       recipes = titleResult.recipes;
       total = titleResult.total;
     } else {
-      const orderBy = this.resolveRecipeOrderBy(
-        sortBy as unknown as RecipeSortBy,
-        sortOrder,
-      );
+      const orderBy = this.resolveRecipeOrderBy(sortBy, sortOrder);
 
       [recipes, total] = await Promise.all([
         this.prisma.recipe.findMany({
@@ -885,26 +929,17 @@ export class RecipeService {
     const summaryPage = this.recipeProjection.toPaginatedSummaryResponse(
       recipes,
       total,
-      { ...(query as unknown as FilterRecipeDto), page, limit },
+      { page, limit, lang: query.lang },
       caller.id,
     );
 
-    const items: AdminRecipeItemDto[] = summaryPage.items.map((item) => {
-      const totalCount = reportMetrics.total.get(item.id) || 0;
-      const pendingCount = reportMetrics.pending.get(item.id) || 0;
-      const latestPendingReportId =
-        pendingCount > 0
-          ? (reportMetrics.latestPendingId.get(item.id) ?? null)
-          : null;
-
-      return {
-        ...item,
-        reports_count: totalCount,
-        pending_reports_count: pendingCount,
-        has_pending_reports: pendingCount > 0,
-        latest_pending_report_id: latestPendingReportId,
-      };
-    });
+    const items: AdminRecipeItemDto[] = summaryPage.items.map((item) => ({
+      ...item,
+      available_languages: (item.available_languages ?? []).map((lang) =>
+        typeof lang === 'string' ? lang : lang.locale,
+      ),
+      ...extractTargetReportCounters(reportMetrics, item.id),
+    }));
 
     return {
       ...summaryPage,

@@ -45,4 +45,13 @@ describe('ReportQueryDto', () => {
     });
     expect(await validate(invalidDto)).not.toHaveLength(0);
   });
+
+  it('treats empty-string target_id as omitted so subject is not required', async () => {
+    const emptyTargetDto = plainToInstance(ReportQueryDto, {
+      target_id: '',
+    });
+    const errors = await validate(emptyTargetDto);
+    expect(errors).toHaveLength(0);
+    expect(emptyTargetDto.target_id).toBeUndefined();
+  });
 });

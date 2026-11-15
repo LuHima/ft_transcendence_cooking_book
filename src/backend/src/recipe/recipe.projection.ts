@@ -272,8 +272,8 @@ export class RecipeProjection {
       page,
       limit,
       total_pages,
-      has_next_page: page < total_pages,
-      has_prev_page: page > 1,
+      has_next_page: total > 0 && page < total_pages,
+      has_prev_page: total > 0 && page > 1,
     };
   }
 

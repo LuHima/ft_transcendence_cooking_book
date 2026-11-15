@@ -416,19 +416,20 @@ describe('AdminRecipesController & RecipeService.getAdminRecipes', () => {
           created_at: new Date('2026-01-02'),
         };
 
-        // 1st findMany: moderator privacy recipe reports
-        // 2nd findMany: moderator privacy comment reports -> none
-        // 3rd findMany: reported_only pending recipe target IDs
-        // 4th findMany: latestPendingId lookup in getBatchReportMetrics
+        // 1st findMany: single pending recipe target ID lookup (reused by moderator scoping)
+        // 2nd findMany: latestPendingId lookup for pagedIds
         mockPrisma.report.findMany
-          .mockResolvedValueOnce([{ target_id: 1 }, { target_id: 2 }])
-          .mockResolvedValueOnce([])
           .mockResolvedValueOnce([{ target_id: 1 }, { target_id: 2 }])
           .mockResolvedValueOnce([
             { id: 802, target_id: 2 },
             { id: 801, target_id: 1 },
           ]);
-        mockPrisma.recipe.findMany.mockResolvedValueOnce([recipe1, recipe2]);
+        mockPrisma.recipe.findMany
+          .mockResolvedValueOnce([
+            { id: 1, created_at: recipe1.created_at },
+            { id: 2, created_at: recipe2.created_at },
+          ])
+          .mockResolvedValueOnce([recipe1, recipe2]);
         mockPrisma.report.groupBy.mockResolvedValueOnce([
           { target_id: 1, status: ReportStatus.pending, _count: { id: 1 } },
           { target_id: 1, status: ReportStatus.dismissed, _count: { id: 4 } },
@@ -439,6 +440,8 @@ describe('AdminRecipesController & RecipeService.getAdminRecipes', () => {
           { status: AdminRecipeStatus.all, reported_only: true },
           { id: 2, role: Role.moderator },
         );
+
+        expect(mockPrisma.report.findMany).toHaveBeenCalledTimes(2);
 
         expect(result.items.map((i) => i.id)).toEqual([2, 1]);
         expect(result.items[0]).toMatchObject({
@@ -479,7 +482,13 @@ describe('AdminRecipesController & RecipeService.getAdminRecipes', () => {
         ];
 
         // DESC: r1 (5) -> r3 (2, newer/higher id) -> r2 (2)
-        mockPrisma.recipe.findMany.mockResolvedValueOnce([r1, r2, r3]);
+        mockPrisma.recipe.findMany
+          .mockResolvedValueOnce([
+            { id: 1, created_at: r1.created_at },
+            { id: 2, created_at: r2.created_at },
+            { id: 3, created_at: r3.created_at },
+          ])
+          .mockResolvedValueOnce([r1, r2, r3]);
         mockPrisma.report.groupBy.mockResolvedValueOnce(groupRows);
         mockPrisma.report.findMany.mockResolvedValueOnce([
           { id: 902, target_id: 2 },
@@ -495,7 +504,13 @@ describe('AdminRecipesController & RecipeService.getAdminRecipes', () => {
         expect(descRes.items.map((i) => i.id)).toEqual([1, 3, 2]);
 
         // ASC: tie-break still deterministic (created_at DESC, id DESC) -> r3 (2), r2 (2), r1 (5)
-        mockPrisma.recipe.findMany.mockResolvedValueOnce([r1, r2, r3]);
+        mockPrisma.recipe.findMany
+          .mockResolvedValueOnce([
+            { id: 1, created_at: r1.created_at },
+            { id: 2, created_at: r2.created_at },
+            { id: 3, created_at: r3.created_at },
+          ])
+          .mockResolvedValueOnce([r1, r2, r3]);
         mockPrisma.report.groupBy.mockResolvedValueOnce(groupRows);
         mockPrisma.report.findMany.mockResolvedValueOnce([
           { id: 902, target_id: 2 },

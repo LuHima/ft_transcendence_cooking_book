@@ -539,7 +539,7 @@ describe('ReportsService', () => {
 
       await expect(
         service.updateReport(999, {
-          status: ReportStatus.reviewed,
+          status: ReportStatus.dismissed,
         }),
       ).rejects.toThrow(new NotFoundException('Report not found'));
     });
@@ -556,25 +556,25 @@ describe('ReportsService', () => {
         target_id: 10,
         reason: ReportReason.harassment_bullying,
         description: null,
-        status: ReportStatus.reviewed,
-        resolution_notes: 'Reviewed without action',
+        status: ReportStatus.dismissed,
+        resolution_notes: 'Dismissed without action',
         created_at: new Date(),
         updated_at: new Date(),
       };
       mockPrisma.report.update.mockResolvedValueOnce(updated);
 
       const result = await service.updateReport(1, {
-        status: ReportStatus.reviewed,
-        resolution_notes: 'Reviewed without action',
+        status: ReportStatus.dismissed,
+        resolution_notes: 'Dismissed without action',
       });
 
-      expect(result.status).toBe(ReportStatus.reviewed);
+      expect(result.status).toBe(ReportStatus.dismissed);
       expect(mockPrisma.report.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 1 },
           data: expect.objectContaining({
-            status: ReportStatus.reviewed,
-            resolution_notes: 'Reviewed without action',
+            status: ReportStatus.dismissed,
+            resolution_notes: 'Dismissed without action',
           }),
         }),
       );
@@ -1678,7 +1678,7 @@ describe('ReportsService', () => {
         total: 0,
         page: 1,
         limit: 20,
-        total_pages: 1,
+        total_pages: 0,
         has_next_page: false,
         has_prev_page: false,
       });

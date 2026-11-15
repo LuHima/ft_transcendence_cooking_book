@@ -11,6 +11,7 @@ import { RecipeProjection } from '../recipe/recipe.projection';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto, ReportAction } from './dto/update-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
+import { buildPaginatedResponse } from '../common/dto/pagination-query.dto';
 import {
   ReportItemDto,
   PaginatedReportsResponseDto,
@@ -156,17 +157,7 @@ export class ReportsService {
       query?.lang ?? '',
     );
 
-    const total_pages = Math.ceil(total / limit) || 1;
-
-    return {
-      items: hydratedItems,
-      total,
-      page,
-      limit,
-      total_pages,
-      has_next_page: page < total_pages,
-      has_prev_page: page > 1,
-    };
+    return buildPaginatedResponse(hydratedItems, total, page, limit);
   }
 
   /**

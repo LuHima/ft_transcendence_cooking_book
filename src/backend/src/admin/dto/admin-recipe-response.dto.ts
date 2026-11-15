@@ -7,6 +7,13 @@ import { LocalizedRecipeSummaryResponse } from '../../recipe/dto/localized-recip
  */
 export class AdminRecipeItemDto extends LocalizedRecipeSummaryResponse {
   @ApiProperty({
+    type: [String],
+    description: 'List of available locale projections for this recipe',
+    example: ['it', 'en', 'fr'],
+  })
+  declare available_languages: string[];
+
+  @ApiProperty({
     description:
       'Total number of moderation reports filed against this recipe (subject = recipe) across all statuses',
     example: 3,

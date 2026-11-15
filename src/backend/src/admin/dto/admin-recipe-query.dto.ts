@@ -5,6 +5,10 @@ import {
   FilterRecipeDto,
   RecipeSortOrder,
 } from '../../recipe/dto/filter-recipe.dto';
+import {
+  createContextualSortByAccessor,
+  transformOptionalBoolean,
+} from '../../common/dto/query-transforms';
 
 export enum AdminRecipeStatus {
   active = 'active',
@@ -22,10 +26,10 @@ export enum AdminRecipeSortBy {
   reports_count = 'reports_count',
 }
 
-const adminRecipeSortByOverrides = new WeakMap<
+const sortByAccessor = createContextualSortByAccessor<
   AdminRecipeQueryDto,
   AdminRecipeSortBy
->();
+>(AdminRecipeSortBy.created_at, AdminRecipeSortBy.pending_reports_count);
 
 /**
  * Query parameters for administrative and staff recipe search stream.
@@ -57,11 +61,7 @@ export class AdminRecipeQueryDto extends OmitType(FilterRecipeDto, [
     example: true,
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === true || value === 'true') return true;
-    if (value === false || value === 'false') return false;
-    return undefined;
-  })
+  @Transform(transformOptionalBoolean)
   @IsBoolean()
   reported_only?: boolean;
 
@@ -79,22 +79,11 @@ export class AdminRecipeQueryDto extends OmitType(FilterRecipeDto, [
   @IsOptional()
   @IsEnum(AdminRecipeSortBy)
   get sort_by(): AdminRecipeSortBy {
-    const sortByOverride = adminRecipeSortByOverrides.get(this);
-    if (sortByOverride !== undefined) {
-      return sortByOverride;
-    }
-    if (this.reported_only) {
-      return AdminRecipeSortBy.pending_reports_count;
-    }
-    return AdminRecipeSortBy.created_at;
+    return sortByAccessor.get(this);
   }
 
   set sort_by(value: AdminRecipeSortBy | undefined) {
-    if (value === undefined) {
-      adminRecipeSortByOverrides.delete(this);
-      return;
-    }
-    adminRecipeSortByOverrides.set(this, value);
+    sortByAccessor.set(this, value);
   }
 
   /**

@@ -265,11 +265,13 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
         },
       };
 
-      mockPrisma.comment.findMany.mockResolvedValueOnce([
-        commentA,
-        commentB,
-        commentC,
-      ]);
+      mockPrisma.comment.findMany
+        .mockResolvedValueOnce([
+          { id: 1, created_at: commentA.created_at },
+          { id: 2, created_at: commentB.created_at },
+          { id: 3, created_at: commentC.created_at },
+        ])
+        .mockResolvedValueOnce([commentA, commentB, commentC]);
       mockPrisma.report.groupBy.mockResolvedValueOnce([
         { target_id: 2, _count: { id: 5 } },
         { target_id: 1, _count: { id: 1 } },
@@ -338,11 +340,13 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
         },
       };
 
-      mockPrisma.comment.findMany.mockResolvedValueOnce([
-        commentA,
-        commentB,
-        commentC,
-      ]);
+      mockPrisma.comment.findMany
+        .mockResolvedValueOnce([
+          { id: 1, created_at: commentA.created_at },
+          { id: 2, created_at: commentB.created_at },
+          { id: 3, created_at: commentC.created_at },
+        ])
+        .mockResolvedValueOnce([commentA, commentB, commentC]);
       mockPrisma.report.groupBy.mockResolvedValueOnce([
         { target_id: 2, _count: { id: 5 } },
         { target_id: 1, _count: { id: 1 } },
@@ -613,7 +617,12 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
         recipe: { id: 10, source_lang: 'it', translations: [{ locale: 'it', title: 'Pizza' }] },
       };
 
-      mockPrisma.comment.findMany.mockResolvedValueOnce([comment1, comment2]);
+      mockPrisma.comment.findMany
+        .mockResolvedValueOnce([
+          { id: 1, created_at: comment1.created_at },
+          { id: 2, created_at: comment2.created_at },
+        ])
+        .mockResolvedValueOnce([comment1, comment2]);
       mockPrisma.report.groupBy.mockResolvedValueOnce([
         { target_id: 1, status: 'pending', _count: { id: 1 } },
         { target_id: 2, status: 'pending', _count: { id: 3 } },
@@ -629,6 +638,7 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
           status: 'pending',
         },
         select: { target_id: true },
+        distinct: ['target_id'],
       });
 
       expect(result.items).toHaveLength(2);
@@ -911,11 +921,13 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       ];
 
       // 1) sort_by=pending_reports_count -> B (3), A (1), C (0)
-      mockPrisma.comment.findMany.mockResolvedValueOnce([
-        commentA,
-        commentB,
-        commentC,
-      ]);
+      mockPrisma.comment.findMany
+        .mockResolvedValueOnce([
+          { id: 1, created_at: commentA.created_at },
+          { id: 2, created_at: commentB.created_at },
+          { id: 3, created_at: commentC.created_at },
+        ])
+        .mockResolvedValueOnce([commentA, commentB, commentC]);
       mockPrisma.report.groupBy.mockResolvedValueOnce(groupByRows);
       mockPrisma.report.findMany.mockResolvedValueOnce(latestPendingRows);
 
@@ -947,11 +959,13 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
       });
 
       // 2) sort_by=reports_count -> A (5), B (3), C (2)
-      mockPrisma.comment.findMany.mockResolvedValueOnce([
-        commentA,
-        commentB,
-        commentC,
-      ]);
+      mockPrisma.comment.findMany
+        .mockResolvedValueOnce([
+          { id: 1, created_at: commentA.created_at },
+          { id: 2, created_at: commentB.created_at },
+          { id: 3, created_at: commentC.created_at },
+        ])
+        .mockResolvedValueOnce([commentA, commentB, commentC]);
       mockPrisma.report.groupBy.mockResolvedValueOnce(groupByRows);
       mockPrisma.report.findMany.mockResolvedValueOnce(latestPendingRows);
 
@@ -1038,6 +1052,55 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
         sort_by: AdminCommentSortBy.reports_count,
       });
       expect(byTotal.items.map((i) => i.id)).toEqual([1, 2]);
+    });
+
+    it('returns total_pages=0 and has_prev_page=false for empty results even when page > 1', async () => {
+      mockPrisma.comment.findMany.mockResolvedValueOnce([]);
+      mockPrisma.comment.count.mockResolvedValueOnce(0);
+
+      const flatRes = await service.findAllAdminComments({
+        page: 2,
+        search: 'nomatch',
+      });
+      expect(flatRes).toEqual({
+        items: [],
+        total: 0,
+        page: 2,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      });
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([]);
+      const reportSortedRes = await service.findAllAdminComments({
+        page: 2,
+        sort_by: AdminCommentSortBy.pending_reports_count,
+      });
+      expect(reportSortedRes).toEqual({
+        items: [],
+        total: 0,
+        page: 2,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      });
+
+      mockPrisma.comment.findMany.mockResolvedValueOnce([]);
+      const threadedRes = await service.findAllAdminComments({
+        page: 2,
+        format: AdminCommentFormat.threaded,
+      });
+      expect(threadedRes).toEqual({
+        items: [],
+        total: 0,
+        page: 2,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      });
     });
   });
 });

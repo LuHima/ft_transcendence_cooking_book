@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
@@ -14,6 +14,7 @@ import {
 import { ReportStatus, ReportSubject } from '@prisma/client';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
+import { transformOptionalInt } from 'src/common/dto/query-transforms';
 
 @ValidatorConstraint({ name: 'isTargetIdWithSubject', async: false })
 export class IsTargetIdWithSubjectConstraint
@@ -92,7 +93,7 @@ export class ReportQueryDto extends IntersectionType(
     example: 42,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(transformOptionalInt)
   @IsInt()
   @Min(1)
   @IsTargetIdWithSubject()

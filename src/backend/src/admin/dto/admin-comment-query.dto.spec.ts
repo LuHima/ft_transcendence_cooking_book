@@ -117,5 +117,20 @@ describe('AdminCommentQueryDto', () => {
       expect(dto.reported_only).toBe(true);
       expect(dto.sort_by).toBe(AdminCommentSortBy.created_at);
     });
+
+    it('omits empty-string reported_only and rejects invalid non-boolean strings', async () => {
+      const emptyDto = plainToInstance(AdminCommentQueryDto, {
+        reported_only: '',
+      });
+      expect(await validate(emptyDto)).toHaveLength(0);
+      expect(emptyDto.reported_only).toBeUndefined();
+
+      const invalidDto = plainToInstance(AdminCommentQueryDto, {
+        reported_only: 'abc',
+      });
+      const errors = await validate(invalidDto);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('reported_only');
+    });
   });
 });

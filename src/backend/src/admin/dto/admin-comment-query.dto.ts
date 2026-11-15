@@ -10,6 +10,10 @@ import {
   Min,
 } from 'class-validator';
 import { SortOrder } from '../../common/dto/sort-order.enum';
+import {
+  createContextualSortByAccessor,
+  transformOptionalBoolean,
+} from '../../common/dto/query-transforms';
 
 export enum AdminCommentSortBy {
   created_at = 'created_at',
@@ -29,10 +33,10 @@ export enum AdminCommentStatus {
   all = 'all',
 }
 
-const adminCommentSortByOverrides = new WeakMap<
+const sortByAccessor = createContextualSortByAccessor<
   AdminCommentQueryDto,
   AdminCommentSortBy
->();
+>(AdminCommentSortBy.created_at, AdminCommentSortBy.pending_reports_count);
 
 /**
  * Query parameters for administrative comment audit stream.
@@ -149,11 +153,7 @@ export class AdminCommentQueryDto {
     example: true,
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === true || value === 'true') return true;
-    if (value === false || value === 'false') return false;
-    return undefined;
-  })
+  @Transform(transformOptionalBoolean)
   @IsBoolean()
   reported_only?: boolean;
 
@@ -171,22 +171,11 @@ export class AdminCommentQueryDto {
   @IsOptional()
   @IsEnum(AdminCommentSortBy)
   get sort_by(): AdminCommentSortBy {
-    const sortByOverride = adminCommentSortByOverrides.get(this);
-    if (sortByOverride !== undefined) {
-      return sortByOverride;
-    }
-    if (this.reported_only) {
-      return AdminCommentSortBy.pending_reports_count;
-    }
-    return AdminCommentSortBy.created_at;
+    return sortByAccessor.get(this);
   }
 
   set sort_by(value: AdminCommentSortBy | undefined) {
-    if (value === undefined) {
-      adminCommentSortByOverrides.delete(this);
-      return;
-    }
-    adminCommentSortByOverrides.set(this, value);
+    sortByAccessor.set(this, value);
   }
 
   /**
