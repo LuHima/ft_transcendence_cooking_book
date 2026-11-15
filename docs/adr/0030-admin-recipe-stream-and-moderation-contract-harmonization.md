@@ -1,5 +1,9 @@
 # 0030: Administrative Recipe Stream and Moderation Contract Harmonization
 
+---
+status: amended (Decision §1 and §3 partially superseded by [ADR-0035](0035-admin-recipe-audit-stream-report-counters-and-target-lookup.md))
+---
+
 We decided to introduce a dedicated administrative recipe triage stream (`GET /api/admin/recipes`) guarded for `admin` and `moderator` roles enforcing role-scoped privacy boundaries per ADR 0027, enrich the content reports queue (`GET /api/reports`) with contextual reporter profiles and polymorphic target metadata across recipes, comments, and users, extend the administrative comment audit stream (`GET /api/admin/comments`) with a `reported_only` filter, pending report indicators, and guaranteed reported reply previews, provide public single-resource inspection endpoints (`GET /api/ingredients/:id`, `GET /api/tags/:id`) for catalog entities, and propagate recipe context (`recipe_id`) across REST notifications and real-time WebSocket events.
 
 ## Context

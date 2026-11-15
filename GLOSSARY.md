@@ -263,15 +263,15 @@ The lifecycle classification of a localized recipe projection (`author_original`
 _Avoid_: Translation author, translation tag, origin flag
 
 **Administrative Recipe Stream**:
-The dedicated administrative and staff recipe search and triage stream (`GET /api/admin/recipes`) guarded by `@Roles('admin', 'moderator')` supporting status filtering (`active`, `inactive`, `all`), text search, and catalog attributes, conforming to platform privacy visibility boundaries (Administrators access all privacy tiers; Moderators access public and friends-only recipes, plus private recipes only if actively reported).
+The dedicated administrative and staff recipe search and triage stream (`GET /api/admin/recipes`) guarded by `@Roles('admin', 'moderator')` supporting status filtering (`active`, `inactive`, `all`), `reported_only` filtering, recipe-level report counters (`reports_count`, `pending_reports_count`, `has_pending_reports`, `latest_pending_report_id`), report-count sorting (`pending_reports_count`, `reports_count`), text search, and catalog attributes, conforming to platform privacy visibility boundaries (Administrators access all privacy tiers; Moderators access public and friends-only recipes, plus private recipes only if actively reported).
 _Avoid_: Admin recipe feed, backend recipe list, recipe manager
 
 **Polymorphic Report Target Hydration**:
-The contextual resolution process within the moderation queue (`GET /api/reports`) that augments report records with structured reporter identities and target-specific metadata (such as parent recipe IDs, preview snippets, usernames, and content owners) across heterogeneous report subjects (`recipe`, `comment`, `user`) to streamline staff triage without supplemental queries.
+The contextual resolution process within the moderation queue (`GET /api/reports` and `GET /api/reports/:id`) that augments report records with structured reporter identities, staff resolver summaries, and target-specific metadata (such as parent recipe IDs, preview snippets, usernames, and content owners) across heterogeneous report subjects (`recipe`, `comment`, `user`) to streamline staff triage without supplemental queries.
 _Avoid_: Target expander, report populator, subject joining
 
 **Reported Comments Audit Filter**:
-The administrative triage query filter (`reported_only=true` on `GET /api/admin/comments`) that restricts the comment audit stream strictly to comments having active pending reports, prioritizing heavily reported items by default, signaling pending report counts, and guaranteeing inclusion of reported child replies in threaded previews.
+The administrative triage query filter (`reported_only=true` on `GET /api/admin/comments`) that restricts the comment audit stream strictly to comments having active pending reports, sorting by `pending_reports_count: desc` by default, distinguishing total historical reports (`reports_count`) from active pending counts (`pending_reports_count` and `latest_pending_report_id`), and guaranteeing inclusion of reported child replies in threaded previews.
 _Avoid_: Flagged comment filter, dirty comments, report list
 
 **Administrative Catalog Management**:
