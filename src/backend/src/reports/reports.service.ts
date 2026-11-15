@@ -137,6 +137,7 @@ export class ReportsService {
     const where: Prisma.ReportWhereInput = {
       ...(query.status ? { status: query.status } : {}),
       ...(query.subject ? { subject: query.subject } : {}),
+      ...(query.target_id !== undefined ? { target_id: query.target_id } : {}),
     };
 
     const [items, total] = await Promise.all([
@@ -166,6 +167,26 @@ export class ReportsService {
       has_next_page: page < total_pages,
       has_prev_page: page > 1,
     };
+  }
+
+  /**
+   * Retrieve a single content report by ID, hydrated with reporter, resolved_by,
+   * polymorphic target summary, and prior sanction counts.
+   */
+  async getReportById(
+    reportId: number,
+    lang = '',
+  ): Promise<ReportItemDto> {
+    const report = await this.prisma.report.findUnique({
+      where: { id: reportId },
+    });
+
+    if (!report) {
+      throw new NotFoundException('Report not found');
+    }
+
+    const [hydrated] = await this.hydrateReportItems([report], lang);
+    return hydrated;
   }
 
   /**

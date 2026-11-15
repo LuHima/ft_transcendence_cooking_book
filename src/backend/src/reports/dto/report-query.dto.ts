@@ -1,8 +1,49 @@
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Min,
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
 import { ReportStatus, ReportSubject } from '@prisma/client';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
+
+@ValidatorConstraint({ name: 'isTargetIdWithSubject', async: false })
+export class IsTargetIdWithSubjectConstraint
+  implements ValidatorConstraintInterface
+{
+  validate(value: unknown, args: ValidationArguments): boolean {
+    if (value === undefined || value === null) {
+      return true;
+    }
+    const obj = args.object as { subject?: ReportSubject };
+    return Boolean(obj?.subject);
+  }
+
+  defaultMessage(): string {
+    return 'subject must be specified when target_id is provided';
+  }
+}
+
+export function IsTargetIdWithSubject(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isTargetIdWithSubject',
+      target: object.constructor,
+      propertyName,
+      constraints: [],
+      options: validationOptions,
+      validator: IsTargetIdWithSubjectConstraint,
+    });
+  };
+}
 
 /**
  * Query filters for the administrative moderation reports queue.
@@ -38,4 +79,22 @@ export class ReportQueryDto extends IntersectionType(
   @IsOptional()
   @IsEnum(ReportSubject)
   subject?: ReportSubject;
+
+  /**
+   * Filter reports by target entity ID (requires subject).
+   * @example 42
+   */
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 1,
+    description:
+      'Filter reports by target entity ID (requires subject to prevent polymorphic ID collisions)',
+    example: 42,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsTargetIdWithSubject()
+  target_id?: number;
 }

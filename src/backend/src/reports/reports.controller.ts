@@ -28,6 +28,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
+import { LocaleQueryDto } from '../common/dto/locale-query.dto';
 import {
   ReportItemDto,
   PaginatedReportsResponseDto,
@@ -88,7 +89,7 @@ export class ReportsController {
   @ApiOperation({
     summary: 'List reports queue (Admin/Moderator only)',
     description:
-      'Retrieves a paginated list of content reports with optional filtering by status and subject.',
+      'Retrieves a paginated list of content reports with optional filtering by status, subject, and target_id (subject is required when target_id is supplied).',
   })
   @ApiOkResponse({
     description: 'Paginated moderation queue',
@@ -105,6 +106,45 @@ export class ReportsController {
     @Query() query: ReportQueryDto,
   ): Promise<PaginatedReportsResponseDto> {
     return await this.reportsService.getReports(query);
+  }
+
+  /**
+   * Retrieve a single hydrated content report by ID (Admin/Moderator only).
+   */
+  @ApiOperation({
+    summary: 'Get single report by ID (Admin/Moderator only)',
+    description:
+      'Retrieves a single hydrated content report with reporter, polymorphic localized target, prior sanction counts, and resolved_by actor.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Numeric report identifier',
+    example: 1,
+  })
+  @ApiOkResponse({
+    description: 'Hydrated content report',
+    type: ReportItemDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid report ID format or locale parameter',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: Admin or Moderator role required',
+    type: ApiForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Report not found',
+    type: ApiNotFoundResponseDto,
+  })
+  @Auth()
+  @Roles('admin', 'moderator')
+  @Get(':id')
+  async getReportById(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: LocaleQueryDto,
+  ): Promise<ReportItemDto> {
+    return await this.reportsService.getReportById(id, query?.lang ?? '');
   }
 
   /**

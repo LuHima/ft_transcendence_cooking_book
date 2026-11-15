@@ -9,7 +9,12 @@ import {
   Role,
 } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { ROLES_KEY } from '../common/decorators/roles.decorator';
 
 describe('ReportsController', () => {
   let controller: ReportsController;
@@ -17,6 +22,7 @@ describe('ReportsController', () => {
   const mockReportsService = {
     createReport: jest.fn(),
     getReports: jest.fn(),
+    getReportById: jest.fn(),
     updateReport: jest.fn(),
   };
 
@@ -92,6 +98,41 @@ describe('ReportsController', () => {
 
       expect(mockReportsService.getReports).toHaveBeenCalledWith(query);
       expect(result).toEqual(expectedEnvelope);
+    });
+  });
+
+  describe('getReportById', () => {
+    it('is guarded for admin and moderator roles', () => {
+      const roles = Reflect.getMetadata(
+        ROLES_KEY,
+        ReportsController.prototype.getReportById,
+      );
+      expect(roles).toEqual(['admin', 'moderator']);
+    });
+
+    it('delegates single report lookup to reportsService.getReportById with lang forwarding', async () => {
+      const expectedReport = {
+        id: 77,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        status: ReportStatus.pending,
+      };
+      mockReportsService.getReportById.mockResolvedValueOnce(expectedReport);
+
+      const result = await (controller as any).getReportById(77, { lang: 'it' });
+
+      expect(mockReportsService.getReportById).toHaveBeenCalledWith(77, 'it');
+      expect(result).toEqual(expectedReport);
+    });
+
+    it('propagates 404 Not Found when report does not exist', async () => {
+      mockReportsService.getReportById.mockRejectedValueOnce(
+        new NotFoundException('Report not found'),
+      );
+
+      await expect(
+        (controller as any).getReportById(999, {}),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

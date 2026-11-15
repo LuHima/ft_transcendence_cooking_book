@@ -1652,4 +1652,129 @@ describe('ReportsService', () => {
       );
     });
   });
+
+  describe('getReports target_id filtering and getReportById', () => {
+    it('filters reports by subject and target_id with optional status and returns empty page when none match', async () => {
+      mockPrisma.report.findMany.mockResolvedValueOnce([]);
+      mockPrisma.report.count.mockResolvedValueOnce(0);
+
+      const emptyRes = await service.getReports({
+        page: 1,
+        limit: 20,
+        subject: ReportSubject.recipe,
+        target_id: 42,
+      });
+
+      expect(mockPrisma.report.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            subject: ReportSubject.recipe,
+            target_id: 42,
+          },
+        }),
+      );
+      expect(emptyRes).toEqual({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+        has_next_page: false,
+        has_prev_page: false,
+      });
+
+      mockPrisma.report.findMany.mockResolvedValueOnce([]);
+      mockPrisma.report.count.mockResolvedValueOnce(0);
+
+      await service.getReports({
+        page: 1,
+        limit: 20,
+        subject: ReportSubject.comment,
+        target_id: 99,
+        status: ReportStatus.dismissed,
+      });
+
+      expect(mockPrisma.report.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: {
+            status: ReportStatus.dismissed,
+            subject: ReportSubject.comment,
+            target_id: 99,
+          },
+        }),
+      );
+    });
+
+    it('getReportById returns hydrated ReportItemDto respecting lang', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 77,
+        reporter_id: 5,
+        resolved_by_id: 2,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.spam_scam,
+        description: 'Spam recipe',
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.delete_content],
+        resolution_reason: ReportReason.spam_scam,
+        resolution_description: 'Removed spam',
+        resolution_notes: 'Staff note',
+        resolved_at: new Date('2026-11-15T10:00:00Z'),
+        created_at: new Date('2026-11-15T09:00:00Z'),
+        updated_at: new Date('2026-11-15T10:00:00Z'),
+      });
+      mockPrisma.user.findMany.mockResolvedValueOnce([
+        { id: 5, username: 'reporter5', avatar_url: null },
+        { id: 2, username: 'mod2', avatar_url: '/avatars/2.webp' },
+      ]);
+      mockPrisma.recipe.findMany.mockResolvedValueOnce([
+        {
+          id: 10,
+          user_id: 11,
+          source_lang: 'en',
+          translations: [
+            { locale: 'en', title: 'English Pasta' },
+            { locale: 'it', title: 'Pasta Italiana' },
+          ],
+          user: { id: 11, username: 'author11', avatar_url: null },
+        },
+      ]);
+      mockPrisma.banHistory.groupBy.mockResolvedValueOnce([
+        { user_id: 11, action: ReportAction.ban, _count: { id: 1 } },
+        { user_id: 11, action: ReportAction.warn, _count: { id: 2 } },
+      ]);
+
+      const result = await (service as any).getReportById(77, 'it');
+
+      expect(mockPrisma.report.findUnique).toHaveBeenCalledWith({
+        where: { id: 77 },
+      });
+      expect(result.id).toBe(77);
+      expect(result.reporter).toEqual({
+        id: 5,
+        username: 'reporter5',
+        avatar_url: null,
+      });
+      expect(result.resolved_by).toEqual({
+        id: 2,
+        username: 'mod2',
+        avatar_url: '/avatars/2.webp',
+      });
+      expect(result.target).toEqual({
+        label: 'Pasta Italiana',
+        recipe_id: 10,
+        owner: { id: 11, username: 'author11', avatar_url: null },
+      });
+      expect(result.previous_bans_count).toBe(1);
+      expect(result.previous_warnings_count).toBe(2);
+    });
+
+    it('getReportById throws NotFoundException when report does not exist', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce(null);
+
+      await expect((service as any).getReportById(999, 'en')).rejects.toThrow(
+        'Report not found',
+      );
+    });
+  });
 });
