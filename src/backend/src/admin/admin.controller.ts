@@ -217,7 +217,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Update user account or status (Admin only)',
     description:
-      'Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling status mutations. Atomically restores platform-custody content on reactivation to active status.',
+      'Modifies user account attributes. Enforces anti-self-sabotage guards and last-admin protection. Selectively purges JWT sessions on credential, role, or disabling/banning status mutations. Disabling suspends login and profile discovery without altering authored content; reactivating a soft-deleted account restores platform-custody public recipes and comments.',
   })
   @ApiParam({
     name: 'id',
@@ -265,7 +265,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Deactivate or delete user (Admin only)',
     description:
-      'By default performs soft deletion: disables account, purges active JWT sessions, transfers public recipes to platform custody, and deactivates authored comments. With ?hard=true, disassociates recipes and permanently deletes user row.',
+      'By default performs soft deletion: disables account, sets deleted_at, purges active JWT sessions, transfers public recipes to platform custody (hiding non-public recipes at query time), and deactivates authored comments. Returns 409 Conflict if already soft-deleted. With ?hard=true, disassociates recipes and permanently deletes user row.',
   })
   @ApiParam({
     name: 'id',
@@ -289,7 +289,8 @@ export class AdminController {
     type: ApiBadRequestResponseDto,
   })
   @ApiConflictResponse({
-    description: 'Attempt to delete the sole remaining platform administrator',
+    description:
+      'User is already soft-deleted or attempt to delete the sole remaining platform administrator',
     type: ApiConflictResponseDto,
   })
   @ApiNotFoundResponse({

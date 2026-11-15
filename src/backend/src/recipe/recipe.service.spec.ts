@@ -693,10 +693,11 @@ describe('RecipeService', () => {
                 {
                   OR: [
                     { privacy: RecipePrivacy.public },
-                    { user_id: 1 },
+                    { user_id: 1, user: { deleted_at: null } },
                     {
                       privacy: RecipePrivacy.friends_only,
                       user_id: { in: [10, 20] },
+                      user: { deleted_at: null },
                     },
                   ],
                 },
@@ -725,7 +726,7 @@ describe('RecipeService', () => {
                 {
                   OR: [
                     { privacy: RecipePrivacy.public },
-                    { user_id: 1 },
+                    { user_id: 1, user: { deleted_at: null } },
                   ],
                 },
                 {
@@ -1627,6 +1628,31 @@ describe('RecipeService', () => {
 
           // Admin
           mockPrisma.recipe.findUnique.mockResolvedValueOnce(friendsOnlyRecipe);
+          const adminRes = await service.getRecipeById(100, 'it', { id: 99, role: Role.admin });
+          expect(adminRes.id).toBe(100);
+        });
+
+        it('hides friends_only recipe from non-staff callers when author is soft-deleted, while preserving staff access', async () => {
+          const softDeletedAuthorRecipe = {
+            ...friendsOnlyRecipe,
+            user: {
+              id: 10,
+              username: 'deleted_chef',
+              avatar_url: null,
+              deleted_at: new Date('2026-10-01'),
+            },
+          };
+
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(softDeletedAuthorRecipe);
+          await expect(
+            service.getRecipeById(100, 'it', { id: 20, role: Role.user }),
+          ).rejects.toThrow(NotFoundException);
+
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(softDeletedAuthorRecipe);
+          const modRes = await service.getRecipeById(100, 'it', { id: 88, role: Role.moderator });
+          expect(modRes.id).toBe(100);
+
+          mockPrisma.recipe.findUnique.mockResolvedValueOnce(softDeletedAuthorRecipe);
           const adminRes = await service.getRecipeById(100, 'it', { id: 99, role: Role.admin });
           expect(adminRes.id).toBe(100);
         });

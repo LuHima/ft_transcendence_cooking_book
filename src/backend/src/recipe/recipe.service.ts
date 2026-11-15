@@ -276,12 +276,13 @@ export class RecipeService {
     } else {
       const privacyOr: Prisma.RecipeWhereInput[] = [
         { privacy: RecipePrivacy.public },
-        { user_id: currentUserId },
+        { user_id: currentUserId, user: { deleted_at: null } },
       ];
       if (friendIds.length > 0) {
         privacyOr.push({
           privacy: RecipePrivacy.friends_only,
           user_id: { in: friendIds },
+          user: { deleted_at: null },
         });
       }
       andConditions.push({ OR: privacyOr });
@@ -484,11 +485,11 @@ export class RecipeService {
       } else {
         if (friendIds.length > 0) {
           sqlConditions.push(
-            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId} OR (r.privacy = 'friends_only'::"RecipePrivacy" AND r.user_id IN (${Prisma.join(friendIds)})))`,
+            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR (u.deleted_at IS NULL AND (r.user_id = ${currentUserId} OR (r.privacy = 'friends_only'::"RecipePrivacy" AND r.user_id IN (${Prisma.join(friendIds)})))))`,
           );
         } else {
           sqlConditions.push(
-            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${currentUserId})`,
+            Prisma.sql`(r.privacy = 'public'::"RecipePrivacy" OR (u.deleted_at IS NULL AND r.user_id = ${currentUserId}))`,
           );
         }
       }
@@ -508,6 +509,7 @@ export class RecipeService {
       this.prisma.$queryRaw<{ id: number }[]>`
         SELECT r.id
         FROM recipes r
+        LEFT JOIN users u ON u.id = r.user_id
         LEFT JOIN recipe_translations t_target ON (t_target.recipe_id = r.id AND t_target.locale = ${targetLocale})
         LEFT JOIN recipe_translations t_source ON (t_source.recipe_id = r.id AND t_source.locale = r.source_lang)
         LEFT JOIN recipe_translations t_en ON (t_en.recipe_id = r.id AND t_en.locale = 'en')
@@ -859,6 +861,14 @@ export class RecipeService {
 
     // Privacy Access Control
     const privacy = recipe.privacy ?? RecipePrivacy.public;
+
+    if (
+      privacy !== RecipePrivacy.public &&
+      !isStaff &&
+      recipe.user?.deleted_at != null
+    ) {
+      throw new NotFoundException('Recipe not found');
+    }
 
     if (privacy === RecipePrivacy.private) {
       if (isAuthor) {

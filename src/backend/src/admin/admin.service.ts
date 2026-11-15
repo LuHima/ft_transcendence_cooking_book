@@ -1,7 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import {
   OwnerType,
   Prisma,
+  RecipePrivacy,
   ReportAction,
   Role,
   UserStatus,
@@ -466,11 +471,15 @@ export class AdminService {
         targetUser.status === UserStatus.banned) &&
       dto.status === UserStatus.active;
 
+    const isDisablingFromBanned =
+      targetUser.status === UserStatus.banned &&
+      dto.status === UserStatus.disabled;
+
     const isDeactivating =
       targetUser.status === UserStatus.active &&
-      (dto.status === UserStatus.disabled || dto.status === UserStatus.banned);
+      dto.status === UserStatus.banned;
 
-    // Selective Session Eviction: only on password, role, or disabling status modification
+    // Selective Session Eviction: only on password, role, or disabling/banning status modification
     const shouldEvictSessions =
       dto.password !== undefined ||
       (dto.role !== undefined && dto.role !== targetUser.role) ||
@@ -488,23 +497,28 @@ export class AdminService {
           (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7);
         bannedUntil = new Date(Date.now() + duration * 86400000);
       }
-    } else if (isReactivating && targetUser.status === UserStatus.banned) {
+    } else if (
+      (isReactivating || isDisablingFromBanned) &&
+      targetUser.status === UserStatus.banned
+    ) {
       bannedUntil = null;
     }
 
     const updatedUser = await this.prisma.$transaction(async (tx) => {
       if (isReactivating) {
-        // Revert platform-custody recipes back to the author
-        await tx.recipe.updateMany({
-          where: { user_id: targetUserId, owner_type: OwnerType.platform },
-          data: { owner_type: OwnerType.user },
-        });
+        if (targetUser.deleted_at !== null) {
+          // Revert platform-custody recipes back to the author
+          await tx.recipe.updateMany({
+            where: { user_id: targetUserId, owner_type: OwnerType.platform },
+            data: { owner_type: OwnerType.user },
+          });
 
-        // Reactivate authored comments
-        await tx.comment.updateMany({
-          where: { user_id: targetUserId, is_active: false },
-          data: { is_active: true },
-        });
+          // Reactivate authored comments
+          await tx.comment.updateMany({
+            where: { user_id: targetUserId, is_active: false },
+            data: { is_active: true },
+          });
+        }
 
         if (targetUser.status === UserStatus.banned) {
           await this.banHistoryService.recordUnban(
@@ -514,6 +528,15 @@ export class AdminService {
             tx,
           );
         }
+      }
+
+      if (isDisablingFromBanned) {
+        await this.banHistoryService.closeOpenBans(
+          targetUserId,
+          currentAdminId,
+          'Account disabled',
+          tx,
+        );
       }
 
       if (isDeactivating) {
@@ -573,7 +596,9 @@ export class AdminService {
         ...(dto.postal_code !== undefined
           ? { postal_code: dto.postal_code }
           : {}),
-        ...(isReactivating ? { deleted_at: null } : {}),
+        ...(isReactivating && targetUser.deleted_at !== null
+          ? { deleted_at: null }
+          : {}),
         ...(isDeactivating ? { deleted_at: new Date() } : {}),
       };
 
@@ -630,6 +655,10 @@ export class AdminService {
     }
 
     if (!hard) {
+      if (targetUser.deleted_at !== null) {
+        throw new ConflictException('User is already soft-deleted');
+      }
+
       // Soft deletion lifecycle
       await this.prisma.$transaction(async (tx) => {
         // 1. Evict active sessions
@@ -639,7 +668,7 @@ export class AdminService {
 
         // 2. Transfer authored public recipes to platform custody
         await tx.recipe.updateMany({
-          where: { user_id: targetUserId },
+          where: { user_id: targetUserId, privacy: RecipePrivacy.public },
           data: { owner_type: OwnerType.platform },
         });
 
@@ -649,12 +678,25 @@ export class AdminService {
           data: { is_active: false },
         });
 
-        // 4. Update user account status
+        // 4. Close any open ban records if user was banned
+        if (targetUser.status === UserStatus.banned) {
+          await this.banHistoryService.closeOpenBans(
+            targetUserId,
+            currentAdminId,
+            'Account soft-deleted',
+            tx,
+          );
+        }
+
+        // 5. Update user account status
         await tx.user.update({
           where: { id: targetUserId },
           data: {
             status: UserStatus.disabled,
             deleted_at: new Date(),
+            ...(targetUser.status === UserStatus.banned
+              ? { banned_until: null }
+              : {}),
           },
         });
       });

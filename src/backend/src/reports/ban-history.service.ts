@@ -102,6 +102,39 @@ export class BanHistoryService {
   }
 
   /**
+   * Close all open ban records for a user (e.g., on disable, soft-delete, or superseding ban).
+   */
+  async closeOpenBans(
+    userId: number,
+    staffId?: number | null,
+    reason?: string | null,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const client = tx ?? this.prisma;
+
+    const result = await client.banHistory.updateMany({
+      where: {
+        user_id: userId,
+        action: ReportAction.ban,
+        unbanned_at: null,
+      },
+      data: {
+        unbanned_at: new Date(),
+        unbanned_by_id: staffId ?? null,
+        unban_reason: reason ?? null,
+      },
+    });
+
+    if (result.count > 0) {
+      this.logger.log(
+        `Closed ${result.count} open ban(s) for user #${userId} by staff #${staffId ?? 'system'} (reason: ${reason ?? 'none'})`,
+      );
+    }
+
+    return result.count;
+  }
+
+  /**
    * Retrieve total number of historical bans for a user to inform progressive discipline.
    */
   async getPreviousBansCount(

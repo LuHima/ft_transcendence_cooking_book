@@ -82,6 +82,7 @@ export const RECIPE_DETAIL_INCLUDE = (currentUserId?: number) => ({
       id: true,
       username: true,
       avatar_url: true,
+      deleted_at: true,
     },
   },
   _count: {

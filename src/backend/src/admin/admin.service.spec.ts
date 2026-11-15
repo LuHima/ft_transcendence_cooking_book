@@ -95,6 +95,7 @@ describe('AdminService', () => {
     mockBanHistoryService = {
       recordSanction: jest.fn().mockResolvedValue({ id: 'ban-1' }),
       recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      closeOpenBans: jest.fn().mockResolvedValue(0),
       getPreviousBansCount: jest.fn().mockResolvedValue(0),
       getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
     };
@@ -541,27 +542,70 @@ describe('AdminService', () => {
       });
     });
 
-    it('triggers platform custody transfer and comment deactivation when status transitions to disabled', async () => {
+    it('disables account without platform custody transfer, comment deactivation, or deleted_at', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockTargetUser);
       (prisma.user.update as jest.Mock).mockResolvedValue({
         ...mockTargetUser,
         status: UserStatus.disabled,
-        deleted_at: new Date(),
+        deleted_at: null,
       });
 
-      await service.updateUser(2, { status: UserStatus.disabled }, 1);
+      const result = await service.updateUser(
+        2,
+        { status: UserStatus.disabled },
+        1,
+      );
 
-      expect(prisma.recipe.updateMany).toHaveBeenCalledWith({
-        where: { user_id: 2 },
-        data: { owner_type: OwnerType.platform },
-      });
-      expect(prisma.comment.updateMany).toHaveBeenCalledWith({
-        where: { user_id: 2 },
-        data: { is_active: false },
-      });
+      expect(result.status).toBe(UserStatus.disabled);
+      expect(result.deleted_at).toBeNull();
+      expect(prisma.recipe.updateMany).not.toHaveBeenCalled();
+      expect(prisma.comment.updateMany).not.toHaveBeenCalled();
       expect(prisma.jwtSession.deleteMany).toHaveBeenCalledWith({
         where: { id_user: 2 },
       });
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 2 },
+          data: expect.not.objectContaining({ deleted_at: expect.any(Date) }),
+        }),
+      );
+    });
+
+    it('closes open bans and clears banned_until when transitioning from banned to disabled', async () => {
+      const bannedUser = {
+        ...mockTargetUser,
+        status: UserStatus.banned,
+        banned_until: new Date('2026-12-01'),
+        deleted_at: null,
+      };
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(bannedUser);
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        ...bannedUser,
+        status: UserStatus.disabled,
+        banned_until: null,
+      });
+
+      const result = await service.updateUser(
+        2,
+        { status: UserStatus.disabled },
+        1,
+      );
+
+      expect(result.status).toBe(UserStatus.disabled);
+      expect(mockBanHistoryService.closeOpenBans).toHaveBeenCalledWith(
+        2,
+        1,
+        'Account disabled',
+        expect.anything(),
+      );
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: UserStatus.disabled,
+            banned_until: null,
+          }),
+        }),
+      );
     });
 
     it('atomically restores platform recipes and comments when reactivated from disabled to active', async () => {
@@ -616,7 +660,10 @@ describe('AdminService', () => {
     });
 
     it('executes soft deletion: adopts public recipes to platform custody, deactivates comments, evicts sessions', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockTargetUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        deleted_at: null,
+      });
 
       const result = await service.deleteUser(2, 1, false);
 
@@ -625,7 +672,7 @@ describe('AdminService', () => {
         where: { id_user: 2 },
       });
       expect(prisma.recipe.updateMany).toHaveBeenCalledWith({
-        where: { user_id: 2 },
+        where: { user_id: 2, privacy: 'public' },
         data: { owner_type: OwnerType.platform },
       });
       expect(prisma.comment.updateMany).toHaveBeenCalledWith({
@@ -637,6 +684,46 @@ describe('AdminService', () => {
           where: { id: 2 },
           data: expect.objectContaining({
             status: UserStatus.disabled,
+          }),
+        }),
+      );
+    });
+
+    it('rejects soft deletion with 409 Conflict when user is already soft-deleted', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        status: UserStatus.disabled,
+        deleted_at: new Date('2026-10-01'),
+      });
+
+      await expect(service.deleteUser(2, 1, false)).rejects.toThrow(
+        'User is already soft-deleted',
+      );
+    });
+
+    it('closes open bans and clears banned_until when soft-deleting a banned user', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        status: UserStatus.banned,
+        banned_until: new Date('2026-12-01'),
+        deleted_at: null,
+      });
+
+      await service.deleteUser(2, 1, false);
+
+      expect(mockBanHistoryService.closeOpenBans).toHaveBeenCalledWith(
+        2,
+        1,
+        'Account soft-deleted',
+        expect.anything(),
+      );
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 2 },
+          data: expect.objectContaining({
+            status: UserStatus.disabled,
+            banned_until: null,
+            deleted_at: expect.any(Date),
           }),
         }),
       );

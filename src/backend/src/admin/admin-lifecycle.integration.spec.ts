@@ -41,6 +41,7 @@ describe('Admin User Governance & Content Lifecycle Integration Suite', () => {
       id: 101,
       user_id: 42,
       owner_type: OwnerType.user,
+      privacy: 'public',
       course: Course.first_course,
       difficulty: RecipeDifficulty.medium,
       prep_time: 15,
@@ -143,6 +144,7 @@ describe('Admin User Governance & Content Lifecycle Integration Suite', () => {
     const mockBanHistoryService = {
       recordSanction: jest.fn().mockResolvedValue({ id: 'ban-1' }),
       recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+      closeOpenBans: jest.fn().mockResolvedValue(0),
       getPreviousBansCount: jest.fn().mockResolvedValue(0),
       getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
     };
