@@ -1,27 +1,44 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../../context/AuthContext'
-import { useToast } from '../../context/ToastContext'
-import { api, asArray, getErrorMessage, qs, toPage, uploadWithProgress } from '../../api/client'
+import { useAuth } from '../../context/auth'
+import { useToast } from '../../context/toast'
+import { api, ApiError, getErrorMessage, qs, toPage, uploadWithProgress } from '../../api/client'
 import { UPLOAD_LIMITS } from '../../config'
 import UploadProgress from '../../components/UploadProgress'
 import { useLang } from '../../lib/useLang'
 import { IMAGE_ACCEPT, validateImage } from '../../lib/files'
 import { useObjectUrl } from '../../lib/useObjectUrl'
+import { useDialogDismiss } from '../../lib/useDialogDismiss'
+import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
+import { DEFAULT_BAN_DAYS, MODERATION_TEXT_MAX } from '../../lib/moderation'
+import BanHistoryDrawer from '../../components/BanHistoryDrawer'
 import Avatar from '../../components/Avatar'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { ListSkeleton } from '../../components/Skeleton'
-import type { AdminUser, AvatarUploadResponseDto, BanHistoryItem, Paginated, SortOrder, UserRole, UserSortBy, UserStatus } from '../../types/models'
+import {
+	REPORT_REASONS,
+	type AdminUser,
+	type AdminUserStatusDto,
+	type AvatarUploadResponseDto,
+	type Paginated,
+	type ReportReason,
+	type SortOrder,
+	type UserRole,
+	type UserSortBy,
+	type UserStatus,
+} from '../../types/models'
 
 // endpoint admin (guard: solo admin)
 //   GET    /admin/users?page=&limit=&search=&role=&status=&sort_by=&sort_order=  -> PaginatedAdminUsersResponseDto
 //   POST   /admin/users                 { username, email, password, role }
 //   PATCH  /admin/users/:id             { username?, email?, role?, status?, password? }
-//   DELETE /admin/users/:id             disattivazione (soft delete)
-//   DELETE /admin/users/:id?hard=true   eliminazione definitiva
-//   GET    /admin/users/:id/ban-history -> BanHistoryItemDto[]
+//          status 'disabled' = Disable (reversibile) · 'active' = Reactivate (+ unban_reason se era bannato)
+//          status 'banned' + ban_reason, ban_duration_days | is_permanent, ban_description, internal_notes (#207)
+//   DELETE /admin/users/:id?hard=true   Purge: eliminazione definitiva (il soft delete senza hard è ridondante
+//                                       con Disable e non viene più offerto, vedi #207)
+//   GET    /admin/users/:id/ban-history (BanHistoryDrawer condiviso con /moderation)
 //   POST   /admin/users/:id/avatar      (multipart, campo "file")
 //   DELETE /admin/users/:id/avatar
 
@@ -64,9 +81,12 @@ function AdminUsers() {
 	const [busyId, setBusyId] = useState<number | null>(null)
 	const [editing, setEditing] = useState<AdminUser | null>(null)
 	const [creating, setCreating] = useState(false)
-	const [deleting, setDeleting] = useState<AdminUser | null>(null)
 	const [purging, setPurging] = useState<AdminUser | null>(null)
+	const [banning, setBanning] = useState<AdminUser | null>(null)
+	const [unbanning, setUnbanning] = useState<AdminUser | null>(null)
 	const [history, setHistory] = useState<AdminUser | null>(null)
+	const listTopRef = useRef<HTMLDivElement>(null)
+	useScrollIntoViewOnChange(page, listTopRef)
 	const [sortBy, sortOrder] = sort.split(':') as [UserSortBy, SortOrder]
 
 	// la ricerca parte 300ms dopo l'ultimo tasto
@@ -77,6 +97,20 @@ function AdminUsers() {
 		}, 300)
 		return () => window.clearTimeout(id)
 	}, [search])
+
+	// filtri cambiati: via le righe vecchie (skeleton) invece di mostrare risultati non più validi
+	const filterKey = [debounced, roleFilter, statusFilter, sort].join('|')
+	const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+	if (filterKey !== prevFilterKey) {
+		setPrevFilterKey(filterKey)
+		setData(null)
+	}
+
+	// filter change: back to page 1
+	function changeFilter(fn: () => void) {
+		fn()
+		setPage(1)
+	}
 
 	useEffect(() => {
 		let cancelled = false
@@ -111,33 +145,38 @@ function AdminUsers() {
 		setData((prev) => (prev ? { ...prev, items: prev.items.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)) } : prev))
 	}
 
-	async function patchUser(u: AdminUser, patch: Partial<Pick<AdminUser, 'role' | 'status'>>) {
+	// returns true on success (dialogs close only then)
+	async function patchUser(u: AdminUser, patch: Partial<Pick<AdminUser, 'role'>> | AdminUserStatusDto): Promise<boolean> {
 		setBusyId(u.id)
 		try {
 			const updated = await api.patch<AdminUser>(`/admin/users/${u.id}`, patch)
 			// se il backend risponde senza body si applica la modifica in locale
-			replaceUser({ ...u, ...patch, ...(updated ?? {}) })
+			const local: Partial<AdminUser> = 'status' in patch ? { status: patch.status } : { role: patch.role }
+			replaceUser({ ...u, ...local, ...(updated ?? {}) })
 			toast.success(t('admin.users.updated'))
+			return true
 		} catch (err) {
-			toast.error(getErrorMessage(err, t('admin.users.updateError')))
+			// backend senza #207: internal_notes non ancora accettato (forbidNonWhitelisted)
+			const notesUnsupported = err instanceof ApiError && err.status === 400 && /internal_notes/.test(err.message)
+			toast.error(notesUnsupported ? t('admin.users.internalNotesUnsupported') : getErrorMessage(err, t('admin.users.updateError')))
+			return false
 		} finally {
 			setBusyId(null)
 		}
 	}
 
-	// hard=false → disattivazione (soft delete); hard=true → eliminazione definitiva dell'account
-	async function deleteUser(u: AdminUser, hard: boolean) {
+	// Purge: DELETE ?hard=true, eliminazione definitiva dell'account
+	async function purgeUser(u: AdminUser) {
 		setBusyId(u.id)
 		try {
-			await api.delete(`/admin/users/${u.id}${qs({ hard: hard ? 'true' : undefined })}`)
-			toast.success(t(hard ? 'admin.users.purged' : 'admin.users.deleted'))
+			await api.delete(`/admin/users/${u.id}${qs({ hard: 'true' })}`)
+			toast.success(t('admin.users.purged'))
 			if (data && data.items.length === 1 && page > 1) setPage(page - 1)
 			else setReload((n) => n + 1)
 		} catch (err) {
 			toast.error(getErrorMessage(err, t('admin.users.deleteError')))
 		} finally {
 			setBusyId(null)
-			setDeleting(null)
 			setPurging(null)
 		}
 	}
@@ -145,7 +184,7 @@ function AdminUsers() {
 	const users = data?.items ?? []
 
 	return (
-		<div>
+		<div ref={listTopRef} className="scroll-mt-24">
 			<div className="flex flex-wrap items-center gap-3">
 				<input
 					value={search}
@@ -157,10 +196,7 @@ function AdminUsers() {
 				<select
 					value={roleFilter}
 					aria-label={t('admin.users.role')}
-					onChange={(e) => {
-						setRoleFilter(e.target.value as UserRole | '')
-						setPage(1)
-					}}
+					onChange={(e) => changeFilter(() => setRoleFilter(e.target.value as UserRole | ''))}
 					className={inputClass}
 				>
 					<option value="">{t('admin.users.allRoles')}</option>
@@ -173,10 +209,7 @@ function AdminUsers() {
 				<select
 					value={statusFilter}
 					aria-label={t('admin.users.status')}
-					onChange={(e) => {
-						setStatusFilter(e.target.value as UserStatus | '')
-						setPage(1)
-					}}
+					onChange={(e) => changeFilter(() => setStatusFilter(e.target.value as UserStatus | ''))}
 					className={inputClass}
 				>
 					<option value="">{t('admin.users.allStatuses')}</option>
@@ -189,10 +222,7 @@ function AdminUsers() {
 				<select
 					value={sort}
 					aria-label={t('search.sortBy')}
-					onChange={(e) => {
-						setSort(e.target.value as (typeof SORT_OPTIONS)[number]['value'])
-						setPage(1)
-					}}
+					onChange={(e) => changeFilter(() => setSort(e.target.value as (typeof SORT_OPTIONS)[number]['value']))}
 					className={inputClass}
 				>
 					{SORT_OPTIONS.map((o) => (
@@ -279,14 +309,19 @@ function AdminUsers() {
 														: t('admin.users.bannedPermanent')}
 												</span>
 											)}
-											{(status === 'banned' || (u.previous_bans_count ?? 0) > 0) && (
-												<button
-													onClick={() => setHistory(u)}
-													className="mt-1 block text-xs text-[var(--wc-saffron)] hover:underline"
-												>
-													{t('admin.users.banHistory')}
-													{(u.previous_bans_count ?? 0) > 0 && ` (${u.previous_bans_count})`}
-												</button>
+											{/* storico: bannato ora, o con ban / avvisi precedenti */}
+											{(status === 'banned' || (u.previous_bans_count ?? 0) > 0 || (u.previous_warnings_count ?? 0) > 0) && (
+												<div className="mt-1 flex flex-col items-start gap-0.5 text-left text-xs">
+													<button onClick={() => setHistory(u)} className="text-[var(--wc-saffron)] hover:underline">
+														{t('admin.users.banHistory')}
+													</button>
+													{(u.previous_bans_count ?? 0) > 0 && (
+														<span className="text-[var(--wc-text-muted)]">{t('moderation.previousBans', { count: u.previous_bans_count })}</span>
+													)}
+													{(u.previous_warnings_count ?? 0) > 0 && (
+														<span className="text-[var(--wc-text-muted)]">{t('moderation.previousWarnings', { count: u.previous_warnings_count })}</span>
+													)}
+												</div>
 											)}
 										</td>
 										<td className="p-3">
@@ -297,45 +332,48 @@ function AdminUsers() {
 												>
 													{t('common.edit')}
 												</button>
-												{status === 'active' ? (
+												{status === 'active' && (
 													<>
 														<button
 															disabled={isSelf || busyId === u.id}
-															onClick={() => patchUser(u, { status: 'disabled' })}
+															onClick={() => void patchUser(u, { status: 'disabled' })}
+															title={t('admin.users.disableHelp')}
 															className="rounded-full border border-[var(--wc-border)] px-3 py-1 hover:border-[var(--wc-saffron)] disabled:opacity-40"
 														>
 															{t('admin.users.disable')}
 														</button>
 														<button
 															disabled={isSelf || busyId === u.id}
-															onClick={() => {
-																if (confirm(t('admin.users.confirmBan', { name: u.username }))) patchUser(u, { status: 'banned' })
-															}}
+															onClick={() => setBanning(u)}
 															className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-40"
 														>
 															{t('admin.users.ban')}
 														</button>
 													</>
-												) : (
+												)}
+												{status === 'disabled' && (
 													<button
 														disabled={busyId === u.id}
-														onClick={() => patchUser(u, { status: 'active' })}
+														onClick={() => void patchUser(u, { status: 'active' })}
 														className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-basil)] hover:border-[var(--wc-basil)] disabled:opacity-40"
 													>
 														{t('admin.users.reactivate')}
 													</button>
 												)}
-												<button
-													disabled={isSelf || busyId === u.id}
-													onClick={() => setDeleting(u)}
-													title={t('admin.users.deactivateHelp')}
-													className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-40"
-												>
-													{t('common.delete')}
-												</button>
+												{status === 'banned' && (
+													<button
+														disabled={busyId === u.id}
+														onClick={() => setUnbanning(u)}
+														className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-basil)] hover:border-[var(--wc-basil)] disabled:opacity-40"
+													>
+														{t('admin.users.unban')}
+													</button>
+												)}
+												{/* Purge = eliminazione definitiva; il vecchio "Elimina" (soft delete) faceva lo stesso di Disable */}
 												<button
 													disabled={isSelf || busyId === u.id}
 													onClick={() => setPurging(u)}
+													title={t('admin.users.purgeHelp')}
 													className="rounded-full border border-[var(--wc-paprika)] px-3 py-1 font-medium text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)] disabled:opacity-40"
 												>
 													{t('admin.users.purge')}
@@ -368,30 +406,37 @@ function AdminUsers() {
 					}}
 				/>
 			)}
-			{deleting && (
-				<ConfirmDialog
-					title={t('admin.users.confirmDeleteTitle', { name: deleting.username })}
-					confirmLabel={t('common.delete')}
-					danger
-					onConfirm={() => deleteUser(deleting, false)}
-					onClose={() => setDeleting(null)}
-				>
-					<p>{t('admin.users.confirmDelete', { name: deleting.username })}</p>
-				</ConfirmDialog>
-			)}
 			{purging && (
 				<ConfirmDialog
 					title={t('admin.users.confirmPurgeTitle', { name: purging.username })}
 					confirmLabel={t('admin.users.purge')}
 					danger
 					requireText={purging.username}
-					onConfirm={() => deleteUser(purging, true)}
+					onConfirm={() => purgeUser(purging)}
 					onClose={() => setPurging(null)}
 				>
 					<p>{t('admin.users.confirmPurge', { name: purging.username })}</p>
 				</ConfirmDialog>
 			)}
-			{history && <BanHistoryDialog user={history} onClose={() => setHistory(null)} />}
+			{history && <BanHistoryDrawer user={history} onClose={() => setHistory(null)} />}
+			{banning && (
+				<BanUserDialog
+					user={banning}
+					onClose={() => setBanning(null)}
+					onSubmit={async (body) => {
+						if (await patchUser(banning, body)) setBanning(null)
+					}}
+				/>
+			)}
+			{unbanning && (
+				<UnbanDialog
+					user={unbanning}
+					onClose={() => setUnbanning(null)}
+					onSubmit={async (body) => {
+						if (await patchUser(unbanning, body)) setUnbanning(null)
+					}}
+				/>
+			)}
 			{creating && (
 				<UserDialog
 					title={t('admin.users.new')}
@@ -522,6 +567,7 @@ function UserDialog({ title, initial, onClose, onSaved, onAvatarChanged }: UserD
 	}
 
 	const label = 'mb-1 block text-sm text-[var(--wc-text-muted)]'
+	useDialogDismiss(onClose)
 
 	return (
 		<div
@@ -531,9 +577,6 @@ function UserDialog({ title, initial, onClose, onSaved, onAvatarChanged }: UserD
 			aria-label={title}
 			onMouseDown={(e) => {
 				if (e.target === e.currentTarget) onClose()
-			}}
-			onKeyDown={(e) => {
-				if (e.key === 'Escape') onClose()
 			}}
 		>
 			<form
@@ -749,111 +792,251 @@ function AvatarManager({ user, onChanged }: { user: AdminUser; onChanged: (avata
 	)
 }
 
-// storico delle sanzioni: GET /admin/users/:id/ban-history
-function BanHistoryDialog({ user, onClose }: { user: AdminUser; onClose: () => void }) {
+const DIALOG_FIELD =
+	'w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm text-[var(--wc-text)] outline-none focus:border-[var(--wc-basil)]'
+const DIALOG_LABEL = 'mb-1 block text-sm text-[var(--wc-text-muted)]'
+
+// Ban di un account dal pannello utenti (sostituisce window.confirm): motivo, durata o permanente,
+// messaggio per l'utente e note interne per lo staff (internal_notes, #207)
+function BanUserDialog({
+	user,
+	onClose,
+	onSubmit,
+}: {
+	user: AdminUser
+	onClose: () => void
+	onSubmit: (body: AdminUserStatusDto) => Promise<void>
+}) {
 	const { t } = useTranslation()
-	const lang = useLang()
-	const [items, setItems] = useState<BanHistoryItem[] | null>(null)
+	const [reason, setReason] = useState<ReportReason>('other')
+	const [days, setDays] = useState('')
+	const [permanent, setPermanent] = useState(false)
+	const [description, setDescription] = useState('')
+	const [notes, setNotes] = useState('')
+	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
-	useEffect(() => {
-		let cancelled = false
-		api
-			.get<BanHistoryItem[]>(`/admin/users/${user.id}/ban-history`)
-			.then((res) => {
-				if (!cancelled) setItems(asArray<BanHistoryItem>(res))
-			})
-			.catch((err) => {
-				if (cancelled) return
-				setItems([])
-				setError(getErrorMessage(err, t('admin.users.banHistoryError')))
-			})
-		return () => {
-			cancelled = true
-		}
-	}, [user.id, t])
+	useDialogDismiss(() => {
+		if (!submitting) onClose()
+	})
 
-	const fmt = (iso: string | null) =>
-		iso ? new Date(iso).toLocaleString(lang, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+	async function handleSubmit(e: FormEvent) {
+		e.preventDefault()
+		setError(null)
+		const n = days.trim() ? Number(days) : undefined
+		if (!permanent && n !== undefined && (!Number.isInteger(n) || n < 1)) return setError(t('moderation.errors.banDays'))
+		const body: AdminUserStatusDto = {
+			status: 'banned',
+			ban_reason: reason,
+			...(permanent ? { is_permanent: true } : n !== undefined ? { ban_duration_days: n } : {}),
+			...(description.trim() ? { ban_description: description.trim() } : {}),
+			// inviato solo se compilato: il backend senza #207 rifiuta il campo
+			...(notes.trim() ? { internal_notes: notes.trim() } : {}),
+		}
+		setSubmitting(true)
+		try {
+			await onSubmit(body)
+		} finally {
+			setSubmitting(false)
+		}
+	}
+
+	const title = t('admin.users.banTitle', { name: user.username })
 
 	return (
 		<div
-			className="fixed inset-0 z-[90] flex justify-end bg-black/60"
+			className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4"
 			role="dialog"
 			aria-modal="true"
-			aria-label={t('admin.users.banHistoryTitle', { name: user.username })}
+			aria-label={title}
 			onMouseDown={(e) => {
-				if (e.target === e.currentTarget) onClose()
-			}}
-			onKeyDown={(e) => {
-				if (e.key === 'Escape') onClose()
+				if (e.target === e.currentTarget && !submitting) onClose()
 			}}
 		>
-			{/* pannello laterale (slide-over) */}
-			<div className="h-full w-full max-w-lg overflow-y-auto border-l border-[var(--wc-border)] bg-[var(--wc-bg)] p-6">
+			<form
+				onSubmit={handleSubmit}
+				className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6"
+			>
 				<div className="flex items-start justify-between gap-3">
-					<h2 className="font-display text-2xl text-[var(--wc-saffron)]">{t('admin.users.banHistoryTitle', { name: user.username })}</h2>
-					<button autoFocus onClick={onClose} aria-label={t('common.close')} className="text-xl text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]">
+					<h2 className="font-display text-2xl text-[var(--wc-paprika)]">{title}</h2>
+					<button type="button" onClick={onClose} aria-label={t('common.close')} className="text-xl text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]">
 						×
 					</button>
 				</div>
+				<p className="text-sm text-[var(--wc-text-muted)]">{t('admin.users.banIntro')}</p>
 
-				{error && <p className="mt-4 text-sm text-[var(--wc-paprika)]">{error}</p>}
-				{!items && (
-					<div className="mt-4">
-						<ListSkeleton rows={3} />
-					</div>
+				<div>
+					<label htmlFor="ban-reason" className={DIALOG_LABEL}>
+						{t('moderation.resolutionReason')} *
+					</label>
+					<select id="ban-reason" required value={reason} onChange={(e) => setReason(e.target.value as ReportReason)} className={DIALOG_FIELD}>
+						{REPORT_REASONS.map((r) => (
+							<option key={r} value={r}>
+								{t(`report.reasons.${r}`)}
+							</option>
+						))}
+					</select>
+				</div>
+
+				<div className="space-y-2 rounded-xl border border-[var(--wc-paprika)] p-3">
+					<label htmlFor="ban-days" className="block text-sm text-[var(--wc-text-muted)]">
+						{t('moderation.banDuration')}
+					</label>
+					<input
+						id="ban-days"
+						type="number"
+						min={1}
+						step={1}
+						disabled={permanent}
+						value={days}
+						placeholder={String(DEFAULT_BAN_DAYS[reason])}
+						onChange={(e) => setDays(e.target.value)}
+						className={`${DIALOG_FIELD} disabled:opacity-50`}
+					/>
+					<p className="text-xs text-[var(--wc-text-muted)]">{t('moderation.banDurationHelp', { days: DEFAULT_BAN_DAYS[reason] })}</p>
+					<label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--wc-paprika)]">
+						<input type="checkbox" checked={permanent} onChange={(e) => setPermanent(e.target.checked)} />
+						{t('moderation.permanentBan')}
+					</label>
+				</div>
+
+				<div>
+					<label htmlFor="ban-desc" className={DIALOG_LABEL}>
+						{t('moderation.userMessage')}
+					</label>
+					<textarea
+						id="ban-desc"
+						rows={3}
+						maxLength={MODERATION_TEXT_MAX}
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						className={DIALOG_FIELD}
+					/>
+					<p className="mt-1 text-xs text-[var(--wc-text-muted)]">{t('moderation.userMessageHelp')}</p>
+				</div>
+
+				<div>
+					<label htmlFor="ban-notes" className={DIALOG_LABEL}>
+						{t('moderation.internalNotes')}
+					</label>
+					<textarea
+						id="ban-notes"
+						rows={2}
+						maxLength={MODERATION_TEXT_MAX}
+						value={notes}
+						onChange={(e) => setNotes(e.target.value)}
+						className={DIALOG_FIELD}
+					/>
+					<p className="mt-1 text-xs text-[var(--wc-text-muted)]">{t('admin.users.internalNotesHelp')}</p>
+				</div>
+
+				{error && (
+					<p role="alert" className="text-sm text-[var(--wc-paprika)]">
+						{error}
+					</p>
 				)}
-				{items && items.length === 0 && !error && <p className="mt-4 text-sm text-[var(--wc-text-muted)]">{t('admin.users.banHistoryEmpty')}</p>}
 
-				<ol className="mt-4 space-y-3">
-					{items?.map((b) => (
-						<li key={b.id} className="rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-4 text-sm">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<span className="rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-xs text-[var(--wc-paprika)]">
-									{t(`report.reasons.${b.reason}`)}
-								</span>
-								<span className="text-xs font-medium text-[var(--wc-text)]">
-									{b.is_permanent ? t('admin.users.bannedPermanent') : t('admin.users.banDays', { count: b.duration_days ?? 0 })}
-								</span>
-							</div>
-							<dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-								<dt className="text-[var(--wc-text-muted)]">{t('admin.users.banStart')}</dt>
-								<dd>{fmt(b.banned_at)}</dd>
-								<dt className="text-[var(--wc-text-muted)]">{t('admin.users.banEnd')}</dt>
-								<dd>{b.is_permanent ? '∞' : fmt(b.expires_at)}</dd>
-								{b.unbanned_at && (
-									<>
-										<dt className="text-[var(--wc-text-muted)]">{t('admin.users.unbannedAt')}</dt>
-										<dd>
-											{fmt(b.unbanned_at)}
-											{b.unbanned_by_id != null && ` · #${b.unbanned_by_id}`}
-										</dd>
-									</>
-								)}
-								<dt className="text-[var(--wc-text-muted)]">{t('admin.users.bannedBy')}</dt>
-								<dd>
-									<Link to={`/users/${b.banned_by_id}`} className="hover:underline">
-										#{b.banned_by_id}
-									</Link>
-									{b.report_id != null && ` · ${t('admin.users.fromReport', { id: b.report_id })}`}
-								</dd>
-							</dl>
-							{b.description && (
-								<p className="mt-2 whitespace-pre-line break-words text-xs text-[var(--wc-text)]">
-									<span className="text-[var(--wc-text-muted)]">{t('moderation.userMessage')}: </span>
-									{b.description}
-								</p>
-							)}
-							{b.unban_reason && (
-								<p className="mt-1 whitespace-pre-line break-words text-xs text-[var(--wc-text-muted)]">
-									{t('admin.users.unbanReason')}: {b.unban_reason}
-								</p>
-							)}
-						</li>
-					))}
-				</ol>
-			</div>
+				<div className="flex justify-end gap-2">
+					<button
+						type="button"
+						onClick={onClose}
+						disabled={submitting}
+						className="rounded-full border border-[var(--wc-border)] px-4 py-2 text-sm hover:border-[var(--wc-basil)] disabled:opacity-60"
+					>
+						{t('common.cancel')}
+					</button>
+					<button
+						type="submit"
+						disabled={submitting}
+						className="rounded-full bg-[var(--wc-paprika)] px-5 py-2 text-sm font-medium text-[var(--wc-bg)] disabled:opacity-60"
+					>
+						{submitting ? t('common.sending') : t('admin.users.ban')}
+					</button>
+				</div>
+			</form>
+		</div>
+	)
+}
+
+// Revoca del ban: motivo facoltativo (unban_reason), registrato nello storico delle sanzioni
+function UnbanDialog({
+	user,
+	onClose,
+	onSubmit,
+}: {
+	user: AdminUser
+	onClose: () => void
+	onSubmit: (body: AdminUserStatusDto) => Promise<void>
+}) {
+	const { t } = useTranslation()
+	const [reason, setReason] = useState('')
+	const [submitting, setSubmitting] = useState(false)
+
+	useDialogDismiss(() => {
+		if (!submitting) onClose()
+	})
+
+	async function handleSubmit(e: FormEvent) {
+		e.preventDefault()
+		setSubmitting(true)
+		try {
+			await onSubmit({ status: 'active', ...(reason.trim() ? { unban_reason: reason.trim() } : {}) })
+		} finally {
+			setSubmitting(false)
+		}
+	}
+
+	const title = t('admin.users.unbanTitle', { name: user.username })
+
+	return (
+		<div
+			className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4"
+			role="dialog"
+			aria-modal="true"
+			aria-label={title}
+			onMouseDown={(e) => {
+				if (e.target === e.currentTarget && !submitting) onClose()
+			}}
+		>
+			<form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6">
+				<div className="flex items-start justify-between gap-3">
+					<h2 className="font-display text-2xl text-[var(--wc-saffron)]">{title}</h2>
+					<button type="button" onClick={onClose} aria-label={t('common.close')} className="text-xl text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]">
+						×
+					</button>
+				</div>
+				<div>
+					<label htmlFor="unban-reason" className={DIALOG_LABEL}>
+						{t('admin.users.unbanReason')} ({t('admin.users.optional')})
+					</label>
+					<textarea
+						id="unban-reason"
+						rows={3}
+						autoFocus
+						maxLength={MODERATION_TEXT_MAX}
+						value={reason}
+						onChange={(e) => setReason(e.target.value)}
+						className={DIALOG_FIELD}
+					/>
+				</div>
+				<div className="flex justify-end gap-2">
+					<button
+						type="button"
+						onClick={onClose}
+						disabled={submitting}
+						className="rounded-full border border-[var(--wc-border)] px-4 py-2 text-sm hover:border-[var(--wc-basil)] disabled:opacity-60"
+					>
+						{t('common.cancel')}
+					</button>
+					<button
+						type="submit"
+						disabled={submitting}
+						className="rounded-full bg-[var(--wc-basil)] px-5 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)] disabled:opacity-60"
+					>
+						{submitting ? t('common.sending') : t('admin.users.unban')}
+					</button>
+				</div>
+			</form>
 		</div>
 	)
 }

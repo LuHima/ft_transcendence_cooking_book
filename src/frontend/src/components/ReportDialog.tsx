@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/auth'
+import { useToast } from '../context/toast'
 import { api, ApiError, getErrorMessage } from '../api/client'
+import { useDialogDismiss } from '../lib/useDialogDismiss'
 import { REPORT_REASONS, type CreateReportDto, type ReportReason, type ReportSubject } from '../types/models'
 
 // CreateReportDto: description is at most 1000 characters
@@ -43,6 +44,8 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 		}
 	}
 
+	useDialogDismiss(onClose)
+
 	return (
 		<div
 			className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4"
@@ -51,9 +54,6 @@ function ReportDialog({ targetType, targetId, onClose }: ReportDialogProps) {
 			aria-label={t('report.title')}
 			onMouseDown={(e) => {
 				if (e.target === e.currentTarget) onClose()
-			}}
-			onKeyDown={(e) => {
-				if (e.key === 'Escape') onClose()
 			}}
 		>
 			<form

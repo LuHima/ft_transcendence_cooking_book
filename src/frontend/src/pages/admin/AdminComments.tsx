@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError, getErrorMessage, qs, toPage } from '../../api/client'
-import { useAuth } from '../../context/AuthContext'
-import { useToast } from '../../context/ToastContext'
+import { useAuth } from '../../context/auth'
+import { useToast } from '../../context/toast'
 import { useLang } from '../../lib/useLang'
 import { isAdmin } from '../../lib/permissions'
+import { reportsHref, useStaffBasePath } from '../../lib/staffLinks'
+import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
+import BanHistoryDrawer from '../../components/BanHistoryDrawer'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { ListSkeleton } from '../../components/Skeleton'
@@ -39,6 +42,7 @@ function AdminComments() {
 	const toast = useToast()
 	const { user } = useAuth()
 	const admin = isAdmin(user)
+	const base = useStaffBasePath()
 	const [data, setData] = useState<Paginated<AdminComment> | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [search, setSearch] = useState('')
@@ -57,6 +61,10 @@ function AdminComments() {
 	const [reload, setReload] = useState(0)
 	const [busyId, setBusyId] = useState<number | null>(null)
 	const [purging, setPurging] = useState<{ comment: AdminComment; prune: boolean } | null>(null)
+	const [deactivating, setDeactivating] = useState<AdminComment | null>(null)
+	const [history, setHistory] = useState<{ id: number; username: string } | null>(null)
+	const listTopRef = useRef<HTMLDivElement>(null)
+	useScrollIntoViewOnChange(page, listTopRef)
 
 	// con "solo segnalati" l'ordinamento lo decide il backend (numero di segnalazioni)
 	const [sortBy, sortOrder] = sort.split(':') as [AdminCommentSortBy, SortOrder]
@@ -71,6 +79,14 @@ function AdminComments() {
 		}, 300)
 		return () => window.clearTimeout(id)
 	}, [search, recipeIdText, userIdText])
+
+	// filtri cambiati: via le righe vecchie (skeleton) invece di mostrare risultati non più validi
+	const filterKey = [debounced, status, recipeId, userId, reportedOnly, editedOnly, sort, format].join('|')
+	const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+	if (filterKey !== prevFilterKey) {
+		setPrevFilterKey(filterKey)
+		setData(null)
+	}
 
 	useEffect(() => {
 		let cancelled = false
@@ -113,7 +129,7 @@ function AdminComments() {
 
 	// DELETE soft: il commento resta nel database con is_active = false
 	async function softDelete(c: AdminComment) {
-		if (!confirm(t('comments.confirmDelete'))) return
+		setDeactivating(null)
 		setBusyId(c.id)
 		try {
 			await api.delete(`/recipes/${c.recipe_id}/comments/${c.id}`)
@@ -172,7 +188,25 @@ function AdminComments() {
 						{c.is_edited && ` · ${t('comments.edited')}`}
 						{c.parent_id != null && !isReply && ` · ${t('admin.comments.replyTo', { id: c.parent_id })}`}
 					</span>
-					<span className="flex shrink-0 items-center gap-3">
+					<span className="flex shrink-0 flex-wrap items-center justify-end gap-3">
+						{/* segnalazioni del commento: apre il pannello Segnalazioni filtrato su questo commento */}
+						{(c.has_pending_reports || c.reports_count > 0) && (
+							<Link
+								to={reportsHref(base, { subject: 'comment', target_id: c.id, status: c.has_pending_reports ? 'pending' : 'all' })}
+								className="text-[var(--wc-paprika)] hover:underline"
+							>
+								{c.has_pending_reports ? t('admin.reportsLink.resolve') : t('admin.reportsLink.view')}
+							</Link>
+						)}
+						{c.user && (
+							<button
+								type="button"
+								onClick={() => c.user && setHistory({ id: c.user.id, username: c.user.username })}
+								className="text-[var(--wc-saffron)] hover:underline"
+							>
+								{t('admin.users.banHistory')}
+							</button>
+						)}
 						{c.has_pending_reports && (
 							<span className="rounded-full bg-[var(--wc-paprika)] px-2 py-0.5 font-semibold text-[var(--wc-bg)]">
 								⚑ {t('admin.comments.reported')}
@@ -189,7 +223,7 @@ function AdminComments() {
 						)}
 						{c.is_active && (
 							<button
-								onClick={() => void softDelete(c)}
+								onClick={() => setDeactivating(c)}
 								disabled={busyId === c.id}
 								className="text-[var(--wc-paprika)] hover:underline disabled:opacity-50"
 							>
@@ -234,7 +268,7 @@ function AdminComments() {
 	}
 
 	return (
-		<div>
+		<div ref={listTopRef} className="scroll-mt-24">
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 				<input
 					value={search}
@@ -346,6 +380,19 @@ function AdminComments() {
 
 			{data && <Pagination page={data.page} totalPages={data.total_pages} onChange={setPage} />}
 
+			{deactivating && (
+				<ConfirmDialog
+					title={t('admin.comments.deactivate')}
+					confirmLabel={t('admin.comments.deactivate')}
+					danger
+					onConfirm={() => softDelete(deactivating)}
+					onClose={() => setDeactivating(null)}
+				>
+					<p>{t('comments.confirmDelete')}</p>
+					<p className="italic text-[var(--wc-text-muted)]">“{deactivating.content.slice(0, 160)}”</p>
+				</ConfirmDialog>
+			)}
+			{history && <BanHistoryDrawer user={history} onClose={() => setHistory(null)} />}
 			{purging && (
 				<ConfirmDialog
 					title={t('admin.comments.purgeTitle')}

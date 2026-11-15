@@ -257,8 +257,19 @@ export interface CatalogTag {
 	name: string
 }
 
+// Sort fields of the public catalog lists (GET /ingredients, GET /tags → FilterTagDto)
+export type CatalogSortBy = 'name' | 'slug'
+
+// GET /ingredients?page=&limit=&lang=&search=&category=&sort_by=&sort_order= → PaginatedIngredientsResponseDto
+export type PaginatedIngredientsResponseDto = Paginated<CatalogIngredient>
+// GET /tags?page=&limit=&lang=&search=&sort_by=&sort_order= → PaginatedTagsResponseDto
+export type PaginatedTagsResponseDto = Paginated<CatalogTag>
+
 // ─── catalog management (admins only): /api/admin/catalog/(ingredients|tags)[/:id] ───
-// Detail endpoints return every translation; lists stay on GET /ingredients and GET /tags.
+// Paginated lists (GET /admin/catalog/ingredients, GET /admin/catalog/tags) and detail endpoints
+// return every translation ({ it, en, fr }).
+export type AdminCatalogSortBy = 'id' | 'slug'
+
 export interface CatalogTranslations {
 	it: string
 	en: string
@@ -298,6 +309,11 @@ export interface TagDetailResponseDto {
 	slug: string
 	translations: CatalogTranslations
 }
+
+// GET /admin/catalog/ingredients?page=&limit=&search=&category=&sort_by=&sort_order=
+export type PaginatedAdminIngredientsResponseDto = Paginated<IngredientDetailResponseDto>
+// GET /admin/catalog/tags?page=&limit=&search=&sort_by=&sort_order=
+export type PaginatedAdminTagsResponseDto = Paginated<TagDetailResponseDto>
 
 // Body of POST /api/recipes and PATCH /api/recipes/:id
 export interface CreateRecipeBody {
@@ -443,8 +459,24 @@ export interface AdminComment {
 	replies?: AdminComment[]
 }
 
-// ─── admin recipes (GET /admin/recipes = GET /recipes filters + status) ───
+// ─── admin recipes (GET /admin/recipes = GET /recipes filters + status [+ reported_only, #208]) ───
 export type AdminRecipeStatus = 'all' | 'active' | 'inactive'
+
+// Recipe row of GET /admin/recipes: report indicators added by #208 (optional until the backend ships them)
+export interface AdminRecipe extends RecipeSummary {
+	reports_count?: number
+	pending_reports_count?: number
+	has_pending_reports?: boolean
+	// Latest pending report, when the backend provides it
+	pending_report_id?: number | null
+}
+
+// Compact staff/user summary hydrated by the backend (#207: resolved_by, banned_by, unbanned_by)
+export interface UserRef {
+	id: number
+	username: string
+	avatar_url?: string | null
+}
 
 // ─── admin user management (GET /admin/users → AdminUserResponseDto) ───
 export interface AdminUser extends User {
@@ -456,12 +488,19 @@ export interface AdminUser extends User {
 	deleted_at?: string | null
 }
 
-// GET /admin/users/:id/ban-history → BanHistoryItemDto[]
+// GET /admin/users/:id/ban-history?page=&limit=&sort_order= → PaginatedBanHistoryResponseDto
 export interface BanHistoryItem {
 	id: string
 	user_id: number
 	banned_by_id: number
 	report_id: number | null
+	// Moderation action recorded with the sanction (ReportAction, normally 'ban')
+	action?: ModerationAction
+	// Hydrated staff actors (#207); the *_id fields stay as fallback
+	banned_by?: UserRef | null
+	unbanned_by?: UserRef | null
+	// Staff-only context (#207), never shown to the sanctioned user
+	internal_notes?: string | null
 	reason: ReportReason
 	description: string | null
 	duration_days: number | null
@@ -472,6 +511,8 @@ export interface BanHistoryItem {
 	unbanned_by_id: number | null
 	unban_reason: string | null
 }
+
+export type PaginatedBanHistoryResponseDto = Paginated<BanHistoryItem>
 
 // ─── reports and moderation (CreateReportDto / UpdateReportDto / ReportItemDto) ───
 
@@ -558,9 +599,33 @@ export interface ReportItem {
 	// Actions taken on resolution (e.g. ['delete_content', 'warn'])
 	actions?: ModerationAction[]
 	resolved_by_id: number | null
+	// Hydrated resolver (#207); resolved_by_id stays as fallback
+	resolved_by?: UserRef | null
 	resolved_at: string | null
 	created_at: string
 	updated_at?: string
+}
+
+// PATCH /admin/users/:id when banning or reactivating an account (UpdateAdminUserDto, #207)
+export interface AdminUserStatusDto {
+	status: UserStatus
+	ban_reason?: ReportReason
+	ban_duration_days?: number
+	is_permanent?: boolean
+	// User-facing explanation
+	ban_description?: string
+	// Staff-only notes (#207)
+	internal_notes?: string
+	// When lifting a ban
+	unban_reason?: string
+}
+
+// Report filters carried in the staff panels' URL (/admin?tab=reports&…, /moderation?tab=reports&…)
+export interface ReportLinkFilters {
+	subject?: ReportSubject
+	target_id?: number
+	status?: ReportStatus | 'all'
+	report_id?: number
 }
 
 // ─── banned account: 403 { code: 'ACCOUNT_BANNED', details } from /auth/signin and /auth/signin/google ───

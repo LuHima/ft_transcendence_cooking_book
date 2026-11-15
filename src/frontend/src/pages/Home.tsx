@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import KitchenScene from '../3d/components/KitchenScene'
 
 import { api, qs, toPage } from '../api/client'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth'
 import { useLang } from '../lib/useLang'
 import RecipeCard from '../components/RecipeCard'
 import { RecipeGridSkeleton } from '../components/Skeleton'

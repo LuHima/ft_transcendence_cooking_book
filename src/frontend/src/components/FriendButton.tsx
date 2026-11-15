@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/auth'
+import { useToast } from '../context/toast'
 import { api, ApiError, getErrorMessage } from '../api/client'
+import ConfirmDialog from './ConfirmDialog'
 import type { FriendshipStatus } from '../types/models'
 
 interface FriendButtonProps {
@@ -30,6 +31,7 @@ function FriendButton({ userId, username, status, onChange }: FriendButtonProps)
 	const toast = useToast()
 	const navigate = useNavigate()
 	const [busy, setBusy] = useState(false)
+	const [confirmingRemove, setConfirmingRemove] = useState(false)
 	// Inline notice for 409 (request already exists or cooldown active)
 	const [notice, setNotice] = useState<string | null>(null)
 
@@ -58,19 +60,28 @@ function FriendButton({ userId, username, status, onChange }: FriendButtonProps)
 
 	if (current === 'friends') {
 		return (
-			<button
-				disabled={busy}
-				className={OUTLINE}
-				onClick={() => {
-					if (!confirm(t('friends.confirmRemove', { name: username }))) return
-					void run(async () => {
-						await api.delete(`/friends/${userId}`)
-						return 'none'
-					}, 'friends.removed')
-				}}
-			>
-				{t('friends.remove')}
-			</button>
+			<>
+				<button disabled={busy} className={OUTLINE} onClick={() => setConfirmingRemove(true)}>
+					{t('friends.remove')}
+				</button>
+				{confirmingRemove && (
+					<ConfirmDialog
+						title={t('friends.remove')}
+						confirmLabel={t('friends.remove')}
+						danger
+						onConfirm={async () => {
+							setConfirmingRemove(false)
+							await run(async () => {
+								await api.delete(`/friends/${userId}`)
+								return 'none'
+							}, 'friends.removed')
+						}}
+						onClose={() => setConfirmingRemove(false)}
+					>
+						<p>{t('friends.confirmRemove', { name: username })}</p>
+					</ConfirmDialog>
+				)}
+			</>
 		)
 	}
 

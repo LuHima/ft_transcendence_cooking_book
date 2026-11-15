@@ -1,19 +1,22 @@
-import { useId, useMemo, useState, type KeyboardEvent } from 'react'
+import { useId, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLang } from '../lib/useLang'
+import { useIngredientSearch } from '../lib/catalog'
 import type { CatalogIngredient } from '../types/models'
 
 interface IngredientPickerProps {
-	catalog: CatalogIngredient[]
 	value: CatalogIngredient | null
 	onChange: (ingredient: CatalogIngredient | null) => void
 	invalid?: boolean
 }
 
-const MAX_OPTIONS = 8
-
-// Combobox over the ingredient catalog: the backend only accepts catalog ingredient IDs
-function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPickerProps) {
+// Combobox over the ingredient catalog (~3,000 items): debounced server-side search on
+// GET /ingredients?search=&lang=&limit=20&sort_by=name, with on-demand next pages.
+// The backend only accepts catalog ingredient IDs; the selected value keeps its own name,
+// so an existing recipe shows its ingredients without loading the catalog.
+function IngredientPicker({ value, onChange, invalid }: IngredientPickerProps) {
 	const { t } = useTranslation()
+	const lang = useLang()
 	const listId = useId()
 	const [text, setText] = useState(value?.name ?? '')
 	const [open, setOpen] = useState(false)
@@ -26,11 +29,9 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 		setText(value?.name ?? '')
 	}
 
-	const options = useMemo(() => {
-		const q = text.trim().toLowerCase()
-		if (!q || q === value?.name.toLowerCase()) return catalog.slice(0, MAX_OPTIONS)
-		return catalog.filter((i) => i.name.toLowerCase().includes(q) || i.slug.includes(q)).slice(0, MAX_OPTIONS)
-	}, [text, catalog, value])
+	// The current choice's name in the box means "browse": show the top of the list instead of searching for it
+	const searchText = value && text === value.name ? '' : text
+	const { items: options, loading, error, hasMore, loadingMore, loadMore } = useIngredientSearch(searchText, lang, open)
 
 	function choose(ingredient: CatalogIngredient) {
 		setText(ingredient.name)
@@ -41,7 +42,7 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 	function handleBlur() {
 		setOpen(false)
 		const q = text.trim().toLowerCase()
-		const exact = catalog.find((i) => i.name.toLowerCase() === q)
+		const exact = q ? options.find((i) => i.name.toLowerCase() === q) : undefined
 		if (exact) {
 			if (exact.id !== value?.id) onChange(exact)
 			setText(exact.name)
@@ -61,7 +62,7 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault()
 			setActiveIndex((i) => (options.length ? (i <= 0 ? options.length - 1 : i - 1) : 0))
-		} else if (e.key === 'Enter' && open && options[activeIndex]) {
+		} else if (e.key === 'Enter' && open && !loading && options[activeIndex]) {
 			e.preventDefault()
 			choose(options[activeIndex])
 		} else if (e.key === 'Escape') {
@@ -69,16 +70,20 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 		}
 	}
 
+	const status = loading ? t('common.loading') : error ? t('form.catalogUnavailable') : options.length === 0 ? t('form.noIngredientFound') : null
+
 	return (
 		<div className="relative min-w-[12rem] flex-1 basis-full sm:basis-0">
 			<input
 				type="text"
+				role="combobox"
 				value={text}
 				placeholder={t('form.ingredientPlaceholder')}
 				aria-label={t('form.ingredientName')}
 				aria-autocomplete="list"
 				aria-expanded={open}
 				aria-controls={listId}
+				aria-busy={open && loading}
 				aria-invalid={invalid || undefined}
 				autoComplete="off"
 				onChange={(e) => {
@@ -100,30 +105,49 @@ function IngredientPicker({ catalog, value, onChange, invalid }: IngredientPicke
 					role="listbox"
 					className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-auto rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg"
 				>
-					{options.length === 0 ? (
-						<li className="px-3 py-2 text-sm text-[var(--wc-text-muted)]">{t('form.noIngredientFound')}</li>
+					{status ? (
+						<li role="status" className={`px-3 py-2 text-sm ${error ? 'text-[var(--wc-paprika)]' : 'text-[var(--wc-text-muted)]'}`}>
+							{status}
+						</li>
 					) : (
-						options.map((i, index) => (
-							<li key={i.id} role="option" aria-selected={index === activeIndex}>
-								{/* onMouseDown + preventDefault: select before the input blur */}
-								<button
-									type="button"
-									onMouseDown={(e) => {
-										e.preventDefault()
-										choose(i)
-									}}
-									onMouseEnter={() => setActiveIndex(index)}
-									className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-[var(--wc-text)] ${
-										index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
-									}`}
-								>
-									<span className="truncate">{i.name}</span>
-									<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
-										{t(`ingredientCategory.${i.category}`)}
-									</span>
-								</button>
-							</li>
-						))
+						<>
+							{options.map((i, index) => (
+								<li key={i.id} role="option" aria-selected={index === activeIndex}>
+									{/* onMouseDown + preventDefault: select before the input blur */}
+									<button
+										type="button"
+										onMouseDown={(e) => {
+											e.preventDefault()
+											choose(i)
+										}}
+										onMouseEnter={() => setActiveIndex(index)}
+										className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-[var(--wc-text)] ${
+											index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
+										}`}
+									>
+										<span className="truncate">{i.name}</span>
+										<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
+											{t(`ingredientCategory.${i.category}`)}
+										</span>
+									</button>
+								</li>
+							))}
+							{hasMore && (
+								<li role="presentation">
+									<button
+										type="button"
+										disabled={loadingMore}
+										onMouseDown={(e) => {
+											e.preventDefault()
+											void loadMore()
+										}}
+										className="w-full px-3 py-2 text-left text-xs text-[var(--wc-saffron)] hover:underline disabled:opacity-50"
+									>
+										{loadingMore ? t('common.loading') : t('form.moreIngredients')}
+									</button>
+								</li>
+							)}
+						</>
 					)}
 				</ul>
 			)}

@@ -1,12 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/auth'
+import { useToast } from '../context/toast'
 import { api, getErrorMessage } from '../api/client'
 import { useLang } from '../lib/useLang'
 import { canDeactivateComment, isStaff as isStaffUser } from '../lib/permissions'
 import Avatar from './Avatar'
+import ConfirmDialog from './ConfirmDialog'
 import { ReportButton } from './ReportDialog'
 import { Skeleton } from './Skeleton'
 import Pagination from './Pagination'
@@ -105,6 +106,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	const [loadError, setLoadError] = useState<string | null>(null)
 	const [replyingTo, setReplyingTo] = useState<number | null>(null)
 	const [editing, setEditing] = useState<number | null>(null)
+	const [confirmingDelete, setConfirmingDelete] = useState<ApiComment | null>(null)
 	const [loadingReplies, setLoadingReplies] = useState<Record<number, boolean>>({})
 	const [replyPages, setReplyPages] = useState<Record<number, number>>({})
 
@@ -237,7 +239,9 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	}
 
 	async function deleteComment(comment: ApiComment) {
-		if (!confirm(t('comments.confirmDelete'))) return
+		setConfirmingDelete(null)
+		// root without replies disappears from the list: the "Comments (N)" counter goes down too
+		const removedRoot = threads?.find((th) => th.id === comment.id && th.replies.length === 0)
 		try {
 			// Soft delete: the backend sets is_active = false
 			await api.delete(`/recipes/${recipeId}/comments/${comment.id}`)
@@ -265,6 +269,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 							})
 					: null,
 			)
+			if (removedRoot) setTotalCount((c) => Math.max(0, c - 1))
 			toast.success(t('comments.deleted'))
 		} catch (err) {
 			toast.error(getErrorMessage(err, t('comments.deleteError')))
@@ -323,7 +328,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 							{canDelete && (
 								<button
 									type="button"
-									onClick={() => void deleteComment(c)}
+									onClick={() => setConfirmingDelete(c)}
 									className="text-[var(--wc-paprika)] hover:underline"
 								>
 									{t('common.delete')}
@@ -450,6 +455,18 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 
 			{totalPages > 1 && (
 				<Pagination page={page} totalPages={totalPages} onChange={(p) => setPage(p)} />
+			)}
+
+			{confirmingDelete && (
+				<ConfirmDialog
+					title={t('common.delete')}
+					confirmLabel={t('common.delete')}
+					danger
+					onConfirm={() => deleteComment(confirmingDelete)}
+					onClose={() => setConfirmingDelete(null)}
+				>
+					<p>{t('comments.confirmDelete')}</p>
+				</ConfirmDialog>
 			)}
 		</section>
 	)

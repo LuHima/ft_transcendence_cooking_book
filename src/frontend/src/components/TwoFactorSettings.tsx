@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/auth'
+import { useToast } from '../context/toast'
 import { api, ApiError, getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from './PasswordInput'
@@ -11,7 +11,7 @@ type Step = 'idle' | 'password' | 'verify'
 
 // Local 2FA hint, used only when GET /users/me doesn't return is_two_factor_enabled
 const hintKey = (email: string) => `wecook.2fa.${email.toLowerCase()}`
-export function readTwoFactorHint(email?: string): boolean {
+function readTwoFactorHint(email?: string): boolean {
 	if (!email) return false
 	try {
 		return localStorage.getItem(hintKey(email)) === '1'
@@ -19,7 +19,7 @@ export function readTwoFactorHint(email?: string): boolean {
 		return false
 	}
 }
-export function writeTwoFactorHint(email: string, value: boolean) {
+function writeTwoFactorHint(email: string, value: boolean) {
 	try {
 		if (value) localStorage.setItem(hintKey(email), '1')
 		else localStorage.removeItem(hintKey(email))

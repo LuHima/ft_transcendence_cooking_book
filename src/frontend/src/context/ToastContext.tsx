@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+import { ToastContext, type ToastApi } from './toast'
 
 type ToastKind = 'success' | 'error' | 'info'
 
@@ -9,13 +10,6 @@ interface ToastItem {
 	message: string
 }
 
-interface ToastApi {
-	success: (message: string) => void
-	error: (message: string) => void
-	info: (message: string) => void
-}
-
-const ToastContext = createContext<ToastApi | null>(null)
 
 const DURATION_MS = 4500
 
@@ -85,10 +79,4 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 			</div>
 		</ToastContext.Provider>
 	)
-}
-
-export function useToast(): ToastApi {
-	const ctx = useContext(ToastContext)
-	if (!ctx) throw new Error('useToast deve essere usato dentro <ToastProvider>')
-	return ctx
 }

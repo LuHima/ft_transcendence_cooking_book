@@ -35,7 +35,7 @@ function printable(text: string): string {
 		.trim()
 }
 
-function fileName(title: string): string {
+function fileName(title: string, fallback: string): string {
 	const slug = title
 		.normalize('NFD')
 		.replace(/[̀-ͯ]/g, '')
@@ -43,7 +43,7 @@ function fileName(title: string): string {
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '')
 		.slice(0, 80)
-	return `${slug || 'ricetta'}.pdf`
+	return `${slug || fallback}.pdf`
 }
 
 // A missing photo must not block the export: the recipe is exported without it
@@ -235,5 +235,5 @@ export async function exportRecipePdf(recipe: RecipeDetail, t: TFunction): Promi
 		doc.text(`${page} / ${pages}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 8, { align: 'right' })
 	}
 
-	doc.save(fileName(recipe.title))
+	doc.save(fileName(recipe.title, t('recipe.pdfFileName')))
 }
