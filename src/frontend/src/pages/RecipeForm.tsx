@@ -10,6 +10,7 @@ import { IMAGE_ACCEPT, VIDEO_ACCEPT, validateImage, validateVideo } from '../lib
 import { useLang } from '../lib/useLang'
 import { useObjectUrl } from '../lib/useObjectUrl'
 import IngredientPicker from '../components/IngredientPicker'
+import { fetchAllTags } from '../lib/catalog'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { PROVENANCE_STYLE, provenanceOf } from '../lib/provenance'
 import { Skeleton } from '../components/Skeleton'
@@ -241,9 +242,9 @@ function RecipeForm() {
 	const galleryInputRef = useRef<HTMLInputElement>(null)
 	const videoInputRef = useRef<HTMLInputElement>(null)
 
-	const [catalog, setCatalog] = useState<CatalogIngredient[]>([])
-	const [tagCatalog, setTagCatalog] = useState<CatalogTag[]>([])
-	const [catalogError, setCatalogError] = useState(false)
+	// Tags: small curated set, loaded in full (GET /tags is paginated). Ingredients are searched on demand by IngredientPicker.
+	const [tagCatalog, setTagCatalog] = useState<CatalogTag[] | null>(null)
+	const [tagsError, setTagsError] = useState(false)
 	const [errors, setErrors] = useState<FieldErrors>({})
 	const [loading, setLoading] = useState(isEdit)
 	const [loadError, setLoadError] = useState<string | null>(null)
@@ -263,25 +264,21 @@ function RecipeForm() {
 		return () => window.removeEventListener('beforeunload', onBeforeUnload)
 	}, [saving])
 
-	// ─── catalog ───
+	// ─── tag catalog ───
 	useEffect(() => {
-		let cancelled = false
-		Promise.all([
-			api.get<CatalogIngredient[]>(`/ingredients${qs({ lang: uiLang })}`),
-			api.get<CatalogTag[]>(`/tags${qs({ lang: uiLang })}`),
-		])
-			.then(([ing, tags]) => {
-				if (cancelled) return
-				setCatalog(Array.isArray(ing) ? ing : [])
-				setTagCatalog(Array.isArray(tags) ? tags : [])
-				setCatalogError(false)
+		const controller = new AbortController()
+		fetchAllTags(uiLang, controller.signal)
+			.then((tags) => {
+				if (controller.signal.aborted) return
+				setTagCatalog(tags)
+				setTagsError(false)
 			})
 			.catch(() => {
-				if (!cancelled) setCatalogError(true)
+				if (controller.signal.aborted) return
+				setTagCatalog([])
+				setTagsError(true)
 			})
-		return () => {
-			cancelled = true
-		}
+		return () => controller.abort()
 	}, [uiLang])
 
 	// ─── load the recipe to edit ───
@@ -877,7 +874,11 @@ function RecipeForm() {
 				{/* ─── tags ─── */}
 				<section>
 					<h2 className={SECTION_TITLE}>{t('form.tags')}</h2>
-					{tagCatalog.length > 0 ? (
+					{tagCatalog === null ? (
+						<p className="mt-2 text-sm text-[var(--wc-text-muted)]" role="status">
+							{t('common.loading')}
+						</p>
+					) : tagCatalog.length > 0 ? (
 						<ul className="mt-3 flex flex-wrap gap-2">
 							{tagCatalog.map((tag) => {
 								const active = tagIds.includes(tag.id)
@@ -900,17 +901,15 @@ function RecipeForm() {
 							})}
 						</ul>
 					) : (
-						<p className="mt-2 text-sm text-[var(--wc-text-muted)]">{catalogError ? t('form.catalogError') : t('form.noTags')}</p>
+						<p className={`mt-2 text-sm ${tagsError ? 'text-[var(--wc-paprika)]' : 'text-[var(--wc-text-muted)]'}`}>
+							{tagsError ? t('form.tagsError') : t('form.noTags')}
+						</p>
 					)}
 				</section>
 
 				{/* ─── ingredients ─── */}
 				<section>
 					<h2 className={SECTION_TITLE}>{t('recipe.ingredients')}</h2>
-					{catalogError && <p className="mt-2 text-sm text-[var(--wc-paprika)]">{t('form.catalogError')}</p>}
-					{!catalogError && catalog.length === 0 && (
-						<p className="mt-2 text-sm text-[var(--wc-paprika)]">{t('form.catalogEmpty')}</p>
-					)}
 					{errors.ingredients && <p className="mt-1 text-xs text-[var(--wc-paprika)]">{errors.ingredients}</p>}
 					<div className="mt-3 space-y-3">
 						{ingredients.map((row) => {
@@ -922,7 +921,6 @@ function RecipeForm() {
 								<div key={row.key}>
 									<div className="flex flex-wrap gap-2 sm:flex-nowrap">
 										<IngredientPicker
-											catalog={catalog}
 											value={row.ingredient}
 											invalid={Boolean(err) && (!row.ingredient || dup)}
 											onChange={(ingredient) => updateIngredient(row.key, { ingredient })}

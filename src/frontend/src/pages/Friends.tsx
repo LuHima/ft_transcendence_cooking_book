@@ -12,6 +12,7 @@ import type { FriendItem, FriendRequest } from '../types/models'
 
 type Tab = 'friends' | 'received' | 'sent'
 const FRIENDS_PAGE_SIZE = 20
+const REQUESTS_PAGE_SIZE = 20
 const TABS: Tab[] = ['friends', 'received', 'sent']
 
 function Friends() {
@@ -29,6 +30,12 @@ function Friends() {
 	const [friendsQuery, setFriendsQuery] = useState('')
 	const [friendsPage, setFriendsPage] = useState(1)
 	const [friendsTotalPages, setFriendsTotalPages] = useState(1)
+	// Received / sent requests: paginated too (GET /friends/requests?type=&page=&limit=20)
+	const [requestsPage, setRequestsPage] = useState<Record<'received' | 'sent', number>>({ received: 1, sent: 1 })
+	const [requestsTotalPages, setRequestsTotalPages] = useState(1)
+	// Refetch the current page after removing an item (the next page's first item moves up)
+	const [reload, setReload] = useState(0)
+	const currentRequestsPage = tab === 'friends' ? 1 : requestsPage[tab]
 
 	// Search runs 300 ms after the last keystroke and goes back to the first page
 	useEffect(() => {
@@ -57,9 +64,21 @@ function Friends() {
 						setFriends(pageData.items)
 						setFriendsTotalPages(pageData.total_pages)
 					})
-				: api.get<unknown>(`/friends/requests?type=${tab === 'received' ? 'incoming' : 'outgoing'}`).then((d) => {
-						if (!cancelled) setRequests(toPage<FriendRequest>(d).items)
-					})
+				: api
+						.get<unknown>(
+							`/friends/requests${qs({
+								type: tab === 'received' ? 'incoming' : 'outgoing',
+								page: currentRequestsPage,
+								limit: REQUESTS_PAGE_SIZE,
+							})}`,
+						)
+						.then((d) => {
+							if (cancelled) return
+							const pageData = toPage<FriendRequest>(d, REQUESTS_PAGE_SIZE)
+							setRequests(pageData.items)
+							setRequestsTotalPages(pageData.total_pages)
+							if (tab === 'received') setReceivedCount(pageData.total)
+						})
 		request
 			.then(() => {
 				if (!cancelled) setError(null)
@@ -73,27 +92,43 @@ function Friends() {
 		return () => {
 			cancelled = true
 		}
-	}, [tab, friendsQuery, friendsPage, t])
+	}, [tab, friendsQuery, friendsPage, currentRequestsPage, reload, t])
+
+	// After removing an item: step back when the page became empty, otherwise refetch it
+	function afterRemoval(remaining: number, page: number, setPage: (p: number) => void) {
+		if (remaining === 0 && page > 1) setPage(page - 1)
+		else setReload((n) => n + 1)
+	}
+
+	function setCurrentRequestsPage(page: number) {
+		if (tab === 'friends') return
+		setRequests(null)
+		setRequestsPage((prev) => ({ ...prev, [tab]: page }))
+	}
 
 	// req.id is the other user's ID (sender for incoming, recipient for outgoing requests):
 	//   accept/reject → POST /friends/requests/:requesterId/(accept|reject)
 	//   cancel        → DELETE /friends/requests/:addresseeId
 	const answer = useCallback(
 		async (req: FriendRequest, action: 'accept' | 'reject' | 'cancel') => {
+			if (tab === 'friends') return
+			const listTab = tab
 			setBusyId(req.id)
 			try {
 				if (action === 'cancel') await api.delete(`/friends/requests/${req.id}`)
 				else await api.post(`/friends/requests/${req.id}/${action}`)
-				setRequests((prev) => prev?.filter((r) => r.id !== req.id) ?? null)
+				const remaining = (requests ?? []).filter((r) => r.id !== req.id)
+				setRequests(remaining)
 				if (action !== 'cancel') setReceivedCount((n) => Math.max(0, n - 1))
 				if (action === 'accept') toast.success(t('friends.nowFriends', { name: req.username }))
+				afterRemoval(remaining.length, requestsPage[listTab], (p) => setRequestsPage((prev) => ({ ...prev, [listTab]: p })))
 			} catch (err) {
 				toast.error(getErrorMessage(err, t('friends.actionError')))
 			} finally {
 				setBusyId(null)
 			}
 		},
-		[t, toast],
+		[t, toast, tab, requests, requestsPage],
 	)
 
 	async function removeFriend(u: FriendItem) {
@@ -101,8 +136,10 @@ function Friends() {
 		setBusyId(u.id)
 		try {
 			await api.delete(`/friends/${u.id}`)
-			setFriends((prev) => prev?.filter((x) => x.id !== u.id) ?? null)
+			const remaining = (friends ?? []).filter((x) => x.id !== u.id)
+			setFriends(remaining)
 			toast.success(t('friends.removed', { name: u.username }))
+			afterRemoval(remaining.length, friendsPage, setFriendsPage)
 		} catch (err) {
 			toast.error(getErrorMessage(err, t('friends.actionError')))
 		} finally {
@@ -206,6 +243,9 @@ function Friends() {
 						</li>
 					))}
 				</ul>
+			)}
+			{tab !== 'friends' && (
+				<Pagination page={currentRequestsPage} totalPages={requestsTotalPages} onChange={setCurrentRequestsPage} />
 			)}
 		</div>
 	)

@@ -79,20 +79,62 @@ function NotificationBell() {
 	// Server-side counter (includes unread notifications beyond the first page)
 	const [unreadCount, setUnreadCount] = useState(0)
 	const [open, setOpen] = useState(false)
+	// "Load more": pages of GET /notifications already appended to the list
+	const loadedPagesRef = useRef(1)
+	const [hasMore, setHasMore] = useState(false)
+	const [loadingMore, setLoadingMore] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
 
-	const load = useCallback(() => {
-		api
-			.get<PaginatedNotifications>(`/notifications${qs({ page: 1, limit: PAGE_SIZE, lang })}`)
-			.then((data) => {
-				const list = Array.isArray(data?.items) ? data.items : []
-				setItems(list)
-				setUnreadCount(typeof data?.unread_count === 'number' ? data.unread_count : list.filter((n) => !n.is_read).length)
+	// Refreshes the first page. reset=true (menu opened) drops the extra pages; otherwise (polling, socket)
+	// the newest page is merged in front of the older notifications already loaded with "Load more".
+	const load = useCallback(
+		(reset = false) => {
+			api
+				.get<PaginatedNotifications>(`/notifications${qs({ page: 1, limit: PAGE_SIZE, lang })}`)
+				.then((data) => {
+					const list = Array.isArray(data?.items) ? data.items : []
+					setUnreadCount(typeof data?.unread_count === 'number' ? data.unread_count : list.filter((n) => !n.is_read).length)
+					// No further pages: the first page is the whole list
+					if (reset || loadedPagesRef.current <= 1 || !data?.has_next_page) {
+						loadedPagesRef.current = 1
+						setItems(list)
+						setHasMore(Boolean(data?.has_next_page))
+						return
+					}
+					setItems((prev) => {
+						const ids = new Set(list.map((n) => n.id))
+						const oldestFresh = list.length ? new Date(list[list.length - 1].created_at).getTime() : Infinity
+						const older = prev.filter((n) => !ids.has(n.id) && new Date(n.created_at).getTime() <= oldestFresh)
+						return [...list, ...older]
+					})
+				})
+				.catch(() => {
+					// Notifications are non-essential: fail silently
+				})
+		},
+		[lang],
+	)
+
+	async function loadMore() {
+		if (loadingMore) return
+		setLoadingMore(true)
+		try {
+			const page = loadedPagesRef.current + 1
+			const data = await api.get<PaginatedNotifications>(`/notifications${qs({ page, limit: PAGE_SIZE, lang })}`)
+			const list = Array.isArray(data?.items) ? data.items : []
+			// New notifications shift the offsets: skip duplicates
+			setItems((prev) => {
+				const ids = new Set(prev.map((n) => n.id))
+				return [...prev, ...list.filter((n) => !ids.has(n.id))]
 			})
-			.catch(() => {
-				// Notifications are non-essential: fail silently
-			})
-	}, [lang])
+			loadedPagesRef.current = page
+			setHasMore(Boolean(data?.has_next_page))
+		} catch {
+			// Keep the already loaded notifications
+		} finally {
+			setLoadingMore(false)
+		}
+	}
 
 	// Initial load + periodic polling (only while the tab is visible)
 	useEffect(() => {
@@ -167,7 +209,7 @@ function NotificationBell() {
 		if (open) {
 			close()
 		} else {
-			load()
+			load(true)
 			setOpen(true)
 		}
 	}
@@ -290,6 +332,18 @@ function NotificationBell() {
 									</li>
 								)
 							})}
+							{hasMore && (
+								<li className="border-t border-[var(--wc-border)]">
+									<button
+										type="button"
+										onClick={() => void loadMore()}
+										disabled={loadingMore}
+										className="w-full px-4 py-2 text-center text-sm text-[var(--wc-saffron)] hover:underline disabled:opacity-50"
+									>
+										{loadingMore ? t('common.loading') : t('notifications.loadMore')}
+									</button>
+								</li>
+							)}
 						</ul>
 					)}
 				</div>

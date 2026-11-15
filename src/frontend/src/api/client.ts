@@ -167,11 +167,6 @@ export const api = {
 	delete: <T = unknown>(path: string, options?: RequestOptions) => apiFetch<T>(path, { ...options, method: 'DELETE' }),
 }
 
-// Some endpoints may reply with an empty or non-JSON body: always return an array
-export function asArray<T>(value: unknown): T[] {
-	return Array.isArray(value) ? (value as T[]) : []
-}
-
 // Normalizes plain arrays and paginated responses to the Paginated shape
 export function toPage<T>(data: unknown, fallbackLimit = 20): import('../types/models').Paginated<T> {
 	if (Array.isArray(data)) {

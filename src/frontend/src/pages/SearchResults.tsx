@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import RecipeCard from '../components/RecipeCard'
@@ -6,8 +6,10 @@ import Avatar from '../components/Avatar'
 import Pagination from '../components/Pagination'
 import RecipeSortSelect from '../components/RecipeSortSelect'
 import IngredientMultiPicker from '../components/IngredientMultiPicker'
+import AuthorPicker from '../components/AuthorPicker'
 import { RecipeGridSkeleton } from '../components/Skeleton'
-import { api, asArray, getErrorMessage, qs, toPage } from '../api/client'
+import { api, getErrorMessage, qs, toPage } from '../api/client'
+import { fetchAllTags, fetchIngredientsByIds } from '../lib/catalog'
 import { useLang } from '../lib/useLang'
 import { SUPPORTED_LANGS } from '../i18n'
 import { DEFAULT_RECIPE_SORT, parseRecipeSort } from '../lib/recipeSort'
@@ -15,6 +17,7 @@ import type {
 	CatalogIngredient,
 	CatalogTag,
 	Course,
+	Lang,
 	Paginated,
 	RecipeDifficulty,
 	RecipeSummary,
@@ -52,6 +55,15 @@ const idList = (raw: string | null) =>
 		.filter((n) => Number.isInteger(n) && n > 0)
 
 const nonNegInt = (raw: string | null) => (raw && /^\d+$/.test(raw) ? raw : '')
+// IDs (e.g. author_id) must be >= 1 (backend Min(1)): author=0 is ignored
+const posInt = (raw: string | null) => (raw && /^\d+$/.test(raw) && Number(raw) > 0 ? String(Number(raw)) : '')
+
+// Duration inputs (min) update the URL only after typing pauses
+const DURATION_DEBOUNCE_MS = 500
+const DURATION_KEYS = ['min_time', 'max_time', 'max_prep_time'] as const
+type DurationKey = (typeof DURATION_KEYS)[number]
+type Durations = Record<DurationKey, string>
+const EMPTY_NAMES: ReadonlyMap<number, string> = new Map()
 
 // "All / any" toggle for tags and ingredients
 function MatchModeToggle({ value, onChange, label }: { value: MatchMode; onChange: (v: MatchMode) => void; label: string }) {
@@ -98,7 +110,7 @@ function SearchResults() {
 	const curatedOnly = params.get('curated') === '1'
 	const sourceLangParam = params.get('src') ?? ''
 	const sourceLang = (SUPPORTED_LANGS as string[]).includes(sourceLangParam) ? sourceLangParam : ''
-	const authorId = nonNegInt(params.get('author'))
+	const authorId = posInt(params.get('author'))
 	const tagIds = idList(params.get('tags'))
 	const excludeTagIds = idList(params.get('xtags')).filter((id) => !tagIds.includes(id))
 	const tagMode: MatchMode = params.get('tag_mode') === 'any' ? 'any' : 'all'
@@ -111,8 +123,11 @@ function SearchResults() {
 	const [userSortBy, userSortOrder] = userSort.split(':') as [UserSortBy, SortOrder]
 	const page = Math.max(1, Number(params.get('page')) || 1)
 
-	const [tags, setTags] = useState<CatalogTag[]>([])
-	const [ingredients, setIngredients] = useState<CatalogIngredient[]>([])
+	// Tags: small curated set loaded in full; tagged with the language (and retry count) that produced it
+	const [tagsState, setTagsState] = useState<{ key: string; items: CatalogTag[]; error: boolean } | null>(null)
+	const [tagsReload, setTagsReload] = useState(0)
+	// Names of the selected ingredients (URL IDs are hydrated with GET /ingredients/:id), per language
+	const [ingredientNames, setIngredientNames] = useState<{ lang: Lang; map: ReadonlyMap<number, string> }>({ lang, map: new Map() })
 	// Result tagged with the request that produced it: a key mismatch with the current filters means it is still loading
 	const [result, setResult] = useState<{
 		key: string
@@ -144,16 +159,89 @@ function SearchResults() {
 		}
 	}
 
+	// Inline keyword input, synced with ?q= (also when the navbar SearchBar submits a new search)
+	const [keyword, setKeyword] = useState(query)
+	const [prevQuery, setPrevQuery] = useState(query)
+	if (query !== prevQuery) {
+		setPrevQuery(query)
+		setKeyword(query)
+	}
+
+	function submitKeyword(e: FormEvent) {
+		e.preventDefault()
+		const next = keyword.trim()
+		if (next !== trimmedQuery) update({ q: next || null })
+	}
+
+	// Duration inputs: local values, written to the URL after a pause (no request per keystroke)
+	const urlDurations: Durations = { min_time: minTime, max_time: maxTime, max_prep_time: maxPrepTime }
+	const urlDurationsKey = DURATION_KEYS.map((k) => urlDurations[k]).join('|')
+	const [durations, setDurations] = useState<Durations>(urlDurations)
+	const [prevDurationsKey, setPrevDurationsKey] = useState(urlDurationsKey)
+	if (urlDurationsKey !== prevDurationsKey) {
+		// Changed from outside (clear filters, Back): adopt the URL values
+		setPrevDurationsKey(urlDurationsKey)
+		setDurations(urlDurations)
+	}
+	const localDurationsKey = DURATION_KEYS.map((k) => durations[k]).join('|')
+
 	useEffect(() => {
-		api
-			.get<CatalogTag[]>(`/tags${qs({ lang })}`)
-			.then((res) => setTags(asArray<CatalogTag>(res)))
-			.catch(() => setTags([]))
-		api
-			.get<CatalogIngredient[]>(`/ingredients${qs({ lang })}`)
-			.then((res) => setIngredients(asArray<CatalogIngredient>(res)))
-			.catch(() => setIngredients([]))
-	}, [lang])
+		if (localDurationsKey === urlDurationsKey) return
+		const id = window.setTimeout(() => {
+			const values = localDurationsKey.split('|')
+			setParams((prev) => {
+				const next = new URLSearchParams(prev)
+				DURATION_KEYS.forEach((k, i) => {
+					if (values[i]) next.set(k, values[i])
+					else next.delete(k)
+				})
+				next.delete('page')
+				return next
+			})
+		}, DURATION_DEBOUNCE_MS)
+		return () => window.clearTimeout(id)
+	}, [localDurationsKey, urlDurationsKey, setParams])
+
+	const tagsKey = `${lang}|${tagsReload}`
+	useEffect(() => {
+		const controller = new AbortController()
+		fetchAllTags(lang, controller.signal)
+			.then((items) => {
+				if (!controller.signal.aborted) setTagsState({ key: tagsKey, items, error: false })
+			})
+			.catch(() => {
+				if (!controller.signal.aborted) setTagsState({ key: tagsKey, items: [], error: true })
+			})
+		return () => controller.abort()
+	}, [lang, tagsKey])
+	const tagsCurrent = tagsState?.key === tagsKey ? tagsState : null
+	const tags = tagsCurrent?.items ?? []
+
+	// Ingredient names: picked ones are remembered, IDs coming from the URL are fetched one by one
+	const namesMap = ingredientNames.lang === lang ? ingredientNames.map : EMPTY_NAMES
+	const missingIngredientKey = [...ingredientIds, ...excludeIngredientIds].filter((id) => !namesMap.has(id)).join(',')
+	useEffect(() => {
+		if (!missingIngredientKey) return
+		const controller = new AbortController()
+		const ids = missingIngredientKey.split(',').map(Number)
+		fetchIngredientsByIds(ids, lang, controller.signal)
+			.then((found) => {
+				if (controller.signal.aborted || found.size === 0) return
+				setIngredientNames((prev) => {
+					const map = new Map(prev.lang === lang ? prev.map : [])
+					found.forEach((ing, id) => map.set(id, ing.name))
+					return { lang, map }
+				})
+			})
+			.catch(() => {
+				// Chips fall back to #id
+			})
+		return () => controller.abort()
+	}, [missingIngredientKey, lang])
+
+	function rememberIngredient(i: CatalogIngredient) {
+		setIngredientNames((prev) => ({ lang, map: new Map(prev.lang === lang ? prev.map : []).set(i.id, i.name) }))
+	}
 
 	const tagKey = tagIds.join(',')
 	const xTagKey = excludeTagIds.join(',')
@@ -182,7 +270,11 @@ function SearchResults() {
 		lang,
 	].join('|')
 
+	const timeRangeInvalid = Boolean(minTime && maxTime && Number(minTime) > Number(maxTime))
+
 	useEffect(() => {
+		// Contradictory range (min > max): no request, the UI asks to fix it
+		if (timeRangeInvalid) return
 		let cancelled = false
 
 		const recipesRequest = api.get<Paginated<RecipeSummary>>(
@@ -199,7 +291,7 @@ function SearchResults() {
 				// curated_only requires lang (always sent)
 				curated_only: curatedOnly ? 'true' : undefined,
 				source_lang: sourceLang,
-				author_id: authorId && Number(authorId) > 0 ? authorId : undefined,
+				author_id: authorId || undefined,
 				tag_ids: tagKey,
 				tag_mode: tagKey ? tagMode : undefined,
 				exclude_tag_ids: xTagKey,
@@ -258,6 +350,7 @@ function SearchResults() {
 		page,
 		lang,
 		requestKey,
+		timeRangeInvalid,
 		t,
 	])
 
@@ -294,13 +387,16 @@ function SearchResults() {
 		excludeTagIds.length +
 		ingredientIds.length +
 		excludeIngredientIds.length
-	const timeRangeInvalid = Boolean(minTime && maxTime && Number(minTime) > Number(maxTime))
-	const current = result?.key === requestKey ? result : null
+	// Warning follows what is typed, before the debounce writes it to the URL
+	const typedRangeInvalid = Boolean(
+		durations.min_time && durations.max_time && Number(durations.min_time) > Number(durations.max_time),
+	)
+	const current = timeRangeInvalid ? null : result?.key === requestKey ? result : null
 	const data = current?.data ?? null
 	const users = current?.users?.items ?? []
 	const usersPage = current?.users ?? null
 	const error = current?.error ?? null
-	const loading = current === null
+	const loading = current === null && !timeRangeInvalid
 	const hasResults = (data?.items.length ?? 0) > 0 || users.length > 0
 
 	return (
@@ -309,7 +405,40 @@ function SearchResults() {
 				{query ? t('search.resultsFor', { query }) : t('search.allRecipes')}
 			</h1>
 
-			<div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+			{/* Keyword editable directly on the search page (synced with ?q=) */}
+			<form role="search" onSubmit={submitKeyword} className="mt-6 flex max-w-xl items-center">
+				<div className="relative flex-1">
+					<input
+						type="search"
+						value={keyword}
+						onChange={(e) => setKeyword(e.target.value)}
+						placeholder={t('search.placeholder')}
+						aria-label={t('search.keyword')}
+						className="w-full rounded-l-full border border-[var(--wc-border)] bg-[var(--wc-surface)] px-4 py-2 pr-9 text-sm text-[var(--wc-text)] outline-none placeholder:text-[var(--wc-text-muted)] focus:border-[var(--wc-basil)] [&::-webkit-search-cancel-button]:hidden"
+					/>
+					{keyword && (
+						<button
+							type="button"
+							onClick={() => {
+								setKeyword('')
+								if (trimmedQuery) update({ q: null })
+							}}
+							aria-label={t('search.clearKeyword')}
+							className="absolute right-2 top-1/2 -translate-y-1/2 px-1 text-lg leading-none text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]"
+						>
+							×
+						</button>
+					)}
+				</div>
+				<button
+					type="submit"
+					className="rounded-r-full border border-l-0 border-[var(--wc-border)] bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] transition-colors hover:bg-[var(--wc-basil-dark)]"
+				>
+					{t('search.button')}
+				</button>
+			</form>
+
+			<div className="mt-4 flex flex-wrap items-center justify-between gap-3">
 				<button
 					type="button"
 					onClick={() => setShowFilters((v) => !v)}
@@ -361,9 +490,13 @@ function SearchResults() {
 								type="number"
 								min={0}
 								step={5}
-								value={minTime}
+								value={durations.min_time}
 								placeholder="10"
-								onChange={(e) => update({ min_time: e.target.value || null })}
+								aria-invalid={typedRangeInvalid}
+								onChange={(e) => {
+									const v = e.target.value.replace(/\D/g, '')
+									setDurations((prev) => ({ ...prev, min_time: v }))
+								}}
 								className={`${SELECT} mt-1 w-full`}
 							/>
 						</label>
@@ -373,9 +506,13 @@ function SearchResults() {
 								type="number"
 								min={0}
 								step={5}
-								value={maxTime}
+								value={durations.max_time}
 								placeholder="30"
-								onChange={(e) => update({ max_time: e.target.value || null })}
+								aria-invalid={typedRangeInvalid}
+								onChange={(e) => {
+									const v = e.target.value.replace(/\D/g, '')
+									setDurations((prev) => ({ ...prev, max_time: v }))
+								}}
 								className={`${SELECT} mt-1 w-full`}
 							/>
 						</label>
@@ -385,14 +522,21 @@ function SearchResults() {
 								type="number"
 								min={0}
 								step={5}
-								value={maxPrepTime}
+								value={durations.max_prep_time}
 								placeholder="15"
-								onChange={(e) => update({ max_prep_time: e.target.value || null })}
+								onChange={(e) => {
+									const v = e.target.value.replace(/\D/g, '')
+									setDurations((prev) => ({ ...prev, max_prep_time: v }))
+								}}
 								className={`${SELECT} mt-1 w-full`}
 							/>
 						</label>
 					</div>
-					{timeRangeInvalid && <p className="text-xs text-[var(--wc-paprika)]">{t('search.timeRangeInvalid')}</p>}
+					{(typedRangeInvalid || timeRangeInvalid) && (
+						<p role="alert" className="text-xs text-[var(--wc-paprika)]">
+							{t('search.timeRangeInvalid')}
+						</p>
+					)}
 
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
 						<label className="text-xs text-[var(--wc-text-muted)]">
@@ -406,16 +550,12 @@ function SearchResults() {
 								))}
 							</select>
 						</label>
-						<label className="text-xs text-[var(--wc-text-muted)]">
-							{t('search.authorId')}
-							<input
-								inputMode="numeric"
-								value={authorId}
-								placeholder="42"
-								onChange={(e) => update({ author: e.target.value.replace(/\D/g, '') || null })}
-								className={`${SELECT} mt-1 w-full`}
+						<div className="sm:col-span-2 lg:col-span-2">
+							<AuthorPicker
+								authorId={authorId ? Number(authorId) : null}
+								onChange={(id) => update({ author: id ? String(id) : null })}
 							/>
-						</label>
+						</div>
 					</div>
 
 					<label className="flex cursor-pointer items-start gap-2 text-sm text-[var(--wc-text)]">
@@ -433,18 +573,31 @@ function SearchResults() {
 						</span>
 					</label>
 
-					{tags.length > 0 && (
-						<div>
-							<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-								<p className="text-xs text-[var(--wc-text-muted)]">
-									{t('form.tags')} <span className="opacity-80">· {t('search.tagHelp')}</span>
-								</p>
-								<MatchModeToggle
-									label={t('search.tagMode')}
-									value={tagMode}
-									onChange={(m) => update({ tag_mode: m === 'all' ? null : m })}
-								/>
-							</div>
+					<div>
+						<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+							<p className="text-xs text-[var(--wc-text-muted)]">
+								{t('form.tags')} <span className="opacity-80">· {t('search.tagHelp')}</span>
+							</p>
+							<MatchModeToggle
+								label={t('search.tagMode')}
+								value={tagMode}
+								onChange={(m) => update({ tag_mode: m === 'all' ? null : m })}
+							/>
+						</div>
+						{tagsCurrent === null ? (
+							<p role="status" className="text-sm text-[var(--wc-text-muted)]">
+								{t('search.tagsLoading')}
+							</p>
+						) : tagsCurrent.error ? (
+							<p role="alert" className="text-sm text-[var(--wc-paprika)]">
+								{t('search.tagsUnavailable')}{' '}
+								<button type="button" onClick={() => setTagsReload((n) => n + 1)} className="text-[var(--wc-saffron)] underline">
+									{t('search.retry')}
+								</button>
+							</p>
+						) : tags.length === 0 ? (
+							<p className="text-sm text-[var(--wc-text-muted)]">{t('form.noTags')}</p>
+						) : (
 							<ul className="flex flex-wrap gap-2">
 								{tags.map((tag) => {
 									const included = tagIds.includes(tag.id)
@@ -472,43 +625,44 @@ function SearchResults() {
 									)
 								})}
 							</ul>
-						</div>
-					)}
+						)}
+					</div>
 
-					{ingredients.length > 0 && (
-						<div className="space-y-3">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<p className="text-xs text-[var(--wc-text-muted)]">{t('search.pantry')}</p>
-								<MatchModeToggle
-									label={t('search.ingredientMode')}
-									value={ingredientMode}
-									onChange={(m) => update({ ing_mode: m === 'all' ? null : m })}
-								/>
-							</div>
-							<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-								<IngredientMultiPicker
-									label={t('search.includeIngredients')}
-									catalog={ingredients}
-									selectedIds={ingredientIds}
-									disabledIds={excludeIngredientIds}
-									onChange={(ids) => update({ ings: ids.join(',') || null })}
-								/>
-								<IngredientMultiPicker
-									label={t('search.excludeIngredients')}
-									tone="exclude"
-									catalog={ingredients}
-									selectedIds={excludeIngredientIds}
-									disabledIds={ingredientIds}
-									onChange={(ids) => update({ xings: ids.join(',') || null })}
-								/>
-							</div>
+					<div className="space-y-3">
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<p className="text-xs text-[var(--wc-text-muted)]">{t('search.pantry')}</p>
+							<MatchModeToggle
+								label={t('search.ingredientMode')}
+								value={ingredientMode}
+								onChange={(m) => update({ ing_mode: m === 'all' ? null : m })}
+							/>
 						</div>
-					)}
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+							<IngredientMultiPicker
+								label={t('search.includeIngredients')}
+								names={namesMap}
+								onPick={rememberIngredient}
+								selectedIds={ingredientIds}
+								disabledIds={excludeIngredientIds}
+								onChange={(ids) => update({ ings: ids.join(',') || null })}
+							/>
+							<IngredientMultiPicker
+								label={t('search.excludeIngredients')}
+								tone="exclude"
+								names={namesMap}
+								onPick={rememberIngredient}
+								selectedIds={excludeIngredientIds}
+								disabledIds={ingredientIds}
+								onChange={(ids) => update({ xings: ids.join(',') || null })}
+							/>
+						</div>
+					</div>
 
 					{activeFilters > 0 && (
 						<button
 							type="button"
-							onClick={() =>
+							onClick={() => {
+								setDurations({ min_time: '', max_time: '', max_prep_time: '' })
 								update({
 									course: null,
 									difficulty: null,
@@ -525,7 +679,7 @@ function SearchResults() {
 									xings: null,
 									ing_mode: null,
 								})
-							}
+							}}
 							className="text-sm text-[var(--wc-saffron)] hover:underline"
 						>
 							{t('search.clearFilters')}
@@ -534,13 +688,14 @@ function SearchResults() {
 				</div>
 			)}
 
+			{timeRangeInvalid && <p className="mt-8 text-[var(--wc-paprika)]">{t('search.timeRangeInvalid')}</p>}
 			{error && <p className="mt-8 text-[var(--wc-paprika)]">{error}</p>}
 			{loading && (
 				<div className="mt-8">
 					<RecipeGridSkeleton count={6} />
 				</div>
 			)}
-			{!loading && !error && !hasResults && (
+			{!loading && !error && !timeRangeInvalid && !hasResults && (
 				<p className="mt-8 text-[var(--wc-text-muted)]">{query || activeFilters > 0 ? t('search.noResults') : t('home.empty')}</p>
 			)}
 			{trimmedQuery.length > 0 && trimmedQuery.length < MIN_USER_SEARCH && (

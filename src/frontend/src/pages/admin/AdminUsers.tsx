@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { api, asArray, getErrorMessage, qs, toPage, uploadWithProgress } from '../../api/client'
+import { api, getErrorMessage, qs, toPage, uploadWithProgress } from '../../api/client'
 import { UPLOAD_LIMITS } from '../../config'
 import UploadProgress from '../../components/UploadProgress'
 import { useLang } from '../../lib/useLang'
@@ -13,7 +13,17 @@ import Avatar from '../../components/Avatar'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { ListSkeleton } from '../../components/Skeleton'
-import type { AdminUser, AvatarUploadResponseDto, BanHistoryItem, Paginated, SortOrder, UserRole, UserSortBy, UserStatus } from '../../types/models'
+import type {
+	AdminUser,
+	AvatarUploadResponseDto,
+	BanHistoryItem,
+	Paginated,
+	PaginatedBanHistoryResponseDto,
+	SortOrder,
+	UserRole,
+	UserSortBy,
+	UserStatus,
+} from '../../types/models'
 
 // endpoint admin (guard: solo admin)
 //   GET    /admin/users?page=&limit=&search=&role=&status=&sort_by=&sort_order=  -> PaginatedAdminUsersResponseDto
@@ -21,7 +31,7 @@ import type { AdminUser, AvatarUploadResponseDto, BanHistoryItem, Paginated, Sor
 //   PATCH  /admin/users/:id             { username?, email?, role?, status?, password? }
 //   DELETE /admin/users/:id             disattivazione (soft delete)
 //   DELETE /admin/users/:id?hard=true   eliminazione definitiva
-//   GET    /admin/users/:id/ban-history -> BanHistoryItemDto[]
+//   GET    /admin/users/:id/ban-history?page=&limit=&sort_order=asc|desc -> PaginatedBanHistoryResponseDto
 //   POST   /admin/users/:id/avatar      (multipart, campo "file")
 //   DELETE /admin/users/:id/avatar
 
@@ -749,29 +759,38 @@ function AvatarManager({ user, onChanged }: { user: AdminUser; onChanged: (avata
 	)
 }
 
-// storico delle sanzioni: GET /admin/users/:id/ban-history
+// storico delle sanzioni (paginato): GET /admin/users/:id/ban-history?page=&limit=&sort_order=
+const BAN_HISTORY_PAGE_SIZE = 10
+
 function BanHistoryDialog({ user, onClose }: { user: AdminUser; onClose: () => void }) {
 	const { t } = useTranslation()
 	const lang = useLang()
-	const [items, setItems] = useState<BanHistoryItem[] | null>(null)
-	const [error, setError] = useState<string | null>(null)
+	const [page, setPage] = useState(1)
+	// default backend: più recenti prima (desc)
+	const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+	// risposta etichettata con la richiesta: chiave diversa = caricamento in corso
+	const [result, setResult] = useState<{ key: string; data: PaginatedBanHistoryResponseDto | null; error: string | null } | null>(null)
+	const requestKey = `${user.id}|${page}|${sortOrder}`
 
 	useEffect(() => {
 		let cancelled = false
 		api
-			.get<BanHistoryItem[]>(`/admin/users/${user.id}/ban-history`)
+			.get<unknown>(`/admin/users/${user.id}/ban-history${qs({ page, limit: BAN_HISTORY_PAGE_SIZE, sort_order: sortOrder })}`)
 			.then((res) => {
-				if (!cancelled) setItems(asArray<BanHistoryItem>(res))
+				if (!cancelled) setResult({ key: requestKey, data: toPage<BanHistoryItem>(res, BAN_HISTORY_PAGE_SIZE), error: null })
 			})
 			.catch((err) => {
-				if (cancelled) return
-				setItems([])
-				setError(getErrorMessage(err, t('admin.users.banHistoryError')))
+				if (!cancelled) setResult({ key: requestKey, data: null, error: getErrorMessage(err, t('admin.users.banHistoryError')) })
 			})
 		return () => {
 			cancelled = true
 		}
-	}, [user.id, t])
+	}, [user.id, page, sortOrder, requestKey, t])
+
+	const current = result?.key === requestKey ? result : null
+	const data = current?.data ?? null
+	const items = current ? (data?.items ?? []) : null
+	const error = current?.error ?? null
 
 	const fmt = (iso: string | null) =>
 		iso ? new Date(iso).toLocaleString(lang, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
@@ -796,6 +815,24 @@ function BanHistoryDialog({ user, onClose }: { user: AdminUser; onClose: () => v
 					<button autoFocus onClick={onClose} aria-label={t('common.close')} className="text-xl text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]">
 						×
 					</button>
+				</div>
+
+				<div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--wc-text-muted)]">
+					{data && <span>{t('admin.users.banHistoryCount', { count: data.total })}</span>}
+					<label className="ml-auto flex items-center gap-2">
+						{t('search.sortBy')}
+						<select
+							value={sortOrder}
+							onChange={(e) => {
+								setSortOrder(e.target.value as SortOrder)
+								setPage(1)
+							}}
+							className="rounded-full border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-1 text-sm text-[var(--wc-text)] outline-none focus:border-[var(--wc-basil)]"
+						>
+							<option value="desc">{t('admin.users.banHistorySort.desc')}</option>
+							<option value="asc">{t('admin.users.banHistorySort.asc')}</option>
+						</select>
+					</label>
 				</div>
 
 				{error && <p className="mt-4 text-sm text-[var(--wc-paprika)]">{error}</p>}
@@ -853,6 +890,17 @@ function BanHistoryDialog({ user, onClose }: { user: AdminUser; onClose: () => v
 						</li>
 					))}
 				</ol>
+
+				{data && (
+					<Pagination
+						className="mt-4"
+						page={page}
+						totalPages={data.total_pages}
+						hasPrev={data.has_prev_page}
+						hasNext={data.has_next_page}
+						onChange={setPage}
+					/>
+				)}
 			</div>
 		</div>
 	)

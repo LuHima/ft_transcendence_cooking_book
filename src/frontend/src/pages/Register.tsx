@@ -15,8 +15,9 @@ function Register() {
 	const { signUp, signIn, signInWithGoogle } = useAuth()
 	const navigate = useNavigate()
 	// Page the user came from (e.g. the "Add recipe" form), forwarded by the login page
-	const fromState = (useLocation().state as { from?: { pathname: string } } | null)?.from
-	const from = fromState?.pathname ?? '/'
+	const fromState = (useLocation().state as { from?: { pathname: string; search?: string; hash?: string } } | null)?.from
+	// Full destination: keep the query string (e.g. /search?q=…) and the hash, not just the path
+	const from = fromState ? `${fromState.pathname}${fromState.search ?? ''}${fromState.hash ?? ''}` : '/'
 
 	const [username, setUsername] = useState('')
 	const [email, setEmail] = useState('')
@@ -69,7 +70,7 @@ function Register() {
 			// Banned Google account: the ban details card is shown on the login page
 			const banned = getAccountBannedDetails(err)
 			if (banned) {
-				navigate('/login', { state: { banned } })
+				navigate('/login', { state: { banned, from: fromState } })
 				return
 			}
 			setError(getErrorMessage(err, t('auth.googleError')))

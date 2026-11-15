@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GOOGLE_CLIENT_ID } from '../config'
+import i18n from '../i18n'
 
 // Google Identity Services renders the button and, after consent, returns a Google-signed ID token
 // that is sent to /auth/signin/google.
@@ -28,7 +29,7 @@ function loadGoogleScript(): Promise<void> {
 			script.onload = () => resolve()
 			script.onerror = () => {
 				scriptPromise = null
-				reject(new Error('Impossibile caricare lo script di Google'))
+				reject(new Error(i18n.t('auth.googleScriptError')))
 			}
 			document.head.appendChild(script)
 		})

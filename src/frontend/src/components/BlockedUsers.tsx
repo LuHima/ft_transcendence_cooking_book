@@ -20,6 +20,8 @@ function BlockedUsers() {
 	const [data, setData] = useState<Paginated<BlockedUser> | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [unblocking, setUnblocking] = useState<BlockedUser | null>(null)
+	// Refetch the current page after an unblock (items from the next page move up)
+	const [reload, setReload] = useState(0)
 
 	useEffect(() => {
 		let cancelled = false
@@ -38,14 +40,18 @@ function BlockedUsers() {
 		return () => {
 			cancelled = true
 		}
-	}, [page, t])
+	}, [page, reload, t])
 
 	async function unblock(u: BlockedUser) {
 		try {
 			await api.delete(`/users/${u.id}/block`)
-			setData((prev) => (prev ? { ...prev, items: prev.items.filter((x) => x.id !== u.id), total: Math.max(0, prev.total - 1) } : prev))
+			const remaining = (data?.items ?? []).filter((x) => x.id !== u.id)
+			setData((prev) => (prev ? { ...prev, items: remaining, total: Math.max(0, prev.total - 1) } : prev))
 			toast.success(t('block.unblocked', { name: u.username }))
 			setUnblocking(null)
+			// Last user of a page > 1: step back instead of leaving an empty page; otherwise refill this page
+			if (remaining.length === 0 && page > 1) setPage(page - 1)
+			else setReload((n) => n + 1)
 		} catch (err) {
 			toast.error(getErrorMessage(err, t('block.error')))
 			setUnblocking(null)

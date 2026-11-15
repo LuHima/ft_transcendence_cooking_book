@@ -257,8 +257,19 @@ export interface CatalogTag {
 	name: string
 }
 
+// Sort fields of the public catalog lists (GET /ingredients, GET /tags → FilterTagDto)
+export type CatalogSortBy = 'name' | 'slug'
+
+// GET /ingredients?page=&limit=&lang=&search=&category=&sort_by=&sort_order= → PaginatedIngredientsResponseDto
+export type PaginatedIngredientsResponseDto = Paginated<CatalogIngredient>
+// GET /tags?page=&limit=&lang=&search=&sort_by=&sort_order= → PaginatedTagsResponseDto
+export type PaginatedTagsResponseDto = Paginated<CatalogTag>
+
 // ─── catalog management (admins only): /api/admin/catalog/(ingredients|tags)[/:id] ───
-// Detail endpoints return every translation; lists stay on GET /ingredients and GET /tags.
+// Paginated lists (GET /admin/catalog/ingredients, GET /admin/catalog/tags) and detail endpoints
+// return every translation ({ it, en, fr }).
+export type AdminCatalogSortBy = 'id' | 'slug'
+
 export interface CatalogTranslations {
 	it: string
 	en: string
@@ -298,6 +309,11 @@ export interface TagDetailResponseDto {
 	slug: string
 	translations: CatalogTranslations
 }
+
+// GET /admin/catalog/ingredients?page=&limit=&search=&category=&sort_by=&sort_order=
+export type PaginatedAdminIngredientsResponseDto = Paginated<IngredientDetailResponseDto>
+// GET /admin/catalog/tags?page=&limit=&search=&sort_by=&sort_order=
+export type PaginatedAdminTagsResponseDto = Paginated<TagDetailResponseDto>
 
 // Body of POST /api/recipes and PATCH /api/recipes/:id
 export interface CreateRecipeBody {
@@ -456,12 +472,14 @@ export interface AdminUser extends User {
 	deleted_at?: string | null
 }
 
-// GET /admin/users/:id/ban-history → BanHistoryItemDto[]
+// GET /admin/users/:id/ban-history?page=&limit=&sort_order= → PaginatedBanHistoryResponseDto
 export interface BanHistoryItem {
 	id: string
 	user_id: number
 	banned_by_id: number
 	report_id: number | null
+	// Moderation action recorded with the sanction (ReportAction, normally 'ban')
+	action?: ModerationAction
 	reason: ReportReason
 	description: string | null
 	duration_days: number | null
@@ -472,6 +490,8 @@ export interface BanHistoryItem {
 	unbanned_by_id: number | null
 	unban_reason: string | null
 }
+
+export type PaginatedBanHistoryResponseDto = Paginated<BanHistoryItem>
 
 // ─── reports and moderation (CreateReportDto / UpdateReportDto / ReportItemDto) ───
 
