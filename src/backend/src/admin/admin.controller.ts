@@ -230,12 +230,12 @@ export class AdminController {
   })
   @ApiBadRequestResponse({
     description:
-      'Validation failed or attempt to demote/disable own account (anti-self-sabotage)',
+      'Validation failed, contradictory ban/unban payload, or attempt to demote/disable own account (anti-self-sabotage)',
     type: ApiBadRequestResponseDto,
   })
   @ApiConflictResponse({
     description:
-      'Last administrator safeguard conflict or unique username/email collision',
+      'Last administrator safeguard conflict, unique username/email collision, or banning a soft-deleted account',
     type: ApiConflictResponseDto,
   })
   @ApiNotFoundResponse({

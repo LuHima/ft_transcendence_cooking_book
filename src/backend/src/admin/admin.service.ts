@@ -383,6 +383,41 @@ export class AdminService {
       throw createHttpException(errors.users.notFound);
     }
 
+    // Strict Ban / Unban Payload Validation
+    const hasBanOnlyFields =
+      dto.ban_reason !== undefined ||
+      dto.ban_duration_days !== undefined ||
+      dto.is_permanent !== undefined ||
+      dto.ban_description !== undefined;
+
+    if (hasBanOnlyFields && dto.status !== UserStatus.banned) {
+      throw new BadRequestException(
+        'Ban fields (ban_reason, ban_duration_days, is_permanent, ban_description) are only allowed when status is set to banned',
+      );
+    }
+
+    if (dto.is_permanent === true && dto.ban_duration_days !== undefined) {
+      throw new BadRequestException(
+        'ban_duration_days cannot be combined with is_permanent: true',
+      );
+    }
+
+    const isUnbanning =
+      targetUser.status === UserStatus.banned &&
+      dto.status === UserStatus.active;
+
+    if (dto.unban_reason !== undefined && !isUnbanning) {
+      throw new BadRequestException(
+        'unban_reason is only allowed when transitioning a banned user to active',
+      );
+    }
+
+    if (dto.status === UserStatus.banned && targetUser.deleted_at !== null) {
+      throw new ConflictException(
+        'Cannot ban a soft-deleted user; reactivate the account first',
+      );
+    }
+
     // Anti-Self-Sabotage Guard: admin cannot demote or disable themselves
     if (targetUserId === currentAdminId) {
       if (dto.role !== undefined && dto.role !== targetUser.role) {
@@ -475,9 +510,7 @@ export class AdminService {
       targetUser.status === UserStatus.banned &&
       dto.status === UserStatus.disabled;
 
-    const isDeactivating =
-      targetUser.status === UserStatus.active &&
-      dto.status === UserStatus.banned;
+    const isBanning = dto.status === UserStatus.banned;
 
     // Selective Session Eviction: only on password, role, or disabling/banning status modification
     const shouldEvictSessions =
@@ -524,7 +557,7 @@ export class AdminService {
           await this.banHistoryService.recordUnban(
             targetUserId,
             currentAdminId,
-            dto.unban_reason ?? 'Admin account reactivation',
+            dto.unban_reason?.trim() || 'Admin account reactivation',
             tx,
           );
         }
@@ -539,37 +572,38 @@ export class AdminService {
         );
       }
 
-      if (isDeactivating) {
-        // Transfer public recipes to platform custody
-        await tx.recipe.updateMany({
-          where: { user_id: targetUserId },
-          data: { owner_type: OwnerType.platform },
-        });
-
-        // Deactivate authored comments non-destructively
-        await tx.comment.updateMany({
-          where: { user_id: targetUserId },
-          data: { is_active: false },
-        });
-
-        if (dto.status === UserStatus.banned) {
-          await this.banHistoryService.recordSanction(
-            {
-              userId: targetUserId,
-              bannedById: currentAdminId,
-              reason: dto.ban_reason ?? ReportReason.other,
-              action: ReportAction.ban,
-              description: dto.ban_description ?? null,
-              durationDays: dto.is_permanent
-                ? null
-                : (dto.ban_duration_days ??
-                  (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7)),
-              isPermanent: dto.is_permanent ?? false,
-              expiresAt: bannedUntil,
-            },
+      if (isBanning) {
+        if (targetUser.status === UserStatus.banned) {
+          await this.banHistoryService.closeOpenBans(
+            targetUserId,
+            currentAdminId,
+            'Superseded by updated ban',
             tx,
           );
         }
+
+        // Suspend all active authored recipes without Platform Custody Transfer
+        await tx.recipe.updateMany({
+          where: { user_id: targetUserId, is_active: true },
+          data: { is_active: false },
+        });
+
+        await this.banHistoryService.recordSanction(
+          {
+            userId: targetUserId,
+            bannedById: currentAdminId,
+            reason: dto.ban_reason ?? ReportReason.other,
+            action: ReportAction.ban,
+            description: dto.ban_description?.trim() || null,
+            durationDays: dto.is_permanent
+              ? null
+              : (dto.ban_duration_days ??
+                (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7)),
+            isPermanent: dto.is_permanent ?? false,
+            expiresAt: bannedUntil,
+          },
+          tx,
+        );
       }
 
       if (shouldEvictSessions) {
@@ -599,7 +633,6 @@ export class AdminService {
         ...(isReactivating && targetUser.deleted_at !== null
           ? { deleted_at: null }
           : {}),
-        ...(isDeactivating ? { deleted_at: new Date() } : {}),
       };
 
       return tx.user.update({

@@ -608,6 +608,166 @@ describe('AdminService', () => {
       );
     });
 
+    it('bans active user without deleted_at or platform custody, suspending only active recipes', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        deleted_at: null,
+      });
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        status: UserStatus.banned,
+        deleted_at: null,
+      });
+
+      const result = await service.updateUser(
+        2,
+        {
+          status: UserStatus.banned,
+          ban_reason: 'spam_scam' as any,
+          ban_duration_days: 7,
+          ban_description: '  Repeated spam links  ',
+        },
+        1,
+      );
+
+      expect(result.status).toBe(UserStatus.banned);
+      expect(result.deleted_at).toBeNull();
+      expect(prisma.recipe.updateMany).toHaveBeenCalledWith({
+        where: { user_id: 2, is_active: true },
+        data: { is_active: false },
+      });
+      expect(prisma.jwtSession.deleteMany).toHaveBeenCalledWith({
+        where: { id_user: 2 },
+      });
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 2,
+          bannedById: 1,
+          reason: 'spam_scam',
+          description: 'Repeated spam links',
+          durationDays: 7,
+          isPermanent: false,
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('allows disabled (non-deleted) -> banned and banned -> banned (closing prior open bans as superseded)', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+        ...mockTargetUser,
+        status: UserStatus.disabled,
+        deleted_at: null,
+      });
+      (prisma.user.update as jest.Mock).mockResolvedValueOnce({
+        ...mockTargetUser,
+        status: UserStatus.banned,
+        deleted_at: null,
+      });
+
+      await service.updateUser(
+        2,
+        { status: UserStatus.banned, ban_reason: 'other' as any },
+        1,
+      );
+      expect(mockBanHistoryService.closeOpenBans).not.toHaveBeenCalled();
+
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+        ...mockTargetUser,
+        status: UserStatus.banned,
+        deleted_at: null,
+      });
+      (prisma.user.update as jest.Mock).mockResolvedValueOnce({
+        ...mockTargetUser,
+        status: UserStatus.banned,
+        deleted_at: null,
+      });
+
+      await service.updateUser(
+        2,
+        { status: UserStatus.banned, is_permanent: true },
+        1,
+      );
+      expect(mockBanHistoryService.closeOpenBans).toHaveBeenCalledWith(
+        2,
+        1,
+        'Superseded by updated ban',
+        expect.anything(),
+      );
+    });
+
+    it('rejects banning a soft-deleted user with 409 Conflict', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        status: UserStatus.disabled,
+        deleted_at: new Date('2026-10-01'),
+      });
+
+      await expect(
+        service.updateUser(2, { status: UserStatus.banned }, 1),
+      ).rejects.toThrow('Cannot ban a soft-deleted user');
+    });
+
+    it('rejects ban-only fields without status=banned, is_permanent+ban_duration_days, and unban_reason outside banned->active with 400 Bad Request', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        status: UserStatus.active,
+        deleted_at: null,
+      });
+
+      await expect(
+        service.updateUser(2, { ban_reason: 'spam_scam' as any }, 1),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.updateUser(
+          2,
+          {
+            status: UserStatus.banned,
+            is_permanent: true,
+            ban_duration_days: 7,
+          },
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.updateUser(
+          2,
+          { status: UserStatus.active, unban_reason: 'Not banned' },
+          1,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('leaves is_active=false recipes suspended when unbanning banned -> active and defaults blank unban_reason', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        status: UserStatus.banned,
+        banned_until: new Date('2026-12-01'),
+        deleted_at: null,
+      });
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        ...mockTargetUser,
+        status: UserStatus.active,
+        banned_until: null,
+        deleted_at: null,
+      });
+
+      await service.updateUser(
+        2,
+        { status: UserStatus.active, unban_reason: '   ' },
+        1,
+      );
+
+      expect(prisma.recipe.updateMany).not.toHaveBeenCalled();
+      expect(mockBanHistoryService.recordUnban).toHaveBeenCalledWith(
+        2,
+        1,
+        'Admin account reactivation',
+        expect.anything(),
+      );
+    });
+
     it('atomically restores platform recipes and comments when reactivated from disabled to active', async () => {
       const disabledUser = {
         ...mockTargetUser,
