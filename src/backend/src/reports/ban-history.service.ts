@@ -6,6 +6,7 @@ import {
   BanHistoryQueryDto,
   PaginatedBanHistoryResponseDto,
 } from './dto/ban-history.dto';
+import { buildPaginatedResponse } from '../common/dto/pagination-query.dto';
 import { SortOrder } from '../common/dto/sort-order.enum';
 
 export interface RecordBanParams {
@@ -156,17 +157,7 @@ export class BanHistoryService {
       client.banHistory.count({ where }),
     ]);
 
-    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-      total_pages,
-      has_next_page: total > 0 && page < total_pages,
-      has_prev_page: page > 1,
-    };
+    return buildPaginatedResponse(items, total, page, limit);
   }
 
   /**

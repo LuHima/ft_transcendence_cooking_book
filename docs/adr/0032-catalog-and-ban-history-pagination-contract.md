@@ -18,7 +18,7 @@ An audit of all backend `GET` collection endpoints showed 17 of 20 endpoints alr
 
 ## Considered Options
 
-- **DB-only `id | slug` sorting on public catalog endpoints**: Rejected because recipe authors and search pickers expect ingredients and tags sorted alphabetically in their active locale (`name` via `localeCompare`), even though `name` lives in translation rows and requires localized sorting before slicing when `sort_by = 'name'`.
+- **DB-only `id | slug` sorting on public catalog endpoints**: Rejected because recipe authors and search pickers expect ingredients and tags sorted alphabetically in their active locale (`name`), even though `name` lives in translation rows and requires DB-level SQL `COALESCE` localized sorting with `LIMIT`/`OFFSET` (followed by `Map` hydration by ID) when `sort_by = 'name'`.
 - **Higher `max` limit (> 100) for public dropdown endpoints**: Rejected to keep strict uniformity with `PaginationQueryDto` across all 22 paginated endpoints; clients use `search` or `limit <= 100` / pagination.
 
 ## Consequences

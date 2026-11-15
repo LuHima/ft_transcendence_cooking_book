@@ -5,8 +5,8 @@ import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-abili
 import { Action } from '../auth/casl/action.enum';
 import { Role } from '@prisma/client';
 import { ActiveUserData } from '../common/decorators/current-user.decorator';
-import { createHttpException, errors } from '../common/config/error.config';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { SortOrder } from '../common/dto/sort-order.enum';
 import {
   Course,
   RecipeDifficulty,
@@ -16,39 +16,66 @@ import {
 
 describe('CatalogService', () => {
   let service: CatalogService;
-  let prisma: PrismaService;
+  let mockPrisma: {
+    $queryRaw: jest.Mock;
+    ingredient: {
+      findMany: jest.Mock;
+      findUnique: jest.Mock;
+      count: jest.Mock;
+      create: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+    };
+    tag: {
+      findMany: jest.Mock;
+      findUnique: jest.Mock;
+      count: jest.Mock;
+      create: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+    };
+    recipeIngredient: {
+      count: jest.Mock;
+    };
+    recipeTag: {
+      count: jest.Mock;
+    };
+  };
   let casl: { check: jest.Mock };
 
   beforeEach(async () => {
+    mockPrisma = {
+      $queryRaw: jest.fn(),
+      ingredient: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        count: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      tag: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        count: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      recipeIngredient: {
+        count: jest.fn(),
+      },
+      recipeTag: {
+        count: jest.fn(),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CatalogService,
         {
           provide: PrismaService,
-          useValue: {
-            ingredient: {
-              findMany: jest.fn(),
-              findUnique: jest.fn(),
-              count: jest.fn(),
-              create: jest.fn(),
-              update: jest.fn(),
-              delete: jest.fn(),
-            },
-            tag: {
-              findMany: jest.fn(),
-              findUnique: jest.fn(),
-              count: jest.fn(),
-              create: jest.fn(),
-              update: jest.fn(),
-              delete: jest.fn(),
-            },
-            recipeIngredient: {
-              count: jest.fn(),
-            },
-            recipeTag: {
-              count: jest.fn(),
-            },
-          },
+          useValue: mockPrisma,
         },
         {
           provide: CaslAbilityFactory,
@@ -58,7 +85,6 @@ describe('CatalogService', () => {
     }).compile();
 
     service = module.get<CatalogService>(CatalogService);
-    prisma = module.get<PrismaService>(PrismaService);
     casl = module.get(CaslAbilityFactory);
   });
 
@@ -102,13 +128,30 @@ describe('CatalogService', () => {
     ];
 
     it('should return paginated tags localized in Italian when lang=it', async () => {
-      (prisma.tag.findMany as jest.Mock).mockResolvedValue(mockDbTags);
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+      mockPrisma.tag.count.mockResolvedValue(2);
+      // Returned out of order by DB IN query to verify Map hydration preserves SQL order
+      mockPrisma.tag.findMany.mockResolvedValue([mockDbTags[1], mockDbTags[0]]);
 
       const result = await service.getTags({ lang: 'it' });
 
+      expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.tag.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [1, 2] } },
+        select: {
+          id: true,
+          slug: true,
+          translations: { select: { locale: true, name: true } },
+        },
+      });
       expect(result).toEqual({
         items: [
-          { id: 1, slug: 'vegetarian', name: 'Vegetariano', resolved_lang: 'it' },
+          {
+            id: 1,
+            slug: 'vegetarian',
+            name: 'Vegetariano',
+            resolved_lang: 'it',
+          },
           {
             id: 2,
             slug: 'quick_easy',
@@ -126,10 +169,13 @@ describe('CatalogService', () => {
     });
 
     it('should default to English and name asc sorting when parameters are omitted', async () => {
-      (prisma.tag.findMany as jest.Mock).mockResolvedValue(mockDbTags);
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 2 }, { id: 1 }]);
+      mockPrisma.tag.count.mockResolvedValue(2);
+      mockPrisma.tag.findMany.mockResolvedValue(mockDbTags);
 
       const result = await service.getTags({});
 
+      expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
       expect(result.items).toEqual([
         {
           id: 2,
@@ -150,7 +196,9 @@ describe('CatalogService', () => {
           translations: [{ locale: 'en', name: 'Comfort Food' }],
         },
       ];
-      (prisma.tag.findMany as jest.Mock).mockResolvedValue(tagWithOnlyEnglish);
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 3 }]);
+      mockPrisma.tag.count.mockResolvedValue(1);
+      mockPrisma.tag.findMany.mockResolvedValue(tagWithOnlyEnglish);
 
       const result = await service.getTags({ lang: 'it' });
 
@@ -164,17 +212,28 @@ describe('CatalogService', () => {
       ]);
     });
 
-    it('supports localized name desc sorting and page slicing', async () => {
-      (prisma.tag.findMany as jest.Mock).mockResolvedValue(mockDbTags);
+    it('supports localized name desc sorting and page slicing at DB level', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 2 }]);
+      mockPrisma.tag.count.mockResolvedValue(2);
+      mockPrisma.tag.findMany.mockResolvedValue([mockDbTags[1]]);
 
       const result = await service.getTags({
         lang: 'en',
         sort_by: 'name',
-        sort_order: 'desc' as any,
+        sort_order: SortOrder.desc,
         page: 2,
         limit: 1,
       });
 
+      expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.tag.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [2] } },
+        select: {
+          id: true,
+          slug: true,
+          translations: { select: { locale: true, name: true } },
+        },
+      });
       expect(result).toEqual({
         items: [
           {
@@ -193,20 +252,39 @@ describe('CatalogService', () => {
       });
     });
 
+    it('skips second findMany and returns has_prev_page=false when SQL page is empty and total=0', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([]);
+      mockPrisma.tag.count.mockResolvedValue(0);
+
+      const result = await service.getTags({ page: 2, limit: 20 });
+
+      expect(mockPrisma.tag.findMany).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        items: [],
+        total: 0,
+        page: 2,
+        limit: 20,
+        total_pages: 0,
+        has_next_page: false,
+        has_prev_page: false,
+      });
+    });
+
     it('supports search and DB-level slug pagination when sort_by=slug', async () => {
-      (prisma.tag.findMany as jest.Mock).mockResolvedValue([mockDbTags[1]]);
-      (prisma.tag.count as jest.Mock).mockResolvedValue(2);
+      mockPrisma.tag.findMany.mockResolvedValue([mockDbTags[1]]);
+      mockPrisma.tag.count.mockResolvedValue(2);
 
       const result = await service.getTags({
         lang: 'fr',
         search: 'facile',
         sort_by: 'slug',
-        sort_order: 'asc' as any,
+        sort_order: SortOrder.asc,
         page: 1,
         limit: 1,
       });
 
-      expect(prisma.tag.findMany).toHaveBeenCalledWith({
+      expect(mockPrisma.$queryRaw).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
             { slug: { contains: 'facile', mode: 'insensitive' } },
@@ -217,7 +295,11 @@ describe('CatalogService', () => {
             },
           ],
         },
-        include: { translations: true },
+        select: {
+          id: true,
+          slug: true,
+          translations: { select: { locale: true, name: true } },
+        },
         orderBy: { slug: 'asc' },
         skip: 0,
         take: 1,
@@ -266,12 +348,26 @@ describe('CatalogService', () => {
     ];
 
     it('should return paginated ingredients localized and sorted alphabetically in the requested language', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue(
-        mockDbIngredients,
-      );
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 2 }, { id: 1 }]);
+      mockPrisma.ingredient.count.mockResolvedValue(2);
+      // Returned out of order to verify Map hydration preserves SQL order
+      mockPrisma.ingredient.findMany.mockResolvedValue([
+        mockDbIngredients[0],
+        mockDbIngredients[1],
+      ]);
 
       const result = await service.getIngredients({ lang: 'it' });
 
+      expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [2, 1] } },
+        select: {
+          id: true,
+          slug: true,
+          category: true,
+          translations: { select: { locale: true, name: true } },
+        },
+      });
       expect(result).toEqual({
         items: [
           {
@@ -299,9 +395,9 @@ describe('CatalogService', () => {
     });
 
     it('should filter by category and search term in relational translations', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([
-        mockDbIngredients[0],
-      ]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 1 }]);
+      mockPrisma.ingredient.count.mockResolvedValue(1);
+      mockPrisma.ingredient.findMany.mockResolvedValue([mockDbIngredients[0]]);
 
       const result = await service.getIngredients({
         lang: 'it',
@@ -319,38 +415,38 @@ describe('CatalogService', () => {
         },
       ]);
       expect(result.total).toBe(1);
-      expect(prisma.ingredient.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            category: IngredientCategory.produce,
-            OR: expect.arrayContaining([
-              { slug: { contains: 'pomo', mode: 'insensitive' } },
-              {
-                translations: {
-                  some: {
-                    name: { contains: 'pomo', mode: 'insensitive' },
-                  },
+      expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.ingredient.count).toHaveBeenCalledWith({
+        where: {
+          category: IngredientCategory.produce,
+          OR: [
+            { slug: { contains: 'pomo', mode: 'insensitive' } },
+            {
+              translations: {
+                some: {
+                  name: { contains: 'pomo', mode: 'insensitive' },
                 },
               },
-            ]),
-          }),
-        }),
-      );
+            },
+          ],
+        },
+      });
     });
 
-    it('supports localized name desc sorting and page slicing', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue(
-        mockDbIngredients,
-      );
+    it('supports localized name desc sorting and page slicing at DB level', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ id: 1 }]);
+      mockPrisma.ingredient.count.mockResolvedValue(2);
+      mockPrisma.ingredient.findMany.mockResolvedValue([mockDbIngredients[0]]);
 
       const result = await service.getIngredients({
         lang: 'it',
         sort_by: 'name',
-        sort_order: 'desc' as any,
+        sort_order: SortOrder.desc,
         page: 1,
         limit: 1,
       });
 
+      expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
       expect(result).toEqual({
         items: [
           {
@@ -371,22 +467,26 @@ describe('CatalogService', () => {
     });
 
     it('supports DB-level slug pagination when sort_by=slug', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([
-        mockDbIngredients[1],
-      ]);
-      (prisma.ingredient.count as jest.Mock).mockResolvedValue(2);
+      mockPrisma.ingredient.findMany.mockResolvedValue([mockDbIngredients[1]]);
+      mockPrisma.ingredient.count.mockResolvedValue(2);
 
       const result = await service.getIngredients({
         lang: 'en',
         sort_by: 'slug',
-        sort_order: 'asc' as any,
+        sort_order: SortOrder.asc,
         page: 1,
         limit: 1,
       });
 
-      expect(prisma.ingredient.findMany).toHaveBeenCalledWith({
+      expect(mockPrisma.$queryRaw).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith({
         where: {},
-        include: { translations: true },
+        select: {
+          id: true,
+          slug: true,
+          category: true,
+          translations: { select: { locale: true, name: true } },
+        },
         orderBy: { slug: 'asc' },
         skip: 0,
         take: 1,
@@ -412,12 +512,12 @@ describe('CatalogService', () => {
   });
 
   describe('createIngredient', () => {
-    const admin = {
+    const admin: ActiveUserData = {
       id: 1,
       username: 'admin',
-      role: 'admin',
+      role: Role.admin,
       session: 1,
-    } as any;
+    };
     const dto = {
       slug: 'bell_pepper',
       category: IngredientCategory.produce,
@@ -425,8 +525,8 @@ describe('CatalogService', () => {
     };
 
     it('creates the ingredient with its three translations', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.ingredient.create as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue(null);
+      mockPrisma.ingredient.create.mockResolvedValue({
         id: 7,
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -444,7 +544,7 @@ describe('CatalogService', () => {
         Action.Create,
         'Ingredient',
       );
-      expect(prisma.ingredient.create).toHaveBeenCalledWith({
+      expect(mockPrisma.ingredient.create).toHaveBeenCalledWith({
         data: {
           slug: 'bell_pepper',
           category: IngredientCategory.produce,
@@ -467,12 +567,12 @@ describe('CatalogService', () => {
     });
 
     it('throws 409 when the slug already exists', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({ id: 3 });
+      mockPrisma.ingredient.findUnique.mockResolvedValue({ id: 3 });
 
       await expect(service.createIngredient(admin, dto)).rejects.toMatchObject({
         status: HttpStatus.CONFLICT,
       });
-      expect(prisma.ingredient.create).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.create).not.toHaveBeenCalled();
     });
 
     it('does not touch the database when CASL denies the action', async () => {
@@ -483,26 +583,26 @@ describe('CatalogService', () => {
       await expect(service.createIngredient(admin, dto)).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
-      expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
-      expect(prisma.ingredient.create).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.create).not.toHaveBeenCalled();
     });
   });
 
   describe('deleteIngredient', () => {
-    const admin = {
+    const admin: ActiveUserData = {
       id: 1,
       username: 'admin',
-      role: 'admin',
+      role: Role.admin,
       session: 1,
-    } as any;
+    };
 
     it('deletes an ingredient that is not used by any recipe', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
         id: 1,
         slug: 'bell_pepper',
       });
-      (prisma.recipeIngredient.count as jest.Mock).mockResolvedValue(0);
-      (prisma.ingredient.delete as jest.Mock).mockResolvedValue({});
+      mockPrisma.recipeIngredient.count.mockResolvedValue(0);
+      mockPrisma.ingredient.delete.mockResolvedValue({});
 
       const result = await service.deleteIngredient(admin, 1);
 
@@ -511,7 +611,7 @@ describe('CatalogService', () => {
         Action.Delete,
         'Ingredient',
       );
-      expect(prisma.ingredient.delete).toHaveBeenCalledWith({
+      expect(mockPrisma.ingredient.delete).toHaveBeenCalledWith({
         where: { id: 1 },
       });
       expect(result).toEqual({
@@ -520,25 +620,25 @@ describe('CatalogService', () => {
     });
 
     it('throws 404 if the ingredient does not exist', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.ingredient.findUnique.mockResolvedValue(null);
 
       await expect(service.deleteIngredient(admin, 99)).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
       });
-      expect(prisma.ingredient.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.delete).not.toHaveBeenCalled();
     });
 
     it('throws 409 if the ingredient is used by at least one recipe', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
         id: 1,
         slug: 'bell_pepper',
       });
-      (prisma.recipeIngredient.count as jest.Mock).mockResolvedValue(3);
+      mockPrisma.recipeIngredient.count.mockResolvedValue(3);
 
       await expect(service.deleteIngredient(admin, 1)).rejects.toMatchObject({
         status: HttpStatus.CONFLICT,
       });
-      expect(prisma.ingredient.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.delete).not.toHaveBeenCalled();
     });
 
     it('throws 403 if CASL denies the action', async () => {
@@ -549,55 +649,55 @@ describe('CatalogService', () => {
       await expect(service.deleteIngredient(admin, 1)).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
-      expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.findUnique).not.toHaveBeenCalled();
     });
   });
 
   describe('deleteTag', () => {
-    const admin = {
+    const admin: ActiveUserData = {
       id: 1,
       username: 'admin',
-      role: 'admin',
+      role: Role.admin,
       session: 1,
-    } as any;
+    };
 
     it('deletes a tag that is not used by any recipe', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({
         id: 5,
         slug: 'gluten_free',
       });
-      (prisma.recipeTag.count as jest.Mock).mockResolvedValue(0);
-      (prisma.tag.delete as jest.Mock).mockResolvedValue({});
+      mockPrisma.recipeTag.count.mockResolvedValue(0);
+      mockPrisma.tag.delete.mockResolvedValue({});
 
       const result = await service.deleteTag(admin, 5);
 
       expect(casl.check).toHaveBeenCalledWith(admin, Action.Delete, 'Tag');
-      expect(prisma.tag.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+      expect(mockPrisma.tag.delete).toHaveBeenCalledWith({ where: { id: 5 } });
       expect(result).toEqual({
         message: "Tag 'gluten_free' deleted successfully",
       });
     });
 
     it('throws 404 if the tag does not exist', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.tag.findUnique.mockResolvedValue(null);
 
       await expect(service.deleteTag(admin, 99)).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
       });
-      expect(prisma.tag.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.delete).not.toHaveBeenCalled();
     });
 
     it('throws 409 if the tag is used by at least one recipe', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({
         id: 5,
         slug: 'gluten_free',
       });
-      (prisma.recipeTag.count as jest.Mock).mockResolvedValue(2);
+      mockPrisma.recipeTag.count.mockResolvedValue(2);
 
       await expect(service.deleteTag(admin, 5)).rejects.toMatchObject({
         status: HttpStatus.CONFLICT,
       });
-      expect(prisma.tag.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.delete).not.toHaveBeenCalled();
     });
 
     it('throws 403 if CASL denies the action', async () => {
@@ -608,24 +708,24 @@ describe('CatalogService', () => {
       await expect(service.deleteTag(admin, 5)).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.findUnique).not.toHaveBeenCalled();
     });
   });
 
   describe('updateIngredient', () => {
-    const admin = {
+    const admin: ActiveUserData = {
       id: 1,
       username: 'admin',
-      role: 'admin',
+      role: Role.admin,
       session: 1,
-    } as any;
+    };
     const dto = {
       translations: { it: 'Peperone', en: 'Bell pepper', fr: 'Poivron' },
     };
 
     it('updates the three translations of an existing ingredient', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({ id: 7 });
-      (prisma.ingredient.update as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({ id: 7 });
+      mockPrisma.ingredient.update.mockResolvedValue({
         id: 7,
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -652,14 +752,14 @@ describe('CatalogService', () => {
     });
 
     it('throws 404 if the ingredient does not exist', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.ingredient.findUnique.mockResolvedValue(null);
 
       await expect(
         service.updateIngredient(admin, 99, dto),
       ).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
       });
-      expect(prisma.ingredient.update).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.update).not.toHaveBeenCalled();
     });
 
     it('throws 403 if CASL denies the action', async () => {
@@ -672,17 +772,17 @@ describe('CatalogService', () => {
       ).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
-      expect(prisma.ingredient.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.ingredient.findUnique).not.toHaveBeenCalled();
     });
   });
 
   describe('createTag', () => {
-    const admin = {
+    const admin: ActiveUserData = {
       id: 1,
       username: 'admin',
-      role: 'admin',
+      role: Role.admin,
       session: 1,
-    } as any;
+    };
     const dto = {
       slug: 'gluten_free',
       translations: {
@@ -693,8 +793,8 @@ describe('CatalogService', () => {
     };
 
     it('creates the tag with its three translations', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.tag.create as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue(null);
+      mockPrisma.tag.create.mockResolvedValue({
         id: 5,
         slug: 'gluten_free',
         translations: [
@@ -707,7 +807,7 @@ describe('CatalogService', () => {
       const result = await service.createTag(admin, dto);
 
       expect(casl.check).toHaveBeenCalledWith(admin, Action.Create, 'Tag');
-      expect(prisma.tag.create).toHaveBeenCalledWith({
+      expect(mockPrisma.tag.create).toHaveBeenCalledWith({
         data: {
           slug: 'gluten_free',
           translations: {
@@ -732,12 +832,12 @@ describe('CatalogService', () => {
     });
 
     it('throws 409 when the slug already exists', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({ id: 5 });
+      mockPrisma.tag.findUnique.mockResolvedValue({ id: 5 });
 
       await expect(service.createTag(admin, dto)).rejects.toMatchObject({
         status: HttpStatus.CONFLICT,
       });
-      expect(prisma.tag.create).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.create).not.toHaveBeenCalled();
     });
 
     it('does not touch the database when CASL denies the action', async () => {
@@ -748,18 +848,18 @@ describe('CatalogService', () => {
       await expect(service.createTag(admin, dto)).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
-      expect(prisma.tag.create).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.create).not.toHaveBeenCalled();
     });
   });
 
   describe('updateTag', () => {
-    const admin = {
+    const admin: ActiveUserData = {
       id: 1,
       username: 'admin',
-      role: 'admin',
+      role: Role.admin,
       session: 1,
-    } as any;
+    };
     const dto = {
       translations: {
         it: 'Senza glutine',
@@ -769,8 +869,8 @@ describe('CatalogService', () => {
     };
 
     it('updates the three translations of an existing tag', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({ id: 5 });
-      (prisma.tag.update as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({ id: 5 });
+      mockPrisma.tag.update.mockResolvedValue({
         id: 5,
         slug: 'gluten_free',
         translations: [
@@ -783,7 +883,7 @@ describe('CatalogService', () => {
       const result = await service.updateTag(admin, 5, dto);
 
       expect(casl.check).toHaveBeenCalledWith(admin, Action.Update, 'Tag');
-      expect(prisma.tag.update).toHaveBeenCalledWith({
+      expect(mockPrisma.tag.update).toHaveBeenCalledWith({
         where: { id: 5 },
         data: {
           translations: {
@@ -820,12 +920,12 @@ describe('CatalogService', () => {
     });
 
     it('throws 404 if the tag does not exist', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.tag.findUnique.mockResolvedValue(null);
 
       await expect(service.updateTag(admin, 99, dto)).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
       });
-      expect(prisma.tag.update).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.update).not.toHaveBeenCalled();
     });
 
     it('throws 403 if CASL denies the action', async () => {
@@ -836,7 +936,7 @@ describe('CatalogService', () => {
       await expect(service.updateTag(admin, 5, dto)).rejects.toMatchObject({
         status: HttpStatus.FORBIDDEN,
       });
-      expect(prisma.tag.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.tag.findUnique).not.toHaveBeenCalled();
     });
   });
 
@@ -856,7 +956,7 @@ describe('CatalogService', () => {
 
   describe('getIngredientDetail (Admin)', () => {
     it('returns single ingredient with full multilingual translations map', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
         id: 12,
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -869,7 +969,7 @@ describe('CatalogService', () => {
 
       const result = await service.getIngredientDetail(12);
 
-      expect(prisma.ingredient.findUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.ingredient.findUnique).toHaveBeenCalledWith({
         where: { id: 12 },
         include: { translations: true },
       });
@@ -886,7 +986,7 @@ describe('CatalogService', () => {
     });
 
     it('throws 404 when ingredient does not exist', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.ingredient.findUnique.mockResolvedValue(null);
 
       await expect(service.getIngredientDetail(999)).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
@@ -896,7 +996,7 @@ describe('CatalogService', () => {
 
   describe('getTagDetail (Admin)', () => {
     it('returns single tag with full multilingual translations map', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({
         id: 1,
         slug: 'gluten_free',
         translations: [
@@ -908,7 +1008,7 @@ describe('CatalogService', () => {
 
       const result = await service.getTagDetail(1);
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.tag.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
         include: { translations: true },
       });
@@ -924,7 +1024,7 @@ describe('CatalogService', () => {
     });
 
     it('throws 404 when tag does not exist', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.tag.findUnique.mockResolvedValue(null);
 
       await expect(service.getTagDetail(999)).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
@@ -934,7 +1034,7 @@ describe('CatalogService', () => {
 
   describe('getIngredientById (Public localized)', () => {
     it('returns localized ingredient for requested language', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
         id: 12,
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -946,7 +1046,7 @@ describe('CatalogService', () => {
 
       const result = await service.getIngredientById(12, { lang: 'it' });
 
-      expect(prisma.ingredient.findUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.ingredient.findUnique).toHaveBeenCalledWith({
         where: { id: 12 },
         include: {
           translations: true,
@@ -962,7 +1062,7 @@ describe('CatalogService', () => {
     });
 
     it('falls back to English when requested language translation is missing', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
         id: 12,
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -981,7 +1081,7 @@ describe('CatalogService', () => {
     });
 
     it('falls back to first available language when requested and English translations are missing (ADR 0031)', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
         id: 12,
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -1000,7 +1100,7 @@ describe('CatalogService', () => {
     });
 
     it('falls back to slug when translations are empty', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.ingredient.findUnique.mockResolvedValue({
         id: 12,
         slug: 'bell_pepper',
         category: IngredientCategory.produce,
@@ -1019,7 +1119,7 @@ describe('CatalogService', () => {
     });
 
     it('throws 404 when ingredient does not exist', async () => {
-      (prisma.ingredient.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.ingredient.findUnique.mockResolvedValue(null);
 
       await expect(
         service.getIngredientById(999, { lang: 'it' }),
@@ -1031,7 +1131,7 @@ describe('CatalogService', () => {
 
   describe('getTagById (Public localized)', () => {
     it('returns localized tag for requested language', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({
         id: 1,
         slug: 'gluten_free',
         translations: [
@@ -1042,7 +1142,7 @@ describe('CatalogService', () => {
 
       const result = await service.getTagById(1, { lang: 'it' });
 
-      expect(prisma.tag.findUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.tag.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
         include: {
           translations: true,
@@ -1057,7 +1157,7 @@ describe('CatalogService', () => {
     });
 
     it('falls back to English when requested language translation is missing', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({
         id: 1,
         slug: 'gluten_free',
         translations: [{ locale: 'en', name: 'Gluten free' }],
@@ -1074,7 +1174,7 @@ describe('CatalogService', () => {
     });
 
     it('falls back to first available language when requested and English translations are missing (ADR 0031)', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({
         id: 1,
         slug: 'gluten_free',
         translations: [{ locale: 'it', name: 'Senza glutine' }],
@@ -1091,7 +1191,7 @@ describe('CatalogService', () => {
     });
 
     it('falls back to slug when translations are empty', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue({
+      mockPrisma.tag.findUnique.mockResolvedValue({
         id: 1,
         slug: 'gluten_free',
         translations: [],
@@ -1108,9 +1208,11 @@ describe('CatalogService', () => {
     });
 
     it('throws 404 when tag does not exist', async () => {
-      (prisma.tag.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPrisma.tag.findUnique.mockResolvedValue(null);
 
-      await expect(service.getTagById(999, { lang: 'it' })).rejects.toMatchObject({
+      await expect(
+        service.getTagById(999, { lang: 'it' }),
+      ).rejects.toMatchObject({
         status: HttpStatus.NOT_FOUND,
       });
     });
@@ -1118,7 +1220,7 @@ describe('CatalogService', () => {
 
   describe('getAdminIngredients', () => {
     it('returns paginated ingredients with full multilingual dictionaries and default sorting', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([
+      mockPrisma.ingredient.findMany.mockResolvedValue([
         {
           id: 1,
           slug: 'bell_pepper',
@@ -1130,18 +1232,23 @@ describe('CatalogService', () => {
           ],
         },
       ]);
-      (prisma.ingredient.count as jest.Mock).mockResolvedValue(25);
+      mockPrisma.ingredient.count.mockResolvedValue(25);
 
       const result = await service.getAdminIngredients();
 
-      expect(prisma.ingredient.findMany).toHaveBeenCalledWith({
+      expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith({
         where: {},
-        include: { translations: true },
+        select: {
+          id: true,
+          slug: true,
+          category: true,
+          translations: { select: { locale: true, name: true } },
+        },
         orderBy: { id: 'asc' },
         skip: 0,
         take: 20,
       });
-      expect(prisma.ingredient.count).toHaveBeenCalledWith({ where: {} });
+      expect(mockPrisma.ingredient.count).toHaveBeenCalledWith({ where: {} });
       expect(result).toEqual({
         items: [
           {
@@ -1165,8 +1272,8 @@ describe('CatalogService', () => {
     });
 
     it('applies category, search, custom page/limit, and slug desc sorting', async () => {
-      (prisma.ingredient.findMany as jest.Mock).mockResolvedValue([]);
-      (prisma.ingredient.count as jest.Mock).mockResolvedValue(0);
+      mockPrisma.ingredient.findMany.mockResolvedValue([]);
+      mockPrisma.ingredient.count.mockResolvedValue(0);
 
       const result = await service.getAdminIngredients({
         page: 2,
@@ -1174,7 +1281,7 @@ describe('CatalogService', () => {
         category: IngredientCategory.dairy_eggs,
         search: '  milk ',
         sort_by: 'slug',
-        sort_order: 'desc' as any,
+        sort_order: SortOrder.desc,
       });
 
       const expectedWhere = {
@@ -1189,9 +1296,14 @@ describe('CatalogService', () => {
         ],
       };
 
-      expect(prisma.ingredient.findMany).toHaveBeenCalledWith({
+      expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith({
         where: expectedWhere,
-        include: { translations: true },
+        select: {
+          id: true,
+          slug: true,
+          category: true,
+          translations: { select: { locale: true, name: true } },
+        },
         orderBy: { slug: 'desc' },
         skip: 10,
         take: 10,
@@ -1203,14 +1315,14 @@ describe('CatalogService', () => {
         limit: 10,
         total_pages: 0,
         has_next_page: false,
-        has_prev_page: true,
+        has_prev_page: false,
       });
     });
   });
 
   describe('getAdminTags', () => {
     it('returns paginated tags with full multilingual dictionaries', async () => {
-      (prisma.tag.findMany as jest.Mock).mockResolvedValue([
+      mockPrisma.tag.findMany.mockResolvedValue([
         {
           id: 5,
           slug: 'gluten_free',
@@ -1221,17 +1333,17 @@ describe('CatalogService', () => {
           ],
         },
       ]);
-      (prisma.tag.count as jest.Mock).mockResolvedValue(1);
+      mockPrisma.tag.count.mockResolvedValue(1);
 
       const result = await service.getAdminTags({
         page: 1,
         limit: 20,
         search: 'glutine',
         sort_by: 'slug',
-        sort_order: 'asc' as any,
+        sort_order: SortOrder.asc,
       });
 
-      expect(prisma.tag.findMany).toHaveBeenCalledWith({
+      expect(mockPrisma.tag.findMany).toHaveBeenCalledWith({
         where: {
           OR: [
             { slug: { contains: 'glutine', mode: 'insensitive' } },
@@ -1242,7 +1354,11 @@ describe('CatalogService', () => {
             },
           ],
         },
-        include: { translations: true },
+        select: {
+          id: true,
+          slug: true,
+          translations: { select: { locale: true, name: true } },
+        },
         orderBy: { slug: 'asc' },
         skip: 0,
         take: 20,

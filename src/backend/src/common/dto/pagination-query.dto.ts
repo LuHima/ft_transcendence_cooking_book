@@ -40,3 +40,37 @@ export class PaginationQueryDto {
   @Max(100)
   limit?: number = 20;
 }
+
+/**
+ * Standard 7-field paginated collection envelope.
+ */
+export interface PaginatedEnvelope<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+  has_next_page: boolean;
+  has_prev_page: boolean;
+}
+
+/**
+ * Wraps a slice of items with standard 7-field pagination metadata.
+ */
+export function buildPaginatedResponse<T>(
+  items: T[],
+  total: number,
+  page: number,
+  limit: number,
+): PaginatedEnvelope<T> {
+  const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+  return {
+    items,
+    total,
+    page,
+    limit,
+    total_pages,
+    has_next_page: total > 0 && page < total_pages,
+    has_prev_page: total > 0 && page > 1,
+  };
+}

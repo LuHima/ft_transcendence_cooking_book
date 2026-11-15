@@ -312,6 +312,7 @@ model Ingredient {
   translations       IngredientTranslation[]
   recipe_ingredients RecipeIngredient[]
 
+  @@index([category])
   @@map("ingredients")
 }
 
@@ -553,7 +554,7 @@ model BanHistory {
   unbanned_by    User?        @relation("StaffUnbans", fields: [unbanned_by_id], references: [id])
   unban_reason   String?      @db.VarChar(1000)
 
-  @@index([user_id])
+  @@index([user_id, banned_at])
   @@index([banned_at])
   @@map("ban_history")
 }

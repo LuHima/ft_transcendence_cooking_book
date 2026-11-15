@@ -4407,9 +4407,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive substring search across tag slugs and translations",
+            "description": "Case-insensitive substring search across ingredient slugs and translations",
             "schema": {
-              "example": "vegan",
+              "example": "pomodoro",
               "type": "string"
             }
           },

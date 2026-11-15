@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   Course,
+  IngredientCategory,
+  Prisma,
   RecipeDifficulty,
   UnitOfMeasure,
-  IngredientCategory,
 } from '@prisma/client';
 import { CaslAbilityFactory } from '../auth/casl/casl-ability.factory/casl-ability.factory';
 import { Action } from '../auth/casl/action.enum';
@@ -29,7 +30,43 @@ import { AdminTagQueryDto } from './dto/admin-tag-query.dto';
 import { FilterIngredientDto } from './dto/filter-ingredient.dto';
 import { FilterTagDto } from './dto/filter-tag.dto';
 import { SupportedLocale } from '../common/dto/locale-query.dto';
+import { buildPaginatedResponse } from '../common/dto/pagination-query.dto';
 import { SortOrder } from '../common/dto/sort-order.enum';
+
+const TAG_CATALOG_SELECT = {
+  id: true,
+  slug: true,
+  translations: { select: { locale: true, name: true } },
+} satisfies Prisma.TagSelect;
+
+const INGREDIENT_CATALOG_SELECT = {
+  id: true,
+  slug: true,
+  category: true,
+  translations: { select: { locale: true, name: true } },
+} satisfies Prisma.IngredientSelect;
+
+type CatalogTagRow = Prisma.TagGetPayload<{
+  select: typeof TAG_CATALOG_SELECT;
+}>;
+type CatalogIngredientRow = Prisma.IngredientGetPayload<{
+  select: typeof INGREDIENT_CATALOG_SELECT;
+}>;
+
+const CATALOG_SQL_META = {
+  tags: {
+    tableName: 'tags',
+    translationTable: 'tag_translations',
+    foreignKey: 'tag_id',
+  },
+  ingredients: {
+    tableName: 'ingredients',
+    translationTable: 'ingredient_translations',
+    foreignKey: 'ingredient_id',
+  },
+} as const;
+
+type CatalogEntityKind = keyof typeof CATALOG_SQL_META;
 
 /**
  * Shared helper formatting an array of translation rows into a canonical multilingual dictionary.
@@ -121,19 +158,24 @@ export class CatalogService {
   }
 
   /**
-   * Builds a shared Prisma `where` clause for catalog search and optional ingredient category filtering.
+   * Builds a shared Prisma search filter across canonical `slug` and any locale translation `name`.
    */
-  private buildCatalogWhere(params: {
-    search?: string;
-    category?: IngredientCategory;
-  }): Record<string, any> {
-    const where: Record<string, any> = {};
-    if (params.category) {
-      where.category = params.category;
+  private buildCatalogSearchFilter(search?: string): {
+    OR?: Array<
+      | { slug: { contains: string; mode: 'insensitive' } }
+      | {
+          translations: {
+            some: { name: { contains: string; mode: 'insensitive' } };
+          };
+        }
+    >;
+  } {
+    if (!search || !search.trim()) {
+      return {};
     }
-    if (params.search && params.search.trim()) {
-      const term = params.search.trim();
-      where.OR = [
+    const term = search.trim();
+    return {
+      OR: [
         { slug: { contains: term, mode: 'insensitive' } },
         {
           translations: {
@@ -142,29 +184,17 @@ export class CatalogService {
             },
           },
         },
-      ];
-    }
-    return where;
+      ],
+    };
   }
 
-  /**
-   * Wraps a slice of items with standard 7-field pagination metadata.
-   */
-  private buildPaginatedResponse<T>(
-    items: T[],
-    total: number,
-    page: number,
-    limit: number,
-  ) {
-    const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+  private buildIngredientWhere(
+    search?: string,
+    category?: IngredientCategory,
+  ): Prisma.IngredientWhereInput {
     return {
-      items,
-      total,
-      page,
-      limit,
-      total_pages,
-      has_next_page: total > 0 && page < total_pages,
-      has_prev_page: page > 1,
+      ...this.buildCatalogSearchFilter(search),
+      ...(category ? { category } : {}),
     };
   }
 
@@ -180,15 +210,12 @@ export class CatalogService {
     const limit = query.limit ?? 20;
     const sortBy = query.sort_by ?? 'id';
     const sortOrder = query.sort_order ?? SortOrder.asc;
-    const where = this.buildCatalogWhere({
-      search: query.search,
-      category: query.category,
-    });
+    const where = this.buildIngredientWhere(query.search, query.category);
 
     const [rows, total] = await Promise.all([
       this.prisma.ingredient.findMany({
         where,
-        include: { translations: true },
+        select: INGREDIENT_CATALOG_SELECT,
         orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
         take: limit,
@@ -196,7 +223,7 @@ export class CatalogService {
       this.prisma.ingredient.count({ where }),
     ]);
 
-    return this.buildPaginatedResponse(
+    return buildPaginatedResponse(
       rows.map((row) => this.toIngredientDetail(row)),
       total,
       page,
@@ -216,12 +243,14 @@ export class CatalogService {
     const limit = query.limit ?? 20;
     const sortBy = query.sort_by ?? 'id';
     const sortOrder = query.sort_order ?? SortOrder.asc;
-    const where = this.buildCatalogWhere({ search: query.search });
+    const where: Prisma.TagWhereInput = this.buildCatalogSearchFilter(
+      query.search,
+    );
 
     const [rows, total] = await Promise.all([
       this.prisma.tag.findMany({
         where,
-        include: { translations: true },
+        select: TAG_CATALOG_SELECT,
         orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
         take: limit,
@@ -229,7 +258,7 @@ export class CatalogService {
       this.prisma.tag.count({ where }),
     ]);
 
-    return this.buildPaginatedResponse(
+    return buildPaginatedResponse(
       rows.map((row) => this.toTagDetail(row)),
       total,
       page,
@@ -238,24 +267,140 @@ export class CatalogService {
   }
 
   /**
-   * Sorts localized catalog items by `name` in the active locale with deterministic `id` tie-breaking,
-   * then slices the requested page window and wraps it in a paginated envelope.
+   * Executes DB-level localized name sorting with 4-tier translation fallback
+   * and returns only the requested page's entity IDs in sorted order.
    */
-  private paginateLocalizedByName<T extends { id: number; name: string }>(
-    mapped: T[],
-    locale: SupportedLocale,
-    sortOrder: SortOrder,
-    page: number,
-    limit: number,
-  ) {
-    const dir = sortOrder === SortOrder.desc ? -1 : 1;
-    const sorted = [...mapped].sort((a, b) => {
-      const cmp = a.name.localeCompare(b.name, locale);
-      return cmp !== 0 ? cmp * dir : a.id - b.id;
-    });
-    const total = sorted.length;
-    const items = sorted.slice((page - 1) * limit, page * limit);
-    return this.buildPaginatedResponse(items, total, page, limit);
+  private async querySortedCatalogIds(params: {
+    entity: CatalogEntityKind;
+    locale: SupportedLocale;
+    sortOrder: SortOrder;
+    search?: string;
+    category?: IngredientCategory;
+    skip: number;
+    limit: number;
+  }): Promise<number[]> {
+    const meta = CATALOG_SQL_META[params.entity];
+    const tableSql = Prisma.raw(`"${meta.tableName}"`);
+    const trTableSql = Prisma.raw(`"${meta.translationTable}"`);
+    const fkSql = Prisma.raw(`"${meta.foreignKey}"`);
+    const orderSql = Prisma.raw(
+      params.sortOrder === SortOrder.desc ? 'DESC' : 'ASC',
+    );
+
+    const conditions: Prisma.Sql[] = [];
+    if (params.category) {
+      conditions.push(
+        Prisma.sql`e."category" = ${params.category}::"IngredientCategory"`,
+      );
+    }
+    const term = params.search?.trim();
+    if (term) {
+      const pattern = `%${term}%`;
+      conditions.push(
+        Prisma.sql`(
+          e."slug" ILIKE ${pattern}
+          OR EXISTS (
+            SELECT 1 FROM ${trTableSql} tr_s
+            WHERE tr_s.${fkSql} = e."id" AND tr_s."name" ILIKE ${pattern}
+          )
+        )`,
+      );
+    }
+
+    const whereClause =
+      conditions.length > 0
+        ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`
+        : Prisma.empty;
+
+    const sql = Prisma.sql`
+      SELECT e."id"
+      FROM ${tableSql} e
+      LEFT JOIN ${trTableSql} t_req
+        ON t_req.${fkSql} = e."id" AND t_req."locale" = ${params.locale}
+      LEFT JOIN ${trTableSql} t_en
+        ON t_en.${fkSql} = e."id" AND t_en."locale" = 'en'
+      LEFT JOIN LATERAL (
+        SELECT tr."name"
+        FROM ${trTableSql} tr
+        WHERE tr.${fkSql} = e."id"
+        ORDER BY tr."locale" ASC
+        LIMIT 1
+      ) t_any ON TRUE
+      ${whereClause}
+      ORDER BY LOWER(COALESCE(t_req."name", t_en."name", t_any."name", e."slug")) ${orderSql}, e."id" ASC
+      LIMIT ${params.limit} OFFSET ${params.skip}
+    `;
+
+    const rows = await this.prisma.$queryRaw<{ id: number }[]>(sql);
+    return rows.map((row) => row.id);
+  }
+
+  /**
+   * Shared DB-level pagination path for public localized catalogs (`tags` and `ingredients`),
+   * sorting either by `slug` directly or by localized `name` via SQL `LIMIT`/`OFFSET` + `Map` hydration.
+   */
+  private async paginateLocalizedCatalog<
+    TRow extends { id: number },
+    TDto,
+  >(options: {
+    entity: CatalogEntityKind;
+    locale: SupportedLocale;
+    page: number;
+    limit: number;
+    sortBy: 'name' | 'slug';
+    sortOrder: SortOrder;
+    search?: string;
+    category?: IngredientCategory;
+    count: () => Promise<number>;
+    findPageBySlug: (
+      skip: number,
+      take: number,
+      order: SortOrder,
+    ) => Promise<TRow[]>;
+    findByIds: (ids: number[]) => Promise<TRow[]>;
+    toDto: (row: TRow, locale: SupportedLocale) => TDto;
+  }) {
+    const { locale, page, limit, sortBy, sortOrder } = options;
+    const skip = (page - 1) * limit;
+
+    if (sortBy === 'slug') {
+      const [rows, total] = await Promise.all([
+        options.findPageBySlug(skip, limit, sortOrder),
+        options.count(),
+      ]);
+      return buildPaginatedResponse(
+        rows.map((row) => options.toDto(row, locale)),
+        total,
+        page,
+        limit,
+      );
+    }
+
+    const [ids, total] = await Promise.all([
+      this.querySortedCatalogIds({
+        entity: options.entity,
+        locale,
+        sortOrder,
+        search: options.search,
+        category: options.category,
+        skip,
+        limit,
+      }),
+      options.count(),
+    ]);
+
+    if (ids.length === 0) {
+      return buildPaginatedResponse<TDto>([], total, page, limit);
+    }
+
+    const rows = await options.findByIds(ids);
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    const orderedDtos = ids
+      .map((id) => byId.get(id))
+      .filter((row): row is TRow => Boolean(row))
+      .map((row) => options.toDto(row, locale));
+
+    return buildPaginatedResponse(orderedDtos, total, page, limit);
   }
 
   /*
@@ -271,18 +416,15 @@ export class CatalogService {
     const limit = filterDto.limit ?? 20;
     const sortBy = filterDto.sort_by ?? 'name';
     const sortOrder = filterDto.sort_order ?? SortOrder.asc;
-    const where = this.buildCatalogWhere({ search: filterDto.search });
+    const where: Prisma.TagWhereInput = this.buildCatalogSearchFilter(
+      filterDto.search,
+    );
 
-    const toTagDto = (t: {
-      id: number;
-      slug: string;
-      translations: { locale: string; name: string }[];
-    }): TagResponseDto => {
-      const resolved = resolveCatalogTranslation(
-        t.translations,
-        locale,
-        t.slug,
-      );
+    const toTagDto = (
+      t: CatalogTagRow,
+      loc: SupportedLocale,
+    ): TagResponseDto => {
+      const resolved = resolveCatalogTranslation(t.translations, loc, t.slug);
       return {
         id: t.id,
         slug: t.slug,
@@ -291,37 +433,30 @@ export class CatalogService {
       };
     };
 
-    if (sortBy === 'slug') {
-      const [rows, total] = await Promise.all([
-        this.prisma.tag.findMany({
-          where,
-          include: { translations: true },
-          orderBy: { slug: sortOrder },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        this.prisma.tag.count({ where }),
-      ]);
-      return this.buildPaginatedResponse(
-        rows.map(toTagDto),
-        total,
-        page,
-        limit,
-      );
-    }
-
-    const tags = await this.prisma.tag.findMany({
-      where,
-      include: { translations: true },
-      orderBy: { id: 'asc' },
-    });
-    return this.paginateLocalizedByName(
-      tags.map(toTagDto),
+    return this.paginateLocalizedCatalog({
+      entity: 'tags',
       locale,
-      sortOrder,
       page,
       limit,
-    );
+      sortBy,
+      sortOrder,
+      search: filterDto.search,
+      count: () => this.prisma.tag.count({ where }),
+      findPageBySlug: (skip, take, order) =>
+        this.prisma.tag.findMany({
+          where,
+          select: TAG_CATALOG_SELECT,
+          orderBy: { slug: order },
+          skip,
+          take,
+        }),
+      findByIds: (ids) =>
+        this.prisma.tag.findMany({
+          where: { id: { in: ids } },
+          select: TAG_CATALOG_SELECT,
+        }),
+      toDto: toTagDto,
+    });
   }
 
   /*
@@ -385,22 +520,16 @@ export class CatalogService {
     const limit = filterDto.limit ?? 20;
     const sortBy = filterDto.sort_by ?? 'name';
     const sortOrder = filterDto.sort_order ?? SortOrder.asc;
-    const where = this.buildCatalogWhere({
-      search: filterDto.search,
-      category: filterDto.category,
-    });
+    const where = this.buildIngredientWhere(
+      filterDto.search,
+      filterDto.category,
+    );
 
-    const toIngredientDto = (i: {
-      id: number;
-      slug: string;
-      category: IngredientCategory;
-      translations: { locale: string; name: string }[];
-    }): IngredientResponseDto => {
-      const resolved = resolveCatalogTranslation(
-        i.translations,
-        locale,
-        i.slug,
-      );
+    const toIngredientDto = (
+      i: CatalogIngredientRow,
+      loc: SupportedLocale,
+    ): IngredientResponseDto => {
+      const resolved = resolveCatalogTranslation(i.translations, loc, i.slug);
       return {
         id: i.id,
         slug: i.slug,
@@ -410,37 +539,31 @@ export class CatalogService {
       };
     };
 
-    if (sortBy === 'slug') {
-      const [rows, total] = await Promise.all([
-        this.prisma.ingredient.findMany({
-          where,
-          include: { translations: true },
-          orderBy: { slug: sortOrder },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        this.prisma.ingredient.count({ where }),
-      ]);
-      return this.buildPaginatedResponse(
-        rows.map(toIngredientDto),
-        total,
-        page,
-        limit,
-      );
-    }
-
-    const ingredients = await this.prisma.ingredient.findMany({
-      where,
-      include: { translations: true },
-      orderBy: { id: 'asc' },
-    });
-    return this.paginateLocalizedByName(
-      ingredients.map(toIngredientDto),
+    return this.paginateLocalizedCatalog({
+      entity: 'ingredients',
       locale,
-      sortOrder,
       page,
       limit,
-    );
+      sortBy,
+      sortOrder,
+      search: filterDto.search,
+      category: filterDto.category,
+      count: () => this.prisma.ingredient.count({ where }),
+      findPageBySlug: (skip, take, order) =>
+        this.prisma.ingredient.findMany({
+          where,
+          select: INGREDIENT_CATALOG_SELECT,
+          orderBy: { slug: order },
+          skip,
+          take,
+        }),
+      findByIds: (ids) =>
+        this.prisma.ingredient.findMany({
+          where: { id: { in: ids } },
+          select: INGREDIENT_CATALOG_SELECT,
+        }),
+      toDto: toIngredientDto,
+    });
   }
 
   /*

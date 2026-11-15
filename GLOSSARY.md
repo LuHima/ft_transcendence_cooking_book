@@ -226,8 +226,8 @@ _Avoid_: Ghost alert, stealth notice, hidden author notification
 The explicit array of disciplinary choices (`actions: ReportAction[]`) persisted on a Content Report record, enforcing strict mutual exclusivity constraints (`dismiss` standalone, `warn` and `ban` mutually exclusive, composable with `delete_content`).
 _Avoid_: Actions list, resolution flags, status tags
 
-**Ban History**:
-The immutable historical ledger recording all account suspensions, duration intervals, policy violation categories, user-facing explanations, and issuing staff identifiers for a community member, informing progressive discipline for repeat offenders.
+**Sanction History**:
+The immutable historical ledger recording all moderation sanctions (`ban` suspensions and `warn` warnings), duration intervals, policy violation categories, user-facing explanations, and issuing staff identifiers for a community member, informing progressive discipline for repeat offenders (implemented by the `BanHistory` model and exposed at the preserved `GET /api/admin/users/:id/ban-history` endpoint).
 _Avoid_: Ban log, strike history, black mark list
 
 **Composite Resolution Action**:

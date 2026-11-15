@@ -2,9 +2,17 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { IngredientCategory } from '@prisma/client';
 import { FilterIngredientDto } from './filter-ingredient.dto';
+import { FilterTagDto } from './filter-tag.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SortOrder } from '../../common/dto/sort-order.enum';
 
 describe('FilterIngredientDto', () => {
+  it('inherits from PaginationQueryDto independently of FilterTagDto', () => {
+    const dto = new FilterIngredientDto();
+    expect(dto).toBeInstanceOf(PaginationQueryDto);
+    expect(dto).not.toBeInstanceOf(FilterTagDto);
+  });
+
   it('allows all optional fields to be omitted and applies pagination/sort defaults', async () => {
     const dto = plainToInstance(FilterIngredientDto, {});
     const errors = await validate(dto);

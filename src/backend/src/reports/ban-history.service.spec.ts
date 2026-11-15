@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BanHistoryService } from './ban-history.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ReportAction, ReportReason } from '@prisma/client';
+import { SortOrder } from '../common/dto/sort-order.enum';
 
 describe('BanHistoryService', () => {
   let service: BanHistoryService;
@@ -103,7 +104,7 @@ describe('BanHistoryService', () => {
           duration_days: null,
           is_permanent: true,
           expires_at: null,
-        }),
+        }) as unknown,
       });
     });
 
@@ -177,14 +178,19 @@ describe('BanHistoryService', () => {
         where: { user_id: 10, action: ReportAction.ban, unbanned_at: null },
         orderBy: { banned_at: 'desc' },
       });
-      expect(mockPrisma.banHistory.update).toHaveBeenCalledWith({
-        where: { id: 'ban-uuid-1' },
+      const calls = mockPrisma.banHistory.update.mock.calls as unknown[][];
+      const updateCall = calls[0]?.[0] as {
+        where: { id: string };
         data: {
-          unbanned_at: expect.any(Date),
-          unbanned_by_id: 1,
-          unban_reason: 'Appeal approved',
-        },
-      });
+          unbanned_at: unknown;
+          unbanned_by_id: number;
+          unban_reason: string;
+        };
+      };
+      expect(updateCall.where).toEqual({ id: 'ban-uuid-1' });
+      expect(updateCall.data.unbanned_at).toBeInstanceOf(Date);
+      expect(updateCall.data.unbanned_by_id).toBe(1);
+      expect(updateCall.data.unban_reason).toBe('Appeal approved');
       expect(result).toEqual(unbannedRecord);
     });
 
@@ -272,7 +278,7 @@ describe('BanHistoryService', () => {
       const result = await service.getUserSanctionsHistory(10, {
         page: 2,
         limit: 10,
-        sort_order: 'asc' as any,
+        sort_order: SortOrder.asc,
       });
 
       expect(mockPrisma.banHistory.findMany).toHaveBeenCalledWith({
@@ -292,16 +298,19 @@ describe('BanHistoryService', () => {
       });
     });
 
-    it('returns empty envelope metadata when user has no history', async () => {
+    it('returns empty envelope metadata when user has no history even on page > 1', async () => {
       mockPrisma.banHistory.findMany.mockResolvedValueOnce([]);
       mockPrisma.banHistory.count.mockResolvedValueOnce(0);
 
-      const result = await service.getUserSanctionsHistory(10);
+      const result = await service.getUserSanctionsHistory(10, {
+        page: 2,
+        limit: 20,
+      });
 
       expect(result).toEqual({
         items: [],
         total: 0,
-        page: 1,
+        page: 2,
         limit: 20,
         total_pages: 0,
         has_next_page: false,
