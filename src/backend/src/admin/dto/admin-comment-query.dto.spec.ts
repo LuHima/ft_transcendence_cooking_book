@@ -26,6 +26,7 @@ describe('AdminCommentQueryDto', () => {
     AdminCommentSortBy.created_at,
     AdminCommentSortBy.recipe,
     AdminCommentSortBy.reports_count,
+    AdminCommentSortBy.pending_reports_count,
   ])('accepts valid sort_by value %s', async (sortBy) => {
     const dto = plainToInstance(AdminCommentQueryDto, { sort_by: sortBy });
     const errors = await validate(dto);
@@ -94,15 +95,15 @@ describe('AdminCommentQueryDto', () => {
     expect(errors[0].property).toBe('replies_limit');
   });
 
-  describe('reported_only filtering (Ticket #155)', () => {
-    it('accepts reported_only=true and contextually defaults sort_by to reports_count', async () => {
+  describe('reported_only filtering (Ticket #155 / #221)', () => {
+    it('accepts reported_only=true and contextually defaults sort_by to pending_reports_count', async () => {
       const dto = plainToInstance(AdminCommentQueryDto, {
         reported_only: 'true',
       });
       const errors = await validate(dto);
       expect(errors.length).toBe(0);
       expect(dto.reported_only).toBe(true);
-      expect(dto.sort_by).toBe(AdminCommentSortBy.reports_count);
+      expect(dto.sort_by).toBe(AdminCommentSortBy.pending_reports_count);
       expect(dto.format).toBe(AdminCommentFormat.flat);
     });
 

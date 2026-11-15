@@ -79,7 +79,7 @@ export class AdminCommentItemDto {
 
   @ApiProperty({
     description:
-      'Number of active pending moderation reports filed against this comment',
+      'Total number of moderation reports filed against this comment across all statuses (pending, action_taken, dismissed)',
     example: 3,
   })
   reports_count: number;
@@ -97,6 +97,15 @@ export class AdminCommentItemDto {
     example: true,
   })
   has_pending_reports: boolean;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      'ID of the most recent active pending report for this comment (ordered by created_at DESC, id DESC), or null when none are pending',
+    example: 105,
+  })
+  latest_pending_report_id: number | null;
 
   @ApiProperty({
     type: RecipeAuthorSummaryDto,

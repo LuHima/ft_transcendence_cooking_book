@@ -38,7 +38,11 @@ import {
 } from './dto/admin-comment-response.dto';
 import { UserSortBy, SortOrder } from '../users/dto/search-user-query.dto';
 import { ImageProcessingService } from '../common/services/image-processing.service';
-import { getPendingCommentReportTargetIds } from '../reports/helpers/pending-reports.helper';
+import {
+  getBatchReportMetrics,
+  getPendingCommentReportTargetIds,
+  ReportMetricsMaps,
+} from '../reports/helpers/pending-reports.helper';
 
 interface CommentRecipePayload {
   id: number;
@@ -847,7 +851,7 @@ export class AdminService {
     const sortBy =
       query?.sort_by ??
       (isReportedOnly
-        ? AdminCommentSortBy.reports_count
+        ? AdminCommentSortBy.pending_reports_count
         : AdminCommentSortBy.created_at);
     const sortOrder =
       query?.sort_order ??
@@ -915,55 +919,18 @@ export class AdminService {
       return fallback?.title || recipe.translations[0]?.title || '';
     };
 
-    const fetchReportCounts = async (
-      ids: number[],
-    ): Promise<{ total: Map<number, number>; pending: Map<number, number> }> => {
-      const total = new Map<number, number>();
-      const pending = new Map<number, number>();
-      if (ids.length === 0 || !this.prisma.report?.groupBy) {
-        return { total, pending };
-      }
-      try {
-        const groups = await this.prisma.report.groupBy({
-          by: ['target_id', 'status'],
-          where: {
-            subject: ReportSubject.comment,
-            target_id: { in: ids },
-          },
-          _count: { id: true },
-        });
-        for (const g of groups as any[]) {
-          const cnt =
-            typeof g._count === 'number'
-              ? g._count
-              : (g._count?.id ?? 1);
-          const currentTotal = total.get(g.target_id) || 0;
-          total.set(g.target_id, currentTotal + cnt);
+    const fetchReportMetrics = (ids: number[]): Promise<ReportMetricsMaps> =>
+      getBatchReportMetrics(this.prisma, ReportSubject.comment, ids);
 
-          if (
-            !g.status ||
-            g.status === ReportStatus.pending ||
-            g.status === 'pending'
-          ) {
-            const currentPending = pending.get(g.target_id) || 0;
-            pending.set(g.target_id, currentPending + cnt);
-          }
-        }
-      } catch {
-        // Fallback for mocked environments
-      }
-      return { total, pending };
-    };
-
-    const calculateThreadPendingReports = (
+    const calculateThreadReports = (
       rootId: number,
       replies: Array<{ id: number }> | undefined,
-      pendingMap: Map<number, number>,
+      countMap: Map<number, number>,
     ): number => {
       return (
-        (pendingMap.get(rootId) || 0) +
+        (countMap.get(rootId) || 0) +
         (replies || []).reduce(
-          (sum, r) => sum + (pendingMap.get(r.id) || 0),
+          (sum, r) => sum + (countMap.get(r.id) || 0),
           0,
         )
       );
@@ -971,9 +938,14 @@ export class AdminService {
 
     const mapCommentItem = (
       c: CommentPayload,
-      reportCounts: { total: Map<number, number>; pending: Map<number, number> },
+      reportMetrics: ReportMetricsMaps,
     ): AdminCommentItemDto => {
-      const pendingCount = reportCounts.pending.get(c.id) || 0;
+      const totalCount = reportMetrics.total.get(c.id) || 0;
+      const pendingCount = reportMetrics.pending.get(c.id) || 0;
+      const latestPendingReportId =
+        pendingCount > 0
+          ? (reportMetrics.latestPendingId.get(c.id) ?? null)
+          : null;
       return {
         id: c.id,
         recipe_id: c.recipe_id,
@@ -984,9 +956,10 @@ export class AdminService {
         is_edited: c.is_edited ?? false,
         created_at: c.created_at,
         updated_at: c.updated_at ?? null,
-        reports_count: pendingCount,
+        reports_count: totalCount,
         pending_reports_count: pendingCount,
         has_pending_reports: pendingCount > 0,
+        latest_pending_report_id: latestPendingReportId,
         user: c.user
           ? {
               id: c.user.id,
@@ -1075,11 +1048,12 @@ export class AdminService {
         return { root, latestActivity };
       });
 
-      let candidateReportCounts:
-        | { total: Map<number, number>; pending: Map<number, number> }
-        | undefined;
+      let candidateReportMetrics: ReportMetricsMaps | undefined;
 
-      if (sortBy === AdminCommentSortBy.reports_count) {
+      if (
+        sortBy === AdminCommentSortBy.pending_reports_count ||
+        sortBy === AdminCommentSortBy.reports_count
+      ) {
         const allCandidateIds: number[] = [];
         for (const root of candidateRoots) {
           allCandidateIds.push(root.id);
@@ -1087,24 +1061,31 @@ export class AdminService {
             allCandidateIds.push(r.id);
           }
         }
-        candidateReportCounts = await fetchReportCounts(allCandidateIds);
+        candidateReportMetrics = await fetchReportMetrics(allCandidateIds);
+        const targetCountMap =
+          sortBy === AdminCommentSortBy.pending_reports_count
+            ? candidateReportMetrics.pending
+            : candidateReportMetrics.total;
         withActivity.sort((a, b) => {
-          const countA = calculateThreadPendingReports(
+          const countA = calculateThreadReports(
             a.root.id,
             a.root.replies,
-            candidateReportCounts!.pending,
+            targetCountMap,
           );
-          const countB = calculateThreadPendingReports(
+          const countB = calculateThreadReports(
             b.root.id,
             b.root.replies,
-            candidateReportCounts!.pending,
+            targetCountMap,
           );
           if (countB !== countA) {
             return sortOrder === SortOrder.asc
               ? countA - countB
               : countB - countA;
           }
-          return b.latestActivity - a.latestActivity;
+          if (b.latestActivity !== a.latestActivity) {
+            return b.latestActivity - a.latestActivity;
+          }
+          return b.root.id - a.root.id;
         });
       } else if (sortBy === AdminCommentSortBy.recipe) {
         withActivity.sort((a, b) => {
@@ -1129,12 +1110,9 @@ export class AdminService {
         .slice(skip, skip + limit)
         .map((w) => w.root);
 
-      let reportCounts: {
-        total: Map<number, number>;
-        pending: Map<number, number>;
-      };
-      if (candidateReportCounts) {
-        reportCounts = candidateReportCounts;
+      let reportMetrics: ReportMetricsMaps;
+      if (candidateReportMetrics) {
+        reportMetrics = candidateReportMetrics;
       } else {
         const allIds: number[] = [];
         for (const root of pagedRoots) {
@@ -1144,7 +1122,7 @@ export class AdminService {
             allIds.push(r.id);
           }
         }
-        reportCounts = await fetchReportCounts(allIds);
+        reportMetrics = await fetchReportMetrics(allIds);
       }
 
       const items: ThreadedAdminCommentItemDto[] = pagedRoots.map((root) => {
@@ -1152,31 +1130,31 @@ export class AdminService {
           root._count?.replies ?? (root.replies ? root.replies.length : 0);
         const allReplies = root.replies || [];
         const reportedRepliesCount = allReplies.filter(
-          (r) => (reportCounts.pending.get(r.id) || 0) > 0,
+          (r) => (reportMetrics.pending.get(r.id) || 0) > 0,
         ).length;
 
-        const threadPendingReportsCount = calculateThreadPendingReports(
+        const threadPendingReportsCount = calculateThreadReports(
           root.id,
           allReplies,
-          reportCounts.pending,
+          reportMetrics.pending,
         );
 
         let repliesToWindow = allReplies;
         if (isReportedOnly) {
           const reportedReplies = allReplies.filter(
-            (r) => (reportCounts.pending.get(r.id) || 0) > 0,
+            (r) => (reportMetrics.pending.get(r.id) || 0) > 0,
           );
           const otherReplies = allReplies.filter(
-            (r) => (reportCounts.pending.get(r.id) || 0) === 0,
+            (r) => (reportMetrics.pending.get(r.id) || 0) === 0,
           );
           repliesToWindow = [...reportedReplies, ...otherReplies];
         }
 
         const windowedReplies = repliesToWindow
           .slice(0, repliesLimit)
-          .map((r) => mapCommentItem(r, reportCounts));
+          .map((r) => mapCommentItem(r, reportMetrics));
 
-        const baseItem = mapCommentItem(root, reportCounts);
+        const baseItem = mapCommentItem(root, reportMetrics);
 
         return {
           ...baseItem,
@@ -1202,7 +1180,10 @@ export class AdminService {
     }
 
     // Presentation format: Flat (Default)
-    if (sortBy === AdminCommentSortBy.reports_count) {
+    if (
+      sortBy === AdminCommentSortBy.pending_reports_count ||
+      sortBy === AdminCommentSortBy.reports_count
+    ) {
       const allComments = (await this.prisma.comment.findMany({
         where,
         include: {
@@ -1219,24 +1200,31 @@ export class AdminService {
       })) as unknown as CommentPayload[];
 
       const allIds = allComments.map((c) => c.id);
-      const reportCounts = await fetchReportCounts(allIds);
+      const reportMetrics = await fetchReportMetrics(allIds);
+      const targetCountMap =
+        sortBy === AdminCommentSortBy.pending_reports_count
+          ? reportMetrics.pending
+          : reportMetrics.total;
 
       allComments.sort((a, b) => {
-        const countA = reportCounts.pending.get(a.id) || 0;
-        const countB = reportCounts.pending.get(b.id) || 0;
+        const countA = targetCountMap.get(a.id) || 0;
+        const countB = targetCountMap.get(b.id) || 0;
         if (countB !== countA) {
           return sortOrder === SortOrder.asc
             ? countA - countB
             : countB - countA;
         }
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        const timeDiff =
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        if (timeDiff !== 0) {
+          return timeDiff;
+        }
+        return b.id - a.id;
       });
 
       const total = allComments.length;
       const paged = allComments.slice(skip, skip + limit);
-      const items = paged.map((c) => mapCommentItem(c, reportCounts));
+      const items = paged.map((c) => mapCommentItem(c, reportMetrics));
       const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
 
       return {
@@ -1281,8 +1269,8 @@ export class AdminService {
     ])) as unknown as [CommentPayload[], number];
 
     const ids = rawComments.map((c) => c.id);
-    const reportCounts = await fetchReportCounts(ids);
-    const items = rawComments.map((c) => mapCommentItem(c, reportCounts));
+    const reportMetrics = await fetchReportMetrics(ids);
+    const items = rawComments.map((c) => mapCommentItem(c, reportMetrics));
     const total_pages = total === 0 ? 0 : Math.ceil(total / limit);
 
     return {

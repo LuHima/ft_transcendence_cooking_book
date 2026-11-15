@@ -15,6 +15,7 @@ export enum AdminCommentSortBy {
   created_at = 'created_at',
   recipe = 'recipe',
   reports_count = 'reports_count',
+  pending_reports_count = 'pending_reports_count',
 }
 
 export enum AdminCommentFormat {
@@ -163,7 +164,7 @@ export class AdminCommentQueryDto {
   @ApiPropertyOptional({
     enum: AdminCommentSortBy,
     description:
-      'Field to sort comments by: created_at (default), recipe, reports_count (default when reported_only=true)',
+      'Field to sort comments by: created_at (default), recipe, reports_count (all-status total), pending_reports_count (default when reported_only=true)',
     default: AdminCommentSortBy.created_at,
     example: AdminCommentSortBy.created_at,
   })
@@ -175,7 +176,7 @@ export class AdminCommentQueryDto {
       return sortByOverride;
     }
     if (this.reported_only) {
-      return AdminCommentSortBy.reports_count;
+      return AdminCommentSortBy.pending_reports_count;
     }
     return AdminCommentSortBy.created_at;
   }
@@ -189,13 +190,13 @@ export class AdminCommentQueryDto {
   }
 
   /**
-   * Sort direction. Defaults contextually to desc for created_at and reports_count, asc for recipe.
+   * Sort direction. Defaults contextually to desc for created_at, reports_count, and pending_reports_count; asc for recipe.
    * @example SortOrder.desc
    */
   @ApiPropertyOptional({
     enum: SortOrder,
     description:
-      'Sort direction. Defaults to desc for created_at and reports_count, asc for recipe.',
+      'Sort direction. Defaults to desc for created_at, reports_count, and pending_reports_count; asc for recipe.',
     example: SortOrder.desc,
   })
   @IsOptional()

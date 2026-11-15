@@ -848,5 +848,196 @@ describe('Admin Comments Subsystem (Tickets #95 & #96)', () => {
         (result.items[1] as any).thread_pending_reports_count,
       ).toBe(1);
     });
+
+    it('splits all-status reports_count from pending_reports_count, populates latest_pending_report_id, and sorts independently in flat mode (#221)', async () => {
+      const commentA = {
+        id: 1,
+        recipe_id: 10,
+        user_id: 100,
+        parent_id: null,
+        content: '1 pending + 4 dismissed = 5 total',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-03-01'),
+        user: { id: 100, username: 'user1', avatar_url: null },
+        recipe: {
+          id: 10,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pizza' }],
+        },
+      };
+      const commentB = {
+        id: 2,
+        recipe_id: 10,
+        user_id: 101,
+        parent_id: null,
+        content: '3 pending + 0 dismissed = 3 total',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-03-02'),
+        user: { id: 101, username: 'user2', avatar_url: null },
+        recipe: {
+          id: 10,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pizza' }],
+        },
+      };
+      const commentC = {
+        id: 3,
+        recipe_id: 10,
+        user_id: 102,
+        parent_id: null,
+        content: '0 pending + 2 action_taken = 2 total',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-03-03'),
+        user: { id: 102, username: 'user3', avatar_url: null },
+        recipe: {
+          id: 10,
+          source_lang: 'it',
+          translations: [{ locale: 'it', title: 'Pizza' }],
+        },
+      };
+
+      const groupByRows = [
+        { target_id: 1, status: 'pending', _count: { id: 1 } },
+        { target_id: 1, status: 'dismissed', _count: { id: 4 } },
+        { target_id: 2, status: 'pending', _count: { id: 3 } },
+        { target_id: 3, status: 'action_taken', _count: { id: 2 } },
+      ];
+      const latestPendingRows = [
+        { id: 203, target_id: 2 },
+        { id: 101, target_id: 1 },
+      ];
+
+      // 1) sort_by=pending_reports_count -> B (3), A (1), C (0)
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        commentA,
+        commentB,
+        commentC,
+      ]);
+      mockPrisma.report.groupBy.mockResolvedValueOnce(groupByRows);
+      mockPrisma.report.findMany.mockResolvedValueOnce(latestPendingRows);
+
+      const byPending = await service.findAllAdminComments({
+        sort_by: AdminCommentSortBy.pending_reports_count,
+      });
+
+      expect(byPending.items.map((i) => i.id)).toEqual([2, 1, 3]);
+      expect(byPending.items[0]).toMatchObject({
+        id: 2,
+        reports_count: 3,
+        pending_reports_count: 3,
+        has_pending_reports: true,
+        latest_pending_report_id: 203,
+      });
+      expect(byPending.items[1]).toMatchObject({
+        id: 1,
+        reports_count: 5,
+        pending_reports_count: 1,
+        has_pending_reports: true,
+        latest_pending_report_id: 101,
+      });
+      expect(byPending.items[2]).toMatchObject({
+        id: 3,
+        reports_count: 2,
+        pending_reports_count: 0,
+        has_pending_reports: false,
+        latest_pending_report_id: null,
+      });
+
+      // 2) sort_by=reports_count -> A (5), B (3), C (2)
+      mockPrisma.comment.findMany.mockResolvedValueOnce([
+        commentA,
+        commentB,
+        commentC,
+      ]);
+      mockPrisma.report.groupBy.mockResolvedValueOnce(groupByRows);
+      mockPrisma.report.findMany.mockResolvedValueOnce(latestPendingRows);
+
+      const byTotal = await service.findAllAdminComments({
+        sort_by: AdminCommentSortBy.reports_count,
+      });
+
+      expect(byTotal.items.map((i) => i.id)).toEqual([1, 2, 3]);
+    });
+
+    it('sorts threaded mode by pending_reports_count vs all-status reports_count and hydrates replies[] latest_pending_report_id (#221)', async () => {
+      const thread1 = {
+        id: 1,
+        recipe_id: 10,
+        user_id: 100,
+        parent_id: null,
+        content: 'Root 1',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-01-01T10:00:00Z'),
+        replies: [
+          {
+            id: 11,
+            recipe_id: 10,
+            user_id: 101,
+            parent_id: 1,
+            content: 'Reply 11 (1 pending, 5 dismissed)',
+            is_active: true,
+            is_edited: false,
+            created_at: new Date('2026-01-01T11:00:00Z'),
+          },
+        ],
+        _count: { replies: 1 },
+      };
+
+      const thread2 = {
+        id: 2,
+        recipe_id: 10,
+        user_id: 200,
+        parent_id: null,
+        content: 'Root 2 (3 pending)',
+        is_active: true,
+        is_edited: false,
+        created_at: new Date('2026-01-02T10:00:00Z'),
+        replies: [],
+        _count: { replies: 0 },
+      };
+
+      const groupByRows = [
+        { target_id: 11, status: 'pending', _count: { id: 1 } },
+        { target_id: 11, status: 'dismissed', _count: { id: 5 } },
+        { target_id: 2, status: 'pending', _count: { id: 3 } },
+      ];
+      const latestPendingRows = [
+        { id: 300, target_id: 2 },
+        { id: 311, target_id: 11 },
+      ];
+
+      // sort_by=pending_reports_count -> thread2 (3 pending) > thread1 (1 pending)
+      mockPrisma.comment.findMany.mockResolvedValueOnce([thread1, thread2]);
+      mockPrisma.report.groupBy.mockResolvedValueOnce(groupByRows);
+      mockPrisma.report.findMany.mockResolvedValueOnce(latestPendingRows);
+
+      const byPending = await service.findAllAdminComments({
+        format: AdminCommentFormat.threaded,
+        sort_by: AdminCommentSortBy.pending_reports_count,
+      });
+      expect(byPending.items.map((i) => i.id)).toEqual([2, 1]);
+      expect((byPending.items[1] as any).replies[0]).toMatchObject({
+        id: 11,
+        reports_count: 6,
+        pending_reports_count: 1,
+        has_pending_reports: true,
+        latest_pending_report_id: 311,
+      });
+
+      // sort_by=reports_count -> thread1 (6 total) > thread2 (3 total)
+      mockPrisma.comment.findMany.mockResolvedValueOnce([thread1, thread2]);
+      mockPrisma.report.groupBy.mockResolvedValueOnce(groupByRows);
+      mockPrisma.report.findMany.mockResolvedValueOnce(latestPendingRows);
+
+      const byTotal = await service.findAllAdminComments({
+        format: AdminCommentFormat.threaded,
+        sort_by: AdminCommentSortBy.reports_count,
+      });
+      expect(byTotal.items.map((i) => i.id)).toEqual([1, 2]);
+    });
   });
 });
