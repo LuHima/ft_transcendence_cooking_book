@@ -4996,7 +4996,7 @@
         ]
       },
       "get": {
-        "description": "Retrieves a paginated list of content reports with optional filtering by status and subject.",
+        "description": "Retrieves a paginated list of content reports with optional filtering by status, subject, and target_id (subject is required when target_id is supplied).",
         "operationId": "ReportsController_getReports",
         "parameters": [
           {
@@ -5055,6 +5055,17 @@
             "description": "Filter reports by target entity type",
             "schema": {
               "$ref": "#/components/schemas/ReportSubject"
+            }
+          },
+          {
+            "name": "target_id",
+            "required": false,
+            "in": "query",
+            "description": "Filter reports by target entity ID (requires subject to prevent polymorphic ID collisions)",
+            "schema": {
+              "minimum": 1,
+              "example": 42,
+              "type": "number"
             }
           }
         ],
@@ -5122,6 +5133,108 @@
       }
     },
     "/api/reports/{id}": {
+      "get": {
+        "description": "Retrieves a single hydrated content report with reporter, polymorphic localized target, prior sanction counts, and resolved_by actor.",
+        "operationId": "ReportsController_getReportById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Numeric report identifier",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted.",
+            "schema": {
+              "example": "it",
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hydrated content report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid report ID format or locale parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Admin or Moderator role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiForbiddenResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Report not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiNotFoundResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Get single report by ID (Admin/Moderator only)",
+        "tags": [
+          "Reports"
+        ]
+      },
       "patch": {
         "description": "Resolves a content report with atomic composite actions (e.g. content suspension and author account ban), enforcing moderator disciplinary caps and storing dual-purpose rationale (public explanation vs internal staff notes).",
         "operationId": "ReportsController_updateReport",
@@ -6817,7 +6930,7 @@
             "name": "sort_by",
             "required": false,
             "in": "query",
-            "description": "Field to sort comments by: created_at (default), recipe, reports_count (default when reported_only=true)",
+            "description": "Field to sort comments by: created_at (default), recipe, reports_count (all-status total), pending_reports_count (default when reported_only=true)",
             "schema": {
               "default": "created_at",
               "example": "created_at",
@@ -6825,7 +6938,8 @@
               "enum": [
                 "created_at",
                 "recipe",
-                "reports_count"
+                "reports_count",
+                "pending_reports_count"
               ]
             }
           },
@@ -6833,7 +6947,7 @@
             "name": "sort_order",
             "required": false,
             "in": "query",
-            "description": "Sort direction. Defaults to desc for created_at and reports_count, asc for recipe.",
+            "description": "Sort direction. Defaults to desc for created_at, reports_count, and pending_reports_count; asc for recipe.",
             "schema": {
               "example": "desc",
               "type": "string",
@@ -7192,28 +7306,10 @@
             }
           },
           {
-            "name": "sort_by",
-            "required": false,
-            "in": "query",
-            "description": "Field to sort recipes by (defaults to \"created_at\")",
-            "schema": {
-              "default": "created_at",
-              "example": "created_at",
-              "type": "string",
-              "enum": [
-                "created_at",
-                "total_time",
-                "difficulty",
-                "likes_count",
-                "title"
-              ]
-            }
-          },
-          {
             "name": "sort_order",
             "required": false,
             "in": "query",
-            "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title",
+            "description": "Sort direction. Defaults to \"desc\" for created_at, likes_count, pending_reports_count, and reports_count; \"asc\" for total_time, difficulty, and title",
             "schema": {
               "example": "desc",
               "type": "string",
@@ -7238,15 +7334,45 @@
                 "all"
               ]
             }
+          },
+          {
+            "name": "reported_only",
+            "required": false,
+            "in": "query",
+            "description": "Filter recipes having at least one active pending report (subject = recipe)",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sort_by",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort recipes by: created_at (default), total_time, difficulty, likes_count, title, pending_reports_count (default when reported_only=true), or reports_count",
+            "schema": {
+              "default": "created_at",
+              "example": "created_at",
+              "type": "string",
+              "enum": [
+                "created_at",
+                "total_time",
+                "difficulty",
+                "likes_count",
+                "title",
+                "pending_reports_count",
+                "reports_count"
+              ]
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Paginated recipe records conforming to platform visibility matrix",
+            "description": "Paginated administrative recipe records with recipe-level report counters",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedRecipeResponseDto"
+                  "$ref": "#/components/schemas/PaginatedAdminRecipesResponseDto"
                 }
               }
             }
@@ -12995,7 +13121,7 @@
           },
           "reports_count": {
             "type": "number",
-            "description": "Number of active pending moderation reports filed against this comment",
+            "description": "Total number of moderation reports filed against this comment across all statuses (pending, action_taken, dismissed)",
             "example": 3
           },
           "pending_reports_count": {
@@ -13007,6 +13133,12 @@
             "type": "boolean",
             "description": "Whether this comment currently has at least one active pending moderation report",
             "example": true
+          },
+          "latest_pending_report_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "ID of the most recent active pending report for this comment (ordered by created_at DESC, id DESC), or null when none are pending",
+            "example": 105
           },
           "user": {
             "nullable": true,
@@ -13042,6 +13174,7 @@
           "reports_count",
           "pending_reports_count",
           "has_pending_reports",
+          "latest_pending_report_id",
           "user",
           "recipe"
         ]
@@ -13101,7 +13234,7 @@
           },
           "reports_count": {
             "type": "number",
-            "description": "Number of active pending moderation reports filed against this comment",
+            "description": "Total number of moderation reports filed against this comment across all statuses (pending, action_taken, dismissed)",
             "example": 3
           },
           "pending_reports_count": {
@@ -13113,6 +13246,12 @@
             "type": "boolean",
             "description": "Whether this comment currently has at least one active pending moderation report",
             "example": true
+          },
+          "latest_pending_report_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "ID of the most recent active pending report for this comment (ordered by created_at DESC, id DESC), or null when none are pending",
+            "example": 105
           },
           "user": {
             "nullable": true,
@@ -13175,6 +13314,7 @@
           "reports_count",
           "pending_reports_count",
           "has_pending_reports",
+          "latest_pending_report_id",
           "user",
           "recipe",
           "replies_count",
@@ -13204,6 +13344,280 @@
           "total": {
             "type": "number",
             "description": "Total number of matching comments (or root threads)",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "total_pages": {
+            "type": "number",
+            "description": "Total available pages",
+            "example": 3
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "description": "Indicates whether a next page exists",
+            "example": true
+          },
+          "has_prev_page": {
+            "type": "boolean",
+            "description": "Indicates whether a previous page exists",
+            "example": false
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "total_pages",
+          "has_next_page",
+          "has_prev_page"
+        ]
+      },
+      "AdminRecipeItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique recipe identifier",
+            "example": 42
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the recipe is actively published and visible to the public",
+            "example": true
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "friends_only",
+              "private"
+            ],
+            "description": "Recipe privacy visibility tier",
+            "example": "public"
+          },
+          "course": {
+            "type": "string",
+            "enum": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ],
+            "description": "Course classification",
+            "example": "first_course"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "easy",
+              "medium",
+              "hard"
+            ],
+            "description": "Difficulty level",
+            "example": "medium"
+          },
+          "prep_time": {
+            "type": "number",
+            "description": "Preparation time in minutes",
+            "example": 15
+          },
+          "cook_time": {
+            "type": "number",
+            "description": "Cooking time in minutes",
+            "example": 10
+          },
+          "total_time": {
+            "type": "number",
+            "description": "Total time in minutes (prep_time + cook_time)",
+            "example": 25
+          },
+          "servings": {
+            "type": "number",
+            "description": "Portions / servings yielded",
+            "example": 4
+          },
+          "source_lang": {
+            "type": "string",
+            "description": "Original author language",
+            "example": "it"
+          },
+          "translation_status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "description": "Automated machine translation state",
+            "example": "completed"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "description": "Recipe cover image URL",
+            "example": "/api/media/recipes/42/carbonara_cover.webp",
+            "nullable": true
+          },
+          "video_url": {
+            "type": "string",
+            "description": "Tutorial demonstration video URL",
+            "example": "/api/media/recipes/42/carbonara_tutorial.mp4",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-10-09T18:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2026-10-09T18:30:00.000Z",
+            "nullable": true
+          },
+          "author": {
+            "description": "Author profile summary",
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipeAuthorSummaryDto"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Localized recipe title",
+            "example": "Spaghetti alla Carbonara"
+          },
+          "description": {
+            "type": "string",
+            "description": "Localized introduction and dish description",
+            "example": "Il grande classico della cucina romana con guanciale, pecorino e tuorli."
+          },
+          "tags": {
+            "description": "Classification tags attached to the recipe",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocalizedRecipeTagResponse"
+            }
+          },
+          "likes_count": {
+            "type": "number",
+            "description": "Total number of likes received by this recipe",
+            "example": 42
+          },
+          "comments_count": {
+            "type": "number",
+            "description": "Total number of active comments on this recipe",
+            "example": 8
+          },
+          "is_liked": {
+            "type": "boolean",
+            "description": "Whether the requesting authenticated user has liked this recipe (false for guests)",
+            "example": true
+          },
+          "resolved_lang": {
+            "type": "string",
+            "description": "Resolved locale code used for localized text fields",
+            "enum": [
+              "it",
+              "en",
+              "fr"
+            ],
+            "example": "it"
+          },
+          "available_languages": {
+            "description": "List of available locale projections for this recipe",
+            "example": [
+              "it",
+              "en",
+              "fr"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "reports_count": {
+            "type": "number",
+            "description": "Total number of moderation reports filed against this recipe (subject = recipe) across all statuses",
+            "example": 3
+          },
+          "pending_reports_count": {
+            "type": "number",
+            "description": "Number of active pending moderation reports filed against this recipe (subject = recipe)",
+            "example": 1
+          },
+          "has_pending_reports": {
+            "type": "boolean",
+            "description": "Whether this recipe currently has at least one active pending recipe report",
+            "example": true
+          },
+          "latest_pending_report_id": {
+            "type": "number",
+            "nullable": true,
+            "description": "ID of the most recent active pending report for this recipe (ordered by created_at DESC, id DESC), or null when none are pending",
+            "example": 204
+          }
+        },
+        "required": [
+          "id",
+          "is_active",
+          "privacy",
+          "course",
+          "difficulty",
+          "prep_time",
+          "cook_time",
+          "total_time",
+          "servings",
+          "source_lang",
+          "translation_status",
+          "cover_image_url",
+          "video_url",
+          "created_at",
+          "updated_at",
+          "author",
+          "title",
+          "description",
+          "tags",
+          "likes_count",
+          "comments_count",
+          "is_liked",
+          "resolved_lang",
+          "available_languages",
+          "reports_count",
+          "pending_reports_count",
+          "has_pending_reports",
+          "latest_pending_report_id"
+        ]
+      },
+      "PaginatedAdminRecipesResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Administrative recipe summary items with report counters",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminRecipeItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of matching recipes",
             "example": 42
           },
           "page": {

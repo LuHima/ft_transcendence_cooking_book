@@ -21582,7 +21582,7 @@
           "request": {
             "name": "List reports queue (Admin/Moderator only)",
             "description": {
-              "content": "Retrieves a paginated list of content reports with optional filtering by status and subject.",
+              "content": "Retrieves a paginated list of content reports with optional filtering by status, subject, and target_id (subject is required when target_id is supplied).",
               "type": "text/plain"
             },
             "url": {
@@ -21615,7 +21615,7 @@
                 {
                   "disabled": false,
                   "key": "status",
-                  "value": "pending",
+                  "value": "reviewed",
                   "description": "Filter reports by current review status"
                 },
                 {
@@ -21623,6 +21623,12 @@
                   "key": "subject",
                   "value": "user",
                   "description": "Filter reports by target entity type"
+                },
+                {
+                  "disabled": false,
+                  "key": "target_id",
+                  "value": "42",
+                  "description": "Filter reports by target entity ID (requires subject to prevent polymorphic ID collisions)"
                 }
               ],
               "variable": []
@@ -21668,6 +21674,10 @@
                     {
                       "key": "subject",
                       "value": "<string>"
+                    },
+                    {
+                      "key": "target_id",
+                      "value": "42"
                     }
                   ],
                   "variable": []
@@ -21689,7 +21699,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"harassment_bullying\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21725,6 +21735,10 @@
                     {
                       "key": "subject",
                       "value": "<string>"
+                    },
+                    {
+                      "key": "target_id",
+                      "value": "42"
                     }
                   ],
                   "variable": []
@@ -21782,6 +21796,10 @@
                     {
                       "key": "subject",
                       "value": "<string>"
+                    },
+                    {
+                      "key": "target_id",
+                      "value": "42"
                     }
                   ],
                   "variable": []
@@ -21839,6 +21857,10 @@
                     {
                       "key": "subject",
                       "value": "<string>"
+                    },
+                    {
+                      "key": "target_id",
+                      "value": "42"
                     }
                   ],
                   "variable": []
@@ -21896,6 +21918,10 @@
                     {
                       "key": "subject",
                       "value": "<string>"
+                    },
+                    {
+                      "key": "target_id",
+                      "value": "42"
                     }
                   ],
                   "variable": []
@@ -21927,6 +21953,370 @@
               "listen": "test",
               "script": {
                 "id": "4035a2fd-5346-4853-8f76-2d6fbf56d887",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "8928f9e8-3838-4c40-8673-6427f756bee9",
+          "name": "Get single report by ID (Admin/Moderator only)",
+          "request": {
+            "name": "Get single report by ID (Admin/Moderator only)",
+            "description": {
+              "content": "Retrieves a single hydrated content report with reporter, polymorphic localized target, prior sanction counts, and resolved_by actor.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "reports",
+                ":id"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "lang",
+                  "value": "it",
+                  "description": "Target localization language (it, en, fr). Defaults to author source_lang or system fallback if omitted."
+                }
+              ],
+              "variable": [
+                {
+                  "disabled": false,
+                  "type": "any",
+                  "value": "1",
+                  "key": "id",
+                  "description": "(Required) Numeric report identifier"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET"
+          },
+          "response": [
+            {
+              "id": "c2961836-d5f8-4c15-8ba9-dec4054a2ac5",
+              "name": "Hydrated content report",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "reports",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric report identifier"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "a93e9df0-70f2-46d5-8130-ff16c8209b64",
+              "name": "Invalid report ID format or locale parameter",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "reports",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric report identifier"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "61910e4e-46a3-4ade-8681-7b1cdc595a8c",
+              "name": "Authentication required: missing or invalid accessToken cookie",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "reports",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric report identifier"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f9c7c120-8904-4a86-83fa-e625f4528e58",
+              "name": "Forbidden: Insufficient privileges to access this resource\n\nForbidden: Admin or Moderator role required",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "reports",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric report identifier"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 403,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Forbidden: insufficient permissions for this action on the target resource\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "1993c58c-288e-4392-8fb7-2ec749910635",
+              "name": "Report not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "reports",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric report identifier"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 404,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42\",\n  \"message\": \"Recipe not found\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "d7343cf3-6c02-45f5-8a35-75ebac1c05a3",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "reports",
+                    ":id"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "lang",
+                      "value": "it"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "1",
+                      "key": "id",
+                      "description": "(Required) Numeric report identifier"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "17ce2ce3-699c-4015-866b-d6ee935cf0ee",
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
@@ -22040,7 +22430,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"sexual_content\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -25108,13 +25498,13 @@
                   "disabled": false,
                   "key": "sort_by",
                   "value": "created_at",
-                  "description": "Field to sort comments by: created_at (default), recipe, reports_count (default when reported_only=true)"
+                  "description": "Field to sort comments by: created_at (default), recipe, reports_count (all-status total), pending_reports_count (default when reported_only=true)"
                 },
                 {
                   "disabled": false,
                   "key": "sort_order",
                   "value": "desc",
-                  "description": "Sort direction. Defaults to desc for created_at and reports_count, asc for recipe."
+                  "description": "Sort direction. Defaults to desc for created_at, reports_count, and pending_reports_count; asc for recipe."
                 },
                 {
                   "disabled": false,
@@ -25232,7 +25622,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"latest_pending_report_id\": 105,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    },\n    {\n      \"id\": 1,\n      \"recipe_id\": 42,\n      \"user_id\": 10,\n      \"parent_id\": null,\n      \"content\": \"Ottima ricetta!\",\n      \"is_active\": true,\n      \"is_edited\": false,\n      \"created_at\": \"2026-10-13T10:00:00.000Z\",\n      \"updated_at\": \"2026-10-15T11:00:00.000Z\",\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"latest_pending_report_id\": 105,\n      \"user\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"recipe\": {\n        \"id\": 42,\n        \"title\": \"Spaghetti alla Carbonara\"\n      }\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -25702,21 +26092,27 @@
                 },
                 {
                   "disabled": false,
-                  "key": "sort_by",
-                  "value": "created_at",
-                  "description": "Field to sort recipes by (defaults to \"created_at\")"
-                },
-                {
-                  "disabled": false,
                   "key": "sort_order",
                   "value": "desc",
-                  "description": "Sort direction. Defaults to \"desc\" for created_at and likes_count, \"asc\" for total_time, difficulty, and title"
+                  "description": "Sort direction. Defaults to \"desc\" for created_at, likes_count, pending_reports_count, and reports_count; \"asc\" for total_time, difficulty, and title"
                 },
                 {
                   "disabled": false,
                   "key": "status",
                   "value": "all",
                   "description": "Filter recipes by lifecycle status (active, inactive, all)"
+                },
+                {
+                  "disabled": false,
+                  "key": "reported_only",
+                  "value": "true",
+                  "description": "Filter recipes having at least one active pending report (subject = recipe)"
+                },
+                {
+                  "disabled": false,
+                  "key": "sort_by",
+                  "value": "created_at",
+                  "description": "Field to sort recipes by: created_at (default), total_time, difficulty, likes_count, title, pending_reports_count (default when reported_only=true), or reports_count"
                 }
               ],
               "variable": []
@@ -25731,8 +26127,8 @@
           },
           "response": [
             {
-              "id": "82495619-4ce3-4c3b-8a7f-49dd3273547b",
-              "name": "Paginated recipe records conforming to platform visibility matrix",
+              "id": "1f9eee49-b8a2-47c4-8ce7-d7539d7eb24b",
+              "name": "Paginated administrative recipe records with recipe-level report counters",
               "originalRequest": {
                 "url": {
                   "path": [
@@ -25833,16 +26229,20 @@
                       "value": "it"
                     },
                     {
-                      "key": "sort_by",
-                      "value": "created_at"
-                    },
-                    {
                       "key": "sort_order",
                       "value": "desc"
                     },
                     {
                       "key": "status",
                       "value": "all"
+                    },
+                    {
+                      "key": "reported_only",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
                     }
                   ],
                   "variable": []
@@ -25864,7 +26264,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ]\n    }\n  ],\n  \"total\": 150,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 8,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ],\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"latest_pending_report_id\": 204\n    },\n    {\n      \"id\": 42,\n      \"is_active\": true,\n      \"privacy\": \"public\",\n      \"course\": \"first_course\",\n      \"difficulty\": \"medium\",\n      \"prep_time\": 15,\n      \"cook_time\": 10,\n      \"total_time\": 25,\n      \"servings\": 4,\n      \"source_lang\": \"it\",\n      \"translation_status\": \"completed\",\n      \"cover_image_url\": \"/api/media/recipes/42/carbonara_cover.webp\",\n      \"video_url\": \"/api/media/recipes/42/carbonara_tutorial.mp4\",\n      \"created_at\": \"2026-10-09T18:00:00.000Z\",\n      \"updated_at\": \"2026-10-09T18:30:00.000Z\",\n      \"author\": {\n        \"id\": 1,\n        \"username\": \"chef_mario\",\n        \"avatar_url\": \"/api/media/avatars/1/chef_mario.webp\"\n      },\n      \"title\": \"Spaghetti alla Carbonara\",\n      \"description\": \"Il grande classico della cucina romana con guanciale, pecorino e tuorli.\",\n      \"tags\": [\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        },\n        {\n          \"id\": 1,\n          \"slug\": \"traditional\",\n          \"name\": \"Tradizionale\",\n          \"resolved_lang\": \"it\"\n        }\n      ],\n      \"likes_count\": 42,\n      \"comments_count\": 8,\n      \"is_liked\": true,\n      \"resolved_lang\": \"it\",\n      \"available_languages\": [\n        [],\n        []\n      ],\n      \"reports_count\": 3,\n      \"pending_reports_count\": 1,\n      \"has_pending_reports\": true,\n      \"latest_pending_report_id\": 204\n    }\n  ],\n  \"total\": 42,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 3,\n  \"has_next_page\": true,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -25971,16 +26371,20 @@
                       "value": "it"
                     },
                     {
-                      "key": "sort_by",
-                      "value": "created_at"
-                    },
-                    {
                       "key": "sort_order",
                       "value": "desc"
                     },
                     {
                       "key": "status",
                       "value": "all"
+                    },
+                    {
+                      "key": "reported_only",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
                     }
                   ],
                   "variable": []
@@ -26109,16 +26513,20 @@
                       "value": "it"
                     },
                     {
-                      "key": "sort_by",
-                      "value": "created_at"
-                    },
-                    {
                       "key": "sort_order",
                       "value": "desc"
                     },
                     {
                       "key": "status",
                       "value": "all"
+                    },
+                    {
+                      "key": "reported_only",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
                     }
                   ],
                   "variable": []
@@ -26247,16 +26655,20 @@
                       "value": "it"
                     },
                     {
-                      "key": "sort_by",
-                      "value": "created_at"
-                    },
-                    {
                       "key": "sort_order",
                       "value": "desc"
                     },
                     {
                       "key": "status",
                       "value": "all"
+                    },
+                    {
+                      "key": "reported_only",
+                      "value": "true"
+                    },
+                    {
+                      "key": "sort_by",
+                      "value": "created_at"
                     }
                   ],
                   "variable": []
