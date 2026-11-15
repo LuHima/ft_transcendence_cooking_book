@@ -214,6 +214,10 @@ _Avoid_: Video dumping, progressive download, static video serving
 An administrative sanction applied to a community member's account, either temporary (capped at 180 days for moderators) or permanent (enforced by administrators), immediately invalidating active JWT sessions and restricting platform access.
 _Avoid_: Account freeze, lockout, strike, kick
 
+**Account Disable**:
+A reversible administrative account suspension that revokes active sessions and excludes the member from login and public profile discovery without marking the account deleted or triggering Platform Custody Transfer.
+_Avoid_: Soft delete, account ban, purge
+
 **Moderation Warning**:
 An administrative notice issued by platform staff against reported content or accounts to alert an author of policy infractions and deliver corrective guidance without suspending account access or evicting sessions.
 _Avoid_: Strike, informal warning, ping, slap on the wrist
