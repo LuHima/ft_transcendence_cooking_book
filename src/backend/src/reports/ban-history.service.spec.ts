@@ -73,6 +73,7 @@ describe('BanHistoryService', () => {
           action: ReportAction.ban,
           reason: ReportReason.harassment_bullying,
           description: 'Repeated offensive comments',
+          internal_notes: null,
           duration_days: 30,
           is_permanent: false,
           expires_at: expiresAt,
@@ -145,12 +146,53 @@ describe('BanHistoryService', () => {
           action: ReportAction.warn,
           reason: ReportReason.harassment_bullying,
           description: 'First warning for disrespectful language',
+          internal_notes: null,
           duration_days: null,
           is_permanent: false,
           expires_at: null,
         },
       });
       expect(result).toEqual(expectedRecord);
+    });
+
+    it('persists trimmed internal_notes and defaults blank internal_notes to null', async () => {
+      mockPrisma.banHistory.create.mockResolvedValueOnce({
+        id: 'ban-uuid-notes',
+        internal_notes: 'Staff confidential context',
+      });
+
+      await service.recordSanction({
+        userId: 10,
+        bannedById: 2,
+        reason: ReportReason.spam_scam,
+        action: ReportAction.ban,
+        internalNotes: '  Staff confidential context  ',
+      });
+
+      expect(mockPrisma.banHistory.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          internal_notes: 'Staff confidential context',
+        }),
+      });
+
+      mockPrisma.banHistory.create.mockResolvedValueOnce({
+        id: 'ban-uuid-blank',
+        internal_notes: null,
+      });
+
+      await service.recordSanction({
+        userId: 10,
+        bannedById: 2,
+        reason: ReportReason.spam_scam,
+        action: ReportAction.warn,
+        internalNotes: '   ',
+      });
+
+      expect(mockPrisma.banHistory.create).toHaveBeenLastCalledWith({
+        data: expect.objectContaining({
+          internal_notes: null,
+        }),
+      });
     });
   });
 

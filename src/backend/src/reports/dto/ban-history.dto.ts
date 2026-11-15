@@ -65,6 +65,15 @@ export class BanHistoryItemDto {
   description: string | null;
 
   @ApiPropertyOptional({
+    description:
+      'Confidential staff-only internal notes (never exposed to sanctioned users)',
+    example: 'Escalated after repeated spam reports',
+    maxLength: 1000,
+    nullable: true,
+  })
+  internal_notes?: string | null;
+
+  @ApiPropertyOptional({
     description: 'Ban duration in days (null if permanent)',
     example: 30,
     nullable: true,

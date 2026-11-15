@@ -388,11 +388,12 @@ export class AdminService {
       dto.ban_reason !== undefined ||
       dto.ban_duration_days !== undefined ||
       dto.is_permanent !== undefined ||
-      dto.ban_description !== undefined;
+      dto.ban_description !== undefined ||
+      dto.internal_notes !== undefined;
 
     if (hasBanOnlyFields && dto.status !== UserStatus.banned) {
       throw new BadRequestException(
-        'Ban fields (ban_reason, ban_duration_days, is_permanent, ban_description) are only allowed when status is set to banned',
+        'Ban fields (ban_reason, ban_duration_days, is_permanent, ban_description, internal_notes) are only allowed when status is set to banned',
       );
     }
 
@@ -595,6 +596,7 @@ export class AdminService {
             reason: dto.ban_reason ?? ReportReason.other,
             action: ReportAction.ban,
             description: dto.ban_description?.trim() || null,
+            internalNotes: dto.internal_notes?.trim() || null,
             durationDays: dto.is_permanent
               ? null
               : (dto.ban_duration_days ??

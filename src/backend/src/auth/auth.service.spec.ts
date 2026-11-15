@@ -263,6 +263,7 @@ describe('AuthService', () => {
       banHistoryService.getLatestActiveBan.mockResolvedValue({
         reason: ReportReason.harassment_bullying,
         description: 'Abusive language',
+        internal_notes: 'Confidential staff note',
         is_permanent: false,
       });
 
@@ -280,6 +281,9 @@ describe('AuthService', () => {
           banned_until: bannedUntil.toISOString(),
           is_permanent: false,
         });
+        expect(JSON.stringify(response)).not.toContain(
+          'Confidential staff note',
+        );
       }
     });
 

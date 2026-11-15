@@ -1520,5 +1520,65 @@ describe('ReportsService', () => {
       });
       expect(result.items[1].resolved_by).toBeNull();
     });
+
+    it('propagates resolution_notes to BanHistory.internalNotes on warn and ban without leaking to warn notification', async () => {
+      mockNotificationEmit.notification.mockClear();
+      mockBanHistoryService.recordSanction.mockClear();
+
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 40,
+        reporter_id: 5,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.pending,
+        actions: [],
+      });
+      mockPrisma.user.findFirst.mockResolvedValueOnce({
+        id: 42,
+        role: Role.user,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 40,
+        reporter_id: 5,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.harassment_bullying,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.warn],
+        resolved_by_id: 1,
+      });
+
+      await service.updateReport(
+        40,
+        {
+          actions: [ReportAction.warn],
+          resolution_description: 'Please keep comments respectful',
+          resolution_notes: 'Confidential evidence: 3 prior flags',
+        },
+        { id: 1, role: Role.moderator },
+      );
+
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: ReportAction.warn,
+          description: 'Please keep comments respectful',
+          internalNotes: 'Confidential evidence: 3 prior flags',
+        }),
+        mockPrisma,
+      );
+      expect(mockNotificationEmit.notification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          details: 'Please keep comments respectful',
+        }),
+        expect.anything(),
+      );
+      const notifyPayload = JSON.stringify(
+        mockNotificationEmit.notification.mock.calls[0],
+      );
+      expect(notifyPayload).not.toContain(
+        'Confidential evidence: 3 prior flags',
+      );
+    });
   });
 });

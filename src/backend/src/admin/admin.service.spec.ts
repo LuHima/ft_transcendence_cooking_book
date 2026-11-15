@@ -626,6 +626,7 @@ describe('AdminService', () => {
           ban_reason: 'spam_scam' as any,
           ban_duration_days: 7,
           ban_description: '  Repeated spam links  ',
+          internal_notes: '  Confirmed bot network  ',
         },
         1,
       );
@@ -645,6 +646,7 @@ describe('AdminService', () => {
           bannedById: 1,
           reason: 'spam_scam',
           description: 'Repeated spam links',
+          internalNotes: 'Confirmed bot network',
           durationDays: 7,
           isPermanent: false,
         }),
@@ -716,6 +718,10 @@ describe('AdminService', () => {
 
       await expect(
         service.updateUser(2, { ban_reason: 'spam_scam' as any }, 1),
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.updateUser(2, { internal_notes: 'Staff note only' }, 1),
       ).rejects.toThrow(BadRequestException);
 
       await expect(

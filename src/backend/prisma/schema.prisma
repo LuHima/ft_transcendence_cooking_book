@@ -548,6 +548,7 @@ model BanHistory {
   action         ReportAction @default(ban)
   reason         ReportReason
   description    String?      @db.VarChar(1000)
+  internal_notes String?      @db.VarChar(1000)
   duration_days  Int?
   is_permanent   Boolean      @default(false)
   banned_at      DateTime     @default(now())

@@ -124,6 +124,21 @@ export class UpdateAdminUserDto {
   ban_description?: string;
 
   /**
+   * Confidential staff-only internal notes (Admin only, never exposed to the banned user).
+   * @example 'Repeat spammer across multiple recipe threads.'
+   */
+  @ApiPropertyOptional({
+    description:
+      'Confidential staff-only internal notes (only allowed when status is banned)',
+    maxLength: 1000,
+    example: 'Repeat spammer across multiple recipe threads.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  internal_notes?: string;
+
+  /**
    * Explicit ban duration in days (defaults to policy matrix baseline if omitted).
    * @example 30
    */

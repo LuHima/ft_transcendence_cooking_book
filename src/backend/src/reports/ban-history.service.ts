@@ -15,6 +15,7 @@ export interface RecordBanParams {
   reason: ReportReason;
   action?: ReportAction;
   description?: string | null;
+  internalNotes?: string | null;
   durationDays?: number | null;
   isPermanent?: boolean;
   reportId?: number | null;
@@ -47,6 +48,7 @@ export class BanHistoryService {
         action,
         reason: params.reason,
         description: params.description ?? null,
+        internal_notes: params.internalNotes?.trim() || null,
         duration_days:
           isWarn || isPermanent ? null : (params.durationDays ?? null),
         is_permanent: isPermanent,
