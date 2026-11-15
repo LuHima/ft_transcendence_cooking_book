@@ -96,6 +96,22 @@ export class BanHistoryService {
       },
     });
 
+    if (client.banHistory.updateMany) {
+      await client.banHistory.updateMany({
+        where: {
+          user_id: userId,
+          action: ReportAction.ban,
+          unbanned_at: null,
+          id: { not: updated.id },
+        },
+        data: {
+          unbanned_at: new Date(),
+          unbanned_by_id: staffId ?? null,
+          unban_reason: reason ?? null,
+        },
+      });
+    }
+
     this.logger.log(
       `Recorded unban event for ban ${updated.id} on user #${userId} by staff #${staffId ?? 'system'}`,
     );

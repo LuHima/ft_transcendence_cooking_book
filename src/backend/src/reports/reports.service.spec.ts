@@ -76,6 +76,7 @@ describe('ReportsService', () => {
   const mockBanHistoryService = {
     recordSanction: jest.fn().mockResolvedValue({ id: 'sanction-1' }),
     recordUnban: jest.fn().mockResolvedValue({ id: 'ban-1' }),
+    closeOpenBans: jest.fn().mockResolvedValue(0),
     getPreviousBansCount: jest.fn().mockResolvedValue(0),
     getPreviousWarningsCount: jest.fn().mockResolvedValue(0),
     getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
@@ -370,7 +371,11 @@ describe('ReportsService', () => {
           user_id: 501,
           source_lang: 'it',
           translations: [{ locale: 'it', title: 'Pizza Margherita' }],
-          user: { id: 501, username: 'chef_mario', avatar_url: '/avatars/501.webp' },
+          user: {
+            id: 501,
+            username: 'chef_mario',
+            avatar_url: '/avatars/501.webp',
+          },
         },
       ]);
 
@@ -381,7 +386,11 @@ describe('ReportsService', () => {
           content: 'This recipe is terrible!',
           recipe_id: 42,
           user_id: 502,
-          user: { id: 502, username: 'troll_user', avatar_url: '/avatars/502.webp' },
+          user: {
+            id: 502,
+            username: 'troll_user',
+            avatar_url: '/avatars/502.webp',
+          },
         },
       ]);
 
@@ -404,7 +413,11 @@ describe('ReportsService', () => {
       expect(result.items[0].target).toEqual({
         label: 'Pizza Margherita',
         recipe_id: 42,
-        owner: { id: 501, username: 'chef_mario', avatar_url: '/avatars/501.webp' },
+        owner: {
+          id: 501,
+          username: 'chef_mario',
+          avatar_url: '/avatars/501.webp',
+        },
       });
       expect(result.items[0].previous_bans_count).toBe(1);
 
@@ -417,7 +430,11 @@ describe('ReportsService', () => {
       expect(result.items[1].target).toEqual({
         label: 'This recipe is terrible!',
         recipe_id: 42,
-        owner: { id: 502, username: 'troll_user', avatar_url: '/avatars/502.webp' },
+        owner: {
+          id: 502,
+          username: 'troll_user',
+          avatar_url: '/avatars/502.webp',
+        },
       });
       expect(result.items[1].previous_bans_count).toBe(3);
 
@@ -429,7 +446,11 @@ describe('ReportsService', () => {
       });
       expect(result.items[2].target).toEqual({
         label: 'fake_account',
-        owner: { id: 99, username: 'fake_account', avatar_url: '/avatars/99.webp' },
+        owner: {
+          id: 99,
+          username: 'fake_account',
+          avatar_url: '/avatars/99.webp',
+        },
       });
       expect(result.items[2].previous_bans_count).toBe(0);
     });
@@ -1039,7 +1060,7 @@ describe('ReportsService', () => {
       });
     });
 
-    it("rejects empty actions array when status is action_taken with 400 Bad Request", async () => {
+    it('rejects empty actions array when status is action_taken with 400 Bad Request', async () => {
       mockPrisma.report.findUnique.mockResolvedValueOnce({
         id: 1,
         subject: ReportSubject.recipe,
@@ -1450,8 +1471,6 @@ describe('ReportsService', () => {
       mockPrisma.user.findMany
         .mockResolvedValueOnce([
           { id: 5, username: 'reporter5', avatar_url: null },
-        ])
-        .mockResolvedValueOnce([
           { id: 3, username: 'mod_disabled', avatar_url: '/avatars/3.webp' },
         ])
         .mockResolvedValueOnce([
@@ -1502,8 +1521,6 @@ describe('ReportsService', () => {
       mockPrisma.user.findMany
         .mockResolvedValueOnce([
           { id: 5, username: 'reporter5', avatar_url: null },
-        ])
-        .mockResolvedValueOnce([
           { id: 7, username: 'former_mod', avatar_url: '/avatars/7.webp' },
         ])
         .mockResolvedValueOnce([
@@ -1578,6 +1595,60 @@ describe('ReportsService', () => {
       );
       expect(notifyPayload).not.toContain(
         'Confidential evidence: 3 prior flags',
+      );
+    });
+
+    it('closes prior open bans and trims whitespace-only resolution_description when resolving with ban', async () => {
+      mockBanHistoryService.closeOpenBans.mockClear();
+      mockBanHistoryService.recordSanction.mockClear();
+
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 41,
+        reporter_id: 5,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+        actions: [],
+      });
+      mockPrisma.user.findFirst.mockResolvedValueOnce({
+        id: 42,
+        role: Role.user,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 41,
+        reporter_id: 5,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.ban],
+        resolved_by_id: 1,
+      });
+
+      await service.updateReport(
+        41,
+        {
+          actions: [ReportAction.ban],
+          resolution_description: '   ',
+          resolution_notes: '  Repeat offender  ',
+        },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(mockBanHistoryService.closeOpenBans).toHaveBeenCalledWith(
+        42,
+        1,
+        'Superseded by updated ban',
+        mockPrisma,
+      );
+      expect(mockBanHistoryService.recordSanction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: ReportAction.ban,
+          description: null,
+          internalNotes: 'Repeat offender',
+        }),
+        mockPrisma,
       );
     });
   });

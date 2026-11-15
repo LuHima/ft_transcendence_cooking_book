@@ -200,7 +200,8 @@ export class ReportsService {
         items
           .filter(
             (r) =>
-              r.subject === ReportSubject.user && typeof r.target_id === 'number',
+              r.subject === ReportSubject.user &&
+              typeof r.target_id === 'number',
           )
           .map((r) => r.target_id),
       ),
@@ -228,75 +229,60 @@ export class ReportsService {
       ),
     );
 
-    const [
-      reporters,
-      resolvedByUsers,
-      targetUsers,
-      targetRecipes,
-      targetComments,
-    ] = await Promise.all([
-      reporterIds.length > 0 && this.prisma.user?.findMany
-        ? this.prisma.user.findMany({
-            where: { id: { in: reporterIds } },
-            select: { id: true, username: true, avatar_url: true },
-          })
-        : Promise.resolve([]),
-      resolvedByIds.length > 0 && this.prisma.user?.findMany
-        ? this.prisma.user.findMany({
-            where: { id: { in: resolvedByIds } },
-            select: { id: true, username: true, avatar_url: true },
-          })
-        : Promise.resolve([]),
-      targetUserIds.length > 0 && this.prisma.user?.findMany
-        ? this.prisma.user.findMany({
-            where: { id: { in: targetUserIds } },
-            select: { id: true, username: true, avatar_url: true },
-          })
-        : Promise.resolve([]),
-      targetRecipeIds.length > 0 && this.prisma.recipe?.findMany
-        ? this.prisma.recipe.findMany({
-            where: { id: { in: targetRecipeIds } },
-            select: {
-              id: true,
-              user_id: true,
-              source_lang: true,
-              translations: { select: { locale: true, title: true } },
-              user: {
-                select: { id: true, username: true, avatar_url: true },
-              },
-            },
-          })
-        : Promise.resolve([]),
-      targetCommentIds.length > 0 && this.prisma.comment?.findMany
-        ? this.prisma.comment.findMany({
-            where: { id: { in: targetCommentIds } },
-            select: {
-              id: true,
-              content: true,
-              recipe_id: true,
-              user_id: true,
-              user: {
-                select: { id: true, username: true, avatar_url: true },
-              },
-            },
-          })
-        : Promise.resolve([]),
-    ]);
+    const actorUserIds = Array.from(
+      new Set([...reporterIds, ...resolvedByIds]),
+    );
 
-    const reporterMap = new Map<
+    const [actorUsers, targetUsers, targetRecipes, targetComments] =
+      await Promise.all([
+        actorUserIds.length > 0 && this.prisma.user?.findMany
+          ? this.prisma.user.findMany({
+              where: { id: { in: actorUserIds } },
+              select: { id: true, username: true, avatar_url: true },
+            })
+          : Promise.resolve([]),
+        targetUserIds.length > 0 && this.prisma.user?.findMany
+          ? this.prisma.user.findMany({
+              where: { id: { in: targetUserIds } },
+              select: { id: true, username: true, avatar_url: true },
+            })
+          : Promise.resolve([]),
+        targetRecipeIds.length > 0 && this.prisma.recipe?.findMany
+          ? this.prisma.recipe.findMany({
+              where: { id: { in: targetRecipeIds } },
+              select: {
+                id: true,
+                user_id: true,
+                source_lang: true,
+                translations: { select: { locale: true, title: true } },
+                user: {
+                  select: { id: true, username: true, avatar_url: true },
+                },
+              },
+            })
+          : Promise.resolve([]),
+        targetCommentIds.length > 0 && this.prisma.comment?.findMany
+          ? this.prisma.comment.findMany({
+              where: { id: { in: targetCommentIds } },
+              select: {
+                id: true,
+                content: true,
+                recipe_id: true,
+                user_id: true,
+                user: {
+                  select: { id: true, username: true, avatar_url: true },
+                },
+              },
+            })
+          : Promise.resolve([]),
+      ]);
+
+    const actorUserMap = new Map<
       number,
       { id: number; username: string; avatar_url: string | null }
     >();
-    for (const u of reporters || []) {
-      reporterMap.set(u.id, u);
-    }
-
-    const resolvedByMap = new Map<
-      number,
-      { id: number; username: string; avatar_url: string | null }
-    >();
-    for (const u of resolvedByUsers || []) {
-      resolvedByMap.set(u.id, u);
+    for (const u of actorUsers || []) {
+      actorUserMap.set(u.id, u);
     }
 
     const targetUserMap = new Map<
@@ -384,7 +370,7 @@ export class ReportsService {
       items.map(async (report) => {
         let reporter = report.reporter;
         if (!reporter && typeof report.reporter_id === 'number') {
-          const u = reporterMap.get(report.reporter_id);
+          const u = actorUserMap.get(report.reporter_id);
           reporter = u ?? {
             id: report.reporter_id,
             username: `user_${report.reporter_id}`,
@@ -396,7 +382,7 @@ export class ReportsService {
           report.resolved_by !== undefined
             ? report.resolved_by
             : typeof report.resolved_by_id === 'number'
-              ? (resolvedByMap.get(report.resolved_by_id) ?? null)
+              ? (actorUserMap.get(report.resolved_by_id) ?? null)
               : null;
 
         let targetUserId: number | null = null;
@@ -736,6 +722,14 @@ export class ReportsService {
               where: { id_user: resolvedTargetUserId },
             });
 
+            // Close any prior open ban rows before recording the superseding ban
+            await this.banHistoryService.closeOpenBans?.(
+              resolvedTargetUserId,
+              callerId ?? null,
+              'Superseded by updated ban',
+              tx,
+            );
+
             // Record in immutable BanHistory ledger
             await this.banHistoryService.recordSanction(
               {
@@ -743,7 +737,7 @@ export class ReportsService {
                 bannedById: callerId!,
                 reason: effectiveReason,
                 action: ReportAction.ban,
-                description: dto.resolution_description ?? null,
+                description: dto.resolution_description?.trim() || null,
                 internalNotes: dto.resolution_notes?.trim() || null,
                 durationDays,
                 isPermanent,

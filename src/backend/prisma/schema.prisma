@@ -561,6 +561,7 @@ model BanHistory {
   @@index([user_id, banned_at])
   @@index([banned_at])
   @@index([banned_by_id])
+  @@index([unbanned_by_id])
   @@map("ban_history")
 }
 

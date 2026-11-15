@@ -11,6 +11,7 @@ describe('BanHistoryService', () => {
     banHistory: {
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
       count: jest.fn(),
@@ -233,6 +234,19 @@ describe('BanHistoryService', () => {
       expect(updateCall.data.unbanned_at).toBeInstanceOf(Date);
       expect(updateCall.data.unbanned_by_id).toBe(1);
       expect(updateCall.data.unban_reason).toBe('Appeal approved');
+      expect(mockPrisma.banHistory.updateMany).toHaveBeenCalledWith({
+        where: {
+          user_id: 10,
+          action: ReportAction.ban,
+          unbanned_at: null,
+          id: { not: 'ban-uuid-1' },
+        },
+        data: {
+          unbanned_at: expect.any(Date),
+          unbanned_by_id: 1,
+          unban_reason: 'Appeal approved',
+        },
+      });
       expect(result).toEqual(unbannedRecord);
     });
 
