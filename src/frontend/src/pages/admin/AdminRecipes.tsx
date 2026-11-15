@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError, getErrorMessage, qs } from '../../api/client'
-import { useAuth } from '../../context/AuthContext'
-import { useToast } from '../../context/ToastContext'
+import { useAuth } from '../../context/auth'
+import { useToast } from '../../context/toast'
 import { useLang } from '../../lib/useLang'
 import { canPurge, canRestoreRecipe } from '../../lib/permissions'
+import { reportsHref, useStaffBasePath } from '../../lib/staffLinks'
+import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
 import { DEFAULT_RECIPE_SORT, parseRecipeSort, type RecipeSortValue } from '../../lib/recipeSort'
 import { SUPPORTED_LANGS } from '../../i18n'
+import BanHistoryDrawer from '../../components/BanHistoryDrawer'
 import Pagination from '../../components/Pagination'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import PrivacyBadge from '../../components/PrivacyBadge'
 import RecipeSortSelect from '../../components/RecipeSortSelect'
 import { ListSkeleton } from '../../components/Skeleton'
-import type { AdminRecipeStatus, Course, Paginated, RecipeDifficulty, RecipeSummary } from '../../types/models'
+import type { AdminRecipe, AdminRecipeStatus, Course, Paginated, RecipeDifficulty } from '../../types/models'
 
 const PAGE_SIZE = 15
 const STATUSES: AdminRecipeStatus[] = ['all', 'active', 'inactive']
@@ -24,7 +27,8 @@ const SELECT =
 	'rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm text-[var(--wc-text)] outline-none focus:border-[var(--wc-basil)]'
 
 // elenco ricette per lo staff (admin e moderatori, anche dalla pagina /moderation):
-//   GET    /admin/recipes?page=&limit=&lang=&search=&status=&course=&difficulty=&source_lang=&author_id=&sort_by=&sort_order=
+//   GET    /admin/recipes?page=&limit=&lang=&search=&status=&course=&difficulty=&source_lang=&author_id=&reported_only=&sort_by=&sort_order=
+//          (#208: reports_count, pending_reports_count, has_pending_reports per riga e filtro reported_only)
 //   DELETE /recipes/:id                       → sospensione (admin e moderatori; 403 sulle ricette degli admin per i moderatori)
 //   PATCH  /recipes/:id { is_active: true }   → riattivazione (autore o admin)
 //   DELETE /recipes/:id?hard=true             → eliminazione definitiva (solo admin)
@@ -33,7 +37,8 @@ function AdminRecipes() {
 	const lang = useLang()
 	const toast = useToast()
 	const { user } = useAuth()
-	const [data, setData] = useState<Paginated<RecipeSummary> | null>(null)
+	const base = useStaffBasePath()
+	const [data, setData] = useState<Paginated<AdminRecipe> | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [search, setSearch] = useState('')
 	const [debounced, setDebounced] = useState('')
@@ -44,11 +49,17 @@ function AdminRecipes() {
 	const [authorIdText, setAuthorIdText] = useState('')
 	const [authorId, setAuthorId] = useState<number | undefined>()
 	const [sort, setSort] = useState<RecipeSortValue>(DEFAULT_RECIPE_SORT)
+	// solo ricette con segnalazioni in attesa (#208)
+	const [reportedOnly, setReportedOnly] = useState(false)
 	const [page, setPage] = useState(1)
 	const [reload, setReload] = useState(0)
 	const [busyId, setBusyId] = useState<number | null>(null)
-	const [purging, setPurging] = useState<RecipeSummary | null>(null)
+	const [purging, setPurging] = useState<AdminRecipe | null>(null)
+	const [suspending, setSuspending] = useState<AdminRecipe | null>(null)
+	const [history, setHistory] = useState<{ id: number; username: string } | null>(null)
 	const { sortBy, sortOrder } = parseRecipeSort(sort)
+	const listTopRef = useRef<HTMLDivElement>(null)
+	useScrollIntoViewOnChange(page, listTopRef)
 
 	// filtri testuali: partono 300ms dopo l'ultimo tasto
 	useEffect(() => {
@@ -60,10 +71,18 @@ function AdminRecipes() {
 		return () => window.clearTimeout(id)
 	}, [search, authorIdText])
 
+	// filtri cambiati: via le righe vecchie (skeleton) invece di mostrare risultati non più validi
+	const filterKey = [debounced, status, course, difficulty, sourceLang, authorId, sort, reportedOnly].join('|')
+	const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+	if (filterKey !== prevFilterKey) {
+		setPrevFilterKey(filterKey)
+		setData(null)
+	}
+
 	useEffect(() => {
 		let cancelled = false
 		api
-			.get<Paginated<RecipeSummary>>(
+			.get<Paginated<AdminRecipe>>(
 				`/admin/recipes${qs({
 					page,
 					limit: PAGE_SIZE,
@@ -74,6 +93,7 @@ function AdminRecipes() {
 					difficulty,
 					source_lang: sourceLang,
 					author_id: authorId,
+					reported_only: reportedOnly ? 'true' : undefined,
 					sort_by: sortBy,
 					sort_order: sortOrder,
 				})}`,
@@ -84,12 +104,16 @@ function AdminRecipes() {
 				setError(null)
 			})
 			.catch((err) => {
-				if (!cancelled) setError(getErrorMessage(err, t('myRecipes.loadError')))
+				if (cancelled) return
+				// backend senza #208: reported_only non ancora accettato
+				const unsupported = err instanceof ApiError && err.status === 400 && /reported_only/.test(err.message)
+				setData(null)
+				setError(unsupported ? t('admin.recipes.reportedOnlyUnsupported') : getErrorMessage(err, t('myRecipes.loadError')))
 			})
 		return () => {
 			cancelled = true
 		}
-	}, [page, debounced, status, course, difficulty, sourceLang, authorId, sortBy, sortOrder, lang, reload, t])
+	}, [page, debounced, status, course, difficulty, sourceLang, authorId, reportedOnly, sortBy, sortOrder, lang, reload, t])
 
 	// cambia un filtro e riparte dalla prima pagina
 	function changeFilter(fn: () => void) {
@@ -98,7 +122,7 @@ function AdminRecipes() {
 	}
 
 	// aggiorna la riga in locale; se il filtro di stato la esclude, ricarica la pagina
-	function afterStatusChange(r: RecipeSummary, isActive: boolean) {
+	function afterStatusChange(r: AdminRecipe, isActive: boolean) {
 		if (status === 'all') {
 			setData((prev) => (prev ? { ...prev, items: prev.items.map((x) => (x.id === r.id ? { ...x, is_active: isActive } : x)) } : prev))
 		} else if (data && data.items.length === 1 && page > 1) {
@@ -108,8 +132,8 @@ function AdminRecipes() {
 		}
 	}
 
-	async function suspend(r: RecipeSummary) {
-		if (!confirm(t('admin.recipes.confirmDelete', { title: r.title }))) return
+	async function suspend(r: AdminRecipe) {
+		setSuspending(null)
 		setBusyId(r.id)
 		try {
 			await api.delete(`/recipes/${r.id}`)
@@ -125,7 +149,7 @@ function AdminRecipes() {
 		}
 	}
 
-	async function reactivate(r: RecipeSummary) {
+	async function reactivate(r: AdminRecipe) {
 		setBusyId(r.id)
 		try {
 			await api.patch(`/recipes/${r.id}`, { is_active: true })
@@ -138,7 +162,7 @@ function AdminRecipes() {
 		}
 	}
 
-	async function purge(r: RecipeSummary) {
+	async function purge(r: AdminRecipe) {
 		try {
 			await api.delete(`/recipes/${r.id}${qs({ hard: 'true' })}`)
 			toast.success(t('recipe.purged'))
@@ -154,7 +178,7 @@ function AdminRecipes() {
 	const activeFilters = [course, difficulty, sourceLang, authorIdText.trim()].filter(Boolean).length
 
 	return (
-		<div>
+		<div ref={listTopRef} className="scroll-mt-24">
 			<div className="space-y-3 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-3">
 				<div className="flex flex-wrap items-center gap-3">
 					<input
@@ -172,18 +196,17 @@ function AdminRecipes() {
 								type="button"
 								role="radio"
 								aria-checked={status === s}
-								onClick={() =>
-									changeFilter(() => {
-										setStatus(s)
-										setData(null)
-									})
-								}
+								onClick={() => changeFilter(() => setStatus(s))}
 								className={`px-3 py-1.5 ${status === s ? 'bg-[var(--wc-basil)] text-[var(--wc-bg)]' : 'text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]'}`}
 							>
 								{t(`admin.recipes.statuses.${s}`)}
 							</button>
 						))}
 					</div>
+					<label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--wc-text)]">
+						<input type="checkbox" checked={reportedOnly} onChange={(e) => changeFilter(() => setReportedOnly(e.target.checked))} />
+						{t('admin.comments.reportedOnly')}
+					</label>
 					<div className="ml-auto">
 						<RecipeSortSelect value={sort} onChange={(v) => changeFilter(() => setSort(v))} />
 					</div>
@@ -260,8 +283,16 @@ function AdminRecipes() {
 						const inactive = r.is_active === false
 						// modifica e riattivazione: autore o admin; eliminazione definitiva: solo admin
 						const canManage = canRestoreRecipe(user, r.author?.id)
+						const totalReports = r.reports_count ?? 0
+						const pendingReports = r.pending_reports_count ?? 0
+						const hasReports = Boolean(r.has_pending_reports) || totalReports > 0
 						return (
-							<div key={r.id} className={`flex flex-wrap items-center justify-between gap-4 p-4 ${inactive ? 'bg-[var(--wc-surface)]' : ''}`}>
+							<div
+								key={r.id}
+								className={`flex flex-wrap items-center justify-between gap-4 p-4 ${inactive ? 'bg-[var(--wc-surface)]' : ''} ${
+									r.has_pending_reports ? 'border-l-4 border-l-[var(--wc-paprika)]' : ''
+								}`}
+							>
 								<div className="min-w-0">
 									<div className="flex flex-wrap items-center gap-2">
 										<Link
@@ -274,6 +305,18 @@ function AdminRecipes() {
 										{inactive && (
 											<span className="shrink-0 rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
 												{t('recipe.suspendedBadge')}
+											</span>
+										)}
+										{/* segnalazioni (#208): in attesa in evidenza, altrimenti il totale storico */}
+										{r.has_pending_reports && (
+											<span className="shrink-0 rounded-full bg-[var(--wc-paprika)] px-2 py-0.5 text-[10px] font-semibold text-[var(--wc-bg)]">
+												⚑ {t('admin.comments.reported')}
+												{pendingReports > 0 && ` (${pendingReports})`}
+											</span>
+										)}
+										{!r.has_pending_reports && totalReports > 0 && (
+											<span className="shrink-0 rounded-full border border-[var(--wc-border)] px-2 py-0.5 text-[10px]" title={t('admin.comments.totalReports')}>
+												⚑ {totalReports}
 											</span>
 										)}
 									</div>
@@ -290,6 +333,23 @@ function AdminRecipes() {
 									</p>
 								</div>
 								<div className="flex shrink-0 flex-wrap items-center gap-2 text-sm">
+									{hasReports && (
+										<Link
+											to={reportsHref(base, { subject: 'recipe', target_id: r.id, status: r.has_pending_reports ? 'pending' : 'all' })}
+											className="rounded-full border border-[var(--wc-paprika)] px-3 py-1.5 text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)]"
+										>
+											{r.has_pending_reports ? t('admin.reportsLink.resolve') : t('admin.reportsLink.view')}
+										</Link>
+									)}
+									{r.author && (
+										<button
+											type="button"
+											onClick={() => r.author && setHistory({ id: r.author.id, username: r.author.username })}
+											className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 hover:border-[var(--wc-saffron)]"
+										>
+											{t('admin.users.banHistory')}
+										</button>
+									)}
 									{canManage && (
 										<Link
 											to={`/my-recipes/${r.id}/edit`}
@@ -310,7 +370,7 @@ function AdminRecipes() {
 											)
 										: (
 												<button
-													onClick={() => void suspend(r)}
+													onClick={() => setSuspending(r)}
 													disabled={busyId === r.id}
 													className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
 												>
@@ -334,6 +394,19 @@ function AdminRecipes() {
 			)}
 
 			{data && <Pagination page={data.page} totalPages={data.total_pages} onChange={setPage} />}
+
+			{suspending && (
+				<ConfirmDialog
+					title={t('admin.recipes.suspend')}
+					confirmLabel={t('admin.recipes.suspend')}
+					danger
+					onConfirm={() => suspend(suspending)}
+					onClose={() => setSuspending(null)}
+				>
+					<p>{t('admin.recipes.confirmDelete', { title: suspending.title })}</p>
+				</ConfirmDialog>
+			)}
+			{history && <BanHistoryDrawer user={history} onClose={() => setHistory(null)} />}
 
 			{purging && (
 				<ConfirmDialog

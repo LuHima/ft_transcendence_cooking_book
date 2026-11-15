@@ -24,10 +24,13 @@ import Friends from './pages/Friends'
 import Admin from './pages/admin/Admin'
 import Moderation from './pages/Moderation'
 import NotFound from './pages/NotFound'
+import { useDialogDismiss } from './lib/useDialogDismiss'
 
 function RecipeDetailOverlay() {
 	const { t } = useTranslation()
 	const navigate = useNavigate()
+	// Escape anywhere goes back to the kitchen (unless an inner dialog is open: it closes first)
+	useDialogDismiss(() => navigate(-1))
 
 	return (
 		<div
@@ -42,7 +45,7 @@ function RecipeDetailOverlay() {
 					onClick={() => navigate(-1)}
 					className="text-sm text-[var(--wc-text-muted)] hover:text-[var(--wc-text)]"
 				>
-					← Torna alla cucina
+					← {t('recipe.backToKitchen')}
 				</button>
 			</div>
 			<RecipeDetail />

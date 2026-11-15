@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import AdminReports from './AdminReports'
 import AdminUsers from './AdminUsers'
@@ -9,11 +9,20 @@ import AdminCatalog from './AdminCatalog'
 type Tab = 'reports' | 'users' | 'recipes' | 'comments' | 'catalog'
 
 const TABS: Tab[] = ['reports', 'users', 'recipes', 'comments', 'catalog']
+const isTab = (v: string | null): v is Tab => (TABS as string[]).includes(v ?? '')
 
 // pannello admin: tutto ciò che vede il moderatore (segnalazioni) + gestione utenti, ruoli, ricette e commenti
 function Admin() {
 	const { t } = useTranslation()
-	const [tab, setTab] = useState<Tab>('reports')
+	// active tab in the URL (?tab=…): reloads keep it and other panels can deep-link here,
+	// e.g. ?tab=reports&subject=comment&target_id=42 (filters read by AdminReports)
+	const [params, setParams] = useSearchParams()
+	const tab: Tab = isTab(params.get('tab')) ? (params.get('tab') as Tab) : 'reports'
+
+	// switching tab drops the other panel's filters
+	function setTab(next: Tab) {
+		if (next !== tab) setParams({ tab: next })
+	}
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-12">

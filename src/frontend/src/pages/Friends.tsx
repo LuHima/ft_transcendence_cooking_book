@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, getErrorMessage, qs, toPage } from '../api/client'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/toast'
 import Avatar from '../components/Avatar'
 import OnlineDot from '../components/OnlineDot'
 import { useFriendsPresence } from '../lib/useFriendsPresence'
 import { ListSkeleton } from '../components/Skeleton'
 import Pagination from '../components/Pagination'
+import ConfirmDialog from '../components/ConfirmDialog'
 import type { FriendItem, FriendRequest } from '../types/models'
 
 type Tab = 'friends' | 'received' | 'sent'
@@ -25,6 +26,7 @@ function Friends() {
 	const [receivedCount, setReceivedCount] = useState(0)
 	const [error, setError] = useState<string | null>(null)
 	const [busyId, setBusyId] = useState<number | null>(null)
+	const [removing, setRemoving] = useState<FriendItem | null>(null)
 	// Confirmed friends: username search and pagination (GET /friends?search=&page=&limit=20)
 	const [friendsSearch, setFriendsSearch] = useState('')
 	const [friendsQuery, setFriendsQuery] = useState('')
@@ -132,7 +134,7 @@ function Friends() {
 	)
 
 	async function removeFriend(u: FriendItem) {
-		if (!confirm(t('friends.confirmRemove', { name: u.username }))) return
+		setRemoving(null)
 		setBusyId(u.id)
 		try {
 			await api.delete(`/friends/${u.id}`)
@@ -203,7 +205,7 @@ function Friends() {
 								<span className="truncate font-medium">{u.username}</span>
 								<OnlineDot online={onlineIds.has(u.id)} />
 							</Link>
-							<button className={`${outlineBtn} text-[var(--wc-paprika)]`} disabled={busyId === u.id} onClick={() => removeFriend(u)}>
+							<button className={`${outlineBtn} text-[var(--wc-paprika)]`} disabled={busyId === u.id} onClick={() => setRemoving(u)}>
 								{t('friends.remove')}
 							</button>
 						</li>
@@ -246,6 +248,18 @@ function Friends() {
 			)}
 			{tab !== 'friends' && (
 				<Pagination page={currentRequestsPage} totalPages={requestsTotalPages} onChange={setCurrentRequestsPage} />
+			)}
+
+			{removing && (
+				<ConfirmDialog
+					title={t('friends.remove')}
+					confirmLabel={t('friends.remove')}
+					danger
+					onConfirm={() => removeFriend(removing)}
+					onClose={() => setRemoving(null)}
+				>
+					<p>{t('friends.confirmRemove', { name: removing.username })}</p>
+				</ConfirmDialog>
 			)}
 		</div>
 	)

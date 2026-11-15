@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/auth'
+import { useToast } from '../context/toast'
 import { api, ApiError, assetUrl, getErrorMessage, qs } from '../api/client'
 import { useLang } from '../lib/useLang'
 import Comments from '../components/Comments'
@@ -36,12 +36,15 @@ function RecipeDetail() {
 	const navigate = useNavigate()
 	const [recipe, setRecipe] = useState<RecipeDetailType | null>(null)
 	const [error, setError] = useState<string | null>(null)
+	// photo shown large (0 = cover, then the gallery)
+	const [activeImage, setActiveImage] = useState(0)
 	const [liking, setLiking] = useState(false)
 	const [deleting, setDeleting] = useState(false)
 	const [retrying, setRetrying] = useState(false)
 	const [exporting, setExporting] = useState(false)
 	const [reactivating, setReactivating] = useState(false)
 	const [confirmPurge, setConfirmPurge] = useState(false)
+	const [confirmDelete, setConfirmDelete] = useState(false)
 	// Friends-only recipe: 401 = guest (must sign in), 403 = not a friend of the author
 	const [restricted, setRestricted] = useState<401 | 403 | null>(null)
 	const location = useLocation()
@@ -94,7 +97,7 @@ function RecipeDetail() {
 		if (!recipe) return
 		// Staff (admin or moderator) suspending someone else's recipe
 		const moderation = isStaff && !isOwner
-		if (!confirm(moderation ? t('recipe.confirmDeleteAdmin') : t('recipe.confirmDelete'))) return
+		setConfirmDelete(false)
 		setDeleting(true)
 		try {
 			await api.delete(`/recipes/${recipe.id}`)
@@ -225,6 +228,9 @@ function RecipeDetail() {
 	const cover = assetUrl(recipe.cover_image_url)
 	const gallery = recipe.media.filter((m) => m.media_type === 'image')
 	const video = assetUrl(recipe.video_url)
+	// cover + gallery as one set: one large photo, the others as thumbnails
+	const images = [...(cover ? [cover] : []), ...gallery.map((m) => assetUrl(m.url)).filter((u): u is string => Boolean(u))]
+	const shownImage = images[activeImage < images.length ? activeImage : 0]
 	const steps = [...recipe.steps].sort((a, b) => a.step_number - b.step_number)
 	const translatedFromOtherLang = recipe.resolved_lang !== lang
 
@@ -250,23 +256,6 @@ function RecipeDetail() {
 					)}
 				</div>
 			)}
-			{cover && (
-				<img src={cover} alt={recipe.title} className="mb-4 aspect-[16/9] w-full rounded-2xl object-cover" />
-			)}
-			{gallery.length > 0 && (
-				<div className="mb-6 grid grid-cols-3 gap-2">
-					{gallery.map((m) => (
-						<img
-							key={m.id}
-							src={assetUrl(m.url)}
-							alt={recipe.title}
-							loading="lazy"
-							className="aspect-square w-full rounded-xl object-cover"
-						/>
-					))}
-				</div>
-			)}
-
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0">
 					<h1 className="font-display text-4xl text-[var(--wc-text)]">{recipe.title}</h1>
@@ -286,6 +275,34 @@ function RecipeDetail() {
 					♥ {recipe.likes_count}
 				</button>
 			</div>
+
+			{shownImage && (
+				<div className="mt-6">
+					<img src={shownImage} alt={recipe.title} className="aspect-[16/9] w-full rounded-2xl object-cover" />
+					{images.length > 1 && (
+						<ul className="mt-2 flex flex-wrap gap-2" aria-label={t('recipe.photos')}>
+							{images.map((src, i) => {
+								const active = src === shownImage
+								return (
+									<li key={`${i}-${src}`}>
+										<button
+											type="button"
+											onClick={() => setActiveImage(i)}
+											aria-pressed={active}
+											aria-label={t('recipe.photoN', { n: i + 1, total: images.length })}
+											className={`block overflow-hidden rounded-lg border-2 transition-opacity ${
+												active ? 'border-[var(--wc-saffron)]' : 'border-transparent opacity-70 hover:opacity-100'
+											}`}
+										>
+											<img src={src} alt="" loading="lazy" className="h-16 w-16 object-cover sm:h-20 sm:w-20" />
+										</button>
+									</li>
+								)
+							})}
+						</ul>
+					)}
+				</div>
+			)}
 
 			{recipe.tags.length > 0 && (
 				<ul className="mt-3 flex flex-wrap gap-2">
@@ -387,7 +404,7 @@ function RecipeDetail() {
 					{t('recipe.edit')}
 				</Link>}
 				{canDelete && <button
-					onClick={handleDelete}
+					onClick={() => setConfirmDelete(true)}
 					disabled={deleting}
 					className="rounded-full border border-[var(--wc-border)] px-4 py-1.5 text-sm text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
 				>
@@ -401,7 +418,8 @@ function RecipeDetail() {
 						{t('recipe.purge')}
 					</button>
 				)}
-				{!isOwner && (canManage || (user && author)) && (
+				{/* piattaforma (author null): nessuno da segnalare, nemmeno per lo staff */}
+				{!isOwner && user && author && (
 					<ReportButton targetType="recipe" targetId={recipe.id} ownerId={author?.id ?? null} />
 				)}
 			</div>
@@ -482,6 +500,17 @@ function RecipeDetail() {
 
 			<Comments key={recipe.id} recipeId={recipe.id} recipeAuthorId={author?.id ?? null} />
 
+			{confirmDelete && (
+				<ConfirmDialog
+					title={isStaff && !isOwner ? t('recipe.removeAdmin') : t('common.delete')}
+					confirmLabel={isStaff && !isOwner ? t('recipe.removeAdmin') : t('common.delete')}
+					danger
+					onConfirm={handleDelete}
+					onClose={() => setConfirmDelete(false)}
+				>
+					<p>{isStaff && !isOwner ? t('recipe.confirmDeleteAdmin') : t('recipe.confirmDelete')}</p>
+				</ConfirmDialog>
+			)}
 			{confirmPurge && (
 				<ConfirmDialog
 					title={t('recipe.purgeTitle')}

@@ -1,24 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { api, ApiError } from '../api/client'
 import type { User } from '../types/models'
+import { AuthContext, type SignInResult } from './auth'
 
-interface AuthContextValue {
-	user: User | null
-	// true until the existing session has been checked
-	isLoading: boolean
-	// With 2FA enabled the backend returns a tempToken, completed with the 6-digit code
-	signIn: (email: string, password: string) => Promise<SignInResult>
-	completeTwoFactor: (tempToken: string, code: string) => Promise<void>
-	// Sign in (or sign up on first access) with a Google ID token, verified by the backend
-	signInWithGoogle: (idToken: string) => Promise<SignInResult>
-	signUp: (data: { username: string; email: string; password: string }) => Promise<void>
-	signOut: () => Promise<void>
-	refreshUser: () => Promise<void>
-}
-
-export type SignInResult = { twoFactor: false } | { twoFactor: true; tempToken: string }
-
-const AuthContext = createContext<AuthContextValue | null>(null)
 
 // Browser hint telling whether this device had a session. It holds no sensitive data:
 // tokens stay in httpOnly cookies. Guests skip the startup request, so no 401s in the console.
@@ -71,11 +55,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		writeSessionHint(me !== null)
 	}, [])
 
-	// On startup, known guests skip the request entirely
+	// On startup, known guests skip the request entirely.
+	// State is only set in the async callbacks (the request is shared, so StrictMode's double run is harmless).
 	useEffect(() => {
 		if (readSessionHint() === '0') return
-		refreshUser().finally(() => setIsLoading(false))
-	}, [refreshUser])
+		let cancelled = false
+		fetchMe()
+			.then((me) => {
+				if (cancelled) return
+				setUser(me)
+				writeSessionHint(me !== null)
+			})
+			.finally(() => {
+				if (!cancelled) setIsLoading(false)
+			})
+		return () => {
+			cancelled = true
+		}
+	}, [])
 
 	const signIn = useCallback(
 		async (email: string, password: string): Promise<SignInResult> => {
@@ -133,10 +130,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			{children}
 		</AuthContext.Provider>
 	)
-}
-
-export function useAuth() {
-	const ctx = useContext(AuthContext)
-	if (!ctx) throw new Error('useAuth deve essere usato dentro <AuthProvider>')
-	return ctx
 }

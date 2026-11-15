@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, qs, toPage } from '../api/client'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
 import type { PublicUser, UserSearchResult } from '../types/models'
 

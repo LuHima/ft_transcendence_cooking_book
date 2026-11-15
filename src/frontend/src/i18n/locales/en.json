@@ -161,7 +161,11 @@
 			"guest": "The author shares this recipe only with confirmed friends. Sign in to see it if you are friends.",
 			"notFriend": "The author shares this recipe only with confirmed friends. Send a friend request from their profile to see it."
 		},
-		"suspendForbidden": "You cannot suspend an administrator's recipes."
+		"suspendForbidden": "You cannot suspend an administrator's recipes.",
+		"pdfFileName": "recipe",
+		"backToKitchen": "Back to the kitchen",
+		"photos": "Recipe photos",
+		"photoN": "Photo {{n}} of {{total}}"
 	},
 	"comments": {
 		"title": "Comments",
@@ -287,7 +291,18 @@
 		"userMinChars": "Type at least {{count}} characters to search users too.",
 		"moreUsers": "Show more users",
 		"sourceLang": "Original language",
-		"authorId": "Author ID"
+		"authorId": "Author ID",
+		"keyword": "Keyword",
+		"clearKeyword": "Clear keyword",
+		"author": "Author",
+		"authorPlaceholder": "Search by username…",
+		"noAuthors": "No users found.",
+		"authorError": "User search unavailable.",
+		"clearAuthor": "Remove author filter {{name}}",
+		"you": "you",
+		"tagsLoading": "Loading tags…",
+		"tagsUnavailable": "Tags unavailable.",
+		"retry": "Retry"
 	},
 	"form": {
 		"newTitle": "New recipe",
@@ -301,7 +316,6 @@
 		"visibility": "Who can see this recipe",
 		"tags": "Tags",
 		"noTags": "No tags available.",
-		"catalogError": "Could not load the ingredient and tag catalog. Please reload the page.",
 		"addIngredient": "Add ingredient",
 		"ingredientPlaceholder": "Search ingredient…",
 		"ingredientName": "Ingredient",
@@ -358,7 +372,6 @@
 			"stepDuration": "The step duration must be a whole number of minutes (e.g. 10).",
 			"uploadTimeout": "The upload took too long. Try again with a smaller file or a faster connection."
 		},
-		"catalogEmpty": "The ingredient catalog is empty: ask the backend team to load it (seed).",
 		"editLanguage": "Language of the text to edit",
 		"editLanguageHelp": "The recipe was written in {{lang}}. Changing language edits the translation in that language; unsaved text is replaced.",
 		"localeUnavailable": "The {{lang}} translation is not available yet.",
@@ -390,7 +403,10 @@
 		"warnings": {
 			"stepDurationExceedsTotal": "Step durations total {{stepsSum}} min, which exceeds the recipe total time ({{totalTime}} min). If steps run in parallel, you can ignore this and save anyway.",
 			"dismiss": "Dismiss warning"
-		}
+		},
+		"catalogUnavailable": "Ingredient catalog unavailable, please try again later.",
+		"moreIngredients": "Show more ingredients",
+		"tagsError": "Could not load the tags. Please reload the page."
 	},
 	"notFound": {
 		"text": "This page doesn't exist, or the recipe has been removed.",
@@ -511,7 +527,8 @@
 		"statuses": {
 			"pending": "Pending",
 			"action_taken": "Action taken",
-			"dismissed": "Dismissed"
+			"dismissed": "Dismissed",
+			"all": "All"
 		},
 		"type": "Type",
 		"allTypes": "All types",
@@ -569,7 +586,13 @@
 		"confirmBanName": "Ban {{name}}, the author of this content?",
 		"exclusiveHelp": "Not combinable: warning and ban are mutually exclusive.",
 		"previousWarnings_one": "{{count}} previous warning",
-		"previousWarnings_other": "{{count}} previous warnings"
+		"previousWarnings_other": "{{count}} previous warnings",
+		"clearTargetFilter": "Remove filter",
+		"clientFilteredNote": "Filter applied to the latest {{max}} reports: the backend does not support target_id yet (#208).",
+		"confirmTitle": "Confirm this action?",
+		"filterReport": "Report #{{id}}",
+		"filterTarget": "Reports for {{target}} #{{id}}",
+		"reportNotFound": "Report #{{id}} not found."
 	},
 	"admin": {
 		"subtitle": "Reports, users, roles and platform content.",
@@ -584,8 +607,6 @@
 			"loadError": "Could not load users.",
 			"updated": "User updated.",
 			"updateError": "Update failed.",
-			"confirmDelete": "The account \"{{name}}\" will be deactivated (soft delete): the data is kept.",
-			"deleted": "User deleted.",
 			"deleteError": "Deletion failed.",
 			"filter": "Filter by username or email…",
 			"role": "Role",
@@ -609,8 +630,6 @@
 			"editTitle": "Edit {{name}}",
 			"created": "User created.",
 			"passwordKeep": "Leave empty to keep it",
-			"confirmDeleteTitle": "Deactivate {{name}}?",
-			"deactivateHelp": "Soft deactivation: the account can no longer sign in, data is kept.",
 			"purge": "Purge",
 			"confirmPurgeTitle": "Permanently delete {{name}}?",
 			"confirmPurge": "The account \"{{name}}\" and its data will be erased forever. This cannot be undone.",
@@ -655,7 +674,23 @@
 				"address": "Address",
 				"city": "City",
 				"postal_code": "Postal code"
-			}
+			},
+			"banHistoryCount_one": "{{count}} sanction",
+			"banHistoryCount_other": "{{count}} sanctions",
+			"banHistorySort": {
+				"desc": "Newest first",
+				"asc": "Oldest first"
+			},
+			"banTitle": "Ban {{name}}",
+			"banIntro": "The user cannot sign in until the ban expires. The message is shown at sign-in; internal notes stay visible to staff only.",
+			"disableHelp": "Reversible: blocks sign-in, content is kept. Undo with \"Reactivate\".",
+			"purgeHelp": "Irreversible: permanently deletes the account.",
+			"internalNotesHelp": "Staff only: never shown to the user.",
+			"internalNotesUnsupported": "The backend does not accept internal notes yet (#207): clear the field and try again.",
+			"optional": "optional",
+			"unban": "Lift ban",
+			"unbanTitle": "Lift the ban on {{name}}",
+			"banHistoryForbidden": "The sanction history is currently visible to administrators only: moderator access comes with backend #207."
 		},
 		"recipes": {
 			"confirmDelete": "Suspend the recipe \"{{title}}\"? It can be reactivated later.",
@@ -668,7 +703,8 @@
 				"all": "All",
 				"active": "Active",
 				"inactive": "Suspended"
-			}
+			},
+			"reportedOnlyUnsupported": "The \"reported only\" filter is not supported by the backend yet (#208)."
 		},
 		"comments": {
 			"filter": "Filter by text or author…",
@@ -744,7 +780,17 @@
 			},
 			"allCategoriesShort": "All",
 			"count_one": "{{count}} item",
-			"count_other": "{{count}} items"
+			"count_other": "{{count}} items",
+			"sort": {
+				"id_asc": "ID ascending",
+				"id_desc": "ID descending",
+				"slug_asc": "Slug A–Z",
+				"slug_desc": "Slug Z–A"
+			}
+		},
+		"reportsLink": {
+			"resolve": "Resolve reports",
+			"view": "View reports"
 		}
 	},
 	"friends": {
@@ -842,7 +888,8 @@
 		"warn": "sent you a moderation warning",
 		"moderationTeam": "Moderation team",
 		"moderatorNote": "Moderator note",
-		"warnFallback": "You received a warning from the moderation team."
+		"warnFallback": "You received a warning from the moderation team.",
+		"loadMore": "Load more notifications"
 	},
 	"auth": {
 		"or": "or",
@@ -874,7 +921,8 @@
 			"explanation": "Explanation",
 			"until": "The suspension ends on {{date}}.",
 			"permanent": "This ban is permanent."
-		}
+		},
+		"googleScriptError": "Could not load the Google script"
 	},
 	"personal": {
 		"intro": "These details are optional and only visible to you.",
@@ -891,7 +939,8 @@
 		"day": "Day",
 		"month": "Month",
 		"year": "Year",
-		"birthInvalid": "Enter a valid date (DD/MM/YYYY) or leave it empty."
+		"birthInvalid": "Enter a valid date (DD/MM/YYYY) or leave it empty.",
+		"clearBirthDate": "Remove birth date"
 	},
 	"twofa": {
 		"title": "Two-factor authentication",
@@ -938,5 +987,11 @@
 		"friends_onlyHelp": "Cookbook and friends visible only to confirmed friends.",
 		"private": "Private",
 		"privateHelp": "Cookbook and friends visible only to you."
+	},
+	"scene": {
+		"loading": "Loading… {{percent}}%",
+		"loadError": "Could not load the recipes.",
+		"pageLoadError": "Could not load the requested recipes.",
+		"lightToggle": "Spotlight"
 	}
 }

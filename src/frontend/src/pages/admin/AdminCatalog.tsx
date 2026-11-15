@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, ApiError, getErrorMessage, qs, toPage } from '../../api/client'
-import { useToast } from '../../context/ToastContext'
+import { useToast } from '../../context/toast'
 import { useLang } from '../../lib/useLang'
+import { useDialogDismiss } from '../../lib/useDialogDismiss'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { ListSkeleton } from '../../components/Skeleton'
@@ -422,6 +423,10 @@ function CatalogDialog({ kind, row, onClose, onSaved }: CatalogDialogProps) {
 		}
 	}
 
+	useDialogDismiss(() => {
+		if (!submitting) onClose()
+	})
+
 	const title = isEdit
 		? t('admin.catalog.editTitle', { slug: row.slug })
 		: t(kind === 'ingredients' ? 'admin.catalog.newIngredient' : 'admin.catalog.newTag')
@@ -434,9 +439,6 @@ function CatalogDialog({ kind, row, onClose, onSaved }: CatalogDialogProps) {
 			aria-label={title}
 			onMouseDown={(e) => {
 				if (e.target === e.currentTarget) onClose()
-			}}
-			onKeyDown={(e) => {
-				if (e.key === 'Escape') onClose()
 			}}
 		>
 			<form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6">

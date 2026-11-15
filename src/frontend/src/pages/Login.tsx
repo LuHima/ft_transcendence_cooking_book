@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth'
 import { getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS } from '../lib/ui'
 import PasswordInput from '../components/PasswordInput'
@@ -18,7 +18,9 @@ function Login() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const locationState = location.state as { from?: Location; tempToken?: string; banned?: AccountBannedDetails } | null
-	const from = locationState?.from?.pathname ?? '/'
+	// Full destination: keep the query string (e.g. /search?q=…) and the hash, not just the path
+	const fromLoc = locationState?.from
+	const from = fromLoc ? `${fromLoc.pathname}${fromLoc.search ?? ''}${fromLoc.hash ?? ''}` : '/'
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')

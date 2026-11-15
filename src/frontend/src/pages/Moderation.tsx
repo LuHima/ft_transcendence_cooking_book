@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import AdminReports from './admin/AdminReports'
 import AdminRecipes from './admin/AdminRecipes'
@@ -6,12 +6,21 @@ import AdminComments from './admin/AdminComments'
 
 type Tab = 'reports' | 'recipes' | 'comments'
 const TABS: Tab[] = ['reports', 'recipes', 'comments']
+const isTab = (v: string | null): v is Tab => (TABS as string[]).includes(v ?? '')
 
 // Moderator panel: reports, recipes and comments (the backend allows both admins and moderators).
 // Admin-only actions (permanent deletion, editing and reactivating other users' recipes) are hidden by role inside each component.
 function Moderation() {
 	const { t } = useTranslation()
-	const [tab, setTab] = useState<Tab>('reports')
+	// active tab in the URL (?tab=…): reloads keep it and other panels can deep-link here,
+	// e.g. ?tab=reports&subject=comment&target_id=42 (filters read by AdminReports)
+	const [params, setParams] = useSearchParams()
+	const tab: Tab = isTab(params.get('tab')) ? (params.get('tab') as Tab) : 'reports'
+
+	// switching tab drops the other panel's filters
+	function setTab(next: Tab) {
+		if (next !== tab) setParams({ tab: next })
+	}
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-12">

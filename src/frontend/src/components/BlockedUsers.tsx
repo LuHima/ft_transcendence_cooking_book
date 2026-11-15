@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, getErrorMessage, qs, toPage } from '../api/client'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/toast'
 import { useLang } from '../lib/useLang'
 import Avatar from './Avatar'
 import ConfirmDialog from './ConfirmDialog'

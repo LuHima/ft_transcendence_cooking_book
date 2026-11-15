@@ -161,7 +161,11 @@
 			"guest": "L'autore condivide questa ricetta solo con i suoi amici confermati. Accedi per vederla, se siete amici.",
 			"notFriend": "L'autore condivide questa ricetta solo con i suoi amici confermati. Invia una richiesta di amicizia dal suo profilo per poterla vedere."
 		},
-		"suspendForbidden": "Non puoi sospendere le ricette di un amministratore."
+		"suspendForbidden": "Non puoi sospendere le ricette di un amministratore.",
+		"pdfFileName": "ricetta",
+		"backToKitchen": "Torna alla cucina",
+		"photos": "Foto della ricetta",
+		"photoN": "Foto {{n}} di {{total}}"
 	},
 	"comments": {
 		"title": "Commenti",
@@ -287,7 +291,18 @@
 		"userMinChars": "Scrivi almeno {{count}} caratteri per cercare anche gli utenti.",
 		"moreUsers": "Mostra altri utenti",
 		"sourceLang": "Lingua originale",
-		"authorId": "ID autore"
+		"authorId": "ID autore",
+		"keyword": "Parola chiave",
+		"clearKeyword": "Cancella la parola chiave",
+		"author": "Autore",
+		"authorPlaceholder": "Cerca per username…",
+		"noAuthors": "Nessun utente trovato.",
+		"authorError": "Ricerca utenti non disponibile.",
+		"clearAuthor": "Rimuovi il filtro autore {{name}}",
+		"you": "tu",
+		"tagsLoading": "Caricamento dei tag…",
+		"tagsUnavailable": "Tag non disponibili.",
+		"retry": "Riprova"
 	},
 	"form": {
 		"newTitle": "Nuova ricetta",
@@ -301,7 +316,6 @@
 		"visibility": "Chi può vedere la ricetta",
 		"tags": "Tag",
 		"noTags": "Nessun tag disponibile.",
-		"catalogError": "Impossibile caricare il catalogo di ingredienti e tag. Ricarica la pagina.",
 		"addIngredient": "Aggiungi ingrediente",
 		"ingredientPlaceholder": "Cerca ingrediente…",
 		"ingredientName": "Ingrediente",
@@ -358,7 +372,6 @@
 			"stepDuration": "La durata del passaggio deve essere un numero intero di minuti (es. 10).",
 			"uploadTimeout": "Il caricamento ha richiesto troppo tempo. Riprova con un file più leggero o una connessione più veloce."
 		},
-		"catalogEmpty": "Il catalogo ingredienti è vuoto: chiedi al backend di caricarlo (seed).",
 		"editLanguage": "Lingua del testo da modificare",
 		"editLanguageHelp": "La ricetta è stata scritta in {{lang}}. Cambiando lingua modifichi la traduzione in quella lingua; il testo non ancora salvato viene sostituito.",
 		"localeUnavailable": "La traduzione in {{lang}} non è ancora disponibile.",
@@ -390,7 +403,10 @@
 		"warnings": {
 			"stepDurationExceedsTotal": "La durata totale dei passaggi ({{stepsSum}} min) supera il tempo totale della ricetta ({{totalTime}} min). Se alcuni passaggi avvengono in parallelo, puoi ignorare questo avviso e salvare comunque.",
 			"dismiss": "Chiudi l'avviso"
-		}
+		},
+		"catalogUnavailable": "Catalogo ingredienti non disponibile, riprova più tardi.",
+		"moreIngredients": "Mostra altri ingredienti",
+		"tagsError": "Impossibile caricare i tag. Ricarica la pagina."
 	},
 	"notFound": {
 		"text": "Questa pagina non esiste, o la ricetta è stata rimossa.",
@@ -511,7 +527,8 @@
 		"statuses": {
 			"pending": "In attesa",
 			"action_taken": "Provvedimento preso",
-			"dismissed": "Archiviate"
+			"dismissed": "Archiviate",
+			"all": "Tutte"
 		},
 		"type": "Tipo",
 		"allTypes": "Tutti i tipi",
@@ -569,7 +586,13 @@
 		"confirmBanName": "Bannare {{name}}, autore di questo contenuto?",
 		"exclusiveHelp": "Non combinabile: avviso e ban si escludono a vicenda.",
 		"previousWarnings_one": "{{count}} avviso precedente",
-		"previousWarnings_other": "{{count}} avvisi precedenti"
+		"previousWarnings_other": "{{count}} avvisi precedenti",
+		"clearTargetFilter": "Rimuovi il filtro",
+		"clientFilteredNote": "Filtro applicato sulle ultime {{max}} segnalazioni: il backend non supporta ancora target_id (#208).",
+		"confirmTitle": "Confermi il provvedimento?",
+		"filterReport": "Segnalazione #{{id}}",
+		"filterTarget": "Segnalazioni di {{target}} #{{id}}",
+		"reportNotFound": "Segnalazione #{{id}} non trovata."
 	},
 	"admin": {
 		"subtitle": "Segnalazioni, utenti, ruoli e contenuti della piattaforma.",
@@ -584,8 +607,6 @@
 			"loadError": "Impossibile caricare gli utenti.",
 			"updated": "Utente aggiornato.",
 			"updateError": "Modifica non riuscita.",
-			"confirmDelete": "L'account \"{{name}}\" verrà disattivato (soft delete): i dati vengono conservati.",
-			"deleted": "Utente eliminato.",
 			"deleteError": "Eliminazione non riuscita.",
 			"filter": "Filtra per username o email…",
 			"role": "Ruolo",
@@ -609,8 +630,6 @@
 			"editTitle": "Modifica {{name}}",
 			"created": "Utente creato.",
 			"passwordKeep": "Lascia vuoto per non modificarla",
-			"confirmDeleteTitle": "Disattivare {{name}}?",
-			"deactivateHelp": "Disattivazione: l'account non può più accedere, i dati restano.",
 			"purge": "Elimina definitivamente",
 			"confirmPurgeTitle": "Eliminare definitivamente {{name}}?",
 			"confirmPurge": "L'account \"{{name}}\" e i suoi dati verranno cancellati per sempre. L'azione non è reversibile.",
@@ -655,7 +674,23 @@
 				"address": "Indirizzo",
 				"city": "Città",
 				"postal_code": "CAP"
-			}
+			},
+			"banHistoryCount_one": "{{count}} sanzione",
+			"banHistoryCount_other": "{{count}} sanzioni",
+			"banHistorySort": {
+				"desc": "Più recenti",
+				"asc": "Meno recenti"
+			},
+			"banTitle": "Banna {{name}}",
+			"banIntro": "L’utente non potrà accedere fino alla scadenza del ban. Il messaggio gli verrà mostrato al login, le note interne restano visibili solo allo staff.",
+			"disableHelp": "Reversibile: blocca l’accesso all’account, i contenuti restano. Si annulla con \"Riattiva\".",
+			"purgeHelp": "Irreversibile: cancella definitivamente l’account.",
+			"internalNotesHelp": "Solo per lo staff: non verranno mai mostrate all’utente.",
+			"internalNotesUnsupported": "Il backend non accetta ancora le note interne (#207): svuota il campo e riprova.",
+			"optional": "facoltativo",
+			"unban": "Revoca ban",
+			"unbanTitle": "Revoca il ban di {{name}}",
+			"banHistoryForbidden": "Lo storico delle sanzioni per ora è visibile solo agli amministratori: l’accesso dei moderatori arriva con il backend #207."
 		},
 		"recipes": {
 			"confirmDelete": "Sospendere la ricetta \"{{title}}\"? Potrà essere riattivata in seguito.",
@@ -668,7 +703,8 @@
 				"all": "Tutte",
 				"active": "Attive",
 				"inactive": "Sospese"
-			}
+			},
+			"reportedOnlyUnsupported": "Il filtro \"solo segnalate\" non è ancora supportato dal backend (#208)."
 		},
 		"comments": {
 			"filter": "Filtra per testo o autore…",
@@ -744,7 +780,17 @@
 			},
 			"allCategoriesShort": "Tutte",
 			"count_one": "{{count}} elemento",
-			"count_other": "{{count}} elementi"
+			"count_other": "{{count}} elementi",
+			"sort": {
+				"id_asc": "ID crescente",
+				"id_desc": "ID decrescente",
+				"slug_asc": "Slug A–Z",
+				"slug_desc": "Slug Z–A"
+			}
+		},
+		"reportsLink": {
+			"resolve": "Gestisci segnalazioni",
+			"view": "Vedi segnalazioni"
 		}
 	},
 	"friends": {
@@ -842,7 +888,8 @@
 		"warn": "ti ha inviato un avviso di moderazione",
 		"moderationTeam": "Team di moderazione",
 		"moderatorNote": "Nota del moderatore",
-		"warnFallback": "Hai ricevuto un avviso dal team di moderazione."
+		"warnFallback": "Hai ricevuto un avviso dal team di moderazione.",
+		"loadMore": "Carica altre notifiche"
 	},
 	"auth": {
 		"or": "oppure",
@@ -874,7 +921,8 @@
 			"explanation": "Motivazione",
 			"until": "La sospensione termina il {{date}}.",
 			"permanent": "Questo ban è permanente."
-		}
+		},
+		"googleScriptError": "Impossibile caricare lo script di Google"
 	},
 	"personal": {
 		"intro": "Questi dati sono facoltativi e restano visibili solo a te.",
@@ -891,7 +939,8 @@
 		"day": "Giorno",
 		"month": "Mese",
 		"year": "Anno",
-		"birthInvalid": "Inserisci una data valida (GG/MM/AAAA) oppure lascia vuoto."
+		"birthInvalid": "Inserisci una data valida (GG/MM/AAAA) oppure lascia vuoto.",
+		"clearBirthDate": "Rimuovi la data di nascita"
 	},
 	"twofa": {
 		"title": "Autenticazione a due fattori",
@@ -938,5 +987,11 @@
 		"friends_onlyHelp": "Ricettario e amici visibili solo agli amici confermati.",
 		"private": "Privato",
 		"privateHelp": "Ricettario e amici visibili solo a te."
+	},
+	"scene": {
+		"loading": "Caricamento… {{percent}}%",
+		"loadError": "Impossibile caricare le ricette.",
+		"pageLoadError": "Impossibile caricare le ricette richieste.",
+		"lightToggle": "Luce del faretto"
 	}
 }

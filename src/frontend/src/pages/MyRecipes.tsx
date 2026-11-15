@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, assetUrl, getErrorMessage, qs } from '../api/client'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../context/toast'
 import { useLang } from '../lib/useLang'
 import Pagination from '../components/Pagination'
+import ConfirmDialog from '../components/ConfirmDialog'
 import RecipeSortSelect from '../components/RecipeSortSelect'
 import PrivacyBadge from '../components/PrivacyBadge'
 import { DEFAULT_RECIPE_SORT, parseRecipeSort, type RecipeSortValue } from '../lib/recipeSort'
@@ -45,8 +46,10 @@ function MyRecipes() {
 		}
 	}, [page, lang, sortBy, sortOrder, reload, t])
 
+	const [confirmingId, setConfirmingId] = useState<number | null>(null)
+
 	async function handleDelete(id: number) {
-		if (!confirm(t('recipe.confirmDelete'))) return
+		setConfirmingId(null)
 		setDeletingId(id)
 		try {
 			await api.delete(`/recipes/${id}`)
@@ -132,7 +135,7 @@ function MyRecipes() {
 										{t('common.edit')}
 									</Link>
 									<button
-										onClick={() => handleDelete(recipe.id)}
+										onClick={() => setConfirmingId(recipe.id)}
 										disabled={deletingId === recipe.id}
 										className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-50"
 									>
@@ -146,6 +149,18 @@ function MyRecipes() {
 			)}
 
 			{data && <Pagination page={data.page} totalPages={data.total_pages} onChange={setPage} />}
+
+			{confirmingId !== null && (
+				<ConfirmDialog
+					title={t('common.delete')}
+					confirmLabel={t('common.delete')}
+					danger
+					onConfirm={() => handleDelete(confirmingId)}
+					onClose={() => setConfirmingId(null)}
+				>
+					<p>{t('recipe.confirmDelete')}</p>
+				</ConfirmDialog>
+			)}
 		</div>
 	)
 }

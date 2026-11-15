@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/auth'
+import { useToast } from '../context/toast'
 import { api, getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
 import DateInput from '../components/DateInput'
@@ -25,6 +25,8 @@ function Anagrafica() {
 	})
 	const [saving, setSaving] = useState(false)
 	const [birthValid, setBirthValid] = useState(true)
+	// remounts DateInput after "clear" (it keeps day/month/year in its own state)
+	const [birthKey, setBirthKey] = useState(0)
 
 	if (!user) return null
 
@@ -37,9 +39,10 @@ function Anagrafica() {
 		if (!birthValid) return toast.error(t('personal.birthInvalid'))
 		setSaving(true)
 		try {
-			// An empty birth date is invalid for the backend: omit it
+			// Empty birth date: '' clears a previously saved one (the backend stores null); omitted if there was none
 			const { birth_date, ...rest } = form
-			await api.patch('/users/me', { ...rest, ...(birth_date ? { birth_date } : {}) })
+			const hadBirthDate = Boolean(user?.birth_date)
+			await api.patch('/users/me', { ...rest, ...(birth_date ? { birth_date } : hadBirthDate ? { birth_date: '' } : {}) })
 			await refreshUser()
 			toast.success(t('profile.saved'))
 		} catch (err) {
@@ -67,6 +70,7 @@ function Anagrafica() {
 				</div>
 				<div>
 					<DateInput
+						key={birthKey}
 						id="birth_date"
 						label={t('personal.birthDate')}
 						value={form.birth_date}
@@ -75,6 +79,19 @@ function Anagrafica() {
 							setBirthValid(valid)
 						}}
 					/>
+					{(form.birth_date || user.birth_date) && (
+						<button
+							type="button"
+							onClick={() => {
+								update('birth_date', '')
+								setBirthValid(true)
+								setBirthKey((k) => k + 1)
+							}}
+							className="mt-1 text-xs text-[var(--wc-saffron)] hover:underline"
+						>
+							{t('personal.clearBirthDate')}
+						</button>
+					)}
 				</div>
 				<div>
 					<label htmlFor="phone" className={LABEL_CLASS}>{t('personal.phone')}</label>

@@ -64,6 +64,8 @@ const DURATION_KEYS = ['min_time', 'max_time', 'max_prep_time'] as const
 type DurationKey = (typeof DURATION_KEYS)[number]
 type Durations = Record<DurationKey, string>
 const EMPTY_NAMES: ReadonlyMap<number, string> = new Map()
+// URL params that count as active filters (q and sorting do not)
+const FILTER_PARAMS = ['course', 'difficulty', 'min_time', 'max_time', 'max_prep_time', 'curated', 'src', 'author', 'tags', 'xtags', 'ings', 'xings']
 
 // "All / any" toggle for tags and ingredients
 function MatchModeToggle({ value, onChange, label }: { value: MatchMode; onChange: (v: MatchMode) => void; label: string }) {
@@ -136,7 +138,8 @@ function SearchResults() {
 		error: string | null
 	} | null>(null)
 	const [loadingMoreUsers, setLoadingMoreUsers] = useState(false)
-	const [showFilters, setShowFilters] = useState(false)
+	// filters already in the URL (shared link, Back): open the panel so they are visible
+	const [showFilters, setShowFilters] = useState(() => FILTER_PARAMS.some((k) => params.get(k)))
 
 	function update(patch: Record<string, string | null>, keepPage = false) {
 		const next = new URLSearchParams(params)

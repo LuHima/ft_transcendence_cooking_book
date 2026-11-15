@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useDialogDismiss } from '../lib/useDialogDismiss'
 
 interface ConfirmDialogProps {
 	title: string
@@ -19,6 +20,11 @@ function ConfirmDialog({ title, children, confirmLabel, danger = false, requireT
 	const [typed, setTyped] = useState('')
 	const enabled = !requireText || typed.trim() === requireText
 
+	// Escape anywhere on the page closes the dialog (not while the action is running)
+	useDialogDismiss(() => {
+		if (!busy) onClose()
+	})
+
 	async function confirm() {
 		setBusy(true)
 		try {
@@ -36,9 +42,6 @@ function ConfirmDialog({ title, children, confirmLabel, danger = false, requireT
 			aria-label={title}
 			onMouseDown={(e) => {
 				if (e.target === e.currentTarget && !busy) onClose()
-			}}
-			onKeyDown={(e) => {
-				if (e.key === 'Escape' && !busy) onClose()
 			}}
 		>
 			<div className="w-full max-w-md space-y-4 rounded-2xl border border-[var(--wc-border)] bg-[var(--wc-bg)] p-6">
