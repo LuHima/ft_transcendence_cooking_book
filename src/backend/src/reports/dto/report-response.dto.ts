@@ -5,6 +5,7 @@ import {
   ReportStatus,
   ReportSubject,
 } from '@prisma/client';
+import { StaffActorSummaryDto } from './staff-actor-summary.dto';
 
 /**
  * Hydrated profile information for the reporter who submitted a report.
@@ -251,6 +252,17 @@ export class ReportItemDto {
     example: null,
   })
   resolved_by_id?: number | null;
+
+  /**
+   * Hydrated profile summary of the staff member who resolved the report.
+   */
+  @ApiPropertyOptional({
+    description:
+      'Hydrated profile summary of the staff member who resolved the report',
+    type: StaffActorSummaryDto,
+    nullable: true,
+  })
+  resolved_by?: StaffActorSummaryDto | null;
 
   /**
    * Timestamp when report was resolved.

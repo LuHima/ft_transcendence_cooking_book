@@ -3,6 +3,7 @@ import { ReportAction, ReportReason } from '@prisma/client';
 import { IsEnum, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SortOrder } from '../../common/dto/sort-order.enum';
+import { StaffActorSummaryDto } from './staff-actor-summary.dto';
 
 export class BanHistoryItemDto {
   @ApiProperty({
@@ -15,10 +16,21 @@ export class BanHistoryItemDto {
   user_id: number;
 
   @ApiProperty({
-    description: 'Staff user ID who issued the ban',
+    description:
+      'Staff user ID who issued the ban (null if staff account was hard-deleted)',
     example: 1,
+    nullable: true,
+    type: Number,
   })
-  banned_by_id: number;
+  banned_by_id: number | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Hydrated profile summary of the staff member who issued the sanction',
+    type: StaffActorSummaryDto,
+    nullable: true,
+  })
+  banned_by?: StaffActorSummaryDto | null;
 
   @ApiPropertyOptional({
     description:
@@ -97,6 +109,14 @@ export class BanHistoryItemDto {
     nullable: true,
   })
   unbanned_by_id: number | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Hydrated profile summary of the staff member who lifted the ban',
+    type: StaffActorSummaryDto,
+    nullable: true,
+  })
+  unbanned_by?: StaffActorSummaryDto | null;
 
   @ApiPropertyOptional({
     description: 'Reason for unbanning',

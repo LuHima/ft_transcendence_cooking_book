@@ -149,73 +149,139 @@ export class ReportsService {
       this.prisma.report.count({ where }),
     ]);
 
-    // Hydrate previous_bans_count, reporter, and polymorphic target via batched queries
-    const reporterIds = Array.from(new Set(items.map((r) => r.reporter_id)));
+    // Hydrate previous_bans_count, reporter, resolved_by, and polymorphic target via batched queries
+    const hydratedItems = await this.hydrateReportItems(
+      items,
+      query?.lang ?? '',
+    );
+
+    const total_pages = Math.ceil(total / limit) || 1;
+
+    return {
+      items: hydratedItems,
+      total,
+      page,
+      limit,
+      total_pages,
+      has_next_page: page < total_pages,
+      has_prev_page: page > 1,
+    };
+  }
+
+  /**
+   * Batch-hydrate reporter, resolved_by, polymorphic target, and optional sanction counts
+   * for one or more report records.
+   */
+  private async hydrateReportItems(
+    items: any[],
+    lang = '',
+    options: { skipSanctionCounts?: boolean } = {},
+  ): Promise<ReportItemDto[]> {
+    if (items.length === 0) {
+      return [];
+    }
+
+    const reporterIds = Array.from(
+      new Set(
+        items
+          .map((r) => r.reporter_id)
+          .filter((id): id is number => typeof id === 'number'),
+      ),
+    );
+    const resolvedByIds = Array.from(
+      new Set(
+        items
+          .map((r) => r.resolved_by_id)
+          .filter((id): id is number => typeof id === 'number'),
+      ),
+    );
     const targetUserIds = Array.from(
       new Set(
         items
-          .filter((r) => r.subject === ReportSubject.user)
+          .filter(
+            (r) =>
+              r.subject === ReportSubject.user && typeof r.target_id === 'number',
+          )
           .map((r) => r.target_id),
       ),
     );
     const targetRecipeIds = Array.from(
       new Set(
         items
-          .filter((r) => r.subject === ReportSubject.recipe)
+          .filter(
+            (r) =>
+              r.subject === ReportSubject.recipe &&
+              typeof r.target_id === 'number',
+          )
           .map((r) => r.target_id),
       ),
     );
     const targetCommentIds = Array.from(
       new Set(
         items
-          .filter((r) => r.subject === ReportSubject.comment)
+          .filter(
+            (r) =>
+              r.subject === ReportSubject.comment &&
+              typeof r.target_id === 'number',
+          )
           .map((r) => r.target_id),
       ),
     );
 
-    const [reporters, targetUsers, targetRecipes, targetComments] =
-      await Promise.all([
-        reporterIds.length > 0 && this.prisma.user?.findMany
-          ? this.prisma.user.findMany({
-              where: { id: { in: reporterIds } },
-              select: { id: true, username: true, avatar_url: true },
-            })
-          : Promise.resolve([]),
-        targetUserIds.length > 0 && this.prisma.user?.findMany
-          ? this.prisma.user.findMany({
-              where: { id: { in: targetUserIds } },
-              select: { id: true, username: true, avatar_url: true },
-            })
-          : Promise.resolve([]),
-        targetRecipeIds.length > 0 && this.prisma.recipe?.findMany
-          ? this.prisma.recipe.findMany({
-              where: { id: { in: targetRecipeIds } },
-              select: {
-                id: true,
-                user_id: true,
-                source_lang: true,
-                translations: { select: { locale: true, title: true } },
-                user: {
-                  select: { id: true, username: true, avatar_url: true },
-                },
+    const [
+      reporters,
+      resolvedByUsers,
+      targetUsers,
+      targetRecipes,
+      targetComments,
+    ] = await Promise.all([
+      reporterIds.length > 0 && this.prisma.user?.findMany
+        ? this.prisma.user.findMany({
+            where: { id: { in: reporterIds } },
+            select: { id: true, username: true, avatar_url: true },
+          })
+        : Promise.resolve([]),
+      resolvedByIds.length > 0 && this.prisma.user?.findMany
+        ? this.prisma.user.findMany({
+            where: { id: { in: resolvedByIds } },
+            select: { id: true, username: true, avatar_url: true },
+          })
+        : Promise.resolve([]),
+      targetUserIds.length > 0 && this.prisma.user?.findMany
+        ? this.prisma.user.findMany({
+            where: { id: { in: targetUserIds } },
+            select: { id: true, username: true, avatar_url: true },
+          })
+        : Promise.resolve([]),
+      targetRecipeIds.length > 0 && this.prisma.recipe?.findMany
+        ? this.prisma.recipe.findMany({
+            where: { id: { in: targetRecipeIds } },
+            select: {
+              id: true,
+              user_id: true,
+              source_lang: true,
+              translations: { select: { locale: true, title: true } },
+              user: {
+                select: { id: true, username: true, avatar_url: true },
               },
-            })
-          : Promise.resolve([]),
-        targetCommentIds.length > 0 && this.prisma.comment?.findMany
-          ? this.prisma.comment.findMany({
-              where: { id: { in: targetCommentIds } },
-              select: {
-                id: true,
-                content: true,
-                recipe_id: true,
-                user_id: true,
-                user: {
-                  select: { id: true, username: true, avatar_url: true },
-                },
+            },
+          })
+        : Promise.resolve([]),
+      targetCommentIds.length > 0 && this.prisma.comment?.findMany
+        ? this.prisma.comment.findMany({
+            where: { id: { in: targetCommentIds } },
+            select: {
+              id: true,
+              content: true,
+              recipe_id: true,
+              user_id: true,
+              user: {
+                select: { id: true, username: true, avatar_url: true },
               },
-            })
-          : Promise.resolve([]),
-      ]);
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
     const reporterMap = new Map<
       number,
@@ -223,6 +289,14 @@ export class ReportsService {
     >();
     for (const u of reporters || []) {
       reporterMap.set(u.id, u);
+    }
+
+    const resolvedByMap = new Map<
+      number,
+      { id: number; username: string; avatar_url: string | null }
+    >();
+    for (const u of resolvedByUsers || []) {
+      resolvedByMap.set(u.id, u);
     }
 
     const targetUserMap = new Map<
@@ -243,70 +317,73 @@ export class ReportsService {
       targetCommentMap.set(c.id, c);
     }
 
-    const allTargetUserIds = Array.from(
-      new Set(
-        items
-          .map((report) => {
-            if (report.subject === ReportSubject.user) {
-              return report.target_id;
-            }
-            if (report.subject === ReportSubject.recipe) {
-              const r = targetRecipeMap.get(report.target_id);
-              return r?.user_id ?? r?.user?.id ?? null;
-            }
-            if (report.subject === ReportSubject.comment) {
-              const c = targetCommentMap.get(report.target_id);
-              return c?.user_id ?? c?.user?.id ?? null;
-            }
-            return null;
-          })
-          .filter((id): id is number => id !== null),
-      ),
-    );
-
     const sanctionCountsMap = new Map<
       number,
       { bans: number; warnings: number }
     >();
     let ranBanBatch = false;
-    if (allTargetUserIds.length > 0 && this.prisma.banHistory?.groupBy) {
-      try {
-        const sanctionGroups = await this.prisma.banHistory.groupBy({
-          by: ['user_id', 'action'],
-          _count: { id: true },
-          where: { user_id: { in: allTargetUserIds } },
-        });
-        if (Array.isArray(sanctionGroups)) {
-          ranBanBatch = true;
-          for (const uid of allTargetUserIds) {
-            sanctionCountsMap.set(uid, { bans: 0, warnings: 0 });
-          }
-          for (const bg of sanctionGroups as any[]) {
-            const cnt =
-              typeof bg._count === 'number'
-                ? bg._count
-                : (bg._count?.id ?? 0);
-            const entry = sanctionCountsMap.get(bg.user_id) ?? {
-              bans: 0,
-              warnings: 0,
-            };
-            if (bg.action === ReportAction.warn) {
-              entry.warnings = cnt;
-            } else {
-              entry.bans = cnt;
+
+    if (!options.skipSanctionCounts) {
+      const allTargetUserIds = Array.from(
+        new Set(
+          items
+            .map((report) => {
+              if (report.subject === ReportSubject.user) {
+                return report.target_id;
+              }
+              if (report.subject === ReportSubject.recipe) {
+                const r = targetRecipeMap.get(report.target_id);
+                return r?.user_id ?? r?.user?.id ?? null;
+              }
+              if (report.subject === ReportSubject.comment) {
+                const c = targetCommentMap.get(report.target_id);
+                return c?.user_id ?? c?.user?.id ?? null;
+              }
+              return null;
+            })
+            .filter((id): id is number => id !== null),
+        ),
+      );
+
+      if (allTargetUserIds.length > 0 && this.prisma.banHistory?.groupBy) {
+        try {
+          const sanctionGroups = await this.prisma.banHistory.groupBy({
+            by: ['user_id', 'action'],
+            _count: { id: true },
+            where: { user_id: { in: allTargetUserIds } },
+          });
+          if (Array.isArray(sanctionGroups)) {
+            ranBanBatch = true;
+            for (const uid of allTargetUserIds) {
+              sanctionCountsMap.set(uid, { bans: 0, warnings: 0 });
             }
-            sanctionCountsMap.set(bg.user_id, entry);
+            for (const bg of sanctionGroups as any[]) {
+              const cnt =
+                typeof bg._count === 'number'
+                  ? bg._count
+                  : (bg._count?.id ?? 0);
+              const entry = sanctionCountsMap.get(bg.user_id) ?? {
+                bans: 0,
+                warnings: 0,
+              };
+              if (bg.action === ReportAction.warn) {
+                entry.warnings = cnt;
+              } else {
+                entry.bans = cnt;
+              }
+              sanctionCountsMap.set(bg.user_id, entry);
+            }
           }
+        } catch {
+          // Fallback for mocked environments
         }
-      } catch {
-        // Fallback for mocked environments
       }
     }
 
-    const hydratedItems: ReportItemDto[] = await Promise.all(
+    return await Promise.all(
       items.map(async (report) => {
-        let reporter = (report as any).reporter;
-        if (!reporter) {
+        let reporter = report.reporter;
+        if (!reporter && typeof report.reporter_id === 'number') {
           const u = reporterMap.get(report.reporter_id);
           reporter = u ?? {
             id: report.reporter_id,
@@ -314,6 +391,13 @@ export class ReportsService {
             avatar_url: null,
           };
         }
+
+        const resolved_by =
+          report.resolved_by !== undefined
+            ? report.resolved_by
+            : typeof report.resolved_by_id === 'number'
+              ? (resolvedByMap.get(report.resolved_by_id) ?? null)
+              : null;
 
         let targetUserId: number | null = null;
         let target: {
@@ -345,7 +429,7 @@ export class ReportsService {
           const resolvedTrans = r?.translations
             ? this.recipeProjection.resolveTranslation(
                 r.translations,
-                query?.lang ?? '',
+                lang,
                 r.source_lang,
               )
             : undefined;
@@ -378,9 +462,9 @@ export class ReportsService {
           };
         }
 
-        let banCount = 0;
-        let warningCount = 0;
-        if (targetUserId !== null) {
+        let banCount = report.previous_bans_count ?? 0;
+        let warningCount = report.previous_warnings_count ?? 0;
+        if (!options.skipSanctionCounts && targetUserId !== null) {
           if (ranBanBatch) {
             const counts = sanctionCountsMap.get(targetUserId);
             banCount = counts?.bans ?? 0;
@@ -402,25 +486,14 @@ export class ReportsService {
         return {
           ...report,
           actions: report.actions ?? [],
-          reporter,
+          reporter: reporter ?? null,
+          resolved_by,
           target,
           previous_bans_count: banCount,
           previous_warnings_count: warningCount,
         };
       }),
     );
-
-    const total_pages = Math.ceil(total / limit) || 1;
-
-    return {
-      items: hydratedItems,
-      total,
-      page,
-      limit,
-      total_pages,
-      has_next_page: page < total_pages,
-      has_prev_page: page > 1,
-    };
   }
 
   /**
@@ -740,6 +813,9 @@ export class ReportsService {
         );
       }
     }
-    return result;
+    const [hydratedResult] = await this.hydrateReportItems([result], '', {
+      skipSanctionCounts: true,
+    });
+    return hydratedResult;
   }
 }

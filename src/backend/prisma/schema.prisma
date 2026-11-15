@@ -203,6 +203,7 @@ model User {
   blocks_sent          UserBlock[]  @relation("BlocksSent")
   blocks_received      UserBlock[]  @relation("BlocksReceived")
   reports_submitted    Report[]     @relation("ReportsSubmitted")
+  reports_resolved     Report[]     @relation("ReportsResolved")
 
   ban_history          BanHistory[] @relation("UserBanHistory")
   bans_issued          BanHistory[] @relation("StaffIssuedBans")
@@ -523,10 +524,12 @@ model Report {
   updated_at             DateTime       @updatedAt
 
   reporter               User           @relation("ReportsSubmitted", fields: [reporter_id], references: [id], onDelete: Cascade)
+  resolved_by            User?          @relation("ReportsResolved", fields: [resolved_by_id], references: [id], onDelete: SetNull)
   ban_history            BanHistory[]
 
   @@index([status, created_at])
   @@index([subject, target_id])
+  @@index([resolved_by_id])
   @@map("reports")
 }
 
@@ -538,8 +541,8 @@ model BanHistory {
   id             String       @id @default(uuid())
   user_id        Int
   user           User         @relation("UserBanHistory", fields: [user_id], references: [id], onDelete: Cascade)
-  banned_by_id   Int
-  banned_by      User         @relation("StaffIssuedBans", fields: [banned_by_id], references: [id])
+  banned_by_id   Int?
+  banned_by      User?        @relation("StaffIssuedBans", fields: [banned_by_id], references: [id], onDelete: SetNull)
   report_id      Int?
   report         Report?      @relation(fields: [report_id], references: [id], onDelete: SetNull)
   action         ReportAction @default(ban)
@@ -551,11 +554,12 @@ model BanHistory {
   expires_at     DateTime?
   unbanned_at    DateTime?
   unbanned_by_id Int?
-  unbanned_by    User?        @relation("StaffUnbans", fields: [unbanned_by_id], references: [id])
+  unbanned_by    User?        @relation("StaffUnbans", fields: [unbanned_by_id], references: [id], onDelete: SetNull)
   unban_reason   String?      @db.VarChar(1000)
 
   @@index([user_id, banned_at])
   @@index([banned_at])
+  @@index([banned_by_id])
   @@map("ban_history")
 }
 

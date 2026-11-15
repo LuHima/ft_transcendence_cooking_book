@@ -1422,5 +1422,103 @@ describe('ReportsService', () => {
 
       expect(mockNotificationEmit.notification).toHaveBeenCalledTimes(1);
     });
+
+    it('hydrates resolved_by in updateReport response and returns null when resolved_by_id is null', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 20,
+        reporter_id: 5,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.pending,
+        actions: [],
+      });
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 42,
+        role: Role.user,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 20,
+        reporter_id: 5,
+        subject: ReportSubject.user,
+        target_id: 42,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.dismissed,
+        actions: [ReportAction.dismiss],
+        resolved_by_id: 3,
+      });
+      mockPrisma.user.findMany
+        .mockResolvedValueOnce([
+          { id: 5, username: 'reporter5', avatar_url: null },
+        ])
+        .mockResolvedValueOnce([
+          { id: 3, username: 'mod_disabled', avatar_url: '/avatars/3.webp' },
+        ])
+        .mockResolvedValueOnce([
+          { id: 42, username: 'target42', avatar_url: null },
+        ]);
+
+      const result = await service.updateReport(
+        20,
+        { actions: [ReportAction.dismiss] },
+        { id: 3, role: Role.moderator },
+      );
+
+      expect(result.resolved_by).toEqual({
+        id: 3,
+        username: 'mod_disabled',
+        avatar_url: '/avatars/3.webp',
+      });
+      expect(result.reporter).toEqual({
+        id: 5,
+        username: 'reporter5',
+        avatar_url: null,
+      });
+      expect(result.target?.label).toBe('target42');
+    });
+
+    it('hydrates resolved_by in getReports (preserving disabled staff and null for unresolved/hard-deleted)', async () => {
+      mockPrisma.report.findMany.mockResolvedValueOnce([
+        {
+          id: 30,
+          reporter_id: 5,
+          subject: ReportSubject.user,
+          target_id: 42,
+          reason: ReportReason.spam_scam,
+          status: ReportStatus.dismissed,
+          resolved_by_id: 7,
+        },
+        {
+          id: 31,
+          reporter_id: 5,
+          subject: ReportSubject.user,
+          target_id: 42,
+          reason: ReportReason.spam_scam,
+          status: ReportStatus.pending,
+          resolved_by_id: null,
+        },
+      ]);
+      mockPrisma.report.count.mockResolvedValueOnce(2);
+      mockPrisma.user.findMany
+        .mockResolvedValueOnce([
+          { id: 5, username: 'reporter5', avatar_url: null },
+        ])
+        .mockResolvedValueOnce([
+          { id: 7, username: 'former_mod', avatar_url: '/avatars/7.webp' },
+        ])
+        .mockResolvedValueOnce([
+          { id: 42, username: 'target42', avatar_url: null },
+        ]);
+      mockPrisma.banHistory.groupBy.mockResolvedValueOnce([]);
+
+      const result = await service.getReports({ page: 1, limit: 10 });
+
+      expect(result.items[0].resolved_by).toEqual({
+        id: 7,
+        username: 'former_mod',
+        avatar_url: '/avatars/7.webp',
+      });
+      expect(result.items[1].resolved_by).toBeNull();
+    });
   });
 });

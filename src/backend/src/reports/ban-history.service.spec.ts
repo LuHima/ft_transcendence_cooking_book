@@ -238,12 +238,16 @@ describe('BanHistoryService', () => {
           user_id: 10,
           action: ReportAction.ban,
           banned_at: new Date('2026-11-04'),
+          banned_by: { id: 1, username: 'admin_1', avatar_url: null },
+          unbanned_by: null,
         },
         {
           id: 'warn-1',
           user_id: 10,
           action: ReportAction.warn,
           banned_at: new Date('2026-10-01'),
+          banned_by: null,
+          unbanned_by: null,
         },
       ];
       mockPrisma.banHistory.findMany.mockResolvedValueOnce(historyList);
@@ -256,6 +260,14 @@ describe('BanHistoryService', () => {
         orderBy: { banned_at: 'desc' },
         skip: 0,
         take: 20,
+        include: {
+          banned_by: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+          unbanned_by: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+        },
       });
       expect(mockPrisma.banHistory.count).toHaveBeenCalledWith({
         where: { user_id: 10 },
@@ -286,6 +298,14 @@ describe('BanHistoryService', () => {
         orderBy: { banned_at: 'asc' },
         skip: 10,
         take: 10,
+        include: {
+          banned_by: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+          unbanned_by: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+        },
       });
       expect(result).toEqual({
         items: [],
@@ -315,6 +335,53 @@ describe('BanHistoryService', () => {
         total_pages: 0,
         has_next_page: false,
         has_prev_page: false,
+      });
+    });
+
+    it('hydrates banned_by and unbanned_by summaries and defaults missing actors to null', async () => {
+      mockPrisma.banHistory.findMany.mockResolvedValueOnce([
+        {
+          id: 'ban-3',
+          user_id: 10,
+          banned_by_id: 5,
+          unbanned_by_id: null,
+          action: ReportAction.ban,
+          banned_by: {
+            id: 5,
+            username: 'retired_mod',
+            avatar_url: '/avatars/5.webp',
+          },
+          unbanned_by: null,
+        },
+        {
+          id: 'ban-4',
+          user_id: 10,
+          banned_by_id: null,
+          unbanned_by_id: 9,
+          action: ReportAction.ban,
+          banned_by: null,
+          unbanned_by: {
+            id: 9,
+            username: 'admin_9',
+            avatar_url: null,
+          },
+        },
+      ]);
+      mockPrisma.banHistory.count.mockResolvedValueOnce(2);
+
+      const result = await service.getUserSanctionsHistory(10);
+
+      expect(result.items[0].banned_by).toEqual({
+        id: 5,
+        username: 'retired_mod',
+        avatar_url: '/avatars/5.webp',
+      });
+      expect(result.items[0].unbanned_by).toBeNull();
+      expect(result.items[1].banned_by).toBeNull();
+      expect(result.items[1].unbanned_by).toEqual({
+        id: 9,
+        username: 'admin_9',
+        avatar_url: null,
       });
     });
   });

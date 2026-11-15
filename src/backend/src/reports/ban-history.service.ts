@@ -153,11 +153,25 @@ export class BanHistoryService {
         orderBy: { banned_at: sortOrder },
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          banned_by: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+          unbanned_by: {
+            select: { id: true, username: true, avatar_url: true },
+          },
+        },
       }),
       client.banHistory.count({ where }),
     ]);
 
-    return buildPaginatedResponse(items, total, page, limit);
+    const hydratedItems: BanHistoryItemDto[] = items.map((item) => ({
+      ...item,
+      banned_by: item.banned_by ?? null,
+      unbanned_by: item.unbanned_by ?? null,
+    }));
+
+    return buildPaginatedResponse(hydratedItems, total, page, limit);
   }
 
   /**
