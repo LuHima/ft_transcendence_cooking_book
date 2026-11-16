@@ -5,7 +5,6 @@ import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 
-import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Profile from './pages/Profile'
@@ -61,7 +60,7 @@ function App() {
 		<AuthProvider>
 			<Routes location={backgroundLocation ?? location}>
 				<Route element={<Layout />}>
-					<Route index element={<Home />} />
+					<Route index element={null} />
 					<Route path="login" element={<Login />} />
 					<Route path="register" element={<Register />} />
 					<Route path="search" element={<SearchResults />} />

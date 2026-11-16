@@ -19,7 +19,7 @@ const TABS: FeedTab[] = ['friends', 'community']
 //   Community → GET /recipes   (recent public recipes)
 //   Friends   → GET /feed      (recipes from confirmed friends, sign-in required)
 // Default tab: "Friends" when signed in with at least one friend, otherwise "Community".
-function Home() {
+function Home({ active = true }: { active?: boolean }) {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const { user, isLoading: authLoading } = useAuth()
@@ -96,7 +96,7 @@ function Home() {
 	return (
 		<div>
 			<section className="relative h-[70vh] w-full overflow-hidden">
-				<KitchenScene />
+				<KitchenScene active={active} />
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--wc-bg)] to-transparent p-8">
 					<h1 className="font-display text-4xl text-[var(--wc-text)] md:text-5xl">{t('home.heroTitle')}</h1>
 					<p className="mt-2 max-w-md text-[var(--wc-text-muted)]">{t('home.heroText')}</p>

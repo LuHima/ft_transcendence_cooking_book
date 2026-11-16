@@ -71,7 +71,7 @@ function SceneContent({
   );
 }
 
-export default function Scene() {
+export default function Scene({ active }: { active: boolean }) {
   const { t } = useTranslation();
   const lang = useLang();
   const initialApiPage = 1;
@@ -207,6 +207,7 @@ export default function Scene() {
         </span>
       </button>
       <Canvas
+        frameloop={active ? "always" : "never"}
         onPointerMissed={handleOutsideClick}
         fallback={
           <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
