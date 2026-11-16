@@ -12,7 +12,7 @@ export class NotificationEmit {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  private async notificationString(
+  /* private async notificationString(
     id_sender: number,
     notifyData: NotifyData,
   ): Promise<string> {
@@ -55,7 +55,7 @@ export class NotificationEmit {
       default:
         return `New notification from ${senderName}`;
     }
-  }
+  } */
 
   private async findFriends(id: number): Promise<number[]> {
     const friends = await this.prisma.friendship.findMany({
@@ -136,10 +136,10 @@ export class NotificationEmit {
       recipe_id: recipeId,
     };
 
-    const msg = await this.notificationString(structNotify.id_user, notifyData);
+    //    const msg = await this.notificationString(structNotify.id_user, notifyData);
     this.eventEmitter.emit('newNotification', {
       idUser: userId,
-      message: msg,
+      //      message: msg,
       target: targetInfo,
     });
   }
@@ -172,11 +172,11 @@ export class NotificationEmit {
       recipe_id: recipeId,
     };
 
-    const msg = await this.notificationString(structNotify.id_user, notifyData);
+    //    const msg = await this.notificationString(structNotify.id_user, notifyData);
     for (const userId of friends) {
       this.eventEmitter.emit('newNotification', {
         idUser: userId,
-        message: msg,
+        //        message: msg,
         target: targetInfo,
       });
     }

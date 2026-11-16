@@ -153,13 +153,13 @@ export class NotificationGateway
   @OnEvent('newNotification')
   handleNotificationEvent(userNotification: {
     idUser: number;
-    message: string;
+    message?: string;
     target: { subject: string; idTarget: number; recipe_id?: number | null };
   }) {
     this.server
       ?.to('room-' + userNotification.idUser)
       ?.emit('newNotification', {
-        message: userNotification.message,
+        //        message: userNotification.message,
         target: userNotification.target,
       });
   }
