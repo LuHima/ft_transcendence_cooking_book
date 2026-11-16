@@ -1,6 +1,7 @@
 import {
   Controller,
   Delete,
+  Patch,
   Post,
   Body,
   Res,
@@ -31,11 +32,14 @@ import { SignUpUserDto } from 'src/users/dto/signup-user.dto';
 import { Throttle, days, minutes } from '@nestjs/throttler';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
 import { Auth } from 'src/common/decorators/policies.decorator';
-import { PickType } from '@nestjs/swagger';
+import { PartialType, PickType, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { createHttpException, errors } from 'src/common/config/error.config';
 import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import {
   AuthMessageResponseDto,
   TwoFactorChallengeResponseDto,
@@ -51,9 +55,18 @@ import {
 } from 'src/common/dto/api-error-response.dto';
 import { GoogleAuthDto } from './dto/auth-google.dto';
 
-export class ConfirmPasswordDto extends PickType(SignInUserDto, [
-  'password',
-] as const) {}
+export class ConfirmPasswordDto extends PartialType(
+  PickType(SignInUserDto, ['password'] as const),
+) {
+  @ApiPropertyOptional({
+    description:
+      'Google OAuth2 OpenID Connect ID token (required when the account has no local password)',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: 'Google ID token cannot be empty' })
+  idToken?: string;
+}
 export class TwoFactorCode extends PickType(TwoFactorAuth, ['code'] as const) {}
 
 /* 
@@ -333,6 +346,7 @@ export class AuthController {
     return await this.authService.twoFactorAuthEnable(
       id,
       userPassword.password,
+      ...(userPassword.idToken !== undefined ? [userPassword.idToken] : []),
     );
   }
 
@@ -422,12 +436,43 @@ export class AuthController {
   @Auth()
   @Post('twofactor/disable')
   async twoFactorDisable(
-    @CurrentUser('id') id: number,
+    @CurrentUser() user: ActiveUserData,
     @Body() userPassword: ConfirmPasswordDto,
   ) {
     return await this.authService.twoFactorAuthDisable(
-      id,
+      user.id,
       userPassword.password,
+      userPassword.idToken,
+      user.session,
     );
+  }
+
+  /**
+   * Set a password (for OAuth-only accounts) or change the current account password.
+   */
+  @ApiOperation({
+    summary: 'Set or change account password',
+    description:
+      'Updates the authenticated user password. Requires dual re-authentication via `currentPassword` (when a local password is set) or a matching Google `idToken` (for OAuth-only or hybrid accounts). Revokes all other active sessions.',
+  })
+  @ApiOkResponse({
+    description: 'Password set or updated successfully',
+    type: AuthMessageResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'New password does not meet strength requirements',
+    type: ApiBadRequestResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Current password is missing or invalid',
+    type: ApiUnauthorizedResponseDto,
+  })
+  @Auth()
+  @Patch('password')
+  async changePassword(
+    @CurrentUser() user: ActiveUserData,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return await this.authService.changePassword(user.id, user.session, dto);
   }
 }

@@ -595,10 +595,18 @@ export class UsersService {
         city: true,
         postal_code: true,
         created_at: true,
+        is_two_factor_enabled: true,
+        password_hash: true,
+        id_google: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    const { password_hash, id_google, ...profile } = user;
+    return {
+      ...profile,
+      has_password: Boolean(password_hash),
+      is_google_linked: Boolean(id_google),
+    };
   }
 
   async updateMe(id: number, updateUserDto: UpdateUserDto) {

@@ -694,6 +694,144 @@ describe('AuthService', () => {
         service.twoFactorAuthEnable(1, 'WrongPassword'),
       ).rejects.toThrow(HttpException);
     });
+
+    it('throws HttpException if user has a password_hash but no password is provided', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: false,
+        password_hash: 'hashed_password',
+        email: 'mario@example.com',
+      });
+
+      await expect(service.twoFactorAuthEnable(1)).rejects.toThrow(
+        HttpException,
+      );
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    it('generates secret when user has no password_hash and provides valid matching Google idToken', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: false,
+        password_hash: null,
+        id_google: 'google-sub-123',
+        email: 'googleuser@example.com',
+      });
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          sub: 'google-sub-123',
+          email: 'googleuser@example.com',
+          email_verified: true,
+        }),
+      });
+      (otplib.generateSecret as jest.Mock).mockReturnValue('GENERATED_SECRET');
+      (otplib.generateURI as jest.Mock).mockReturnValue('otpauth://totp/...');
+      encryptionService.encrypting.mockReturnValue('ENCRYPTED_SECRET');
+      (qrcode.toDataURL as jest.Mock).mockResolvedValue(
+        'data:image/png;base64,mockqr',
+      );
+      prisma.user.update.mockResolvedValue({});
+
+      const result = await service.twoFactorAuthEnable(
+        1,
+        undefined,
+        'valid-google-id-token',
+      );
+
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+      expect(mockGoogleClient.verifyIdToken).toHaveBeenCalledWith({
+        idToken: 'valid-google-id-token',
+        audience: 'test-google-client-id',
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { two_factor: 'ENCRYPTED_SECRET' },
+      });
+      expect(result).toEqual({
+        qrCode: 'data:image/png;base64,mockqr',
+        key: 'GENERATED_SECRET',
+      });
+    });
+
+    it('throws HttpException when user has no password_hash and no Google idToken is provided', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: false,
+        password_hash: null,
+        id_google: 'google-sub-123',
+        email: 'googleuser@example.com',
+      });
+
+      await expect(service.twoFactorAuthEnable(1)).rejects.toThrow(
+        HttpException,
+      );
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    it('throws HttpException when Google idToken belongs to a different Google account', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: false,
+        password_hash: null,
+        id_google: 'google-sub-123',
+        email: 'googleuser@example.com',
+      });
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          sub: 'other-google-sub',
+          email: 'other@example.com',
+          email_verified: true,
+        }),
+      });
+
+      await expect(
+        service.twoFactorAuthEnable(1, undefined, 'other-google-token'),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('allows a user with both password_hash and id_google to confirm with Google idToken', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: false,
+        password_hash: 'hashed_password',
+        id_google: 'google-sub-123',
+        email: 'mario@example.com',
+      });
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          sub: 'google-sub-123',
+          email: 'mario@example.com',
+          email_verified: true,
+        }),
+      });
+      (otplib.generateSecret as jest.Mock).mockReturnValue('GENERATED_SECRET');
+      (otplib.generateURI as jest.Mock).mockReturnValue('otpauth://totp/...');
+      encryptionService.encrypting.mockReturnValue('ENCRYPTED_SECRET');
+      (qrcode.toDataURL as jest.Mock).mockResolvedValue(
+        'data:image/png;base64,mockqr',
+      );
+      prisma.user.update.mockResolvedValue({});
+
+      const result = await service.twoFactorAuthEnable(
+        1,
+        undefined,
+        'valid-google-id-token',
+      );
+
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        qrCode: 'data:image/png;base64,mockqr',
+        key: 'GENERATED_SECRET',
+      });
+    });
+
+    it('throws HttpException when Google idToken is provided for a user with no linked Google account', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: false,
+        password_hash: 'hashed_password',
+        id_google: null,
+        email: 'mario@example.com',
+      });
+
+      await expect(
+        service.twoFactorAuthEnable(1, undefined, 'valid-google-id-token'),
+      ).rejects.toThrow(HttpException);
+    });
   });
 
   describe('verify', () => {
@@ -805,6 +943,65 @@ describe('AuthService', () => {
       await expect(
         service.twoFactorAuthDisable(1, 'Password123!'),
       ).rejects.toThrow(HttpException);
+    });
+
+    it('throws HttpException if user has a password_hash but no password is provided', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: true,
+        password_hash: 'hashed_password',
+      });
+
+      await expect(service.twoFactorAuthDisable(1)).rejects.toThrow(
+        HttpException,
+      );
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    it('disables 2FA when user has no password_hash and provides valid matching Google idToken', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: true,
+        password_hash: null,
+        id_google: 'google-sub-123',
+      });
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          sub: 'google-sub-123',
+          email: 'googleuser@example.com',
+          email_verified: true,
+        }),
+      });
+      prisma.user.update.mockResolvedValue({});
+
+      const result = await service.twoFactorAuthDisable(
+        1,
+        undefined,
+        'valid-google-id-token',
+        77,
+      );
+
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { is_two_factor_enabled: false, two_factor: null },
+      });
+      expect(prisma.jwtSession.deleteMany).toHaveBeenCalledWith({
+        where: { id_user: 1, id_session: { not: 77 } },
+      });
+      expect(result).toEqual({
+        message: 'Two-factor authentication disabled successfully',
+      });
+    });
+
+    it('throws HttpException when disabling 2FA for passwordless user without Google idToken', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        is_two_factor_enabled: true,
+        password_hash: null,
+        id_google: 'google-sub-123',
+      });
+
+      await expect(service.twoFactorAuthDisable(1)).rejects.toThrow(
+        HttpException,
+      );
     });
   });
 
@@ -1089,6 +1286,119 @@ describe('AuthService', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
       });
+    });
+  });
+
+  describe('changePassword', () => {
+    it('sets a new password for a Google-authenticated user with password_hash === null when matching Google idToken is provided and revokes other sessions', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        password_hash: null,
+        id_google: 'google-sub-123',
+        status: 'active',
+        deleted_at: null,
+      });
+      mockGoogleClient.verifyIdToken.mockResolvedValue({
+        getPayload: () => ({
+          sub: 'google-sub-123',
+          email: 'google@example.com',
+          email_verified: true,
+        }),
+      });
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new_hashed_pw');
+      prisma.user.update.mockResolvedValue({});
+      prisma.jwtSession.deleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.changePassword(1, 10, {
+        idToken: 'valid-google-token',
+        newPassword: 'NewPassword123!',
+      });
+
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+      expect(bcrypt.hash).toHaveBeenCalledWith('NewPassword123!', 10);
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { password_hash: 'new_hashed_pw' },
+      });
+      expect(prisma.jwtSession.deleteMany).toHaveBeenCalledWith({
+        where: { id_user: 1, id_session: { not: 10 } },
+      });
+      expect(result).toEqual({ message: 'Password set successfully' });
+    });
+
+    it('throws HttpException when setting a password for a Google-only user without Google idToken', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        password_hash: null,
+        id_google: 'google-sub-123',
+        status: 'active',
+        deleted_at: null,
+      });
+
+      await expect(
+        service.changePassword(1, 10, {
+          newPassword: 'NewPassword123!',
+        }),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('updates password for a local user when currentPassword matches', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        password_hash: 'old_hashed_pw',
+        status: 'active',
+        deleted_at: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new_hashed_pw');
+      prisma.user.update.mockResolvedValue({});
+      prisma.jwtSession.deleteMany.mockResolvedValue({ count: 0 });
+
+      const result = await service.changePassword(1, 10, {
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword123!',
+      });
+
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        'OldPassword123!',
+        'old_hashed_pw',
+      );
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { password_hash: 'new_hashed_pw' },
+      });
+      expect(result).toEqual({ message: 'Password updated successfully' });
+    });
+
+    it('throws HttpException if user has a password_hash and currentPassword is missing or wrong', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 1,
+        password_hash: 'old_hashed_pw',
+        status: 'active',
+        deleted_at: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.changePassword(1, 10, {
+          currentPassword: 'WrongPassword',
+          newPassword: 'NewPassword123!',
+        }),
+      ).rejects.toThrow(HttpException);
+
+      await expect(
+        service.changePassword(1, 10, {
+          newPassword: 'NewPassword123!',
+        }),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('throws HttpException if user is not found or inactive', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.changePassword(99, 10, { newPassword: 'NewPassword123!' }),
+      ).rejects.toThrow(HttpException);
     });
   });
 });

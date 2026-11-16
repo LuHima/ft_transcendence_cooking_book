@@ -168,6 +168,36 @@ export class UserProfileResponseDto {
     example: '2026-10-09T18:00:00.000Z',
   })
   created_at: Date;
+
+  /**
+   * Whether two-factor authentication (TOTP) is enabled on this account.
+   * @example false
+   */
+  @ApiProperty({
+    description: 'Whether two-factor authentication is enabled',
+    example: false,
+  })
+  is_two_factor_enabled: boolean;
+
+  /**
+   * Whether the account has a local password configured (false for OAuth-only accounts).
+   * @example true
+   */
+  @ApiProperty({
+    description: 'Whether the account has a local password configured',
+    example: true,
+  })
+  has_password: boolean;
+
+  /**
+   * Whether a Google account is linked to this profile.
+   * @example false
+   */
+  @ApiProperty({
+    description: 'Whether a Google account is linked',
+    example: false,
+  })
+  is_google_linked: boolean;
 }
 
 /**

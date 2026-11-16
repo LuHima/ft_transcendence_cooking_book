@@ -100,11 +100,21 @@ describe('UsersService', () => {
 
   describe('getMe', () => {
     it('should return the full user profile if user exists', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockDbUser);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        ...mockDbUser,
+        is_two_factor_enabled: false,
+        password_hash: 'hashed_pw',
+        id_google: null,
+      });
 
       const result = await service.getMe(1);
 
-      expect(result).toEqual(mockDbUser);
+      expect(result).toEqual({
+        ...mockDbUser,
+        is_two_factor_enabled: false,
+        has_password: true,
+        is_google_linked: false,
+      });
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
         select: {
@@ -123,6 +133,9 @@ describe('UsersService', () => {
           city: true,
           postal_code: true,
           created_at: true,
+          is_two_factor_enabled: true,
+          password_hash: true,
+          id_google: true,
         },
       });
     });

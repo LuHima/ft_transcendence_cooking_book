@@ -17,9 +17,10 @@ import { Prisma, ReportReason, User, UserStatus } from '@prisma/client';
 import { isNumber } from 'class-validator';
 import { TwoFactorCode } from './auth.controller';
 import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { BanHistoryService } from '../reports/ban-history.service';
 import { AccountBannedException } from './exceptions/account-banned.exception';
-import { OAuth2Client } from 'google-auth-library';
+import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 
 interface PayLoadInterface {
   id: number;
@@ -235,14 +236,11 @@ export class AuthService {
     return this.jwtSessionSignin(user);
   }
 
-  async googleSignIn(
+  private async verifyGoogleIdToken(
     token: string,
-  ): Promise<
-    | { accessToken: string; refreshToken: string }
-    | { tempToken: string; twofAuth: true }
-  > {
+  ): Promise<TokenPayload & { email: string; sub: string }> {
     const clientId = process.env.GOOGLE_CLIENT_ID;
-    /* 
+    /*
      * AuthService is initialized as:
      * new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
      * and passed audience: process.env.GOOGLE_CLIENT_ID.
@@ -271,8 +269,6 @@ export class AuthService {
       );
     }
 
-    // Questo ticket contiene tutte le finormazioni dell'utente (è un json), le
-    // salvo in un payload per comodita
     const payload = ticket.getPayload();
     if (!payload || !payload.email || !payload.sub) {
       throw createHttpException(
@@ -281,11 +277,11 @@ export class AuthService {
       );
     }
 
-    /* 
-     * Without this check, the login would work also if a Google account 
+    /*
+     * Without this check, the login would work also if a Google account
      * had an unverified email.
-     * This is a problem because an attacker could register an unverified 
-     * Google account with a victim's email and hijack an existing WeCook 
+     * This is a problem because an attacker could register an unverified
+     * Google account with a victim's email and hijack an existing WeCook
      * profile upon login.
      */
     if (payload.email_verified !== true) {
@@ -295,7 +291,18 @@ export class AuthService {
       );
     }
 
-    const normalizedEmail = payload.email.trim().toLowerCase();
+    return payload as TokenPayload & { email: string; sub: string };
+  }
+
+  async googleSignIn(
+    token: string,
+  ): Promise<
+    | { accessToken: string; refreshToken: string }
+    | { tempToken: string; twofAuth: true }
+  > {
+    const payload = await this.verifyGoogleIdToken(token);
+
+    const normalizedEmail = payload.email!.trim().toLowerCase();
 
     // 1. Try to find user by unique Google ID (sub)
     let user = await this.prisma.user.findUnique({
@@ -531,21 +538,73 @@ export class AuthService {
 	per questo hanno durata 30 secondi, va da se che per questo motivo la chiave va protetta nel database
 
 	*/
-  async twoFactorAuthEnable(id: number, password: string) {
-    const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
+  /**
+   * Re-authenticates the user before sensitive 2FA changes.
+   * Users may confirm with their account password (if set) or with a fresh Google ID token
+   * (if a Google account is linked), regardless of whether both methods are configured.
+   */
+  private async assertReauthenticated(
+    user: { password_hash: string | null; id_google: string | null },
+    credentials: { password?: string; idToken?: string },
+  ): Promise<void> {
+    if (credentials.password !== undefined) {
+      if (
+        !user.password_hash ||
+        !(await bcrypt.compare(credentials.password, user.password_hash))
+      ) {
+        throw createHttpException(errors.auth.accessDenied, 'invalid password');
+      }
+      return;
+    }
+
+    if (credentials.idToken !== undefined) {
+      if (!user.id_google) {
+        throw createHttpException(
+          errors.auth.accessDenied,
+          'Google account is not linked to this user',
+        );
+      }
+      const payload = await this.verifyGoogleIdToken(credentials.idToken);
+      if (payload.sub !== user.id_google) {
+        throw createHttpException(
+          errors.auth.accessDenied,
+          'Google account does not match this user',
+        );
+      }
+      return;
+    }
+
+    throw createHttpException(
+      errors.auth.accessDenied,
+      'Password or Google confirmation is required',
+    );
+  }
+
+  async twoFactorAuthEnable(
+    id: number,
+    password?: string,
+    idToken?: string,
+  ) {
+    const statusTwoFactorAuth = await this.prisma.user.findUnique({
       where: { id: id },
-      select: { is_two_factor_enabled: true, password_hash: true, email: true },
+      select: {
+        is_two_factor_enabled: true,
+        password_hash: true,
+        id_google: true,
+        email: true,
+      },
     });
 
     if (!statusTwoFactorAuth) {
       throw createHttpException(errors.auth.accessDenied, 'User not found');
     }
-    if (statusTwoFactorAuth?.is_two_factor_enabled) {
+    if (statusTwoFactorAuth.is_two_factor_enabled) {
       throw createHttpException(errors.auth.twoFactorAlreadyEnable);
     }
-    if (!(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))) {
-      throw createHttpException(errors.auth.accessDenied, 'invalid password');
-    }
+    await this.assertReauthenticated(statusTwoFactorAuth, {
+      password,
+      idToken,
+    });
 
     //genero la chiave privata
     const key = generateSecret();
@@ -569,20 +628,43 @@ export class AuthService {
     return { qrCode, key };
   }
 
-  async twoFactorAuthDisable(id: number, password: string) {
-    const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
+  private async revokeOtherSessions(
+    userId: number,
+    currentSessionId?: number,
+  ): Promise<void> {
+    if (currentSessionId === undefined) return;
+    await this.prisma.jwtSession.deleteMany({
+      where: {
+        id_user: userId,
+        id_session: { not: currentSessionId },
+      },
+    });
+  }
+
+  async twoFactorAuthDisable(
+    id: number,
+    password?: string,
+    idToken?: string,
+    currentSessionId?: number,
+  ) {
+    const statusTwoFactorAuth = await this.prisma.user.findUnique({
       where: { id: id },
-      select: { is_two_factor_enabled: true, password_hash: true },
+      select: {
+        is_two_factor_enabled: true,
+        password_hash: true,
+        id_google: true,
+      },
     });
 
-    if (
-      !statusTwoFactorAuth ||
-      !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))
-    ) {
+    if (!statusTwoFactorAuth) {
       throw createHttpException(errors.auth.accessDenied, 'invalid password');
     }
+    await this.assertReauthenticated(statusTwoFactorAuth, {
+      password,
+      idToken,
+    });
 
-    if (statusTwoFactorAuth?.is_two_factor_enabled === false) {
+    if (statusTwoFactorAuth.is_two_factor_enabled === false) {
       throw createHttpException(errors.auth.twoFactorAlreadyDisable);
     }
 
@@ -590,6 +672,52 @@ export class AuthService {
       where: { id: id },
       data: { is_two_factor_enabled: false, two_factor: null },
     });
+    await this.revokeOtherSessions(id, currentSessionId);
     return { message: 'Two-factor authentication disabled successfully' };
+  }
+
+  /**
+   * Sets a password for an OAuth-only account or updates the existing password.
+   * Requires dual re-authentication (currentPassword or matching Google idToken).
+   * Revokes all other active refresh sessions while keeping the current session alive.
+   */
+  async changePassword(
+    id: number,
+    currentSessionId: number | undefined,
+    dto: ChangePasswordDto,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        password_hash: true,
+        id_google: true,
+        status: true,
+        deleted_at: true,
+      },
+    });
+
+    if (!user || user.status !== 'active' || user.deleted_at) {
+      throw createHttpException(errors.auth.accessDenied, 'User not found');
+    }
+
+    await this.assertReauthenticated(user, {
+      password: dto.currentPassword,
+      idToken: dto.idToken,
+    });
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id },
+      data: { password_hash: hashedPassword },
+    });
+
+    await this.revokeOtherSessions(id, currentSessionId);
+
+    return {
+      message: user.password_hash
+        ? 'Password updated successfully'
+        : 'Password set successfully',
+    };
   }
 }

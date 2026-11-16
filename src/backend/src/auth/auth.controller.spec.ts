@@ -18,6 +18,7 @@ describe('AuthController', () => {
     twoFactorSignin: jest.Mock;
     verify: jest.Mock;
     twoFactorAuthDisable: jest.Mock;
+    changePassword: jest.Mock;
   };
 
   const createMockResponse = () => {
@@ -38,6 +39,7 @@ describe('AuthController', () => {
       twoFactorSignin: jest.fn(),
       verify: jest.fn(),
       twoFactorAuthDisable: jest.fn(),
+      changePassword: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -339,6 +341,25 @@ describe('AuthController', () => {
         controller.twoFactorEnable(1, { password: 'WrongPassword' }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('forwards idToken when enabling 2FA for a passwordless Google user', async () => {
+      const qrResponse = {
+        qrCode: 'data:image/png;base64,...',
+        key: 'SECRETKEY',
+      };
+      authService.twoFactorAuthEnable.mockResolvedValue(qrResponse);
+
+      const result = await controller.twoFactorEnable(1, {
+        idToken: 'google-id-token',
+      });
+
+      expect(authService.twoFactorAuthEnable).toHaveBeenCalledWith(
+        1,
+        undefined,
+        'google-id-token',
+      );
+      expect(result).toEqual(qrResponse);
+    });
   });
 
   describe('accessTwoFactor', () => {
@@ -414,19 +435,28 @@ describe('AuthController', () => {
   });
 
   describe('twoFactorDisable', () => {
+    const activeUser = {
+      id: 1,
+      username: 'mario',
+      role: 'user' as any,
+      session: 42,
+    };
+
     it('delegates 2FA disable to authService and returns success message', async () => {
       const mockResult = {
         message: 'Two-factor authentication disabled successfully',
       };
       authService.twoFactorAuthDisable.mockResolvedValue(mockResult);
 
-      const result = await controller.twoFactorDisable(1, {
+      const result = await controller.twoFactorDisable(activeUser, {
         password: 'Password123!',
       });
 
       expect(authService.twoFactorAuthDisable).toHaveBeenCalledWith(
         1,
         'Password123!',
+        undefined,
+        42,
       );
       expect(result).toEqual(mockResult);
     });
@@ -437,8 +467,63 @@ describe('AuthController', () => {
       );
 
       await expect(
-        controller.twoFactorDisable(1, { password: 'WrongPassword' }),
+        controller.twoFactorDisable(activeUser, { password: 'WrongPassword' }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('forwards idToken when disabling 2FA for a passwordless Google user', async () => {
+      const mockResult = {
+        message: 'Two-factor authentication disabled successfully',
+      };
+      authService.twoFactorAuthDisable.mockResolvedValue(mockResult);
+
+      const result = await controller.twoFactorDisable(activeUser, {
+        idToken: 'google-id-token',
+      });
+
+      expect(authService.twoFactorAuthDisable).toHaveBeenCalledWith(
+        1,
+        undefined,
+        'google-id-token',
+        42,
+      );
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('changePassword', () => {
+    it('delegates to authService.changePassword with user id, session, and dto', async () => {
+      const mockResult = { message: 'Password updated successfully' };
+      authService.changePassword.mockResolvedValue(mockResult);
+
+      const dto = {
+        currentPassword: 'OldPassword123!',
+        newPassword: 'NewPassword123!',
+      };
+      const result = await controller.changePassword(
+        { id: 1, username: 'mario', role: 'user' as any, session: 42 },
+        dto,
+      );
+
+      expect(authService.changePassword).toHaveBeenCalledWith(1, 42, dto);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('forwards idToken instead of currentPassword (for Google OAuth or hybrid users)', async () => {
+      const mockResult = { message: 'Password set successfully' };
+      authService.changePassword.mockResolvedValue(mockResult);
+
+      const dto = {
+        idToken: 'google-id-token',
+        newPassword: 'NewPassword123!',
+      };
+      const result = await controller.changePassword(
+        { id: 2, username: 'google_u', role: 'user' as any, session: 9 },
+        dto,
+      );
+
+      expect(authService.changePassword).toHaveBeenCalledWith(2, 9, dto);
+      expect(result).toEqual(mockResult);
     });
   });
 });
