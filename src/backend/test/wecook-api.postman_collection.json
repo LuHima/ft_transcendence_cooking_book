@@ -1339,7 +1339,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+              "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1374,7 +1374,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1420,7 +1420,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1466,7 +1466,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1512,7 +1512,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1558,7 +1558,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2154,7 +2154,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+              "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2189,7 +2189,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2235,7 +2235,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2281,7 +2281,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2327,7 +2327,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2373,7 +2373,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"password\": \"SuperSecret123!\",\n  \"idToken\": \"string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2412,6 +2412,248 @@
                   "  pm.expect(jsonData.message).to.be.a(\"string\");",
                   "});",
                   ""
+                ]
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "3d2090f6-f568-400e-831a-68dd1385af4d",
+          "name": "Set or change account password",
+          "request": {
+            "name": "Set or change account password",
+            "description": {
+              "content": "Updates the authenticated user password. Requires dual re-authentication via `currentPassword` (when a local password is set) or a matching Google `idToken` (for OAuth-only or hybrid accounts). Revokes all other active sessions.",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "auth",
+                "password"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "PATCH",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"NewSecretPassw0rd!\",\n  \"currentPassword\": \"CurrentPassw0rd!\",\n  \"idToken\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "dc4a0fea-82ec-4568-8ee5-5527c042e58a",
+              "name": "Password set or updated successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "password"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"NewSecretPassw0rd!\",\n  \"currentPassword\": \"CurrentPassw0rd!\",\n  \"idToken\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Authentication append with success\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8056060b-1ea5-4974-8008-5c5373d07350",
+              "name": "New password does not meet strength requirements",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "password"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"NewSecretPassw0rd!\",\n  \"currentPassword\": \"CurrentPassw0rd!\",\n  \"idToken\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 400,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Bad Request\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "f8d18c7a-a5f5-45ab-80f1-80a6d1eb80e0",
+              "name": "Authentication required: missing or invalid accessToken cookie\n\nCurrent password is missing or invalid",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "password"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"NewSecretPassw0rd!\",\n  \"currentPassword\": \"CurrentPassw0rd!\",\n  \"idToken\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 401,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Authentication required: missing or invalid accessToken cookie\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "584de3d5-9466-4390-8ee6-30904d7a01a8",
+              "name": "Internal server error",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "auth",
+                    "password"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"NewSecretPassw0rd!\",\n  \"currentPassword\": \"CurrentPassw0rd!\",\n  \"idToken\": \"string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "cc09cc98-b21f-4f9c-8a5b-ec7a65fe2a42",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
                 ]
               }
             }
@@ -2494,7 +2736,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"profile_privacy\": \"public\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"profile_privacy\": \"public\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"is_two_factor_enabled\": false,\n  \"has_password\": true,\n  \"is_google_linked\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -2725,7 +2967,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"profile_privacy\": \"public\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\"\n}",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"mario_rossi\",\n  \"email\": \"mario.rossi@example.com\",\n  \"role\": \"user\",\n  \"profile_privacy\": \"public\",\n  \"avatar_url\": \"/uploads/avatars/avatar_1.webp\",\n  \"bio\": \"Passionate about authentic Neapolitan pizza and fresh handmade pasta.\",\n  \"first_name\": \"Mario\",\n  \"last_name\": \"Rossi\",\n  \"birth_date\": \"1995-05-20T00:00:00.000Z\",\n  \"phone\": \"+39 06 1234567\",\n  \"address\": \"Via Roma 123\",\n  \"city\": \"Roma\",\n  \"postal_code\": \"00100\",\n  \"created_at\": \"2026-10-09T18:00:00.000Z\",\n  \"is_two_factor_enabled\": false,\n  \"has_password\": true,\n  \"is_google_linked\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21333,7 +21575,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"hate_speech\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -21621,7 +21863,7 @@
                 {
                   "disabled": false,
                   "key": "subject",
-                  "value": "comment",
+                  "value": "user",
                   "description": "Filter reports by target entity type"
                 },
                 {
@@ -21699,7 +21941,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"copyright_infringement\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"impersonation_misinformation\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"sexual_content\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    },\n    {\n      \"id\": 1,\n      \"reporter_id\": 5,\n      \"subject\": \"recipe\",\n      \"target_id\": 42,\n      \"reason\": \"spam_scam\",\n      \"description\": \"Repeated advertising links\",\n      \"status\": \"pending\",\n      \"resolution_notes\": null,\n      \"created_at\": \"2026-11-02T12:00:00.000Z\",\n      \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n      \"reporter\": {\n        \"id\": 5,\n        \"username\": \"mario_rossi\",\n        \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n      },\n      \"target\": {\n        \"label\": \"Spaghetti alla Carbonara\",\n        \"recipe_id\": 42,\n        \"owner\": {\n          \"id\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"username\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          },\n          \"avatar_url\": {\n            \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n          }\n        }\n      },\n      \"actions\": [\n        \"warn\"\n      ],\n      \"resolution_reason\": \"copyright_infringement\",\n      \"resolution_description\": null,\n      \"previous_bans_count\": 0,\n      \"previous_warnings_count\": 0,\n      \"resolved_by_id\": null,\n      \"resolved_by\": {\n        \"id\": 1,\n        \"username\": \"mod_alice\",\n        \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n      },\n      \"resolved_at\": null\n    }\n  ],\n  \"total\": 1,\n  \"page\": 1,\n  \"limit\": 20,\n  \"total_pages\": 1,\n  \"has_next_page\": false,\n  \"has_prev_page\": false\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22057,7 +22299,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"hate_speech\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -22430,7 +22672,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"harassment_bullying\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
+              "body": "{\n  \"id\": 1,\n  \"reporter_id\": 5,\n  \"subject\": \"recipe\",\n  \"target_id\": 42,\n  \"reason\": \"spam_scam\",\n  \"description\": \"Repeated advertising links\",\n  \"status\": \"pending\",\n  \"resolution_notes\": null,\n  \"created_at\": \"2026-11-02T12:00:00.000Z\",\n  \"updated_at\": \"2026-11-02T12:00:00.000Z\",\n  \"reporter\": {\n    \"id\": 5,\n    \"username\": \"mario_rossi\",\n    \"avatar_url\": \"/uploads/avatars/avatar_5.webp\"\n  },\n  \"target\": {\n    \"label\": \"Spaghetti alla Carbonara\",\n    \"recipe_id\": 42,\n    \"owner\": {\n      \"id\": 10,\n      \"username\": \"chef_luigi\",\n      \"avatar_url\": \"/uploads/avatars/avatar_10.webp\"\n    }\n  },\n  \"actions\": [\n    \"warn\"\n  ],\n  \"resolution_reason\": \"hate_speech\",\n  \"resolution_description\": null,\n  \"previous_bans_count\": 0,\n  \"previous_warnings_count\": 0,\n  \"resolved_by_id\": null,\n  \"resolved_by\": {\n    \"id\": 1,\n    \"username\": \"mod_alice\",\n    \"avatar_url\": \"/uploads/avatars/avatar_1.webp\"\n  },\n  \"resolved_at\": null\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },

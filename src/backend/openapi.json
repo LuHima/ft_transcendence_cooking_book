@@ -641,6 +641,74 @@
         ]
       }
     },
+    "/api/auth/password": {
+      "patch": {
+        "description": "Updates the authenticated user password. Requires dual re-authentication via `currentPassword` (when a local password is set) or a matching Google `idToken` (for OAuth-only or hybrid accounts). Revokes all other active sessions.",
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password set or updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "New password does not meet strength requirements",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiBadRequestResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required: missing or invalid accessToken cookie\n\nCurrent password is missing or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiUnauthorizedResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "summary": "Set or change account password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/users/me": {
       "get": {
         "description": "Returns private personal and account details for the authenticated user.",
@@ -9081,11 +9149,12 @@
             "description": "User account password (minimum 9 characters)",
             "example": "SuperSecret123!",
             "minLength": 9
+          },
+          "idToken": {
+            "type": "string",
+            "description": "Google OAuth2 OpenID Connect ID token (required when the account has no local password)"
           }
-        },
-        "required": [
-          "password"
-        ]
+        }
       },
       "TwoFactorEnableResponseDto": {
         "type": "object",
@@ -9140,6 +9209,32 @@
         },
         "required": [
           "code"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Current account password (alternative to `idToken` when the account already has a password)",
+            "example": "CurrentPassw0rd!",
+            "minLength": 9
+          },
+          "idToken": {
+            "type": "string",
+            "description": "Google OAuth2 OpenID Connect ID token (required when the account has no local password)"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "New strong password (9-72 chars, must contain uppercase, lowercase, and a number or symbol)",
+            "example": "NewSecretPassw0rd!",
+            "minLength": 9,
+            "maxLength": 72,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*[\\d\\W_]).+$"
+          }
+        },
+        "required": [
+          "newPassword"
         ]
       },
       "UserProfileResponseDto": {
@@ -9240,6 +9335,21 @@
             "description": "Account creation timestamp",
             "example": "2026-10-09T18:00:00.000Z",
             "format": "date-time"
+          },
+          "is_two_factor_enabled": {
+            "type": "boolean",
+            "description": "Whether two-factor authentication is enabled",
+            "example": false
+          },
+          "has_password": {
+            "type": "boolean",
+            "description": "Whether the account has a local password configured",
+            "example": true
+          },
+          "is_google_linked": {
+            "type": "boolean",
+            "description": "Whether a Google account is linked",
+            "example": false
           }
         },
         "required": [
@@ -9257,7 +9367,10 @@
           "address",
           "city",
           "postal_code",
-          "created_at"
+          "created_at",
+          "is_two_factor_enabled",
+          "has_password",
+          "is_google_linked"
         ]
       },
       "ApiNotFoundResponseDto": {
