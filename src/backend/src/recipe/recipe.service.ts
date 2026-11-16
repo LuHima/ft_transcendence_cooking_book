@@ -1857,7 +1857,19 @@ export class RecipeService {
         }
       }
     }
-
+    if (
+      recipe.user_id &&
+      recipe.user_id === callerId &&
+      recipe.privacy !== RecipePrivacy.private
+    ) {
+      await this.notificationEmit.notification(
+        { id_user: recipe.user_id, id_target: recipeId },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.delete,
+        },
+      );
+    }
     return await this.prisma.recipe.update({
       where: { id: recipeId },
       data: { is_active: false },
