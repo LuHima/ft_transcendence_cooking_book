@@ -51,9 +51,6 @@ import {
 } from 'src/common/dto/api-error-response.dto';
 import { GoogleAuthDto } from './dto/auth-google.dto';
 
-export class ConfirmPasswordDto extends PickType(SignInUserDto, [
-  'password',
-] as const) {}
 export class TwoFactorCode extends PickType(TwoFactorAuth, ['code'] as const) {}
 
 /* 
@@ -305,19 +302,11 @@ export class AuthController {
   @ApiOperation({
     summary: 'Enable two-factor authentication (initiate setup)',
     description:
-      'Verifies the user account password and generates a new TOTP secret key and QR code data URI.',
+      'Generates a new TOTP secret key and QR code data URI for the authenticated user.',
   })
   @ApiOkResponse({
     description: 'TOTP secret generated; returns QR code URI and base32 key',
     type: TwoFactorEnableResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Password confirmation failed or is missing',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Invalid password provided',
-    type: ApiUnauthorizedResponseDto,
   })
   @ApiConflictResponse({
     description:
@@ -326,14 +315,8 @@ export class AuthController {
   })
   @Auth()
   @Post('twofactor/enable')
-  async twoFactorEnable(
-    @CurrentUser('id') id: number,
-    @Body() userPassword: ConfirmPasswordDto,
-  ) {
-    return await this.authService.twoFactorAuthEnable(
-      id,
-      userPassword.password,
-    );
+  async twoFactorEnable(@CurrentUser('id') id: number) {
+    return await this.authService.twoFactorAuthEnable(id);
   }
 
   /**
@@ -401,19 +384,11 @@ export class AuthController {
   @ApiOperation({
     summary: 'Disable two-factor authentication',
     description:
-      'Verifies account password and disables 2FA protection, clearing the stored secret.',
+      'Disables 2FA protection for the authenticated user, clearing the stored secret.',
   })
   @ApiOkResponse({
     description: 'Two-factor authentication successfully disabled',
     type: AuthMessageResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Password confirmation failed or is missing',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Invalid password',
-    type: ApiUnauthorizedResponseDto,
   })
   @ApiConflictResponse({
     description: 'Two-factor authentication is already disabled',
@@ -421,13 +396,7 @@ export class AuthController {
   })
   @Auth()
   @Post('twofactor/disable')
-  async twoFactorDisable(
-    @CurrentUser('id') id: number,
-    @Body() userPassword: ConfirmPasswordDto,
-  ) {
-    return await this.authService.twoFactorAuthDisable(
-      id,
-      userPassword.password,
-    );
+  async twoFactorDisable(@CurrentUser('id') id: number) {
+    return await this.authService.twoFactorAuthDisable(id);
   }
 }

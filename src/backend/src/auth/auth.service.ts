@@ -533,24 +533,17 @@ export class AuthService {
 	per questo hanno durata 30 secondi, va da se che per questo motivo la chiave va protetta nel database
 
 	*/
-  async twoFactorAuthEnable(id: number, password: string) {
-    const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
+  async twoFactorAuthEnable(id: number) {
+    const statusTwoFactorAuth = await this.prisma.user.findUnique({
       where: { id: id },
-      select: { is_two_factor_enabled: true, password_hash: true, email: true },
+      select: { is_two_factor_enabled: true, email: true },
     });
 
     if (!statusTwoFactorAuth) {
       throw createHttpException(errors.auth.accessDenied, 'User not found');
     }
-    if (statusTwoFactorAuth?.is_two_factor_enabled) {
+    if (statusTwoFactorAuth.is_two_factor_enabled) {
       throw createHttpException(errors.auth.twoFactorAlreadyEnable);
-    }
-    if (statusTwoFactorAuth.password_hash != null) {
-      if (
-        !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))
-      ) {
-        throw createHttpException(errors.auth.accessDenied, 'invalid password');
-      }
     }
 
     //genero la chiave privata
@@ -575,24 +568,16 @@ export class AuthService {
     return { qrCode, key };
   }
 
-  async twoFactorAuthDisable(id: number, password: string) {
-    const statusTwoFactorAuth: any = await this.prisma.user.findUnique({
+  async twoFactorAuthDisable(id: number) {
+    const statusTwoFactorAuth = await this.prisma.user.findUnique({
       where: { id: id },
-      select: { is_two_factor_enabled: true, password_hash: true },
+      select: { is_two_factor_enabled: true },
     });
     if (!statusTwoFactorAuth) {
       throw createHttpException(errors.auth.accessDenied, 'User not found');
     }
-    if (statusTwoFactorAuth.password_hash != null) {
-      if (
-        !statusTwoFactorAuth ||
-        !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))
-      ) {
-        throw createHttpException(errors.auth.accessDenied, 'invalid password');
-      }
-    }
 
-    if (statusTwoFactorAuth?.is_two_factor_enabled === false) {
+    if (statusTwoFactorAuth.is_two_factor_enabled === false) {
       throw createHttpException(errors.auth.twoFactorAlreadyDisable);
     }
 
