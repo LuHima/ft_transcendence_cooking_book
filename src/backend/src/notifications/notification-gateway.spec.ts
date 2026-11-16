@@ -51,13 +51,11 @@ describe('NotificationGateway', () => {
     it('should forward notification with target payload to user room', () => {
       gateway.handleNotificationEvent({
         idUser: 42,
-        message: 'Mario liked your recipe',
         target: { subject: 'recipe', idTarget: 10 },
       });
 
       expect(mockServer.to).toHaveBeenCalledWith('room-42');
       expect(mockServer.emit).toHaveBeenCalledWith('newNotification', {
-        message: 'Mario liked your recipe',
         target: { subject: 'recipe', idTarget: 10 },
       });
     });
@@ -65,22 +63,18 @@ describe('NotificationGateway', () => {
     it('should forward warning notification omitting staff credentials', () => {
       gateway.handleNotificationEvent({
         idUser: 42,
-        message:
-          'You received a warning from the moderation team about your recipe',
         target: { subject: 'recipe', idTarget: 10 },
       });
 
       expect(mockServer.to).toHaveBeenCalledWith('room-42');
       expect(mockServer.emit).toHaveBeenCalledWith('newNotification', {
-        message:
-          'You received a warning from the moderation team about your recipe',
         target: { subject: 'recipe', idTarget: 10 },
       });
     });
   });
 
-  describe('handleConnection & unreadNotifications shielding', () => {
-    it('masks actor_id to null for warn notifications when emitting unreadNotifications', async () => {
+  describe('handleConnection', () => {
+    it('joins the user room and broadcasts online status on valid connection', async () => {
       const mockClient = {
         handshake: {
           headers: {
@@ -99,43 +93,14 @@ describe('NotificationGateway', () => {
         sub: 10,
         type: 'access',
       });
-      jest.spyOn(gateway as any, 'statusUser').mockResolvedValue(undefined);
-
-      (prisma.notification.findMany as jest.Mock).mockResolvedValueOnce([
-        {
-          id: 1,
-          user_id: 10,
-          actor_id: 99,
-          action: 'warn',
-          subject: 'recipe',
-          target_id: 5,
-        },
-        {
-          id: 2,
-          user_id: 10,
-          actor_id: 3,
-          action: 'like',
-          subject: 'recipe',
-          target_id: 5,
-        },
-      ]);
+      const statusUserSpy = jest
+        .spyOn(gateway as any, 'statusUser')
+        .mockResolvedValue(undefined);
 
       await gateway.handleConnection(mockClient as any);
 
-      expect(mockClient.emit).toHaveBeenCalledWith('unreadNotifications', {
-        notification: [
-          expect.objectContaining({
-            id: 1,
-            action: 'warn',
-            actor_id: null,
-          }),
-          expect.objectContaining({
-            id: 2,
-            action: 'like',
-            actor_id: 3,
-          }),
-        ],
-      });
+      expect(mockClient.join).toHaveBeenCalledWith('room-10');
+      expect(statusUserSpy).toHaveBeenCalledWith(10, true);
     });
   });
 
@@ -160,8 +125,8 @@ describe('NotificationGateway', () => {
       });
 
       expect(friends).toEqual([
-        { friend_id: 2, follower_id: 2 },
-        { friend_id: 3, follower_id: 3 },
+        { friend_id: 2 },
+        { friend_id: 3 },
       ]);
     });
   });

@@ -391,7 +391,7 @@ describe('AuthController', () => {
         expect.objectContaining({ path: '/api/auth/refresh' }),
       );
       expect(result).toEqual({
-        message: 'Authentication append with success',
+        message: 'Authentication was successful',
       });
     });
 

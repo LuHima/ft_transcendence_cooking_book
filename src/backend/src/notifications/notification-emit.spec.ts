@@ -92,7 +92,6 @@ describe('NotificationEmit', () => {
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 2,
-        message: 'Mario posted a new recipe',
         target: {
           subject: NotificationSubject.recipe,
           idTarget: 100,
@@ -102,7 +101,6 @@ describe('NotificationEmit', () => {
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 3,
-        message: 'Mario posted a new recipe',
         target: {
           subject: NotificationSubject.recipe,
           idTarget: 100,
@@ -123,7 +121,6 @@ describe('NotificationEmit', () => {
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 2,
-        message: 'Mario update a recipe',
         target: {
           subject: NotificationSubject.recipe,
           idTarget: 50,
@@ -174,7 +171,6 @@ describe('NotificationEmit', () => {
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 99,
-        message: 'Mario liked your recipe',
         target: {
           subject: NotificationSubject.recipe,
           idTarget: 10,
@@ -202,7 +198,6 @@ describe('NotificationEmit', () => {
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 77,
-        message: 'Mario replied to your comment',
         target: {
           subject: NotificationSubject.comment,
           idTarget: 25,
@@ -229,7 +224,6 @@ describe('NotificationEmit', () => {
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('newNotification', {
         idUser: 42,
-        message: 'Mario sent you a friend request',
         target: {
           subject: NotificationSubject.user,
           idTarget: 42,
