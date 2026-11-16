@@ -29,7 +29,7 @@ export function createRecipeTexture(
   ctx.translate(canvas.width - 100, canvas.height / 2);
   ctx.rotate(Math.PI / 2);
 
-  let fontSize = 32;
+  const fontSize = 32;
   ctx.font = `bold ${fontSize}px Arial, sans-serif`;
 
   const titleLines = wrapLongLines(title, 25);

@@ -1,6 +1,6 @@
 import { shaderMaterial } from '@react-three/drei'
-import { extend } from '@react-three/fiber'
-import { Texture } from 'three'
+import { extend, type ThreeElement } from '@react-three/fiber'
+import type { Texture } from 'three'
 
 export const PageCurlMaterial = shaderMaterial(
   {
@@ -102,4 +102,12 @@ export const PageCurlMaterial = shaderMaterial(
   `
 )
 
+export type PageCurlMaterialInstance = InstanceType<typeof PageCurlMaterial>
+
 extend({ PageCurlMaterial })
+
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    pageCurlMaterial: ThreeElement<typeof PageCurlMaterial>
+  }
+}
