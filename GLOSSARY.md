@@ -278,6 +278,18 @@ _Avoid_: Flagged comment filter, dirty comments, report list
 The dedicated administrative API namespace (`/api/admin/catalog`) and workflows restricted to administrators (`@Roles('admin')`) for listing, searching, creating, updating, inspecting full multilingual translation dictionaries, and deleting curated ingredients and tags.
 _Avoid_: Catalog admin, tag manager, ingredient editor, public catalog CRUD
 
+**Passwordless OAuth Account**:
+A member account provisioned via an external identity provider (such as Google OpenID Connect) that has no local password configured (`has_password: false`).
+_Avoid_: Social-only user, passwordless user, Google-only profile
+
+**Hybrid Account**:
+A member account that has both a local password and a linked external identity provider (`has_password: true` and `is_google_linked: true`), allowing sign-in and re-authentication through either credential.
+_Avoid_: Linked account, dual-login user, merged profile
+
+**Dual Re-authentication**:
+The fresh identity confirmation step required before sensitive account security mutations (enabling/disabling 2FA or setting/changing a password), satisfied by either the account's local password or a fresh Google ID token matching the linked Google identity.
+_Avoid_: Sudo mode, step-up check, password prompt
+
 ## API Governance & Documentation
 
 **API Contract**:
