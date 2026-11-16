@@ -60,6 +60,8 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 	const [friendsRestricted, setFriendsRestricted] = useState<Restriction | null>(null)
 	const [friendsPage, setFriendsPage] = useState(1)
 
+	// location.key: a new navigation to this same profile (e.g. a "friend request accepted" notification
+	// clicked while already here) reloads it, so friendship status and counters are up to date
 	useEffect(() => {
 		let cancelled = false
 		const path = username ? `/users/by-username/${encodeURIComponent(username)}` : `/users/${id}`
@@ -77,7 +79,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 		return () => {
 			cancelled = true
 		}
-	}, [id, username, t])
+	}, [id, username, location.key, t])
 
 	const profileId = profile?.id
 
@@ -130,7 +132,7 @@ function UserProfileView({ id, username }: { id?: string; username?: string }) {
 		return () => {
 			cancelled = true
 		}
-	}, [profileId, tab, friendsPage, t])
+	}, [profileId, tab, friendsPage, location.key, t])
 
 	function updateFriendship(next: FriendshipStatus) {
 		setProfile((prev) => {

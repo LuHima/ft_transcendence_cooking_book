@@ -28,8 +28,6 @@ import {
 } from '../../types/models'
 
 const PAGE_SIZE = 10
-// fallback without backend target_id support (#208): one large page, filtered here
-const FALLBACK_LIMIT = 100
 type StatusTab = ReportStatus | 'all'
 const STATUSES: StatusTab[] = ['pending', 'action_taken', 'dismissed', 'all']
 const SUBJECTS: ReportSubject[] = ['recipe', 'comment', 'user']
@@ -77,15 +75,14 @@ interface ReportsResult {
 	key: string
 	data: Paginated<ReportItem> | null
 	error: string | null
-	// target_id filtered here because the backend does not support it yet
-	clientFiltered?: boolean
 }
 
 // coda delle segnalazioni, condivisa da moderatori e admin. Filtri nell'URL (deep link da altri pannelli):
-//   ?status=pending|action_taken|dismissed|all &subject= &target_id= &report_id=
+//   ?status=pending|action_taken|dismissed|all &subject= &target_id= &report_id= &resolve=1
 //   GET   /api/reports?page=&limit=&status=&subject=&target_id=&lang=  -> PaginatedReportsResponseDto
-//         (reporter, target e resolved_by idratati; target.label localizzata in base a lang; target_id: #208)
-//   GET   /api/reports/:id?lang=                                    (#208: link dallo storico ban)
+//         (reporter, target e resolved_by idratati; target.label localizzata in base a lang;
+//          target_id richiede subject, altrimenti 400)
+//   GET   /api/reports/:id?lang=                                    (link dallo storico ban, risoluzione in un clic)
 //   PATCH /api/reports/:id                                          (UpdateReportDto)
 function AdminReports() {
 	const { t } = useTranslation()
@@ -98,6 +95,8 @@ function AdminReports() {
 	const subject: ReportSubject | '' = (SUBJECTS as string[]).includes(subjectParam ?? '') ? (subjectParam as ReportSubject) : ''
 	const targetId = positiveInt(params.get('target_id'))
 	const reportId = positiveInt(params.get('report_id'))
+	// deep link "Gestisci": apre subito il dialogo di risoluzione della segnalazione report_id
+	const autoResolve = params.get('resolve') === '1'
 
 	const [page, setPage] = useState(1)
 	const [result, setResult] = useState<ReportsResult | null>(null)
@@ -123,22 +122,29 @@ function AdminReports() {
 		}
 
 		async function load() {
-			// una sola segnalazione (link dallo storico delle sanzioni)
+			// una sola segnalazione (storico delle sanzioni, "Gestisci" da ricette e commenti)
 			if (reportId) {
 				const one = await api.get<ReportItem>(`/reports/${reportId}${qs({ lang })}`)
+				if (!cancelled && autoResolve && one?.status === 'pending') {
+					setResolving(one)
+					// one-shot: ricaricando la pagina il dialogo non si riapre
+					setParams(
+						(prev) => {
+							const next = new URLSearchParams(prev)
+							next.delete('resolve')
+							return next
+						},
+						{ replace: true },
+					)
+				}
 				return done({ data: toPage<ReportItem>(one ? [one] : [], PAGE_SIZE), error: null })
 			}
-			const base = { status: status === 'all' ? undefined : status, subject, lang }
-			try {
-				const res = await api.get<unknown>(`/reports${qs({ ...base, target_id: targetId, page, limit: PAGE_SIZE })}`)
-				return done({ data: toPage<ReportItem>(res, PAGE_SIZE), error: null })
-			} catch (err) {
-				// backend senza #208: target_id rifiutato (forbidNonWhitelisted) → filtro lato client su una pagina grande
-				if (!(targetId && err instanceof ApiError && err.status === 400 && /target_id/.test(err.message))) throw err
-				const res = await api.get<unknown>(`/reports${qs({ ...base, page: 1, limit: FALLBACK_LIMIT })}`)
-				const items = toPage<ReportItem>(res, FALLBACK_LIMIT).items.filter((r) => r.target_id === targetId && (!subject || r.subject === subject))
-				return done({ data: toPage<ReportItem>(items, PAGE_SIZE), error: null, clientFiltered: true })
-			}
+			// target_id senza subject: il backend risponde 400 (ID ambigui tra ricette, commenti e utenti)
+			if (targetId && !subject) return done({ data: null, error: t('moderation.targetNeedsSubject') })
+			const res = await api.get<unknown>(
+				`/reports${qs({ status: status === 'all' ? undefined : status, subject, target_id: targetId, lang, page, limit: PAGE_SIZE })}`,
+			)
+			return done({ data: toPage<ReportItem>(res, PAGE_SIZE), error: null })
 		}
 
 		load().catch((err) => {
@@ -148,7 +154,7 @@ function AdminReports() {
 		return () => {
 			cancelled = true
 		}
-	}, [status, subject, targetId, reportId, page, lang, reload, requestKey, t])
+	}, [status, subject, targetId, reportId, autoResolve, page, lang, reload, requestKey, setParams, t])
 
 	// risposta della richiesta corrente; durante un cambio pagina resta visibile la precedente, cambiando filtri no
 	const current = result?.key === requestKey ? result : null
@@ -222,7 +228,6 @@ function AdminReports() {
 					</span>
 				)}
 			</div>
-			{shown?.clientFiltered && <p className="mt-2 text-xs text-[var(--wc-text-muted)]">{t('moderation.clientFilteredNote', { max: FALLBACK_LIMIT })}</p>}
 
 			{error && <p className="mt-4 text-sm text-[var(--wc-paprika)]">{error}</p>}
 			{loading && !data && (
@@ -374,7 +379,7 @@ function AdminReports() {
 				</div>
 			)}
 
-			{data && !reportId && !shown?.clientFiltered && (
+			{data && !reportId && (
 				<Pagination page={page} totalPages={data.total_pages} hasPrev={data.has_prev_page} hasNext={data.has_next_page} onChange={setPage} />
 			)}
 

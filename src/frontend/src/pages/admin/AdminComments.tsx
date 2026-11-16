@@ -16,13 +16,18 @@ import type { AdminComment, AdminCommentFormat, AdminCommentSortBy, AdminComment
 
 const PAGE_SIZE = 15
 
+// mostPending = segnalazioni in attesa (pending_reports_count), mostReported = totale di tutti gli stati (reports_count)
 const SORT_OPTIONS = [
 	{ value: 'created_at:desc', label: 'newest' },
 	{ value: 'created_at:asc', label: 'oldest' },
+	{ value: 'pending_reports_count:desc', label: 'mostPending' },
 	{ value: 'reports_count:desc', label: 'mostReported' },
 	{ value: 'recipe:asc', label: 'recipe' },
 ] as const
 type SortValue = (typeof SORT_OPTIONS)[number]['value']
+const DEFAULT_SORT: SortValue = 'created_at:desc'
+// default del backend con reported_only=true (se sort_by non viene inviato)
+const REPORTED_DEFAULT_SORT: SortValue = 'pending_reports_count:desc'
 
 const STATUSES: AdminCommentStatus[] = ['all', 'active', 'inactive']
 
@@ -56,7 +61,8 @@ function AdminComments() {
 	const [reportedOnly, setReportedOnly] = useState(false)
 	// solo commenti modificati dopo la pubblicazione (is_edited=true)
 	const [editedOnly, setEditedOnly] = useState(false)
-	const [sort, setSort] = useState<SortValue>('created_at:desc')
+	// null = ordinamento predefinito del backend (created_at desc, oppure pending_reports_count desc con "solo segnalati")
+	const [sort, setSort] = useState<SortValue | null>(null)
 	const [page, setPage] = useState(1)
 	const [reload, setReload] = useState(0)
 	const [busyId, setBusyId] = useState<number | null>(null)
@@ -66,8 +72,8 @@ function AdminComments() {
 	const listTopRef = useRef<HTMLDivElement>(null)
 	useScrollIntoViewOnChange(page, listTopRef)
 
-	// con "solo segnalati" l'ordinamento lo decide il backend (numero di segnalazioni)
-	const [sortBy, sortOrder] = sort.split(':') as [AdminCommentSortBy, SortOrder]
+	const shownSort = sort ?? (reportedOnly ? REPORTED_DEFAULT_SORT : DEFAULT_SORT)
+	const [sortBy, sortOrder] = sort ? (sort.split(':') as [AdminCommentSortBy, SortOrder]) : [undefined, undefined]
 
 	// filtri testuali: partono 300ms dopo l'ultimo tasto
 	useEffect(() => {
@@ -101,8 +107,8 @@ function AdminComments() {
 					user_id: userId,
 					reported_only: reportedOnly ? 'true' : undefined,
 					is_edited: editedOnly ? 'true' : undefined,
-					sort_by: reportedOnly ? undefined : sortBy,
-					sort_order: reportedOnly ? undefined : sortOrder,
+					sort_by: sortBy,
+					sort_order: sortOrder,
 					format,
 					lang,
 				})}`,
@@ -190,12 +196,21 @@ function AdminComments() {
 					</span>
 					<span className="flex shrink-0 flex-wrap items-center justify-end gap-3">
 						{/* segnalazioni del commento: apre il pannello Segnalazioni filtrato su questo commento */}
-						{(c.has_pending_reports || c.reports_count > 0) && (
+						{/* in un clic: dialogo di risoluzione dell'ultima segnalazione in attesa */}
+						{c.latest_pending_report_id != null && (
 							<Link
-								to={reportsHref(base, { subject: 'comment', target_id: c.id, status: c.has_pending_reports ? 'pending' : 'all' })}
+								to={reportsHref(base, { report_id: c.latest_pending_report_id, resolve: true })}
+								className="font-semibold text-[var(--wc-paprika)] hover:underline"
+							>
+								{t('admin.reportsLink.resolve')}
+							</Link>
+						)}
+						{c.reports_count > 0 && (
+							<Link
+								to={reportsHref(base, { subject: 'comment', target_id: c.id, status: 'all' })}
 								className="text-[var(--wc-paprika)] hover:underline"
 							>
-								{c.has_pending_reports ? t('admin.reportsLink.resolve') : t('admin.reportsLink.view')}
+								{t('admin.reportsLink.view', { count: c.reports_count })}
 							</Link>
 						)}
 						{c.user && (
@@ -294,8 +309,7 @@ function AdminComments() {
 					className={INPUT}
 				/>
 				<select
-					value={sort}
-					disabled={reportedOnly}
+					value={shownSort}
 					aria-label={t('search.sortBy')}
 					onChange={(e) => {
 						setSort(e.target.value as SortValue)

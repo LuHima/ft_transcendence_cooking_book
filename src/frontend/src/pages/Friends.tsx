@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, getErrorMessage, qs, toPage } from '../api/client'
 import { useToast } from '../context/toast'
@@ -20,7 +20,13 @@ function Friends() {
 	const { t } = useTranslation()
 	const toast = useToast()
 	const onlineIds = useFriendsPresence()
-	const [tab, setTab] = useState<Tab>('friends')
+	// active tab in the URL (?tab=received|sent): notifications can link straight to a tab
+	const [params, setParams] = useSearchParams()
+	const tabParam = params.get('tab')
+	const tab: Tab = (TABS as string[]).includes(tabParam ?? '') ? (tabParam as Tab) : 'friends'
+	const setTab = (next: Tab) => setParams(next === 'friends' ? {} : { tab: next })
+	// a new navigation to this page (e.g. notification clicked while already here) reloads the list
+	const { key: locationKey } = useLocation()
 	const [friends, setFriends] = useState<FriendItem[] | null>(null)
 	const [requests, setRequests] = useState<FriendRequest[] | null>(null)
 	const [receivedCount, setReceivedCount] = useState(0)
@@ -94,7 +100,7 @@ function Friends() {
 		return () => {
 			cancelled = true
 		}
-	}, [tab, friendsQuery, friendsPage, currentRequestsPage, reload, t])
+	}, [tab, friendsQuery, friendsPage, currentRequestsPage, reload, locationKey, t])
 
 	// After removing an item: step back when the page became empty, otherwise refetch it
 	function afterRemoval(remaining: number, page: number, setPage: (p: number) => void) {

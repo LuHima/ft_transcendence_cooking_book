@@ -19,15 +19,17 @@ function describe(n: AppNotification, currentUserId?: number): { textKey: string
 	const recipePath = recipeId != null ? `/recipes/${recipeId}` : actorPath
 	switch (n.action) {
 		case 'friend_request':
-			return { textKey: 'notifications.friend_request', to: '/friends' }
+			// straight to the incoming requests tab
+			return { textKey: 'notifications.friend_request', to: '/friends?tab=received' }
 		case 'friend_accept':
 			return { textKey: 'notifications.friend_accept', to: n.actor ? `/users/${n.actor.id}` : '/friends' }
 		case 'like':
 			return { textKey: 'notifications.like', to: recipePath }
 		case 'comment':
+			// anchor: the comment itself (reply notifications), otherwise the comments section
 			return n.subject === 'comment'
-				? { textKey: 'notifications.reply', to: recipePath }
-				: { textKey: 'notifications.comment', to: recipePath }
+				? { textKey: 'notifications.reply', to: recipeId != null && n.target?.id != null ? `${recipePath}#comment-${n.target.id}` : recipePath }
+				: { textKey: 'notifications.comment', to: recipeId != null ? `${recipePath}#comments` : recipePath }
 		case 'post':
 			return { textKey: 'notifications.post', to: recipePath }
 		case 'update':

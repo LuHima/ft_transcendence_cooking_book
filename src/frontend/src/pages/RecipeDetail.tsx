@@ -49,7 +49,8 @@ function RecipeDetail() {
 	const [restricted, setRestricted] = useState<401 | 403 | null>(null)
 	const location = useLocation()
 
-	// Reloads on interface language change: the backend returns translated text
+	// Reloads on interface language change (the backend returns translated text) and on a new navigation
+	// to this same recipe (e.g. an "updated the recipe" notification clicked while already here)
 	useEffect(() => {
 		let cancelled = false
 		api
@@ -72,7 +73,7 @@ function RecipeDetail() {
 		return () => {
 			cancelled = true
 		}
-	}, [id, lang, t])
+	}, [id, lang, location.key, t])
 
 	async function toggleLike() {
 		if (!recipe) return
@@ -498,7 +499,9 @@ function RecipeDetail() {
 				</section>
 			)}
 
-			<Comments key={recipe.id} recipeId={recipe.id} recipeAuthorId={author?.id ?? null} />
+			{/* location.key: a new navigation to the same recipe (e.g. a comment notification clicked while
+			    already on this page) remounts the list, so new comments are fetched */}
+			<Comments key={`${recipe.id}-${location.key}`} recipeId={recipe.id} recipeAuthorId={author?.id ?? null} />
 
 			{confirmDelete && (
 				<ConfirmDialog

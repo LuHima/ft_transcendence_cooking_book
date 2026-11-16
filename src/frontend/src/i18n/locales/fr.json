@@ -192,7 +192,8 @@
 		"showMoreRepliesCount": "Afficher les autres réponses ({{count}})",
 		"loadingReplies": "Chargement des réponses…",
 		"deactivated": "Désactivé",
-		"deactivatedHelp": "Commentaire désactivé : visible uniquement par l'équipe, comme contexte de modération."
+		"deactivatedHelp": "Commentaire désactivé : visible uniquement par l'équipe, comme contexte de modération.",
+		"hideReplies": "Masquer les réponses"
 	},
 	"home": {
 		"loadError": "Impossible de charger les recettes pour le moment.",
@@ -588,11 +589,11 @@
 		"previousWarnings_one": "{{count}} avertissement précédent",
 		"previousWarnings_other": "{{count}} avertissements précédents",
 		"clearTargetFilter": "Retirer le filtre",
-		"clientFilteredNote": "Filtre appliqué aux {{max}} derniers signalements : le backend ne prend pas encore en charge target_id (#208).",
 		"confirmTitle": "Confirmer la sanction ?",
 		"filterReport": "Signalement n°{{id}}",
 		"filterTarget": "Signalements de {{target}} n°{{id}}",
-		"reportNotFound": "Signalement n°{{id}} introuvable."
+		"reportNotFound": "Signalement n°{{id}} introuvable.",
+		"targetNeedsSubject": "Pour filtrer par ID, choisissez aussi le type de contenu (recette, commentaire ou utilisateur)."
 	},
 	"admin": {
 		"subtitle": "Signalements, utilisateurs, rôles et contenus de la plateforme.",
@@ -683,14 +684,28 @@
 			},
 			"banTitle": "Bannir {{name}}",
 			"banIntro": "L’utilisateur ne pourra pas se connecter avant la fin du bannissement. Le message lui est affiché à la connexion ; les notes internes restent visibles uniquement par l’équipe.",
-			"disableHelp": "Réversible : bloque la connexion, le contenu est conservé. Annulable avec « Réactiver ».",
+			"disableHelp": "Réversible : bloque la connexion, recettes et commentaires restent inchangés. Annulable avec « Réactiver ».",
 			"purgeHelp": "Irréversible : supprime définitivement le compte.",
 			"internalNotesHelp": "Réservé à l’équipe : jamais affiché à l’utilisateur.",
-			"internalNotesUnsupported": "Le backend n’accepte pas encore les notes internes (#207) : videz le champ et réessayez.",
 			"optional": "facultatif",
 			"unban": "Lever le bannissement",
 			"unbanTitle": "Lever le bannissement de {{name}}",
-			"banHistoryForbidden": "L’historique des sanctions n’est pour l’instant visible que par les administrateurs : l’accès des modérateurs arrive avec le backend #207."
+			"banHistoryForbidden": "Vous n’avez pas l’autorisation de consulter l’historique des sanctions.",
+			"softDelete": "Supprimer",
+			"softDeleteHelp": "Supprime le compte : les recettes publiques passent à la plateforme et les commentaires sont désactivés. Restaurable.",
+			"confirmSoftDeleteTitle": "Supprimer le compte de {{name}} ?",
+			"confirmSoftDelete": "« {{name}} » ne pourra plus se connecter, ses recettes publiques passeront à la plateforme et ses commentaires seront désactivés. « Restaurer » réactive le compte et le contenu.",
+			"softDeleted": "Compte de {{name}} supprimé.",
+			"alreadyDeleted": "Ce compte a déjà été supprimé.",
+			"deletedBadge": "Supprimé",
+			"deletedOn": "supprimé le {{date}}",
+			"restore": "Restaurer",
+			"restoreHelp": "Réactive le compte et restaure ses recettes et commentaires.",
+			"reban": "Modifier le bannissement",
+			"rebanTitle": "Nouveau bannissement pour {{name}}",
+			"rebanIntro": "L’utilisateur est déjà banni : le nouveau bannissement remplace l’actuel (motif, durée et message).",
+			"warnedAt": "Date de l’avertissement",
+			"warnedBy": "Averti par"
 		},
 		"recipes": {
 			"confirmDelete": "Suspendre la recette « {{title}} » ? Elle pourra être réactivée plus tard.",
@@ -704,7 +719,10 @@
 				"active": "Actives",
 				"inactive": "Suspendues"
 			},
-			"reportedOnlyUnsupported": "Le filtre « signalées uniquement » n’est pas encore pris en charge par le backend (#208)."
+			"sort": {
+				"mostPending": "Plus de signalements en attente",
+				"mostReports": "Plus de signalements (total)"
+			}
 		},
 		"comments": {
 			"filter": "Filtrer par texte ou auteur…",
@@ -725,8 +743,9 @@
 			"sort": {
 				"newest": "Plus récents",
 				"oldest": "Plus anciens",
-				"mostReported": "Les plus signalés",
-				"recipe": "Par recette"
+				"mostReported": "Plus de signalements (total)",
+				"recipe": "Par recette",
+				"mostPending": "Plus de signalements en attente"
 			},
 			"inactive": "Désactivé",
 			"deactivate": "Désactiver",
@@ -789,8 +808,8 @@
 			}
 		},
 		"reportsLink": {
-			"resolve": "Traiter les signalements",
-			"view": "Voir les signalements"
+			"resolve": "Traiter le signalement",
+			"view": "Signalements ({{count}})"
 		}
 	},
 	"friends": {

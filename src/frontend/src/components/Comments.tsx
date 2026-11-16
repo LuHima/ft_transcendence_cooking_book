@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/auth'
 import { useToast } from '../context/toast'
@@ -109,6 +109,29 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	const [confirmingDelete, setConfirmingDelete] = useState<ApiComment | null>(null)
 	const [loadingReplies, setLoadingReplies] = useState<Record<number, boolean>>({})
 	const [replyPages, setReplyPages] = useState<Record<number, number>>({})
+	// Collapsible threads: number of replies in the initial preview (captured on the first expansion)
+	// and threads currently collapsed back to that preview
+	const [previewCounts, setPreviewCounts] = useState<Record<number, number>>({})
+	const [collapsed, setCollapsed] = useState<Record<number, boolean>>({})
+	const location = useLocation()
+	// #comment-<id> / #comments (notification links): scroll there once, after the first load
+	const scrolledFor = useRef<string | null>(null)
+
+	useEffect(() => {
+		const hash = location.hash
+		if (!threads || !hash || scrolledFor.current === location.key) return
+		if (hash !== '#comments' && !hash.startsWith('#comment-')) return
+		scrolledFor.current = location.key
+		// comment not loaded (e.g. a reply beyond the preview): fall back to the section
+		const target = document.getElementById(hash.slice(1)) ?? document.getElementById('comments')
+		if (!target) return
+		target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+		if (target.id.startsWith('comment-')) {
+			// short highlight so the comment is easy to spot
+			target.classList.add('ring-2', 'ring-[var(--wc-saffron)]')
+			window.setTimeout(() => target.classList.remove('ring-2', 'ring-[var(--wc-saffron)]'), 2500)
+		}
+	}, [threads, location.hash, location.key])
 
 	useEffect(() => {
 		let cancelled = false
@@ -148,6 +171,12 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	async function loadMoreReplies(thread: ThreadedComment) {
 		const threadId = thread.id
 		if (loadingReplies[threadId]) return
+		// collapsed thread: show the replies already loaded again, no request needed
+		if (collapsed[threadId]) {
+			setCollapsed((prev) => ({ ...prev, [threadId]: false }))
+			return
+		}
+		setPreviewCounts((prev) => (threadId in prev ? prev : { ...prev, [threadId]: thread.replies.length }))
 		setLoadingReplies((prev) => ({ ...prev, [threadId]: true }))
 		try {
 			const currentPage = replyPages[threadId] || 1
@@ -216,6 +245,8 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 				setTotalCount((c) => c + 1)
 			}
 			setReplyingTo(null)
+			// new reply in a collapsed thread: expand it so the reply is visible
+			if (parentId) setCollapsed((prev) => ({ ...prev, [parentId]: false }))
 			toast.success(t('comments.posted'))
 		} catch (err) {
 			toast.error(getErrorMessage(err, t('comments.postError')))
@@ -285,7 +316,8 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 		return (
 			<li
 				key={c.id}
-				className={`rounded-xl border border-[var(--wc-border)] p-4 ${deactivatedForStaff ? 'border-dashed bg-[var(--wc-bg)] opacity-70' : 'bg-[var(--wc-surface)]'} ${isReply ? 'ml-6 sm:ml-10' : ''}`}
+				id={`comment-${c.id}`}
+				className={`scroll-mt-24 rounded-xl border border-[var(--wc-border)] p-4 ${deactivatedForStaff ? 'border-dashed bg-[var(--wc-bg)] opacity-70' : 'bg-[var(--wc-surface)]'} ${isReply ? 'ml-6 sm:ml-10' : ''}`}
 			>
 				<div className="flex items-center justify-between gap-3 text-xs text-[var(--wc-text-muted)]">
 					<span className="flex min-w-0 items-center gap-2">
@@ -388,7 +420,7 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 	}
 
 	return (
-		<section className="mt-12 border-t border-[var(--wc-border)] pt-8">
+		<section id="comments" className="mt-12 scroll-mt-24 border-t border-[var(--wc-border)] pt-8">
 			<h2 className="font-display text-xl text-[var(--wc-saffron)]">
 				{t('comments.title')}
 				{threads ? ` (${totalCount})` : ''}
@@ -429,25 +461,49 @@ function Comments({ recipeId, recipeAuthorId }: CommentsProps) {
 					<li key={th.id} className="list-none">
 						<ul className="space-y-3">
 							{renderComment(th, th.id, false)}
-							{th.replies.map((r) => renderComment(r, th.id, true))}
-							{th.has_more_replies && (
-								<li className="ml-6 sm:ml-10 list-none">
-									<button
-										type="button"
-										disabled={loadingReplies[th.id]}
-										onClick={() => void loadMoreReplies(th)}
-										className="text-xs font-medium text-[var(--wc-saffron)] hover:underline disabled:opacity-60"
-									>
-										{loadingReplies[th.id]
-											? t('comments.loadingReplies')
-											: th.replies_count - th.replies.length > 0
-												? t('comments.showMoreRepliesCount', {
-														count: th.replies_count - th.replies.length,
-													})
-												: t('comments.showMoreReplies')}
-									</button>
-								</li>
-							)}
+							{(() => {
+								const preview = previewCounts[th.id]
+								const isCollapsed = Boolean(collapsed[th.id]) && preview !== undefined
+								const visible = isCollapsed ? th.replies.slice(0, preview) : th.replies
+								// replies hidden by collapsing + replies not loaded yet
+								const hidden = th.replies.length - visible.length + Math.max(0, th.replies_count - th.replies.length)
+								const canExpand = isCollapsed || th.has_more_replies
+								const canCollapse = !isCollapsed && preview !== undefined && th.replies.length > preview
+								return (
+									<>
+										{visible.map((r) => renderComment(r, th.id, true))}
+										{(canExpand || canCollapse) && (
+											<li className="ml-6 flex flex-wrap gap-4 sm:ml-10 list-none">
+												{canExpand && (
+													<button
+														type="button"
+														disabled={loadingReplies[th.id]}
+														onClick={() => void loadMoreReplies(th)}
+														aria-expanded={false}
+														className="text-xs font-medium text-[var(--wc-saffron)] hover:underline disabled:opacity-60"
+													>
+														{loadingReplies[th.id]
+															? t('comments.loadingReplies')
+															: hidden > 0
+																? t('comments.showMoreRepliesCount', { count: hidden })
+																: t('comments.showMoreReplies')}
+													</button>
+												)}
+												{canCollapse && (
+													<button
+														type="button"
+														onClick={() => setCollapsed((prev) => ({ ...prev, [th.id]: true }))}
+														aria-expanded={true}
+														className="text-xs font-medium text-[var(--wc-text-muted)] hover:text-[var(--wc-text)] hover:underline"
+													>
+														{t('comments.hideReplies')}
+													</button>
+												)}
+											</li>
+										)}
+									</>
+								)
+							})()}
 						</ul>
 					</li>
 				))}

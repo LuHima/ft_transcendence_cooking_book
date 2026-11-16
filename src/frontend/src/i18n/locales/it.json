@@ -192,7 +192,8 @@
 		"showMoreRepliesCount": "Mostra le altre risposte ({{count}})",
 		"loadingReplies": "Caricamento risposte…",
 		"deactivated": "Disattivato",
-		"deactivatedHelp": "Commento disattivato: è visibile solo allo staff come contesto per la moderazione."
+		"deactivatedHelp": "Commento disattivato: è visibile solo allo staff come contesto per la moderazione.",
+		"hideReplies": "Nascondi risposte"
 	},
 	"home": {
 		"loadError": "Non è stato possibile caricare le ricette al momento.",
@@ -588,11 +589,11 @@
 		"previousWarnings_one": "{{count}} avviso precedente",
 		"previousWarnings_other": "{{count}} avvisi precedenti",
 		"clearTargetFilter": "Rimuovi il filtro",
-		"clientFilteredNote": "Filtro applicato sulle ultime {{max}} segnalazioni: il backend non supporta ancora target_id (#208).",
 		"confirmTitle": "Confermi il provvedimento?",
 		"filterReport": "Segnalazione #{{id}}",
 		"filterTarget": "Segnalazioni di {{target}} #{{id}}",
-		"reportNotFound": "Segnalazione #{{id}} non trovata."
+		"reportNotFound": "Segnalazione #{{id}} non trovata.",
+		"targetNeedsSubject": "Per filtrare per ID scegli anche il tipo di contenuto (ricetta, commento o utente)."
 	},
 	"admin": {
 		"subtitle": "Segnalazioni, utenti, ruoli e contenuti della piattaforma.",
@@ -683,14 +684,28 @@
 			},
 			"banTitle": "Banna {{name}}",
 			"banIntro": "L’utente non potrà accedere fino alla scadenza del ban. Il messaggio gli verrà mostrato al login, le note interne restano visibili solo allo staff.",
-			"disableHelp": "Reversibile: blocca l’accesso all’account, i contenuti restano. Si annulla con \"Riattiva\".",
+			"disableHelp": "Reversibile: blocca l’accesso, ricette e commenti restano invariati. Si annulla con \"Riattiva\".",
 			"purgeHelp": "Irreversibile: cancella definitivamente l’account.",
 			"internalNotesHelp": "Solo per lo staff: non verranno mai mostrate all’utente.",
-			"internalNotesUnsupported": "Il backend non accetta ancora le note interne (#207): svuota il campo e riprova.",
 			"optional": "facoltativo",
 			"unban": "Revoca ban",
 			"unbanTitle": "Revoca il ban di {{name}}",
-			"banHistoryForbidden": "Lo storico delle sanzioni per ora è visibile solo agli amministratori: l’accesso dei moderatori arriva con il backend #207."
+			"banHistoryForbidden": "Non hai i permessi per vedere lo storico delle sanzioni.",
+			"softDelete": "Elimina",
+			"softDeleteHelp": "Elimina l’account: le ricette pubbliche passano alla piattaforma e i commenti vengono disattivati. Si può ripristinare.",
+			"confirmSoftDeleteTitle": "Eliminare l’account di {{name}}?",
+			"confirmSoftDelete": "\"{{name}}\" non potrà più accedere, le sue ricette pubbliche passeranno alla piattaforma e i suoi commenti verranno disattivati. Con \"Ripristina\" l’account e i contenuti tornano attivi.",
+			"softDeleted": "Account di {{name}} eliminato.",
+			"alreadyDeleted": "Questo account è già stato eliminato.",
+			"deletedBadge": "Eliminato",
+			"deletedOn": "eliminato il {{date}}",
+			"restore": "Ripristina",
+			"restoreHelp": "Riattiva l’account e ne ripristina ricette e commenti.",
+			"reban": "Modifica ban",
+			"rebanTitle": "Nuovo ban per {{name}}",
+			"rebanIntro": "L’utente è già bannato: il nuovo ban sostituisce quello attuale (motivo, durata e messaggio).",
+			"warnedAt": "Data dell’avviso",
+			"warnedBy": "Avviso di"
 		},
 		"recipes": {
 			"confirmDelete": "Sospendere la ricetta \"{{title}}\"? Potrà essere riattivata in seguito.",
@@ -704,7 +719,10 @@
 				"active": "Attive",
 				"inactive": "Sospese"
 			},
-			"reportedOnlyUnsupported": "Il filtro \"solo segnalate\" non è ancora supportato dal backend (#208)."
+			"sort": {
+				"mostPending": "Più segnalazioni in attesa",
+				"mostReports": "Più segnalazioni (totale)"
+			}
 		},
 		"comments": {
 			"filter": "Filtra per testo o autore…",
@@ -725,8 +743,9 @@
 			"sort": {
 				"newest": "Più recenti",
 				"oldest": "Meno recenti",
-				"mostReported": "Più segnalati",
-				"recipe": "Per ricetta"
+				"mostReported": "Più segnalazioni (totale)",
+				"recipe": "Per ricetta",
+				"mostPending": "Più segnalazioni in attesa"
 			},
 			"inactive": "Disattivato",
 			"deactivate": "Disattiva",
@@ -789,8 +808,8 @@
 			}
 		},
 		"reportsLink": {
-			"resolve": "Gestisci segnalazioni",
-			"view": "Vedi segnalazioni"
+			"resolve": "Gestisci segnalazione",
+			"view": "Segnalazioni ({{count}})"
 		}
 	},
 	"friends": {

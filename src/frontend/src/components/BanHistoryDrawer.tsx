@@ -18,7 +18,7 @@ interface BanHistoryDrawerProps {
 	onClose: () => void
 }
 
-// Staff user: hydrated summary when the backend provides it (#207), otherwise the raw ID
+// Staff user: hydrated summary (banned_by / unbanned_by), otherwise the raw ID
 function StaffName({ actor, fallbackId }: { actor?: UserRef | null; fallbackId: number | null }) {
 	if (actor) {
 		return (
@@ -36,9 +36,9 @@ function StaffName({ actor, fallbackId }: { actor?: UserRef | null; fallbackId: 
 	)
 }
 
-// Sanction history of a user, shared by /admin and /moderation (side panel):
+// Sanction history of a user (bans and warnings), shared by /admin and /moderation (side panel):
 //   GET /admin/users/:id/ban-history?page=&limit=&sort_order=asc|desc → PaginatedBanHistoryResponseDto
-// Moderators need backend #207 (read access for the moderator role).
+// Readable by admins and moderators; internal_notes are staff-only.
 function BanHistoryDrawer({ user, onClose }: BanHistoryDrawerProps) {
 	const { t } = useTranslation()
 	const lang = useLang()
@@ -61,7 +61,6 @@ function BanHistoryDrawer({ user, onClose }: BanHistoryDrawerProps) {
 			})
 			.catch((err) => {
 				if (cancelled) return
-				// 403: per ora lo storico è solo per gli admin (accesso dei moderatori: backend #207)
 				const forbidden = err instanceof ApiError && err.status === 403
 				setResult({ key: requestKey, data: null, error: forbidden ? t('admin.users.banHistoryForbidden') : getErrorMessage(err, t('admin.users.banHistoryError')) })
 			})
@@ -125,74 +124,88 @@ function BanHistoryDrawer({ user, onClose }: BanHistoryDrawerProps) {
 				{items && items.length === 0 && !error && <p className="mt-4 text-sm text-[var(--wc-text-muted)]">{t('admin.users.banHistoryEmpty')}</p>}
 
 				<ol className="mt-4 space-y-3">
-					{items?.map((b) => (
-						<li key={b.id} className="rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-4 text-sm">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<span className="flex flex-wrap items-center gap-1.5">
-									{b.action && b.action !== 'ban' && (
-										<span className="rounded-full bg-[var(--wc-surface-raised)] px-2 py-0.5 text-[10px] uppercase">
-											{t(`moderation.actions.${b.action}`)}
+					{items?.map((b) => {
+						// avviso: nessuna durata né scadenza (duration_days null, is_permanent false)
+						const isWarn = b.action === 'warn'
+						return (
+							<li key={b.id} className="rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-4 text-sm">
+								<div className="flex flex-wrap items-center justify-between gap-2">
+									<span className="flex flex-wrap items-center gap-1.5">
+										{b.action && b.action !== 'ban' && (
+											<span className="rounded-full bg-[var(--wc-surface-raised)] px-2 py-0.5 text-[10px] uppercase">
+												{t(`moderation.actions.${b.action}`)}
+											</span>
+										)}
+										<span className="rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-xs text-[var(--wc-paprika)]">
+											{t(`report.reasons.${b.reason}`)}
+										</span>
+									</span>
+									{!isWarn && (
+										<span className="text-xs font-medium text-[var(--wc-text)]">
+											{b.is_permanent
+												? t('admin.users.bannedPermanent')
+												: b.duration_days != null
+													? t('admin.users.banDays', { count: b.duration_days })
+													: null}
 										</span>
 									)}
-									<span className="rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-xs text-[var(--wc-paprika)]">
-										{t(`report.reasons.${b.reason}`)}
-									</span>
-								</span>
-								<span className="text-xs font-medium text-[var(--wc-text)]">
-									{b.is_permanent ? t('admin.users.bannedPermanent') : t('admin.users.banDays', { count: b.duration_days ?? 0 })}
-								</span>
-							</div>
-							<dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-								<dt className="text-[var(--wc-text-muted)]">{t('admin.users.banStart')}</dt>
-								<dd>{fmt(b.banned_at)}</dd>
-								<dt className="text-[var(--wc-text-muted)]">{t('admin.users.banEnd')}</dt>
-								<dd>{b.is_permanent ? '∞' : fmt(b.expires_at)}</dd>
-								{b.unbanned_at && (
-									<>
-										<dt className="text-[var(--wc-text-muted)]">{t('admin.users.unbannedAt')}</dt>
-										<dd>
-											{fmt(b.unbanned_at)}
-											{(b.unbanned_by || b.unbanned_by_id != null) && (
-												<>
-													{' · '}
-													<StaffName actor={b.unbanned_by} fallbackId={b.unbanned_by_id} />
-												</>
-											)}
-										</dd>
-									</>
-								)}
-								<dt className="text-[var(--wc-text-muted)]">{t('admin.users.bannedBy')}</dt>
-								<dd>
-									<StaffName actor={b.banned_by} fallbackId={b.banned_by_id} />
-									{b.report_id != null && (
+								</div>
+								<dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+									<dt className="text-[var(--wc-text-muted)]">{isWarn ? t('admin.users.warnedAt') : t('admin.users.banStart')}</dt>
+									<dd>{fmt(b.banned_at)}</dd>
+									{!isWarn && (
 										<>
-											{' · '}
-											<Link to={reportsHref(base, { report_id: b.report_id, status: 'all' })} onClick={onClose} className="text-[var(--wc-saffron)] hover:underline">
-												{t('admin.users.fromReport', { id: b.report_id })}
-											</Link>
+											<dt className="text-[var(--wc-text-muted)]">{t('admin.users.banEnd')}</dt>
+											<dd>{b.is_permanent ? '∞' : fmt(b.expires_at)}</dd>
 										</>
 									)}
-								</dd>
-							</dl>
-							{b.description && (
-								<p className="mt-2 whitespace-pre-line break-words text-xs text-[var(--wc-text)]">
-									<span className="text-[var(--wc-text-muted)]">{t('moderation.userMessage')}: </span>
-									{b.description}
-								</p>
-							)}
-							{b.internal_notes && (
-								<p className="mt-2 whitespace-pre-line break-words rounded-lg border-l-4 border-[var(--wc-saffron)] bg-[var(--wc-bg)] px-3 py-2 text-xs text-[var(--wc-text)]">
-									<span className="block font-semibold text-[var(--wc-saffron)]">{t('moderation.internalNotes')}</span>
-									{b.internal_notes}
-								</p>
-							)}
-							{b.unban_reason && (
-								<p className="mt-1 whitespace-pre-line break-words text-xs text-[var(--wc-text-muted)]">
-									{t('admin.users.unbanReason')}: {b.unban_reason}
-								</p>
-							)}
-						</li>
-					))}
+									{b.unbanned_at && (
+										<>
+											<dt className="text-[var(--wc-text-muted)]">{t('admin.users.unbannedAt')}</dt>
+											<dd>
+												{fmt(b.unbanned_at)}
+												{(b.unbanned_by || b.unbanned_by_id != null) && (
+													<>
+														{' · '}
+														<StaffName actor={b.unbanned_by} fallbackId={b.unbanned_by_id} />
+													</>
+												)}
+											</dd>
+										</>
+									)}
+									<dt className="text-[var(--wc-text-muted)]">{isWarn ? t('admin.users.warnedBy') : t('admin.users.bannedBy')}</dt>
+									<dd>
+										<StaffName actor={b.banned_by} fallbackId={b.banned_by_id} />
+										{b.report_id != null && (
+											<>
+												{' · '}
+												<Link to={reportsHref(base, { report_id: b.report_id, status: 'all' })} onClick={onClose} className="text-[var(--wc-saffron)] hover:underline">
+													{t('admin.users.fromReport', { id: b.report_id })}
+												</Link>
+											</>
+										)}
+									</dd>
+								</dl>
+								{b.description && (
+									<p className="mt-2 whitespace-pre-line break-words text-xs text-[var(--wc-text)]">
+										<span className="text-[var(--wc-text-muted)]">{t('moderation.userMessage')}: </span>
+										{b.description}
+									</p>
+								)}
+								{b.internal_notes && (
+									<p className="mt-2 whitespace-pre-line break-words rounded-lg border-l-4 border-[var(--wc-saffron)] bg-[var(--wc-bg)] px-3 py-2 text-xs text-[var(--wc-text)]">
+										<span className="block font-semibold text-[var(--wc-saffron)]">{t('moderation.internalNotes')}</span>
+										{b.internal_notes}
+									</p>
+								)}
+								{b.unban_reason && (
+									<p className="mt-1 whitespace-pre-line break-words text-xs text-[var(--wc-text-muted)]">
+										{t('admin.users.unbanReason')}: {b.unban_reason}
+									</p>
+								)}
+							</li>
+						)
+					})}
 				</ol>
 
 				{data && (

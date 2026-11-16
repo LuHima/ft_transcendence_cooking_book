@@ -192,7 +192,8 @@
 		"showMoreRepliesCount": "Show remaining replies ({{count}})",
 		"loadingReplies": "Loading replies…",
 		"deactivated": "Deactivated",
-		"deactivatedHelp": "Deactivated comment: only staff can see it, as moderation context."
+		"deactivatedHelp": "Deactivated comment: only staff can see it, as moderation context.",
+		"hideReplies": "Hide replies"
 	},
 	"home": {
 		"loadError": "Recipes could not be loaded right now.",
@@ -588,11 +589,11 @@
 		"previousWarnings_one": "{{count}} previous warning",
 		"previousWarnings_other": "{{count}} previous warnings",
 		"clearTargetFilter": "Remove filter",
-		"clientFilteredNote": "Filter applied to the latest {{max}} reports: the backend does not support target_id yet (#208).",
 		"confirmTitle": "Confirm this action?",
 		"filterReport": "Report #{{id}}",
 		"filterTarget": "Reports for {{target}} #{{id}}",
-		"reportNotFound": "Report #{{id}} not found."
+		"reportNotFound": "Report #{{id}} not found.",
+		"targetNeedsSubject": "To filter by ID, also choose the content type (recipe, comment or user)."
 	},
 	"admin": {
 		"subtitle": "Reports, users, roles and platform content.",
@@ -683,14 +684,28 @@
 			},
 			"banTitle": "Ban {{name}}",
 			"banIntro": "The user cannot sign in until the ban expires. The message is shown at sign-in; internal notes stay visible to staff only.",
-			"disableHelp": "Reversible: blocks sign-in, content is kept. Undo with \"Reactivate\".",
+			"disableHelp": "Reversible: blocks sign-in, recipes and comments stay unchanged. Undo with \"Reactivate\".",
 			"purgeHelp": "Irreversible: permanently deletes the account.",
 			"internalNotesHelp": "Staff only: never shown to the user.",
-			"internalNotesUnsupported": "The backend does not accept internal notes yet (#207): clear the field and try again.",
 			"optional": "optional",
 			"unban": "Lift ban",
 			"unbanTitle": "Lift the ban on {{name}}",
-			"banHistoryForbidden": "The sanction history is currently visible to administrators only: moderator access comes with backend #207."
+			"banHistoryForbidden": "You do not have permission to view the sanction history.",
+			"softDelete": "Delete",
+			"softDeleteHelp": "Deletes the account: public recipes move to the platform and comments are deactivated. Can be restored.",
+			"confirmSoftDeleteTitle": "Delete {{name}}’s account?",
+			"confirmSoftDelete": "\"{{name}}\" will no longer be able to sign in, their public recipes will move to the platform and their comments will be deactivated. \"Restore\" brings the account and content back.",
+			"softDeleted": "{{name}}’s account deleted.",
+			"alreadyDeleted": "This account has already been deleted.",
+			"deletedBadge": "Deleted",
+			"deletedOn": "deleted on {{date}}",
+			"restore": "Restore",
+			"restoreHelp": "Reactivates the account and restores its recipes and comments.",
+			"reban": "Change ban",
+			"rebanTitle": "New ban for {{name}}",
+			"rebanIntro": "The user is already banned: the new ban replaces the current one (reason, duration and message).",
+			"warnedAt": "Warning date",
+			"warnedBy": "Warned by"
 		},
 		"recipes": {
 			"confirmDelete": "Suspend the recipe \"{{title}}\"? It can be reactivated later.",
@@ -704,7 +719,10 @@
 				"active": "Active",
 				"inactive": "Suspended"
 			},
-			"reportedOnlyUnsupported": "The \"reported only\" filter is not supported by the backend yet (#208)."
+			"sort": {
+				"mostPending": "Most pending reports",
+				"mostReports": "Most reports (total)"
+			}
 		},
 		"comments": {
 			"filter": "Filter by text or author…",
@@ -725,8 +743,9 @@
 			"sort": {
 				"newest": "Newest",
 				"oldest": "Oldest",
-				"mostReported": "Most reported",
-				"recipe": "By recipe"
+				"mostReported": "Most reports (total)",
+				"recipe": "By recipe",
+				"mostPending": "Most pending reports"
 			},
 			"inactive": "Deactivated",
 			"deactivate": "Deactivate",
@@ -789,8 +808,8 @@
 			}
 		},
 		"reportsLink": {
-			"resolve": "Resolve reports",
-			"view": "View reports"
+			"resolve": "Resolve report",
+			"view": "Reports ({{count}})"
 		}
 	},
 	"friends": {

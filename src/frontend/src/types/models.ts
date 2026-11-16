@@ -429,7 +429,8 @@ export interface PaginatedNotifications {
 }
 
 // ─── admin comment audit (GET /admin/comments → AdminCommentItemDto) ───
-export type AdminCommentSortBy = 'created_at' | 'reports_count' | 'recipe'
+// pending_reports_count = active pending reports (default with reported_only=true); reports_count = all statuses
+export type AdminCommentSortBy = 'created_at' | 'pending_reports_count' | 'reports_count' | 'recipe'
 export type AdminCommentFormat = 'flat' | 'threaded'
 export type AdminCommentStatus = 'active' | 'inactive' | 'all'
 
@@ -443,10 +444,13 @@ export interface AdminComment {
 	is_edited: boolean
 	created_at: string
 	updated_at: string | null
+	// Reports filed on this comment across all statuses
 	reports_count: number
 	// Reports still pending on this comment
-	pending_reports_count?: number
-	has_pending_reports?: boolean
+	pending_reports_count: number
+	has_pending_reports: boolean
+	// Most recent pending report (null when none): 1-click resolution from the audit queue
+	latest_pending_report_id: number | null
 	user: RecipeAuthor | null
 	recipe: { id: number; title: string } | null
 	// Only with format=threaded (ThreadedAdminCommentItemDto)
@@ -459,19 +463,22 @@ export interface AdminComment {
 	replies?: AdminComment[]
 }
 
-// ─── admin recipes (GET /admin/recipes = GET /recipes filters + status [+ reported_only, #208]) ───
+// ─── admin recipes (GET /admin/recipes = GET /recipes filters + status + reported_only) ───
 export type AdminRecipeStatus = 'all' | 'active' | 'inactive'
+// Recipe sort fields + report counters (pending_reports_count is the default with reported_only=true)
+export type AdminRecipeSortBy = RecipeSortBy | 'pending_reports_count' | 'reports_count'
 
-// Recipe row of GET /admin/recipes: report indicators added by #208 (optional until the backend ships them)
+// Recipe row of GET /admin/recipes (AdminRecipeItemDto)
 export interface AdminRecipe extends RecipeSummary {
-	reports_count?: number
-	pending_reports_count?: number
-	has_pending_reports?: boolean
-	// Latest pending report, when the backend provides it
-	pending_report_id?: number | null
+	// Reports filed on this recipe across all statuses
+	reports_count: number
+	pending_reports_count: number
+	has_pending_reports: boolean
+	// Most recent pending report (null when none): 1-click resolution
+	latest_pending_report_id: number | null
 }
 
-// Compact staff/user summary hydrated by the backend (#207: resolved_by, banned_by, unbanned_by)
+// Compact staff/user summary hydrated by the backend (resolved_by, banned_by, unbanned_by)
 export interface UserRef {
 	id: number
 	username: string
@@ -492,14 +499,15 @@ export interface AdminUser extends User {
 export interface BanHistoryItem {
 	id: string
 	user_id: number
-	banned_by_id: number
+	// null when the staff account no longer exists
+	banned_by_id: number | null
 	report_id: number | null
 	// Moderation action recorded with the sanction (ReportAction, normally 'ban')
 	action?: ModerationAction
-	// Hydrated staff actors (#207); the *_id fields stay as fallback
+	// Hydrated staff actors; the *_id fields stay as fallback
 	banned_by?: UserRef | null
 	unbanned_by?: UserRef | null
-	// Staff-only context (#207), never shown to the sanctioned user
+	// Staff-only context, never shown to the sanctioned user
 	internal_notes?: string | null
 	reason: ReportReason
 	description: string | null
@@ -599,14 +607,14 @@ export interface ReportItem {
 	// Actions taken on resolution (e.g. ['delete_content', 'warn'])
 	actions?: ModerationAction[]
 	resolved_by_id: number | null
-	// Hydrated resolver (#207); resolved_by_id stays as fallback
+	// Hydrated resolver; resolved_by_id stays as fallback
 	resolved_by?: UserRef | null
 	resolved_at: string | null
 	created_at: string
 	updated_at?: string
 }
 
-// PATCH /admin/users/:id when banning or reactivating an account (UpdateAdminUserDto, #207)
+// PATCH /admin/users/:id when banning or reactivating an account (UpdateAdminUserDto)
 export interface AdminUserStatusDto {
 	status: UserStatus
 	ban_reason?: ReportReason
@@ -614,7 +622,7 @@ export interface AdminUserStatusDto {
 	is_permanent?: boolean
 	// User-facing explanation
 	ban_description?: string
-	// Staff-only notes (#207)
+	// Staff-only notes
 	internal_notes?: string
 	// When lifting a ban
 	unban_reason?: string
@@ -626,6 +634,8 @@ export interface ReportLinkFilters {
 	target_id?: number
 	status?: ReportStatus | 'all'
 	report_id?: number
+	// open the resolution dialog of report_id right away (1-click from recipes / comments)
+	resolve?: boolean
 }
 
 // ─── banned account: 403 { code: 'ACCOUNT_BANNED', details } from /auth/signin and /auth/signin/google ───

@@ -8,27 +8,36 @@ import { useLang } from '../../lib/useLang'
 import { canPurge, canRestoreRecipe } from '../../lib/permissions'
 import { reportsHref, useStaffBasePath } from '../../lib/staffLinks'
 import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
-import { DEFAULT_RECIPE_SORT, parseRecipeSort, type RecipeSortValue } from '../../lib/recipeSort'
+import { DEFAULT_RECIPE_SORT, RECIPE_SORT_OPTIONS } from '../../lib/recipeSort'
 import { SUPPORTED_LANGS } from '../../i18n'
 import BanHistoryDrawer from '../../components/BanHistoryDrawer'
 import Pagination from '../../components/Pagination'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import PrivacyBadge from '../../components/PrivacyBadge'
-import RecipeSortSelect from '../../components/RecipeSortSelect'
 import { ListSkeleton } from '../../components/Skeleton'
-import type { AdminRecipe, AdminRecipeStatus, Course, Paginated, RecipeDifficulty } from '../../types/models'
+import type { AdminRecipe, AdminRecipeSortBy, AdminRecipeStatus, Course, Paginated, RecipeDifficulty, SortOrder } from '../../types/models'
 
 const PAGE_SIZE = 15
 const STATUSES: AdminRecipeStatus[] = ['all', 'active', 'inactive']
 const COURSES: Course[] = ['appetizer', 'first_course', 'main_course', 'dessert', 'side_dish', 'drink', 'snack']
 const DIFFICULTIES: RecipeDifficulty[] = ['easy', 'medium', 'hard']
 
+// ordinamenti delle ricette + contatori di segnalazioni (AdminRecipeSortBy); label = chiave i18n
+const SORT_OPTIONS = [
+	...RECIPE_SORT_OPTIONS.map((o) => ({ value: o.value as string, label: `search.sort.${o.label}` })),
+	{ value: 'pending_reports_count:desc', label: 'admin.recipes.sort.mostPending' },
+	{ value: 'reports_count:desc', label: 'admin.recipes.sort.mostReports' },
+]
+// default del backend con reported_only=true (se sort_by non viene inviato)
+const REPORTED_DEFAULT_SORT = 'pending_reports_count:desc'
+
 const SELECT =
 	'rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm text-[var(--wc-text)] outline-none focus:border-[var(--wc-basil)]'
 
 // elenco ricette per lo staff (admin e moderatori, anche dalla pagina /moderation):
 //   GET    /admin/recipes?page=&limit=&lang=&search=&status=&course=&difficulty=&source_lang=&author_id=&reported_only=&sort_by=&sort_order=
-//          (#208: reports_count, pending_reports_count, has_pending_reports per riga e filtro reported_only)
+//          (per riga: reports_count, pending_reports_count, has_pending_reports, latest_pending_report_id;
+//           sort_by anche pending_reports_count / reports_count, predefinito con reported_only=true)
 //   DELETE /recipes/:id                       → sospensione (admin e moderatori; 403 sulle ricette degli admin per i moderatori)
 //   PATCH  /recipes/:id { is_active: true }   → riattivazione (autore o admin)
 //   DELETE /recipes/:id?hard=true             → eliminazione definitiva (solo admin)
@@ -48,8 +57,9 @@ function AdminRecipes() {
 	const [sourceLang, setSourceLang] = useState('')
 	const [authorIdText, setAuthorIdText] = useState('')
 	const [authorId, setAuthorId] = useState<number | undefined>()
-	const [sort, setSort] = useState<RecipeSortValue>(DEFAULT_RECIPE_SORT)
-	// solo ricette con segnalazioni in attesa (#208)
+	// null = ordinamento predefinito del backend (created_at desc, oppure pending_reports_count desc con "solo segnalate")
+	const [sort, setSort] = useState<string | null>(null)
+	// solo ricette con segnalazioni in attesa
 	const [reportedOnly, setReportedOnly] = useState(false)
 	const [page, setPage] = useState(1)
 	const [reload, setReload] = useState(0)
@@ -57,7 +67,8 @@ function AdminRecipes() {
 	const [purging, setPurging] = useState<AdminRecipe | null>(null)
 	const [suspending, setSuspending] = useState<AdminRecipe | null>(null)
 	const [history, setHistory] = useState<{ id: number; username: string } | null>(null)
-	const { sortBy, sortOrder } = parseRecipeSort(sort)
+	const shownSort = sort ?? (reportedOnly ? REPORTED_DEFAULT_SORT : DEFAULT_RECIPE_SORT)
+	const [sortBy, sortOrder] = sort ? (sort.split(':') as [AdminRecipeSortBy, SortOrder]) : [undefined, undefined]
 	const listTopRef = useRef<HTMLDivElement>(null)
 	useScrollIntoViewOnChange(page, listTopRef)
 
@@ -105,10 +116,8 @@ function AdminRecipes() {
 			})
 			.catch((err) => {
 				if (cancelled) return
-				// backend senza #208: reported_only non ancora accettato
-				const unsupported = err instanceof ApiError && err.status === 400 && /reported_only/.test(err.message)
 				setData(null)
-				setError(unsupported ? t('admin.recipes.reportedOnlyUnsupported') : getErrorMessage(err, t('myRecipes.loadError')))
+				setError(getErrorMessage(err, t('myRecipes.loadError')))
 			})
 		return () => {
 			cancelled = true
@@ -208,7 +217,16 @@ function AdminRecipes() {
 						{t('admin.comments.reportedOnly')}
 					</label>
 					<div className="ml-auto">
-						<RecipeSortSelect value={sort} onChange={(v) => changeFilter(() => setSort(v))} />
+						<label className="flex items-center gap-2 text-sm text-[var(--wc-text-muted)]">
+							{t('search.sortBy')}
+							<select value={shownSort} onChange={(e) => changeFilter(() => setSort(e.target.value))} className={SELECT}>
+								{SORT_OPTIONS.map((o) => (
+									<option key={o.value} value={o.value}>
+										{t(o.label)}
+									</option>
+								))}
+							</select>
+						</label>
 					</div>
 				</div>
 
@@ -307,7 +325,7 @@ function AdminRecipes() {
 												{t('recipe.suspendedBadge')}
 											</span>
 										)}
-										{/* segnalazioni (#208): in attesa in evidenza, altrimenti il totale storico */}
+										{/* segnalazioni: in attesa in evidenza, altrimenti il totale storico */}
 										{r.has_pending_reports && (
 											<span className="shrink-0 rounded-full bg-[var(--wc-paprika)] px-2 py-0.5 text-[10px] font-semibold text-[var(--wc-bg)]">
 												⚑ {t('admin.comments.reported')}
@@ -333,12 +351,21 @@ function AdminRecipes() {
 									</p>
 								</div>
 								<div className="flex shrink-0 flex-wrap items-center gap-2 text-sm">
+									{/* in un clic: dialogo di risoluzione dell'ultima segnalazione in attesa */}
+									{r.latest_pending_report_id != null && (
+										<Link
+											to={reportsHref(base, { report_id: r.latest_pending_report_id, resolve: true })}
+											className="rounded-full bg-[var(--wc-paprika)] px-3 py-1.5 font-medium text-[var(--wc-bg)] hover:opacity-90"
+										>
+											{t('admin.reportsLink.resolve')}
+										</Link>
+									)}
 									{hasReports && (
 										<Link
-											to={reportsHref(base, { subject: 'recipe', target_id: r.id, status: r.has_pending_reports ? 'pending' : 'all' })}
+											to={reportsHref(base, { subject: 'recipe', target_id: r.id, status: 'all' })}
 											className="rounded-full border border-[var(--wc-paprika)] px-3 py-1.5 text-[var(--wc-paprika)] hover:bg-[var(--wc-paprika)] hover:text-[var(--wc-bg)]"
 										>
-											{r.has_pending_reports ? t('admin.reportsLink.resolve') : t('admin.reportsLink.view')}
+											{t('admin.reportsLink.view', { count: totalReports })}
 										</Link>
 									)}
 									{r.author && (

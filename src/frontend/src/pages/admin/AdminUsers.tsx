@@ -34,10 +34,13 @@ import {
 //   GET    /admin/users?page=&limit=&search=&role=&status=&sort_by=&sort_order=  -> PaginatedAdminUsersResponseDto
 //   POST   /admin/users                 { username, email, password, role }
 //   PATCH  /admin/users/:id             { username?, email?, role?, status?, password? }
-//          status 'disabled' = Disable (reversibile) · 'active' = Reactivate (+ unban_reason se era bannato)
-//          status 'banned' + ban_reason, ban_duration_days | is_permanent, ban_description, internal_notes (#207)
-//   DELETE /admin/users/:id?hard=true   Purge: eliminazione definitiva (il soft delete senza hard è ridondante
-//                                       con Disable e non viene più offerto, vedi #207)
+//          status 'disabled' = Disable: blocca l'accesso, contenuti intatti, deleted_at resta null (reversibile)
+//          status 'active'   = Reactivate (+ unban_reason se era bannato; ripristina anche un account soft-deleted)
+//          status 'banned'   + ban_reason, ban_duration_days | is_permanent, ban_description, internal_notes
+//                              (da active, disabled o banned = nuovo ban; 409 sugli account soft-deleted)
+//   DELETE /admin/users/:id             Soft-Delete: deleted_at, ricette pubbliche alla piattaforma, commenti
+//                                       disattivati (409 se già eliminato; si annulla con Reactivate)
+//   DELETE /admin/users/:id?hard=true   Purge: eliminazione definitiva
 //   GET    /admin/users/:id/ban-history (BanHistoryDrawer condiviso con /moderation)
 //   POST   /admin/users/:id/avatar      (multipart, campo "file")
 //   DELETE /admin/users/:id/avatar
@@ -83,6 +86,7 @@ function AdminUsers() {
 	const [creating, setCreating] = useState(false)
 	const [purging, setPurging] = useState<AdminUser | null>(null)
 	const [banning, setBanning] = useState<AdminUser | null>(null)
+	const [softDeleting, setSoftDeleting] = useState<AdminUser | null>(null)
 	const [unbanning, setUnbanning] = useState<AdminUser | null>(null)
 	const [history, setHistory] = useState<AdminUser | null>(null)
 	const listTopRef = useRef<HTMLDivElement>(null)
@@ -156,12 +160,28 @@ function AdminUsers() {
 			toast.success(t('admin.users.updated'))
 			return true
 		} catch (err) {
-			// backend senza #207: internal_notes non ancora accettato (forbidNonWhitelisted)
-			const notesUnsupported = err instanceof ApiError && err.status === 400 && /internal_notes/.test(err.message)
-			toast.error(notesUnsupported ? t('admin.users.internalNotesUnsupported') : getErrorMessage(err, t('admin.users.updateError')))
+			toast.error(getErrorMessage(err, t('admin.users.updateError')))
 			return false
 		} finally {
 			setBusyId(null)
+		}
+	}
+
+	// Soft-Delete: DELETE senza hard (deleted_at, ricette pubbliche alla piattaforma, commenti disattivati)
+	async function softDeleteUser(u: AdminUser) {
+		setBusyId(u.id)
+		try {
+			await api.delete(`/admin/users/${u.id}`)
+			toast.success(t('admin.users.softDeleted', { name: u.username }))
+			// ricarica: deleted_at e stato arrivano dal backend
+			setReload((n) => n + 1)
+		} catch (err) {
+			toast.error(
+				err instanceof ApiError && err.status === 409 ? t('admin.users.alreadyDeleted') : getErrorMessage(err, t('admin.users.deleteError')),
+			)
+		} finally {
+			setBusyId(null)
+			setSoftDeleting(null)
 		}
 	}
 
@@ -259,6 +279,7 @@ function AdminUsers() {
 							{users.map((u) => {
 								const isSelf = me?.id === u.id
 								const status = u.status ?? 'active'
+								const deleted = Boolean(u.deleted_at)
 								return (
 									<tr key={u.id} className="border-t border-[var(--wc-border)]">
 										<td className="p-3">
@@ -300,6 +321,19 @@ function AdminUsers() {
 										</td>
 										<td className="p-3">
 											<span className={`font-medium ${STATUS_COLOR[status]}`}>{t(`admin.users.statuses.${status}`)}</span>
+											{/* soft-deleted: account eliminato (deleted_at), distinto da un semplice "Disattivato" */}
+											{u.deleted_at && (
+												<span className="ml-2 rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
+													{t('admin.users.deletedBadge')}
+												</span>
+											)}
+											{u.deleted_at && (
+												<span className="block text-xs text-[var(--wc-text-muted)]">
+													{t('admin.users.deletedOn', {
+														date: new Date(u.deleted_at).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric' }),
+													})}
+												</span>
+											)}
 											{status === 'banned' && (
 												<span className="block text-xs text-[var(--wc-text-muted)]">
 													{u.banned_until
@@ -332,32 +366,26 @@ function AdminUsers() {
 												>
 													{t('common.edit')}
 												</button>
-												{status === 'active' && (
-													<>
-														<button
-															disabled={isSelf || busyId === u.id}
-															onClick={() => void patchUser(u, { status: 'disabled' })}
-															title={t('admin.users.disableHelp')}
-															className="rounded-full border border-[var(--wc-border)] px-3 py-1 hover:border-[var(--wc-saffron)] disabled:opacity-40"
-														>
-															{t('admin.users.disable')}
-														</button>
-														<button
-															disabled={isSelf || busyId === u.id}
-															onClick={() => setBanning(u)}
-															className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-40"
-														>
-															{t('admin.users.ban')}
-														</button>
-													</>
+												{/* Disable: reversibile, nessun effetto sui contenuti (non per gli account eliminati) */}
+												{status === 'active' && !deleted && (
+													<button
+														disabled={isSelf || busyId === u.id}
+														onClick={() => void patchUser(u, { status: 'disabled' })}
+														title={t('admin.users.disableHelp')}
+														className="rounded-full border border-[var(--wc-border)] px-3 py-1 hover:border-[var(--wc-saffron)] disabled:opacity-40"
+													>
+														{t('admin.users.disable')}
+													</button>
 												)}
-												{status === 'disabled' && (
+												{/* Reactivate: da disattivato o da eliminato (ripristina i contenuti); il ban si revoca con "Revoca ban" */}
+												{(status === 'disabled' || (deleted && status !== 'banned')) && (
 													<button
 														disabled={busyId === u.id}
 														onClick={() => void patchUser(u, { status: 'active' })}
+														title={deleted ? t('admin.users.restoreHelp') : undefined}
 														className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-basil)] hover:border-[var(--wc-basil)] disabled:opacity-40"
 													>
-														{t('admin.users.reactivate')}
+														{deleted ? t('admin.users.restore') : t('admin.users.reactivate')}
 													</button>
 												)}
 												{status === 'banned' && (
@@ -369,7 +397,28 @@ function AdminUsers() {
 														{t('admin.users.unban')}
 													</button>
 												)}
-												{/* Purge = eliminazione definitiva; il vecchio "Elimina" (soft delete) faceva lo stesso di Disable */}
+												{/* Ban: da attivo, disattivato o già bannato (nuovo ban); non sugli account eliminati (409) */}
+												{!deleted && (
+													<button
+														disabled={isSelf || busyId === u.id}
+														onClick={() => setBanning(u)}
+														className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-40"
+													>
+														{status === 'banned' ? t('admin.users.reban') : t('admin.users.ban')}
+													</button>
+												)}
+												{/* Soft-Delete: diverso da Disable (trasferisce le ricette pubbliche, disattiva i commenti) */}
+												{!deleted && (
+													<button
+														disabled={isSelf || busyId === u.id}
+														onClick={() => setSoftDeleting(u)}
+														title={t('admin.users.softDeleteHelp')}
+														className="rounded-full border border-[var(--wc-border)] px-3 py-1 text-[var(--wc-paprika)] hover:border-[var(--wc-paprika)] disabled:opacity-40"
+													>
+														{t('admin.users.softDelete')}
+													</button>
+												)}
+												{/* Purge = eliminazione definitiva */}
 												<button
 													disabled={isSelf || busyId === u.id}
 													onClick={() => setPurging(u)}
@@ -406,6 +455,17 @@ function AdminUsers() {
 					}}
 				/>
 			)}
+			{softDeleting && (
+				<ConfirmDialog
+					title={t('admin.users.confirmSoftDeleteTitle', { name: softDeleting.username })}
+					confirmLabel={t('admin.users.softDelete')}
+					danger
+					onConfirm={() => softDeleteUser(softDeleting)}
+					onClose={() => setSoftDeleting(null)}
+				>
+					<p>{t('admin.users.confirmSoftDelete', { name: softDeleting.username })}</p>
+				</ConfirmDialog>
+			)}
 			{purging && (
 				<ConfirmDialog
 					title={t('admin.users.confirmPurgeTitle', { name: purging.username })}
@@ -422,6 +482,7 @@ function AdminUsers() {
 			{banning && (
 				<BanUserDialog
 					user={banning}
+					reban={banning.status === 'banned'}
 					onClose={() => setBanning(null)}
 					onSubmit={async (body) => {
 						if (await patchUser(banning, body)) setBanning(null)
@@ -796,14 +857,16 @@ const DIALOG_FIELD =
 	'w-full rounded-lg border border-[var(--wc-border)] bg-[var(--wc-surface)] px-3 py-2 text-sm text-[var(--wc-text)] outline-none focus:border-[var(--wc-basil)]'
 const DIALOG_LABEL = 'mb-1 block text-sm text-[var(--wc-text-muted)]'
 
-// Ban di un account dal pannello utenti (sostituisce window.confirm): motivo, durata o permanente,
-// messaggio per l'utente e note interne per lo staff (internal_notes, #207)
+// Ban di un account dal pannello utenti: motivo, durata o permanente, messaggio per l'utente
+// e note interne per lo staff (internal_notes). reban = l'utente è già bannato: il nuovo ban sostituisce il precedente
 function BanUserDialog({
 	user,
+	reban = false,
 	onClose,
 	onSubmit,
 }: {
 	user: AdminUser
+	reban?: boolean
 	onClose: () => void
 	onSubmit: (body: AdminUserStatusDto) => Promise<void>
 }) {
@@ -830,7 +893,6 @@ function BanUserDialog({
 			ban_reason: reason,
 			...(permanent ? { is_permanent: true } : n !== undefined ? { ban_duration_days: n } : {}),
 			...(description.trim() ? { ban_description: description.trim() } : {}),
-			// inviato solo se compilato: il backend senza #207 rifiuta il campo
 			...(notes.trim() ? { internal_notes: notes.trim() } : {}),
 		}
 		setSubmitting(true)
@@ -841,7 +903,7 @@ function BanUserDialog({
 		}
 	}
 
-	const title = t('admin.users.banTitle', { name: user.username })
+	const title = t(reban ? 'admin.users.rebanTitle' : 'admin.users.banTitle', { name: user.username })
 
 	return (
 		<div
@@ -863,7 +925,7 @@ function BanUserDialog({
 						×
 					</button>
 				</div>
-				<p className="text-sm text-[var(--wc-text-muted)]">{t('admin.users.banIntro')}</p>
+				<p className="text-sm text-[var(--wc-text-muted)]">{t(reban ? 'admin.users.rebanIntro' : 'admin.users.banIntro')}</p>
 
 				<div>
 					<label htmlFor="ban-reason" className={DIALOG_LABEL}>
@@ -950,7 +1012,7 @@ function BanUserDialog({
 						disabled={submitting}
 						className="rounded-full bg-[var(--wc-paprika)] px-5 py-2 text-sm font-medium text-[var(--wc-bg)] disabled:opacity-60"
 					>
-						{submitting ? t('common.sending') : t('admin.users.ban')}
+						{submitting ? t('common.sending') : reban ? t('admin.users.reban') : t('admin.users.ban')}
 					</button>
 				</div>
 			</form>
