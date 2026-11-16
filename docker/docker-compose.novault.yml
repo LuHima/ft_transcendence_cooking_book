@@ -8,18 +8,31 @@
 # The default mode (USE_VAULT=true) does not load this file, so no secret from
 # .env ever reaches the containers.
 services:
+  vault:
+    healthcheck:
+      disable: true
+
   database:
     env_file:
       - .env
     environment:
       USE_VAULT: "false"
+    depends_on:
+      vault:
+        condition: service_started
 
   backend:
     env_file:
       - .env
     environment:
       USE_VAULT: "false"
+    depends_on:
+      vault:
+        condition: service_started
 
   acme:
     environment:
       USE_VAULT: "false"
+    depends_on:
+      vault:
+        condition: service_started

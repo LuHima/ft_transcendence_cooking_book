@@ -19,6 +19,7 @@ We decided to structure development and production environments using Docker Com
    - `make` (`all`) and `make setup`: Check Vault status; if sealed, trigger `vault-unseal` before launching containers.
    - `make up`: Retained as a pure `docker compose up -d` wrapper.
    - `make dev` and `make prod`: Explicitly select development overrides or production targets.
+   - **Vault Healthcheck Contract**: `vault` defines a `HEALTHCHECK` (`vault status`) that succeeds only when Vault is initialized and unsealed. `database`, `backend`, and `acme` depend on `vault` with `condition: service_healthy`. When `USE_VAULT=false`, `docker/docker-compose.novault.yml` overrides those dependencies to `condition: service_started` and disables `vault`'s healthcheck so the stack does not block on an uninitialized Vault.
 4. **ACME DNS-01 Fallback**: In `docker/acme/entrypoint.sh`, attempt Infomaniak DNS-01 challenge first. If credentials are missing or the challenge fails, log a warning and generate a self-signed certificate with Subject Alternative Names (SAN) matching `${DOMAIN_NAME}`, `localhost`, and `127.0.0.1`, guaranteeing zero-downtime service availability.
 
 ## Consequences

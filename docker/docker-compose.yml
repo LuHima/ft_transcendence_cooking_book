@@ -31,6 +31,9 @@ services:
     networks:
       - db-net
       - vault-net
+    depends_on:
+      vault:
+        condition: service_healthy
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
@@ -111,6 +114,9 @@ services:
     networks:
       - acme-net
       - vault-net
+    depends_on:
+      vault:
+        condition: service_healthy
     restart: unless-stopped
 
   #----------------------------------------------------------------------------#
@@ -156,14 +162,14 @@ services:
       - back-net
       - db-net
       - vault-net #reaches vault
-    # Start backend only after database is completely ready and healthy
+    # Start backend only after database, libretranslate, and vault are ready and healthy
     depends_on:
       database:
         condition: service_healthy
       libretranslate:
         condition: service_healthy
       vault:
-        condition: service_started
+        condition: service_healthy
     # Auto-restart on crash or reboot unless manually stopped
     restart: unless-stopped
 
