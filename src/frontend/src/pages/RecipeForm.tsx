@@ -72,6 +72,14 @@ function localizedSnapshot(
 	return JSON.stringify([title, description, tips, preservation, steps.map((st) => [st.title, st.description])])
 }
 
+// Ingredient quantity: digits and at most one decimal separator ("," is accepted and stored as ".")
+// Letters, signs and exponents ("e") are dropped while typing
+function sanitizeQuantity(raw: string): string {
+	const cleaned = raw.replace(',', '.').replace(/[^\d.]/g, '')
+	const dot = cleaned.indexOf('.')
+	return dot === -1 ? cleaned : cleaned.slice(0, dot + 1) + cleaned.slice(dot + 1).replace(/\./g, '')
+}
+
 // Sum of step durations: empty or invalid values count as 0
 function sumStepDurations(steps: { duration: string }[]): number {
 	return steps.reduce((sum, st) => {
@@ -926,14 +934,14 @@ function RecipeForm() {
 											onChange={(ingredient) => updateIngredient(row.key, { ingredient })}
 										/>
 										<input
-											type="number"
-											min={0}
-											step="any"
+											type="text"
+											inputMode="decimal"
+											autoComplete="off"
 											aria-label={t('form.quantity')}
 											placeholder={t('form.quantity')}
 											value={row.quantity}
 											aria-invalid={Boolean(err) && Boolean(row.ingredient)}
-											onChange={(e) => updateIngredient(row.key, { quantity: e.target.value })}
+											onChange={(e) => updateIngredient(row.key, { quantity: sanitizeQuantity(e.target.value) })}
 											className={`${FIELD_BASE} h-[42px] w-24 shrink-0`}
 										/>
 										<select
