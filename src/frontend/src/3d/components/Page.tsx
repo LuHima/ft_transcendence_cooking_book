@@ -1,7 +1,9 @@
 import { useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
-import { DoubleSide, Texture } from "three";
-import "../materials/PageCurlMaterial"; // side-effect: registra extend()
+import { DoubleSide } from "three";
+import type { Texture } from "three";
+import "../materials/PageCurlMaterial";
+import type { PageCurlMaterialInstance } from "../materials/PageCurlMaterial";
 
 interface PageProps {
   progressRef?: RefObject<number>;
@@ -22,7 +24,7 @@ export function Page({
   height,
   position,
 }: PageProps) {
-  const matRef = useRef<any>(null);
+  const matRef = useRef<PageCurlMaterialInstance | null>(null);
 
   function easeInOutCubic(t: number) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -38,7 +40,6 @@ export function Page({
   return (
     <mesh position={position}>
       <planeGeometry args={[width - 0.02, height, 32, 32]} />
-      {/* @ts-expect-error - ignores the following error */}
       <pageCurlMaterial
         ref={matRef}
         uMapFront={frontMap}

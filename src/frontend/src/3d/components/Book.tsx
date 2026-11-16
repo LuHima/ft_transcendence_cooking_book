@@ -9,7 +9,7 @@ import {
   SRGBColorSpace,
   Vector3,
 } from "three";
-import type { Group, MeshBasicMaterial } from "three";
+import type { Group, MeshBasicMaterial, Texture } from "three";
 
 import { Page } from "./Page.tsx";
 import { useBookPages } from "../hooks/useBookPages.ts";
@@ -177,45 +177,85 @@ function ApiPageButton({
 
 function useLogoTexture() {
   // carica la texture del logo usata sulla copertina del libro
-  const logoMap = useTexture(logoUrl);
-  logoMap.colorSpace = SRGBColorSpace;
-  return logoMap;
+  const source = useTexture(logoUrl);
+  const texture = useMemo(() => {
+    const clone = source.clone();
+    clone.colorSpace = SRGBColorSpace;
+    return clone;
+  }, [source]);
+
+  useEffect(() => () => texture.dispose(), [texture]);
+  return texture;
+}
+
+function cloneLeatherTexture(texture: Texture, isColorMap = false) {
+  const clone = texture.clone();
+  clone.wrapS = clone.wrapT = RepeatWrapping;
+  clone.repeat.set(1, 1);
+  if (isColorMap) clone.colorSpace = SRGBColorSpace;
+  return clone;
 }
 
 function useLeatherMaterial() {
   // carica le texture della pelle per la copertina principale del libro
-  const [colorMap, roughnessMap, normalMap, dispMap] = useTexture([
+  const [colorSource, roughnessSource, normalSource, dispSource] = useTexture([
     leatherColorUrl,
     leatherRoughnessUrl,
     leatherNormalUrl,
     leatherDispUrl,
   ]);
 
-  colorMap.colorSpace = SRGBColorSpace;
+  const [colorMap, roughnessMap, normalMap, dispMap] = useMemo(
+    () => [
+      cloneLeatherTexture(colorSource, true),
+      cloneLeatherTexture(roughnessSource),
+      cloneLeatherTexture(normalSource),
+      cloneLeatherTexture(dispSource),
+    ],
+    [colorSource, roughnessSource, normalSource, dispSource],
+  );
 
-  [colorMap, roughnessMap, normalMap, dispMap].forEach((tex) => {
-    tex.wrapS = tex.wrapT = RepeatWrapping;
-    tex.repeat.set(1, 1);
-  });
+  useEffect(
+    () => () => {
+      colorMap.dispose();
+      roughnessMap.dispose();
+      normalMap.dispose();
+      dispMap.dispose();
+    },
+    [colorMap, roughnessMap, normalMap, dispMap],
+  );
 
   return { colorMap, roughnessMap, normalMap, dispMap };
 }
 
 function useLeatherMaterial1() {
   // carica un altro set di texture per il materiale della cerniera del libro
-  const [colorMap1, roughnessMap1, normalMap1, dispMap1] = useTexture([
+  const [colorSource1, roughnessSource1, normalSource1, dispSource1] = useTexture([
     leatherColorUrl1,
     leatherRoughnessUrl1,
     leatherNormalUrl1,
     leatherDispUrl1,
   ]);
 
-  colorMap1.colorSpace = SRGBColorSpace;
+  const [colorMap1, roughnessMap1, normalMap1, dispMap1] = useMemo(
+    () => [
+      cloneLeatherTexture(colorSource1, true),
+      cloneLeatherTexture(roughnessSource1),
+      cloneLeatherTexture(normalSource1),
+      cloneLeatherTexture(dispSource1),
+    ],
+    [colorSource1, roughnessSource1, normalSource1, dispSource1],
+  );
 
-  [colorMap1, roughnessMap1, normalMap1, dispMap1].forEach((tex) => {
-    tex.wrapS = tex.wrapT = RepeatWrapping;
-    tex.repeat.set(1, 1);
-  });
+  useEffect(
+    () => () => {
+      colorMap1.dispose();
+      roughnessMap1.dispose();
+      normalMap1.dispose();
+      dispMap1.dispose();
+    },
+    [colorMap1, roughnessMap1, normalMap1, dispMap1],
+  );
 
   return { colorMap1, roughnessMap1, normalMap1, dispMap1 };
 }
@@ -256,19 +296,26 @@ export default function Book({
   const { colorMap1, normalMap1, roughnessMap1 } = useLeatherMaterial1();
 
   const [isOpen, setIsOpen] = useState(false);
-  const coverTopRef = useRef<any>(null);
-  const hingeRef = useRef<any>(null);
+  const coverTopRef = useRef<Group>(null);
+  const hingeRef = useRef<Group>(null);
   const [hovered, setHovered] = useState(false);
   const [turnedPageCount, setTurnedPageCount] = useState(0);
+  const [isCoverClosed, setIsCoverClosed] = useState(true);
+  const coverClosedRef = useRef(true);
   const trackedTurnedPageCount = useRef(0);
-  const pageProgressRefs = useRef<Array<{ current: number }>>([]);
+  const pageProgressRefs = useMemo(
+    () => recipes.map(() => ({ current: 0 })),
+    [recipes],
+  );
   const { pageProgress, currentPage, nextPage, prevPage, turning, closePages } =
     useBookPages(recipes.length, currentApiPage);
   const { camera } = useThree();
-  const camPhase = useRef<"idle" | "zooming-in" | "zooming-out">("idle");
+  const [camPhase, setCamPhase] = useState<
+    "idle" | "zooming-in" | "zooming-out"
+  >("idle");
   const camProgress = useRef(0);
   const triggerPageAction = (action: () => void) => {
-    if (!isOpen || camPhase.current !== "idle" || turning.current) return;
+    if (!isOpen || camPhase !== "idle" || turning.current) return;
     action();
   };
 
@@ -279,14 +326,14 @@ export default function Book({
 
   useEffect(() => {
     const closeBook = () => {
-      if (camPhase.current === "zooming-in") {
-        camPhase.current = "zooming-out";
+      if (camPhase === "zooming-in") {
+        setCamPhase("zooming-out");
       }
       if (isOpen) setIsOpen(false);
     };
 
     return registerCloseBook(closeBook);
-  }, [isOpen, registerCloseBook]);
+  }, [camPhase, isOpen, registerCloseBook]);
 
   // stato dell'animazione di apertura del libro
   const progress = useRef(0);
@@ -304,10 +351,20 @@ export default function Book({
     });
   }, [recipes]);
 
+  useEffect(
+    () => () => {
+      recipeTextures.forEach(({ frontMap, backMap }) => {
+        frontMap?.dispose();
+        backMap?.dispose();
+      });
+    },
+    [recipeTextures],
+  );
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // chiude il libro con Esc solo quando la camera è ferma
-      if (event.key === "Escape" && isOpen && camPhase.current === "idle") {
+      if (event.key === "Escape" && isOpen && camPhase === "idle") {
         event.preventDefault();
         setIsOpen(false);
       }
@@ -324,7 +381,7 @@ export default function Book({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, nextPage, prevPage]);
+  }, [camPhase, isOpen, nextPage, prevPage]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -339,7 +396,7 @@ export default function Book({
   // posizione target della camera durante l'ingrandimento sul libro
   const zoomedCamPos = useRef(new Vector3(-2.51, 1.3, -0.1));
   const zoomedTarget = useRef(new Vector3(-2.5, 1, -0.1));
-  const pageGroupRefs = useRef<Array<any>>([]);
+  const pageGroupRefs = useRef<Array<Group | null>>([]);
 
   useFrame((_, delta) => {
     if (trackedTurnedPageCount.current !== currentPage.current) {
@@ -347,7 +404,7 @@ export default function Book({
       setTurnedPageCount(currentPage.current);
     }
 
-    pageProgressRefs.current.forEach((ref, index) => {
+    pageProgressRefs.forEach((ref, index) => {
       const p = pageProgress.current[index] ?? 0;
       ref.current = p;
 
@@ -366,11 +423,8 @@ export default function Book({
     });
     const camSpeed = 1;
 
-    if (
-      camPhase.current === "zooming-in" ||
-      camPhase.current === "zooming-out"
-    ) {
-      const dir = camPhase.current === "zooming-in" ? 1 : -1;
+    if (camPhase === "zooming-in" || camPhase === "zooming-out") {
+      const dir = camPhase === "zooming-in" ? 1 : -1;
       camProgress.current = Math.max(
         0,
         Math.min(1, camProgress.current + dir * (delta / camSpeed)),
@@ -392,13 +446,13 @@ export default function Book({
         controlsRef.current.update();
       }
 
-      if (camPhase.current === "zooming-in" && camProgress.current >= 1) {
-        camPhase.current = "idle";
+      if (camPhase === "zooming-in" && camProgress.current >= 1) {
+        setCamPhase("idle");
         setIsOpen(true);
       }
 
-      if (camPhase.current === "zooming-out" && camProgress.current <= 0) {
-        camPhase.current = "idle";
+      if (camPhase === "zooming-out" && camProgress.current <= 0) {
+        setCamPhase("idle");
         if (controlsRef.current) controlsRef.current.enabled = true;
         setControlsLimits(originalLimits.current);
       }
@@ -410,10 +464,15 @@ export default function Book({
 
     progress.current += direction * delta;
     progress.current = Math.max(0, Math.min(1, progress.current));
+    const coverClosed = progress.current <= 0.001;
+    if (coverClosedRef.current !== coverClosed) {
+      coverClosedRef.current = coverClosed;
+      setIsCoverClosed(coverClosed);
+    }
 
     // quando il libro è chiuso e il progresso torna a 0, inizia lo zoom out della camera
-    if (wasOpen && progress.current === 0 && camPhase.current === "idle")
-      camPhase.current = "zooming-out";
+    if (wasOpen && progress.current === 0 && camPhase === "idle")
+      setCamPhase("zooming-out");
 
     // easing cubico per chiusura/apertura più morbida
     const eased = 1 - Math.pow(1 - progress.current, 3);
@@ -431,9 +490,7 @@ export default function Book({
   });
 
   const logoMap = useLogoTexture();
-  const isCoverHighlighted = !isOpen && hovered && progress.current <= 0.001;
-  const canInteractWithBook =
-    !isOpen && !!controlsRef.current && camPhase.current === "idle";
+  const isCoverHighlighted = !isOpen && hovered && isCoverClosed;
 
   return (
     <group
@@ -442,7 +499,7 @@ export default function Book({
       // cliccare sul libro avvia l'animazione di zooming e apre la copertina
       onClick={(e) => {
         e.stopPropagation();
-        if (camPhase.current !== "idle" || isOpen) return;
+        if (camPhase !== "idle" || isOpen) return;
         if (controlsRef.current) controlsRef.current.enabled = false;
         setControlsLimits({
           minPolarAngle: 0,
@@ -452,16 +509,16 @@ export default function Book({
           maxDistance: 1,
           minDistance: 1,
         });
-        camPhase.current = "zooming-in";
+        setCamPhase("zooming-in");
       }}
       onPointerDown={(e) => {
         e.stopPropagation();
-        if (!canInteractWithBook) return;
+        if (isOpen || camPhase !== "idle" || !controlsRef.current) return;
         controlsRef.current.enabled = false;
       }}
       // riattiva i controlli dell'orbita quando il puntatore viene rilasciato
       onPointerUp={() => {
-        if (!canInteractWithBook) return;
+        if (isOpen || camPhase !== "idle" || !controlsRef.current) return;
         controlsRef.current.enabled = true;
       }}
       onPointerOver={(e) => {
@@ -645,14 +702,16 @@ export default function Book({
       {/* pagine all'interno del libro, ciascuna con texture frontale e retro */}
       {recipes.map((recipe, index) => {
         const zOffset = 0.1 + (recipes.length - 1 - index) * 0.001;
-        const pageRef = (pageProgressRefs.current[index] ??= { current: 0 });
+        const pageRef = pageProgressRefs[index];
         const textures = recipeTextures[index];
         if (!textures?.frontMap || !textures.backMap) return null;
 
         return (
           <group
             key={recipe.id}
-            ref={(el) => (pageGroupRefs.current[index] = el)}
+            ref={(el) => {
+              pageGroupRefs.current[index] = el;
+            }}
             position={[0, 0.164, zOffset + 0.01]}
           >
             <Page

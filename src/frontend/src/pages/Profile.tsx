@@ -10,6 +10,7 @@ import { INPUT_CLASS, LABEL_CLASS, SUBMIT_CLASS } from '../lib/ui'
 import Avatar from '../components/Avatar'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import TwoFactorSettings from '../components/TwoFactorSettings'
+import ChangePasswordSettings from '../components/ChangePasswordSettings'
 import BlockedUsers from '../components/BlockedUsers'
 import UploadProgress from '../components/UploadProgress'
 import { PROFILE_PRIVACIES, type AvatarUploadResponseDto, type ProfilePrivacy, type UpdateUserDto } from '../types/models'
@@ -203,6 +204,8 @@ function Profile() {
 					{saving ? t('common.saving') : t('form.saveChanges')}
 				</button>
 			</form>
+
+			<ChangePasswordSettings />
 
 			<TwoFactorSettings />
 

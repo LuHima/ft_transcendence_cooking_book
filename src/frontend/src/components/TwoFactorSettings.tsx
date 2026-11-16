@@ -4,10 +4,8 @@ import { useAuth } from '../context/auth'
 import { useToast } from '../context/toast'
 import { api, ApiError, getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS } from '../lib/ui'
-import PasswordInput from './PasswordInput'
-import ShowPasswordToggle from './ShowPasswordToggle'
 
-type Step = 'idle' | 'password' | 'verify'
+type Step = 'idle' | 'verify'
 
 // Local 2FA hint, used only when GET /users/me doesn't return is_two_factor_enabled
 const hintKey = (email: string) => `wecook.2fa.${email.toLowerCase()}`
@@ -29,9 +27,10 @@ function writeTwoFactorHint(email: string, value: boolean) {
 }
 
 // Enable / disable two-factor authentication (TOTP):
-//   POST /auth/twofactor/enable  { password }  -> { qrCode (data URI), key (base32) }
-//   POST /auth/twofactor/verify  { code }      -> enables 2FA
-//   POST /auth/twofactor/disable { password }
+//   POST /auth/twofactor/enable  {}       -> { qrCode (data URI), key (base32) }
+//   POST /auth/twofactor/verify  { code } -> enables 2FA
+//   POST /auth/twofactor/disable {}
+// No password confirmation: works the same for Google and email/password accounts.
 // State comes from is_two_factor_enabled (GET /users/me); without it, falls back to the local hint and 409 responses.
 function TwoFactorSettings() {
 	const { t } = useTranslation()
@@ -44,8 +43,6 @@ function TwoFactorSettings() {
 		if (user?.email) writeTwoFactorHint(user.email, value)
 	}
 	const [step, setStep] = useState<Step>('idle')
-	const [password, setPassword] = useState('')
-	const [showPassword, setShowPassword] = useState(false)
 	const [qrCode, setQrCode] = useState<string | null>(null)
 	const [secret, setSecret] = useState<string | null>(null)
 	const [code, setCode] = useState('')
@@ -54,26 +51,25 @@ function TwoFactorSettings() {
 
 	function reset() {
 		setStep('idle')
-		setPassword('')
 		setQrCode(null)
 		setSecret(null)
 		setCode('')
 		setError(null)
 	}
 
-	async function submitPassword(e: FormEvent) {
-		e.preventDefault()
+	// Click on "Enable" -> QR shown right away; click on "Disable" -> 2FA turned off
+	async function toggle() {
 		setBusy(true)
 		setError(null)
 		try {
 			if (enabled) {
-				await api.post('/auth/twofactor/disable', { password })
+				await api.post('/auth/twofactor/disable', {})
 				setEnabled(false)
 				toast.success(t('twofa.disabledToast'))
 				reset()
 				await refreshUser()
 			} else {
-				const res = await api.post<{ qrCode: string; key: string }>('/auth/twofactor/enable', { password })
+				const res = await api.post<{ qrCode: string; key: string }>('/auth/twofactor/enable', {})
 				setQrCode(res.qrCode)
 				setSecret(res.key)
 				setStep('verify')
@@ -85,7 +81,7 @@ function TwoFactorSettings() {
 				toast.info(enabled ? t('twofa.alreadyDisabled') : t('twofa.alreadyEnabled'))
 				reset()
 			} else {
-				setError(getErrorMessage(err, t('twofa.passwordError')))
+				setError(getErrorMessage(err, t('twofa.toggleError')))
 			}
 		} finally {
 			setBusy(false)
@@ -122,10 +118,11 @@ function TwoFactorSettings() {
 				{step === 'idle' && (
 					<button
 						type="button"
-						onClick={() => setStep('password')}
-						className={enabled ? `${btn} text-[var(--wc-paprika)]` : 'rounded-full bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)]'}
+						onClick={toggle}
+						disabled={busy}
+						className={`${enabled ? `${btn} text-[var(--wc-paprika)]` : 'rounded-full bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)]'} disabled:opacity-60`}
 					>
-						{enabled ? t('twofa.disable') : t('twofa.enable')}
+						{busy ? t('common.sending') : enabled ? t('twofa.disable') : t('twofa.enable')}
 					</button>
 				)}
 			</div>
@@ -133,30 +130,7 @@ function TwoFactorSettings() {
 			{step === 'idle' && enabled && (
 				<p className="mt-3 text-sm text-[var(--wc-basil)]">✓ {t('twofa.active')}</p>
 			)}
-
-			{step === 'password' && (
-				<form onSubmit={submitPassword} className="mt-4 space-y-3">
-					<PasswordInput
-						id="twofa-password"
-						label={t('twofa.confirmWithPassword')}
-						autoComplete="current-password"
-						minLength={8}
-						value={password}
-						onChange={setPassword}
-						show={showPassword}
-					/>
-					<ShowPasswordToggle id="twofa-show" checked={showPassword} onChange={setShowPassword} />
-					{error && <p role="alert" className="text-sm text-[var(--wc-paprika)]">{error}</p>}
-					<div className="flex gap-2">
-						<button type="submit" disabled={busy} className="rounded-full bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] disabled:opacity-60">
-							{busy ? t('common.sending') : t('twofa.continue')}
-						</button>
-						<button type="button" onClick={reset} className={btn}>
-							{t('common.cancel')}
-						</button>
-					</div>
-				</form>
-			)}
+			{step === 'idle' && error && <p role="alert" className="mt-3 text-sm text-[var(--wc-paprika)]">{error}</p>}
 
 			{step === 'verify' && (
 				<form onSubmit={submitCode} className="mt-4 space-y-4">
