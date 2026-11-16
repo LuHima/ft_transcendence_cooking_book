@@ -1,9 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { NotificationSubject, NotificationAction } from '@prisma/client';
+import {
+  NotificationSubject,
+  NotificationAction,
+  RecipePrivacy,
+} from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
-import { NotifyData } from 'src/common/decorators/notify.decorator';
-import { NotificationStructDto } from 'src/common/dto/notification-struct.dto';
+
+export interface NotifyData {
+  subject: NotificationSubject;
+  action: NotificationAction;
+}
+
+export interface NotificationStructDto {
+  id_user: number;
+  id_target: number;
+  details?: string | null;
+}
 
 @Injectable()
 export class NotificationEmit {
@@ -148,6 +161,18 @@ export class NotificationEmit {
     structNotify: NotificationStructDto,
     notifyData: NotifyData,
   ): Promise<void> {
+    if (
+      notifyData.subject === NotificationSubject.recipe &&
+      notifyData.action !== NotificationAction.delete &&
+      this.prisma.recipe?.findUnique
+    ) {
+      const targetRecipe = await this.prisma.recipe.findUnique({
+        where: { id: structNotify.id_target },
+        select: { privacy: true },
+      });
+      if (targetRecipe?.privacy === RecipePrivacy.private) return;
+    }
+
     const friends = await this.findFriends(structNotify.id_user);
     if (friends.length === 0) return;
 
