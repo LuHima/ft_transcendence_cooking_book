@@ -4,8 +4,11 @@ import { useAuth } from '../context/auth'
 import { useToast } from '../context/toast'
 import { api, ApiError, getErrorMessage } from '../api/client'
 import { INPUT_CLASS, LABEL_CLASS } from '../lib/ui'
+import PasswordInput from './PasswordInput'
+import ShowPasswordToggle from './ShowPasswordToggle'
+import GoogleSignInButton from './GoogleSignInButton'
 
-type Step = 'idle' | 'verify'
+type Step = 'idle' | 'reauth' | 'verify'
 
 // Local 2FA hint, used only when GET /users/me doesn't return is_two_factor_enabled
 const hintKey = (email: string) => `wecook.2fa.${email.toLowerCase()}`
@@ -43,6 +46,8 @@ function TwoFactorSettings() {
 		if (user?.email) writeTwoFactorHint(user.email, value)
 	}
 	const [step, setStep] = useState<Step>('idle')
+	const [password, setPassword] = useState('')
+	const [showPassword, setShowPassword] = useState(false)
 	const [qrCode, setQrCode] = useState<string | null>(null)
 	const [secret, setSecret] = useState<string | null>(null)
 	const [code, setCode] = useState('')
@@ -51,25 +56,29 @@ function TwoFactorSettings() {
 
 	function reset() {
 		setStep('idle')
+		setPassword('')
+		setShowPassword(false)
 		setQrCode(null)
 		setSecret(null)
 		setCode('')
 		setError(null)
 	}
 
-	// Click on "Enable" -> QR shown right away; click on "Disable" -> 2FA turned off
-	async function toggle() {
+	const hasPassword = user?.has_password !== false
+	const isGoogleLinked = Boolean(user?.is_google_linked)
+
+	async function submitEnableOrDisable(body: { password?: string; idToken?: string }) {
 		setBusy(true)
 		setError(null)
 		try {
 			if (enabled) {
-				await api.post('/auth/twofactor/disable', {})
+				await api.post('/auth/twofactor/disable', body)
 				setEnabled(false)
 				toast.success(t('twofa.disabledToast'))
 				reset()
 				await refreshUser()
 			} else {
-				const res = await api.post<{ qrCode: string; key: string }>('/auth/twofactor/enable', {})
+				const res = await api.post<{ qrCode: string; key: string }>('/auth/twofactor/enable', body)
 				setQrCode(res.qrCode)
 				setSecret(res.key)
 				setStep('verify')
@@ -81,11 +90,21 @@ function TwoFactorSettings() {
 				toast.info(enabled ? t('twofa.alreadyDisabled') : t('twofa.alreadyEnabled'))
 				reset()
 			} else {
-				setError(getErrorMessage(err, t('twofa.toggleError')))
+				setError(getErrorMessage(err, body.idToken ? t('twofa.googleError') : t('twofa.passwordError')))
 			}
 		} finally {
 			setBusy(false)
 		}
+	}
+
+	async function submitPassword(e: FormEvent) {
+		e.preventDefault()
+		await submitEnableOrDisable({ password })
+	}
+
+	function handleActionClick() {
+		setError(null)
+		setStep('reauth')
 	}
 
 	async function submitCode(e: FormEvent) {
@@ -118,19 +137,75 @@ function TwoFactorSettings() {
 				{step === 'idle' && (
 					<button
 						type="button"
-						onClick={toggle}
 						disabled={busy}
-						className={`${enabled ? `${btn} text-[var(--wc-paprika)]` : 'rounded-full bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)]'} disabled:opacity-60`}
+						onClick={handleActionClick}
+						className={enabled ? `${btn} text-[var(--wc-paprika)]` : 'rounded-full bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] hover:bg-[var(--wc-basil-dark)] disabled:opacity-60'}
 					>
 						{busy ? t('common.sending') : enabled ? t('twofa.disable') : t('twofa.enable')}
 					</button>
 				)}
 			</div>
 
+			{step === 'idle' && error && (
+				<p role="alert" className="mt-3 text-sm text-[var(--wc-paprika)]">{error}</p>
+			)}
+
 			{step === 'idle' && enabled && (
 				<p className="mt-3 text-sm text-[var(--wc-basil)]">✓ {t('twofa.active')}</p>
 			)}
-			{step === 'idle' && error && <p role="alert" className="mt-3 text-sm text-[var(--wc-paprika)]">{error}</p>}
+
+			{step === 'reauth' && (
+				<div className="mt-4 space-y-4">
+					{hasPassword && (
+						<form onSubmit={submitPassword} className="space-y-3">
+							<PasswordInput
+								id="twofa-password"
+								label={t('twofa.confirmWithPassword')}
+								autoComplete="current-password"
+								minLength={8}
+								value={password}
+								onChange={setPassword}
+								show={showPassword}
+							/>
+							<ShowPasswordToggle id="twofa-show" checked={showPassword} onChange={setShowPassword} />
+							<div className="flex gap-2">
+								<button type="submit" disabled={busy} className="rounded-full bg-[var(--wc-basil)] px-4 py-2 text-sm font-medium text-[var(--wc-bg)] disabled:opacity-60">
+									{busy ? t('common.sending') : t('twofa.continue')}
+								</button>
+								{!isGoogleLinked && (
+									<button type="button" onClick={reset} className={btn}>
+										{t('common.cancel')}
+									</button>
+								)}
+							</div>
+						</form>
+					)}
+					{(isGoogleLinked || !hasPassword) && (
+						<div className="space-y-3">
+							{hasPassword && (
+								<div className="flex items-center gap-3 text-xs uppercase tracking-wider text-[var(--wc-text-muted)]">
+									<span className="h-px flex-1 bg-[var(--wc-border)]" />
+									<span>{t('auth.or')}</span>
+									<span className="h-px flex-1 bg-[var(--wc-border)]" />
+								</div>
+							)}
+							<p className="text-sm text-[var(--wc-text)]">{t('twofa.confirmWithGoogle')}</p>
+							<div className="flex justify-start">
+								<GoogleSignInButton onCredential={(idToken) => submitEnableOrDisable({ idToken })} />
+							</div>
+						</div>
+					)}
+					{busy && <p className="text-xs text-[var(--wc-text-muted)]">{t('common.sending')}</p>}
+					{error && <p role="alert" className="text-sm text-[var(--wc-paprika)]">{error}</p>}
+					{(isGoogleLinked || !hasPassword) && (
+						<div className="flex gap-2">
+							<button type="button" onClick={reset} className={btn}>
+								{t('common.cancel')}
+							</button>
+						</div>
+					)}
+				</div>
+			)}
 
 			{step === 'verify' && (
 				<form onSubmit={submitCode} className="mt-4 space-y-4">

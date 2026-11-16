@@ -976,16 +976,25 @@
 		"disabledToast": "Authentification à deux facteurs désactivée.",
 		"alreadyEnabled": "La 2FA est déjà activée sur votre compte.",
 		"alreadyDisabled": "La 2FA est déjà désactivée.",
+		"passwordError": "Mot de passe incorrect.",
 		"codeError": "Code invalide, réessayez.",
+		"confirmWithGoogle": "Confirmez avec votre compte Google pour continuer.",
+		"googleError": "La vérification Google a échoué.",
 		"toggleError": "L'opération a échoué, réessayez."
 	},
 	"changePassword": {
 		"title": "Changer le mot de passe",
-		"intro": "Définissez un nouveau mot de passe pour la connexion par e-mail. Fonctionne aussi si vous vous êtes inscrit avec Google.",
+		"intro": "Mettez à jour votre mot de passe. Les autres sessions actives seront déconnectées.",
+		"setTitle": "Définir un mot de passe",
+		"setIntro": "Votre compte utilise Google et n'a pas encore de mot de passe. Définissez-en un pour vous connecter aussi par e-mail.",
+		"currentPassword": "Mot de passe actuel",
 		"newPassword": "Nouveau mot de passe",
 		"confirmNewPassword": "Confirmer le nouveau mot de passe",
 		"submit": "Mettre à jour le mot de passe",
+		"confirmWithGoogle": "Confirmez avec votre compte Google pour enregistrer le mot de passe.",
+		"googleError": "La vérification Google a échoué.",
 		"successToast": "Mot de passe mis à jour.",
+		"setToast": "Mot de passe défini.",
 		"error": "Impossible de mettre à jour le mot de passe, réessayez."
 	},
 	"block": {

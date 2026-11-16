@@ -976,16 +976,25 @@
 		"disabledToast": "Autenticazione a due fattori disattivata.",
 		"alreadyEnabled": "La 2FA è già attiva sul tuo account.",
 		"alreadyDisabled": "La 2FA è già disattivata.",
+		"passwordError": "Password non corretta.",
 		"codeError": "Codice non valido, riprova.",
+		"confirmWithGoogle": "Conferma con il tuo account Google per continuare.",
+		"googleError": "Verifica Google non riuscita.",
 		"toggleError": "Operazione non riuscita, riprova."
 	},
 	"changePassword": {
 		"title": "Cambia password",
-		"intro": "Imposta una nuova password per l'accesso con email. Vale anche se ti sei registrato con Google.",
+		"intro": "Aggiorna la password del tuo account. Le altre sessioni attive verranno disconnesse.",
+		"setTitle": "Imposta una password",
+		"setIntro": "Il tuo account usa Google e non ha ancora una password. Impostane una per accedere anche con l'email.",
+		"currentPassword": "Password attuale",
 		"newPassword": "Nuova password",
 		"confirmNewPassword": "Conferma nuova password",
 		"submit": "Aggiorna password",
+		"confirmWithGoogle": "Conferma con il tuo account Google per salvare la password.",
+		"googleError": "Verifica Google non riuscita.",
 		"successToast": "Password aggiornata.",
+		"setToast": "Password impostata.",
 		"error": "Impossibile aggiornare la password, riprova."
 	},
 	"block": {

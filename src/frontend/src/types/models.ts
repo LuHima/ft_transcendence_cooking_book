@@ -56,6 +56,9 @@ export interface User {
 	status?: UserStatus
 	// May be missing from GET /users/me: the Profile page then infers it from the 409 responses of enable/disable
 	is_two_factor_enabled?: boolean
+	// Whether the account has a local password configured (false for Google OAuth-only accounts)
+	has_password?: boolean
+	is_google_linked?: boolean
 	// Culinary bio (max 500 characters)
 	bio?: string | null
 	profile_privacy?: ProfilePrivacy
