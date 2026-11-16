@@ -109,9 +109,7 @@ export class RecipeService {
         : currentUserOrId?.id;
     let currentUserRole =
       roleOverride ??
-      (typeof currentUserOrId === 'object'
-        ? currentUserOrId?.role
-        : undefined);
+      (typeof currentUserOrId === 'object' ? currentUserOrId?.role : undefined);
 
     if (!currentUserRole && currentUserId && this.prisma.user?.findUnique) {
       const caller = await this.prisma.user.findUnique({
@@ -289,10 +287,7 @@ export class RecipeService {
 
     if (blockedIds.length > 0) {
       andConditions.push({
-        OR: [
-          { user_id: null },
-          { user_id: { notIn: blockedIds } },
-        ],
+        OR: [{ user_id: null }, { user_id: { notIn: blockedIds } }],
       });
     }
 
@@ -314,7 +309,8 @@ export class RecipeService {
       order = sortOrder as Prisma.SortOrder;
     } else {
       order =
-        sortBy === RecipeSortBy.created_at || sortBy === RecipeSortBy.likes_count
+        sortBy === RecipeSortBy.created_at ||
+        sortBy === RecipeSortBy.likes_count
           ? 'desc'
           : 'asc';
     }
@@ -336,9 +332,7 @@ export class RecipeService {
     const sqlConditions: Prisma.Sql[] = [];
 
     if (filterDto.course) {
-      sqlConditions.push(
-        Prisma.sql`r.course = ${filterDto.course}::"Course"`,
-      );
+      sqlConditions.push(Prisma.sql`r.course = ${filterDto.course}::"Course"`);
     }
 
     if (filterDto.difficulty) {
@@ -360,9 +354,7 @@ export class RecipeService {
     }
 
     if (filterDto.max_prep_time !== undefined) {
-      sqlConditions.push(
-        Prisma.sql`r.prep_time <= ${filterDto.max_prep_time}`,
-      );
+      sqlConditions.push(Prisma.sql`r.prep_time <= ${filterDto.max_prep_time}`);
     }
 
     if (filterDto.source_lang) {
@@ -470,8 +462,7 @@ export class RecipeService {
     const targetLocale = filterDto.lang || null;
     const sortOrder =
       filterDto.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
-    const orderSql =
-      sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+    const orderSql = sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
 
     let sqlConditions: Prisma.Sql[];
     if (customBaseSqlConditions) {
@@ -1192,6 +1183,14 @@ export class RecipeService {
       });
     });
 
+    await this.notificationEmit.notification(
+      { id_user: userId, id_target: createdRecipe.id },
+      {
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.post,
+      },
+    );
+
     return await this.getRecipeById(
       createdRecipe.id,
       recipe.source_lang,
@@ -1259,7 +1258,10 @@ export class RecipeService {
     } else {
       if (!isAuthor) {
         if (this.productionConfig.isProduction()) {
-          throw createHttpException(errors.recipes.notFound, 'Recipe not found');
+          throw createHttpException(
+            errors.recipes.notFound,
+            'Recipe not found',
+          );
         } else {
           throw new NotFoundException('UserId is not the author of the recipe');
         }
@@ -1773,6 +1775,14 @@ export class RecipeService {
       }
     }
 
+    await this.notificationEmit.notification(
+      { id_user: userId, id_target: recipeId },
+      {
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.update,
+      },
+    );
+
     return await this.getRecipeById(recipeId, targetLocale, userId);
   }
 
@@ -1943,6 +1953,14 @@ export class RecipeService {
     for (const url of mediaUrls) {
       await this.safeUnlink(url);
     }
+
+    await this.notificationEmit.notification(
+      { id_user: userId, id_target: recipeId },
+      {
+        subject: NotificationSubject.recipe,
+        action: NotificationAction.delete,
+      },
+    );
 
     return { message: 'Recipe permanently deleted successfully' };
   }

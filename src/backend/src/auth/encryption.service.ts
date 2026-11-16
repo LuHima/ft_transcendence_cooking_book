@@ -39,11 +39,11 @@ export class EncryptionService {
 
 [ Il Secret ]		+			[ L'autoTag ]		+		[ L'IV (Casuale) ]
 
-  il codice generato		Garantisce che il 			Il punto di partenza per 
-	da proteggere			sigillo non sia 			garantire che nessuna chiave
-								manomesso				sia simile se, ci fossere 2 
-														password uguali il codice verrebe
-														uguale altrimenti
+il codice generato		Garantisce che il    			Il punto di partenza per 
+da proteggere			    sigillo non sia 		    	garantire che nessuna chiave
+							        	manomesso				        sia simile se, ci fossere 2 
+														                    IV uguali il codice verrebe
+													                    	uguale altrimenti
 	
 che garantisce la rileggibilita e l'impredivibilita del codice, anche per gli
 algoritmi di hashing visto che chiunque ha l'env puo revertire il codice

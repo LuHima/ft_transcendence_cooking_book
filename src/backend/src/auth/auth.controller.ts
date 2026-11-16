@@ -366,7 +366,7 @@ export class AuthController {
 
     jwts = await this.authService.twoFactorSignin(twoFactor);
     this.setAuthCookie(response, jwts);
-    return { message: 'Authentication append with success' };
+    return { message: 'Authentication was successful' };
   }
 
   /**

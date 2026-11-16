@@ -42,9 +42,9 @@ export class NotificationEmit {
       case 'post':
         return `${senderName} posted a new recipe`;
       case 'delete':
-        return `${senderName} delete a recipe`;
+        return `${senderName} deleted a recipe`;
       case 'update':
-        return `${senderName} update a recipe`;
+        return `${senderName} updated a recipe`;
       case 'warn':
         if (notifyData.subject === 'recipe') {
           return 'You received a warning from the moderation team about your recipe';

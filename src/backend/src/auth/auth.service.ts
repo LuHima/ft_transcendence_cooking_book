@@ -39,7 +39,7 @@ export class AuthService {
   ) {}
 
   private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  /* 
+  /*
    * Creo il verificatore per google
    * da notare che non uso GOOGLE_CLIENT_SECRET visto che il token che mi passa
    * l'utente è gia un jwt firmato da google, quindi non devo scambiarlo/
@@ -221,9 +221,10 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: payloads.userId },
     });
-    if (!user || user.status !== 'active' || user.deleted_at)
+    if (!user || user.deleted_at)
       throw createHttpException(errors.auth.accessDenied);
     // decrypto la password nel database
+    await this.checkUserBanAndStatus(user);
     const twoFactorCodeDecrypted = this.encryptionService.decrypting(
       user.two_factor,
     );
@@ -242,7 +243,7 @@ export class AuthService {
     | { tempToken: string; twofAuth: true }
   > {
     const clientId = process.env.GOOGLE_CLIENT_ID;
-    /* 
+    /*
      * AuthService is initialized as:
      * new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
      * and passed audience: process.env.GOOGLE_CLIENT_ID.
@@ -281,11 +282,11 @@ export class AuthService {
       );
     }
 
-    /* 
-     * Without this check, the login would work also if a Google account 
+    /*
+     * Without this check, the login would work also if a Google account
      * had an unverified email.
-     * This is a problem because an attacker could register an unverified 
-     * Google account with a victim's email and hijack an existing WeCook 
+     * This is a problem because an attacker could register an unverified
+     * Google account with a victim's email and hijack an existing WeCook
      * profile upon login.
      */
     if (payload.email_verified !== true) {
@@ -449,9 +450,10 @@ export class AuthService {
     }
 
     const user = await this.usersService.getUserById(payload.id);
-    if (!user || user.status !== 'active' || user.deleted_at) {
+    if (!user || user.deleted_at) {
       throw createHttpException(errors.auth.accessDenied);
     }
+    await this.checkUserBanAndStatus(user);
     const refreshTokenSession = await this.prisma.jwtSession.findUnique({
       where: {
         id_session: payload.session,
@@ -543,8 +545,12 @@ export class AuthService {
     if (statusTwoFactorAuth?.is_two_factor_enabled) {
       throw createHttpException(errors.auth.twoFactorAlreadyEnable);
     }
-    if (!(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))) {
-      throw createHttpException(errors.auth.accessDenied, 'invalid password');
+    if (statusTwoFactorAuth.password_hash != null) {
+      if (
+        !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))
+      ) {
+        throw createHttpException(errors.auth.accessDenied, 'invalid password');
+      }
     }
 
     //genero la chiave privata
@@ -574,12 +580,16 @@ export class AuthService {
       where: { id: id },
       select: { is_two_factor_enabled: true, password_hash: true },
     });
-
-    if (
-      !statusTwoFactorAuth ||
-      !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))
-    ) {
-      throw createHttpException(errors.auth.accessDenied, 'invalid password');
+    if (!statusTwoFactorAuth) {
+      throw createHttpException(errors.auth.accessDenied, 'User not found');
+    }
+    if (statusTwoFactorAuth.password_hash != null) {
+      if (
+        !statusTwoFactorAuth ||
+        !(await bcrypt.compare(password, statusTwoFactorAuth.password_hash))
+      ) {
+        throw createHttpException(errors.auth.accessDenied, 'invalid password');
+      }
     }
 
     if (statusTwoFactorAuth?.is_two_factor_enabled === false) {
