@@ -318,19 +318,11 @@ export class AuthController {
   @ApiOperation({
     summary: 'Enable two-factor authentication (initiate setup)',
     description:
-      'Verifies the user account password and generates a new TOTP secret key and QR code data URI.',
+      'Generates a new TOTP secret key and QR code data URI for the authenticated user.',
   })
   @ApiOkResponse({
     description: 'TOTP secret generated; returns QR code URI and base32 key',
     type: TwoFactorEnableResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Password confirmation failed or is missing',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Invalid password provided',
-    type: ApiUnauthorizedResponseDto,
   })
   @ApiConflictResponse({
     description:
@@ -380,7 +372,7 @@ export class AuthController {
 
     jwts = await this.authService.twoFactorSignin(twoFactor);
     this.setAuthCookie(response, jwts);
-    return { message: 'Authentication append with success' };
+    return { message: 'Authentication was successful' };
   }
 
   /**
@@ -415,19 +407,11 @@ export class AuthController {
   @ApiOperation({
     summary: 'Disable two-factor authentication',
     description:
-      'Verifies account password and disables 2FA protection, clearing the stored secret.',
+      'Disables 2FA protection for the authenticated user, clearing the stored secret.',
   })
   @ApiOkResponse({
     description: 'Two-factor authentication successfully disabled',
     type: AuthMessageResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Password confirmation failed or is missing',
-    type: ApiBadRequestResponseDto,
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Invalid password',
-    type: ApiUnauthorizedResponseDto,
   })
   @ApiConflictResponse({
     description: 'Two-factor authentication is already disabled',

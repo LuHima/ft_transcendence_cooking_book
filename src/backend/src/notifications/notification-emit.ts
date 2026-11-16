@@ -1,9 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { NotificationSubject, NotificationAction } from '@prisma/client';
+import {
+  NotificationSubject,
+  NotificationAction,
+  RecipePrivacy,
+} from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { NotifyData } from 'src/common/decorators/notify.decorator';
-import { NotificationStructDto } from 'src/common/dto/notification-struct.dto';
+
+export interface NotifyData {
+  subject: NotificationSubject;
+  action: NotificationAction;
+}
+
+export interface NotificationStructDto {
+  id_user: number;
+  id_target: number;
+  details?: string | null;
+}
 
 @Injectable()
 export class NotificationEmit {
@@ -12,7 +25,7 @@ export class NotificationEmit {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  private async notificationString(
+  /* private async notificationString(
     id_sender: number,
     notifyData: NotifyData,
   ): Promise<string> {
@@ -42,9 +55,9 @@ export class NotificationEmit {
       case 'post':
         return `${senderName} posted a new recipe`;
       case 'delete':
-        return `${senderName} delete a recipe`;
+        return `${senderName} deleted a recipe`;
       case 'update':
-        return `${senderName} update a recipe`;
+        return `${senderName} updated a recipe`;
       case 'warn':
         if (notifyData.subject === 'recipe') {
           return 'You received a warning from the moderation team about your recipe';
@@ -55,7 +68,7 @@ export class NotificationEmit {
       default:
         return `New notification from ${senderName}`;
     }
-  }
+  } */
 
   private async findFriends(id: number): Promise<number[]> {
     const friends = await this.prisma.friendship.findMany({
@@ -136,10 +149,10 @@ export class NotificationEmit {
       recipe_id: recipeId,
     };
 
-    const msg = await this.notificationString(structNotify.id_user, notifyData);
+    //    const msg = await this.notificationString(structNotify.id_user, notifyData);
     this.eventEmitter.emit('newNotification', {
       idUser: userId,
-      message: msg,
+      //      message: msg,
       target: targetInfo,
     });
   }
@@ -148,6 +161,18 @@ export class NotificationEmit {
     structNotify: NotificationStructDto,
     notifyData: NotifyData,
   ): Promise<void> {
+    if (
+      notifyData.subject === NotificationSubject.recipe &&
+      notifyData.action !== NotificationAction.delete &&
+      this.prisma.recipe?.findUnique
+    ) {
+      const targetRecipe = await this.prisma.recipe.findUnique({
+        where: { id: structNotify.id_target },
+        select: { privacy: true },
+      });
+      if (targetRecipe?.privacy === RecipePrivacy.private) return;
+    }
+
     const friends = await this.findFriends(structNotify.id_user);
     if (friends.length === 0) return;
 
@@ -172,11 +197,11 @@ export class NotificationEmit {
       recipe_id: recipeId,
     };
 
-    const msg = await this.notificationString(structNotify.id_user, notifyData);
+    //    const msg = await this.notificationString(structNotify.id_user, notifyData);
     for (const userId of friends) {
       this.eventEmitter.emit('newNotification', {
         idUser: userId,
-        message: msg,
+        //        message: msg,
         target: targetInfo,
       });
     }

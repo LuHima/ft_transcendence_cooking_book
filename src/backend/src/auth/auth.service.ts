@@ -40,7 +40,7 @@ export class AuthService {
   ) {}
 
   private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  /* 
+  /*
    * Creo il verificatore per google
    * da notare che non uso GOOGLE_CLIENT_SECRET visto che il token che mi passa
    * l'utente è gia un jwt firmato da google, quindi non devo scambiarlo/
@@ -222,9 +222,10 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: payloads.userId },
     });
-    if (!user || user.status !== 'active' || user.deleted_at)
+    if (!user || user.deleted_at)
       throw createHttpException(errors.auth.accessDenied);
     // decrypto la password nel database
+    await this.checkUserBanAndStatus(user);
     const twoFactorCodeDecrypted = this.encryptionService.decrypting(
       user.two_factor,
     );
@@ -456,9 +457,10 @@ export class AuthService {
     }
 
     const user = await this.usersService.getUserById(payload.id);
-    if (!user || user.status !== 'active' || user.deleted_at) {
+    if (!user || user.deleted_at) {
       throw createHttpException(errors.auth.accessDenied);
     }
+    await this.checkUserBanAndStatus(user);
     const refreshTokenSession = await this.prisma.jwtSession.findUnique({
       where: {
         id_session: payload.session,
@@ -529,19 +531,11 @@ export class AuthService {
     return { message: 'Two-factor authentication enabled successfully' };
   }
 
-  /*
-	come funziona la twoFactor:
-	Ce un codice che viene salvato nel database in un formato con 3 stringhe diverse (che è anche cryptato) per decryptarlo,
-	in maniera che in caso di attacco sia protetto e non possa essere ricavato dalla persona attaccante,
-	questo codice viene anche dato all'utente (in chiaro) in maniera che lui possa generare codici temporanei sul dispositivo
-	in base anche all'ora e verificarli se è uguale al codice che genera il sistema nella stessa identi ora
-	per questo hanno durata 30 secondi, va da se che per questo motivo la chiave va protetta nel database
-
-	*/
   /**
    * Re-authenticates the user before sensitive 2FA changes.
-   * Users may confirm with their account password (if set) or with a fresh Google ID token
-   * (if a Google account is linked), regardless of whether both methods are configured.
+   * Users may confirm with their account password (if set) or with a fresh
+   * Google ID token (if a Google account is linked), regardless of whether
+   * both methods are configured.
    */
   private async assertReauthenticated(
     user: { password_hash: string | null; id_google: string | null },
@@ -580,6 +574,17 @@ export class AuthService {
     );
   }
 
+  /*
+   * come funziona la twoFactor:
+   * Ce un codice che viene salvato nel database in un formato con 3 stringhe
+   * diverse (che è anche cryptato) per decryptarlo, in maniera che in caso di
+   * attacco sia protetto e non possa essere ricavato dalla persona attaccante,
+   * questo codice viene anche dato all'utente (in chiaro) in maniera che lui
+   * possa generare codici temporanei sul dispositivo	in base anche all'ora e
+   * verificarli se è uguale al codice che genera il sistema nella stessa
+   * identica ora	per questo hanno durata 30 secondi, va da se che per questo
+   * motivo la chiave va protetta nel database
+	 */
   async twoFactorAuthEnable(
     id: number,
     password?: string,

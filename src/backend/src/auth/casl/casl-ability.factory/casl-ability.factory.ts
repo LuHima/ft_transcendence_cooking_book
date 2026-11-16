@@ -62,6 +62,7 @@ export class CaslAbilityFactory {
       can([Action.Update, Action.Delete], 'Recipe', { user_id: user.id });
       can(Action.Create, 'Comment');
       can([Action.Update, Action.Delete], 'Comment', { user_id: user.id });
+      can(Action.Delete, 'Comment', { 'recipe.user_id': user.id });
 
       can(Action.Report, 'Recipe');
       can(Action.Report, 'Comment');
@@ -73,11 +74,9 @@ export class CaslAbilityFactory {
 
       cannot(Action.Ban, 'User', { id: user.id });
       cannot(Action.Ban, 'User', { role: Role.admin });
-      cannot(Action.Ban, 'User', { role: Role.moderator });
 
       cannot(Action.Ban, 'Recipe', { user_id: user.id });
       cannot(Action.Ban, 'Recipe', { 'user.role': Role.admin });
-      cannot(Action.Ban, 'Recipe', { 'user.role': Role.moderator });
 
       cannot([Action.Create, Action.Update, Action.Delete], 'Tag');
       cannot([Action.Create, Action.Update, Action.Delete], 'Ingredient');
@@ -91,13 +90,8 @@ export class CaslAbilityFactory {
       // can(Action.Report, 'Comment'); se è cosi faccio solo un controllo sull'abilita di fare quella azione non gli passo nessun oggetto nel ability.can()
 
       cannot(Action.Update, 'Recipe', { 'user.role': Role.admin });
-      cannot(Action.Update, 'Recipe', { 'user.role': Role.moderator });
-
-      cannot(Action.Update, 'Recipe', { 'user.role': Role.admin });
-      cannot(Action.Update, 'Recipe', { 'user.role': Role.moderator });
 
       cannot(Action.Ban, 'Comment', { 'user.role': Role.admin });
-      cannot(Action.Ban, 'Comment', { 'user.role': Role.moderator });
       cannot(Action.Ban, 'Comment', { user_id: user.id });
     } else {
       can(Action.Read, 'all');
@@ -109,6 +103,7 @@ export class CaslAbilityFactory {
       can(Action.Create, 'Comment');
       can(Action.Update, 'Comment', { user_id: user.id });
       can(Action.Delete, 'Comment', { user_id: user.id });
+      can(Action.Delete, 'Comment', { 'recipe.user_id': user.id });
 
       can(Action.Report, 'Recipe');
       can(Action.Report, 'Comment');
@@ -119,10 +114,6 @@ export class CaslAbilityFactory {
     can(Action.Read, 'Notification', { user_id: user.id });
     cannot(Action.Delete, 'Notification');
     can(Action.Delete, 'Notification', { user_id: user.id });
-    cannot(Action.Accept, 'Notification');
-    can(Action.Accept, 'Notification', { user_id: user.id });
-    cannot(Action.Refuse, 'Notification');
-    can(Action.Refuse, 'Notification', { user_id: user.id });
 
     return build();
   }
