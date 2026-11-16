@@ -1857,6 +1857,12 @@ export class RecipeService {
         }
       }
     }
+
+    const recipeRec = await this.prisma.recipe.update({
+      where: { id: recipeId },
+      data: { is_active: false },
+    });
+
     if (
       recipe.user_id &&
       recipe.user_id === callerId &&
@@ -1870,10 +1876,7 @@ export class RecipeService {
         },
       );
     }
-    return await this.prisma.recipe.update({
-      where: { id: recipeId },
-      data: { is_active: false },
-    });
+    return recipeRec;
   }
 
   /* 
