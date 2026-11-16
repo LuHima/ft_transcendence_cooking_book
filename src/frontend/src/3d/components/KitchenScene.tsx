@@ -1,8 +1,10 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Environment } from "@react-three/drei";
+import { useTranslation } from "react-i18next";
 import { Group, PCFShadowMap, SpotLight } from "three";
 import { useLang } from "../../lib/useLang";
+import type { OrbitControlsRef } from "../interfaces.ts";
 
 import KitchenModel from "./KitchenModel.tsx";
 import LoadingOverlay from "./LoadingOverlay.tsx";
@@ -70,6 +72,7 @@ function SceneContent({
 }
 
 export default function Scene() {
+  const { t } = useTranslation();
   const lang = useLang();
   const initialApiPage = 1;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -81,7 +84,7 @@ export default function Scene() {
   const pageRequestInProgress = useRef(false);
   const [recipesLoaded, setRecipesLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsRef | null>(null);
   const closeBookRef = useRef<(() => void) | null>(null);
   const registerCloseBook = useCallback((closeBook: () => void) => {
     closeBookRef.current = closeBook;
@@ -105,12 +108,12 @@ export default function Scene() {
       })
       .catch((error) => {
         console.error("Failed to load recipes:", error);
-        setPaginationError("Impossibile caricare le ricette.");
+        setPaginationError(t("scene.loadError"));
       })
       .finally(() => {
         setRecipesLoaded(true);
       });
-  }, [lang]);
+  }, [lang, t]);
 
   // Functions to handle API page changes
   // This function fetches the recipes for a given page and updates the state accordingly
@@ -133,7 +136,7 @@ export default function Scene() {
       setPaginationError(null);
     } catch (error) {
       console.error("Failed to change recipe page:", error);
-      setPaginationError("Impossibile caricare le ricette richieste.");
+      setPaginationError(t("scene.pageLoadError"));
     } finally {
       pageRequestInProgress.current = false;
       setIsChangingApiPage(false);
@@ -167,6 +170,8 @@ export default function Scene() {
         type="button"
         onClick={() => setIsBullseyeOn((prev) => !prev)}
         role="switch"
+        aria-checked={isBullseyeOn}
+        aria-label={t("scene.lightToggle")}
         className={`absolute left-4 top-4 z-10 flex h-10 w-[4.5rem] items-center rounded-full border p-1 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 motion-reduce:transition-none ${isBullseyeOn ? "border-amber-200/70 bg-amber-100/15 shadow-amber-300/20" : "border-white/20 bg-black/40 shadow-black/30"}`}
       >
         <span

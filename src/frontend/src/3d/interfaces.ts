@@ -1,5 +1,11 @@
+import type { ComponentRef, RefObject } from "react";
+
+export type OrbitControlsRef = ComponentRef<
+  typeof import("@react-three/drei").OrbitControls
+>;
+
 export interface BookProps {
-  controlsRef: React.RefObject<any>;
+  controlsRef: RefObject<OrbitControlsRef | null>;
   registerCloseBook: (closeBook: () => void) => () => void;
   recipes: Recipe[];
   hasPreviousPage: boolean;
@@ -31,7 +37,7 @@ export interface Recipe {
 }
 
 export interface SceneContentProps {
-  controlsRef: React.RefObject<any>;
+  controlsRef: RefObject<OrbitControlsRef | null>;
   onOutsideClick: () => void;
   registerCloseBook: (closeBook: () => void) => () => void;
   recipes: Recipe[];
