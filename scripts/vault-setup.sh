@@ -246,16 +246,27 @@ PG_DB="$(get_env_var POSTGRES_DB)"
 [ -n "$PG_DB" ]   || die "POSTGRES_DB is missing in $ENV_FILE."
 DB_URL="postgresql://${PG_USER}:${PG_PASS}@database:5432/${PG_DB}?schema=public"
 
+read_existing_backend_secret() {
+	vexec kv get -field="$1" secret/backend 2>/dev/null || true
+}
+
 JWT_SECRET_V="$(get_env_var JWT_SECRET)"
 JWT_REFRESH_V="$(get_env_var JWT_REFRESH_SECRET)"
 COOKIE_V="$(get_env_var COOKIE_SECRET)"
 TWOFA_V="$(get_env_var TWO_FACTOR_AUTH)"
 SEED_ADMIN_PASS_V="$(get_env_var SEED_ADMIN_PASSWORD)"
-[ -n "$JWT_SECRET_V" ]  || { JWT_SECRET_V="$(gen_secret)";  log "JWT_SECRET not in .env: generated."; }
-[ -n "$JWT_REFRESH_V" ] || { JWT_REFRESH_V="$(gen_secret)"; log "JWT_REFRESH_SECRET not in .env: generated."; }
-[ -n "$COOKIE_V" ]      || { COOKIE_V="$(gen_secret)";      log "COOKIE_SECRET not in .env: generated."; }
-[ -n "$TWOFA_V" ]       || { TWOFA_V="$(gen_secret)";       log "TWO_FACTOR_AUTH not in .env: generated."; }
-[ -n "$SEED_ADMIN_PASS_V" ] || { SEED_ADMIN_PASS_V="$(gen_secret)"; log "SEED_ADMIN_PASSWORD not in .env: generated."; }
+
+[ -n "$JWT_SECRET_V" ]      || JWT_SECRET_V="$(read_existing_backend_secret JWT_SECRET)"
+[ -n "$JWT_REFRESH_V" ]     || JWT_REFRESH_V="$(read_existing_backend_secret JWT_REFRESH_SECRET)"
+[ -n "$COOKIE_V" ]          || COOKIE_V="$(read_existing_backend_secret COOKIE_SECRET)"
+[ -n "$TWOFA_V" ]           || TWOFA_V="$(read_existing_backend_secret TWO_FACTOR_AUTH)"
+[ -n "$SEED_ADMIN_PASS_V" ] || SEED_ADMIN_PASS_V="$(read_existing_backend_secret SEED_ADMIN_PASSWORD)"
+
+[ -n "$JWT_SECRET_V" ]  || { JWT_SECRET_V="$(gen_secret)";  log "JWT_SECRET not in .env or Vault: generated."; }
+[ -n "$JWT_REFRESH_V" ] || { JWT_REFRESH_V="$(gen_secret)"; log "JWT_REFRESH_SECRET not in .env or Vault: generated."; }
+[ -n "$COOKIE_V" ]      || { COOKIE_V="$(gen_secret)";      log "COOKIE_SECRET not in .env or Vault: generated."; }
+[ -n "$TWOFA_V" ]       || { TWOFA_V="$(gen_secret)";       log "TWO_FACTOR_AUTH not in .env or Vault: generated."; }
+[ -n "$SEED_ADMIN_PASS_V" ] || { SEED_ADMIN_PASS_V="$(gen_secret)"; log "SEED_ADMIN_PASSWORD not in .env or Vault: generated."; }
 
 vexec kv put secret/backend \
         DATABASE_URL="$DB_URL" \

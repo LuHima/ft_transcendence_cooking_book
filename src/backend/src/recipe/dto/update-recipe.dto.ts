@@ -1,13 +1,63 @@
-import { CreateRecipeDto } from './create-recipe.dto';
+import { CreateRecipeDto, CreateRecipeStepDto } from './create-recipe.dto';
 import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
 import { RecipePrivacy } from '@prisma/client';
-import { IsBoolean, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+
+/**
+ * Step update DTO preserving optional existing step ID and image_url across reorder/deletion.
+ */
+export class UpdateRecipeStepDto extends CreateRecipeStepDto {
+  @ApiPropertyOptional({
+    type: Number,
+    description:
+      'Existing step ID used to preserve step image and translations when reordering or deleting steps',
+    example: 10,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  id?: number;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description:
+      'Optional existing or cleared step image URL preserved during update',
+    example: '/api/media/recipes/42/step-1.webp',
+  })
+  @IsOptional()
+  @IsString({ message: 'image_url must be a string' })
+  image_url?: string | null;
+}
 
 /**
  * Data transfer object for updating an existing recipe.
  * Inherits all fields from CreateRecipeDto as optional fields.
  */
 export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {
+  @ApiPropertyOptional({
+    type: [UpdateRecipeStepDto],
+    description:
+      'Ordered sequence of recipe preparation steps (minimum 1 step)',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1, { message: 'Recipe must have at least one step' })
+  @ValidateNested({ each: true })
+  @Type(() => UpdateRecipeStepDto)
+  steps?: UpdateRecipeStepDto[];
   /**
    * Optional updated privacy visibility tier.
    * @example RecipePrivacy.friends_only

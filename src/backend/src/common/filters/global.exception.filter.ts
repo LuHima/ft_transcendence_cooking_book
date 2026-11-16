@@ -103,6 +103,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message = 'Internal server error';
     }
 
+    if (response.headersSent) {
+      return;
+    }
+
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),

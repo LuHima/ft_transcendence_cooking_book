@@ -458,7 +458,13 @@ describe('UsersService', () => {
           created_at: true,
           _count: {
             select: {
-              recipes: true,
+              recipes: {
+                where: {
+                  owner_type: OwnerType.user,
+                  is_active: true,
+                  privacy: RecipePrivacy.public,
+                },
+              },
             },
           },
         },
@@ -786,6 +792,46 @@ describe('UsersService', () => {
       expect(result.items[0].id).toBe(10);
       expect(result.items[0].is_liked).toBe(true);
     });
+
+    it('filters getLikedRecipes by is_active: true and visibility/block predicates', async () => {
+      (prisma.userBlock.findMany as jest.Mock).mockResolvedValueOnce([
+        { blocker_id: 1, blocked_id: 99 },
+      ]);
+      (prisma.friendship.findMany as jest.Mock).mockResolvedValueOnce([
+        { requester_id: 1, addressee_id: 42 },
+      ]);
+      (prisma.like.findMany as jest.Mock).mockResolvedValueOnce(mockLikes);
+      (prisma.like.count as jest.Mock).mockResolvedValueOnce(1);
+
+      await service.getLikedRecipes(1, { page: 1, limit: 20 });
+
+      expect(prisma.like.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            user_id: 1,
+            recipe: expect.objectContaining({
+              is_active: true,
+              AND: expect.arrayContaining([
+                {
+                  OR: [{ user_id: null }, { user_id: { notIn: [99] } }],
+                },
+                {
+                  OR: expect.arrayContaining([
+                    { privacy: RecipePrivacy.public },
+                    { user_id: 1 },
+                    {
+                      privacy: RecipePrivacy.friends_only,
+                      user_id: { in: [42] },
+                      user: { deleted_at: null },
+                    },
+                  ]),
+                },
+              ]),
+            }),
+          }),
+        }),
+      );
+    });
   });
 
   describe('getMyRecipes', () => {
@@ -984,7 +1030,12 @@ describe('UsersService', () => {
         },
       });
       expect(prisma.recipe.count).toHaveBeenCalledWith({
-        where: { user_id: 2 },
+        where: {
+          user_id: 2,
+          owner_type: OwnerType.user,
+          is_active: true,
+          privacy: RecipePrivacy.public,
+        },
       });
       expect(prisma.friendship.count).toHaveBeenCalledWith({
         where: {
@@ -993,7 +1044,14 @@ describe('UsersService', () => {
         },
       });
       expect(prisma.like.count).toHaveBeenCalledWith({
-        where: { recipe: { user_id: 2 } },
+        where: {
+          recipe: {
+            user_id: 2,
+            owner_type: OwnerType.user,
+            is_active: true,
+            privacy: RecipePrivacy.public,
+          },
+        },
       });
     });
 

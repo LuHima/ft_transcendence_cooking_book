@@ -403,7 +403,7 @@
             "auth": null,
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"mario.rossi@example.com\",\n  \"password\": \"SuperSecret123!\"\n}",
+              "raw": "{\n  \"email\": \"mario@example.com\",\n  \"password\": \"Password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -437,7 +437,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"mario.rossi@example.com\",\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"email\": \"mario@example.com\",\n  \"password\": \"Password123\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -482,7 +482,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"mario.rossi@example.com\",\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"email\": \"mario@example.com\",\n  \"password\": \"Password123\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -527,7 +527,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"mario.rossi@example.com\",\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"email\": \"mario@example.com\",\n  \"password\": \"Password123\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -572,7 +572,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"mario.rossi@example.com\",\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"email\": \"mario@example.com\",\n  \"password\": \"Password123\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -617,7 +617,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"mario.rossi@example.com\",\n  \"password\": \"SuperSecret123!\"\n}",
+                  "raw": "{\n  \"email\": \"mario@example.com\",\n  \"password\": \"Password123\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10221,10 +10221,8 @@
                   "  pm.expect(jsonData).to.be.an(\"object\");",
                   "  pm.expect(jsonData).to.have.property(\"courses\").that.is.an(\"array\");",
                   "  pm.expect(jsonData).to.have.property(\"difficulties\").that.is.an(\"array\");",
-                  "  pm.expect(jsonData).to.have.property(\"cooking_methods\").that.is.an(\"array\");",
-                  "  pm.expect(jsonData).to.have.property(\"pricing_tiers\").that.is.an(\"array\");",
                   "  pm.expect(jsonData).to.have.property(\"units\").that.is.an(\"array\");",
-                  "  pm.expect(jsonData).to.have.property(\"languages\").that.is.an(\"array\");",
+                  "  pm.expect(jsonData).to.have.property(\"categories\").that.is.an(\"array\");",
                   "});",
                   ""
                 ]
@@ -11077,12 +11075,12 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "text/plain"
+                  "value": "application/json"
                 }
               ],
-              "body": "",
+              "body": "{\n  \"message\": \"Recipe deleted successfully\"\n}",
               "cookie": [],
-              "_postman_previewlanguage": "text"
+              "_postman_previewlanguage": "json"
             },
             {
               "id": "d1ba573c-130d-4b17-8b21-adf88e538d6b",
@@ -11441,7 +11439,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"message\": \"Recipe deleted successfully\"\n}",
+              "body": "{\n  \"message\": \"Translation retry completed successfully\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             },
@@ -11626,6 +11624,52 @@
                 }
               ],
               "body": "{\n  \"statusCode\": 500,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes\",\n  \"message\": \"Internal server error\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5bb1549d-f08f-48cc-886a-6ccbad2d97d6",
+              "name": "Translation service temporarily unavailable",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "recipes",
+                    ":id",
+                    "translate"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": [
+                    {
+                      "disabled": false,
+                      "type": "any",
+                      "value": "42",
+                      "key": "id",
+                      "description": "(Required) Recipe ID"
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {}
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": 503,\n  \"timestamp\": \"2026-10-14T10:00:00.000Z\",\n  \"path\": \"/api/recipes/42/translate\",\n  \"message\": \"Translation service temporarily unavailable\"\n}",
               "cookie": [],
               "_postman_previewlanguage": "json"
             }
@@ -28921,12 +28965,12 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "text/plain"
+                  "value": "application/json"
                 }
               ],
-              "body": "",
+              "body": "{\n  \"message\": \"Ingredient deleted successfully\"\n}",
               "cookie": [],
-              "_postman_previewlanguage": "text"
+              "_postman_previewlanguage": "json"
             },
             {
               "id": "1937460c-91b1-460b-8a80-7f070f6531e5",
@@ -29803,12 +29847,12 @@
               "header": [
                 {
                   "key": "Content-Type",
-                  "value": "text/plain"
+                  "value": "application/json"
                 }
               ],
-              "body": "",
+              "body": "{\n  \"message\": \"Tag deleted successfully\"\n}",
               "cookie": [],
-              "_postman_previewlanguage": "text"
+              "_postman_previewlanguage": "json"
             },
             {
               "id": "c8a1e621-3c0a-42b3-86cc-57b2baf92aab",

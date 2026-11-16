@@ -318,6 +318,8 @@
 		"tags": "Tag",
 		"noTags": "Nessun tag disponibile.",
 		"addIngredient": "Aggiungi ingrediente",
+		"ingredientNotes": "Note",
+		"ingredientNotesPlaceholder": "Note (opzionale)",
 		"ingredientPlaceholder": "Cerca ingrediente…",
 		"ingredientName": "Ingrediente",
 		"noIngredientFound": "Nessun ingrediente trovato nel catalogo.",
@@ -1027,6 +1029,9 @@
 		"loading": "Caricamento… {{percent}}%",
 		"loadError": "Impossibile caricare le ricette.",
 		"pageLoadError": "Impossibile caricare le ricette richieste.",
-		"lightToggle": "Luce del faretto"
+		"lightToggle": "Luce del faretto",
+		"webglUnavailable": "Anteprima 3D non disponibile",
+		"webglDisabledTitle": "WebGL è disabilitato in questo browser",
+		"webglDisabledBody": "La scena della cucina richiede un contesto WebGL attivo per mostrare il ricettario in 3D."
 	}
 }

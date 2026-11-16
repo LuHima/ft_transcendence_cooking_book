@@ -136,6 +136,7 @@ export class AuthController {
     description: 'Forbidden: Account suspended (banned)',
     type: AccountBannedResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
   @Post('signin/google')
   async signInGoogle(
@@ -186,6 +187,7 @@ export class AuthController {
     description: 'Forbidden: Account suspended (banned)',
     type: AccountBannedResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @HttpCode(HttpStatus.OK) // per forzare lo status 200 piustosto che 201 che e' lo status di creazione 201 e il post ritorna 201 di default
   @Post('signin')
   async signIn(
@@ -229,6 +231,7 @@ export class AuthController {
     description: 'Username or email is already taken',
     type: ApiConflictResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('signup')
   async signUp(@Body() signUpDto: SignUpUserDto) {
     return this.authService.signUp(signUpDto);
@@ -275,6 +278,7 @@ export class AuthController {
     description: 'Refresh token missing, invalid, or expired',
     type: ApiUnauthorizedResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
   async refresh(
@@ -325,6 +329,7 @@ export class AuthController {
       'Two-factor authentication is already enabled for this account',
     type: ApiConflictResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Auth()
   @Post('twofactor/enable')
   async twoFactorEnable(
@@ -358,6 +363,7 @@ export class AuthController {
     description: 'Invalid or expired 2FA code or temporary token',
     type: ApiUnauthorizedResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   @Post('twofactor/access')
   async accessTwoFactor(
@@ -391,6 +397,7 @@ export class AuthController {
     description: 'Invalid verification code',
     type: ApiUnauthorizedResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Auth()
   @Post('twofactor/verify')
   async verify(@CurrentUser('id') id: number, @Body() code: TwoFactorCodeDto) {
@@ -421,6 +428,7 @@ export class AuthController {
     description: 'Two-factor authentication is already disabled',
     type: ApiConflictResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Auth()
   @Post('twofactor/disable')
   async twoFactorDisable(
@@ -455,6 +463,7 @@ export class AuthController {
     description: 'Current password is missing or invalid',
     type: ApiUnauthorizedResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Auth()
   @Patch('password')
   async changePassword(

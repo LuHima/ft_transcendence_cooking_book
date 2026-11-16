@@ -208,6 +208,7 @@ model User {
   bans_issued          BanHistory[] @relation("StaffIssuedBans")
   unbans_issued        BanHistory[] @relation("StaffUnbans")
 
+  @@index([status, deleted_at, created_at])
   @@map("users")
 }
 
@@ -220,6 +221,7 @@ model Recipe {
   user_id            Int?
   owner_type         OwnerType          @default(user)
   is_active          Boolean            @default(true)
+  suspended_by_ban   Boolean            @default(false)
   privacy            RecipePrivacy      @default(public)
   course             Course             @default(main_course)
   difficulty         RecipeDifficulty   @default(easy)
@@ -244,6 +246,8 @@ model Recipe {
   recipe_media       RecipeMedia[]
 
   @@index([privacy, is_active])
+  @@index([is_active, privacy, created_at(sort: Desc)])
+  @@index([user_id, is_active, privacy, created_at(sort: Desc)])
   @@map("recipes")
 }
 
@@ -297,6 +301,7 @@ model RecipeTag {
   tag          Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
   @@id([recipe_id, tag_id])
+  @@index([tag_id])
   @@map("recipe_tags")
 }
 
@@ -361,6 +366,7 @@ model RecipeIngredient {
   ingredient Ingredient @relation(fields: [ingredient_id], references: [id])
 
   @@id([recipe_id, ingredient_id])
+  @@index([ingredient_id])
   @@map("recipe_ingredients")
 }
 
@@ -405,6 +411,11 @@ model Comment {
   parent  Comment?  @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
   replies Comment[] @relation("CommentReplies")
 
+  @@index([recipe_id, is_active])
+  @@index([recipe_id, parent_id, created_at])
+  @@index([parent_id, created_at])
+  @@index([user_id, is_active])
+  @@index([created_at])
   @@map("comments")
 }
 
@@ -421,6 +432,7 @@ model Like {
   recipe Recipe @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
 
   @@id([user_id, recipe_id])
+  @@index([recipe_id])
   @@map("likes")
 }
 
@@ -447,6 +459,8 @@ model Notification {
   actor  User   @relation("NotificationActor", fields: [actor_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, is_read, created_at])
+  @@index([actor_id])
+  @@index([subject, target_id])
   @@map("notifications")
 }
 
@@ -464,6 +478,7 @@ model RecipeMedia {
 
   recipe Recipe @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
 
+  @@index([recipe_id, order])
   @@map("recipe_media")
 }
 
@@ -479,6 +494,8 @@ model JwtSession {
 
   user User @relation(fields: [id_user], references: [id], onDelete: Cascade)
 
+  @@index([id_user, id_session])
+  @@index([expire_time_jwt])
   @@map("jwt_sessions")
 }
 
@@ -496,7 +513,6 @@ model UserBlock {
   blocked    User     @relation("BlocksReceived", fields: [blocked_id], references: [id], onDelete: Cascade)
 
   @@unique([blocker_id, blocked_id])
-  @@index([blocker_id])
   @@index([blocked_id])
   @@map("user_blocks")
 }
@@ -530,6 +546,7 @@ model Report {
   @@index([subject, target_id])
   @@index([subject, status, target_id])
   @@index([resolved_by_id])
+  @@index([reporter_id, subject, target_id, status])
   @@map("reports")
 }
 
@@ -562,6 +579,7 @@ model BanHistory {
   @@index([banned_at])
   @@index([banned_by_id])
   @@index([unbanned_by_id])
+  @@index([report_id])
   @@map("ban_history")
 }
 

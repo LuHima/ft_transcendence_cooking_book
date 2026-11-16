@@ -5,11 +5,24 @@ import { createHttpException, errors } from 'src/common/config/error.config';
 
 @Injectable()
 export class EncryptionService {
-  private readonly encryptionKey = Buffer.from(
-    process.env.TWO_FACTOR_AUTH ||
-      '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-    'hex',
-  );
+  private readonly encryptionKey: Buffer;
+
+  constructor() {
+    const rawKey = process.env.TWO_FACTOR_AUTH;
+    if (
+      process.env.NODE_ENV === 'production' &&
+      (!rawKey || !/^[0-9a-fA-F]{64}$/.test(rawKey))
+    ) {
+      throw new Error(
+        'TWO_FACTOR_AUTH environment variable must be a 64-character hex string in production',
+      );
+    }
+    this.encryptionKey = Buffer.from(
+      rawKey ||
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      'hex',
+    );
+  }
 
   // https://nodejs.org/api/crypto.html#cipherfinaloutputencoding per info
   public encrypting(secret: string) {

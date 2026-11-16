@@ -6,7 +6,6 @@ export const PageCurlMaterial = shaderMaterial(
   {
     uProgress: 0,
     uPageHeight: 0.28,
-    uHingeOffset: 0.025,
     uMapFront: null as Texture | null,
     uMapBack: null as Texture | null,
     uShadowStrength: 0.4,

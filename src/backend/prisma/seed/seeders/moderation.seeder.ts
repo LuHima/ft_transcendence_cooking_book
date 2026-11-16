@@ -297,6 +297,7 @@ export async function seedModeration(
         is_permanent: false,
         banned_at: new Date(now.getTime() - 40 * DAY_MS),
         expires_at: new Date(now.getTime() - 26 * DAY_MS),
+        unbanned_at: new Date(now.getTime() - 26 * DAY_MS),
       },
       {
         user_id: tempBanned.id,
@@ -335,6 +336,7 @@ export async function seedModeration(
         is_permanent: false,
         banned_at: new Date(now.getTime() - 30 * DAY_MS),
         expires_at: new Date(now.getTime() - 23 * DAY_MS),
+        unbanned_at: new Date(now.getTime() - 23 * DAY_MS),
       },
     ],
   });

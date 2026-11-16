@@ -33,6 +33,9 @@ export interface ReportDelegateLike {
     args: Prisma.ReportFindManyArgs,
   ) => PromiseLike<Array<ReportTargetIdRow | ReportLatestIdRow>>;
   groupBy?: (args: Prisma.ReportGroupByArgs) => PromiseLike<ReportGroupByRow[]>;
+  updateMany?: (
+    args: Prisma.ReportUpdateManyArgs,
+  ) => PromiseLike<{ count: number }>;
 }
 
 export interface ReportPrismaLike {
@@ -221,5 +224,34 @@ export function sortByReportMetric<
       return timeDiff;
     }
     return b.id - a.id;
+  });
+}
+
+/**
+ * Auto-dismisses open (pending) reports whose target was permanently deleted or
+ * deactivated, preventing dangling reports from failing with 404 on resolution.
+ */
+export async function dismissOpenReports(
+  prisma: ReportPrismaLike | null | undefined,
+  subject: ReportSubject,
+  targetIds: number[],
+  resolvedById: number | null,
+  resolutionNotes: string,
+): Promise<void> {
+  if (!prisma?.report?.updateMany || targetIds.length === 0) {
+    return;
+  }
+  await prisma.report.updateMany({
+    where: {
+      subject,
+      target_id: { in: targetIds },
+      status: ReportStatus.pending,
+    },
+    data: {
+      status: ReportStatus.dismissed,
+      resolved_by_id: resolvedById,
+      resolved_at: new Date(),
+      resolution_notes: resolutionNotes,
+    },
   });
 }

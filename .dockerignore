@@ -31,5 +31,6 @@ node_modules/
 dist/
 **/dist/
 
-# Database files
+# Database files and local uploaded media
 docker/database/
+src/backend/uploads/

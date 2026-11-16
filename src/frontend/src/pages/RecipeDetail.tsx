@@ -217,12 +217,12 @@ function RecipeDetail() {
 
 	const isOwner = Boolean(user && recipe.author && recipe.author.id === user.id)
 	const isStaff = isStaffUser(user)
-	const canReactivate = canRestoreRecipe(user)
+	const canReactivate = canRestoreRecipe(user, recipe.author?.role)
 	const suspended = recipe.is_active === false
 	const provenance = recipe.translation_source
 	// Edit and retranslate: author or admin; suspend: author or staff
 	const canEdit = canEditRecipe(user, recipe.author?.id)
-	const canDelete = canDeleteRecipe(user, recipe.author?.id) && !suspended
+	const canDelete = canDeleteRecipe(user, recipe.author?.id, recipe.author?.role) && !suspended
 	const canManage = canEdit
 	const author = recipe.author
 

@@ -27,8 +27,9 @@ const secretId = process.env.BACKEND_VAULT_SECRET_ID;
   if (!res.ok) throw new Error("read secret/backend failed: HTTP " + res.status);
   const data = (await res.json()).data.data;
   for (const [k, v] of Object.entries(data)) {
-    if (!/^[A-Z_][A-Z0-9_]*$/.test(k) || String(v).includes("\x27")) throw new Error("unsafe key/value: " + k);
-    console.log("export " + k + "=\x27" + v + "\x27");
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(k)) throw new Error("unsafe key: " + k);
+    const escaped = String(v).replace(/\x27/g, () => "\x27\\\x27\x27");
+    console.log("export " + k + "=\x27" + escaped + "\x27");
   }
 })().catch((e) => { console.error(e.message); process.exit(1); });
 '
@@ -54,8 +55,10 @@ fi
 
 # Handle Prisma client generation and database migrations
 if [ -x "./node_modules/.bin/prisma" ]; then
-  echo "Generating Prisma Client..."
-  ./node_modules/.bin/prisma generate
+  if [ "${NODE_ENV}" != "production" ]; then
+    echo "Generating Prisma Client..."
+    ./node_modules/.bin/prisma generate
+  fi
 
   # Apply any pending database migrations
   echo "Applying database migrations..."

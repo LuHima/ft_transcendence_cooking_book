@@ -7,6 +7,7 @@ import {
   isSeedResetEnabled,
   resolveSeedEnv,
   resolveSeedUploadsDir,
+  SEED_COUNTS,
 } from './config';
 import { seedCatalog } from './seeders/catalog.seeder';
 import { bootstrapProdAdmin, seedUsers } from './seeders/users.seeder';
@@ -69,14 +70,29 @@ export async function runSeed(
     await resetDatabaseAndMedia(prisma, env);
   }
 
-  const usersByKey = await seedUsers(prisma);
+  let usersByKey = await seedUsers(prisma);
 
   const existingRecipes = await prisma.recipe.count();
   if (existingRecipes > 0) {
-    console.log(
-      `[seed] Demo recipes already exist (${existingRecipes} found); skipping recipes, social, and moderation seeders.`,
+    const [existingFriendships, existingReports] = await Promise.all([
+      prisma.friendship.count(),
+      prisma.report.count(),
+    ]);
+    if (
+      existingRecipes >= SEED_COUNTS.TOTAL_RECIPES &&
+      (existingFriendships > 0 || existingReports > 0)
+    ) {
+      console.log(
+        `[seed] Demo recipes already exist (${existingRecipes} found); skipping recipes, social, and moderation seeders.`,
+      );
+      return;
+    }
+
+    console.warn(
+      `[seed] Partial seed state detected (recipes=${existingRecipes}, friendships=${existingFriendships}, reports=${existingReports}); resetting domain tables before resuming seed.`,
     );
-    return;
+    await resetDatabaseAndMedia(prisma, env);
+    usersByKey = await seedUsers(prisma);
   }
 
   const recipesResult = await seedRecipes(prisma, usersByKey, env);

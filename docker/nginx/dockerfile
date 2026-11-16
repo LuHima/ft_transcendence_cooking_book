@@ -18,7 +18,6 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
 
 EXPOSE 8443 8080
 
-# Define the default command: starts Nginx in foreground.
-# The flag -g passes global directives to Nginx: 'daemon off;' is crucial in
-# Docker so the main process stays in foreground (PID 1).
-CMD ["nginx", "-g", "daemon off;"]
+# Define the default command: starts a background watcher for ACME certificate
+# renewal markers on the shared volume, then runs Nginx in the foreground (PID 1).
+CMD ["sh", "-c", "(LAST=\"\"; while sleep 30; do if [ -f /etc/nginx/conf/.reload_needed ]; then CUR=$(cat /etc/nginx/conf/.reload_needed 2>/dev/null || true); if [ -n \"$CUR\" ] && [ \"$CUR\" != \"$LAST\" ]; then LAST=\"$CUR\"; echo \"$LAST\" > /tmp/.last_reload_marker; nginx -s reload || true; fi; fi; done) & exec nginx -g 'daemon off;'"]

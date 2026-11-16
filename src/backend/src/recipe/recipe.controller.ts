@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Body,
@@ -24,12 +26,14 @@ import {
   ApiForbiddenResponse,
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
+  ApiServiceUnavailableResponse,
   ApiParam,
   ApiQuery,
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import {
   recipeImageMulterOptions,
   recipeVideoMulterOptions,
@@ -245,8 +249,24 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
+  @ApiServiceUnavailableResponse({
+    description: 'Translation service temporarily unavailable',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 503 },
+        timestamp: { type: 'string', example: '2026-10-14T10:00:00.000Z' },
+        path: { type: 'string', example: '/api/recipes/42/translate' },
+        message: {
+          type: 'string',
+          example: 'Translation service temporarily unavailable',
+        },
+      },
+    },
+  })
   @Auth()
   @Post(':id/translate')
+  @HttpCode(HttpStatus.OK)
   async retryTranslation(
     @Param('id', ParseIntPipe) recipeId: number,
     @CurrentUser('id') userId: number,
@@ -302,6 +322,7 @@ export class RecipeController {
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({
     description: 'Recipe deleted or suspended successfully',
+    type: RecipeMessageResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Invalid recipe ID format (must be an integer)',
@@ -521,6 +542,7 @@ export class RecipeController {
     description: 'Recipe not found',
     type: ApiNotFoundResponseDto,
   })
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Auth()
   @Post(':id/video')
   @UseInterceptors(FileInterceptor('file', recipeVideoMulterOptions))
@@ -680,6 +702,7 @@ export class RecipeController {
   })
   @Auth()
   @Post(':id/like')
+  @HttpCode(HttpStatus.OK)
   async likeRecipe(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') userId: number,

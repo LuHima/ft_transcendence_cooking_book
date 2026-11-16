@@ -14,11 +14,20 @@ VAULT_ADDR="${VAULT_ADDR:-http://vault:8200}"
 if [ "${USE_VAULT:-true}" = "true" ] && [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_SECRET_ID" ]; then
 	echo "=== Authenticating to Vault (acme-role) ==="
 
-	LOGIN_RESPONSE=$(curl -s --fail -X POST \
-		-d "{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}" \
-		"${VAULT_ADDR}/v1/auth/approle/login" 2>/dev/null) || true
-
-	VAULT_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+	VAULT_TOKEN=""
+	attempts=0
+	while [ "$attempts" -lt 30 ]; do
+		LOGIN_RESPONSE=$(curl -s --fail -X POST \
+			-d "{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}" \
+			"${VAULT_ADDR}/v1/auth/approle/login" 2>/dev/null) || LOGIN_RESPONSE=""
+		VAULT_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+		if [ -n "$VAULT_TOKEN" ]; then
+			break
+		fi
+		attempts=$((attempts + 1))
+		echo "Vault not ready (attempt ${attempts}/30), retrying in 5s..."
+		sleep 5
+	done
 
 	if [ -n "$VAULT_TOKEN" ]; then
 		SECRET_RESPONSE=$(curl -s --fail \
@@ -34,8 +43,9 @@ if [ "${USE_VAULT:-true}" = "true" ] && [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_
 			echo "WARNING: Vault reachable but no INFOMANIAK_API_TOKEN found; using existing environment value (if any)."
 		fi
 	else
-		echo "WARNING: Could not authenticate to Vault; using existing environment value (if any)."
+		echo "WARNING: Could not authenticate to Vault after 30 attempts; using existing environment value (if any)."
 	fi
+	unset VAULT_SECRET_ID VAULT_TOKEN LOGIN_RESPONSE SECRET_RESPONSE
 else
 	echo "INFO: Vault disabled (USE_VAULT=false) or credentials not set; skipping Vault fetch."
 fi
@@ -63,6 +73,17 @@ elif [ -x "/usr/share/acme.sh/acme.sh" ]; then
 else
 	ACME_BIN=""
 fi
+
+# Ensure the private key stays strictly 0600 and readable by Nginx (UID 101)
+secure_ssl_files() {
+	if [ -f "$SSL_DIR/transcendence.key" ]; then
+		chown 101:101 "$SSL_DIR/transcendence.key" 2>/dev/null || true
+		chmod 600 "$SSL_DIR/transcendence.key"
+	fi
+	if [ -f "$SSL_DIR/transcendence.crt" ]; then
+		chmod 644 "$SSL_DIR/transcendence.crt"
+	fi
+}
 
 # Function to generate self-signed certificate with multi-domain SAN
 generate_self_signed() {
@@ -98,8 +119,7 @@ generate_self_signed() {
 		-subj "/C=IT/ST=Tuscany/L=Florence/O=WeCook/OU=dev/CN=${DOMAIN}/UID=WeCook" \
 		-addext "subjectAltName=DNS:${DOMAIN},DNS:localhost,IP:127.0.0.1"
 
-	chmod 644 "$SSL_DIR/transcendence.key"
-	chmod 644 "$SSL_DIR/transcendence.crt"
+	secure_ssl_files
 	echo "Self-signed SSL certificate generated successfully."
 }
 
@@ -136,6 +156,7 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 			generate_self_signed
 		else
 			echo "Existing SSL certificate found in ${SSL_DIR}, using existing certificate."
+			secure_ssl_files
 		fi
 	else
 		# Check if valid non-self-signed certificate already exists for this domain
@@ -158,6 +179,7 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 				NEED_ISSUE=1
 			else
 				echo "Valid Let's Encrypt certificate for ${DOMAIN} already exists in ${SSL_DIR}, skipping issuance."
+				secure_ssl_files
 				LETS_ENCRYPT_ISSUED=1
 			fi
 		fi
@@ -191,9 +213,8 @@ if [ "$IS_PRODUCTION" -eq 1 ]; then
 			   "$ACME_BIN" --install-cert -d "$DOMAIN" \
 			       --key-file "$SSL_DIR/transcendence.key" \
 			       --fullchain-file "$SSL_DIR/transcendence.crt" \
-			       --reloadcmd "nginx -s reload || true"; then
-				chmod 644 "$SSL_DIR/transcendence.key"
-				chmod 644 "$SSL_DIR/transcendence.crt"
+			       --reloadcmd "chown 101:101 '${SSL_DIR}/transcendence.key' && chmod 600 '${SSL_DIR}/transcendence.key' && chmod 644 '${SSL_DIR}/transcendence.crt' && date +%s > '${SSL_DIR}/.reload_needed'"; then
+				secure_ssl_files
 				echo "Let's Encrypt certificate issued and installed successfully."
 				LETS_ENCRYPT_ISSUED=1
 			else
@@ -236,6 +257,7 @@ else
 		generate_self_signed
 	else
 		echo "SSL certificate already exists in ${SSL_DIR}, skipping generation."
+		secure_ssl_files
 	fi
 fi
 

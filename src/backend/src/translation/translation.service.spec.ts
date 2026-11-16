@@ -130,5 +130,42 @@ describe('TranslationService', () => {
         success: false,
       });
     });
+
+    it('strips empty strings before calling LibreTranslate and restores positions cleanly', async () => {
+      const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          translatedText: ['Hello', 'World'],
+        }),
+      } as any);
+
+      const input = ['Ciao', '', 'Mondo'];
+      const result = await service.translateBatch(input, 'it', 'en');
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const body = JSON.parse((fetchSpy.mock.calls[0][1] as any).body);
+      expect(body.q).toEqual(['Ciao', 'Mondo']);
+      expect(result).toEqual({
+        translations: ['Hello', '', 'World'],
+        success: true,
+      });
+    });
+
+    it('returns original texts with success: false when LibreTranslate returns a mismatched array length', async () => {
+      jest.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          translatedText: ['OnlyOne'],
+        }),
+      } as any);
+
+      const input = ['Ciao', 'Mondo'];
+      const result = await service.translateBatch(input, 'it', 'en');
+
+      expect(result).toEqual({
+        translations: input,
+        success: false,
+      });
+    });
   });
 });

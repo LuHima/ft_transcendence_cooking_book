@@ -102,6 +102,13 @@ describe('NotificationGateway', () => {
       expect(mockClient.join).toHaveBeenCalledWith('room-10');
       expect(statusUserSpy).toHaveBeenCalledWith(10, true);
     });
+
+    it('preserves trailing = padding in base64-encoded accessToken cookies', () => {
+      const token = (gateway as any).findToken(
+        'other=1; accessToken=abc.def.ghi==; Path=/',
+      );
+      expect(token).toBe('abc.def.ghi==');
+    });
   });
 
   describe('User presence and friends status', () => {
@@ -128,6 +135,33 @@ describe('NotificationGateway', () => {
         { friend_id: 2 },
         { friend_id: 3 },
       ]);
+    });
+
+    it('excludes mutually blocked friends in findFriend', async () => {
+      (prisma.friendship.findMany as jest.Mock<any>).mockResolvedValue([
+        { requester_id: 1, addressee_id: 2 },
+        { requester_id: 3, addressee_id: 1 },
+      ]);
+      (prisma as any).userBlock = {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ blocker_id: 3, blocked_id: 1 }]),
+      };
+
+      const friends = await (gateway as any).findFriend(1);
+
+      expect(friends).toEqual([{ friend_id: 2 }]);
+    });
+
+    it('disconnects active sockets for user on eviction event', () => {
+      const disconnectSockets = jest.fn();
+      const inSpy = jest.fn().mockReturnValue({ disconnectSockets });
+      gateway.server = { ...(mockServer as any), in: inSpy } as any;
+
+      gateway.handleUserEviction({ userId: 42 });
+
+      expect(inSpy).toHaveBeenCalledWith('room-42');
+      expect(disconnectSockets).toHaveBeenCalledWith(true);
     });
   });
 });

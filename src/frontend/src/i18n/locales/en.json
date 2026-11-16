@@ -318,6 +318,8 @@
 		"tags": "Tags",
 		"noTags": "No tags available.",
 		"addIngredient": "Add ingredient",
+		"ingredientNotes": "Notes",
+		"ingredientNotesPlaceholder": "Notes (optional)",
 		"ingredientPlaceholder": "Search ingredient…",
 		"ingredientName": "Ingredient",
 		"noIngredientFound": "No ingredient found in the catalog.",
@@ -1027,6 +1029,9 @@
 		"loading": "Loading… {{percent}}%",
 		"loadError": "Could not load the recipes.",
 		"pageLoadError": "Could not load the requested recipes.",
-		"lightToggle": "Spotlight"
+		"lightToggle": "Spotlight",
+		"webglUnavailable": "3D preview unavailable",
+		"webglDisabledTitle": "WebGL is disabled in this browser",
+		"webglDisabledBody": "The kitchen scene needs a working WebGL context to render the 3D cookbook experience."
 	}
 }

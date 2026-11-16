@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  ServiceUnavailableException,
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
@@ -55,6 +56,7 @@ import {
   RecipeCommentSortBy,
 } from './dto/recipe-comment-query.dto';
 import {
+  dismissOpenReports,
   extractTargetReportCounters,
   getBatchReportMetrics,
   getPendingCommentReportTargetIds,
@@ -474,6 +476,7 @@ export class RecipeService {
     friendIds: number[] = [],
     blockedIds: number[] = [],
     customBaseSqlConditions?: Prisma.Sql[],
+    includeAuthorRole = false,
   ): Promise<{ recipes: any[]; total: number }> {
     const targetLocale = filterDto.lang || null;
     const sortOrder =
@@ -531,7 +534,7 @@ export class RecipeService {
     if (ids.length > 0) {
       const hydrated = await this.prisma.recipe.findMany({
         where: { id: { in: ids } },
-        include: RECIPE_SUMMARY_INCLUDE(currentUserId),
+        include: RECIPE_SUMMARY_INCLUDE(currentUserId, includeAuthorRole),
       });
       const recipeMap = new Map(hydrated.map((r) => [r.id, r]));
       recipes = ids.map((id) => recipeMap.get(id)).filter(Boolean);
@@ -741,7 +744,7 @@ export class RecipeService {
     const [hydrated] = await Promise.all([
       this.prisma.recipe.findMany({
         where: { id: { in: pagedIds } },
-        include: RECIPE_SUMMARY_INCLUDE(callerId),
+        include: RECIPE_SUMMARY_INCLUDE(callerId, true),
       }),
       populateLatestPendingReportIds(
         this.prisma,
@@ -889,6 +892,7 @@ export class RecipeService {
         [],
         [],
         customBaseSqlConditions,
+        true,
       );
       recipes = titleResult.recipes;
       total = titleResult.total;
@@ -901,7 +905,7 @@ export class RecipeService {
           skip,
           take: limit,
           orderBy,
-          include: RECIPE_SUMMARY_INCLUDE(caller.id),
+          include: RECIPE_SUMMARY_INCLUDE(caller.id, true),
         }),
         this.prisma.recipe.count({
           where,
@@ -1233,7 +1237,7 @@ export class RecipeService {
         recipe.source_lang,
         targetLang,
       );
-      if (!res.success) {
+      if (!res.success || res.translations.length !== textsToTranslate.length) {
         overallTranslationSuccess = false;
       } else {
         const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
@@ -1444,8 +1448,10 @@ export class RecipeService {
     const updateData: any = {};
     if (recipeUpdate.privacy !== undefined)
       updateData.privacy = recipeUpdate.privacy;
-    if (recipeUpdate.is_active !== undefined)
+    if (recipeUpdate.is_active !== undefined) {
       updateData.is_active = recipeUpdate.is_active;
+      updateData.suspended_by_ban = false;
+    }
     if (recipeUpdate.course !== undefined)
       updateData.course = recipeUpdate.course;
     if (recipeUpdate.difficulty !== undefined)
@@ -1601,13 +1607,45 @@ export class RecipeService {
       };
     }
 
+    const hasExplicitStepIds =
+      recipeUpdate.steps?.some((step) => step.id !== undefined) ?? false;
+    const allowedExistingStepImages = new Set(
+      (recipe.steps ?? [])
+        .map((step) => step.image_url)
+        .filter((url): url is string => typeof url === 'string' && url.length > 0),
+    );
+    const resolveExistingStep = (step: { id?: number; step_number: number }) => {
+      if (step.id !== undefined) {
+        return recipe.steps?.find((currentStep) => currentStep.id === step.id);
+      }
+      if (hasExplicitStepIds) {
+        return undefined;
+      }
+      return recipe.steps?.find(
+        (currentStep) => currentStep.step_number === step.step_number,
+      );
+    };
+    const resolveStepImageUrl = (
+      step: { id?: number; step_number: number; image_url?: string | null },
+      existingStep?: { image_url: string | null },
+    ): string | null => {
+      if (step.image_url === null) {
+        return null;
+      }
+      if (
+        typeof step.image_url === 'string' &&
+        allowedExistingStepImages.has(step.image_url)
+      ) {
+        return step.image_url;
+      }
+      return existingStep?.image_url ?? null;
+    };
+
     if (recipeUpdate.steps !== undefined) {
       updateData.steps = {
         deleteMany: {},
         create: recipeUpdate.steps.map((step) => {
-          const existingStep = recipe.steps?.find(
-            (currentStep) => currentStep.step_number === step.step_number,
-          );
+          const existingStep = resolveExistingStep(step);
           const translations = (existingStep?.translations ?? [])
             .filter((translation) => translation.locale !== targetLocale)
             .map((translation) => ({
@@ -1624,8 +1662,7 @@ export class RecipeService {
           return {
             step_number: step.step_number,
             duration: step.duration ?? null,
-            image_url:
-              (step as any).image_url ?? existingStep?.image_url ?? null,
+            image_url: resolveStepImageUrl(step, existingStep),
             translations: { create: translations },
           };
         }),
@@ -1721,7 +1758,7 @@ export class RecipeService {
           recipe.source_lang,
           targetLang,
         );
-        if (!res.success) {
+        if (!res.success || res.translations.length !== textsToTranslate.length) {
           overallSuccess = false;
           break;
         }
@@ -1735,7 +1772,8 @@ export class RecipeService {
         for (let i = 0; i < stepsToTranslate.length; i++) {
           const step = stepsToTranslate[i];
           const sTitle = stepTexts[i * 2] || null;
-          const sDesc = stepTexts[i * 2 + 1] || '';
+          const fallbackDesc = textsToTranslate[4 + i * 2 + 1] ?? '';
+          const sDesc = stepTexts[i * 2 + 1] || fallbackDesc;
           stepTranslations.push({
             stepNumber: step.step_number,
             title: sTitle,
@@ -1760,9 +1798,7 @@ export class RecipeService {
         updateData.translation_status === 'completed'
       ) {
         updateData.steps.create = recipeUpdate.steps.map((step) => {
-          const existingStep = recipe.steps?.find(
-            (currentStep) => currentStep.step_number === step.step_number,
-          );
+          const existingStep = resolveExistingStep(step);
           const translations = [
             {
               locale: recipe.source_lang,
@@ -1808,8 +1844,7 @@ export class RecipeService {
           return {
             step_number: step.step_number,
             duration: step.duration ?? null,
-            image_url:
-              (step as any).image_url ?? existingStep?.image_url ?? null,
+            image_url: resolveStepImageUrl(step, existingStep),
             translations: { create: translations },
           };
         });
@@ -1926,14 +1961,19 @@ export class RecipeService {
       });
     });
 
-    // Safely cleanup physical files for any steps that were removed from the
-    // recipe
+    // Safely cleanup physical files for step images no longer referenced
+    // after step deletion, image clearing, or reordering
     if (recipeUpdate.steps !== undefined) {
-      const newStepNumbers = new Set(
-        recipeUpdate.steps.map((s) => s.step_number),
+      const preservedImageUrls = new Set<string>(
+        (updateData.steps?.create ?? [])
+          .map((s: { image_url?: string | null }) => s.image_url)
+          .filter(
+            (url: unknown): url is string =>
+              typeof url === 'string' && url.length > 0,
+          ),
       );
       for (const oldStep of recipe.steps ?? []) {
-        if (!newStepNumbers.has(oldStep.step_number) && oldStep.image_url) {
+        if (oldStep.image_url && !preservedImageUrls.has(oldStep.image_url)) {
           await this.safeUnlink(oldStep.image_url);
         }
       }
@@ -2030,9 +2070,9 @@ export class RecipeService {
       }
     }
 
-    const recipeRec = await this.prisma.recipe.update({
+    await this.prisma.recipe.update({
       where: { id: recipeId },
-      data: { is_active: false },
+      data: { is_active: false, suspended_by_ban: false },
     });
 
     if (
@@ -2048,7 +2088,7 @@ export class RecipeService {
         },
       );
     }
-    return recipeRec;
+    return { message: 'Recipe deleted successfully' };
   }
 
   /* 
@@ -2118,8 +2158,42 @@ export class RecipeService {
       if (media.url) mediaUrls.push(media.url);
     }
 
-    // Transactionally delete comments, notifications, and recipe
+    // Transactionally dismiss open reports and delete comments, notifications, and recipe
     await this.prisma.$transaction(async (tx) => {
+      const recipeComments = tx.comment?.findMany
+        ? await tx.comment.findMany({
+            where: { recipe_id: recipeId },
+            select: { id: true },
+          })
+        : [];
+      const recipeCommentIds = (recipeComments ?? []).map(
+        (c: { id: number }) => c.id,
+      );
+
+      await dismissOpenReports(
+        tx,
+        ReportSubject.recipe,
+        [recipeId],
+        userId,
+        'Target recipe permanently deleted',
+      );
+      await dismissOpenReports(
+        tx,
+        ReportSubject.comment,
+        recipeCommentIds,
+        userId,
+        'Parent recipe permanently deleted',
+      );
+
+      if (recipeCommentIds.length > 0 && tx.notification?.deleteMany) {
+        await tx.notification.deleteMany({
+          where: {
+            subject: NotificationSubject.comment,
+            target_id: { in: recipeCommentIds },
+          },
+        });
+      }
+
       await tx.comment.deleteMany({
         where: { recipe_id: recipeId },
       });
@@ -2141,13 +2215,19 @@ export class RecipeService {
       await this.safeUnlink(url);
     }
 
-    await this.notificationEmit.notification(
-      { id_user: userId, id_target: recipeId },
-      {
-        subject: NotificationSubject.recipe,
-        action: NotificationAction.delete,
-      },
-    );
+    if (
+      recipe.user_id &&
+      recipe.user_id === userId &&
+      recipe.privacy !== RecipePrivacy.private
+    ) {
+      await this.notificationEmit.notification(
+        { id_user: userId, id_target: recipeId },
+        {
+          subject: NotificationSubject.recipe,
+          action: NotificationAction.delete,
+        },
+      );
+    }
 
     return { message: 'Recipe permanently deleted successfully' };
   }
@@ -2237,7 +2317,7 @@ export class RecipeService {
         recipe.source_lang,
         targetLang,
       );
-      if (!res.success) {
+      if (!res.success || res.translations.length !== textsToTranslate.length) {
         overallSuccess = false;
         break;
       }
@@ -2251,7 +2331,8 @@ export class RecipeService {
       for (let i = 0; i < recipe.steps.length; i++) {
         const step = recipe.steps[i];
         const sTitle = stepTexts[i * 2] || null;
-        const sDesc = stepTexts[i * 2 + 1] || '';
+        const fallbackDesc = textsToTranslate[4 + i * 2 + 1] ?? '';
+        const sDesc = stepTexts[i * 2 + 1] || fallbackDesc;
         stepTranslations.push({
           stepId: step.id,
           title: sTitle,
@@ -2267,12 +2348,15 @@ export class RecipeService {
       };
     }
 
-    // If translation service failed, maintain failed status in database
+    // If translation service failed, keep failed status and throw 503 Service Unavailable
     if (!overallSuccess) {
-      return await this.prisma.recipe.update({
+      await this.prisma.recipe.update({
         where: { id: recipe.id },
         data: { translation_status: 'failed' },
       });
+      throw new ServiceUnavailableException(
+        'Translation service is currently unavailable. Please try again later.',
+      );
     }
 
     // Execute database transaction to persist translated records and set
@@ -2341,10 +2425,12 @@ export class RecipeService {
       }
 
       // Update recipe translation status to completed
-      return await tx.recipe.update({
+      await tx.recipe.update({
         where: { id: recipe.id },
         data: { translation_status: 'completed' },
       });
+
+      return { message: 'Translation retry completed successfully' };
     });
   }
 
@@ -2549,8 +2635,14 @@ export class RecipeService {
         throw firstRejection;
       }
 
-      // Re-verify gallery limit & persist atomically inside $transaction to prevent TOCTOU races
+      // Lock parent recipe row inside $transaction so concurrent gallery uploads
+      // serialize before evaluating the 3-image cap (prevents TOCTOU race).
       const createdMedia = await this.prisma.$transaction(async (tx) => {
+        if (typeof (tx as any).$queryRaw === 'function') {
+          await (tx as any)
+            .$queryRaw`SELECT id FROM "recipes" WHERE id = ${recipeId} FOR UPDATE`;
+        }
+
         const currentMedia = await tx.recipeMedia.findMany({
           where: {
             recipe_id: recipeId,
@@ -2564,7 +2656,10 @@ export class RecipeService {
           );
         }
 
-        const startingOrder = currentMedia.length;
+        const startingOrder =
+          currentMedia.length > 0
+            ? (currentMedia[currentMedia.length - 1]?.order ?? -1) + 1
+            : 0;
         const items: RecipeMedia[] = [];
         for (let i = 0; i < processedFiles.length; i++) {
           const { relativePath: fileUrl } = processedFiles[i];
@@ -2648,16 +2743,16 @@ export class RecipeService {
       // Development only
       throw new NotFoundException('UserId not the author of the recipe');
 
-    // Safely remove cover image file from disk
-    if (recipe.cover_image_url) {
-      await this.safeUnlink(recipe.cover_image_url);
-    }
-
-    // Nullify cover_image_url on recipe
+    // Nullify cover_image_url on recipe first so DB failures preserve disk file
     await this.prisma.recipe.update({
       where: { id: recipeId },
       data: { cover_image_url: null },
     });
+
+    // Safely remove cover image file from disk after DB commit
+    if (recipe.cover_image_url) {
+      await this.safeUnlink(recipe.cover_image_url);
+    }
 
     return { message: 'Cover image deleted successfully' };
   }
@@ -2684,16 +2779,16 @@ export class RecipeService {
       // Development only
       throw new NotFoundException('UserId not the author of the recipe');
 
-    // Safely remove video file from disk
-    if (recipe.video_url) {
-      await this.safeUnlink(recipe.video_url);
-    }
-
-    // Nullify video_url on recipe
+    // Nullify video_url on recipe first so DB failures preserve disk file
     await this.prisma.recipe.update({
       where: { id: recipeId },
       data: { video_url: null },
     });
+
+    // Safely remove video file from disk after DB commit
+    if (recipe.video_url) {
+      await this.safeUnlink(recipe.video_url);
+    }
 
     return { message: 'Recipe video deleted successfully' };
   }
@@ -2731,16 +2826,16 @@ export class RecipeService {
       throw new NotFoundException('Step not found');
     }
 
-    // Safely remove step image file from disk
-    if (step.image_url) {
-      await this.safeUnlink(step.image_url);
-    }
-
-    // Nullify image_url on step
+    // Nullify image_url on step first so DB failures preserve disk file
     await this.prisma.recipeStep.update({
       where: { id: step.id },
       data: { image_url: null },
     });
+
+    // Safely remove step image file from disk after DB commit
+    if (step.image_url) {
+      await this.safeUnlink(step.image_url);
+    }
 
     return { message: 'Step image deleted successfully' };
   }
@@ -2778,15 +2873,15 @@ export class RecipeService {
       throw new NotFoundException('Gallery media not found');
     }
 
-    // Safely remove gallery image file from disk
-    if (media.url) {
-      await this.safeUnlink(media.url);
-    }
-
-    // Delete gallery media record
+    // Delete gallery media record first so DB failures preserve disk file
     await this.prisma.recipeMedia.delete({
       where: { id: media.id },
     });
+
+    // Safely remove gallery image file from disk after DB commit
+    if (media.url) {
+      await this.safeUnlink(media.url);
+    }
 
     return { message: 'Gallery media deleted successfully' };
   }
@@ -2985,6 +3080,24 @@ export class RecipeService {
         throw new BadRequestException(
           'Parent comment does not belong to this recipe',
         );
+      }
+
+      if (
+        parent.user_id &&
+        parent.user_id !== recipe.user_id &&
+        this.prisma.userBlock
+      ) {
+        const isParentBlocked = await this.prisma.userBlock.findFirst({
+          where: {
+            OR: [
+              { blocker_id: userId, blocked_id: parent.user_id },
+              { blocker_id: parent.user_id, blocked_id: userId },
+            ],
+          },
+        });
+        if (isParentBlocked) {
+          throw new NotFoundException('Parent comment not found');
+        }
       }
 
       // Enforce 2-level hierarchy: if parent is already a reply, normalize to
@@ -3424,49 +3537,72 @@ export class RecipeService {
         throw createHttpException(errors.common.adminOnly);
       }
 
-      const childCount = await this.prisma.comment.count({
-        where: { parent_id: commentId },
-      });
+      return await this.prisma.$transaction(async (tx) => {
+        if (typeof (tx as any).$queryRaw === 'function') {
+          await (tx as any)
+            .$queryRaw`SELECT id FROM "comments" WHERE id = ${commentId} FOR UPDATE`;
+        }
 
-      if (childCount > 0 && !query.prune_replies) {
-        throw createHttpException(errors.comment.hasReplies);
-      }
-
-      if (childCount > 0 && query.prune_replies) {
-        const childReplies = await this.prisma.comment.findMany({
+        const childCount = await tx.comment.count({
           where: { parent_id: commentId },
-          select: { id: true },
         });
-        const childIds = childReplies.map((c) => c.id);
 
-        await this.prisma.notification.deleteMany({
+        if (childCount > 0 && !query.prune_replies) {
+          throw createHttpException(errors.comment.hasReplies);
+        }
+
+        if (childCount > 0 && query.prune_replies) {
+          const childReplies = await tx.comment.findMany({
+            where: { parent_id: commentId },
+            select: { id: true },
+          });
+          const childIds = childReplies.map((c) => c.id);
+
+          await dismissOpenReports(
+            tx,
+            ReportSubject.comment,
+            [commentId, ...childIds],
+            userId,
+            'Target comment permanently deleted',
+          );
+
+          await tx.notification.deleteMany({
+            where: {
+              subject: NotificationSubject.comment,
+              target_id: { in: [commentId, ...childIds] },
+            },
+          });
+
+          await tx.comment.deleteMany({
+            where: { parent_id: commentId },
+          });
+          await tx.comment.delete({
+            where: { id: commentId },
+          });
+
+          return { message: 'Comment permanently deleted with replies' };
+        }
+
+        await dismissOpenReports(
+          tx,
+          ReportSubject.comment,
+          [commentId],
+          userId,
+          'Target comment permanently deleted',
+        );
+
+        await tx.notification.deleteMany({
           where: {
             subject: NotificationSubject.comment,
-            target_id: { in: [commentId, ...childIds] },
+            target_id: commentId,
           },
         });
-
-        await this.prisma.comment.deleteMany({
-          where: { parent_id: commentId },
-        });
-        await this.prisma.comment.delete({
+        await tx.comment.delete({
           where: { id: commentId },
         });
 
-        return { message: 'Comment permanently deleted with replies' };
-      }
-
-      await this.prisma.notification.deleteMany({
-        where: {
-          subject: NotificationSubject.comment,
-          target_id: commentId,
-        },
+        return { message: 'Comment permanently deleted successfully' };
       });
-      await this.prisma.comment.delete({
-        where: { id: commentId },
-      });
-
-      return { message: 'Comment permanently deleted successfully' };
     }
 
     // Soft deletion path (Default)

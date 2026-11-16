@@ -21,14 +21,23 @@ fi
 
 echo "=== Authenticating to Vault (database-role) ==="
 
-LOGIN_RESPONSE=$(curl -s --fail -X POST \
-	-d "{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}" \
-	"${VAULT_ADDR}/v1/auth/approle/login")
-
-VAULT_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+VAULT_TOKEN=""
+attempts=0
+while [ "$attempts" -lt 30 ]; do
+	LOGIN_RESPONSE=$(curl -s --fail -X POST \
+		-d "{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}" \
+		"${VAULT_ADDR}/v1/auth/approle/login" 2>/dev/null) || LOGIN_RESPONSE=""
+	VAULT_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+	if [ -n "$VAULT_TOKEN" ]; then
+		break
+	fi
+	attempts=$((attempts + 1))
+	echo "Vault not ready (attempt ${attempts}/30), retrying in 5s..."
+	sleep 5
+done
 
 if [ -z "$VAULT_TOKEN" ]; then
-	echo "ERROR: Failed to authenticate to Vault."
+	echo "ERROR: Failed to authenticate to Vault after 30 attempts."
 	exit 1
 fi
 
@@ -44,6 +53,8 @@ if [ -z "$POSTGRES_PASSWORD" ]; then
 	echo "ERROR: POSTGRES_PASSWORD not found in Vault response."
 	exit 1
 fi
+
+unset VAULT_SECRET_ID VAULT_TOKEN LOGIN_RESPONSE SECRET_RESPONSE
 
 echo "=== Secret retrieved successfully. Starting PostgreSQL ==="
 

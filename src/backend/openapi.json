@@ -2639,7 +2639,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Recipe deleted or suspended successfully"
+            "description": "Recipe deleted or suspended successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid recipe ID format (must be an integer)",
@@ -2766,6 +2773,34 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Translation service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "number",
+                      "example": 503
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2026-10-14T10:00:00.000Z"
+                    },
+                    "path": {
+                      "type": "string",
+                      "example": "/api/recipes/42/translate"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Translation service temporarily unavailable"
+                    }
+                  }
                 }
               }
             }
@@ -6977,7 +7012,6 @@
             "description": "Filter comments by lifecycle status (active, inactive, all)",
             "schema": {
               "default": "all",
-              "example": "all",
               "type": "string",
               "enum": [
                 "active",
@@ -7068,7 +7102,6 @@
             "description": "Structural presentation format: flat (default atomic stream) or threaded (paginated root comments with windowed reply previews)",
             "schema": {
               "default": "flat",
-              "example": "flat",
               "type": "string",
               "enum": [
                 "flat",
@@ -8151,7 +8184,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Ingredient deleted successfully"
+            "description": "Ingredient deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogMessageResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
@@ -8386,7 +8426,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Tag deleted successfully"
+            "description": "Tag deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogMessageResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
@@ -8879,8 +8926,8 @@
           "idToken": {
             "type": "string",
             "description": "Google OAuth2 OpenID Connect ID token (JWT) issued by Google Identity Services",
-            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature",
-            "maxLength": 4096
+            "maxLength": 4096,
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature"
           }
         },
         "required": [
@@ -8897,10 +8944,10 @@
           },
           "constraints": {
             "type": "object",
+            "description": "Map of failed constraint keys to human-readable messages",
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Map of failed constraint keys to human-readable messages",
             "example": {
               "matches": "Phone number must contain 7 to 15 digits and may only include numbers, spaces, +, -, (, ), and . (e.g. +39 06 1234567)"
             }
@@ -9027,8 +9074,8 @@
           },
           "banned_until": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
+            "nullable": true,
             "description": "Scheduled ban expiration timestamp (null if permanent)",
             "example": "2026-12-04T12:00:00.000Z"
           },
@@ -9099,15 +9146,15 @@
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "description": "Registered user email address",
-            "example": "mario.rossi@example.com",
-            "maxLength": 255,
-            "format": "email"
+            "example": "mario@example.com",
+            "maxLength": 255
           },
           "password": {
             "type": "string",
             "description": "User account password (minimum 9 characters)",
-            "example": "SuperSecret123!",
+            "example": "Password123",
             "minLength": 9,
             "maxLength": 72
           }
@@ -9130,10 +9177,10 @@
           },
           "email": {
             "type": "string",
+            "format": "email",
             "description": "Valid email address",
             "example": "mario.rossi@example.com",
-            "maxLength": 255,
-            "format": "email"
+            "maxLength": 255
           },
           "password": {
             "type": "string",
@@ -9168,14 +9215,14 @@
             "example": "mario.rossi@example.com"
           },
           "role": {
+            "type": "string",
             "description": "System role assigned to the user",
-            "example": "user",
             "enum": [
               "admin",
               "moderator",
               "user"
             ],
-            "type": "string"
+            "example": "user"
           },
           "created_at": {
             "format": "date-time",
@@ -9229,7 +9276,7 @@
           "password": {
             "type": "string",
             "description": "User account password (minimum 9 characters)",
-            "example": "SuperSecret123!",
+            "example": "Password123",
             "minLength": 9,
             "maxLength": 72
           },
@@ -9343,85 +9390,85 @@
             "example": "mario.rossi@example.com"
           },
           "role": {
-            "description": "User role",
-            "example": "user",
+            "type": "string",
             "enum": [
               "admin",
               "moderator",
               "user"
             ],
-            "type": "string"
+            "description": "User role",
+            "example": "user"
           },
           "profile_privacy": {
-            "description": "Profile privacy setting",
-            "example": "public",
+            "type": "string",
             "enum": [
               "public",
               "friends_only",
               "private"
             ],
-            "type": "string"
+            "description": "Profile privacy setting",
+            "example": "public"
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar image URL",
-            "example": "/uploads/avatars/avatar_1.webp"
+            "example": "/uploads/avatars/avatar_1.webp",
+            "nullable": true
           },
           "bio": {
             "type": "string",
-            "nullable": true,
             "description": "Culinary biography / cooking philosophy",
-            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta."
+            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta.",
+            "nullable": true
           },
           "first_name": {
             "type": "string",
-            "nullable": true,
             "description": "First name",
-            "example": "Mario"
+            "example": "Mario",
+            "nullable": true
           },
           "last_name": {
             "type": "string",
-            "nullable": true,
             "description": "Last name",
-            "example": "Rossi"
+            "example": "Rossi",
+            "nullable": true
           },
           "birth_date": {
             "type": "string",
-            "nullable": true,
+            "format": "date-time",
             "description": "Date of birth",
             "example": "1995-05-20T00:00:00.000Z",
-            "format": "date-time"
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "nullable": true,
             "description": "Phone number",
-            "example": "+39 06 1234567"
+            "example": "+39 06 1234567",
+            "nullable": true
           },
           "address": {
             "type": "string",
-            "nullable": true,
             "description": "Residential street address",
-            "example": "Via Roma 123"
+            "example": "Via Roma 123",
+            "nullable": true
           },
           "city": {
             "type": "string",
-            "nullable": true,
             "description": "City of residence",
-            "example": "Roma"
+            "example": "Roma",
+            "nullable": true
           },
           "postal_code": {
             "type": "string",
-            "nullable": true,
             "description": "Postal code / ZIP",
-            "example": "00100"
+            "example": "00100",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Account creation timestamp",
-            "example": "2026-10-09T18:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-10-09T18:00:00.000Z"
           },
           "is_two_factor_enabled": {
             "type": "boolean",
@@ -9517,10 +9564,10 @@
           },
           "birth_date": {
             "type": "string",
-            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
-            "example": "1995-05-20",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
+            "example": "1995-05-20"
           },
           "phone": {
             "type": "string",
@@ -9549,19 +9596,19 @@
             "nullable": true,
             "description": "Postal code / ZIP (3-10 alphanumeric characters with at least one digit and optional single space or hyphen; empty resolves to null)",
             "example": "00100",
-            "maxLength": 10,
             "minLength": 3,
+            "maxLength": 10,
             "pattern": "^(?=.*\\d)[A-Za-z0-9](?:[A-Za-z0-9]|[- ](?=[A-Za-z0-9])){1,8}[A-Za-z0-9]$"
           },
           "profile_privacy": {
-            "description": "Profile privacy setting (public, friends_only, private)",
-            "example": "public",
+            "type": "string",
             "enum": [
               "public",
               "friends_only",
               "private"
             ],
-            "type": "string"
+            "description": "Profile privacy setting (public, friends_only, private)",
+            "example": "public"
           },
           "username": {
             "type": "string",
@@ -9573,10 +9620,10 @@
           },
           "email": {
             "type": "string",
+            "format": "email",
             "description": "Updated email address",
             "example": "mario.updated@example.com",
-            "maxLength": 255,
-            "format": "email"
+            "maxLength": 255
           }
         }
       },
@@ -9624,6 +9671,15 @@
             "description": "Author avatar photo URL",
             "example": "/api/media/avatars/1/chef_mario.webp",
             "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "moderator",
+              "user"
+            ],
+            "description": "Author account role when included in staff/detail views"
           }
         },
         "required": [
@@ -9932,15 +9988,15 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Public avatar photo URL of the blocked user",
-            "example": "/uploads/avatars/avatar_42.webp"
+            "example": "/uploads/avatars/avatar_42.webp",
+            "nullable": true
           },
           "blocked_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Timestamp when the user was blocked",
-            "example": "2026-11-01T10:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-11-01T10:00:00.000Z"
           }
         },
         "required": [
@@ -10016,27 +10072,27 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar image URL",
-            "example": "/uploads/avatars/avatar_1.webp"
+            "example": "/uploads/avatars/avatar_1.webp",
+            "nullable": true
           },
           "first_name": {
             "type": "string",
-            "nullable": true,
             "description": "First name",
-            "example": "Mario"
+            "example": "Mario",
+            "nullable": true
           },
           "last_name": {
             "type": "string",
-            "nullable": true,
             "description": "Last name",
-            "example": "Rossi"
+            "example": "Rossi",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Account registration timestamp",
-            "example": "2026-10-15T12:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-10-15T12:00:00.000Z"
           },
           "recipes_count": {
             "type": "number",
@@ -10044,16 +10100,16 @@
             "example": 12
           },
           "friendship_status": {
-            "nullable": true,
+            "type": "string",
             "description": "Contextual friendship status relative to the authenticated caller (friends, pending_sent, pending_received, none, or null for guests)",
-            "example": "friends",
             "enum": [
               "none",
               "pending_sent",
               "pending_received",
               "friends"
             ],
-            "type": "string"
+            "nullable": true,
+            "example": "friends"
           }
         },
         "required": [
@@ -10132,33 +10188,33 @@
           },
           "first_name": {
             "type": "string",
-            "nullable": true,
             "description": "First name",
-            "example": "Mario"
+            "example": "Mario",
+            "nullable": true
           },
           "last_name": {
             "type": "string",
-            "nullable": true,
             "description": "Last name",
-            "example": "Rossi"
+            "example": "Rossi",
+            "nullable": true
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Public avatar photo URL",
-            "example": "/uploads/avatars/avatar_1.webp"
+            "example": "/uploads/avatars/avatar_1.webp",
+            "nullable": true
           },
           "bio": {
             "type": "string",
-            "nullable": true,
             "description": "Culinary biography / cooking philosophy",
-            "example": "Passionate about authentic Neapolitan pizza and fresh pasta."
+            "example": "Passionate about authentic Neapolitan pizza and fresh pasta.",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Member since date",
-            "example": "2026-10-09T18:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-10-09T18:00:00.000Z"
           },
           "recipes_count": {
             "type": "number",
@@ -10176,51 +10232,51 @@
             "example": 138
           },
           "friendship_status": {
-            "nullable": true,
+            "type": "string",
             "description": "Current user friendship status with this profile (friends, pending_sent, pending_received, none, or null for self/guest)",
-            "example": "friends",
             "enum": [
               "none",
               "pending_sent",
               "pending_received",
               "friends"
             ],
-            "type": "string"
+            "nullable": true,
+            "example": "friends"
           },
           "profile_privacy": {
-            "description": "Profile privacy setting",
-            "example": "public",
+            "type": "string",
             "enum": [
               "public",
               "friends_only",
               "private"
             ],
-            "type": "string"
+            "description": "Profile privacy setting",
+            "example": "public"
           },
           "email": {
             "type": "string",
-            "nullable": true,
             "description": "Account email address (masked to null on degraded profile)",
-            "example": "mario.rossi@example.com"
+            "example": "mario.rossi@example.com",
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "nullable": true,
             "description": "User telephone number (masked to null on degraded profile)",
-            "example": "+39021234567"
+            "example": "+39021234567",
+            "nullable": true
           },
           "city": {
             "type": "string",
-            "nullable": true,
             "description": "City of residence (masked to null on degraded profile)",
-            "example": "Milano"
+            "example": "Milano",
+            "nullable": true
           },
           "birth_date": {
             "type": "string",
-            "nullable": true,
+            "format": "date",
             "description": "User date of birth (masked to null on degraded profile)",
             "example": "1995-03-15",
-            "format": "date"
+            "nullable": true
           }
         },
         "required": [
@@ -10283,15 +10339,15 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Public avatar photo URL",
-            "example": "/uploads/avatars/avatar_2.webp"
+            "example": "/uploads/avatars/avatar_2.webp",
+            "nullable": true
           },
           "friends_since": {
             "type": "string",
+            "format": "date-time",
             "description": "Timestamp when friendship was established",
-            "example": "2026-10-15T12:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-10-15T12:00:00.000Z"
           }
         },
         "required": [
@@ -10358,6 +10414,15 @@
           "courses": {
             "type": "array",
             "description": "List of meal courses (e.g. appetizer, first_course, dessert)",
+            "example": [
+              "appetizer",
+              "first_course",
+              "main_course",
+              "dessert",
+              "side_dish",
+              "drink",
+              "snack"
+            ],
             "items": {
               "type": "string",
               "enum": [
@@ -10369,20 +10434,16 @@
                 "drink",
                 "snack"
               ]
-            },
-            "example": [
-              "appetizer",
-              "first_course",
-              "main_course",
-              "dessert",
-              "side_dish",
-              "drink",
-              "snack"
-            ]
+            }
           },
           "difficulties": {
             "type": "array",
             "description": "List of recipe difficulty classifications (very_easy, easy, medium, hard, very_hard)",
+            "example": [
+              "easy",
+              "medium",
+              "hard"
+            ],
             "items": {
               "type": "string",
               "enum": [
@@ -10390,16 +10451,26 @@
                 "medium",
                 "hard"
               ]
-            },
-            "example": [
-              "easy",
-              "medium",
-              "hard"
-            ]
+            }
           },
           "units": {
             "type": "array",
             "description": "Supported measurement units (grams, milliliters, spoons, pieces, etc.)",
+            "example": [
+              "g",
+              "kg",
+              "ml",
+              "cl",
+              "l",
+              "oz",
+              "lb",
+              "fl_oz",
+              "cup",
+              "tbsp",
+              "tsp",
+              "piece",
+              "pinch"
+            ],
             "items": {
               "type": "string",
               "enum": [
@@ -10417,26 +10488,22 @@
                 "piece",
                 "pinch"
               ]
-            },
-            "example": [
-              "g",
-              "kg",
-              "ml",
-              "cl",
-              "l",
-              "oz",
-              "lb",
-              "fl_oz",
-              "cup",
-              "tbsp",
-              "tsp",
-              "piece",
-              "pinch"
-            ]
+            }
           },
           "categories": {
             "type": "array",
             "description": "Ingredient culinary categories (vegetables, dairy, meat, spices, etc.)",
+            "example": [
+              "produce",
+              "dairy_eggs",
+              "meat_poultry",
+              "seafood",
+              "bakery_grains",
+              "pantry_spices",
+              "legumes_nuts",
+              "beverages_liquids",
+              "other"
+            ],
             "items": {
               "type": "string",
               "enum": [
@@ -10450,18 +10517,7 @@
                 "beverages_liquids",
                 "other"
               ]
-            },
-            "example": [
-              "produce",
-              "dairy_eggs",
-              "meat_poultry",
-              "seafood",
-              "bakery_grains",
-              "pantry_spices",
-              "legumes_nuts",
-              "beverages_liquids",
-              "other"
-            ]
+            }
           }
         },
         "required": [
@@ -10916,29 +10972,29 @@
           "step_number": {
             "type": "number",
             "description": "1-based sequential step order number",
-            "example": 1,
             "minimum": 1,
-            "maximum": 100
+            "maximum": 100,
+            "example": 1
           },
           "title": {
             "type": "string",
             "nullable": true,
             "description": "Optional summary title for this step (max 255 characters; empty resolves to null)",
-            "example": "Preparare il guanciale",
-            "maxLength": 255
+            "maxLength": 255,
+            "example": "Preparare il guanciale"
           },
           "description": {
             "type": "string",
             "description": "Detailed instructions for this step in source_lang",
-            "example": "Tagliare il guanciale a striscioline spesse mezzo centimetro.",
-            "maxLength": 2000
+            "maxLength": 2000,
+            "example": "Tagliare il guanciale a striscioline spesse mezzo centimetro."
           },
           "duration": {
             "type": "number",
             "description": "Step duration in minutes (0 to 8760)",
-            "example": 10,
             "minimum": 0,
-            "maximum": 8760
+            "maximum": 8760,
+            "example": 10
           }
         },
         "required": [
@@ -10952,20 +11008,19 @@
           "ingredient_id": {
             "type": "number",
             "description": "Catalog ingredient ID referenced from /api/ingredients",
-            "example": 5,
             "minimum": 1,
-            "maximum": 2147483647
+            "maximum": 2147483647,
+            "example": 5
           },
           "quantity": {
             "type": "number",
             "description": "Ingredient quantity (0.01 to 99999999.99)",
-            "example": 200,
             "minimum": 0.01,
-            "maximum": 99999999.99
+            "maximum": 99999999.99,
+            "example": 200
           },
           "unit": {
-            "description": "Unit of measure (e.g. g, ml, piece)",
-            "example": "g",
+            "type": "string",
             "enum": [
               "g",
               "kg",
@@ -10981,11 +11036,11 @@
               "piece",
               "pinch"
             ],
-            "type": "string"
+            "description": "Unit of measure (e.g. g, ml, piece)",
+            "example": "g"
           },
           "notes": {
             "description": "Optional preparation notes as a string or key-value locale dictionary (it, en, fr; max 255 chars)",
-            "example": "tagliato a listarelle",
             "nullable": true,
             "oneOf": [
               {
@@ -11010,7 +11065,8 @@
                 },
                 "additionalProperties": false
               }
-            ]
+            ],
+            "example": "tagliato a listarelle"
           }
         },
         "required": [
@@ -11025,34 +11081,33 @@
           "title": {
             "type": "string",
             "description": "Recipe title in source_lang (3-255 characters)",
-            "example": "Spaghetti alla Carbonara",
             "minLength": 3,
-            "maxLength": 255
+            "maxLength": 255,
+            "example": "Spaghetti alla Carbonara"
           },
           "description": {
             "type": "string",
             "description": "Introductory recipe description in source_lang (10-1000 characters)",
-            "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.",
             "minLength": 10,
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino."
           },
           "preservation": {
             "type": "string",
             "nullable": true,
             "description": "Storage and shelf life advice (max 1000 characters; empty resolves to null)",
-            "example": "Consumare immediatamente; non congelare.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Consumare immediatamente; non congelare."
           },
           "tips": {
             "type": "string",
             "nullable": true,
             "description": "Author tips, tricks, and culinary secrets (max 1000 characters; empty resolves to null)",
-            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
           },
           "course": {
-            "description": "Course classification within a meal (first course, main course, dessert, etc.)",
-            "example": "first_course",
+            "type": "string",
             "enum": [
               "appetizer",
               "first_course",
@@ -11062,62 +11117,62 @@
               "drink",
               "snack"
             ],
-            "type": "string"
+            "description": "Course classification within a meal (first course, main course, dessert, etc.)",
+            "example": "first_course"
           },
           "difficulty": {
-            "description": "Difficulty rating",
-            "example": "medium",
+            "type": "string",
             "enum": [
               "easy",
               "medium",
               "hard"
             ],
-            "type": "string"
+            "description": "Difficulty rating",
+            "example": "medium"
           },
           "prep_time": {
             "type": "number",
             "description": "Preparation time in minutes (0 to 8760)",
-            "example": 15,
             "minimum": 0,
-            "maximum": 8760
+            "maximum": 8760,
+            "example": 15
           },
           "cook_time": {
             "type": "number",
             "description": "Cooking time in minutes (0 to 8760)",
-            "example": 10,
             "minimum": 0,
-            "maximum": 8760
+            "maximum": 8760,
+            "example": 10
           },
           "servings": {
             "type": "number",
             "description": "Yield in servings/portions (1 to 1000)",
-            "example": 4,
             "minimum": 1,
-            "maximum": 1000
+            "maximum": 1000,
+            "example": 4
           },
           "source_lang": {
             "type": "string",
-            "description": "Author canonical writing language code (it, en, fr)",
-            "example": "it",
             "enum": [
               "it",
               "en",
               "fr"
-            ]
+            ],
+            "description": "Author canonical writing language code (it, en, fr)",
+            "example": "it"
           },
           "privacy": {
-            "description": "Privacy tier of the recipe (public, friends_only, private)",
-            "example": "public",
+            "type": "string",
             "enum": [
               "public",
               "friends_only",
               "private"
             ],
-            "type": "string"
+            "description": "Privacy tier of the recipe (public, friends_only, private)",
+            "example": "public"
           },
           "steps": {
             "description": "Ordered sequence of recipe preparation steps (1 to 50 steps)",
-            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CreateRecipeStepDto"
@@ -11125,7 +11180,6 @@
           },
           "ingredients": {
             "description": "List of ingredients with quantities and units (1 to 100 ingredients)",
-            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CreateRecipeIngredientDto"
@@ -11139,9 +11193,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "number",
-              "maximum": 2147483647,
-              "minimum": 1
+              "type": "number"
             }
           }
         },
@@ -11171,40 +11223,86 @@
           "message"
         ]
       },
+      "UpdateRecipeStepDto": {
+        "type": "object",
+        "properties": {
+          "step_number": {
+            "type": "number",
+            "description": "1-based sequential step order number",
+            "minimum": 1,
+            "maximum": 100,
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional summary title for this step (max 255 characters; empty resolves to null)",
+            "maxLength": 255,
+            "example": "Preparare il guanciale"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed instructions for this step in source_lang",
+            "maxLength": 2000,
+            "example": "Tagliare il guanciale a striscioline spesse mezzo centimetro."
+          },
+          "duration": {
+            "type": "number",
+            "description": "Step duration in minutes (0 to 8760)",
+            "minimum": 0,
+            "maximum": 8760,
+            "example": 10
+          },
+          "id": {
+            "type": "number",
+            "description": "Existing step ID used to preserve step image and translations when reordering or deleting steps",
+            "example": 10
+          },
+          "image_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional existing or cleared step image URL preserved during update",
+            "example": "/api/media/recipes/42/step-1.webp"
+          }
+        },
+        "required": [
+          "step_number",
+          "description"
+        ]
+      },
       "UpdateRecipeDto": {
         "type": "object",
         "properties": {
           "title": {
             "type": "string",
             "description": "Recipe title in source_lang (3-255 characters)",
-            "example": "Spaghetti alla Carbonara",
             "minLength": 3,
-            "maxLength": 255
+            "maxLength": 255,
+            "example": "Spaghetti alla Carbonara"
           },
           "description": {
             "type": "string",
             "description": "Introductory recipe description in source_lang (10-1000 characters)",
-            "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino.",
             "minLength": 10,
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Il grande classico della cucina tradizionale romana preparato con guanciale e pecorino."
           },
           "preservation": {
             "type": "string",
             "nullable": true,
             "description": "Storage and shelf life advice (max 1000 characters; empty resolves to null)",
-            "example": "Consumare immediatamente; non congelare.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Consumare immediatamente; non congelare."
           },
           "tips": {
             "type": "string",
             "nullable": true,
             "description": "Author tips, tricks, and culinary secrets (max 1000 characters; empty resolves to null)",
-            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
           },
           "course": {
-            "description": "Course classification within a meal (first course, main course, dessert, etc.)",
-            "example": "first_course",
+            "type": "string",
             "enum": [
               "appetizer",
               "first_course",
@@ -11214,70 +11312,69 @@
               "drink",
               "snack"
             ],
-            "type": "string"
+            "description": "Course classification within a meal (first course, main course, dessert, etc.)",
+            "example": "first_course"
           },
           "difficulty": {
-            "description": "Difficulty rating",
-            "example": "medium",
+            "type": "string",
             "enum": [
               "easy",
               "medium",
               "hard"
             ],
-            "type": "string"
+            "description": "Difficulty rating",
+            "example": "medium"
           },
           "prep_time": {
             "type": "number",
             "description": "Preparation time in minutes (0 to 8760)",
-            "example": 15,
             "minimum": 0,
-            "maximum": 8760
+            "maximum": 8760,
+            "example": 15
           },
           "cook_time": {
             "type": "number",
             "description": "Cooking time in minutes (0 to 8760)",
-            "example": 10,
             "minimum": 0,
-            "maximum": 8760
+            "maximum": 8760,
+            "example": 10
           },
           "servings": {
             "type": "number",
             "description": "Yield in servings/portions (1 to 1000)",
-            "example": 4,
             "minimum": 1,
-            "maximum": 1000
+            "maximum": 1000,
+            "example": 4
           },
           "source_lang": {
             "type": "string",
-            "description": "Author canonical writing language code (it, en, fr)",
-            "example": "it",
             "enum": [
               "it",
               "en",
               "fr"
-            ]
+            ],
+            "description": "Author canonical writing language code (it, en, fr)",
+            "example": "it"
           },
           "privacy": {
-            "description": "Updated privacy tier of the recipe (public, friends_only, private)",
-            "example": "friends_only",
+            "type": "string",
             "enum": [
               "public",
               "friends_only",
               "private"
             ],
-            "type": "string"
+            "description": "Updated privacy tier of the recipe (public, friends_only, private)",
+            "example": "friends_only"
           },
           "steps": {
-            "description": "Ordered sequence of recipe preparation steps (1 to 50 steps)",
-            "minItems": 1,
+            "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CreateRecipeStepDto"
+              "$ref": "#/components/schemas/UpdateRecipeStepDto"
             }
           },
           "ingredients": {
             "description": "List of ingredients with quantities and units (1 to 100 ingredients)",
-            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CreateRecipeIngredientDto"
@@ -11291,9 +11388,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "number",
-              "maximum": 2147483647,
-              "minimum": 1
+              "type": "number"
             }
           },
           "is_active": {
@@ -11303,13 +11398,13 @@
           },
           "locale": {
             "type": "string",
-            "description": "Target locale of modified localized fields (it, en, fr)",
-            "example": "it",
             "enum": [
               "it",
               "en",
               "fr"
-            ]
+            ],
+            "description": "Target locale of modified localized fields (it, en, fr)",
+            "example": "it"
           }
         }
       },
@@ -11396,9 +11491,9 @@
           "parent_id": {
             "type": "number",
             "description": "Optional parent comment ID if this comment is a reply. Automatically normalized to root comment.",
-            "example": 1,
             "minimum": 1,
-            "maximum": 2147483647
+            "maximum": 2147483647,
+            "example": 1
           }
         },
         "required": [
@@ -11420,21 +11515,21 @@
           },
           "user_id": {
             "type": "number",
-            "nullable": true,
             "description": "Author user ID",
-            "example": 10
+            "example": 10,
+            "nullable": true
           },
           "parent_id": {
             "type": "number",
-            "nullable": true,
             "description": "Parent root comment ID if reply, or null for top-level comment",
-            "example": null
+            "example": null,
+            "nullable": true
           },
           "content": {
             "type": "string",
-            "nullable": true,
             "description": "Comment content text, or null if deleted/deactivated with active replies",
-            "example": "Ottima ricetta!"
+            "example": "Ottima ricetta!",
+            "nullable": true
           },
           "is_active": {
             "type": "boolean",
@@ -11454,14 +11549,14 @@
           },
           "updated_at": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
             "description": "Last update timestamp, or null if never edited",
-            "example": "2026-10-15T11:00:00.000Z"
+            "example": "2026-10-15T11:00:00.000Z",
+            "nullable": true
           },
           "user": {
-            "nullable": true,
             "description": "Author profile summary, or null if deactivated",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -11498,21 +11593,21 @@
           },
           "user_id": {
             "type": "number",
-            "nullable": true,
             "description": "Author user ID",
-            "example": 10
+            "example": 10,
+            "nullable": true
           },
           "parent_id": {
             "type": "number",
-            "nullable": true,
             "description": "Parent root comment ID if reply, or null for top-level comment",
-            "example": null
+            "example": null,
+            "nullable": true
           },
           "content": {
             "type": "string",
-            "nullable": true,
             "description": "Comment content text, or null if deleted/deactivated with active replies",
-            "example": "Ottima ricetta!"
+            "example": "Ottima ricetta!",
+            "nullable": true
           },
           "is_active": {
             "type": "boolean",
@@ -11532,14 +11627,14 @@
           },
           "updated_at": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
             "description": "Last update timestamp, or null if never edited",
-            "example": "2026-10-15T11:00:00.000Z"
+            "example": "2026-10-15T11:00:00.000Z",
+            "nullable": true
           },
           "user": {
-            "nullable": true,
             "description": "Author profile summary, or null if deactivated",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -11719,12 +11814,12 @@
           "resolved_lang": {
             "type": "string",
             "description": "Resolved locale code used for localized tag name",
-            "example": "it",
             "enum": [
               "it",
               "en",
               "fr"
-            ]
+            ],
+            "example": "it"
           }
         },
         "required": [
@@ -11799,8 +11894,7 @@
             "example": "parmigiano-reggiano"
           },
           "category": {
-            "description": "Ingredient culinary category",
-            "example": "dairy_eggs",
+            "type": "string",
             "enum": [
               "produce",
               "dairy_eggs",
@@ -11812,7 +11906,8 @@
               "beverages_liquids",
               "other"
             ],
-            "type": "string"
+            "description": "Ingredient culinary category",
+            "example": "dairy_eggs"
           },
           "name": {
             "type": "string",
@@ -11822,12 +11917,12 @@
           "resolved_lang": {
             "type": "string",
             "description": "Resolved locale code used for localized ingredient name",
-            "example": "it",
             "enum": [
               "it",
               "en",
               "fr"
-            ]
+            ],
+            "example": "it"
           }
         },
         "required": [
@@ -11904,9 +11999,9 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar image URL of the actor",
-            "example": "/uploads/avatars/avatar_5.webp"
+            "example": "/uploads/avatars/avatar_5.webp",
+            "nullable": true
           }
         },
         "required": [
@@ -11920,31 +12015,31 @@
         "properties": {
           "id": {
             "type": "number",
-            "nullable": true,
             "description": "Numeric resource ID of the target resource",
-            "example": 42
+            "example": 42,
+            "nullable": true
           },
           "subject": {
+            "type": "string",
+            "description": "Domain entity subject associated with the target",
             "enum": [
               "recipe",
               "comment",
               "user"
             ],
-            "type": "string",
-            "description": "Domain entity subject associated with the target",
             "example": "recipe"
           },
           "title_or_snippet": {
             "type": "string",
-            "nullable": true,
             "description": "Localized title of recipe or text snippet of comment",
-            "example": "Lasagna alla Bolognese"
+            "example": "Lasagna alla Bolognese",
+            "nullable": true
           },
           "recipe_id": {
             "type": "number",
-            "nullable": true,
             "description": "Parent recipe ID for comment interactions, or recipe ID for recipe interactions",
-            "example": 42
+            "example": 42,
+            "nullable": true
           }
         },
         "required": [
@@ -11966,8 +12061,8 @@
             "example": 2
           },
           "actor": {
-            "nullable": true,
             "description": "Actor profile card who triggered the notification (null for anonymous staff/moderation notices)",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -11976,16 +12071,18 @@
             ]
           },
           "subject": {
+            "type": "string",
+            "description": "Domain entity subject associated with the notification",
             "enum": [
               "recipe",
               "comment",
               "user"
             ],
-            "type": "string",
-            "description": "Domain entity subject associated with the notification",
             "example": "recipe"
           },
           "action": {
+            "type": "string",
+            "description": "Action that triggered the notification",
             "enum": [
               "like",
               "comment",
@@ -11996,8 +12093,6 @@
               "update",
               "warn"
             ],
-            "type": "string",
-            "description": "Action that triggered the notification",
             "example": "like"
           },
           "target": {
@@ -12015,9 +12110,9 @@
           },
           "details": {
             "type": "string",
-            "nullable": true,
             "description": "Explanation written by the moderator (only for warning notifications)",
-            "example": "Your recipe contained offensive language."
+            "example": "Your recipe contained offensive language.",
+            "nullable": true
           },
           "is_read": {
             "type": "boolean",
@@ -12136,9 +12231,9 @@
           "target_id": {
             "type": "number",
             "description": "Primary key identifier of the reported item",
-            "example": 42,
             "minimum": 1,
-            "maximum": 2147483647
+            "maximum": 2147483647,
+            "example": 42
           },
           "reason": {
             "description": "Reason category for the report",
@@ -12153,8 +12248,8 @@
             "type": "string",
             "nullable": true,
             "description": "Detailed explanation of the violation (maximum 1000 characters; empty resolves to null)",
-            "example": "This post contains repetitive promotional links.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "This post contains repetitive promotional links."
           }
         },
         "required": [
@@ -12178,9 +12273,9 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar image URL of the reporter",
-            "example": "/uploads/avatars/avatar_5.webp"
+            "example": "/uploads/avatars/avatar_5.webp",
+            "nullable": true
           }
         },
         "required": [
@@ -12204,9 +12299,9 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar image URL of the content owner",
-            "example": "/uploads/avatars/avatar_10.webp"
+            "example": "/uploads/avatars/avatar_10.webp",
+            "nullable": true
           }
         },
         "required": [
@@ -12228,8 +12323,8 @@
             "example": 42
           },
           "owner": {
-            "nullable": true,
             "description": "Author or owner of the reported entity",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -12266,9 +12361,9 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar image URL of the staff actor",
-            "example": "/uploads/avatars/avatar_1.webp"
+            "example": "/uploads/avatars/avatar_1.webp",
+            "nullable": true
           }
         },
         "required": [
@@ -12291,8 +12386,8 @@
             "example": 5
           },
           "reporter": {
-            "nullable": true,
             "description": "Hydrated profile details of the reporter",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -12315,8 +12410,8 @@
             "example": 42
           },
           "target": {
-            "nullable": true,
             "description": "Polymorphic target summary context",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -12354,6 +12449,7 @@
             "example": [
               "warn"
             ],
+            "default": [],
             "items": {
               "type": "string",
               "enum": [
@@ -12362,8 +12458,7 @@
                 "warn",
                 "dismiss"
               ]
-            },
-            "default": []
+            }
           },
           "resolution_notes": {
             "type": "string",
@@ -12406,8 +12501,8 @@
             "example": null
           },
           "resolved_by": {
-            "nullable": true,
             "description": "Hydrated profile summary of the staff member who resolved the report",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -12417,22 +12512,22 @@
           },
           "resolved_at": {
             "type": "string",
+            "format": "date-time",
             "nullable": true,
             "description": "Timestamp when report was resolved",
-            "example": null,
-            "format": "date-time"
+            "example": null
           },
           "created_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Timestamp when report was submitted",
-            "example": "2026-11-02T12:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-11-02T12:00:00.000Z"
           },
           "updated_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Timestamp when report was last modified",
-            "example": "2026-11-02T12:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-11-02T12:00:00.000Z"
           }
         },
         "required": [
@@ -12444,6 +12539,10 @@
           "description",
           "status",
           "resolution_notes",
+          "resolution_reason",
+          "resolution_description",
+          "resolved_by_id",
+          "resolved_at",
           "created_at",
           "updated_at"
         ]
@@ -12541,28 +12640,28 @@
             "type": "string",
             "nullable": true,
             "description": "User-facing explanation delivered to the penalized community member (empty resolves to null)",
-            "example": "Your content was removed for violating community safety policies.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Your content was removed for violating community safety policies."
           },
           "resolution_notes": {
             "type": "string",
             "nullable": true,
             "description": "Internal staff notes documenting findings or action taken (confidential; empty resolves to null)",
-            "example": "Content reviewed and removed; user account banned.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Content reviewed and removed; user account banned."
           },
           "ban_duration_days": {
             "type": "number",
             "description": "Custom ban duration in days (1 to 36500; capped at 180 days for moderators)",
-            "example": 30,
             "minimum": 1,
-            "maximum": 36500
+            "maximum": 36500,
+            "example": 30
           },
           "permanent": {
             "type": "boolean",
             "description": "Permanent ban flag (default false; restricted to administrators, rejected for moderators)",
-            "example": false,
-            "default": false
+            "default": false,
+            "example": false
           }
         }
       },
@@ -12581,15 +12680,15 @@
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar URL of counterparty",
-            "example": "/uploads/avatars/avatar_4.webp"
+            "example": "/uploads/avatars/avatar_4.webp",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Timestamp when request was sent",
-            "example": "2026-10-20T15:30:00.000Z",
-            "format": "date-time"
+            "example": "2026-10-20T15:30:00.000Z"
           }
         },
         "required": [
@@ -12659,12 +12758,12 @@
             "example": "Friend request sent"
           },
           "status": {
+            "type": "string",
+            "description": "Resulting relationship status when sending request",
             "enum": [
               "pending",
               "accepted"
             ],
-            "type": "string",
-            "description": "Resulting relationship status when sending request",
             "example": "pending"
           }
         },
@@ -12704,79 +12803,79 @@
             "example": "mario.rossi@example.com"
           },
           "role": {
-            "description": "User role",
-            "example": "admin",
+            "type": "string",
             "enum": [
               "admin",
               "moderator",
               "user"
             ],
-            "type": "string"
+            "description": "User role",
+            "example": "admin"
           },
           "status": {
-            "description": "Lifecycle status",
-            "example": "active",
+            "type": "string",
             "enum": [
               "active",
               "disabled",
               "banned"
             ],
-            "type": "string"
+            "description": "Lifecycle status",
+            "example": "active"
           },
           "avatar_url": {
             "type": "string",
-            "nullable": true,
             "description": "Avatar image URL",
-            "example": "/uploads/avatars/avatar_1.webp"
+            "example": "/uploads/avatars/avatar_1.webp",
+            "nullable": true
           },
           "bio": {
             "type": "string",
-            "nullable": true,
             "description": "Biography / user description",
-            "example": "Italian chef passionate about sourdough and pasta."
+            "example": "Italian chef passionate about sourdough and pasta.",
+            "nullable": true
           },
           "first_name": {
             "type": "string",
-            "nullable": true,
             "description": "First name",
-            "example": "Mario"
+            "example": "Mario",
+            "nullable": true
           },
           "last_name": {
             "type": "string",
-            "nullable": true,
             "description": "Last name",
-            "example": "Rossi"
+            "example": "Rossi",
+            "nullable": true
           },
           "birth_date": {
             "type": "string",
-            "nullable": true,
+            "format": "date-time",
             "description": "Date of birth",
             "example": "1990-01-01T00:00:00.000Z",
-            "format": "date-time"
+            "nullable": true
           },
           "phone": {
             "type": "string",
-            "nullable": true,
             "description": "Phone number",
-            "example": "+39 06 1234567"
+            "example": "+39 06 1234567",
+            "nullable": true
           },
           "address": {
             "type": "string",
-            "nullable": true,
             "description": "Street address",
-            "example": "Via Roma 1"
+            "example": "Via Roma 1",
+            "nullable": true
           },
           "city": {
             "type": "string",
-            "nullable": true,
             "description": "City",
-            "example": "Roma"
+            "example": "Roma",
+            "nullable": true
           },
           "postal_code": {
             "type": "string",
-            "nullable": true,
             "description": "Postal code / ZIP",
-            "example": "00100"
+            "example": "00100",
+            "nullable": true
           },
           "recipes_count": {
             "type": "number",
@@ -12785,16 +12884,16 @@
           },
           "created_at": {
             "type": "string",
+            "format": "date-time",
             "description": "Account registration timestamp",
-            "example": "2026-10-01T12:00:00.000Z",
-            "format": "date-time"
+            "example": "2026-10-01T12:00:00.000Z"
           },
           "banned_until": {
             "type": "string",
-            "nullable": true,
-            "description": "Active ban expiration timestamp (null if permanent or not banned)",
             "format": "date-time",
-            "example": null
+            "description": "Active ban expiration timestamp (null if permanent or not banned)",
+            "example": null,
+            "nullable": true
           },
           "previous_bans_count": {
             "type": "number",
@@ -12808,10 +12907,10 @@
           },
           "deleted_at": {
             "type": "string",
-            "nullable": true,
-            "description": "Account soft-deletion timestamp",
             "format": "date-time",
-            "example": null
+            "description": "Account soft-deletion timestamp",
+            "example": null,
+            "nullable": true
           }
         },
         "required": [
@@ -12831,6 +12930,9 @@
           "postal_code",
           "recipes_count",
           "created_at",
+          "banned_until",
+          "previous_bans_count",
+          "previous_warnings_count",
           "deleted_at"
         ]
       },
@@ -12910,13 +13012,13 @@
           },
           "banned_by_id": {
             "type": "number",
-            "nullable": true,
             "description": "Staff user ID who issued the ban (null if staff account was hard-deleted)",
-            "example": 1
+            "example": 1,
+            "nullable": true
           },
           "banned_by": {
-            "nullable": true,
             "description": "Hydrated profile summary of the staff member who issued the sanction",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -12925,10 +13027,10 @@
             ]
           },
           "report_id": {
-            "type": "number",
-            "nullable": true,
+            "type": "object",
             "description": "Originating report ID if ban was issued via report resolution",
-            "example": 10
+            "example": 10,
+            "nullable": true
           },
           "action": {
             "description": "Sanction type (ban or warn)",
@@ -12950,23 +13052,23 @@
             ]
           },
           "description": {
-            "type": "string",
-            "nullable": true,
+            "type": "object",
             "description": "User-facing explanation of the sanction",
-            "example": "Harassment in recipe comments"
+            "example": "Harassment in recipe comments",
+            "nullable": true
           },
           "internal_notes": {
-            "type": "string",
-            "nullable": true,
+            "type": "object",
             "description": "Confidential staff-only internal notes (never exposed to sanctioned users)",
             "example": "Escalated after repeated spam reports",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "nullable": true
           },
           "duration_days": {
-            "type": "number",
-            "nullable": true,
+            "type": "object",
             "description": "Ban duration in days (null if permanent)",
-            "example": 30
+            "example": 30,
+            "nullable": true
           },
           "is_permanent": {
             "type": "boolean",
@@ -12981,27 +13083,27 @@
           },
           "expires_at": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
             "description": "Scheduled ban expiration timestamp (null if permanent)",
-            "example": "2026-12-04T12:00:00.000Z"
+            "example": "2026-12-04T12:00:00.000Z",
+            "nullable": true
           },
           "unbanned_at": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
             "description": "Timestamp when the ban was lifted",
-            "example": null
+            "example": null,
+            "nullable": true
           },
           "unbanned_by_id": {
-            "type": "number",
-            "nullable": true,
+            "type": "object",
             "description": "Staff user ID who lifted the ban",
-            "example": null
+            "example": null,
+            "nullable": true
           },
           "unbanned_by": {
-            "nullable": true,
             "description": "Hydrated profile summary of the staff member who lifted the ban",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -13010,10 +13112,10 @@
             ]
           },
           "unban_reason": {
-            "type": "string",
-            "nullable": true,
+            "type": "object",
             "description": "Reason for unbanning",
-            "example": null
+            "example": null,
+            "nullable": true
           }
         },
         "required": [
@@ -13103,10 +13205,10 @@
           },
           "birth_date": {
             "type": "string",
-            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
-            "example": "1995-05-20",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
+            "example": "1995-05-20"
           },
           "phone": {
             "type": "string",
@@ -13135,8 +13237,8 @@
             "nullable": true,
             "description": "Postal code / ZIP (3-10 alphanumeric characters with at least one digit and optional single space or hyphen; empty resolves to null)",
             "example": "00100",
-            "maxLength": 10,
             "minLength": 3,
+            "maxLength": 10,
             "pattern": "^(?=.*\\d)[A-Za-z0-9](?:[A-Za-z0-9]|[- ](?=[A-Za-z0-9])){1,8}[A-Za-z0-9]$"
           },
           "username": {
@@ -13149,10 +13251,10 @@
           },
           "email": {
             "type": "string",
+            "format": "email",
             "description": "User email address",
             "example": "moderator@wecook.com",
-            "maxLength": 255,
-            "format": "email"
+            "maxLength": 255
           },
           "password": {
             "type": "string",
@@ -13162,24 +13264,24 @@
             "maxLength": 72
           },
           "role": {
-            "description": "Assigned platform role",
-            "example": "moderator",
+            "type": "string",
             "enum": [
               "admin",
               "moderator",
               "user"
             ],
-            "type": "string"
+            "description": "Assigned platform role",
+            "example": "moderator"
           },
           "status": {
-            "description": "Initial account lifecycle status (defaults to active)",
-            "example": "active",
+            "type": "string",
             "enum": [
               "active",
               "disabled",
               "banned"
             ],
-            "type": "string"
+            "description": "Initial account lifecycle status (defaults to active)",
+            "example": "active"
           },
           "avatar_url": {
             "type": "string",
@@ -13221,10 +13323,10 @@
           },
           "birth_date": {
             "type": "string",
-            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
-            "example": "1995-05-20",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
+            "example": "1995-05-20"
           },
           "phone": {
             "type": "string",
@@ -13253,8 +13355,8 @@
             "nullable": true,
             "description": "Postal code / ZIP (3-10 alphanumeric characters with at least one digit and optional single space or hyphen; empty resolves to null)",
             "example": "00100",
-            "maxLength": 10,
             "minLength": 3,
+            "maxLength": 10,
             "pattern": "^(?=.*\\d)[A-Za-z0-9](?:[A-Za-z0-9]|[- ](?=[A-Za-z0-9])){1,8}[A-Za-z0-9]$"
           },
           "username": {
@@ -13267,10 +13369,10 @@
           },
           "email": {
             "type": "string",
+            "format": "email",
             "description": "Updated email address",
             "example": "new.moderator@wecook.com",
-            "maxLength": 255,
-            "format": "email"
+            "maxLength": 255
           },
           "password": {
             "type": "string",
@@ -13280,24 +13382,24 @@
             "maxLength": 72
           },
           "role": {
-            "description": "Reassigned role. Demotions or changes immediately purge active sessions.",
-            "example": "admin",
+            "type": "string",
             "enum": [
               "admin",
               "moderator",
               "user"
             ],
-            "type": "string"
+            "description": "Reassigned role. Demotions or changes immediately purge active sessions.",
+            "example": "admin"
           },
           "status": {
-            "description": "Account lifecycle status (active, disabled, banned)",
-            "example": "active",
+            "type": "string",
             "enum": [
               "active",
               "disabled",
               "banned"
             ],
-            "type": "string"
+            "description": "Account lifecycle status (active, disabled, banned)",
+            "example": "active"
           },
           "ban_reason": {
             "description": "Violation category when transitioning status to banned",
@@ -13312,15 +13414,15 @@
             "type": "string",
             "nullable": true,
             "description": "User-facing explanation for the ban (max 1000 characters)",
-            "example": "Repeated violations of community conduct policies.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Repeated violations of community conduct policies."
           },
           "internal_notes": {
             "type": "string",
             "nullable": true,
             "description": "Confidential staff-only internal notes (only allowed when status is banned)",
-            "example": "Repeat spammer across multiple recipe threads.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Repeat spammer across multiple recipe threads."
           },
           "ban_duration_days": {
             "type": "number",
@@ -13338,8 +13440,8 @@
             "type": "string",
             "nullable": true,
             "description": "Reason for lifting account ban upon reactivation",
-            "example": "Ban appeal reviewed and granted by trust & safety staff.",
-            "maxLength": 1000
+            "maxLength": 1000,
+            "example": "Ban appeal reviewed and granted by trust & safety staff."
           },
           "avatar_url": {
             "type": "string",
@@ -13383,15 +13485,15 @@
           },
           "user_id": {
             "type": "number",
-            "nullable": true,
             "description": "Author user ID, or null if deleted/deactivated",
-            "example": 10
+            "example": 10,
+            "nullable": true
           },
           "parent_id": {
             "type": "number",
-            "nullable": true,
             "description": "Parent root comment ID if reply, or null for top-level root comment",
-            "example": null
+            "example": null,
+            "nullable": true
           },
           "content": {
             "type": "string",
@@ -13416,10 +13518,10 @@
           },
           "updated_at": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
             "description": "Last update timestamp, or null if never edited",
-            "example": "2026-10-15T11:00:00.000Z"
+            "example": "2026-10-15T11:00:00.000Z",
+            "nullable": true
           },
           "reports_count": {
             "type": "number",
@@ -13443,8 +13545,8 @@
             "example": 105
           },
           "user": {
-            "nullable": true,
             "description": "Author profile summary",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -13453,8 +13555,8 @@
             ]
           },
           "recipe": {
-            "nullable": true,
             "description": "Recipe summary metadata",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -13496,15 +13598,15 @@
           },
           "user_id": {
             "type": "number",
-            "nullable": true,
             "description": "Author user ID, or null if deleted/deactivated",
-            "example": 10
+            "example": 10,
+            "nullable": true
           },
           "parent_id": {
             "type": "number",
-            "nullable": true,
             "description": "Parent root comment ID if reply, or null for top-level root comment",
-            "example": null
+            "example": null,
+            "nullable": true
           },
           "content": {
             "type": "string",
@@ -13529,10 +13631,10 @@
           },
           "updated_at": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
             "description": "Last update timestamp, or null if never edited",
-            "example": "2026-10-15T11:00:00.000Z"
+            "example": "2026-10-15T11:00:00.000Z",
+            "nullable": true
           },
           "reports_count": {
             "type": "number",
@@ -13556,8 +13658,8 @@
             "example": 105
           },
           "user": {
-            "nullable": true,
             "description": "Author profile summary",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -13566,8 +13668,8 @@
             ]
           },
           "recipe": {
-            "nullable": true,
             "description": "Recipe summary metadata",
+            "nullable": true,
             "type": "object",
             "allOf": [
               {
@@ -14000,8 +14102,7 @@
             "example": "bell_pepper"
           },
           "category": {
-            "description": "Ingredient culinary category",
-            "example": "produce",
+            "type": "string",
             "enum": [
               "produce",
               "dairy_eggs",
@@ -14013,7 +14114,8 @@
               "beverages_liquids",
               "other"
             ],
-            "type": "string"
+            "description": "Ingredient culinary category",
+            "example": "produce"
           },
           "translations": {
             "description": "Ingredient display name in Italian, English and French",
@@ -14168,12 +14270,10 @@
             "type": "string",
             "description": "Unique canonical slug (lowercase letters, digits, underscores)",
             "example": "bell_pepper",
-            "maxLength": 100,
-            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+            "maxLength": 100
           },
           "category": {
-            "description": "Ingredient culinary category",
-            "example": "produce",
+            "type": "string",
             "enum": [
               "produce",
               "dairy_eggs",
@@ -14185,7 +14285,8 @@
               "beverages_liquids",
               "other"
             ],
-            "type": "string"
+            "description": "Ingredient culinary category",
+            "example": "produce"
           },
           "translations": {
             "description": "Ingredient display name in Italian, English and French",
@@ -14218,6 +14319,19 @@
           "translations"
         ]
       },
+      "CatalogMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Confirmation message",
+            "example": "Catalog entry deleted successfully"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
       "CreateTagDto": {
         "type": "object",
         "properties": {
@@ -14225,8 +14339,7 @@
             "type": "string",
             "description": "Unique canonical slug (lowercase letters, digits, underscores)",
             "example": "gluten_free",
-            "maxLength": 50,
-            "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+            "maxLength": 50
           },
           "translations": {
             "description": "Tag display name in Italian, English and French",

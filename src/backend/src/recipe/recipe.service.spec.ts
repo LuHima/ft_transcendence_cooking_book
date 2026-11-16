@@ -3,6 +3,7 @@ import {
   NotFoundException,
   HttpException,
   ForbiddenException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -121,6 +122,7 @@ describe('RecipeService', () => {
     report: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     user: {
       findUnique: jest.fn(),
@@ -1866,10 +1868,12 @@ describe('RecipeService', () => {
           data: expect.objectContaining({ translation_status: 'completed' }),
         }),
       );
-      expect(result.translation_status).toBe('completed');
+      expect(result).toEqual({
+        message: 'Translation retry completed successfully',
+      });
     });
 
-    it('keeps translation_status as failed if translationBatch fails during retry', async () => {
+    it('keeps translation_status as failed and throws ServiceUnavailableException if translationBatch fails during retry', async () => {
       const mockFailedRecipe = {
         id: 1,
         user_id: 1,
@@ -1914,7 +1918,9 @@ describe('RecipeService', () => {
       };
       mockPrisma.recipe.update.mockResolvedValueOnce(failedRecipeResult);
 
-      const result = await service.retryTranslation(1, 1);
+      await expect(service.retryTranslation(1, 1)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
 
       expect(mockTranslationService.translateBatch).toHaveBeenCalled();
       expect(mockPrisma.recipeTranslation.upsert).not.toHaveBeenCalled();
@@ -1922,7 +1928,6 @@ describe('RecipeService', () => {
         where: { id: 1 },
         data: { translation_status: 'failed' },
       });
-      expect(result.translation_status).toBe('failed');
     });
   });
 
@@ -2726,6 +2731,67 @@ describe('RecipeService', () => {
         }),
       );
     });
+
+    it('preserves step images by step.id across step deletion/reordering and unlinks only orphaned files', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 1,
+        prep_time: 10,
+        cook_time: 10,
+        source_lang: 'it',
+        translations: [],
+        steps: [
+          {
+            id: 10,
+            step_number: 1,
+            image_url: '/api/media/recipes/1/step1.webp',
+            translations: [],
+          },
+          {
+            id: 20,
+            step_number: 2,
+            image_url: '/api/media/recipes/1/step2.webp',
+            translations: [],
+          },
+        ],
+      };
+
+      jest
+        .spyOn(service, 'getRecipeById')
+        .mockResolvedValueOnce(existingRecipe as any);
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+      mockPrisma.recipe.update.mockResolvedValueOnce(existingRecipe);
+      const unlinkSpy = jest
+        .spyOn(service as any, 'safeUnlink')
+        .mockResolvedValueOnce(undefined);
+
+      await service.updateRecipe(1, 1, {
+        steps: [
+          {
+            id: 20,
+            step_number: 1,
+            description: 'Step 2 promoted to Step 1',
+          },
+        ],
+      });
+
+      expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            steps: expect.objectContaining({
+              create: [
+                expect.objectContaining({
+                  step_number: 1,
+                  image_url: '/api/media/recipes/1/step2.webp',
+                }),
+              ],
+            }),
+          }),
+        }),
+      );
+      expect(unlinkSpy).toHaveBeenCalledTimes(1);
+      expect(unlinkSpy).toHaveBeenCalledWith('/api/media/recipes/1/step1.webp');
+    });
   });
 
   describe('deleteRecipe', () => {
@@ -2768,9 +2834,9 @@ describe('RecipeService', () => {
 
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { is_active: false },
+        data: { is_active: false, suspended_by_ban: false },
       });
-      expect(result).toEqual({ id: 1, is_active: false });
+      expect(result).toEqual({ message: 'Recipe deleted successfully' });
     });
 
     it('throws NotFoundException when non-staff author attempts to delete an already suspended/deleted recipe', async () => {
@@ -2840,9 +2906,9 @@ describe('RecipeService', () => {
 
       expect(mockPrisma.recipe.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { is_active: false },
+        data: { is_active: false, suspended_by_ban: false },
       });
-      expect(result).toEqual({ id: 1, is_active: false });
+      expect(result).toEqual({ message: 'Recipe deleted successfully' });
     });
 
     it('throws NotFoundException when non-staff author attempts to delete an already suspended/deleted recipe', async () => {
@@ -2907,6 +2973,18 @@ describe('RecipeService', () => {
           target_id: 1,
         },
       });
+      expect(mockPrisma.report.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            subject: 'recipe',
+            target_id: { in: [1] },
+            status: 'pending',
+          }),
+          data: expect.objectContaining({
+            status: 'dismissed',
+          }),
+        }),
+      );
       expect(mockPrisma.recipe.delete).toHaveBeenCalledWith({
         where: { id: 1 },
       });

@@ -12,10 +12,32 @@ import { RECIPE_UPLOADS_DIR } from '../config/upload-paths';
 import { ProcessedMediaResult } from './image-processing.service';
 
 const VIDEO_TRANSCODE_TIMEOUT_MS = 120_000;
+const MAX_CONCURRENT_FFMPEG = 2;
 
 @Injectable()
 export class VideoProcessingService {
   private readonly logger = new Logger(VideoProcessingService.name);
+  private activeTranscodes = 0;
+  private readonly waitQueue: Array<() => void> = [];
+
+  private acquireSlot(): Promise<void> | undefined {
+    if (this.activeTranscodes < MAX_CONCURRENT_FFMPEG) {
+      this.activeTranscodes += 1;
+      return undefined;
+    }
+    return new Promise<void>((resolve) => {
+      this.waitQueue.push(resolve);
+    });
+  }
+
+  private releaseSlot(): void {
+    const next = this.waitQueue.shift();
+    if (next) {
+      next();
+      return;
+    }
+    this.activeTranscodes = Math.max(0, this.activeTranscodes - 1);
+  }
 
   /**
    * Synchronously transcodes an uploaded tutorial video to a streaming-optimized
@@ -46,12 +68,17 @@ export class VideoProcessingService {
     const filename = `recipe-${Date.now()}-${randomUUID()}.mp4`;
     const outputPath = join(RECIPE_UPLOADS_DIR, filename);
 
+    const waitForSlot = this.acquireSlot();
+    if (waitForSlot) {
+      await waitForSlot;
+    }
     try {
       await this.runFfmpeg(inputPath, outputPath);
     } catch (err) {
       await fs.promises.unlink(outputPath).catch(() => {});
       throw err;
     } finally {
+      this.releaseSlot();
       await fs.promises.unlink(inputPath).catch(() => {});
     }
 

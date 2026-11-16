@@ -10,13 +10,17 @@ import {
 } from './dto/localized-recipe.response';
 import { PaginatedRecipeResponseDto } from './dto/recipe-response.dto';
 
-export const RECIPE_SUMMARY_INCLUDE = (currentUserId?: number) => ({
+export const RECIPE_SUMMARY_INCLUDE = (
+  currentUserId?: number,
+  includeAuthorRole = false,
+) => ({
   translations: true,
   user: {
     select: {
       id: true,
       username: true,
       avatar_url: true,
+      ...(includeAuthorRole ? { role: true } : {}),
     },
   },
   recipe_tags: {
@@ -82,6 +86,7 @@ export const RECIPE_DETAIL_INCLUDE = (currentUserId?: number) => ({
       id: true,
       username: true,
       avatar_url: true,
+      role: true,
       deleted_at: true,
     },
   },
@@ -178,6 +183,18 @@ export class RecipeProjection {
     return null;
   }
 
+  private mapAuthor(recipe: any) {
+    if (recipe.owner_type === OwnerType.platform || !recipe.user) {
+      return null;
+    }
+    return {
+      id: recipe.user.id,
+      username: recipe.user.username,
+      avatar_url: recipe.user.avatar_url ?? null,
+      ...(recipe.user.role !== undefined ? { role: recipe.user.role } : {}),
+    };
+  }
+
   /**
    * Maps a raw recipe record to a lightweight summary card DTO.
    */
@@ -229,14 +246,7 @@ export class RecipeProjection {
       video_url: recipe.video_url ?? null,
       created_at: recipe.created_at,
       updated_at: recipe.updated_at ?? null,
-      author:
-        recipe.owner_type === OwnerType.platform || !recipe.user
-          ? null
-          : {
-              id: recipe.user.id,
-              username: recipe.user.username,
-              avatar_url: recipe.user.avatar_url ?? null,
-            },
+      author: this.mapAuthor(recipe),
       title: translation?.title ?? '',
       description: translation?.description ?? '',
       tags,
@@ -383,14 +393,7 @@ export class RecipeProjection {
       video_url: recipe.video_url ?? null,
       created_at: recipe.created_at,
       updated_at: recipe.updated_at ?? null,
-      author:
-        recipe.owner_type === OwnerType.platform || !recipe.user
-          ? null
-          : {
-              id: recipe.user.id,
-              username: recipe.user.username,
-              avatar_url: recipe.user.avatar_url ?? null,
-            },
+      author: this.mapAuthor(recipe),
       title: translation?.title ?? '',
       description: translation?.description ?? '',
       preservation: translation?.preservation ?? null,

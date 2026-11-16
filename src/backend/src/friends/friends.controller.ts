@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Delete,
   Param,
@@ -171,6 +173,7 @@ export class FriendsController {
   })
   @Auth()
   @Post('requests/:requesterId/accept')
+  @HttpCode(HttpStatus.OK)
   async acceptFriendRequest(
     @CurrentUser('id') userId: number,
     @Param('requesterId', ParseIntPipe) requesterId: number,
@@ -206,6 +209,7 @@ export class FriendsController {
   })
   @Auth()
   @Post('requests/:requesterId/reject')
+  @HttpCode(HttpStatus.OK)
   async rejectFriendRequest(
     @CurrentUser('id') userId: number,
     @Param('requesterId', ParseIntPipe) requesterId: number,
