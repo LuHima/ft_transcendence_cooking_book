@@ -15,6 +15,7 @@ describe('BanHistoryService', () => {
       findFirst: jest.fn(),
       findMany: jest.fn(),
       count: jest.fn(),
+      groupBy: jest.fn(),
     },
   };
 
@@ -470,6 +471,42 @@ describe('BanHistoryService', () => {
         orderBy: { banned_at: 'desc' },
       });
       expect(result).toEqual(activeBan);
+    });
+  });
+
+  describe('getSanctionCountsMap', () => {
+    it('returns empty map without querying when userIds is empty', async () => {
+      const result = await service.getSanctionCountsMap([]);
+
+      expect(result).toEqual(new Map());
+      expect(mockPrisma.banHistory.groupBy).not.toHaveBeenCalled();
+    });
+
+    it('aggregates ban and warning counts per user across unique IDs', async () => {
+      mockPrisma.banHistory.groupBy.mockResolvedValueOnce([
+        { user_id: 10, action: ReportAction.ban, _count: { id: 2 } },
+        { user_id: 10, action: ReportAction.warn, _count: { id: 1 } },
+        { user_id: 20, action: ReportAction.warn, _count: 3 },
+      ]);
+
+      const result = await service.getSanctionCountsMap([10, 20, 10, 30]);
+
+      expect(mockPrisma.banHistory.groupBy).toHaveBeenCalledWith({
+        by: ['user_id', 'action'],
+        _count: { id: true },
+        where: { user_id: { in: [10, 20, 30] } },
+      });
+      expect(result?.get(10)).toEqual({ bans: 2, warnings: 1 });
+      expect(result?.get(20)).toEqual({ bans: 0, warnings: 3 });
+      expect(result?.get(30)).toEqual({ bans: 0, warnings: 0 });
+    });
+
+    it('returns null when groupBy throws', async () => {
+      mockPrisma.banHistory.groupBy.mockRejectedValueOnce(new Error('DB error'));
+
+      const result = await service.getSanctionCountsMap([10]);
+
+      expect(result).toBeNull();
     });
   });
 });

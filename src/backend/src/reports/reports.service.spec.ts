@@ -80,6 +80,9 @@ describe('ReportsService', () => {
     getPreviousBansCount: jest.fn().mockResolvedValue(0),
     getPreviousWarningsCount: jest.fn().mockResolvedValue(0),
     getUserSanctionsHistory: jest.fn().mockResolvedValue([]),
+    getSanctionCountsMap: jest.fn((userIds: number[]) =>
+      new BanHistoryService(mockPrisma as any).getSanctionCountsMap(userIds),
+    ),
   };
 
   beforeEach(async () => {

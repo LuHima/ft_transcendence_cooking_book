@@ -9,6 +9,11 @@ import {
 import { buildPaginatedResponse } from '../common/dto/pagination-query.dto';
 import { SortOrder } from '../common/dto/sort-order.enum';
 
+export interface UserSanctionCounts {
+  bans: number;
+  warnings: number;
+}
+
 export interface RecordBanParams {
   userId: number;
   bannedById: number;
@@ -237,6 +242,56 @@ export class BanHistoryService {
   ): number {
     const escalated = baseDuration * Math.pow(2, previousBansCount);
     return Math.min(escalated, cap);
+  }
+
+  /**
+   * Batch-retrieve historical ban and warning counts for a list of users.
+   * Returns null when groupBy is unavailable or fails so callers can fall back if needed.
+   */
+  async getSanctionCountsMap(
+    userIds: number[],
+  ): Promise<Map<number, UserSanctionCounts> | null> {
+    const uniqueIds = Array.from(new Set(userIds));
+    if (uniqueIds.length === 0) {
+      return new Map();
+    }
+    if (!this.prisma.banHistory?.groupBy) {
+      return null;
+    }
+
+    try {
+      const groups = await this.prisma.banHistory.groupBy({
+        by: ['user_id', 'action'],
+        _count: { id: true },
+        where: { user_id: { in: uniqueIds } },
+      });
+      if (!Array.isArray(groups)) {
+        return null;
+      }
+
+      const countsMap = new Map<number, UserSanctionCounts>();
+      for (const uid of uniqueIds) {
+        countsMap.set(uid, { bans: 0, warnings: 0 });
+      }
+      for (const g of groups as Array<{
+        user_id: number;
+        action: ReportAction;
+        _count: number | { id?: number };
+      }>) {
+        const cnt =
+          typeof g._count === 'number' ? g._count : (g._count?.id ?? 0);
+        const entry = countsMap.get(g.user_id) ?? { bans: 0, warnings: 0 };
+        if (g.action === ReportAction.warn) {
+          entry.warnings = cnt;
+        } else {
+          entry.bans = cnt;
+        }
+        countsMap.set(g.user_id, entry);
+      }
+      return countsMap;
+    } catch {
+      return null;
+    }
   }
 
   /**

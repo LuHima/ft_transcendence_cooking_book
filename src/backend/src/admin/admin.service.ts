@@ -113,43 +113,6 @@ export class AdminService {
     }
   }
 
-  private async getSanctionCountsMap(
-    userIds: number[],
-  ): Promise<Map<number, { bans: number; warnings: number }>> {
-    const countsMap = new Map<number, { bans: number; warnings: number }>();
-    if (userIds.length === 0 || !this.prisma.banHistory?.groupBy) {
-      return countsMap;
-    }
-
-    try {
-      const groups = await this.prisma.banHistory.groupBy({
-        by: ['user_id', 'action'],
-        _count: { id: true },
-        where: { user_id: { in: userIds } },
-      });
-      if (Array.isArray(groups)) {
-        for (const uid of userIds) {
-          countsMap.set(uid, { bans: 0, warnings: 0 });
-        }
-        for (const g of groups as any[]) {
-          const cnt =
-            typeof g._count === 'number' ? g._count : (g._count?.id ?? 0);
-          const entry = countsMap.get(g.user_id) ?? { bans: 0, warnings: 0 };
-          if (g.action === ReportAction.warn) {
-            entry.warnings = cnt;
-          } else {
-            entry.bans = cnt;
-          }
-          countsMap.set(g.user_id, entry);
-        }
-      }
-    } catch {
-      // Fallback for mocked environments without banHistory.groupBy
-    }
-
-    return countsMap;
-  }
-
   private mapToAdminUserResponse(
     user: any,
     sanctions?: { bans: number; warnings: number },
@@ -253,9 +216,10 @@ export class AdminService {
       this.prisma.user.count({ where }),
     ]);
 
-    const sanctionCountsMap = await this.getSanctionCountsMap(
-      users.map((u) => u.id),
-    );
+    const sanctionCountsMap =
+      (await this.banHistoryService?.getSanctionCountsMap?.(
+        users.map((u) => u.id),
+      )) ?? new Map();
 
     const totalPages = Math.ceil(total / limit) || 1;
 
@@ -287,7 +251,9 @@ export class AdminService {
     if (!user) {
       throw createHttpException(errors.users.notFound);
     }
-    const sanctionCountsMap = await this.getSanctionCountsMap([targetUserId]);
+    const sanctionCountsMap =
+      (await this.banHistoryService?.getSanctionCountsMap?.([targetUserId])) ??
+      new Map();
     return this.mapToAdminUserResponse(
       user,
       sanctionCountsMap.get(targetUserId),
@@ -372,26 +338,10 @@ export class AdminService {
     return this.mapToAdminUserResponse(created);
   }
 
-  /**
-   * Administrative modification of user accounts:
-   * - Enforces Anti-Self-Sabotage guard (cannot demote or disable self)
-   * - Enforces Last-Admin safeguard (cannot demote or disable last admin)
-   * - Selective session eviction on credential, role, or deactivation transitions
-   * - Atomic user reactivation with platform custody content restoration
-   */
-  async updateUser(
-    targetUserId: number,
+  private validateUpdateUserPayload(
     dto: UpdateAdminUserDto,
-    currentAdminId: number,
-  ): Promise<AdminUserResponseDto> {
-    const targetUser = await this.prisma.user.findUnique({
-      where: { id: targetUserId },
-    });
-    if (!targetUser) {
-      throw createHttpException(errors.users.notFound);
-    }
-
-    // Strict Ban / Unban Payload Validation
+    targetUser: { status: UserStatus; deleted_at: Date | null },
+  ): void {
     const hasBanOnlyFields =
       dto.ban_reason !== undefined ||
       dto.ban_duration_days !== undefined ||
@@ -426,8 +376,14 @@ export class AdminService {
         'Cannot ban a soft-deleted user; reactivate the account first',
       );
     }
+  }
 
-    // Anti-Self-Sabotage Guard: admin cannot demote or disable themselves
+  private async assertAdminUpdateGuards(
+    targetUserId: number,
+    currentAdminId: number,
+    targetUser: { role: Role; status: UserStatus },
+    dto: UpdateAdminUserDto,
+  ): Promise<void> {
     if (targetUserId === currentAdminId) {
       if (dto.role !== undefined && dto.role !== targetUser.role) {
         throw createHttpException(errors.admin.cannotModifySelf);
@@ -441,7 +397,6 @@ export class AdminService {
       }
     }
 
-    // Last-Admin Safeguard: cannot demote or disable the last active administrator
     const isTargetActiveAdmin =
       targetUser.role === Role.admin && targetUser.status === UserStatus.active;
     const isDemotingAdmin =
@@ -459,69 +414,220 @@ export class AdminService {
         throw createHttpException(errors.admin.lastAdminRequired);
       }
     }
+  }
 
-    // Uniqueness validation if username or email is being modified
-    if (dto.username || dto.email) {
-      const existing = await this.prisma.user.findFirst({
-        where: {
-          AND: [
-            { id: { not: targetUserId } },
-            {
-              OR: [
-                dto.username
-                  ? { username: { equals: dto.username, mode: 'insensitive' } }
-                  : {},
-                dto.email
-                  ? { email: { equals: dto.email, mode: 'insensitive' } }
-                  : {},
-              ],
-            },
-          ],
-        },
+  private async assertUniqueAdminIdentity(
+    targetUserId: number,
+    dto: UpdateAdminUserDto,
+  ): Promise<void> {
+    if (!dto.username && !dto.email) {
+      return;
+    }
+
+    const existing = await this.prisma.user.findFirst({
+      where: {
+        AND: [
+          { id: { not: targetUserId } },
+          {
+            OR: [
+              dto.username
+                ? { username: { equals: dto.username, mode: 'insensitive' } }
+                : {},
+              dto.email
+                ? { email: { equals: dto.email, mode: 'insensitive' } }
+                : {},
+            ],
+          },
+        ],
+      },
+    });
+
+    if (!existing) {
+      return;
+    }
+
+    if (
+      dto.username &&
+      existing.username.toLowerCase() === dto.username.toLowerCase()
+    ) {
+      throw createHttpException(errors.auth.usernameAlreadyUsed);
+    }
+    throw createHttpException(errors.auth.emailAlreadyUsed);
+  }
+
+  private parseOptionalBirthDate(
+    birthDateInput: string | Date | undefined,
+  ): Date | null | undefined {
+    if (birthDateInput === undefined) {
+      return undefined;
+    }
+    if (birthDateInput === '' || birthDateInput === null) {
+      return null;
+    }
+    const parsed = new Date(birthDateInput);
+    if (isNaN(parsed.getTime())) {
+      throw new BadRequestException('Invalid birth_date format');
+    }
+    return parsed;
+  }
+
+  private computeBanExpiration(
+    dto: UpdateAdminUserDto,
+    targetUserStatus: UserStatus,
+    isReactivating: boolean,
+    isDisablingFromBanned: boolean,
+  ): Date | null | undefined {
+    if (dto.status === UserStatus.banned) {
+      if (dto.is_permanent) {
+        return null;
+      }
+      const duration =
+        dto.ban_duration_days ??
+        (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7);
+      return new Date(Date.now() + duration * 86400000);
+    }
+    if (
+      (isReactivating || isDisablingFromBanned) &&
+      targetUserStatus === UserStatus.banned
+    ) {
+      return null;
+    }
+    return undefined;
+  }
+
+  private async applyStatusTransitionSideEffects(
+    tx: Prisma.TransactionClient,
+    params: {
+      targetUserId: number;
+      currentAdminId: number;
+      targetUser: { status: UserStatus; deleted_at: Date | null };
+      dto: UpdateAdminUserDto;
+      bannedUntil: Date | null | undefined;
+      isReactivating: boolean;
+      isDisablingFromBanned: boolean;
+      isBanning: boolean;
+    },
+  ): Promise<void> {
+    const {
+      targetUserId,
+      currentAdminId,
+      targetUser,
+      dto,
+      bannedUntil,
+      isReactivating,
+      isDisablingFromBanned,
+      isBanning,
+    } = params;
+
+    if (isReactivating) {
+      if (targetUser.deleted_at !== null) {
+        await tx.recipe.updateMany({
+          where: { user_id: targetUserId, owner_type: OwnerType.platform },
+          data: { owner_type: OwnerType.user },
+        });
+        await tx.comment.updateMany({
+          where: { user_id: targetUserId, is_active: false },
+          data: { is_active: true },
+        });
+      }
+
+      if (targetUser.status === UserStatus.banned) {
+        await this.banHistoryService.recordUnban(
+          targetUserId,
+          currentAdminId,
+          dto.unban_reason?.trim() || 'Admin account reactivation',
+          tx,
+        );
+      }
+    }
+
+    if (isDisablingFromBanned) {
+      await this.banHistoryService.closeOpenBans(
+        targetUserId,
+        currentAdminId,
+        'Account disabled',
+        tx,
+      );
+    }
+
+    if (isBanning) {
+      if (targetUser.status === UserStatus.banned) {
+        await this.banHistoryService.closeOpenBans(
+          targetUserId,
+          currentAdminId,
+          'Superseded by updated ban',
+          tx,
+        );
+      }
+
+      // Suspend all active authored recipes without Platform Custody Transfer
+      await tx.recipe.updateMany({
+        where: { user_id: targetUserId, is_active: true },
+        data: { is_active: false },
       });
 
-      if (existing) {
-        if (
-          dto.username &&
-          existing.username.toLowerCase() === dto.username.toLowerCase()
-        ) {
-          throw createHttpException(errors.auth.usernameAlreadyUsed);
-        }
-        throw createHttpException(errors.auth.emailAlreadyUsed);
-      }
+      await this.banHistoryService.recordSanction(
+        {
+          userId: targetUserId,
+          bannedById: currentAdminId,
+          reason: dto.ban_reason ?? ReportReason.other,
+          action: ReportAction.ban,
+          description: dto.ban_description?.trim() || null,
+          internalNotes: dto.internal_notes?.trim() || null,
+          durationDays: dto.is_permanent
+            ? null
+            : (dto.ban_duration_days ??
+              (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7)),
+          isPermanent: dto.is_permanent ?? false,
+          expiresAt: bannedUntil,
+        },
+        tx,
+      );
+    }
+  }
+
+  /**
+   * Administrative modification of user accounts:
+   * - Enforces Anti-Self-Sabotage guard (cannot demote or disable self)
+   * - Enforces Last-Admin safeguard (cannot demote or disable last admin)
+   * - Selective session eviction on credential, role, or deactivation transitions
+   * - Atomic user reactivation with platform custody content restoration
+   */
+  async updateUser(
+    targetUserId: number,
+    dto: UpdateAdminUserDto,
+    currentAdminId: number,
+  ): Promise<AdminUserResponseDto> {
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
+    if (!targetUser) {
+      throw createHttpException(errors.users.notFound);
     }
 
-    let password_hash: string | undefined = undefined;
-    if (dto.password) {
-      password_hash = await bcrypt.hash(dto.password, 10);
-    }
+    this.validateUpdateUserPayload(dto, targetUser);
+    await this.assertAdminUpdateGuards(
+      targetUserId,
+      currentAdminId,
+      targetUser,
+      dto,
+    );
+    await this.assertUniqueAdminIdentity(targetUserId, dto);
 
-    let birthDate: Date | null | undefined = undefined;
-    if (dto.birth_date !== undefined) {
-      if (dto.birth_date === '' || dto.birth_date === null) {
-        birthDate = null;
-      } else {
-        const parsed = new Date(dto.birth_date);
-        if (isNaN(parsed.getTime())) {
-          throw new BadRequestException('Invalid birth_date format');
-        }
-        birthDate = parsed;
-      }
-    }
+    const password_hash = dto.password
+      ? await bcrypt.hash(dto.password, 10)
+      : undefined;
+    const birthDate = this.parseOptionalBirthDate(dto.birth_date);
 
-    // Lifecycle state transition checks
     const isReactivating =
       (targetUser.status === UserStatus.disabled ||
         targetUser.status === UserStatus.banned) &&
       dto.status === UserStatus.active;
-
     const isDisablingFromBanned =
       targetUser.status === UserStatus.banned &&
       dto.status === UserStatus.disabled;
-
     const isBanning = dto.status === UserStatus.banned;
 
-    // Selective Session Eviction: only on password, role, or disabling/banning status modification
     const shouldEvictSessions =
       dto.password !== undefined ||
       (dto.role !== undefined && dto.role !== targetUser.role) ||
@@ -529,92 +635,24 @@ export class AdminService {
         (dto.status === UserStatus.disabled ||
           dto.status === UserStatus.banned));
 
-    let bannedUntil: Date | null | undefined = undefined;
-    if (dto.status === UserStatus.banned) {
-      if (dto.is_permanent) {
-        bannedUntil = null;
-      } else {
-        const duration =
-          dto.ban_duration_days ??
-          (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7);
-        bannedUntil = new Date(Date.now() + duration * 86400000);
-      }
-    } else if (
-      (isReactivating || isDisablingFromBanned) &&
-      targetUser.status === UserStatus.banned
-    ) {
-      bannedUntil = null;
-    }
+    const bannedUntil = this.computeBanExpiration(
+      dto,
+      targetUser.status,
+      isReactivating,
+      isDisablingFromBanned,
+    );
 
     const updatedUser = await this.prisma.$transaction(async (tx) => {
-      if (isReactivating) {
-        if (targetUser.deleted_at !== null) {
-          // Revert platform-custody recipes back to the author
-          await tx.recipe.updateMany({
-            where: { user_id: targetUserId, owner_type: OwnerType.platform },
-            data: { owner_type: OwnerType.user },
-          });
-
-          // Reactivate authored comments
-          await tx.comment.updateMany({
-            where: { user_id: targetUserId, is_active: false },
-            data: { is_active: true },
-          });
-        }
-
-        if (targetUser.status === UserStatus.banned) {
-          await this.banHistoryService.recordUnban(
-            targetUserId,
-            currentAdminId,
-            dto.unban_reason?.trim() || 'Admin account reactivation',
-            tx,
-          );
-        }
-      }
-
-      if (isDisablingFromBanned) {
-        await this.banHistoryService.closeOpenBans(
-          targetUserId,
-          currentAdminId,
-          'Account disabled',
-          tx,
-        );
-      }
-
-      if (isBanning) {
-        if (targetUser.status === UserStatus.banned) {
-          await this.banHistoryService.closeOpenBans(
-            targetUserId,
-            currentAdminId,
-            'Superseded by updated ban',
-            tx,
-          );
-        }
-
-        // Suspend all active authored recipes without Platform Custody Transfer
-        await tx.recipe.updateMany({
-          where: { user_id: targetUserId, is_active: true },
-          data: { is_active: false },
-        });
-
-        await this.banHistoryService.recordSanction(
-          {
-            userId: targetUserId,
-            bannedById: currentAdminId,
-            reason: dto.ban_reason ?? ReportReason.other,
-            action: ReportAction.ban,
-            description: dto.ban_description?.trim() || null,
-            internalNotes: dto.internal_notes?.trim() || null,
-            durationDays: dto.is_permanent
-              ? null
-              : (dto.ban_duration_days ??
-                (dto.ban_reason ? getDefaultBanDuration(dto.ban_reason) : 7)),
-            isPermanent: dto.is_permanent ?? false,
-            expiresAt: bannedUntil,
-          },
-          tx,
-        );
-      }
+      await this.applyStatusTransitionSideEffects(tx, {
+        targetUserId,
+        currentAdminId,
+        targetUser,
+        dto,
+        bannedUntil,
+        isReactivating,
+        isDisablingFromBanned,
+        isBanning,
+      });
 
       if (shouldEvictSessions) {
         await tx.jwtSession.deleteMany({
