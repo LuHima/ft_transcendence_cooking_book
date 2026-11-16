@@ -19,6 +19,8 @@ services:
       context: ../
       dockerfile: ./docker/frontend/dockerfile
       target: development
+    environment:
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLI_ID:-}
     volumes:
       - ../src/frontend:/usr/src/app
       - /usr/src/app/node_modules
