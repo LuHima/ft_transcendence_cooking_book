@@ -11,7 +11,7 @@ COPY nginx.conf /etc/nginx/templates/conf.d/default.conf.template
 # Options:
 #   --interval=10s:		check every 10 seconds
 #   --timeout=5s:		fail check if response exceeds 5 seconds
-#   --start-period=5s:	grace period after container start
+#   --start-period=15s:	grace period after container start
 #   --retries=3:		mark unhealthy after 3 consecutive failures
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -fk https://localhost:8443/healthz || exit 1
