@@ -115,11 +115,6 @@ function MyRecipes() {
 										<span className="flex flex-wrap items-center gap-1.5">
 											{/* "My recipes" always shows the privacy level, including "Public" */}
 											<PrivacyBadge privacy={recipe.privacy} showPublic />
-											{recipe.is_active === false && (
-												<span className="inline-block rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
-													{t('recipe.suspendedBadge')}
-												</span>
-											)}
 										</span>
 										<p className="text-xs text-[var(--wc-text-muted)]">
 											{t(`difficulty.${recipe.difficulty}`)} · {t('recipe.minutes', { count: recipe.total_time })} · ♥{' '}

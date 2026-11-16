@@ -17,9 +17,9 @@ export function canDeleteRecipe(u: Actor, authorId: number | null | undefined): 
 	return Boolean(u && ((authorId != null && authorId === u.id) || isStaff(u)))
 }
 
-// Reactivate a suspended recipe (PATCH { is_active: true }): author or admin, not moderators
-export function canRestoreRecipe(u: Actor, authorId: number | null | undefined): boolean {
-	return canEditRecipe(u, authorId)
+// Reactivate a suspended recipe (PATCH { is_active: true }): staff only (admin or moderator; moderators get 403 on admin recipes)
+export function canRestoreRecipe(u: Actor): boolean {
+	return isStaff(u)
 }
 
 // Permanent deletion (?hard=true): admins only

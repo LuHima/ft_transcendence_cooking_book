@@ -361,6 +361,23 @@ describe('MediaService', () => {
         ),
       ).rejects.toThrow(new NotFoundException('Recipe not found'));
     });
+
+    it('suspended recipe throws 404 for non-staff author', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        ...publicRecipe,
+        is_active: false,
+      });
+
+      await expect(
+        service.getRecipeMedia(
+          1,
+          'test_cover.webp',
+          { id: 10, username: 'author', role: Role.user, session: 1 },
+          {} as any,
+          {} as any,
+        ),
+      ).rejects.toThrow(new NotFoundException('Recipe not found'));
+    });
   });
 
   describe('getRecipeMedia - Video Streaming', () => {

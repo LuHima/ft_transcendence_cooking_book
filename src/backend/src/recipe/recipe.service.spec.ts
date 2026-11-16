@@ -1453,7 +1453,7 @@ describe('RecipeService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('allows author to view their own suspended recipe', async () => {
+    it('throws NotFoundException when recipe is suspended (is_active: false) and caller is the author (non-staff)', async () => {
       const mockSuspendedRecipe = {
         id: 1,
         user_id: 10,
@@ -1471,12 +1471,12 @@ describe('RecipeService', () => {
       };
       mockPrisma.recipe.findUnique.mockResolvedValueOnce(mockSuspendedRecipe);
 
-      const result = await service.getRecipeById(1, 'it', {
-        id: 10,
-        role: Role.user,
-      });
-      expect(result.id).toBe(1);
-      expect(result.is_active).toBe(false);
+      await expect(
+        service.getRecipeById(1, 'it', {
+          id: 10,
+          role: Role.user,
+        }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('allows moderator to view suspended recipe', async () => {
@@ -2684,7 +2684,7 @@ describe('RecipeService', () => {
       );
     });
 
-    it('rejects regular author attempting to toggle is_active status (403 Forbidden)', async () => {
+    it('throws NotFoundException when non-staff author attempts to update or reactivate a suspended/deleted recipe', async () => {
       const existingRecipe = {
         id: 1,
         user_id: 10,
@@ -2699,6 +2699,25 @@ describe('RecipeService', () => {
       await expect(
         service.updateRecipe({ id: 10, role: Role.user }, 1, {
           is_active: true,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('rejects regular author attempting to toggle is_active status on an active recipe (403 Forbidden)', async () => {
+      const existingRecipe = {
+        id: 1,
+        user_id: 10,
+        is_active: true,
+        source_lang: 'it',
+        user: { id: 10, role: Role.user },
+        translations: [{ locale: 'it', title: 'Carbonara' }],
+        steps: [],
+      };
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce(existingRecipe);
+
+      await expect(
+        service.updateRecipe({ id: 10, role: Role.user }, 1, {
+          is_active: false,
         }),
       ).rejects.toThrow(
         expect.objectContaining({
@@ -2752,6 +2771,19 @@ describe('RecipeService', () => {
         data: { is_active: false },
       });
       expect(result).toEqual({ id: 1, is_active: false });
+    });
+
+    it('throws NotFoundException when non-staff author attempts to delete an already suspended/deleted recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        user: { id: 10, role: Role.user },
+      });
+
+      await expect(
+        service.deleteRecipe(1, { id: 10, role: Role.user }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('moderator attempting to suspend admin recipe receives 403 Forbidden', async () => {
@@ -2811,6 +2843,19 @@ describe('RecipeService', () => {
         data: { is_active: false },
       });
       expect(result).toEqual({ id: 1, is_active: false });
+    });
+
+    it('throws NotFoundException when non-staff author attempts to delete an already suspended/deleted recipe', async () => {
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 1,
+        user_id: 10,
+        is_active: false,
+        user: { id: 10, role: Role.user },
+      });
+
+      await expect(
+        service.deleteRecipe(1, { id: 10, role: Role.user }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('regular user attempting ?hard=true receives 403 Forbidden', async () => {

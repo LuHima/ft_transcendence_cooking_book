@@ -5,7 +5,7 @@ import { api, ApiError, getErrorMessage, qs } from '../../api/client'
 import { useAuth } from '../../context/auth'
 import { useToast } from '../../context/toast'
 import { useLang } from '../../lib/useLang'
-import { canPurge, canRestoreRecipe } from '../../lib/permissions'
+import { canEditRecipe, canPurge, canRestoreRecipe } from '../../lib/permissions'
 import { reportsHref, useStaffBasePath } from '../../lib/staffLinks'
 import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
 import { DEFAULT_RECIPE_SORT, RECIPE_SORT_OPTIONS } from '../../lib/recipeSort'
@@ -39,7 +39,7 @@ const SELECT =
 //          (per riga: reports_count, pending_reports_count, has_pending_reports, latest_pending_report_id;
 //           sort_by anche pending_reports_count / reports_count, predefinito con reported_only=true)
 //   DELETE /recipes/:id                       → sospensione (admin e moderatori; 403 sulle ricette degli admin per i moderatori)
-//   PATCH  /recipes/:id { is_active: true }   → riattivazione (autore o admin)
+//   PATCH  /recipes/:id { is_active: true }   → riattivazione (staff: admin o moderatore)
 //   DELETE /recipes/:id?hard=true             → eliminazione definitiva (solo admin)
 function AdminRecipes() {
 	const { t } = useTranslation()
@@ -299,8 +299,9 @@ function AdminRecipes() {
 				<div className="mt-4 divide-y divide-[var(--wc-border)] rounded-2xl border border-[var(--wc-border)]">
 					{data.items.map((r) => {
 						const inactive = r.is_active === false
-						// modifica e riattivazione: autore o admin; eliminazione definitiva: solo admin
-						const canManage = canRestoreRecipe(user, r.author?.id)
+						// modifica: autore o admin; riattivazione: staff; eliminazione definitiva: solo admin
+						const canEdit = canEditRecipe(user, r.author?.id)
+						const canReactivate = canRestoreRecipe(user)
 						const totalReports = r.reports_count ?? 0
 						const pendingReports = r.pending_reports_count ?? 0
 						const hasReports = Boolean(r.has_pending_reports) || totalReports > 0
@@ -377,7 +378,7 @@ function AdminRecipes() {
 											{t('admin.users.banHistory')}
 										</button>
 									)}
-									{canManage && (
+									{canEdit && (
 										<Link
 											to={`/my-recipes/${r.id}/edit`}
 											className="rounded-full border border-[var(--wc-border)] px-3 py-1.5 hover:border-[var(--wc-basil)]"
@@ -386,7 +387,7 @@ function AdminRecipes() {
 										</Link>
 									)}
 									{inactive
-										? canManage && (
+										? canReactivate && (
 												<button
 													onClick={() => void reactivate(r)}
 													disabled={busyId === r.id}

@@ -983,7 +983,7 @@ export class RecipeService {
       currentUserRole === Role.admin || currentUserRole === Role.moderator;
 
     if (recipe.is_active === false) {
-      if (!isAuthor && !isStaff) {
+      if (!isStaff) {
         throw new NotFoundException('Recipe not found');
       }
     }
@@ -1404,6 +1404,11 @@ export class RecipeService {
     }
 
     const isAuthor = recipe.user_id === userId;
+    const isStaff = userRole === Role.admin || userRole === Role.moderator;
+
+    if (recipe.is_active === false && !isStaff) {
+      throw new NotFoundException('Recipe not found');
+    }
 
     if (userRole === Role.admin) {
       // Administrator authorized to update or restore any recipe
@@ -1986,6 +1991,14 @@ export class RecipeService {
         select: { role: true },
       });
       callerRole = user?.role;
+    }
+
+    if (
+      recipe.is_active === false &&
+      callerRole !== Role.admin &&
+      callerRole !== Role.moderator
+    ) {
+      throw new NotFoundException('Recipe not found');
     }
 
     if (callerRole === Role.admin) {
@@ -2754,9 +2767,9 @@ export class RecipeService {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true, user_id: true },
+      select: { id: true, user_id: true, is_active: true },
     });
-    if (!recipe) {
+    if (!recipe || recipe.is_active === false) {
       throw new NotFoundException('Recipe not found');
     }
 
@@ -2826,9 +2839,9 @@ export class RecipeService {
     // Verify that the recipe exists
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true, user_id: true },
+      select: { id: true, user_id: true, is_active: true },
     });
-    if (!recipe) {
+    if (!recipe || recipe.is_active === false) {
       throw new NotFoundException('Recipe not found');
     }
 
@@ -2898,10 +2911,10 @@ export class RecipeService {
   async createComment(recipeId: number, userId: number, dto: CreateCommentDto) {
     const recipe = await this.prisma.recipe.findUnique({
       where: { id: recipeId },
-      select: { id: true, user_id: true },
+      select: { id: true, user_id: true, is_active: true },
     });
 
-    if (!recipe) {
+    if (!recipe || recipe.is_active === false) {
       throw new NotFoundException('Recipe not found');
     }
 

@@ -818,7 +818,7 @@ describe('UsersService', () => {
       expect(result.limit).toBe(20);
       expect(prisma.recipe.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { user_id: 1 },
+          where: { user_id: 1, is_active: true },
           skip: 0,
           take: 20,
           orderBy: { created_at: 'desc' },

@@ -829,10 +829,13 @@ export class UsersService {
         LEFT JOIN recipe_translations t_target ON (t_target.recipe_id = r.id AND t_target.locale = ${targetLocale})
         LEFT JOIN recipe_translations t_source ON (t_source.recipe_id = r.id AND t_source.locale = r.source_lang)
         LEFT JOIN recipe_translations t_en ON (t_en.recipe_id = r.id AND t_en.locale = 'en')
+        WHERE r.is_active = true
         ORDER BY LOWER(COALESCE(t_target.title, t_source.title, t_en.title)) ${orderSql}, r.id ${orderSql}
         LIMIT ${limit} OFFSET ${skip}
       `,
-      this.prisma.like.count({ where: { user_id: userId } }),
+      this.prisma.like.count({
+        where: { user_id: userId, recipe: { is_active: true } },
+      }),
     ]);
 
     const ids = rawRows.map((row) => row.id);
@@ -886,7 +889,7 @@ export class UsersService {
 
       const [likes, count] = await Promise.all([
         this.prisma.like.findMany({
-          where: { user_id: userId },
+          where: { user_id: userId, recipe: { is_active: true } },
           skip,
           take: limit,
           orderBy,
@@ -897,7 +900,7 @@ export class UsersService {
           },
         }),
         this.prisma.like.count({
-          where: { user_id: userId },
+          where: { user_id: userId, recipe: { is_active: true } },
         }),
       ]);
 
@@ -926,14 +929,14 @@ export class UsersService {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.RecipeWhereInput = { user_id: userId };
+    const where: Prisma.RecipeWhereInput = { user_id: userId, is_active: true };
 
     let recipes: any[];
     let total: number;
 
     if (query.sort_by === RecipeSortBy.title) {
       const titleResult = await this.resolveCookbookRecipesSortedByTitle(
-        Prisma.sql`r.user_id = ${userId}`,
+        Prisma.sql`r.user_id = ${userId} AND r.is_active = true`,
         where,
         query,
         skip,

@@ -120,7 +120,7 @@ function RecipeDetail() {
 		}
 	}
 
-	// Only the author or an admin can reactivate a suspended recipe
+	// Only staff (admin or moderator) can reactivate a suspended recipe
 	async function reactivate() {
 		if (!recipe) return
 		setReactivating(true)
@@ -217,7 +217,7 @@ function RecipeDetail() {
 
 	const isOwner = Boolean(user && recipe.author && recipe.author.id === user.id)
 	const isStaff = isStaffUser(user)
-	const canReactivate = canRestoreRecipe(user, recipe.author?.id)
+	const canReactivate = canRestoreRecipe(user)
 	const suspended = recipe.is_active === false
 	const provenance = recipe.translation_source
 	// Edit and retranslate: author or admin; suspend: author or staff

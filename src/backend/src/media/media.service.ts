@@ -86,6 +86,10 @@ export class MediaService {
     const isStaff =
       currentUserRole === Role.admin || currentUserRole === Role.moderator;
 
+    if (recipe.is_active === false && !isStaff) {
+      throw new NotFoundException('Recipe not found');
+    }
+
     // 3. Privacy Access Control Evaluation (evaluated before linkage to prevent oracle leaks)
     const privacy = recipe.privacy ?? RecipePrivacy.public;
 
