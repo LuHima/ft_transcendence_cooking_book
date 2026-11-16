@@ -163,6 +163,7 @@ build: env-check ## [name]|Build images with cache and log to file
 # Rebuild docker-compose images (cached) and start containers
 .PHONY: up-build
 up-build: env-check ## |Rebuild images (cached) and start containers
+	@$(MAKE) vault-check-auto-unseal
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) up --build -d
 	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
 	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
@@ -178,6 +179,7 @@ rebuild: env-check ## [name]|Rebuild images with no-cache and log to file
 .PHONY: up-rebuild
 up-rebuild: env-check ## |Rebuild images (no-cache) and start containers
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) build --no-cache
+	@$(MAKE) vault-check-auto-unseal
 	@$(SUDO) docker compose -f $(COMPOSE_FILE) up -d
 	@DOMAIN_NAME=$$(grep -E '^[[:space:]]*DOMAIN_NAME[[:space:]]*=' \
 	$(ENV_FILE) | cut -d '=' -f2 | tr -d ' "'\''\r'); \
@@ -345,19 +347,53 @@ df: ## |Show Docker disk usage summary
 #    DATABASE COMMANDS                                                         #
 # **************************************************************************** #
 
+# Shell snippet executed inside the backend container to load secrets from Vault
+# when USE_VAULT=true (docker exec / docker run --entrypoint "" do not inherit
+# the environment variables eval'd by entrypoint.sh).
+define VAULT_LOAD_BACKEND_SECRETS
+if [ "$${USE_VAULT:-true}" = "true" ] && [ -z "$${DATABASE_URL:-}" ]; then \
+	VAULT_ENV=$$(node -e ' \
+		const base = process.env.VAULT_ADDR; \
+		const roleId = process.env.BACKEND_VAULT_ROLE_ID; \
+		const secretId = process.env.BACKEND_VAULT_SECRET_ID; \
+		(async () => { \
+			if (!base || !roleId || !secretId) throw new Error("missing VAULT_ADDR / BACKEND_VAULT_ROLE_ID / BACKEND_VAULT_SECRET_ID"); \
+			const login = await fetch(base + "/v1/auth/approle/login", { \
+				method: "POST", \
+				headers: { "Content-Type": "application/json" }, \
+				body: JSON.stringify({ role_id: roleId, secret_id: secretId }), \
+			}); \
+			if (!login.ok) throw new Error("AppRole login failed: HTTP " + login.status); \
+			const token = (await login.json()).auth.client_token; \
+			const res = await fetch(base + "/v1/secret/data/backend", { headers: { "X-Vault-Token": token } }); \
+			if (!res.ok) throw new Error("read secret/backend failed: HTTP " + res.status); \
+			const data = (await res.json()).data.data; \
+			for (const [k, v] of Object.entries(data)) { \
+				if (!/^[A-Z_][A-Z0-9_]*$$/.test(k) || String(v).includes("\x27")) throw new Error("unsafe key/value: " + k); \
+				console.log("export " + k + "=\x27" + v + "\x27"); \
+			} \
+		})().catch((e) => { console.error(e.message); process.exit(1); }); \
+	') || exit 1; \
+	eval "$$VAULT_ENV"; \
+	unset VAULT_ENV; \
+fi
+endef
+
 # Macro to execute Prisma commands inside backend container.
 # If backend container is running, use 'docker compose exec'.
 # If stopped, use 'docker compose run --rm --entrypoint ""'.
 define run_prisma
+	$(MAKE) vault-check-auto-unseal; \
 	TTY_OPT=""; \
 	if [ ! -t 0 ]; then TTY_OPT="-T"; fi; \
 	if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status running \
 	-q backend 2>/dev/null)" ]; then \
 		$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT backend \
-		npx prisma $(1); \
+		sh -c '$(subst ','\'',$(VAULT_LOAD_BACKEND_SECRETS)); exec npx prisma "$$@"' _ $(1); \
 	else \
 		$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
-		--entrypoint "" backend npx prisma $(1); \
+		--entrypoint "" backend \
+		sh -c '$(subst ','\'',$(VAULT_LOAD_BACKEND_SECRETS)); exec npx prisma "$$@"' _ $(1); \
 	fi
 endef
 
@@ -408,6 +444,7 @@ db-studio: env-check ## <start/kill>|Launch/Stop Prisma Studio GUI on port 5555
 	fi
 	@case "$$(printf '%s' "$(ARGS)" | tr '[:upper:]' '[:lower:]')" in \
 		start) \
+			$(MAKE) vault-check-auto-unseal; \
 			echo "Opening Prisma Studio at: http://localhost:5555"; \
 			echo "Press Ctrl+C to kill."; \
 			TTY_OPT=""; \
@@ -415,10 +452,11 @@ db-studio: env-check ## <start/kill>|Launch/Stop Prisma Studio GUI on port 5555
 			if [ -n "$$($(SUDO) docker compose -f $(COMPOSE_FILE) ps --status \
 			running -q backend 2>/dev/null)" ]; then \
 				$(SUDO) docker compose -f $(COMPOSE_FILE) exec $$TTY_OPT \
-				backend node prisma/studio.js; \
+				backend sh -c '$(subst ','\'',$(VAULT_LOAD_BACKEND_SECRETS)); exec node prisma/studio.js'; \
 			else \
 				$(SUDO) docker compose -f $(COMPOSE_FILE) run --rm $$TTY_OPT \
-				-p 5555:5555 --entrypoint "" backend node prisma/studio.js; \
+				-p 5555:5555 --entrypoint "" backend \
+				sh -c '$(subst ','\'',$(VAULT_LOAD_BACKEND_SECRETS)); exec node prisma/studio.js'; \
 			fi \
 			;; \
 		kill) \
@@ -605,6 +643,9 @@ env-check: ## |Verify .env exists and required vars are present
 		echo "Vault disabled, secrets are read from $(ENV_FILE)."; \
 		mode_vars="DATABASE_URL JWT_SECRET JWT_REFRESH_SECRET COOKIE_SECRET \
 		TWO_FACTOR_AUTH"; \
+		if [ "$(IS_PROD_ENV)" = "yes" ]; then \
+			mode_vars="$$mode_vars SEED_ADMIN_PASSWORD"; \
+		fi; \
 	else \
 		mode_vars="ACME_VAULT_ROLE_ID ACME_VAULT_SECRET_ID \
 		DATABASE_VAULT_ROLE_ID DATABASE_VAULT_SECRET_ID \
@@ -612,6 +653,7 @@ env-check: ## |Verify .env exists and required vars are present
 	fi; \
 	for var in PRODUCTION_FLAG ACME_EMAIL ACME_STAGING DOMAIN_NAME \
 	POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB UPLOADS_DIR \
+	LIBRETRANSLATE_URL SEED_ADMIN_EMAIL SEED_ADMIN_USERNAME \
 	$$mode_vars; do \
 		if ! grep -Eq "^[[:space:]]*$${var}[[:space:]]*=" "$(ENV_FILE)"; then \
 			echo "Missing variable in $(ENV_FILE): $$var"; \

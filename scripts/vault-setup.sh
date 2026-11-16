@@ -57,12 +57,12 @@ vault_status_field() {
 		vault status 2>/dev/null </dev/null | awk -v f="$1" '$1==f {print $2}'
 }
 
-# Read KEY from the .env file (ignores commented lines, strips quotes/spaces).
+# Read KEY from the .env file (ignores commented lines, strips quotes/spaces/CR).
 get_env_var() {
 	[ -f "$ENV_FILE" ] || return 0
 	grep -E "^[[:space:]]*$1[[:space:]]*=" "$ENV_FILE" | head -n 1 \
-		| sed -e 's/^[^=]*=//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
-			-e 's/^"//' -e 's/"$//' || true
+		| sed -e 's/^[^=]*=//' -e 's/\r$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+			-e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//" || true
 }
 
 # Set KEY="VALUE" in the .env file (replace if present, append otherwise).
@@ -70,7 +70,11 @@ set_env_var() {
 	_tmp="$(mktemp)"
 	awk -v k="$1" -v v="$2" '
 		BEGIN { FS = "="; found = 0 }
-		$1 == k { print k "=\"" v "\""; found = 1; next }
+		{
+			key = $1
+			gsub(/^[[:space:]]+|[[:space:]]+$/, "", key)
+		}
+		key == k { print k "=\"" v "\""; found = 1; next }
 		{ print }
 		END { if (!found) print k "=\"" v "\"" }
 	' "$ENV_FILE" > "$_tmp"
@@ -157,7 +161,7 @@ if [ "$INITIALIZED" = "false" ]; then
 else
 	SEALED="$(vault_status_field Sealed || true)"
 	if [ "$SEALED" = "true" ]; then
-		die "Vault is initialized but sealed. Run ./unseal.sh <key1> <key2> <key3>, then run this script again."
+		die "Vault is initialized but sealed. Run 'make vault-unseal', then run this script again."
 	fi
 	log "Vault is already initialized and unsealed."
 	if [ -z "$ROOT_TOKEN" ] && [ -f "$KEYS_FILE" ]; then
@@ -282,7 +286,7 @@ log "Vault is initialized, unsealed and configured."
 log ""
 log "Next steps:"
 log "  1. Remove (or comment out) the secrets that now live in Vault from"
-log "     $ENV_FILE: DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH."
+log "     $ENV_FILE: DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET, TWO_FACTOR_AUTH, SEED_ADMIN_PASSWORD."
 log "  2. Start the whole stack:  make"
 log "  3. After any future restart Vault comes back sealed:"
-log "     ./unseal.sh <key1> <key2> <key3>   (keys are in $KEYS_FILE)"
+log "     make vault-unseal   (keys are in $KEYS_FILE)"
