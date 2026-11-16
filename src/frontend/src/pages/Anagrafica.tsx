@@ -10,6 +10,30 @@ function field(value: string | null | undefined) {
 	return value ?? ''
 }
 
+// Phone: 7–15 digits, optional leading "+", optional "(+prefix)", separators: spaces ( ) . -
+const PHONE_RE = /^(?=(?:\D*\d){7,15}\D*$)(?:\+\s?)?(?:\(\+?\d{1,5}\)|\d)[\d\s().-]*\d$/
+// Postal code: 3–10 alphanumerics with at least one digit, single "-" or space between them
+const POSTAL_RE = /^(?=.*\d)[A-Za-z0-9](?:[A-Za-z0-9]|[- ](?=[A-Za-z0-9])){1,8}[A-Za-z0-9]$/
+// City: letters only (any alphabet, accents included); single space, apostrophe or hyphen allowed between words
+const CITY_RE = /^\p{L}+(?:[ '’-]\p{L}+)*$/u
+
+// Characters that can never appear in a valid value are dropped while typing
+const sanitize = {
+	phone: (v: string) => v.replace(/[^\d\s+().-]/g, ''),
+	postal_code: (v: string) => v.replace(/[^A-Za-z0-9 -]/g, ''),
+	city: (v: string) => v.replace(/[^\p{L} '’-]/gu, ''),
+}
+
+type CheckedField = keyof typeof sanitize
+
+const PATTERNS: Record<CheckedField, RegExp> = { phone: PHONE_RE, postal_code: POSTAL_RE, city: CITY_RE }
+
+// Empty is allowed: every field on this page is optional
+function isValid(key: CheckedField, value: string) {
+	const v = value.trim()
+	return v === '' || PATTERNS[key].test(v)
+}
+
 function Anagrafica() {
 	const { t } = useTranslation()
 	const toast = useToast()
@@ -27,6 +51,8 @@ function Anagrafica() {
 	const [birthValid, setBirthValid] = useState(true)
 	// remounts DateInput after "clear" (it keeps day/month/year in its own state)
 	const [birthKey, setBirthKey] = useState(0)
+	// errors are shown only after the user leaves the field (or tries to submit)
+	const [touched, setTouched] = useState<Record<CheckedField, boolean>>({ phone: false, postal_code: false, city: false })
 
 	if (!user) return null
 
@@ -34,13 +60,26 @@ function Anagrafica() {
 		setForm((prev) => ({ ...prev, [key]: value }))
 	}
 
+	const invalid: Record<CheckedField, boolean> = {
+		phone: !isValid('phone', form.phone),
+		postal_code: !isValid('postal_code', form.postal_code),
+		city: !isValid('city', form.city),
+	}
+	const showError = (key: CheckedField) => touched[key] && invalid[key]
+	const touch = (key: CheckedField) => setTouched((prev) => ({ ...prev, [key]: true }))
+
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
 		if (!birthValid) return toast.error(t('personal.birthInvalid'))
+		if (invalid.phone || invalid.postal_code || invalid.city) {
+			setTouched({ phone: true, postal_code: true, city: true })
+			return toast.error(t('personal.fixErrors'))
+		}
 		setSaving(true)
 		try {
 			// Empty birth date: '' clears a previously saved one (the backend stores null); omitted if there was none
-			const { birth_date, ...rest } = form
+			const { birth_date, ...fields } = form
+			const rest = { ...fields, phone: fields.phone.trim(), postal_code: fields.postal_code.trim(), city: fields.city.trim() }
 			const hadBirthDate = Boolean(user?.birth_date)
 			await api.patch('/users/me', { ...rest, ...(birth_date ? { birth_date } : hadBirthDate ? { birth_date: '' } : {}) })
 			await refreshUser()
@@ -95,7 +134,22 @@ function Anagrafica() {
 				</div>
 				<div>
 					<label htmlFor="phone" className={LABEL_CLASS}>{t('personal.phone')}</label>
-					<input id="phone" maxLength={30} value={form.phone} onChange={(e) => update('phone', e.target.value)} className={INPUT_CLASS} />
+					<input
+						id="phone"
+						type="tel"
+						inputMode="tel"
+						autoComplete="tel"
+						maxLength={30}
+						value={form.phone}
+						onChange={(e) => update('phone', sanitize.phone(e.target.value))}
+						onBlur={() => touch('phone')}
+						aria-invalid={showError('phone')}
+						aria-describedby={showError('phone') ? 'phone-error' : undefined}
+						className={INPUT_CLASS}
+					/>
+					{showError('phone') && (
+						<p id="phone-error" role="alert" className="mt-1 text-xs text-[var(--wc-paprika)]">{t('personal.phoneInvalid')}</p>
+					)}
 				</div>
 				<div>
 					<label htmlFor="address" className={LABEL_CLASS}>{t('personal.address')}</label>
@@ -104,11 +158,37 @@ function Anagrafica() {
 				<div className="grid grid-cols-2 gap-4">
 					<div>
 						<label htmlFor="city" className={LABEL_CLASS}>{t('personal.city')}</label>
-						<input id="city" maxLength={100} value={form.city} onChange={(e) => update('city', e.target.value)} className={INPUT_CLASS} />
+						<input
+							id="city"
+							autoComplete="address-level2"
+							maxLength={100}
+							value={form.city}
+							onChange={(e) => update('city', sanitize.city(e.target.value))}
+							onBlur={() => touch('city')}
+							aria-invalid={showError('city')}
+							aria-describedby={showError('city') ? 'city-error' : undefined}
+							className={INPUT_CLASS}
+						/>
+						{showError('city') && (
+							<p id="city-error" role="alert" className="mt-1 text-xs text-[var(--wc-paprika)]">{t('personal.cityInvalid')}</p>
+						)}
 					</div>
 					<div>
 						<label htmlFor="postal_code" className={LABEL_CLASS}>{t('personal.postalCode')}</label>
-						<input id="postal_code" maxLength={10} value={form.postal_code} onChange={(e) => update('postal_code', e.target.value)} className={INPUT_CLASS} />
+						<input
+							id="postal_code"
+							autoComplete="postal-code"
+							maxLength={10}
+							value={form.postal_code}
+							onChange={(e) => update('postal_code', sanitize.postal_code(e.target.value))}
+							onBlur={() => touch('postal_code')}
+							aria-invalid={showError('postal_code')}
+							aria-describedby={showError('postal_code') ? 'postal_code-error' : undefined}
+							className={INPUT_CLASS}
+						/>
+						{showError('postal_code') && (
+							<p id="postal_code-error" role="alert" className="mt-1 text-xs text-[var(--wc-paprika)]">{t('personal.postalCodeInvalid')}</p>
+						)}
 					</div>
 				</div>
 

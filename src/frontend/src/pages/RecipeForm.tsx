@@ -394,7 +394,7 @@ function RecipeForm() {
 		try {
 			const r = await api.get<RecipeDetail>(`/recipes/${id}${qs({ lang: next })}`)
 			if (r.resolved_lang !== next) {
-				toast.info(t('form.localeUnavailable', { lang: t(`lang.${next}`) }))
+				toast.info(t('form.localeUnavailable', { lang: t(`langInline.${next}`) }))
 				return
 			}
 			const translated = [...r.steps].sort((a, b) => a.step_number - b.step_number)
@@ -759,14 +759,14 @@ function RecipeForm() {
 						</Field>
 					</div>
 					<p className="-mt-2 text-xs text-[var(--wc-text-muted)]">
-						{isEdit ? t('form.editLanguageHelp', { lang: t(`lang.${sourceLang}`) }) : t('form.languageHelp')}
+						{isEdit ? t('form.editLanguageHelp', { lang: t(`langInline.${sourceLang}`) }) : t('form.languageHelp')}
 					</p>
 
 					{/* Provenance of the edited language and automatic retranslation */}
 					{isEdit && (
 						<div className="space-y-3 rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] p-3 text-sm">
 							<div className="flex flex-wrap items-center gap-2">
-								<span className="text-xs text-[var(--wc-text-muted)]">{t('form.provenanceLabel', { lang: t(`lang.${editLocale}`) })}</span>
+								<span className="text-xs text-[var(--wc-text-muted)]">{t('form.provenanceLabel', { lang: t(`langInline.${editLocale}`) })}</span>
 								{editProvenance ? (
 									<span
 										className={`inline-block rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${PROVENANCE_STYLE[editProvenance]}`}
@@ -797,7 +797,7 @@ function RecipeForm() {
 											<span className="block font-medium text-[var(--wc-text)]">{t('form.retranslate')}</span>
 											<span className="block text-xs text-[var(--wc-text-muted)]">
 												{canRetranslate
-													? t('form.retranslateHelp', { langs: retranslatable.map((l) => t(`lang.${l}`)).join(', ') })
+													? t('form.retranslateHelp', { langs: retranslatable.map((l) => t(`langInline.${l}`)).join(', ') })
 													: t('form.retranslateAllManual')}
 											</span>
 										</span>
@@ -1248,7 +1248,7 @@ function RecipeForm() {
 			{pendingLocale && (
 				<ConfirmDialog
 					title={t('form.discardTitle')}
-					confirmLabel={t('form.discardConfirm', { lang: t(`lang.${pendingLocale}`) })}
+					confirmLabel={t('form.discardConfirm', { lang: t(`langInline.${pendingLocale}`) })}
 					danger
 					onConfirm={() => {
 						const next = pendingLocale
@@ -1257,7 +1257,7 @@ function RecipeForm() {
 					}}
 					onClose={() => setPendingLocale(null)}
 				>
-					<p>{t('form.discardText', { from: t(`lang.${editLocale}`), to: t(`lang.${pendingLocale}`) })}</p>
+					<p>{t('form.discardText', { from: t(`langInline.${editLocale}`), to: t(`langInline.${pendingLocale}`) })}</p>
 				</ConfirmDialog>
 			)}
 		</div>
