@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import KitchenScene from '../3d/components/KitchenScene'
 
 import { api, qs, toPage } from '../api/client'
 import { useAuth } from '../context/auth'
@@ -11,41 +12,6 @@ import type { FriendItem, Paginated, RecipeSummary } from '../types/models'
 
 const FEED_SIZE = 8
 
-// The 3D scene (three.js + textures) is loaded in a separate chunk and mounted only AFTER
-// the recipe feed is on screen: building the WebGL scene blocks the main thread for a while,
-// and before this change it delayed the recipe cards by 1-2 seconds.
-const loadKitchenScene = () => import('../3d/components/KitchenScene')
-const KitchenScene = lazy(loadKitchenScene)
-// Upper bound: if the feed is slow (or fails) the scene starts anyway
-const SCENE_MAX_WAIT_MS = 2500
-
-// In-memory cache (lives as long as the tab): coming back to Home shows the last feed
-// immediately and refreshes it in the background, instead of grey skeletons every time.
-const friendsCache = new Map<number, boolean>()
-const feedCache = new Map<string, RecipeSummary[]>()
-
-// Runs fn when the browser is idle (after the cards have been painted)
-function whenIdle(fn: () => void): () => void {
-	if (typeof window.requestIdleCallback === 'function') {
-		const id = window.requestIdleCallback(fn, { timeout: 500 })
-		return () => window.cancelIdleCallback(id)
-	}
-	const id = window.setTimeout(fn, 100)
-	return () => window.clearTimeout(id)
-}
-
-// Same look as the scene's LoadingOverlay at 1%, so the swap is seamless
-function ScenePlaceholder() {
-	return (
-		<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#120d09] text-center text-white">
-			<div className="h-2 w-[min(280px,80vw)] overflow-hidden rounded bg-[#555]">
-				<div className="h-full bg-[#f5c46b]" style={{ width: '1%' }} />
-			</div>
-			<p>Caricamento... 1%</p>
-		</div>
-	)
-}
-
 type FeedTab = 'friends' | 'community'
 const TABS: FeedTab[] = ['friends', 'community']
 
@@ -53,7 +19,7 @@ const TABS: FeedTab[] = ['friends', 'community']
 //   Community → GET /recipes   (recent public recipes)
 //   Friends   → GET /feed      (recipes from confirmed friends, sign-in required)
 // Default tab: "Friends" when signed in with at least one friend, otherwise "Community".
-function Home() {
+function Home({ active = true }: { active?: boolean }) {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const { user, isLoading: authLoading } = useAuth()
@@ -63,7 +29,6 @@ function Home() {
 	// GET /friends result tied to the user who requested it (avoids synchronous setState in the effect)
 	const [friendsInfo, setFriendsInfo] = useState<{ userId: number; hasFriends: boolean } | null>(null)
 	const [result, setResult] = useState<{ key: string; recipes: RecipeSummary[]; error: string | null } | null>(null)
-	const [showScene, setShowScene] = useState(false)
 
 	// The default tab only needs to know whether at least one friend exists
 	const userId = user?.id
@@ -73,9 +38,7 @@ function Home() {
 		api
 			.get<unknown>(`/friends${qs({ page: 1, limit: 1 })}`)
 			.then((d) => {
-				const hasFriends = toPage<FriendItem>(d).total > 0
-				friendsCache.set(userId, hasFriends)
-				if (!cancelled) setFriendsInfo({ userId, hasFriends })
+				if (!cancelled) setFriendsInfo({ userId, hasFriends: toPage<FriendItem>(d).total > 0 })
 			})
 			.catch(() => {
 				if (!cancelled) setFriendsInfo({ userId, hasFriends: false })
@@ -92,7 +55,7 @@ function Home() {
 			? false
 			: friendsInfo?.userId === userId
 				? friendsInfo.hasFriends
-				: (friendsCache.get(userId) ?? null)
+				: null
 	const defaultTab: FeedTab | null = hasFriends === null ? null : hasFriends ? 'friends' : 'community'
 	const tab = chosenTab ?? defaultTab
 	// The friends feed requires sign-in: guests don't call the backend
@@ -106,9 +69,7 @@ function Home() {
 		api
 			.get<Paginated<RecipeSummary>>(`${path}${qs({ page: 1, limit: FEED_SIZE, lang })}`)
 			.then((data) => {
-				const recipes = data?.items ?? []
-				feedCache.set(requestKey, recipes)
-				if (!cancelled) setResult({ key: requestKey, recipes, error: null })
+				if (!cancelled) setResult({ key: requestKey, recipes: data?.items ?? [], error: null })
 			})
 			.catch(() => {
 				if (!cancelled) setResult({ key: requestKey, recipes: [], error: t('home.loadError') })
@@ -126,21 +87,8 @@ function Home() {
 		else navigate('/login', { state: { from: { pathname: target } } })
 	}
 
-	const cached = feedCache.get(requestKey)
-	const current = result?.key === requestKey ? result : cached ? { recipes: cached, error: null } : null
+	const current = result?.key === requestKey ? result : null
 	const loading = tab === null || (needsFetch && current === null)
-
-	// Start downloading the 3D chunk right away (in parallel with the feed request)...
-	useEffect(() => {
-		void loadKitchenScene()
-	}, [])
-	// ...but mount the scene only once the feed is rendered and the browser is idle (or after SCENE_MAX_WAIT_MS)
-	useEffect(() => {
-		if (showScene) return
-		if (!loading) return whenIdle(() => setShowScene(true))
-		const id = window.setTimeout(() => setShowScene(true), SCENE_MAX_WAIT_MS)
-		return () => window.clearTimeout(id)
-	}, [loading, showScene])
 	const recipes = current?.recipes ?? []
 	const error = current?.error ?? null
 	const showFriendsEmpty = tab === 'friends' && !loading && !error && recipes.length === 0
@@ -148,13 +96,7 @@ function Home() {
 	return (
 		<div>
 			<section className="relative h-[70vh] w-full overflow-hidden">
-				{showScene ? (
-					<Suspense fallback={<ScenePlaceholder />}>
-						<KitchenScene />
-					</Suspense>
-				) : (
-					<ScenePlaceholder />
-				)}
+				<KitchenScene active={active} />
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--wc-bg)] to-transparent p-8">
 					<h1 className="font-display text-4xl text-[var(--wc-text)] md:text-5xl">{t('home.heroTitle')}</h1>
 					<p className="mt-2 max-w-md text-[var(--wc-text-muted)]">{t('home.heroText')}</p>
@@ -200,7 +142,7 @@ function Home() {
 					{error && <p className="text-[var(--wc-paprika)]">{error}</p>}
 
 					{loading ? (
-						<RecipeGridSkeleton count={FEED_SIZE} columns={4} />
+						<RecipeGridSkeleton count={FEED_SIZE} />
 					) : showFriendsEmpty ? (
 						<div className="rounded-2xl border border-dashed border-[var(--wc-border)] p-8 text-center">
 							<p className="font-display text-xl text-[var(--wc-text)]">

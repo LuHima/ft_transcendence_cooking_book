@@ -571,7 +571,7 @@ function SearchResults() {
 						<span>
 							{t('search.curatedOnly')}
 							<span className="block text-xs text-[var(--wc-text-muted)]">
-								{t('search.curatedOnlyHelp', { lang: t(`lang.${lang}`) })}
+								{t('search.curatedOnlyHelp', { lang: t(`langInline.${lang}`) })}
 							</span>
 						</span>
 					</label>

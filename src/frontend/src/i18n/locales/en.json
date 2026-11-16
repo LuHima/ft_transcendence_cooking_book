@@ -49,9 +49,14 @@
 		"terms": "Terms of service"
 	},
 	"lang": {
-		"it": "Italiano",
+		"it": "Italian",
 		"en": "English",
-		"fr": "Français"
+		"fr": "French"
+	},
+	"langInline": {
+		"it": "Italian",
+		"en": "English",
+		"fr": "French"
 	},
 	"difficulty": {
 		"easy": "Easy",
@@ -959,7 +964,11 @@
 		"month": "Month",
 		"year": "Year",
 		"birthInvalid": "Enter a valid date (DD/MM/YYYY) or leave it empty.",
-		"clearBirthDate": "Remove birth date"
+		"clearBirthDate": "Remove birth date",
+		"phoneInvalid": "Invalid phone number: 7–15 digits, optional leading +, allowed separators: spaces ( ) . -",
+		"postalCodeInvalid": "Invalid postal code: 3–10 letters or digits (at least one digit), with an optional single - or space.",
+		"cityInvalid": "City may only contain letters (spaces, apostrophes and hyphens between words are allowed).",
+		"fixErrors": "Fix the highlighted fields before saving."
 	},
 	"twofa": {
 		"title": "Two-factor authentication",

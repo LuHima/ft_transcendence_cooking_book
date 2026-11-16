@@ -50,8 +50,13 @@
 	},
 	"lang": {
 		"it": "Italiano",
-		"en": "English",
-		"fr": "Français"
+		"en": "Inglese",
+		"fr": "Francese"
+	},
+	"langInline": {
+		"it": "italiano",
+		"en": "inglese",
+		"fr": "francese"
 	},
 	"difficulty": {
 		"easy": "Facile",
@@ -381,8 +386,8 @@
 		"uploadProgress": "Avanzamento caricamento",
 		"uploadKeepOpen": "Non chiudere la pagina finché il caricamento non è completato.",
 		"discardTitle": "Modifiche non salvate",
-		"discardConfirm": "Passa a {{lang}}",
-		"discardText": "Hai modificato i testi in {{from}} senza salvarli. Passando a {{to}} queste modifiche andranno perse.",
+		"discardConfirm": "Passa alla versione in {{lang}}",
+		"discardText": "Hai modificato i testi in {{from}} senza salvarli. Passando alla versione in {{to}} queste modifiche andranno perse.",
 		"machinePromotionNote": "Questa lingua è tradotta automaticamente. Salvando le tue modifiche diventerà una traduzione curata a mano e non verrà più sovrascritta dalle ritraduzioni automatiche.",
 		"optimizingVideo": "Ottimizzazione del video sul server, può richiedere qualche istante…",
 		"uploadingVideo": "Caricamento e ottimizzazione del video, può richiedere qualche istante…",
@@ -959,7 +964,11 @@
 		"month": "Mese",
 		"year": "Anno",
 		"birthInvalid": "Inserisci una data valida (GG/MM/AAAA) oppure lascia vuoto.",
-		"clearBirthDate": "Rimuovi la data di nascita"
+		"clearBirthDate": "Rimuovi la data di nascita",
+		"phoneInvalid": "Numero non valido: 7–15 cifre, eventuale + iniziale, separatori ammessi: spazi ( ) . -",
+		"postalCodeInvalid": "CAP non valido: 3–10 caratteri tra lettere e cifre (almeno una cifra), con eventuale - o spazio singolo.",
+		"cityInvalid": "La città può contenere solo lettere (ammessi spazi, apostrofi e trattini tra le parole).",
+		"fixErrors": "Correggi i campi evidenziati prima di salvare."
 	},
 	"twofa": {
 		"title": "Autenticazione a due fattori",

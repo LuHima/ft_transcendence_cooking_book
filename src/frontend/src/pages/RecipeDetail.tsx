@@ -341,8 +341,8 @@ function RecipeDetail() {
 			<p className="mt-2 text-xs text-[var(--wc-text-muted)]">
 				{t('recipe.totalTime', { count: recipe.total_time })}
 				{' · '}
-				{t('recipe.writtenIn', { lang: t(`lang.${recipe.source_lang}`) })}
-				{translatedFromOtherLang && ` · ${t('recipe.shownIn', { lang: t(`lang.${recipe.resolved_lang}`) })}`}
+				{t('recipe.writtenIn', { lang: t(`langInline.${recipe.source_lang}`) })}
+				{translatedFromOtherLang && ` · ${t('recipe.shownIn', { lang: t(`langInline.${recipe.resolved_lang}`) })}`}
 				{provenance && (
 					<span
 						className={`ml-2 inline-block rounded-full border px-2 py-0.5 align-middle text-[10px] uppercase tracking-wide ${PROVENANCE_STYLE[provenance]}`}

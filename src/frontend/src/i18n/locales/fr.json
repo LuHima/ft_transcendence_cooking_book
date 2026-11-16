@@ -49,9 +49,14 @@
 		"terms": "Conditions d'utilisation"
 	},
 	"lang": {
-		"it": "Italiano",
-		"en": "English",
+		"it": "Italien",
+		"en": "Anglais",
 		"fr": "Français"
+	},
+	"langInline": {
+		"it": "italien",
+		"en": "anglais",
+		"fr": "français"
 	},
 	"difficulty": {
 		"easy": "Facile",
@@ -959,7 +964,11 @@
 		"month": "Mois",
 		"year": "Année",
 		"birthInvalid": "Saisissez une date valide (JJ/MM/AAAA) ou laissez vide.",
-		"clearBirthDate": "Supprimer la date de naissance"
+		"clearBirthDate": "Supprimer la date de naissance",
+		"phoneInvalid": "Numéro invalide : 7 à 15 chiffres, + initial facultatif, séparateurs autorisés : espaces ( ) . -",
+		"postalCodeInvalid": "Code postal invalide : 3 à 10 lettres ou chiffres (au moins un chiffre), avec un - ou un espace simple facultatif.",
+		"cityInvalid": "La ville ne peut contenir que des lettres (espaces, apostrophes et traits d'union autorisés entre les mots).",
+		"fixErrors": "Corrigez les champs signalés avant d'enregistrer."
 	},
 	"twofa": {
 		"title": "Authentification à deux facteurs",
