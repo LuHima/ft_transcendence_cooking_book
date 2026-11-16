@@ -213,14 +213,13 @@ export default function Scene({ active }: { active: boolean }) {
           <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
             <div className="max-w-lg space-y-3">
               <p className="text-xs font-medium uppercase tracking-[0.3em] text-amber-200/80">
-                3D preview unavailable
+                {t("scene.webglTitle")}
               </p>
               <h2 className="text-2xl font-semibold text-amber-50">
-                WebGL is disabled in this browser
+                {t("scene.webglHeading")}
               </h2>
               <p className="text-sm text-amber-100/80">
-                The kitchen scene needs a working WebGL context to render the 3D
-                cookbook experience.
+                {t("scene.webglBody")}
               </p>
             </div>
           </div>

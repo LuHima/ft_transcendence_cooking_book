@@ -45,7 +45,6 @@ export function Page({
         uMapFront={frontMap}
         uMapBack={backMap}
         uPageHeight={height}
-        uPageWidth={width - 0.02}
         uHingeOffset={0.025}
         side={DoubleSide}
       />

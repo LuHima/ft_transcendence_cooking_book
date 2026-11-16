@@ -94,28 +94,16 @@ function ApiPageButton({
 
   if (!visible) return null;
 
-  const isPrevious = direction === "previous";
-  const iconParts = isPrevious
-    ? [
-        {
-          position: [0.004, -0.001, 0] as [number, number, number],
-          angle: Math.PI / 4,
-        },
-        {
-          position: [-0.004, -0.001, 0] as [number, number, number],
-          angle: -Math.PI / 4,
-        },
-      ]
-    : [
-        {
-          position: [0.004, -0.001, 0] as [number, number, number],
-          angle: Math.PI / 4,
-        },
-        {
-          position: [-0.004, -0.001, 0] as [number, number, number],
-          angle: -Math.PI / 4,
-        },
-      ];
+  const iconParts = [
+    {
+      position: [0.004, -0.001, 0] as [number, number, number],
+      angle: Math.PI / 4,
+    },
+    {
+      position: [-0.004, -0.001, 0] as [number, number, number],
+      angle: -Math.PI / 4,
+    },
+  ];
   return (
     <group position={position} rotation={[0, faceAway ? Math.PI : 0, 0]}>
       <mesh
@@ -319,9 +307,16 @@ export default function Book({
     action();
   };
 
+  const [prevApiPage, setPrevApiPage] = useState(currentApiPage);
+  const [prevRecipesLength, setPrevRecipesLength] = useState(recipes.length);
+  if (prevApiPage !== currentApiPage || prevRecipesLength !== recipes.length) {
+    setPrevApiPage(currentApiPage);
+    setPrevRecipesLength(recipes.length);
+    setTurnedPageCount(0);
+  }
+
   useEffect(() => {
     trackedTurnedPageCount.current = 0;
-    setTurnedPageCount(0);
   }, [currentApiPage, recipes.length]);
 
   useEffect(() => {

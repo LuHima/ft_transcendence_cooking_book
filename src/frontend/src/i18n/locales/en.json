@@ -586,7 +586,8 @@
 		"errors": {
 			"noAction": "Choose at least one action.",
 			"banDays": "The ban duration must be a whole number of days (at least 1).",
-			"banCap": "The maximum ban duration for moderators is {{max}} days."
+			"banCap": "The maximum ban duration for moderators is {{max}} days.",
+			"banMax": "The ban duration cannot exceed {{max}} days."
 		},
 		"owner": "author:",
 		"confirmBanName": "Ban {{name}}, the author of this content?",
@@ -1036,6 +1037,9 @@
 		"loading": "Loading… {{percent}}%",
 		"loadError": "Could not load the recipes.",
 		"pageLoadError": "Could not load the requested recipes.",
-		"lightToggle": "Spotlight"
+		"lightToggle": "Spotlight",
+		"webglTitle": "3D preview unavailable",
+		"webglHeading": "WebGL is disabled in this browser",
+		"webglBody": "The kitchen scene needs a working WebGL context to render the 3D cookbook experience."
 	}
 }

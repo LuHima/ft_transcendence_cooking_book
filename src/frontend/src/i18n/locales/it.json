@@ -586,7 +586,8 @@
 		"errors": {
 			"noAction": "Scegli almeno un'azione.",
 			"banDays": "La durata del ban deve essere un numero intero di giorni (almeno 1).",
-			"banCap": "La durata massima del ban per i moderatori è {{max}} giorni."
+			"banCap": "La durata massima del ban per i moderatori è {{max}} giorni.",
+			"banMax": "La durata del ban non può superare {{max}} giorni."
 		},
 		"owner": "autore:",
 		"confirmBanName": "Bannare {{name}}, autore di questo contenuto?",
@@ -1036,6 +1037,9 @@
 		"loading": "Caricamento… {{percent}}%",
 		"loadError": "Impossibile caricare le ricette.",
 		"pageLoadError": "Impossibile caricare le ricette richieste.",
-		"lightToggle": "Luce del faretto"
+		"lightToggle": "Luce del faretto",
+		"webglTitle": "Anteprima 3D non disponibile",
+		"webglHeading": "WebGL è disabilitato in questo browser",
+		"webglBody": "La scena della cucina richiede un contesto WebGL attivo per mostrare il ricettario 3D."
 	}
 }

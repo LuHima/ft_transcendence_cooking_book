@@ -11,7 +11,7 @@ import { IMAGE_ACCEPT, validateImage } from '../../lib/files'
 import { useObjectUrl } from '../../lib/useObjectUrl'
 import { useDialogDismiss } from '../../lib/useDialogDismiss'
 import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
-import { DEFAULT_BAN_DAYS, MODERATION_TEXT_MAX } from '../../lib/moderation'
+import { DEFAULT_BAN_DAYS, MAX_BAN_DURATION_DAYS, MODERATION_TEXT_MAX, validateBanDays } from '../../lib/moderation'
 import BanHistoryDrawer from '../../components/BanHistoryDrawer'
 import Avatar from '../../components/Avatar'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -886,12 +886,15 @@ function BanUserDialog({
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault()
 		setError(null)
-		const n = days.trim() ? Number(days) : undefined
-		if (!permanent && n !== undefined && (!Number.isInteger(n) || n < 1)) return setError(t('moderation.errors.banDays'))
+		const banDaysError = !permanent ? validateBanDays(days, true) : null
+		if (banDaysError) {
+			return setError(t(banDaysError.key, 'max' in banDaysError ? { max: banDaysError.max } : undefined))
+		}
+		const parsedDays = days.trim() ? Number(days) : undefined
 		const body: AdminUserStatusDto = {
 			status: 'banned',
 			ban_reason: reason,
-			...(permanent ? { is_permanent: true } : n !== undefined ? { ban_duration_days: n } : {}),
+			...(permanent ? { is_permanent: true } : parsedDays !== undefined ? { ban_duration_days: parsedDays } : {}),
 			...(description.trim() ? { ban_description: description.trim() } : {}),
 			...(notes.trim() ? { internal_notes: notes.trim() } : {}),
 		}
@@ -948,6 +951,7 @@ function BanUserDialog({
 						id="ban-days"
 						type="number"
 						min={1}
+						max={MAX_BAN_DURATION_DAYS}
 						step={1}
 						disabled={permanent}
 						value={days}

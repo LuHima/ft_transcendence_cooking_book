@@ -586,7 +586,8 @@
 		"errors": {
 			"noAction": "Choisissez au moins une action.",
 			"banDays": "La durée du bannissement doit être un nombre entier de jours (au moins 1).",
-			"banCap": "La durée maximale de bannissement pour les modérateurs est de {{max}} jours."
+			"banCap": "La durée maximale de bannissement pour les modérateurs est de {{max}} jours.",
+			"banMax": "La durée du bannissement ne peut pas dépasser {{max}} jours."
 		},
 		"owner": "auteur :",
 		"confirmBanName": "Bannir {{name}}, l'auteur de ce contenu ?",
@@ -1036,6 +1037,9 @@
 		"loading": "Chargement… {{percent}} %",
 		"loadError": "Impossible de charger les recettes.",
 		"pageLoadError": "Impossible de charger les recettes demandées.",
-		"lightToggle": "Projecteur"
+		"lightToggle": "Projecteur",
+		"webglTitle": "Aperçu 3D indisponible",
+		"webglHeading": "WebGL est désactivé dans ce navigateur",
+		"webglBody": "La scène de cuisine nécessite un contexte WebGL actif pour afficher le livre de recettes 3D."
 	}
 }

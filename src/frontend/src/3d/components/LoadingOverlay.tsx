@@ -1,6 +1,6 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
-import { useLang } from "../../lib/useLang";
+import { useTranslation } from "react-i18next";
 
 export default function LoadingOverlay({
   recipesLoaded,
@@ -11,11 +11,7 @@ export default function LoadingOverlay({
 }) {
   const [displayProgress, setDisplayProgress] = useState(1);
   const [hidden, setHidden] = useState(false);
-  const lang = useLang();
-  const loading =
-    lang === "it" ? "Caricamento" :
-    lang === "fr" ? "Chargement" :
-    "Loading";
+  const { t } = useTranslation();
   const loadingComplete = recipesLoaded && sceneReady;
 
   useEffect(() => {
@@ -61,7 +57,7 @@ export default function LoadingOverlay({
       <div className="loader-bar">
         <div style={{ width: `${displayProgress}%` }} />
       </div>
-      <p>{loading}... {Math.round(displayProgress)}%</p>
+      <p>{t("scene.loading", { percent: Math.round(displayProgress) })}</p>
     </div>
   );
 }

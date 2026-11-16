@@ -6,7 +6,7 @@ import { useAuth } from '../../context/auth'
 import { useToast } from '../../context/toast'
 import { useLang } from '../../lib/useLang'
 import { isAdmin } from '../../lib/permissions'
-import { DEFAULT_BAN_DAYS, MODERATION_TEXT_MAX, MODERATOR_MAX_BAN_DAYS } from '../../lib/moderation'
+import { DEFAULT_BAN_DAYS, MAX_BAN_DURATION_DAYS, MODERATION_TEXT_MAX, MODERATOR_MAX_BAN_DAYS, validateBanDays } from '../../lib/moderation'
 import { useDialogDismiss } from '../../lib/useDialogDismiss'
 import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
 import Avatar from '../../components/Avatar'
@@ -437,7 +437,7 @@ function ResolveDialog({
 	}, pendingBody === null)
 
 	const banSelected = mode === 'action' && actions.includes('ban')
-	const maxDays = admin ? undefined : MODERATOR_MAX_BAN_DAYS
+	const maxDays = admin ? MAX_BAN_DURATION_DAYS : MODERATOR_MAX_BAN_DAYS
 
 	// scegliendo avviso si toglie il ban (e viceversa)
 	function toggleAction(a: Exclude<ModerationAction, 'dismiss'>) {
@@ -466,11 +466,11 @@ function ResolveDialog({
 			}
 		} else {
 			if (actions.length === 0) return setFormError(t('moderation.errors.noAction'))
-			const days = banDays.trim() ? Number(banDays) : undefined
-			if (banSelected && !isPermanent && days !== undefined) {
-				if (!Number.isInteger(days) || days < 1) return setFormError(t('moderation.errors.banDays'))
-				if (maxDays && days > maxDays) return setFormError(t('moderation.errors.banCap', { max: maxDays }))
+			const banDaysError = banSelected && !isPermanent ? validateBanDays(banDays, admin) : null
+			if (banDaysError) {
+				return setFormError(t(banDaysError.key, 'max' in banDaysError ? { max: banDaysError.max } : undefined))
 			}
+			const days = banDays.trim() ? Number(banDays) : undefined
 			body = {
 				status: 'action_taken',
 				actions,

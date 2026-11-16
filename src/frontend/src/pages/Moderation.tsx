@@ -9,7 +9,7 @@ const TABS: Tab[] = ['reports', 'recipes', 'comments']
 const isTab = (v: string | null): v is Tab => (TABS as string[]).includes(v ?? '')
 
 // Moderator panel: reports, recipes and comments (the backend allows both admins and moderators).
-// Admin-only actions (permanent deletion, editing and reactivating other users' recipes) are hidden by role inside each component.
+// Admin-only actions (permanent deletion, editing recipes, and reactivating admin-authored recipes) are enforced by role.
 function Moderation() {
 	const { t } = useTranslation()
 	// active tab in the URL (?tab=…): reloads keep it and other panels can deep-link here,
