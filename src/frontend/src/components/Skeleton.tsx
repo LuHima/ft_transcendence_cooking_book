@@ -22,14 +22,9 @@ export function RecipeCardSkeleton() {
 	)
 }
 
-// columns: must match the real grid of the page (Home uses 4), otherwise the layout jumps when data arrives
-export function RecipeGridSkeleton({ count = 6, columns = 3 }: { count?: number; columns?: 3 | 4 }) {
+export function RecipeGridSkeleton({ count = 6 }: { count?: number }) {
 	return (
-		<div
-			role="status"
-			aria-busy="true"
-			className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${columns === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
-		>
+		<div role="status" aria-busy="true" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{Array.from({ length: count }, (_, i) => (
 				<RecipeCardSkeleton key={i} />
 			))}
