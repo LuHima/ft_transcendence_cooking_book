@@ -967,8 +967,6 @@
 		"enable": "Activer",
 		"disable": "Désactiver",
 		"active": "Activée sur votre compte",
-		"confirmWithPassword": "Confirmez avec votre mot de passe",
-		"continue": "Continuer",
 		"scan": "Scannez le QR code avec votre application (Google Authenticator, Authy, 1Password…).",
 		"qrAlt": "QR code pour l'application d'authentification",
 		"manualKey": "Ou saisissez cette clé manuellement :",
@@ -978,8 +976,17 @@
 		"disabledToast": "Authentification à deux facteurs désactivée.",
 		"alreadyEnabled": "La 2FA est déjà activée sur votre compte.",
 		"alreadyDisabled": "La 2FA est déjà désactivée.",
-		"passwordError": "Mot de passe incorrect.",
-		"codeError": "Code invalide, réessayez."
+		"codeError": "Code invalide, réessayez.",
+		"toggleError": "L'opération a échoué, réessayez."
+	},
+	"changePassword": {
+		"title": "Changer le mot de passe",
+		"intro": "Définissez un nouveau mot de passe pour la connexion par e-mail. Fonctionne aussi si vous vous êtes inscrit avec Google.",
+		"newPassword": "Nouveau mot de passe",
+		"confirmNewPassword": "Confirmer le nouveau mot de passe",
+		"submit": "Mettre à jour le mot de passe",
+		"successToast": "Mot de passe mis à jour.",
+		"error": "Impossible de mettre à jour le mot de passe, réessayez."
 	},
 	"block": {
 		"button": "Bloquer l'utilisateur",

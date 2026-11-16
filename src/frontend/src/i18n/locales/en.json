@@ -967,8 +967,6 @@
 		"enable": "Enable",
 		"disable": "Disable",
 		"active": "Active on your account",
-		"confirmWithPassword": "Confirm with your password",
-		"continue": "Continue",
 		"scan": "Scan the QR code with your app (Google Authenticator, Authy, 1Password…).",
 		"qrAlt": "QR code for the authenticator app",
 		"manualKey": "Or enter this key manually:",
@@ -978,8 +976,17 @@
 		"disabledToast": "Two-factor authentication disabled.",
 		"alreadyEnabled": "2FA is already enabled on your account.",
 		"alreadyDisabled": "2FA is already disabled.",
-		"passwordError": "Incorrect password.",
-		"codeError": "Invalid code, please try again."
+		"codeError": "Invalid code, please try again.",
+		"toggleError": "Something went wrong, please try again."
+	},
+	"changePassword": {
+		"title": "Change password",
+		"intro": "Set a new password for email sign-in. Works even if you signed up with Google.",
+		"newPassword": "New password",
+		"confirmNewPassword": "Confirm new password",
+		"submit": "Update password",
+		"successToast": "Password updated.",
+		"error": "Couldn't update the password, please try again."
 	},
 	"block": {
 		"button": "Block user",
