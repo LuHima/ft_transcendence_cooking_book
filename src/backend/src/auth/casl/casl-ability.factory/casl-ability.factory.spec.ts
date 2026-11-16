@@ -43,7 +43,7 @@ describe('CaslAbilityFactory', () => {
   });
 
   describe('Moderator permissions & hierarchy guards', () => {
-    it('prevents moderator from banning self, other moderators, or admins (User, Recipe, Comment)', () => {
+    it('prevents moderator from banning self or admins, while allowing moderation of other moderators', () => {
       // User targets
       expect(() =>
         factory.check(modUser, Action.Ban, AppSubject.User, { id: modUser.id }),
@@ -59,7 +59,7 @@ describe('CaslAbilityFactory', () => {
           id: 98,
           role: Role.moderator,
         }),
-      ).toThrow(HttpException);
+      ).not.toThrow();
 
       // Recipe targets
       expect(() =>
@@ -74,6 +74,12 @@ describe('CaslAbilityFactory', () => {
           user: { role: Role.admin },
         }),
       ).toThrow(HttpException);
+      expect(() =>
+        factory.check(modUser, Action.Ban, AppSubject.Recipe, {
+          user_id: 98,
+          user: { role: Role.moderator },
+        }),
+      ).not.toThrow();
 
       // Comment targets
       expect(() =>
@@ -88,6 +94,12 @@ describe('CaslAbilityFactory', () => {
           user: { role: Role.admin },
         }),
       ).toThrow(HttpException);
+      expect(() =>
+        factory.check(modUser, Action.Ban, AppSubject.Comment, {
+          user_id: 98,
+          user: { role: Role.moderator },
+        }),
+      ).not.toThrow();
     });
 
     it('allows moderator to ban regular users, recipes, and comments', () => {
@@ -144,6 +156,18 @@ describe('CaslAbilityFactory', () => {
       expect(() =>
         factory.check(normalUser, Action.Delete, AppSubject.Comment, {
           user_id: 999,
+          recipe: { user_id: normalUser.id },
+        }),
+      ).not.toThrow();
+      expect(() =>
+        factory.check(modUser, Action.Delete, AppSubject.Comment, {
+          user_id: 999,
+          recipe: { user_id: modUser.id },
+        }),
+      ).not.toThrow();
+      expect(() =>
+        factory.check(normalUser, Action.Delete, AppSubject.Comment, {
+          user_id: 999,
         }),
       ).toThrow(HttpException);
     });
@@ -161,14 +185,9 @@ describe('CaslAbilityFactory', () => {
   });
 
   describe('Notification ownership (all roles)', () => {
-    it('allows reading, deleting, accepting, and refusing own notifications only', () => {
+    it('allows reading and deleting own notifications only', () => {
       for (const actor of [adminUser, modUser, normalUser]) {
-        for (const action of [
-          Action.Read,
-          Action.Delete,
-          Action.Accept,
-          Action.Refuse,
-        ]) {
+        for (const action of [Action.Read, Action.Delete]) {
           expect(() =>
             factory.check(actor, action, AppSubject.Notification, {
               user_id: actor.id,

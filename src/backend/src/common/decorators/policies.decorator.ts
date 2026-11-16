@@ -1,29 +1,12 @@
-import {
-  applyDecorators,
-  SetMetadata,
-  UseGuards,
-  ExecutionContext,
-} from '@nestjs/common';
-import {
-  ApiCookieAuth,
-  ApiForbiddenResponse,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
-import { AppAbility } from 'src/auth/casl/casl-ability.factory/casl-ability.factory';
-import { Action } from 'src/auth/casl/action.enum';
-import { Subjects } from '../../auth/casl/casl-ability.factory/casl-ability.factory';
+import { applyDecorators, UseGuards } from '@nestjs/common';
+import { ApiCookieAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { AuthGuard } from 'src/common/guards/auth.guard';
-import {
-  ApiUnauthorizedResponseDto,
-  ApiForbiddenResponseDto,
-} from '../dto/api-error-response.dto';
-
-export type HandlerRolePolicy = (ability: AppAbility) => boolean;
+import { ApiUnauthorizedResponseDto } from '../dto/api-error-response.dto';
 
 /**
- * Composite authentication and authorization decorator.
- * Enforces JWT accessToken cookie authentication and optional CASL action/subject policy checks.
- * Also attaches OpenAPI security scheme metadata and error response specifications.
+ * Composite authentication decorator.
+ * Enforces JWT accessToken cookie authentication via AuthGuard and attaches
+ * OpenAPI security scheme metadata and unauthorized response specifications.
  */
 export function Auth() {
   return applyDecorators(
