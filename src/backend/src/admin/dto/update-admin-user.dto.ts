@@ -6,6 +6,8 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Matches,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -13,25 +15,43 @@ import {
 import { Transform } from 'class-transformer';
 import { ReportReason, Role, UserStatus } from '@prisma/client';
 import { IsTrustedAvatarUrl } from '../validators/trusted-avatar-url.validator';
+import {
+  trimLowerCase,
+  trimString,
+  trimToNull,
+} from '../../common/dto/string-transforms';
+import {
+  MAX_BAN_DURATION_DAYS,
+  PASSWORD_REGEX,
+  USERNAME_REGEX,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
+import { UserPersonalDetailsDto } from '../../users/dto/user-personal-details.dto';
 
 /**
  * Data transfer object for administrative user profile, role, status, and credential mutation.
  */
-export class UpdateAdminUserDto {
+export class UpdateAdminUserDto extends UserPersonalDetailsDto {
   /**
    * Updated unique username (3-30 characters).
    * @example 'moderator_chef_updated'
    */
   @ApiPropertyOptional({
-    description: 'Updated username (3-30 characters)',
+    description:
+      'Updated username consisting of letters, numbers, underscores, and hyphens (3-30 characters)',
     example: 'moderator_chef_updated',
     minLength: 3,
     maxLength: 30,
+    pattern: USERNAME_REGEX.source,
   })
   @IsOptional()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(30)
+  @Transform(trimString)
+  @IsString({ message: VALIDATION_MESSAGES.usernameType })
+  @MinLength(3, { message: VALIDATION_MESSAGES.usernameMin })
+  @MaxLength(30, { message: VALIDATION_MESSAGES.usernameMax })
+  @Matches(USERNAME_REGEX, {
+    message: VALIDATION_MESSAGES.usernameFormat,
+  })
   username?: string;
 
   /**
@@ -39,30 +59,37 @@ export class UpdateAdminUserDto {
    * @example 'new.moderator@wecook.com'
    */
   @ApiPropertyOptional({
+    type: String,
+    format: 'email',
     description: 'Updated email address',
     example: 'new.moderator@wecook.com',
+    maxLength: 255,
   })
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : undefined,
-  )
-  @IsEmail()
+  @Transform(trimLowerCase)
+  @IsEmail({}, { message: VALIDATION_MESSAGES.emailFormat })
+  @MaxLength(255, { message: VALIDATION_MESSAGES.emailMax })
   email?: string;
 
   /**
-   * Reset user password (minimum 8 characters).
+   * Reset user password (9-72 characters, requiring uppercase, lowercase, and digit/special character).
    * Providing a new password immediately revokes active JWT sessions.
    * @example 'NewSecurePassword456!'
    */
   @ApiPropertyOptional({
     description:
-      'Reset password (minimum 8 characters). Purges active user sessions.',
+      'Reset password (9-72 chars, must contain uppercase, lowercase, and a number or symbol). Purges active user sessions.',
     example: 'NewSecurePassword456!',
-    minLength: 8,
+    minLength: 9,
+    maxLength: 72,
   })
   @IsOptional()
-  @IsString()
-  @MinLength(8)
+  @IsString({ message: VALIDATION_MESSAGES.passwordType })
+  @MinLength(9, { message: VALIDATION_MESSAGES.passwordMin })
+  @MaxLength(72, { message: VALIDATION_MESSAGES.passwordMax })
+  @Matches(PASSWORD_REGEX, {
+    message: VALIDATION_MESSAGES.passwordStrength,
+  })
   password?: string;
 
   /**
@@ -77,7 +104,7 @@ export class UpdateAdminUserDto {
     example: Role.admin,
   })
   @IsOptional()
-  @IsEnum(Role)
+  @IsEnum(Role, { message: 'Role must be one of: admin, moderator, user' })
   role?: Role;
 
   /**
@@ -92,7 +119,9 @@ export class UpdateAdminUserDto {
     example: UserStatus.active,
   })
   @IsOptional()
-  @IsEnum(UserStatus)
+  @IsEnum(UserStatus, {
+    message: 'Status must be one of: active, disabled, banned',
+  })
   status?: UserStatus;
 
   /**
@@ -106,7 +135,7 @@ export class UpdateAdminUserDto {
     example: ReportReason.harassment_bullying,
   })
   @IsOptional()
-  @IsEnum(ReportReason)
+  @IsEnum(ReportReason, { message: 'Invalid ban reason category' })
   ban_reason?: ReportReason;
 
   /**
@@ -114,42 +143,56 @@ export class UpdateAdminUserDto {
    * @example 'Repeated violations of community conduct policies.'
    */
   @ApiPropertyOptional({
-    description: 'User-facing explanation for the ban',
+    type: String,
+    nullable: true,
+    description: 'User-facing explanation for the ban (max 1000 characters)',
     maxLength: 1000,
     example: 'Repeated violations of community conduct policies.',
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  ban_description?: string;
+  @Transform(trimToNull)
+  @IsString({ message: 'Ban description must be a text string' })
+  @MaxLength(1000, {
+    message: 'Ban description cannot exceed 1000 characters',
+  })
+  ban_description?: string | null;
 
   /**
    * Confidential staff-only internal notes (Admin only, never exposed to the banned user).
    * @example 'Repeat spammer across multiple recipe threads.'
    */
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description:
       'Confidential staff-only internal notes (only allowed when status is banned)',
     maxLength: 1000,
     example: 'Repeat spammer across multiple recipe threads.',
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  internal_notes?: string;
+  @Transform(trimToNull)
+  @IsString({ message: 'Internal notes must be a text string' })
+  @MaxLength(1000, {
+    message: 'Internal notes cannot exceed 1000 characters',
+  })
+  internal_notes?: string | null;
 
   /**
    * Explicit ban duration in days (defaults to policy matrix baseline if omitted).
    * @example 30
    */
   @ApiPropertyOptional({
-    description: 'Ban duration in days',
+    description: 'Ban duration in days (1 to 36500)',
     example: 30,
     minimum: 1,
+    maximum: MAX_BAN_DURATION_DAYS,
   })
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'Ban duration must be a whole number of days' })
+  @Min(1, { message: 'Ban duration must be at least 1 day' })
+  @Max(MAX_BAN_DURATION_DAYS, {
+    message: `Ban duration cannot exceed ${MAX_BAN_DURATION_DAYS} days`,
+  })
   ban_duration_days?: number;
 
   /**
@@ -161,7 +204,7 @@ export class UpdateAdminUserDto {
     example: false,
   })
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'is_permanent must be a boolean value' })
   is_permanent?: boolean;
 
   /**
@@ -169,135 +212,32 @@ export class UpdateAdminUserDto {
    * @example 'Ban appeal reviewed and granted by trust & safety staff.'
    */
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Reason for lifting account ban upon reactivation',
     maxLength: 1000,
     example: 'Ban appeal reviewed and granted by trust & safety staff.',
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  unban_reason?: string;
+  @Transform(trimToNull)
+  @IsString({ message: 'Unban reason must be a text string' })
+  @MaxLength(1000, { message: 'Unban reason cannot exceed 1000 characters' })
+  unban_reason?: string | null;
 
   /**
    * Updated avatar URL (must be a canonical media route or trusted HTTPS domain).
    * @example '/api/media/avatars/1/chef.webp'
    */
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description:
       'Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)',
     example: '/api/media/avatars/1/chef.webp',
   })
   @IsOptional()
-  @IsString()
+  @Transform(trimToNull)
+  @IsString({ message: 'Avatar URL must be a text string' })
   @IsTrustedAvatarUrl()
-  avatar_url?: string;
-
-  /**
-   * Culinary biography / staff notes (maximum 500 characters).
-   * @example 'Senior community moderator and culinary instructor.'
-   */
-  @ApiPropertyOptional({
-    description: 'Culinary biography / description (maximum 500 characters)',
-    example: 'Senior community moderator and culinary instructor.',
-    maxLength: 500,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  bio?: string;
-
-  /**
-   * Member first name.
-   * @example 'Luca'
-   */
-  @ApiPropertyOptional({
-    description: 'First name',
-    example: 'Luca',
-    maxLength: 100,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  first_name?: string;
-
-  /**
-   * Member last name.
-   * @example 'Bianchi'
-   */
-  @ApiPropertyOptional({
-    description: 'Last name',
-    example: 'Bianchi',
-    maxLength: 100,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  last_name?: string;
-
-  /**
-   * Date of birth (ISO 8601 string or Date).
-   * @example '1990-05-15'
-   */
-  @ApiPropertyOptional({
-    description: 'Date of birth (ISO 8601 date string)',
-    example: '1990-05-15',
-  })
-  @IsOptional()
-  birth_date?: string | Date;
-
-  /**
-   * Contact phone number.
-   * @example '+39 02 1234567'
-   */
-  @ApiPropertyOptional({
-    description: 'Contact phone number',
-    example: '+39 02 1234567',
-    maxLength: 30,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  phone?: string;
-
-  /**
-   * Street address.
-   * @example 'Corso Buenos Aires 45'
-   */
-  @ApiPropertyOptional({
-    description: 'Residential address',
-    example: 'Corso Buenos Aires 45',
-    maxLength: 255,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  address?: string;
-
-  /**
-   * City of residence.
-   * @example 'Milano'
-   */
-  @ApiPropertyOptional({
-    description: 'City of residence',
-    example: 'Milano',
-    maxLength: 100,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  city?: string;
-
-  /**
-   * Postal code.
-   * @example '20124'
-   */
-  @ApiPropertyOptional({
-    description: 'Postal code / ZIP',
-    example: '20124',
-    maxLength: 10,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
-  postal_code?: string;
+  avatar_url?: string | null;
 }

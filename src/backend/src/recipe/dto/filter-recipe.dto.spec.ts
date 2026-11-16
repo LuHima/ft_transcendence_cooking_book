@@ -83,8 +83,8 @@ describe('FilterRecipeDto', () => {
   });
 
   describe('Language and Curation parameters', () => {
-    it('accepts valid source_lang codes of length 2 to 5', async () => {
-      for (const code of ['it', 'en', 'fr', 'es-ES']) {
+    it('accepts supported source_lang codes (it, en, fr)', async () => {
+      for (const code of ['it', 'en', 'fr']) {
         const dto = plainToInstance(FilterRecipeDto, { source_lang: code });
         const errors = await validate(dto);
         expect(errors.length).toBe(0);
@@ -92,22 +92,48 @@ describe('FilterRecipeDto', () => {
       }
     });
 
-    it('rejects source_lang codes with length < 2 or > 5', async () => {
-      const dtoShort = plainToInstance(FilterRecipeDto, { source_lang: 'e' });
-      const errorsShort = await validate(dtoShort);
-      expect(errorsShort.length).toBeGreaterThan(0);
-      expect(errorsShort[0].property).toBe('source_lang');
+    it('rejects unsupported source_lang codes', async () => {
+      for (const code of ['e', 'es', 'es-ES', 'en-US-extra']) {
+        const dto = plainToInstance(FilterRecipeDto, { source_lang: code });
+        const errors = await validate(dto);
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].property).toBe('source_lang');
+      }
+    });
 
-      const dtoLong = plainToInstance(FilterRecipeDto, {
-        source_lang: 'en-US-extra',
+    it('rejects min_time greater than max_time and out-of-range durations or search lengths', async () => {
+      const rangeDto = plainToInstance(FilterRecipeDto, {
+        min_time: 60,
+        max_time: 10,
       });
-      const errorsLong = await validate(dtoLong);
-      expect(errorsLong.length).toBeGreaterThan(0);
-      expect(errorsLong[0].property).toBe('source_lang');
+      const rangeErrors = await validate(rangeDto);
+      expect(rangeErrors.some((e) => e.property === 'min_time')).toBe(true);
+
+      const nonNumericMaxDto = plainToInstance(FilterRecipeDto, {
+        min_time: 10,
+        max_time: 'abc',
+      });
+      const nonNumericErrors = await validate(nonNumericMaxDto);
+      expect(nonNumericErrors.map((e) => e.property)).toEqual(['max_time']);
+
+      const boundsDto = plainToInstance(FilterRecipeDto, {
+        min_time: 17521,
+        max_prep_time: 8761,
+        author_id: 2147483648,
+        search: 'x'.repeat(101),
+      });
+      const boundsErrors = await validate(boundsDto);
+      const props = boundsErrors.map((e) => e.property);
+      expect(props).toContain('min_time');
+      expect(props).toContain('max_prep_time');
+      expect(props).toContain('author_id');
+      expect(props).toContain('search');
     });
 
     it('correctly transforms string and boolean representations of curated_only', () => {
-      const dtoTrue = plainToInstance(FilterRecipeDto, { curated_only: 'true' });
+      const dtoTrue = plainToInstance(FilterRecipeDto, {
+        curated_only: 'true',
+      });
       expect(dtoTrue.curated_only).toBe(true);
 
       const dtoFalse = plainToInstance(FilterRecipeDto, {
@@ -201,9 +227,9 @@ describe('FilterRecipeDto', () => {
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
       const props = errors.map((e) => e.property);
-      expect(props.includes('tag_ids') || props.includes('exclude_tag_ids')).toBe(
-        true,
-      );
+      expect(
+        props.includes('tag_ids') || props.includes('exclude_tag_ids'),
+      ).toBe(true);
     });
 
     it('accepts disjoint tag_ids and exclude_tag_ids', async () => {

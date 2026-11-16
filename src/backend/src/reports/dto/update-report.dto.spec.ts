@@ -65,4 +65,21 @@ describe('UpdateReportDto validation', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('actions');
   });
+
+  it('rejects excessive ban_duration_days and resolves blank descriptions/notes to null', async () => {
+    const badDays = plainToInstance(UpdateReportDto, {
+      ban_duration_days: 36501,
+    });
+    expect(
+      (await validate(badDays)).some((e) => e.property === 'ban_duration_days'),
+    ).toBe(true);
+
+    const cleared = plainToInstance(UpdateReportDto, {
+      resolution_description: '   ',
+      resolution_notes: '',
+    });
+    expect(await validate(cleared)).toHaveLength(0);
+    expect(cleared.resolution_description).toBeNull();
+    expect(cleared.resolution_notes).toBeNull();
+  });
 });

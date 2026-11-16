@@ -299,7 +299,7 @@ describe('RecipeController', () => {
         1,
         updateDto,
         mockUser as any,
-        'true',
+        { retranslate: true },
       );
 
       expect(service.updateRecipe).toHaveBeenCalledWith(

@@ -61,11 +61,11 @@ function Anagrafica() {
 				<div className="grid grid-cols-2 gap-4">
 					<div>
 						<label htmlFor="first_name" className={LABEL_CLASS}>{t('personal.firstName')}</label>
-						<input id="first_name" maxLength={100} value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT_CLASS} />
+						<input id="first_name" autoComplete="given-name" maxLength={100} value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT_CLASS} />
 					</div>
 					<div>
 						<label htmlFor="last_name" className={LABEL_CLASS}>{t('personal.lastName')}</label>
-						<input id="last_name" maxLength={100} value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT_CLASS} />
+						<input id="last_name" autoComplete="family-name" maxLength={100} value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT_CLASS} />
 					</div>
 				</div>
 				<div>
@@ -95,20 +95,20 @@ function Anagrafica() {
 				</div>
 				<div>
 					<label htmlFor="phone" className={LABEL_CLASS}>{t('personal.phone')}</label>
-					<input id="phone" maxLength={30} value={form.phone} onChange={(e) => update('phone', e.target.value)} className={INPUT_CLASS} />
+					<input id="phone" type="tel" autoComplete="tel" maxLength={30} value={form.phone} onChange={(e) => update('phone', e.target.value)} className={INPUT_CLASS} />
 				</div>
 				<div>
 					<label htmlFor="address" className={LABEL_CLASS}>{t('personal.address')}</label>
-					<input id="address" maxLength={255} value={form.address} onChange={(e) => update('address', e.target.value)} className={INPUT_CLASS} />
+					<input id="address" autoComplete="street-address" maxLength={255} value={form.address} onChange={(e) => update('address', e.target.value)} className={INPUT_CLASS} />
 				</div>
 				<div className="grid grid-cols-2 gap-4">
 					<div>
 						<label htmlFor="city" className={LABEL_CLASS}>{t('personal.city')}</label>
-						<input id="city" maxLength={100} value={form.city} onChange={(e) => update('city', e.target.value)} className={INPUT_CLASS} />
+						<input id="city" autoComplete="address-level2" maxLength={100} value={form.city} onChange={(e) => update('city', e.target.value)} className={INPUT_CLASS} />
 					</div>
 					<div>
 						<label htmlFor="postal_code" className={LABEL_CLASS}>{t('personal.postalCode')}</label>
-						<input id="postal_code" maxLength={10} value={form.postal_code} onChange={(e) => update('postal_code', e.target.value)} className={INPUT_CLASS} />
+						<input id="postal_code" autoComplete="postal-code" maxLength={10} value={form.postal_code} onChange={(e) => update('postal_code', e.target.value)} className={INPUT_CLASS} />
 					</div>
 				</div>
 

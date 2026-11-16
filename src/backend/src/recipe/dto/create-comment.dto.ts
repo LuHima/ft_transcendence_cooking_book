@@ -6,8 +6,14 @@ import {
   IsOptional,
   IsString,
   Length,
+  Max,
   Min,
 } from 'class-validator';
+import { trimString } from '../../common/dto/string-transforms';
+import {
+  INT32_MAX,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
 
 /**
  * Data transfer object for adding a new comment or reply to a recipe.
@@ -24,10 +30,12 @@ export class CreateCommentDto {
     minLength: 1,
     maxLength: 1000,
   })
-  @IsNotEmpty()
-  @IsString()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-  @Length(1, 1000)
+  @Transform(trimString)
+  @IsString({ message: 'Comment content must be a text string' })
+  @IsNotEmpty({ message: 'Comment cannot be empty' })
+  @Length(1, 1000, {
+    message: 'Comment must be between 1 and 1000 characters',
+  })
   content: string;
 
   /**
@@ -38,10 +46,13 @@ export class CreateCommentDto {
   @ApiPropertyOptional({
     description:
       'Optional parent comment ID if this comment is a reply. Automatically normalized to root comment.',
+    minimum: 1,
+    maximum: INT32_MAX,
     example: 1,
   })
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: VALIDATION_MESSAGES.idRange })
+  @Min(1, { message: VALIDATION_MESSAGES.idRange })
+  @Max(INT32_MAX, { message: VALIDATION_MESSAGES.idRange })
   parent_id?: number;
 }

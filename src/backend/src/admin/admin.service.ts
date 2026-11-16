@@ -456,7 +456,7 @@ export class AdminService {
   }
 
   private parseOptionalBirthDate(
-    birthDateInput: string | Date | undefined,
+    birthDateInput: string | Date | null | undefined,
   ): Date | null | undefined {
     if (birthDateInput === undefined) {
       return undefined;

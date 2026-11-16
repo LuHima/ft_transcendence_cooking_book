@@ -1,11 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
-
-// Toglie gli spazi a inizio/fine solo se il valore è una stringa
-// (se non lo è, lo lascia com'è e ci pensa @IsString a rifiutarlo).
-const trim = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() : value;
+import { trimString } from './string-transforms';
 
 /**
  * Reusable translation payload holding one display name per supported
@@ -21,10 +17,12 @@ export class TranslationDto {
     example: 'Pomodoro',
     maxLength: 100,
   })
-  @Transform(trim)
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
+  @Transform(trimString)
+  @IsString({ message: 'Italian translation must be a text string' })
+  @IsNotEmpty({ message: 'Italian translation cannot be empty' })
+  @MaxLength(100, {
+    message: 'Italian translation cannot exceed 100 characters',
+  })
   it: string;
 
   /**
@@ -36,10 +34,12 @@ export class TranslationDto {
     example: 'Tomato',
     maxLength: 100,
   })
-  @Transform(trim)
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
+  @Transform(trimString)
+  @IsString({ message: 'English translation must be a text string' })
+  @IsNotEmpty({ message: 'English translation cannot be empty' })
+  @MaxLength(100, {
+    message: 'English translation cannot exceed 100 characters',
+  })
   en: string;
 
   /**
@@ -51,9 +51,11 @@ export class TranslationDto {
     example: 'Tomate',
     maxLength: 100,
   })
-  @Transform(trim)
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
+  @Transform(trimString)
+  @IsString({ message: 'French translation must be a text string' })
+  @IsNotEmpty({ message: 'French translation cannot be empty' })
+  @MaxLength(100, {
+    message: 'French translation cannot exceed 100 characters',
+  })
   fr: string;
 }

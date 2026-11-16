@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -6,6 +7,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
   Validate,
@@ -15,13 +17,13 @@ import {
 } from 'class-validator';
 import { ReportAction, ReportReason, ReportStatus } from '@prisma/client';
 import { validateReportActions } from '../helpers/report-actions.validator';
+import { trimToNull } from '../../common/dto/string-transforms';
+import { MAX_BAN_DURATION_DAYS } from '../../common/validators/validation-constants';
 
 export { ReportAction };
 
 @ValidatorConstraint({ name: 'ValidReportActions', async: false })
-export class ValidReportActionsConstraint
-  implements ValidatorConstraintInterface
-{
+export class ValidReportActionsConstraint implements ValidatorConstraintInterface {
   validate(actions: any, args: ValidationArguments) {
     const obj = args.object as UpdateReportDto;
     return validateReportActions(actions as ReportAction[], obj.status).valid;
@@ -53,7 +55,9 @@ export class UpdateReportDto {
     example: ReportStatus.action_taken,
   })
   @IsOptional()
-  @IsEnum(ReportStatus)
+  @IsEnum(ReportStatus, {
+    message: 'status must be one of: pending, dismissed, action_taken',
+  })
   status?: ReportStatus;
 
   /**
@@ -68,24 +72,28 @@ export class UpdateReportDto {
     example: [ReportAction.delete_content, ReportAction.ban],
   })
   @IsOptional()
-  @IsArray()
-  @IsEnum(ReportAction, { each: true })
+  @IsArray({ message: 'actions must be an array' })
+  @IsEnum(ReportAction, {
+    each: true,
+    message: 'Each action must be one of: delete_content, ban, warn, dismiss',
+  })
   @Validate(ValidReportActionsConstraint)
   actions?: ReportAction[];
 
   /**
    * Canonical violation reason for disciplinary sanctions.
-   * Mandatory if actions include 'ban', 'delete_content', or 'warn'.
+   * Defaults to the report's original reason if omitted.
    * @example ReportReason.harassment_bullying
    */
   @ApiPropertyOptional({
     enum: ReportReason,
     enumName: 'ReportReason',
-    description: 'Formal policy violation category for resolution',
+    description:
+      "Formal policy violation category for resolution (defaults to the report's original reason if omitted)",
     example: ReportReason.harassment_bullying,
   })
   @IsOptional()
-  @IsEnum(ReportReason)
+  @IsEnum(ReportReason, { message: 'Invalid resolution reason category' })
   resolution_reason?: ReportReason;
 
   /**
@@ -93,31 +101,41 @@ export class UpdateReportDto {
    * @example 'Your content was removed for violating community safety policies.'
    */
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description:
-      'User-facing explanation delivered to the penalized community member',
+      'User-facing explanation delivered to the penalized community member (empty resolves to null)',
     maxLength: 1000,
     example:
       'Your content was removed for violating community safety policies.',
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  resolution_description?: string;
+  @Transform(trimToNull)
+  @IsString({ message: 'Resolution description must be a text string' })
+  @MaxLength(1000, {
+    message: 'Resolution description cannot exceed 1000 characters',
+  })
+  resolution_description?: string | null;
 
   /**
    * Internal staff resolution notes documenting findings or peer evaluations.
    * @example 'Content reviewed and removed; user account banned.'
    */
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description:
-      'Internal staff notes documenting findings or action taken (confidential)',
+      'Internal staff notes documenting findings or action taken (confidential; empty resolves to null)',
     maxLength: 1000,
     example: 'Content reviewed and removed; user account banned.',
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  resolution_notes?: string;
+  @Transform(trimToNull)
+  @IsString({ message: 'Resolution notes must be a text string' })
+  @MaxLength(1000, {
+    message: 'Resolution notes cannot exceed 1000 characters',
+  })
+  resolution_notes?: string | null;
 
   /**
    * Custom ban duration in days (defaults to baseline policy duration if omitted).
@@ -125,13 +143,17 @@ export class UpdateReportDto {
    */
   @ApiPropertyOptional({
     description:
-      'Custom ban duration in days (capped at 180 days for moderators)',
+      'Custom ban duration in days (1 to 36500; capped at 180 days for moderators)',
     minimum: 1,
+    maximum: MAX_BAN_DURATION_DAYS,
     example: 30,
   })
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'Ban duration must be a whole number of days' })
+  @Min(1, { message: 'Ban duration must be at least 1 day' })
+  @Max(MAX_BAN_DURATION_DAYS, {
+    message: `Ban duration cannot exceed ${MAX_BAN_DURATION_DAYS} days`,
+  })
   ban_duration_days?: number;
 
   /**
@@ -145,6 +167,6 @@ export class UpdateReportDto {
     example: false,
   })
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'permanent must be a boolean value' })
   permanent?: boolean;
 }

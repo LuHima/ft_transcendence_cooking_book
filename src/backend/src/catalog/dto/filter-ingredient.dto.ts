@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IngredientCategory } from '@prisma/client';
 import { IsEnum, IsOptional } from 'class-validator';
 import { CatalogQueryDto } from './catalog-query.dto';
+import { MAX_SEARCH_LENGTH } from '../../common/validators/validation-constants';
 
 /**
  * Query parameter data transfer object for filtering, searching, sorting, and paginating the ingredient catalog.
@@ -13,7 +14,8 @@ export class FilterIngredientDto extends CatalogQueryDto {
    */
   @ApiPropertyOptional({
     description:
-      'Case-insensitive substring search across ingredient slugs and translations',
+      'Case-insensitive substring search across ingredient slugs and translations (max 100 characters)',
+    maxLength: MAX_SEARCH_LENGTH,
     example: 'pomodoro',
   })
   override search?: string = undefined;

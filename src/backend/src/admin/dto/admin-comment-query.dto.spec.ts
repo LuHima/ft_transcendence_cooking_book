@@ -95,6 +95,23 @@ describe('AdminCommentQueryDto', () => {
     expect(errors[0].property).toBe('replies_limit');
   });
 
+  it('rejects invalid recipe_id, user_id, lang, is_edited, and overly long search', async () => {
+    const dto = plainToInstance(AdminCommentQueryDto, {
+      recipe_id: 0,
+      user_id: -3,
+      lang: 'es',
+      is_edited: 'maybe',
+      search: 'x'.repeat(101),
+    });
+    const errors = await validate(dto);
+    const props = errors.map((e) => e.property);
+    expect(props).toContain('recipe_id');
+    expect(props).toContain('user_id');
+    expect(props).toContain('lang');
+    expect(props).toContain('is_edited');
+    expect(props).toContain('search');
+  });
+
   describe('reported_only filtering (Ticket #155 / #221)', () => {
     it('accepts reported_only=true and contextually defaults sort_by to pending_reports_count', async () => {
       const dto = plainToInstance(AdminCommentQueryDto, {

@@ -54,6 +54,16 @@ describe('PaginationQueryDto', () => {
     expect(errors[0].constraints).toHaveProperty('max');
   });
 
+  it('rejects page exceeding 32-bit signed integer max', async () => {
+    const dto = plainToInstance(PaginationQueryDto, {
+      page: '2147483648',
+    });
+    const errors = await validate(dto);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].property).toBe('page');
+    expect(errors[0].constraints).toHaveProperty('max');
+  });
+
   describe('buildPaginatedResponse', () => {
     it('returns has_prev_page=false when total is 0 even if page > 1', () => {
       expect(buildPaginatedResponse([], 0, 2, 20)).toEqual({

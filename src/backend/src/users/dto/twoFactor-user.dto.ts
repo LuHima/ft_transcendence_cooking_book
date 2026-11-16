@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsNotEmpty,
   IsJWT,
-  IsString,
+  IsNotEmpty,
   IsNumberString,
+  IsString,
   Length,
 } from 'class-validator';
 
@@ -21,11 +21,13 @@ export class TwoFactorAuth {
     minLength: 6,
     maxLength: 6,
   })
-  @IsNotEmpty({ message: 'the two factor code cannot be empty' })
-  @Length(6, 6, { message: 'The two factor code must be exactly 6 digits' })
+  @IsNotEmpty({ message: 'The two-factor verification code cannot be empty' })
+  @Length(6, 6, {
+    message: 'The two-factor verification code must be exactly 6 digits',
+  })
   @IsNumberString(
     {},
-    { message: 'The two factor code must contain only numbers' },
+    { message: 'The two-factor verification code must contain only digits' },
   )
   code: string;
 
@@ -37,8 +39,10 @@ export class TwoFactorAuth {
     description: 'Temporary JWT token received from /api/auth/signin challenge',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
-  @IsNotEmpty({ message: 'the two factor tempToken cannot be empty' })
-  @IsString({ message: 'The tempToken must be a string' })
-  @IsJWT({ message: 'The tempToken must be a valid JWT' })
+  @IsNotEmpty({ message: 'The temporary authentication token cannot be empty' })
+  @IsString({ message: 'The temporary authentication token must be a string' })
+  @IsJWT({
+    message: 'The temporary authentication token must be a valid JWT',
+  })
   tempToken: string;
 }

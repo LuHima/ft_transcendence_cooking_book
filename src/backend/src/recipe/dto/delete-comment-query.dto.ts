@@ -1,26 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
+import { HardDeleteQueryDto } from '../../common/dto/hard-delete-query.dto';
+import { transformOptionalBoolean } from '../../common/dto/query-transforms';
 
 /**
  * Query parameters for recipe comment deletion and deactivation.
  */
-export class DeleteCommentQueryDto {
-  /**
-   * Permanent hard deletion flag. Restricted strictly to platform administrators.
-   * When false (default), performs safe soft-deactivation (is_active = false).
-   */
-  @ApiPropertyOptional({
-    description:
-      'Permanent hard deletion flag. Restricted strictly to platform administrators. Defaults to false (soft deactivation).',
-    default: false,
-    example: false,
-  })
-  @IsOptional()
-  @Transform(({ value }) => value === true || value === 'true')
-  @IsBoolean()
-  hard?: boolean = false;
-
+export class DeleteCommentQueryDto extends HardDeleteQueryDto {
   /**
    * Explicit cascade confirmation flag when hard-deleting a parent comment that has child replies.
    * If replies exist and this flag is not true, returns 409 Conflict.
@@ -32,7 +19,7 @@ export class DeleteCommentQueryDto {
     example: false,
   })
   @IsOptional()
-  @Transform(({ value }) => value === true || value === 'true')
-  @IsBoolean()
+  @Transform(transformOptionalBoolean)
+  @IsBoolean({ message: 'prune_replies must be a boolean (true or false)' })
   prune_replies?: boolean = false;
 }

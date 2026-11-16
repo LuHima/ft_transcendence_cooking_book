@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { INT32_MAX } from '../validators/validation-constants';
 
 /**
  * Common query parameters for collection pagination.
@@ -14,12 +15,14 @@ export class PaginationQueryDto {
     description: '1-based page window index',
     default: 1,
     minimum: 1,
+    maximum: INT32_MAX,
     example: 1,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'page must be a whole number' })
+  @Min(1, { message: 'page must be at least 1' })
+  @Max(INT32_MAX, { message: `page cannot exceed ${INT32_MAX}` })
   page?: number = 1;
 
   /**
@@ -35,9 +38,9 @@ export class PaginationQueryDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
+  @IsInt({ message: 'limit must be a whole number' })
+  @Min(1, { message: 'limit must be at least 1' })
+  @Max(100, { message: 'limit cannot exceed 100' })
   limit?: number = 20;
 }
 

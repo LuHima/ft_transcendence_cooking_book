@@ -1,3 +1,4 @@
+import { applyDecorators } from '@nestjs/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Course, RecipeDifficulty } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
@@ -8,15 +9,28 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Length,
+  Max,
+  MaxLength,
   Min,
   registerDecorator,
   ValidationArguments,
   ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
+  ArrayMaxSize,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { transformOptionalBoolean } from '../../common/dto/query-transforms';
+import { trimToUndefined } from '../../common/dto/string-transforms';
+import {
+  INT32_MAX,
+  MAX_FILTER_IDS,
+  MAX_RECIPE_TIME_MINUTES,
+  MAX_SEARCH_LENGTH,
+  MAX_TOTAL_TIME_MINUTES,
+  SUPPORTED_LOCALES,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
 
 export enum RecipeSortBy {
   created_at = 'created_at',
@@ -34,21 +48,20 @@ export enum RecipeSortOrder {
 export type FilterMatchMode = 'all' | 'any';
 
 @ValidatorConstraint({ name: 'isNotIntersecting', async: false })
-export class IsNotIntersectingConstraint
-  implements ValidatorConstraintInterface
-{
-  validate(value: any, args: ValidationArguments): boolean {
-    const [relatedPropertyName] = args.constraints;
-    const relatedValue = (args.object as any)?.[relatedPropertyName];
+export class IsNotIntersectingConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown, args: ValidationArguments): boolean {
+    const [relatedPropertyName] = args.constraints as [string];
+    const obj = args.object as Record<string, unknown> | undefined;
+    const relatedValue = obj?.[relatedPropertyName];
     if (!Array.isArray(value) || !Array.isArray(relatedValue)) {
       return true;
     }
-    const set = new Set(value);
+    const set = new Set<unknown>(value);
     return !relatedValue.some((item) => set.has(item));
   }
 
   defaultMessage(args: ValidationArguments): string {
-    const [relatedPropertyName] = args.constraints;
+    const [relatedPropertyName] = args.constraints as [string];
     return `${args.property} and ${relatedPropertyName} cannot contain common IDs`;
   }
 }
@@ -70,11 +83,9 @@ export function IsNotIntersecting(
 }
 
 @ValidatorConstraint({ name: 'isCuratedOnlyWithLang', async: false })
-export class IsCuratedOnlyWithLangConstraint
-  implements ValidatorConstraintInterface
-{
-  validate(value: any, args: ValidationArguments): boolean {
-    const obj = args.object as any;
+export class IsCuratedOnlyWithLangConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown, args: ValidationArguments): boolean {
+    const obj = args.object as { lang?: unknown } | undefined;
     if (value === true) {
       return typeof obj?.lang === 'string' && obj.lang.trim().length > 0;
     }
@@ -99,11 +110,35 @@ export function IsCuratedOnlyWithLang(validationOptions?: ValidationOptions) {
   };
 }
 
-export function transformIdArray({
-  value,
-}: {
-  value: any;
-}): number[] | undefined {
+@ValidatorConstraint({ name: 'isTimeRangeValid', async: false })
+export class IsTimeRangeValidConstraint implements ValidatorConstraintInterface {
+  validate(minTime: unknown, args: ValidationArguments): boolean {
+    const obj = args.object as { max_time?: unknown } | undefined;
+    if (!Number.isFinite(minTime) || !Number.isFinite(obj?.max_time)) {
+      return true;
+    }
+    return (minTime as number) <= (obj?.max_time as number);
+  }
+
+  defaultMessage(): string {
+    return 'min_time cannot be greater than max_time';
+  }
+}
+
+export function IsTimeRangeValid(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isTimeRangeValid',
+      target: object.constructor,
+      propertyName,
+      constraints: [],
+      options: validationOptions,
+      validator: IsTimeRangeValidConstraint,
+    });
+  };
+}
+
+export function transformIdArray({ value }: { value: unknown }): unknown {
   if (value === undefined || value === null || value === '') return undefined;
   if (Array.isArray(value)) {
     return value.map((v) =>
@@ -117,6 +152,20 @@ export function transformIdArray({
     return [value];
   }
   return value;
+}
+
+function IsFilterIdArray(fieldName: string, disjointFieldName: string) {
+  return applyDecorators(
+    IsOptional(),
+    Transform(transformIdArray),
+    ArrayMaxSize(MAX_FILTER_IDS, {
+      message: `${fieldName} cannot contain more than ${MAX_FILTER_IDS} items`,
+    }),
+    IsInt({ each: true, message: VALIDATION_MESSAGES.idRange }),
+    Min(1, { each: true, message: VALIDATION_MESSAGES.idRange }),
+    Max(INT32_MAX, { each: true, message: VALIDATION_MESSAGES.idRange }),
+    IsNotIntersecting(disjointFieldName),
+  );
 }
 
 /**
@@ -135,7 +184,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: Course.main_course,
   })
   @IsOptional()
-  @IsEnum(Course)
+  @IsEnum(Course, { message: 'Invalid course category' })
   course?: Course;
 
   /**
@@ -148,7 +197,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: RecipeDifficulty.easy,
   })
   @IsOptional()
-  @IsEnum(RecipeDifficulty)
+  @IsEnum(RecipeDifficulty, { message: 'Invalid difficulty level' })
   difficulty?: RecipeDifficulty;
 
   /**
@@ -163,11 +212,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: [1, 2],
     type: [Number],
   })
-  @IsOptional()
-  @Transform(transformIdArray)
-  @IsInt({ each: true })
-  @Min(1, { each: true })
-  @IsNotIntersecting('exclude_tag_ids')
+  @IsFilterIdArray('tag_ids', 'exclude_tag_ids')
   tag_ids?: number[];
 
   /**
@@ -183,7 +228,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: 'all',
   })
   @IsOptional()
-  @IsIn(['all', 'any'])
+  @IsIn(['all', 'any'], { message: 'tag_mode must be either "all" or "any"' })
   tag_mode?: FilterMatchMode = 'all';
 
   /**
@@ -197,11 +242,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: [3, 4],
     type: [Number],
   })
-  @IsOptional()
-  @Transform(transformIdArray)
-  @IsInt({ each: true })
-  @Min(1, { each: true })
-  @IsNotIntersecting('tag_ids')
+  @IsFilterIdArray('exclude_tag_ids', 'tag_ids')
   exclude_tag_ids?: number[];
 
   /**
@@ -215,11 +256,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: [10, 20],
     type: [Number],
   })
-  @IsOptional()
-  @Transform(transformIdArray)
-  @IsInt({ each: true })
-  @Min(1, { each: true })
-  @IsNotIntersecting('exclude_ingredient_ids')
+  @IsFilterIdArray('ingredient_ids', 'exclude_ingredient_ids')
   ingredient_ids?: number[];
 
   /**
@@ -235,7 +272,9 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: 'all',
   })
   @IsOptional()
-  @IsIn(['all', 'any'])
+  @IsIn(['all', 'any'], {
+    message: 'ingredient_mode must be either "all" or "any"',
+  })
   ingredient_mode?: FilterMatchMode = 'all';
 
   /**
@@ -249,11 +288,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: [30, 40],
     type: [Number],
   })
-  @IsOptional()
-  @Transform(transformIdArray)
-  @IsInt({ each: true })
-  @Min(1, { each: true })
-  @IsNotIntersecting('ingredient_ids')
+  @IsFilterIdArray('exclude_ingredient_ids', 'ingredient_ids')
   exclude_ingredient_ids?: number[];
 
   /**
@@ -263,12 +298,18 @@ export class FilterRecipeDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     description:
       'Filter recipes where total_time is greater than or equal to this limit (in minutes)',
+    minimum: 0,
+    maximum: MAX_TOTAL_TIME_MINUTES,
     example: 15,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(0)
+  @IsInt({ message: 'min_time must be a whole number of minutes' })
+  @Min(0, { message: 'min_time cannot be negative' })
+  @Max(MAX_TOTAL_TIME_MINUTES, {
+    message: `min_time cannot exceed ${MAX_TOTAL_TIME_MINUTES} minutes`,
+  })
+  @IsTimeRangeValid()
   min_time?: number;
 
   /**
@@ -278,12 +319,17 @@ export class FilterRecipeDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     description:
       'Filter recipes where total_time is less than or equal to this limit (in minutes)',
+    minimum: 0,
+    maximum: MAX_TOTAL_TIME_MINUTES,
     example: 30,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(0)
+  @IsInt({ message: 'max_time must be a whole number of minutes' })
+  @Min(0, { message: 'max_time cannot be negative' })
+  @Max(MAX_TOTAL_TIME_MINUTES, {
+    message: `max_time cannot exceed ${MAX_TOTAL_TIME_MINUTES} minutes`,
+  })
   max_time?: number;
 
   /**
@@ -293,12 +339,17 @@ export class FilterRecipeDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     description:
       'Filter recipes where prep_time is less than or equal to this limit (in minutes)',
+    minimum: 0,
+    maximum: MAX_RECIPE_TIME_MINUTES,
     example: 15,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(0)
+  @IsInt({ message: 'max_prep_time must be a whole number of minutes' })
+  @Min(0, { message: 'max_prep_time cannot be negative' })
+  @Max(MAX_RECIPE_TIME_MINUTES, {
+    message: `max_prep_time cannot exceed ${MAX_RECIPE_TIME_MINUTES} minutes`,
+  })
   max_prep_time?: number;
 
   /**
@@ -307,12 +358,15 @@ export class FilterRecipeDto extends PaginationQueryDto {
    */
   @ApiPropertyOptional({
     description: 'Filter recipes authored by a specific user ID',
+    minimum: 1,
+    maximum: INT32_MAX,
     example: 1,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: VALIDATION_MESSAGES.idRange })
+  @Min(1, { message: VALIDATION_MESSAGES.idRange })
+  @Max(INT32_MAX, { message: VALIDATION_MESSAGES.idRange })
   author_id?: number;
 
   /**
@@ -320,25 +374,34 @@ export class FilterRecipeDto extends PaginationQueryDto {
    * @example 'pasta'
    */
   @ApiPropertyOptional({
-    description: 'Keyword search query matching recipe title or description',
+    description:
+      'Keyword search query matching recipe title or description (max 100 characters)',
+    maxLength: MAX_SEARCH_LENGTH,
     example: 'pasta',
   })
   @IsOptional()
-  @IsString()
+  @Transform(trimToUndefined)
+  @IsString({ message: 'search query must be a text string' })
+  @MaxLength(MAX_SEARCH_LENGTH, {
+    message: `search query cannot exceed ${MAX_SEARCH_LENGTH} characters`,
+  })
   search?: string;
 
   /**
-   * Filter recipes by the authoring original source language code (e.g., 'it', 'en', 'fr').
+   * Filter recipes by the authoring original source language code ('it', 'en', 'fr').
    * @example 'it'
    */
   @ApiPropertyOptional({
     description:
-      'Filter recipes by the authoring original source language code (e.g., "it", "en", "fr")',
+      'Filter recipes by the authoring original source language code (it, en, fr)',
+    enum: SUPPORTED_LOCALES,
     example: 'it',
   })
   @IsOptional()
-  @IsString()
-  @Length(2, 5)
+  @IsString({ message: 'source_lang must be a text string' })
+  @IsIn(SUPPORTED_LOCALES, {
+    message: 'source_lang must be one of the following values: it, en, fr',
+  })
   source_lang?: string;
 
   /**
@@ -352,12 +415,8 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: true,
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === 'true' || value === true) return true;
-    if (value === 'false' || value === false) return false;
-    return value;
-  })
-  @IsBoolean()
+  @Transform(transformOptionalBoolean)
+  @IsBoolean({ message: 'curated_only must be a boolean (true or false)' })
   @IsCuratedOnlyWithLang()
   curated_only?: boolean;
 
@@ -367,11 +426,12 @@ export class FilterRecipeDto extends PaginationQueryDto {
    */
   @ApiPropertyOptional({
     description: 'Target locale code for projected title and description',
-    enum: ['it', 'en', 'fr'],
+    enum: SUPPORTED_LOCALES,
     example: 'it',
   })
   @IsOptional()
-  @IsIn(['it', 'en', 'fr'])
+  @IsString({ message: 'lang must be a text string' })
+  @IsIn(SUPPORTED_LOCALES, { message: VALIDATION_MESSAGES.langUnsupported })
   lang?: 'it' | 'en' | 'fr';
 
   /**
@@ -385,7 +445,7 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: RecipeSortBy.created_at,
   })
   @IsOptional()
-  @IsEnum(RecipeSortBy)
+  @IsEnum(RecipeSortBy, { message: 'Invalid sort_by value' })
   sort_by?: RecipeSortBy = RecipeSortBy.created_at;
 
   /**
@@ -400,6 +460,6 @@ export class FilterRecipeDto extends PaginationQueryDto {
     example: RecipeSortOrder.desc,
   })
   @IsOptional()
-  @IsEnum(RecipeSortOrder)
+  @IsEnum(RecipeSortOrder, { message: 'sort_order must be asc or desc' })
   sort_order?: RecipeSortOrder;
 }

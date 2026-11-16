@@ -3,17 +3,27 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SortOrder } from '../../common/dto/sort-order.enum';
 import {
   createContextualSortByAccessor,
   transformOptionalBoolean,
 } from '../../common/dto/query-transforms';
+import { trimToUndefined } from '../../common/dto/string-transforms';
+import {
+  INT32_MAX,
+  MAX_SEARCH_LENGTH,
+  SUPPORTED_LOCALES,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
 
 export enum AdminCommentSortBy {
   created_at = 'created_at',
@@ -41,51 +51,23 @@ const sortByAccessor = createContextualSortByAccessor<
 /**
  * Query parameters for administrative comment audit stream.
  */
-export class AdminCommentQueryDto {
-  /**
-   * 1-based page window index.
-   * @example 1
-   */
-  @ApiPropertyOptional({
-    description: '1-based page window index',
-    default: 1,
-    minimum: 1,
-    example: 1,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  /**
-   * Number of items per page window (1 to 100).
-   * @example 20
-   */
-  @ApiPropertyOptional({
-    description: 'Number of items per page window (1 to 100)',
-    default: 20,
-    minimum: 1,
-    maximum: 100,
-    example: 20,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number = 20;
-
+export class AdminCommentQueryDto extends PaginationQueryDto {
   /**
    * Case-insensitive substring search in comment content.
    * @example 'spaghetti'
    */
   @ApiPropertyOptional({
-    description: 'Case-insensitive substring search in comment content',
+    description:
+      'Case-insensitive substring search in comment content (max 100 characters)',
+    maxLength: MAX_SEARCH_LENGTH,
     example: 'recipe',
   })
   @IsOptional()
-  @IsString()
+  @Transform(trimToUndefined)
+  @IsString({ message: 'search query must be a text string' })
+  @MaxLength(MAX_SEARCH_LENGTH, {
+    message: `search query cannot exceed ${MAX_SEARCH_LENGTH} characters`,
+  })
   search?: string;
 
   /**
@@ -98,7 +80,9 @@ export class AdminCommentQueryDto {
     default: AdminCommentStatus.all,
   })
   @IsOptional()
-  @IsEnum(AdminCommentStatus)
+  @IsEnum(AdminCommentStatus, {
+    message: 'status must be one of: active, inactive, all',
+  })
   status?: AdminCommentStatus = AdminCommentStatus.all;
 
   /**
@@ -107,11 +91,15 @@ export class AdminCommentQueryDto {
    */
   @ApiPropertyOptional({
     description: 'Filter comments targeting a specific recipe ID',
+    minimum: 1,
+    maximum: INT32_MAX,
     example: 42,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsInt({ message: VALIDATION_MESSAGES.idRange })
+  @Min(1, { message: VALIDATION_MESSAGES.idRange })
+  @Max(INT32_MAX, { message: VALIDATION_MESSAGES.idRange })
   recipe_id?: number;
 
   /**
@@ -120,11 +108,15 @@ export class AdminCommentQueryDto {
    */
   @ApiPropertyOptional({
     description: 'Filter comments authored by a specific user ID',
+    minimum: 1,
+    maximum: INT32_MAX,
     example: 10,
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsInt({ message: VALIDATION_MESSAGES.idRange })
+  @Min(1, { message: VALIDATION_MESSAGES.idRange })
+  @Max(INT32_MAX, { message: VALIDATION_MESSAGES.idRange })
   user_id?: number;
 
   /**
@@ -136,12 +128,8 @@ export class AdminCommentQueryDto {
     example: true,
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === true || value === 'true') return true;
-    if (value === false || value === 'false') return false;
-    return undefined;
-  })
-  @IsBoolean()
+  @Transform(transformOptionalBoolean)
+  @IsBoolean({ message: 'is_edited must be a boolean (true or false)' })
   is_edited?: boolean;
 
   /**
@@ -154,7 +142,7 @@ export class AdminCommentQueryDto {
   })
   @IsOptional()
   @Transform(transformOptionalBoolean)
-  @IsBoolean()
+  @IsBoolean({ message: 'reported_only must be a boolean (true or false)' })
   reported_only?: boolean;
 
   /**
@@ -169,7 +157,7 @@ export class AdminCommentQueryDto {
     example: AdminCommentSortBy.created_at,
   })
   @IsOptional()
-  @IsEnum(AdminCommentSortBy)
+  @IsEnum(AdminCommentSortBy, { message: 'Invalid sort_by value' })
   get sort_by(): AdminCommentSortBy {
     return sortByAccessor.get(this);
   }
@@ -189,7 +177,7 @@ export class AdminCommentQueryDto {
     example: SortOrder.desc,
   })
   @IsOptional()
-  @IsEnum(SortOrder)
+  @IsEnum(SortOrder, { message: 'sort_order must be asc or desc' })
   sort_order?: SortOrder;
 
   /**
@@ -205,7 +193,9 @@ export class AdminCommentQueryDto {
     default: AdminCommentFormat.flat,
   })
   @IsOptional()
-  @IsEnum(AdminCommentFormat)
+  @IsEnum(AdminCommentFormat, {
+    message: 'format must be either flat or threaded',
+  })
   format?: AdminCommentFormat = AdminCommentFormat.flat;
 
   /**
@@ -222,9 +212,9 @@ export class AdminCommentQueryDto {
   })
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(20)
+  @IsInt({ message: 'replies_limit must be a whole number' })
+  @Min(1, { message: 'replies_limit must be at least 1' })
+  @Max(20, { message: 'replies_limit cannot exceed 20' })
   replies_limit?: number = 5;
 
   /**
@@ -232,10 +222,13 @@ export class AdminCommentQueryDto {
    * @example 'it'
    */
   @ApiPropertyOptional({
-    description: 'Preferred language locale for recipe title hydration',
+    enum: SUPPORTED_LOCALES,
+    description:
+      'Preferred language locale for recipe title hydration (it, en, fr)',
     example: 'it',
   })
   @IsOptional()
-  @IsString()
-  lang?: string;
+  @IsString({ message: 'lang must be a text string' })
+  @IsIn(SUPPORTED_LOCALES, { message: VALIDATION_MESSAGES.langUnsupported })
+  lang?: 'it' | 'en' | 'fr';
 }

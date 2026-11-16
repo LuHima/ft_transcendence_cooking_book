@@ -35,11 +35,11 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { ActiveUserData } from 'src/common/decorators/current-user.decorator';
 import type { Response, Request } from 'express';
 import { Auth } from 'src/common/decorators/policies.decorator';
-import { PartialType, PickType, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { createHttpException, errors } from 'src/common/config/error.config';
 import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ConfirmPasswordDto } from './dto/confirm-password.dto';
+import { TwoFactorCode, TwoFactorCodeDto } from './dto/two-factor-code.dto';
 import {
   AuthMessageResponseDto,
   TwoFactorChallengeResponseDto,
@@ -55,19 +55,7 @@ import {
 } from 'src/common/dto/api-error-response.dto';
 import { GoogleAuthDto } from './dto/auth-google.dto';
 
-export class ConfirmPasswordDto extends PartialType(
-  PickType(SignInUserDto, ['password'] as const),
-) {
-  @ApiPropertyOptional({
-    description:
-      'Google OAuth2 OpenID Connect ID token (required when the account has no local password)',
-  })
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty({ message: 'Google ID token cannot be empty' })
-  idToken?: string;
-}
-export class TwoFactorCode extends PickType(TwoFactorAuth, ['code'] as const) {}
+export { ConfirmPasswordDto, TwoFactorCode };
 
 /* 
 Aggiungendo type, comunichiamo a TypeScript che Response serve esclusivamente per il
@@ -405,7 +393,7 @@ export class AuthController {
   })
   @Auth()
   @Post('twofactor/verify')
-  async verify(@CurrentUser('id') id: number, @Body() code: TwoFactorCode) {
+  async verify(@CurrentUser('id') id: number, @Body() code: TwoFactorCodeDto) {
     return await this.authService.verify(id, code.code);
   }
 

@@ -57,6 +57,94 @@ describe('Recipe Privacy DTO Validation', () => {
       expect(privacyError).toBeDefined();
       expect(privacyError?.constraints).toHaveProperty('isEnum');
     });
+
+    it('rejects whitespace-only title, description, and step description', async () => {
+      const dto = plainToInstance(CreateRecipeDto, {
+        ...validBaseRecipe,
+        title: '   ',
+        description: '          ',
+        steps: [{ step_number: 1, description: '   ' }],
+      });
+      const errors = await validate(dto);
+      expect(errors.some((e) => e.property === 'title')).toBe(true);
+      expect(errors.some((e) => e.property === 'description')).toBe(true);
+      expect(errors.some((e) => e.property === 'steps')).toBe(true);
+    });
+
+    it('resolves empty preservation, tips, step title, and ingredient notes to null and enforces max lengths', async () => {
+      const clearedDto = plainToInstance(CreateRecipeDto, {
+        ...validBaseRecipe,
+        preservation: '   ',
+        tips: '',
+        steps: [
+          { step_number: 1, title: '  ', description: 'Lessare la pasta.' },
+        ],
+        ingredients: [
+          { ingredient_id: 1, quantity: 100, unit: 'g', notes: '  ' },
+        ],
+      });
+      expect(await validate(clearedDto)).toHaveLength(0);
+      expect(clearedDto.preservation).toBeNull();
+      expect(clearedDto.tips).toBeNull();
+      expect(clearedDto.steps[0].title).toBeNull();
+      expect(clearedDto.ingredients[0].notes).toBeNull();
+
+      const tooLongDto = plainToInstance(CreateRecipeDto, {
+        ...validBaseRecipe,
+        preservation: 'a'.repeat(1001),
+        tips: 'b'.repeat(1001),
+        steps: [{ step_number: 1, description: 'c'.repeat(2001) }],
+      });
+      const errors = await validate(tooLongDto);
+      expect(errors.some((e) => e.property === 'preservation')).toBe(true);
+      expect(errors.some((e) => e.property === 'tips')).toBe(true);
+      expect(errors.some((e) => e.property === 'steps')).toBe(true);
+    });
+
+    it('enforces quantity bounds (0.01 to 99999999.99) and integer upper bounds', async () => {
+      const invalidDto = plainToInstance(CreateRecipeDto, {
+        ...validBaseRecipe,
+        prep_time: 8761,
+        cook_time: 8761,
+        servings: 1001,
+        tag_ids: [0, 2147483648],
+        steps: [
+          {
+            step_number: 101,
+            description: 'Step troppo lungo nel numero.',
+            duration: 8761,
+          },
+        ],
+        ingredients: [
+          { ingredient_id: 0, quantity: 0, unit: 'g', notes: { es: 'bad' } },
+        ],
+      });
+      const errors = await validate(invalidDto);
+      const props = errors.map((e) => e.property);
+      expect(props).toContain('prep_time');
+      expect(props).toContain('cook_time');
+      expect(props).toContain('servings');
+      expect(props).toContain('tag_ids');
+      expect(props).toContain('steps');
+      expect(props).toContain('ingredients');
+
+      const overMaxQty = plainToInstance(CreateRecipeDto, {
+        ...validBaseRecipe,
+        ingredients: [{ ingredient_id: 1, quantity: 100000000, unit: 'g' }],
+      });
+      expect(
+        (await validate(overMaxQty)).some((e) => e.property === 'ingredients'),
+      ).toBe(true);
+
+      const minValidQty = plainToInstance(CreateRecipeDto, {
+        ...validBaseRecipe,
+        prep_time: 8760,
+        cook_time: 8760,
+        servings: 1000,
+        ingredients: [{ ingredient_id: 1, quantity: 0.01, unit: 'g' }],
+      });
+      expect(await validate(minValidQty)).toHaveLength(0);
+    });
   });
 
   describe('UpdateRecipeDto', () => {
@@ -82,6 +170,16 @@ describe('Recipe Privacy DTO Validation', () => {
       const privacyError = errors.find((e) => e.property === 'privacy');
       expect(privacyError).toBeDefined();
       expect(privacyError?.constraints).toHaveProperty('isEnum');
+    });
+
+    it('inherits trim-to-null and bounds on partial updates', async () => {
+      const dto = plainToInstance(UpdateRecipeDto, {
+        preservation: '   ',
+        tips: '',
+      });
+      expect(await validate(dto)).toHaveLength(0);
+      expect(dto.preservation).toBeNull();
+      expect(dto.tips).toBeNull();
     });
   });
 });

@@ -55,4 +55,22 @@ describe('CreateReportDto', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('reason');
   });
+
+  it('resolves blank description to null and rejects out-of-range target_id', async () => {
+    const blank = plainToInstance(CreateReportDto, {
+      ...validBasePayload,
+      reason: ReportReason.other,
+      description: '   ',
+    });
+    expect(await validate(blank)).toHaveLength(0);
+    expect(blank.description).toBeNull();
+
+    const badId = plainToInstance(CreateReportDto, {
+      ...validBasePayload,
+      reason: ReportReason.other,
+      target_id: 2147483648,
+    });
+    const errors = await validate(badId);
+    expect(errors.some((e) => e.property === 'target_id')).toBe(true);
+  });
 });

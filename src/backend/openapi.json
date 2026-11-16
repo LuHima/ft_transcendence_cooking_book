@@ -505,7 +505,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TwoFactorCode"
+                "$ref": "#/components/schemas/TwoFactorCodeDto"
               }
             }
           }
@@ -999,6 +999,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -1130,6 +1131,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -1261,6 +1263,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -1345,6 +1348,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -1367,9 +1371,10 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Search query substring matching username, first_name, or last_name (minimum 2 non-whitespace characters)",
+            "description": "Search query substring matching username, first_name, or last_name (2-100 non-whitespace characters)",
             "schema": {
               "minLength": 2,
+              "maxLength": 100,
               "example": "mario",
               "type": "string"
             }
@@ -1582,6 +1587,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -1738,6 +1744,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -1993,6 +2000,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -2057,8 +2065,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -2089,8 +2096,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -2106,8 +2112,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -2138,8 +2143,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -2150,6 +2154,7 @@
             "description": "Filter recipes where total_time is greater than or equal to this limit (in minutes)",
             "schema": {
               "minimum": 0,
+              "maximum": 17520,
               "example": 15,
               "type": "number"
             }
@@ -2161,6 +2166,7 @@
             "description": "Filter recipes where total_time is less than or equal to this limit (in minutes)",
             "schema": {
               "minimum": 0,
+              "maximum": 17520,
               "example": 30,
               "type": "number"
             }
@@ -2172,6 +2178,7 @@
             "description": "Filter recipes where prep_time is less than or equal to this limit (in minutes)",
             "schema": {
               "minimum": 0,
+              "maximum": 8760,
               "example": 15,
               "type": "number"
             }
@@ -2183,6 +2190,7 @@
             "description": "Filter recipes authored by a specific user ID",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "example": 1,
               "type": "number"
             }
@@ -2191,8 +2199,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Keyword search query matching recipe title or description",
+            "description": "Keyword search query matching recipe title or description (max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "pasta",
               "type": "string"
             }
@@ -2201,12 +2210,15 @@
             "name": "source_lang",
             "required": false,
             "in": "query",
-            "description": "Filter recipes by the authoring original source language code (e.g., \"it\", \"en\", \"fr\")",
+            "description": "Filter recipes by the authoring original source language code (it, en, fr)",
             "schema": {
-              "minLength": 2,
-              "maxLength": 5,
               "example": "it",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
             }
           },
           {
@@ -2519,10 +2531,11 @@
             "name": "retranslate",
             "required": false,
             "in": "query",
-            "description": "Set to \"true\" to re-generate automated translations for updated text",
+            "description": "Set to true to re-generate automated translations for updated text",
             "schema": {
-              "example": "true",
-              "type": "string"
+              "default": false,
+              "example": true,
+              "type": "boolean"
             }
           }
         ],
@@ -2616,7 +2629,7 @@
             "name": "hard",
             "required": false,
             "in": "query",
-            "description": "Permanent hard deletion flag. Restricted strictly to platform administrators. Defaults to false (soft suspension).",
+            "description": "Permanent hard deletion flag. Restricted strictly to platform administrators. Defaults to false (soft deactivation).",
             "schema": {
               "default": false,
               "example": false,
@@ -3776,6 +3789,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -3918,6 +3932,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -4235,6 +4250,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -4272,8 +4288,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive substring search across tag slugs and translations",
+            "description": "Case-insensitive substring search across tag slugs and translations (max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "vegan",
               "type": "string"
             }
@@ -4438,6 +4455,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -4475,8 +4493,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive substring search across ingredient slugs and translations",
+            "description": "Case-insensitive substring search across ingredient slugs and translations (max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "pomodoro",
               "type": "string"
             }
@@ -4662,6 +4681,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -5074,6 +5094,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -5132,6 +5153,7 @@
             "description": "Filter reports by target entity ID (requires subject to prevent polymorphic ID collisions)",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "example": 42,
               "type": "number"
             }
@@ -5413,6 +5435,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -5435,8 +5458,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive username substring filter",
+            "description": "Case-insensitive username substring filter (max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "giulia",
               "type": "string"
             }
@@ -5507,6 +5531,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -6009,6 +6034,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -6108,6 +6134,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -6130,9 +6157,10 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Search query substring matching username, first_name, or last_name (minimum 2 non-whitespace characters)",
+            "description": "Search query substring matching username, first_name, or last_name (2-100 non-whitespace characters)",
             "schema": {
               "minLength": 2,
+              "maxLength": 100,
               "example": "mario",
               "type": "string"
             }
@@ -6354,6 +6382,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -6643,8 +6672,9 @@
             "name": "hard",
             "required": false,
             "in": "query",
-            "description": "When true, permanently purges the user row and disassociates recipes. Defaults to false (soft deactivation).",
+            "description": "Permanent hard deletion flag. Restricted strictly to platform administrators. Defaults to false (soft deactivation).",
             "schema": {
+              "default": false,
               "example": false,
               "type": "boolean"
             }
@@ -6910,6 +6940,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -6932,8 +6963,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive substring search in comment content",
+            "description": "Case-insensitive substring search in comment content (max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "recipe",
               "type": "string"
             }
@@ -6960,6 +6992,8 @@
             "in": "query",
             "description": "Filter comments targeting a specific recipe ID",
             "schema": {
+              "minimum": 1,
+              "maximum": 2147483647,
               "example": 42,
               "type": "number"
             }
@@ -6970,6 +7004,8 @@
             "in": "query",
             "description": "Filter comments authored by a specific user ID",
             "schema": {
+              "minimum": 1,
+              "maximum": 2147483647,
               "example": 10,
               "type": "number"
             }
@@ -7057,10 +7093,15 @@
             "name": "lang",
             "required": false,
             "in": "query",
-            "description": "Preferred language locale for recipe title hydration",
+            "description": "Preferred language locale for recipe title hydration (it, en, fr)",
             "schema": {
               "example": "it",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
             }
           }
         ],
@@ -7132,6 +7173,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -7196,8 +7238,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -7228,8 +7269,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -7245,8 +7285,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -7277,8 +7316,7 @@
               ],
               "type": "array",
               "items": {
-                "type": "number",
-                "minimum": 1
+                "type": "number"
               }
             }
           },
@@ -7289,6 +7327,7 @@
             "description": "Filter recipes where total_time is greater than or equal to this limit (in minutes)",
             "schema": {
               "minimum": 0,
+              "maximum": 17520,
               "example": 15,
               "type": "number"
             }
@@ -7300,6 +7339,7 @@
             "description": "Filter recipes where total_time is less than or equal to this limit (in minutes)",
             "schema": {
               "minimum": 0,
+              "maximum": 17520,
               "example": 30,
               "type": "number"
             }
@@ -7311,6 +7351,7 @@
             "description": "Filter recipes where prep_time is less than or equal to this limit (in minutes)",
             "schema": {
               "minimum": 0,
+              "maximum": 8760,
               "example": 15,
               "type": "number"
             }
@@ -7322,6 +7363,7 @@
             "description": "Filter recipes authored by a specific user ID",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "example": 1,
               "type": "number"
             }
@@ -7330,8 +7372,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Keyword search query matching recipe title or description",
+            "description": "Keyword search query matching recipe title or description (max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "pasta",
               "type": "string"
             }
@@ -7340,12 +7383,15 @@
             "name": "source_lang",
             "required": false,
             "in": "query",
-            "description": "Filter recipes by the authoring original source language code (e.g., \"it\", \"en\", \"fr\")",
+            "description": "Filter recipes by the authoring original source language code (it, en, fr)",
             "schema": {
-              "minLength": 2,
-              "maxLength": 5,
               "example": "it",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "it",
+                "en",
+                "fr"
+              ]
             }
           },
           {
@@ -7502,6 +7548,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -7545,8 +7592,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive substring search across ingredient slugs and translations (it, en, fr)",
+            "description": "Case-insensitive substring search across ingredient slugs and translations (it, en, fr; max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "pomodoro",
               "type": "string"
             }
@@ -7729,6 +7777,7 @@
             "description": "1-based page window index",
             "schema": {
               "minimum": 1,
+              "maximum": 2147483647,
               "default": 1,
               "example": 1,
               "type": "number"
@@ -7751,8 +7800,9 @@
             "name": "search",
             "required": false,
             "in": "query",
-            "description": "Case-insensitive substring search across tag slugs and translations (it, en, fr)",
+            "description": "Case-insensitive substring search across tag slugs and translations (it, en, fr; max 100 characters)",
             "schema": {
+              "maxLength": 100,
               "example": "vegan",
               "type": "string"
             }
@@ -8829,11 +8879,36 @@
           "idToken": {
             "type": "string",
             "description": "Google OAuth2 OpenID Connect ID token (JWT) issued by Google Identity Services",
-            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature"
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSIsImVtYWlsIjoibWFyaW8ucm9zc2lAZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.example_signature",
+            "maxLength": 4096
           }
         },
         "required": [
           "idToken"
+        ]
+      },
+      "ValidationFieldDetailDto": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Property path of the field that failed validation",
+            "example": "phone"
+          },
+          "constraints": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Map of failed constraint keys to human-readable messages",
+            "example": {
+              "matches": "Phone number must contain 7 to 15 digits and may only include numbers, spaces, +, -, (, ), and . (e.g. +39 06 1234567)"
+            }
+          }
+        },
+        "required": [
+          "field",
+          "constraints"
         ]
       },
       "ApiBadRequestResponseDto": {
@@ -8871,6 +8946,13 @@
                 ]
               }
             ]
+          },
+          "details": {
+            "description": "Optional per-field validation constraint breakdown for structured client error handling",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationFieldDetailDto"
+            }
           }
         },
         "required": [
@@ -9026,7 +9108,8 @@
             "type": "string",
             "description": "User account password (minimum 9 characters)",
             "example": "SuperSecret123!",
-            "minLength": 9
+            "minLength": 9,
+            "maxLength": 72
           }
         },
         "required": [
@@ -9057,8 +9140,7 @@
             "description": "Strong password (9-72 chars, must contain uppercase, lowercase, and a number or symbol)",
             "example": "SecretPassw0rd!",
             "minLength": 9,
-            "maxLength": 72,
-            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*[\\d\\W_]).+$"
+            "maxLength": 72
           }
         },
         "required": [
@@ -9148,11 +9230,14 @@
             "type": "string",
             "description": "User account password (minimum 9 characters)",
             "example": "SuperSecret123!",
-            "minLength": 9
+            "minLength": 9,
+            "maxLength": 72
           },
           "idToken": {
             "type": "string",
-            "description": "Google OAuth2 OpenID Connect ID token (required when the account has no local password)"
+            "description": "Google OAuth2 OpenID Connect ID token (required when the account has no local password)",
+            "maxLength": 4096,
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSJ9.example_signature"
           }
         }
       },
@@ -9196,7 +9281,7 @@
           "tempToken"
         ]
       },
-      "TwoFactorCode": {
+      "TwoFactorCodeDto": {
         "type": "object",
         "properties": {
           "code": {
@@ -9218,19 +9303,21 @@
             "type": "string",
             "description": "Current account password (alternative to `idToken` when the account already has a password)",
             "example": "CurrentPassw0rd!",
-            "minLength": 9
+            "minLength": 9,
+            "maxLength": 72
           },
           "idToken": {
             "type": "string",
-            "description": "Google OAuth2 OpenID Connect ID token (required when the account has no local password)"
+            "description": "Google OAuth2 OpenID Connect ID token (required when the account has no local password)",
+            "maxLength": 4096,
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSJ9.example_signature"
           },
           "newPassword": {
             "type": "string",
             "description": "New strong password (9-72 chars, must contain uppercase, lowercase, and a number or symbol)",
             "example": "NewSecretPassw0rd!",
             "minLength": 9,
-            "maxLength": 72,
-            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*[\\d\\W_]).+$"
+            "maxLength": 72
           }
         },
         "required": [
@@ -9407,6 +9494,65 @@
       "UpdateUserDto": {
         "type": "object",
         "properties": {
+          "bio": {
+            "type": "string",
+            "nullable": true,
+            "description": "Culinary biography / cooking philosophy (max 500 characters; empty resolves to null)",
+            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta.",
+            "maxLength": 500
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name (max 100 characters; empty resolves to null)",
+            "example": "Mario",
+            "maxLength": 100
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name (max 100 characters; empty resolves to null)",
+            "example": "Rossi",
+            "maxLength": 100
+          },
+          "birth_date": {
+            "type": "string",
+            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
+            "example": "1995-05-20",
+            "format": "date",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contact phone number (7-15 digits, optional + or parenthesized prefix, spaces/dots/hyphens; empty resolves to null)",
+            "example": "+39 06 1234567",
+            "maxLength": 30,
+            "pattern": "^(?=(?:\\D*\\d){7,15}\\D*$)(?:\\+\\s?)?(?:\\(\\+?\\d{1,5}\\)|\\d)[\\d\\s().-]*\\d$"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Residential street address (max 255 characters; empty resolves to null)",
+            "example": "Via Roma 123",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "description": "City of residence (max 100 characters; empty resolves to null)",
+            "example": "Roma",
+            "maxLength": 100
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Postal code / ZIP (3-10 alphanumeric characters with at least one digit and optional single space or hyphen; empty resolves to null)",
+            "example": "00100",
+            "maxLength": 10,
+            "minLength": 3,
+            "pattern": "^(?=.*\\d)[A-Za-z0-9](?:[A-Za-z0-9]|[- ](?=[A-Za-z0-9])){1,8}[A-Za-z0-9]$"
+          },
           "profile_privacy": {
             "description": "Profile privacy setting (public, friends_only, private)",
             "example": "public",
@@ -9419,63 +9565,18 @@
           },
           "username": {
             "type": "string",
-            "description": "Updated username (3-30 characters)",
+            "description": "Updated username consisting of letters, numbers, underscores, and hyphens (3-30 characters)",
             "example": "mario_rossi_updated",
             "minLength": 3,
-            "maxLength": 30
-          },
-          "bio": {
-            "type": "string",
-            "description": "Culinary biography / cooking philosophy (max 500 characters)",
-            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta.",
-            "maxLength": 500
+            "maxLength": 30,
+            "pattern": "^[a-zA-Z0-9_-]+$"
           },
           "email": {
             "type": "string",
             "description": "Updated email address",
             "example": "mario.updated@example.com",
+            "maxLength": 255,
             "format": "email"
-          },
-          "first_name": {
-            "type": "string",
-            "description": "First name",
-            "example": "Mario",
-            "maxLength": 100
-          },
-          "last_name": {
-            "type": "string",
-            "description": "Last name",
-            "example": "Rossi",
-            "maxLength": 100
-          },
-          "birth_date": {
-            "type": "object",
-            "description": "Date of birth (ISO 8601 date string or timestamp)",
-            "example": "1995-05-20"
-          },
-          "phone": {
-            "type": "string",
-            "description": "Contact phone number",
-            "example": "+39 06 1234567",
-            "maxLength": 30
-          },
-          "address": {
-            "type": "string",
-            "description": "Residential street address",
-            "example": "Via Roma 123",
-            "maxLength": 255
-          },
-          "city": {
-            "type": "string",
-            "description": "City of residence",
-            "example": "Roma",
-            "maxLength": 100
-          },
-          "postal_code": {
-            "type": "string",
-            "description": "Postal code / ZIP",
-            "example": "00100",
-            "maxLength": 10
           }
         }
       },
@@ -10816,24 +10917,28 @@
             "type": "number",
             "description": "1-based sequential step order number",
             "example": 1,
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 100
           },
           "title": {
             "type": "string",
-            "description": "Optional summary title for this step",
+            "nullable": true,
+            "description": "Optional summary title for this step (max 255 characters; empty resolves to null)",
             "example": "Preparare il guanciale",
             "maxLength": 255
           },
           "description": {
             "type": "string",
             "description": "Detailed instructions for this step in source_lang",
-            "example": "Tagliare il guanciale a striscioline spesse mezzo centimetro."
+            "example": "Tagliare il guanciale a striscioline spesse mezzo centimetro.",
+            "maxLength": 2000
           },
           "duration": {
             "type": "number",
-            "description": "Step duration in minutes",
+            "description": "Step duration in minutes (0 to 8760)",
             "example": 10,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 8760
           }
         },
         "required": [
@@ -10847,13 +10952,16 @@
           "ingredient_id": {
             "type": "number",
             "description": "Catalog ingredient ID referenced from /api/ingredients",
-            "example": 5
+            "example": 5,
+            "minimum": 1,
+            "maximum": 2147483647
           },
           "quantity": {
             "type": "number",
-            "description": "Ingredient quantity (greater than or equal to 0)",
+            "description": "Ingredient quantity (0.01 to 99999999.99)",
             "example": 200,
-            "minimum": 0
+            "minimum": 0.01,
+            "maximum": 99999999.99
           },
           "unit": {
             "description": "Unit of measure (e.g. g, ml, piece)",
@@ -10876,9 +10984,33 @@
             "type": "string"
           },
           "notes": {
-            "type": "object",
-            "description": "Optional preparation notes as a string or key-value locale dictionary",
-            "example": "tagliato a listarelle"
+            "description": "Optional preparation notes as a string or key-value locale dictionary (it, en, fr; max 255 chars)",
+            "example": "tagliato a listarelle",
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "it": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "en": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "fr": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
           }
         },
         "required": [
@@ -10906,13 +11038,17 @@
           },
           "preservation": {
             "type": "string",
-            "description": "Storage and shelf life advice",
-            "example": "Consumare immediatamente; non congelare."
+            "nullable": true,
+            "description": "Storage and shelf life advice (max 1000 characters; empty resolves to null)",
+            "example": "Consumare immediatamente; non congelare.",
+            "maxLength": 1000
           },
           "tips": {
             "type": "string",
-            "description": "Author tips, tricks, and culinary secrets",
-            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
+            "nullable": true,
+            "description": "Author tips, tricks, and culinary secrets (max 1000 characters; empty resolves to null)",
+            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata.",
+            "maxLength": 1000
           },
           "course": {
             "description": "Course classification within a meal (first course, main course, dessert, etc.)",
@@ -10940,21 +11076,24 @@
           },
           "prep_time": {
             "type": "number",
-            "description": "Preparation time in minutes",
+            "description": "Preparation time in minutes (0 to 8760)",
             "example": 15,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 8760
           },
           "cook_time": {
             "type": "number",
-            "description": "Cooking time in minutes",
+            "description": "Cooking time in minutes (0 to 8760)",
             "example": 10,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 8760
           },
           "servings": {
             "type": "number",
-            "description": "Yield in servings/portions (minimum 1)",
+            "description": "Yield in servings/portions (1 to 1000)",
             "example": 4,
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 1000
           },
           "source_lang": {
             "type": "string",
@@ -10977,7 +11116,7 @@
             "type": "string"
           },
           "steps": {
-            "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
+            "description": "Ordered sequence of recipe preparation steps (1 to 50 steps)",
             "minItems": 1,
             "type": "array",
             "items": {
@@ -10985,7 +11124,7 @@
             }
           },
           "ingredients": {
-            "description": "List of ingredients with quantities and units (minimum 1 ingredient)",
+            "description": "List of ingredients with quantities and units (1 to 100 ingredients)",
             "minItems": 1,
             "type": "array",
             "items": {
@@ -10993,7 +11132,7 @@
             }
           },
           "tag_ids": {
-            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags).",
+            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags; max 30).",
             "example": [
               1,
               3
@@ -11001,6 +11140,7 @@
             "type": "array",
             "items": {
               "type": "number",
+              "maximum": 2147483647,
               "minimum": 1
             }
           }
@@ -11050,13 +11190,17 @@
           },
           "preservation": {
             "type": "string",
-            "description": "Storage and shelf life advice",
-            "example": "Consumare immediatamente; non congelare."
+            "nullable": true,
+            "description": "Storage and shelf life advice (max 1000 characters; empty resolves to null)",
+            "example": "Consumare immediatamente; non congelare.",
+            "maxLength": 1000
           },
           "tips": {
             "type": "string",
-            "description": "Author tips, tricks, and culinary secrets",
-            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata."
+            "nullable": true,
+            "description": "Author tips, tricks, and culinary secrets (max 1000 characters; empty resolves to null)",
+            "example": "Mantecare a bagnomaria per evitare che le uova coagulino a frittata.",
+            "maxLength": 1000
           },
           "course": {
             "description": "Course classification within a meal (first course, main course, dessert, etc.)",
@@ -11084,21 +11228,24 @@
           },
           "prep_time": {
             "type": "number",
-            "description": "Preparation time in minutes",
+            "description": "Preparation time in minutes (0 to 8760)",
             "example": 15,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 8760
           },
           "cook_time": {
             "type": "number",
-            "description": "Cooking time in minutes",
+            "description": "Cooking time in minutes (0 to 8760)",
             "example": 10,
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 8760
           },
           "servings": {
             "type": "number",
-            "description": "Yield in servings/portions (minimum 1)",
+            "description": "Yield in servings/portions (1 to 1000)",
             "example": 4,
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 1000
           },
           "source_lang": {
             "type": "string",
@@ -11121,7 +11268,7 @@
             "type": "string"
           },
           "steps": {
-            "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
+            "description": "Ordered sequence of recipe preparation steps (1 to 50 steps)",
             "minItems": 1,
             "type": "array",
             "items": {
@@ -11129,7 +11276,7 @@
             }
           },
           "ingredients": {
-            "description": "List of ingredients with quantities and units (minimum 1 ingredient)",
+            "description": "List of ingredients with quantities and units (1 to 100 ingredients)",
             "minItems": 1,
             "type": "array",
             "items": {
@@ -11137,7 +11284,7 @@
             }
           },
           "tag_ids": {
-            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags).",
+            "description": "Optional catalog tag IDs to attach (e.g. dietary or style tags; max 30).",
             "example": [
               1,
               3
@@ -11145,6 +11292,7 @@
             "type": "array",
             "items": {
               "type": "number",
+              "maximum": 2147483647,
               "minimum": 1
             }
           },
@@ -11249,7 +11397,8 @@
             "type": "number",
             "description": "Optional parent comment ID if this comment is a reply. Automatically normalized to root comment.",
             "example": 1,
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 2147483647
           }
         },
         "required": [
@@ -11988,7 +12137,8 @@
             "type": "number",
             "description": "Primary key identifier of the reported item",
             "example": 42,
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 2147483647
           },
           "reason": {
             "description": "Reason category for the report",
@@ -12001,7 +12151,8 @@
           },
           "description": {
             "type": "string",
-            "description": "Detailed explanation of the violation (maximum 1000 characters)",
+            "nullable": true,
+            "description": "Detailed explanation of the violation (maximum 1000 characters; empty resolves to null)",
             "example": "This post contains repetitive promotional links.",
             "maxLength": 1000
           }
@@ -12378,7 +12529,7 @@
             }
           },
           "resolution_reason": {
-            "description": "Formal policy violation category for resolution",
+            "description": "Formal policy violation category for resolution (defaults to the report's original reason if omitted)",
             "example": "harassment_bullying",
             "allOf": [
               {
@@ -12388,21 +12539,24 @@
           },
           "resolution_description": {
             "type": "string",
-            "description": "User-facing explanation delivered to the penalized community member",
+            "nullable": true,
+            "description": "User-facing explanation delivered to the penalized community member (empty resolves to null)",
             "example": "Your content was removed for violating community safety policies.",
             "maxLength": 1000
           },
           "resolution_notes": {
             "type": "string",
-            "description": "Internal staff notes documenting findings or action taken (confidential)",
+            "nullable": true,
+            "description": "Internal staff notes documenting findings or action taken (confidential; empty resolves to null)",
             "example": "Content reviewed and removed; user account banned.",
             "maxLength": 1000
           },
           "ban_duration_days": {
             "type": "number",
-            "description": "Custom ban duration in days (capped at 180 days for moderators)",
+            "description": "Custom ban duration in days (1 to 36500; capped at 180 days for moderators)",
             "example": 30,
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 36500
           },
           "permanent": {
             "type": "boolean",
@@ -12926,24 +13080,86 @@
       "CreateAdminUserDto": {
         "type": "object",
         "properties": {
+          "bio": {
+            "type": "string",
+            "nullable": true,
+            "description": "Culinary biography / cooking philosophy (max 500 characters; empty resolves to null)",
+            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta.",
+            "maxLength": 500
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name (max 100 characters; empty resolves to null)",
+            "example": "Mario",
+            "maxLength": 100
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name (max 100 characters; empty resolves to null)",
+            "example": "Rossi",
+            "maxLength": 100
+          },
+          "birth_date": {
+            "type": "string",
+            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
+            "example": "1995-05-20",
+            "format": "date",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contact phone number (7-15 digits, optional + or parenthesized prefix, spaces/dots/hyphens; empty resolves to null)",
+            "example": "+39 06 1234567",
+            "maxLength": 30,
+            "pattern": "^(?=(?:\\D*\\d){7,15}\\D*$)(?:\\+\\s?)?(?:\\(\\+?\\d{1,5}\\)|\\d)[\\d\\s().-]*\\d$"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Residential street address (max 255 characters; empty resolves to null)",
+            "example": "Via Roma 123",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "description": "City of residence (max 100 characters; empty resolves to null)",
+            "example": "Roma",
+            "maxLength": 100
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Postal code / ZIP (3-10 alphanumeric characters with at least one digit and optional single space or hyphen; empty resolves to null)",
+            "example": "00100",
+            "maxLength": 10,
+            "minLength": 3,
+            "pattern": "^(?=.*\\d)[A-Za-z0-9](?:[A-Za-z0-9]|[- ](?=[A-Za-z0-9])){1,8}[A-Za-z0-9]$"
+          },
           "username": {
             "type": "string",
-            "description": "Unique username (3-30 characters)",
+            "description": "Unique username consisting of letters, numbers, underscores, and hyphens (3-30 characters)",
             "example": "moderator_chef",
             "minLength": 3,
-            "maxLength": 30
+            "maxLength": 30,
+            "pattern": "^[a-zA-Z0-9_-]+$"
           },
           "email": {
             "type": "string",
             "description": "User email address",
             "example": "moderator@wecook.com",
+            "maxLength": 255,
             "format": "email"
           },
           "password": {
             "type": "string",
-            "description": "Initial plaintext password (minimum 8 characters)",
+            "description": "Initial plaintext password (9-72 chars, must contain uppercase, lowercase, and a number or symbol)",
             "example": "SecurePassword123!",
-            "minLength": 8
+            "minLength": 9,
+            "maxLength": 72
           },
           "role": {
             "description": "Assigned platform role",
@@ -12967,55 +13183,9 @@
           },
           "avatar_url": {
             "type": "string",
+            "nullable": true,
             "description": "Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)",
             "example": "/api/media/avatars/1/default.webp"
-          },
-          "bio": {
-            "type": "string",
-            "description": "Culinary biography / description (maximum 500 characters)",
-            "example": "Staff moderator specializing in Mediterranean culinary techniques.",
-            "maxLength": 500
-          },
-          "first_name": {
-            "type": "string",
-            "description": "First name",
-            "example": "Luca",
-            "maxLength": 100
-          },
-          "last_name": {
-            "type": "string",
-            "description": "Last name",
-            "example": "Bianchi",
-            "maxLength": 100
-          },
-          "birth_date": {
-            "type": "object",
-            "description": "Date of birth (ISO 8601 date string)",
-            "example": "1990-05-15"
-          },
-          "phone": {
-            "type": "string",
-            "description": "Contact phone number",
-            "example": "+39 02 1234567",
-            "maxLength": 30
-          },
-          "address": {
-            "type": "string",
-            "description": "Residential address",
-            "example": "Corso Buenos Aires 45",
-            "maxLength": 255
-          },
-          "city": {
-            "type": "string",
-            "description": "City of residence",
-            "example": "Milano",
-            "maxLength": 100
-          },
-          "postal_code": {
-            "type": "string",
-            "description": "Postal code / ZIP",
-            "example": "20124",
-            "maxLength": 10
           }
         },
         "required": [
@@ -13028,24 +13198,86 @@
       "UpdateAdminUserDto": {
         "type": "object",
         "properties": {
+          "bio": {
+            "type": "string",
+            "nullable": true,
+            "description": "Culinary biography / cooking philosophy (max 500 characters; empty resolves to null)",
+            "example": "Passionate about authentic Neapolitan pizza and fresh handmade pasta.",
+            "maxLength": 500
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "First name (max 100 characters; empty resolves to null)",
+            "example": "Mario",
+            "maxLength": 100
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last name (max 100 characters; empty resolves to null)",
+            "example": "Rossi",
+            "maxLength": 100
+          },
+          "birth_date": {
+            "type": "string",
+            "description": "Date of birth (strict ISO 8601 date string; empty or null clears the field)",
+            "example": "1995-05-20",
+            "format": "date",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contact phone number (7-15 digits, optional + or parenthesized prefix, spaces/dots/hyphens; empty resolves to null)",
+            "example": "+39 06 1234567",
+            "maxLength": 30,
+            "pattern": "^(?=(?:\\D*\\d){7,15}\\D*$)(?:\\+\\s?)?(?:\\(\\+?\\d{1,5}\\)|\\d)[\\d\\s().-]*\\d$"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Residential street address (max 255 characters; empty resolves to null)",
+            "example": "Via Roma 123",
+            "maxLength": 255
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "description": "City of residence (max 100 characters; empty resolves to null)",
+            "example": "Roma",
+            "maxLength": 100
+          },
+          "postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Postal code / ZIP (3-10 alphanumeric characters with at least one digit and optional single space or hyphen; empty resolves to null)",
+            "example": "00100",
+            "maxLength": 10,
+            "minLength": 3,
+            "pattern": "^(?=.*\\d)[A-Za-z0-9](?:[A-Za-z0-9]|[- ](?=[A-Za-z0-9])){1,8}[A-Za-z0-9]$"
+          },
           "username": {
             "type": "string",
-            "description": "Updated username (3-30 characters)",
+            "description": "Updated username consisting of letters, numbers, underscores, and hyphens (3-30 characters)",
             "example": "moderator_chef_updated",
             "minLength": 3,
-            "maxLength": 30
+            "maxLength": 30,
+            "pattern": "^[a-zA-Z0-9_-]+$"
           },
           "email": {
             "type": "string",
             "description": "Updated email address",
             "example": "new.moderator@wecook.com",
+            "maxLength": 255,
             "format": "email"
           },
           "password": {
             "type": "string",
-            "description": "Reset password (minimum 8 characters). Purges active user sessions.",
+            "description": "Reset password (9-72 chars, must contain uppercase, lowercase, and a number or symbol). Purges active user sessions.",
             "example": "NewSecurePassword456!",
-            "minLength": 8
+            "minLength": 9,
+            "maxLength": 72
           },
           "role": {
             "description": "Reassigned role. Demotions or changes immediately purge active sessions.",
@@ -13078,21 +13310,24 @@
           },
           "ban_description": {
             "type": "string",
-            "description": "User-facing explanation for the ban",
+            "nullable": true,
+            "description": "User-facing explanation for the ban (max 1000 characters)",
             "example": "Repeated violations of community conduct policies.",
             "maxLength": 1000
           },
           "internal_notes": {
             "type": "string",
+            "nullable": true,
             "description": "Confidential staff-only internal notes (only allowed when status is banned)",
             "example": "Repeat spammer across multiple recipe threads.",
             "maxLength": 1000
           },
           "ban_duration_days": {
             "type": "number",
-            "description": "Ban duration in days",
+            "description": "Ban duration in days (1 to 36500)",
             "example": 30,
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 36500
           },
           "is_permanent": {
             "type": "boolean",
@@ -13101,61 +13336,16 @@
           },
           "unban_reason": {
             "type": "string",
+            "nullable": true,
             "description": "Reason for lifting account ban upon reactivation",
             "example": "Ban appeal reviewed and granted by trust & safety staff.",
             "maxLength": 1000
           },
           "avatar_url": {
             "type": "string",
+            "nullable": true,
             "description": "Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)",
             "example": "/api/media/avatars/1/chef.webp"
-          },
-          "bio": {
-            "type": "string",
-            "description": "Culinary biography / description (maximum 500 characters)",
-            "example": "Senior community moderator and culinary instructor.",
-            "maxLength": 500
-          },
-          "first_name": {
-            "type": "string",
-            "description": "First name",
-            "example": "Luca",
-            "maxLength": 100
-          },
-          "last_name": {
-            "type": "string",
-            "description": "Last name",
-            "example": "Bianchi",
-            "maxLength": 100
-          },
-          "birth_date": {
-            "type": "object",
-            "description": "Date of birth (ISO 8601 date string)",
-            "example": "1990-05-15"
-          },
-          "phone": {
-            "type": "string",
-            "description": "Contact phone number",
-            "example": "+39 02 1234567",
-            "maxLength": 30
-          },
-          "address": {
-            "type": "string",
-            "description": "Residential address",
-            "example": "Corso Buenos Aires 45",
-            "maxLength": 255
-          },
-          "city": {
-            "type": "string",
-            "description": "City of residence",
-            "example": "Milano",
-            "maxLength": 100
-          },
-          "postal_code": {
-            "type": "string",
-            "description": "Postal code / ZIP",
-            "example": "20124",
-            "maxLength": 10
           }
         }
       },

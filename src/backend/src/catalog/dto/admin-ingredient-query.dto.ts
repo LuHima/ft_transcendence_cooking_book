@@ -1,8 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IngredientCategory } from '@prisma/client';
-import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsEnum, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SortOrder } from '../../common/dto/sort-order.enum';
+import { trimToUndefined } from '../../common/dto/string-transforms';
+import { MAX_SEARCH_LENGTH } from '../../common/validators/validation-constants';
 
 /**
  * Query parameters for administrative paginated ingredient listing.
@@ -18,7 +21,7 @@ export class AdminIngredientQueryDto extends PaginationQueryDto {
     example: IngredientCategory.dairy_eggs,
   })
   @IsOptional()
-  @IsEnum(IngredientCategory)
+  @IsEnum(IngredientCategory, { message: 'Invalid ingredient category' })
   category?: IngredientCategory;
 
   /**
@@ -27,11 +30,16 @@ export class AdminIngredientQueryDto extends PaginationQueryDto {
    */
   @ApiPropertyOptional({
     description:
-      'Case-insensitive substring search across ingredient slugs and translations (it, en, fr)',
+      'Case-insensitive substring search across ingredient slugs and translations (it, en, fr; max 100 characters)',
+    maxLength: MAX_SEARCH_LENGTH,
     example: 'pomodoro',
   })
   @IsOptional()
-  @IsString()
+  @Transform(trimToUndefined)
+  @IsString({ message: 'search query must be a text string' })
+  @MaxLength(MAX_SEARCH_LENGTH, {
+    message: `search query cannot exceed ${MAX_SEARCH_LENGTH} characters`,
+  })
   search?: string;
 
   /**
@@ -45,7 +53,7 @@ export class AdminIngredientQueryDto extends PaginationQueryDto {
     example: 'id',
   })
   @IsOptional()
-  @IsIn(['id', 'slug'])
+  @IsIn(['id', 'slug'], { message: 'sort_by must be either id or slug' })
   sort_by?: 'id' | 'slug' = 'id';
 
   /**
@@ -59,6 +67,6 @@ export class AdminIngredientQueryDto extends PaginationQueryDto {
     example: SortOrder.asc,
   })
   @IsOptional()
-  @IsEnum(SortOrder)
+  @IsEnum(SortOrder, { message: 'sort_order must be asc or desc' })
   sort_order?: SortOrder = SortOrder.asc;
 }

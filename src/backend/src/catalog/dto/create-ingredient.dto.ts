@@ -26,9 +26,9 @@ export class CreateIngredientDto {
     example: 'bell_pepper',
     maxLength: 100,
   })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
+  @IsString({ message: 'slug must be a text string' })
+  @IsNotEmpty({ message: 'slug cannot be empty' })
+  @MaxLength(100, { message: 'slug cannot exceed 100 characters' })
   @Matches(/^[a-z0-9]+(?:_[a-z0-9]+)*$/, {
     message:
       'slug must be lowercase snake_case (letters, digits and single underscores, e.g. bell_pepper)',
@@ -44,7 +44,7 @@ export class CreateIngredientDto {
     description: 'Ingredient culinary category',
     example: IngredientCategory.produce,
   })
-  @IsEnum(IngredientCategory)
+  @IsEnum(IngredientCategory, { message: 'Invalid ingredient category' })
   category: IngredientCategory;
 
   /**
@@ -54,7 +54,7 @@ export class CreateIngredientDto {
     type: TranslationDto,
     description: 'Ingredient display name in Italian, English and French',
   })
-  @IsDefined()
+  @IsDefined({ message: 'translations object is required' })
   @ValidateNested()
   @Type(() => TranslationDto)
   translations: TranslationDto;

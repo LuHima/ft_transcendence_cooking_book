@@ -113,4 +113,12 @@ describe('SearchUserQueryDto', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('limit');
   });
+
+  it('rejects search exceeding 100 characters', async () => {
+    const dto = plainToInstance(SearchUserQueryDto, {
+      search: 'a'.repeat(101),
+    });
+    const errors = await validate(dto);
+    expect(errors.some((e) => e.property === 'search')).toBe(true);
+  });
 });

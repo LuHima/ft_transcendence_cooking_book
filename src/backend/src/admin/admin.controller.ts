@@ -26,7 +26,6 @@ import {
   ApiConsumes,
   ApiBody,
   ApiParam,
-  ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -37,6 +36,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AdminSearchUserQueryDto } from './dto/admin-search-user-query.dto';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
+import { HardDeleteQueryDto } from '../common/dto/hard-delete-query.dto';
 import {
   AdminUserResponseDto,
   PaginatedAdminUsersResponseDto,
@@ -272,14 +272,6 @@ export class AdminController {
     description: 'Numeric user identifier',
     example: 42,
   })
-  @ApiQuery({
-    name: 'hard',
-    required: false,
-    type: Boolean,
-    description:
-      'When true, permanently purges the user row and disassociates recipes. Defaults to false (soft deactivation).',
-    example: false,
-  })
   @ApiOkResponse({
     description: 'User successfully deactivated or deleted',
     type: UserMessageResponseDto,
@@ -309,10 +301,13 @@ export class AdminController {
   async deleteUser(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') currentAdminId: number,
-    @Query('hard') hard?: string,
+    @Query() query?: HardDeleteQueryDto,
   ): Promise<UserMessageResponseDto> {
-    const isHard = hard === 'true' || hard === '1';
-    return await this.adminService.deleteUser(id, currentAdminId, isHard);
+    return await this.adminService.deleteUser(
+      id,
+      currentAdminId,
+      Boolean(query?.hard),
+    );
   }
 
   /**

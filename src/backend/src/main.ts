@@ -3,6 +3,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalNotEmptyBodyPipe } from './common/pipes/global-not-empty-body.pipe';
+import { validationExceptionFactory } from './common/pipes/validation-exception.factory';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 import { GlobalExceptionFilter } from './common/filters/global.exception.filter';
@@ -39,6 +40,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       // Abilita la trasformazione dei tipi e l'esecuzione di @Transform()
       transform: true,
+      exceptionFactory: validationExceptionFactory,
     }),
   );
   app.enableCors({

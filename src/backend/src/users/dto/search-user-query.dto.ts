@@ -1,8 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { SortOrder } from '../../common/dto/sort-order.enum';
+import { trimToUndefined } from '../../common/dto/string-transforms';
+import { MAX_SEARCH_LENGTH } from '../../common/validators/validation-constants';
 
 export { SortOrder };
 
@@ -28,18 +36,18 @@ export class SearchUserQueryDto extends PaginationQueryDto {
    */
   @ApiPropertyOptional({
     description:
-      'Search query substring matching username, first_name, or last_name (minimum 2 non-whitespace characters)',
+      'Search query substring matching username, first_name, or last_name (2-100 non-whitespace characters)',
     example: 'mario',
     minLength: 2,
+    maxLength: MAX_SEARCH_LENGTH,
   })
-  @Transform(({ value }) => {
-    if (typeof value !== 'string') return value;
-    const trimmed = value.trim();
-    return trimmed.length === 0 ? undefined : trimmed;
-  })
+  @Transform(trimToUndefined)
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'search query must be a text string' })
   @MinLength(2, { message: 'search query must be at least 2 characters' })
+  @MaxLength(MAX_SEARCH_LENGTH, {
+    message: `search query cannot exceed ${MAX_SEARCH_LENGTH} characters`,
+  })
   search?: string;
 
   /**
@@ -54,7 +62,7 @@ export class SearchUserQueryDto extends PaginationQueryDto {
     example: UserSortBy.recipes_count,
   })
   @IsOptional()
-  @IsEnum(UserSortBy)
+  @IsEnum(UserSortBy, { message: 'Invalid sort_by value' })
   sort_by?: UserSortBy;
 
   /**
@@ -68,6 +76,6 @@ export class SearchUserQueryDto extends PaginationQueryDto {
     example: SortOrder.desc,
   })
   @IsOptional()
-  @IsEnum(SortOrder)
+  @IsEnum(SortOrder, { message: 'sort_order must be asc or desc' })
   sort_order?: SortOrder;
 }

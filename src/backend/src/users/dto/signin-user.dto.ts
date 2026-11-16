@@ -1,11 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
+  IsString,
   MaxLength,
   MinLength,
-  IsString,
 } from 'class-validator';
+import { trimLowerCase } from '../../common/dto/string-transforms';
+import { VALIDATION_MESSAGES } from '../../common/validators/validation-constants';
 
 /**
  * Data transfer object for user sign-in credentials.
@@ -22,9 +25,10 @@ export class SignInUserDto {
     example: 'mario.rossi@example.com',
     maxLength: 255,
   })
-  @IsEmail()
-  @IsNotEmpty({ message: 'The email can not be empty' })
-  @MaxLength(255)
+  @Transform(trimLowerCase)
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.emailEmpty })
+  @IsEmail({}, { message: VALIDATION_MESSAGES.emailFormat })
+  @MaxLength(255, { message: VALIDATION_MESSAGES.emailMax })
   email: string;
 
   /**
@@ -36,9 +40,11 @@ export class SignInUserDto {
     description: 'User account password (minimum 9 characters)',
     example: 'SuperSecret123!',
     minLength: 9,
+    maxLength: 72,
   })
-  @IsNotEmpty({ message: 'The password cannot be empty' })
-  @IsString()
-  @MinLength(9, { message: 'The password must have at least 9 character' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.passwordEmpty })
+  @IsString({ message: VALIDATION_MESSAGES.passwordType })
+  @MinLength(9, { message: VALIDATION_MESSAGES.passwordMin })
+  @MaxLength(72, { message: VALIDATION_MESSAGES.passwordMax })
   password: string;
 }

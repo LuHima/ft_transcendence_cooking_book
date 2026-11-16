@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  ValidationPipe,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -44,6 +43,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { DeleteCommentQueryDto } from './dto/delete-comment-query.dto';
 import { DeleteRecipeQueryDto } from './dto/delete-recipe-query.dto';
+import { UpdateRecipeQueryDto } from './dto/update-recipe-query.dto';
 import {
   RecipeCommentResponseDto,
   ThreadedRecipeCommentResponseDto,
@@ -218,7 +218,7 @@ export class RecipeController {
   @Auth()
   @Post()
   addRecipe(
-    @Body(ValidationPipe) createRecipeDto: CreateRecipeDto,
+    @Body() createRecipeDto: CreateRecipeDto,
     @CurrentUser('id') id: number,
   ) {
     return this.recipeService.createRecipe(createRecipeDto, id);
@@ -263,13 +263,6 @@ export class RecipeController {
       'Modifies recipe attributes, steps, ingredients, or localized text. Optionally triggers full re-translation via `retranslate=true`.',
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
-  @ApiQuery({
-    name: 'retranslate',
-    required: false,
-    description:
-      'Set to "true" to re-generate automated translations for updated text',
-    example: 'true',
-  })
   @ApiOkResponse({
     description: 'Recipe updated successfully',
     type: LocalizedRecipeDetailResponse,
@@ -286,16 +279,15 @@ export class RecipeController {
   @Patch(':id')
   async updateRecipe(
     @Param('id', ParseIntPipe) recipeId: number,
-    @Body(ValidationPipe) updateRecipeDto: UpdateRecipeDto,
+    @Body() updateRecipeDto: UpdateRecipeDto,
     @CurrentUser() user: ActiveUserData,
-    @Query('retranslate') retranslate?: string,
+    @Query() query?: UpdateRecipeQueryDto,
   ) {
-    const shouldRetranslate = retranslate === 'true' || retranslate === '1';
     return this.recipeService.updateRecipe(
       user,
       recipeId,
       updateRecipeDto,
-      shouldRetranslate,
+      Boolean(query?.retranslate),
     );
   }
 
@@ -768,7 +760,8 @@ export class RecipeController {
   })
   @ApiParam({ name: 'id', description: 'Recipe ID', example: 42 })
   @ApiOkResponse({
-    description: 'Paginated collection of threaded comments with windowed replies',
+    description:
+      'Paginated collection of threaded comments with windowed replies',
     type: PaginatedRecipeCommentsResponseDto,
   })
   @ApiBadRequestResponse({

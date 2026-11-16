@@ -5,31 +5,49 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { Role, UserStatus } from '@prisma/client';
 import { IsTrustedAvatarUrl } from '../validators/trusted-avatar-url.validator';
+import {
+  trimLowerCase,
+  trimString,
+  trimToNull,
+} from '../../common/dto/string-transforms';
+import {
+  PASSWORD_REGEX,
+  USERNAME_REGEX,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
+import { UserPersonalDetailsDto } from '../../users/dto/user-personal-details.dto';
 
 /**
  * Data transfer object for administrative user provisioning.
  */
-export class CreateAdminUserDto {
+export class CreateAdminUserDto extends UserPersonalDetailsDto {
   /**
    * Unique account username (3-30 characters).
    * @example 'moderator_chef'
    */
   @ApiProperty({
-    description: 'Unique username (3-30 characters)',
+    description:
+      'Unique username consisting of letters, numbers, underscores, and hyphens (3-30 characters)',
     example: 'moderator_chef',
     minLength: 3,
     maxLength: 30,
+    pattern: USERNAME_REGEX.source,
   })
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(30)
+  @Transform(trimString)
+  @IsString({ message: VALIDATION_MESSAGES.usernameType })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.usernameEmpty })
+  @MinLength(3, { message: VALIDATION_MESSAGES.usernameMin })
+  @MaxLength(30, { message: VALIDATION_MESSAGES.usernameMax })
+  @Matches(USERNAME_REGEX, {
+    message: VALIDATION_MESSAGES.usernameFormat,
+  })
   username: string;
 
   /**
@@ -37,28 +55,36 @@ export class CreateAdminUserDto {
    * @example 'moderator@wecook.com'
    */
   @ApiProperty({
+    type: String,
+    format: 'email',
     description: 'User email address',
     example: 'moderator@wecook.com',
+    maxLength: 255,
   })
-  @IsNotEmpty()
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : undefined,
-  )
-  @IsEmail()
+  @Transform(trimLowerCase)
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.emailEmpty })
+  @IsEmail({}, { message: VALIDATION_MESSAGES.emailFormat })
+  @MaxLength(255, { message: VALIDATION_MESSAGES.emailMax })
   email: string;
 
   /**
-   * Account initial password (minimum 8 characters).
+   * Account initial password (9-72 characters, requiring uppercase, lowercase, and digit/special character).
    * @example 'SecurePassword123!'
    */
   @ApiProperty({
-    description: 'Initial plaintext password (minimum 8 characters)',
+    description:
+      'Initial plaintext password (9-72 chars, must contain uppercase, lowercase, and a number or symbol)',
     example: 'SecurePassword123!',
-    minLength: 8,
+    minLength: 9,
+    maxLength: 72,
   })
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(8)
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.passwordEmpty })
+  @IsString({ message: VALIDATION_MESSAGES.passwordType })
+  @MinLength(9, { message: VALIDATION_MESSAGES.passwordMin })
+  @MaxLength(72, { message: VALIDATION_MESSAGES.passwordMax })
+  @Matches(PASSWORD_REGEX, {
+    message: VALIDATION_MESSAGES.passwordStrength,
+  })
   password: string;
 
   /**
@@ -70,8 +96,8 @@ export class CreateAdminUserDto {
     description: 'Assigned platform role',
     example: Role.moderator,
   })
-  @IsNotEmpty()
-  @IsEnum(Role)
+  @IsNotEmpty({ message: 'Role cannot be empty' })
+  @IsEnum(Role, { message: 'Role must be one of: admin, moderator, user' })
   role: Role;
 
   /**
@@ -84,7 +110,9 @@ export class CreateAdminUserDto {
     example: UserStatus.active,
   })
   @IsOptional()
-  @IsEnum(UserStatus)
+  @IsEnum(UserStatus, {
+    message: 'Status must be one of: active, disabled, banned',
+  })
   status?: UserStatus;
 
   /**
@@ -92,122 +120,15 @@ export class CreateAdminUserDto {
    * @example '/api/media/avatars/1/default.webp'
    */
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description:
       'Avatar image URL (canonical path /api/media/avatars/* or trusted HTTPS domain)',
     example: '/api/media/avatars/1/default.webp',
   })
   @IsOptional()
-  @IsString()
+  @Transform(trimToNull)
+  @IsString({ message: 'Avatar URL must be a text string' })
   @IsTrustedAvatarUrl()
-  avatar_url?: string;
-
-  /**
-   * Culinary biography / staff notes (maximum 500 characters).
-   * @example 'Staff moderator specializing in Mediterranean culinary techniques.'
-   */
-  @ApiPropertyOptional({
-    description: 'Culinary biography / description (maximum 500 characters)',
-    example:
-      'Staff moderator specializing in Mediterranean culinary techniques.',
-    maxLength: 500,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  bio?: string;
-
-  /**
-   * Member first name.
-   * @example 'Luca'
-   */
-  @ApiPropertyOptional({
-    description: 'First name',
-    example: 'Luca',
-    maxLength: 100,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  first_name?: string;
-
-  /**
-   * Member last name.
-   * @example 'Bianchi'
-   */
-  @ApiPropertyOptional({
-    description: 'Last name',
-    example: 'Bianchi',
-    maxLength: 100,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  last_name?: string;
-
-  /**
-   * Date of birth (ISO 8601 string or Date).
-   * @example '1990-05-15'
-   */
-  @ApiPropertyOptional({
-    description: 'Date of birth (ISO 8601 date string)',
-    example: '1990-05-15',
-  })
-  @IsOptional()
-  birth_date?: string | Date;
-
-  /**
-   * Contact phone number.
-   * @example '+39 02 1234567'
-   */
-  @ApiPropertyOptional({
-    description: 'Contact phone number',
-    example: '+39 02 1234567',
-    maxLength: 30,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  phone?: string;
-
-  /**
-   * Street address.
-   * @example 'Corso Buenos Aires 45'
-   */
-  @ApiPropertyOptional({
-    description: 'Residential address',
-    example: 'Corso Buenos Aires 45',
-    maxLength: 255,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  address?: string;
-
-  /**
-   * City of residence.
-   * @example 'Milano'
-   */
-  @ApiPropertyOptional({
-    description: 'City of residence',
-    example: 'Milano',
-    maxLength: 100,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  city?: string;
-
-  /**
-   * Postal code.
-   * @example '20124'
-   */
-  @ApiPropertyOptional({
-    description: 'Postal code / ZIP',
-    example: '20124',
-    maxLength: 10,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(10)
-  postal_code?: string;
+  avatar_url?: string | null;
 }

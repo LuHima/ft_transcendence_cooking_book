@@ -14,11 +14,14 @@ export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {
    */
   @ApiPropertyOptional({
     enum: RecipePrivacy,
-    description: 'Updated privacy tier of the recipe (public, friends_only, private)',
+    description:
+      'Updated privacy tier of the recipe (public, friends_only, private)',
     example: RecipePrivacy.friends_only,
   })
   @IsOptional()
-  @IsEnum(RecipePrivacy)
+  @IsEnum(RecipePrivacy, {
+    message: 'Privacy must be one of: public, friends_only, private',
+  })
   privacy?: RecipePrivacy;
 
   /**
@@ -31,7 +34,7 @@ export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {
     example: true,
   })
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'is_active must be a boolean value' })
   is_active?: boolean;
 
   /**
@@ -44,7 +47,7 @@ export class UpdateRecipeDto extends PartialType(CreateRecipeDto) {
     example: 'it',
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'locale must be a text string' })
   @IsIn(['it', 'en', 'fr'], { message: 'locale must be it, en, or fr' })
   locale?: string;
 }

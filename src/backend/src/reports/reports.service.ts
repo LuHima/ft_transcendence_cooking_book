@@ -164,10 +164,7 @@ export class ReportsService {
    * Retrieve a single content report by ID, hydrated with reporter, resolved_by,
    * polymorphic target summary, and prior sanction counts.
    */
-  async getReportById(
-    reportId: number,
-    lang = '',
-  ): Promise<ReportItemDto> {
+  async getReportById(reportId: number, lang = ''): Promise<ReportItemDto> {
     const report = await this.prisma.report.findUnique({
       where: { id: reportId },
     });
@@ -847,7 +844,7 @@ export class ReportsService {
           resolution_description: dto.resolution_description?.trim() || null,
           resolution_notes:
             dto.resolution_notes !== undefined
-              ? dto.resolution_notes.trim() || null
+              ? dto.resolution_notes?.trim() || null
               : undefined,
           ...(callerId
             ? {

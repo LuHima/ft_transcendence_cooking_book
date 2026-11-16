@@ -1,12 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
-  Matches,
   IsEmail,
   IsNotEmpty,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { trimLowerCase, trimString } from '../../common/dto/string-transforms';
+import {
+  PASSWORD_REGEX,
+  USERNAME_REGEX,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
 
 /**
  * Data transfer object for user registration.
@@ -22,15 +29,15 @@ export class SignUpUserDto {
     example: 'mario_rossi',
     minLength: 3,
     maxLength: 30,
-    pattern: '^[a-zA-Z0-9_-]+$',
+    pattern: USERNAME_REGEX.source,
   })
-  @IsString()
-  @IsNotEmpty({ message: 'The username cannot be empty' })
-  @MinLength(3, { message: 'Username must be at least 3 characters long' })
-  @MaxLength(30, { message: 'Username cannot exceed 30 characters' })
-  @Matches(/^[a-zA-Z0-9_-]+$/, {
-    message:
-      'Username can only contain letters, numbers, underscores and hyphens',
+  @Transform(trimString)
+  @IsString({ message: VALIDATION_MESSAGES.usernameType })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.usernameEmpty })
+  @MinLength(3, { message: VALIDATION_MESSAGES.usernameMin })
+  @MaxLength(30, { message: VALIDATION_MESSAGES.usernameMax })
+  @Matches(USERNAME_REGEX, {
+    message: VALIDATION_MESSAGES.usernameFormat,
   })
   username: string;
 
@@ -45,9 +52,10 @@ export class SignUpUserDto {
     example: 'mario.rossi@example.com',
     maxLength: 255,
   })
-  @IsEmail()
-  @IsNotEmpty({ message: 'The email can not be empty' })
-  @MaxLength(255)
+  @Transform(trimLowerCase)
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.emailEmpty })
+  @IsEmail({}, { message: VALIDATION_MESSAGES.emailFormat })
+  @MaxLength(255, { message: VALIDATION_MESSAGES.emailMax })
   email: string;
 
   /**
@@ -61,13 +69,12 @@ export class SignUpUserDto {
     minLength: 9,
     maxLength: 72,
   })
-  @IsNotEmpty({ message: 'The password cannot be empty' })
-  @IsString()
-  @MinLength(9, { message: 'The password must have at least 9 character' })
-  @MaxLength(72, { message: 'Password cannot exceed 72 characters' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W_]).+$/, {
-    message:
-      'Password is too weak (needs uppercase, lowercase, and a number or symbol)',
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.passwordEmpty })
+  @IsString({ message: VALIDATION_MESSAGES.passwordType })
+  @MinLength(9, { message: VALIDATION_MESSAGES.passwordMin })
+  @MaxLength(72, { message: VALIDATION_MESSAGES.passwordMax })
+  @Matches(PASSWORD_REGEX, {
+    message: VALIDATION_MESSAGES.passwordStrength,
   })
   password: string;
 }

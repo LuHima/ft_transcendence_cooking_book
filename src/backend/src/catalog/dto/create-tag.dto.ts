@@ -24,9 +24,9 @@ export class CreateTagDto {
     example: 'gluten_free',
     maxLength: 50,
   })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
+  @IsString({ message: 'slug must be a text string' })
+  @IsNotEmpty({ message: 'slug cannot be empty' })
+  @MaxLength(50, { message: 'slug cannot exceed 50 characters' })
   @Matches(/^[a-z0-9]+(?:_[a-z0-9]+)*$/, {
     message:
       'slug must be lowercase snake_case (letters, digits and single underscores, e.g. gluten_free)',
@@ -40,7 +40,7 @@ export class CreateTagDto {
     type: TranslationDto,
     description: 'Tag display name in Italian, English and French',
   })
-  @IsDefined()
+  @IsDefined({ message: 'translations object is required' })
   @ValidateNested()
   @Type(() => TranslationDto)
   translations: TranslationDto;

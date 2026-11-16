@@ -15,7 +15,7 @@ import { createHttpException, errors } from 'src/common/config/error.config';
 import { EncryptionService } from './encryption.service';
 import { Prisma, ReportReason, User, UserStatus } from '@prisma/client';
 import { isNumber } from 'class-validator';
-import { TwoFactorCode } from './auth.controller';
+import { TwoFactorCodeDto as TwoFactorCode } from './dto/two-factor-code.dto';
 import { TwoFactorAuth } from 'src/users/dto/twoFactor-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { BanHistoryService } from '../reports/ban-history.service';

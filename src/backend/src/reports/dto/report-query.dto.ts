@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  Max,
   Min,
   registerDecorator,
   ValidationArguments,
@@ -15,11 +16,13 @@ import { ReportStatus, ReportSubject } from '@prisma/client';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { transformOptionalInt } from 'src/common/dto/query-transforms';
+import {
+  INT32_MAX,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
 
 @ValidatorConstraint({ name: 'isTargetIdWithSubject', async: false })
-export class IsTargetIdWithSubjectConstraint
-  implements ValidatorConstraintInterface
-{
+export class IsTargetIdWithSubjectConstraint implements ValidatorConstraintInterface {
   validate(value: unknown, args: ValidationArguments): boolean {
     if (value === undefined || value === null) {
       return true;
@@ -64,7 +67,9 @@ export class ReportQueryDto extends IntersectionType(
     example: ReportStatus.pending,
   })
   @IsOptional()
-  @IsEnum(ReportStatus)
+  @IsEnum(ReportStatus, {
+    message: 'status must be one of: pending, dismissed, action_taken',
+  })
   status?: ReportStatus;
 
   /**
@@ -78,7 +83,9 @@ export class ReportQueryDto extends IntersectionType(
     example: ReportSubject.recipe,
   })
   @IsOptional()
-  @IsEnum(ReportSubject)
+  @IsEnum(ReportSubject, {
+    message: 'subject must be one of: recipe, comment, user',
+  })
   subject?: ReportSubject;
 
   /**
@@ -88,14 +95,16 @@ export class ReportQueryDto extends IntersectionType(
   @ApiPropertyOptional({
     type: Number,
     minimum: 1,
+    maximum: INT32_MAX,
     description:
       'Filter reports by target entity ID (requires subject to prevent polymorphic ID collisions)',
     example: 42,
   })
   @IsOptional()
   @Transform(transformOptionalInt)
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: VALIDATION_MESSAGES.idRange })
+  @Min(1, { message: VALIDATION_MESSAGES.idRange })
+  @Max(INT32_MAX, { message: VALIDATION_MESSAGES.idRange })
   @IsTargetIdWithSubject()
   target_id?: number;
 }

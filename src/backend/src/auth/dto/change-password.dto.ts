@@ -7,6 +7,12 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import {
+  MAX_ID_TOKEN_LENGTH,
+  PASSWORD_REGEX,
+  VALIDATION_MESSAGES,
+} from '../../common/validators/validation-constants';
+import { IsGoogleIdToken } from '../validators/google-id-token.validator';
 
 /**
  * Data transfer object for setting or changing the current user's password.
@@ -21,10 +27,12 @@ export class ChangePasswordDto {
       'Current account password (alternative to `idToken` when the account already has a password)',
     example: 'CurrentPassw0rd!',
     minLength: 9,
+    maxLength: 72,
   })
   @IsOptional()
-  @IsString()
-  @MinLength(9, { message: 'The password must have at least 9 character' })
+  @IsString({ message: VALIDATION_MESSAGES.passwordType })
+  @MinLength(9, { message: VALIDATION_MESSAGES.passwordMin })
+  @MaxLength(72, { message: VALIDATION_MESSAGES.passwordMax })
   currentPassword?: string;
 
   /**
@@ -33,10 +41,12 @@ export class ChangePasswordDto {
   @ApiPropertyOptional({
     description:
       'Google OAuth2 OpenID Connect ID token (required when the account has no local password)',
+    maxLength: MAX_ID_TOKEN_LENGTH,
+    example:
+      'eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDk4NzY1NDMyMSJ9.example_signature',
   })
   @IsOptional()
-  @IsString()
-  @IsNotEmpty({ message: 'Google ID token cannot be empty' })
+  @IsGoogleIdToken()
   idToken?: string;
 
   /**
@@ -50,13 +60,12 @@ export class ChangePasswordDto {
     minLength: 9,
     maxLength: 72,
   })
-  @IsNotEmpty({ message: 'The password cannot be empty' })
-  @IsString()
-  @MinLength(9, { message: 'The password must have at least 9 character' })
-  @MaxLength(72, { message: 'Password cannot exceed 72 characters' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W_]).+$/, {
-    message:
-      'Password is too weak (needs uppercase, lowercase, and a number or symbol)',
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.passwordEmpty })
+  @IsString({ message: VALIDATION_MESSAGES.passwordType })
+  @MinLength(9, { message: VALIDATION_MESSAGES.passwordMin })
+  @MaxLength(72, { message: VALIDATION_MESSAGES.passwordMax })
+  @Matches(PASSWORD_REGEX, {
+    message: VALIDATION_MESSAGES.passwordStrength,
   })
   newPassword: string;
 }

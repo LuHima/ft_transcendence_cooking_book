@@ -1,4 +1,26 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/**
+ * Structured per-field validation failure entry returned in 400 Bad Request `details`.
+ */
+export class ValidationFieldDetailDto {
+  @ApiProperty({
+    description: 'Property path of the field that failed validation',
+    example: 'phone',
+  })
+  field: string;
+
+  @ApiProperty({
+    description: 'Map of failed constraint keys to human-readable messages',
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: {
+      matches:
+        'Phone number must contain 7 to 15 digits and may only include numbers, spaces, +, -, (, ), and . (e.g. +39 06 1234567)',
+    },
+  })
+  constraints: Record<string, string>;
+}
 
 /**
  * Standardized API error response payload returned by GlobalExceptionFilter.
@@ -88,6 +110,13 @@ export class ApiBadRequestResponseDto {
     ],
   })
   message: string | string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Optional per-field validation constraint breakdown for structured client error handling',
+    type: [ValidationFieldDetailDto],
+  })
+  details?: ValidationFieldDetailDto[];
 }
 
 /**

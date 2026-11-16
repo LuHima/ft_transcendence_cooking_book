@@ -137,7 +137,7 @@ describe('AdminController', () => {
         message: 'User permanently deleted',
       });
 
-      const result = await controller.deleteUser(2, 1, 'true');
+      const result = await controller.deleteUser(2, 1, { hard: true });
 
       expect(service.deleteUser).toHaveBeenCalledWith(2, 1, true);
       expect(result).toEqual({ message: 'User permanently deleted' });
