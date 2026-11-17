@@ -68,12 +68,14 @@ function Navbar() {
 								onClick={() => setMenuOpen((v) => !v)}
 								aria-haspopup="menu"
 								aria-expanded={menuOpen}
-								className="flex items-center gap-2 rounded-full border border-[var(--wc-border)] px-3 py-1.5 text-sm text-[var(--wc-text)] hover:border-[var(--wc-basil)]"
+								aria-label={user.username}
+								className="flex items-center gap-2 rounded-full border border-[var(--wc-border)] px-2 py-1.5 text-sm text-[var(--wc-text)] hover:border-[var(--wc-basil)] sm:px-3"
 							>
 								<Avatar username={user.username} url={user.avatar_url} className="h-6 w-6 text-xs" />
-								<span className="max-w-[8rem] truncate">{user.username}</span>
+								{/* On phones only the avatar: name and role badge pushed the bar past the screen edge */}
+									<span className="hidden max-w-[8rem] truncate sm:inline">{user.username}</span>
 								{user.role !== 'user' && (
-									<span className="rounded-full bg-[var(--wc-saffron)] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--wc-bg)]">
+									<span className="hidden rounded-full bg-[var(--wc-saffron)] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--wc-bg)] sm:inline">
 										{t(`role.${user.role}`)}
 									</span>
 								)}

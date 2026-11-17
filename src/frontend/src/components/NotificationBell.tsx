@@ -226,7 +226,8 @@ function NotificationBell() {
 	const badge = open ? 0 : unreadCount
 
 	return (
-		<div ref={containerRef} className="relative shrink-0">
+		// Positioned only from md up: on phones the panel anchors to the header and spans the screen width (like the user menu)
+		<div ref={containerRef} className="shrink-0 md:relative">
 			<button
 				type="button"
 				onClick={toggle}
@@ -257,14 +258,14 @@ function NotificationBell() {
 			</button>
 
 			{open && (
-				<div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg">
+				<div className="absolute inset-x-2 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg md:inset-x-auto md:right-0 md:top-auto md:mt-2 md:w-80">
 					<div className="border-b border-[var(--wc-border)] px-4 py-2 text-sm font-semibold text-[var(--wc-text)]">
 						{t('notifications.title')}
 					</div>
 					{items.length === 0 ? (
 						<p className="px-4 py-6 text-center text-sm text-[var(--wc-text-muted)]">{t('notifications.empty')}</p>
 					) : (
-						<ul className="max-h-96 overflow-y-auto">
+						<ul className="max-h-[70vh] overflow-y-auto overscroll-contain md:max-h-96">
 							{items.map((n) => {
 								const { textKey, to } = describe(n, user?.id)
 								const isWarn = n.action === 'warn'

@@ -29,7 +29,7 @@ function Admin() {
 			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('nav.adminPanel')}</h1>
 			<p className="mt-1 text-sm text-[var(--wc-text-muted)]">{t('admin.subtitle')}</p>
 
-			<div className="mt-6 flex flex-wrap gap-2 border-b border-[var(--wc-border)] pb-3" role="tablist">
+			<div className="mt-6 tab-row flex sm:flex-wrap gap-2 border-b border-[var(--wc-border)] pb-3" role="tablist">
 				{TABS.map((x) => (
 					<button
 						key={x}
