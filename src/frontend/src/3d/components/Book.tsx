@@ -213,11 +213,12 @@ function useLeatherMaterial() {
 
 function useLeatherMaterial1() {
   // carica un altro set di texture per il materiale della cerniera del libro
-  const [colorSource1, roughnessSource1, normalSource1] = useTexture([
-    leatherColorUrl1,
-    leatherRoughnessUrl1,
-    leatherNormalUrl1,
-  ]);
+  const [colorSource1, roughnessSource1, normalSource1] =
+    useTexture([
+      leatherColorUrl1,
+      leatherRoughnessUrl1,
+      leatherNormalUrl1,
+    ]);
 
   const [colorMap1, roughnessMap1, normalMap1] = useMemo(
     () => [
