@@ -47,7 +47,6 @@ export function Page({
         uMapFront={frontMap}
         uMapBack={backMap}
         uPageHeight={height}
-        uHingeOffset={0.025}
         side={DoubleSide}
       />
     </mesh>
