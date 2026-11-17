@@ -14,32 +14,77 @@ VAULT_JS='
 const base = process.env.VAULT_ADDR;
 const roleId = process.env.BACKEND_VAULT_ROLE_ID;
 const secretId = process.env.BACKEND_VAULT_SECRET_ID;
+
+class FatalVaultError extends Error {}
+
+async function readErrorBody(res) {
+  try {
+    return (await res.text()).trim();
+  } catch {
+    return "";
+  }
+}
+
 (async () => {
-  if (!base || !roleId || !secretId) throw new Error("missing VAULT_ADDR / BACKEND_VAULT_ROLE_ID / BACKEND_VAULT_SECRET_ID");
+  if (!base || !roleId || !secretId) {
+    throw new FatalVaultError(
+      "Missing VAULT_ADDR, BACKEND_VAULT_ROLE_ID, or BACKEND_VAULT_SECRET_ID. Check docker/.env (must match the active Vault instance; run make vault-init to resync)."
+    );
+  }
   const login = await fetch(base + "/v1/auth/approle/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ role_id: roleId, secret_id: secretId }),
   });
-  if (!login.ok) throw new Error("AppRole login failed: HTTP " + login.status);
+  if (!login.ok) {
+    const body = await readErrorBody(login);
+    const detail = body ? ": " + body : "";
+    if (login.status === 400 || login.status === 403) {
+      throw new FatalVaultError(
+        `Vault AppRole login rejected for backend-role (HTTP ${login.status})${detail}. Check BACKEND_VAULT_ROLE_ID and BACKEND_VAULT_SECRET_ID in docker/.env (they must match the active Vault instance; run make vault-init to resync).`
+      );
+    }
+    throw new Error(`AppRole login failed for backend-role (HTTP ${login.status})${detail}`);
+  }
   const token = (await login.json()).auth.client_token;
   const res = await fetch(base + "/v1/secret/data/backend", { headers: { "X-Vault-Token": token } });
-  if (!res.ok) throw new Error("read secret/backend failed: HTTP " + res.status);
+  if (!res.ok) {
+    const body = await readErrorBody(res);
+    const detail = body ? ": " + body : "";
+    if (res.status === 403 || res.status === 404) {
+      throw new FatalVaultError(`Failed to read secret/data/backend from Vault (HTTP ${res.status})${detail}`);
+    }
+    throw new Error(`read secret/backend failed (HTTP ${res.status})${detail}`);
+  }
   const data = (await res.json()).data.data;
   for (const [k, v] of Object.entries(data)) {
-    if (!/^[A-Z_][A-Z0-9_]*$/.test(k) || String(v).includes("\x27")) throw new Error("unsafe key/value: " + k);
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(k) || String(v).includes("\x27")) throw new FatalVaultError("unsafe key/value: " + k);
     console.log("export " + k + "=\x27" + v + "\x27");
   }
-})().catch((e) => { console.error(e.message); process.exit(1); });
+})().catch((e) => {
+  console.error("ERROR:", e.message);
+  process.exit(e instanceof FatalVaultError ? 2 : 1);
+});
 '
 
 if [ "${USE_VAULT:-true}" = "true" ]; then
   echo "Fetching secrets from Vault..."
   attempts=0
-  until VAULT_ENV=$(node -e "$VAULT_JS"); do
+  while true; do
+    set +e
+    VAULT_ENV=$(node -e "$VAULT_JS")
+    rc=$?
+    set -e
+    if [ "$rc" -eq 0 ]; then
+      break
+    fi
+    if [ "$rc" -eq 2 ]; then
+      echo "ERROR: Aborting backend startup due to invalid Vault credentials or configuration." >&2
+      exit 1
+    fi
     attempts=$((attempts + 1))
     if [ "$attempts" -ge 30 ]; then
-      echo "ERROR: Vault not reachable/unsealed after 30 attempts. Aborting."
+      echo "ERROR: Vault not reachable/unsealed after 30 attempts. Aborting." >&2
       exit 1
     fi
     echo "Vault not ready (attempt $attempts/30), retrying in 5s..."

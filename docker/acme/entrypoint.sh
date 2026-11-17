@@ -11,33 +11,72 @@ DOMAIN="${DOMAIN_NAME:-localhost}"
 # (useful for local dev without Vault, or if Vault is unreachable).
 VAULT_ADDR="${VAULT_ADDR:-http://vault:8200}"
 
-if [ "${USE_VAULT:-true}" = "true" ] && [ -n "$VAULT_ROLE_ID" ] && [ -n "$VAULT_SECRET_ID" ]; then
+# Perform a Vault HTTP request and capture HTTP status + body without aborting
+# under `set -e` (acme falls back to env / self-signed certs on failure).
+vault_request() {
+	_method="$1"
+	_url="$2"
+	_header="$3"
+	_body="$4"
+
+	set +e
+	if [ -n "$_body" ]; then
+		_raw=$(curl -sS -w '\n%{http_code}' -X "$_method" -d "$_body" "$_url")
+	elif [ -n "$_header" ]; then
+		_raw=$(curl -sS -w '\n%{http_code}' -X "$_method" -H "$_header" "$_url")
+	else
+		_raw=$(curl -sS -w '\n%{http_code}' -X "$_method" "$_url")
+	fi
+	_rc=$?
+	set -e
+
+	if [ "$_rc" -ne 0 ]; then
+		VAULT_HTTP_CODE=0
+		VAULT_RESP_BODY="curl exit ${_rc}"
+		return 1
+	fi
+
+	VAULT_HTTP_CODE=$(printf '%s\n' "$_raw" | tail -n 1)
+	VAULT_RESP_BODY=$(printf '%s\n' "$_raw" | sed '$d')
+	return 0
+}
+
+if [ "${USE_VAULT:-true}" != "true" ]; then
+	echo "INFO: Vault disabled (USE_VAULT=${USE_VAULT}); skipping Vault fetch."
+elif [ -z "$VAULT_ROLE_ID" ] || [ -z "$VAULT_SECRET_ID" ]; then
+	echo "WARNING: ACME_VAULT_ROLE_ID or ACME_VAULT_SECRET_ID is not set (mapped to VAULT_ROLE_ID / VAULT_SECRET_ID); check docker/.env. Using existing environment INFOMANIAK_API_TOKEN (if any)." >&2
+else
 	echo "=== Authenticating to Vault (acme-role) ==="
 
-	LOGIN_RESPONSE=$(curl -s --fail -X POST \
-		-d "{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}" \
-		"${VAULT_ADDR}/v1/auth/approle/login" 2>/dev/null) || true
-
-	VAULT_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
-
-	if [ -n "$VAULT_TOKEN" ]; then
-		SECRET_RESPONSE=$(curl -s --fail \
-			-H "X-Vault-Token: ${VAULT_TOKEN}" \
-			"${VAULT_ADDR}/v1/secret/data/acme" 2>/dev/null) || true
-
-		FETCHED_TOKEN=$(echo "$SECRET_RESPONSE" | grep -o '"INFOMANIAK_API_TOKEN":"[^"]*"' | cut -d'"' -f4)
-
-		if [ -n "$FETCHED_TOKEN" ]; then
-			INFOMANIAK_API_TOKEN="$FETCHED_TOKEN"
-			echo "=== INFOMANIAK_API_TOKEN retrieved from Vault ==="
+	if ! vault_request POST "${VAULT_ADDR}/v1/auth/approle/login" "" \
+		"{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}"; then
+		echo "WARNING: Could not reach Vault at ${VAULT_ADDR} (${VAULT_RESP_BODY}); using existing environment INFOMANIAK_API_TOKEN (if any)." >&2
+	elif [ "$VAULT_HTTP_CODE" -ne 200 ]; then
+		if [ "$VAULT_HTTP_CODE" -eq 400 ] || [ "$VAULT_HTTP_CODE" -eq 403 ]; then
+			echo "WARNING: Vault AppRole login rejected for acme-role (HTTP ${VAULT_HTTP_CODE}): ${VAULT_RESP_BODY}. Check ACME_VAULT_ROLE_ID and ACME_VAULT_SECRET_ID in docker/.env (they must match the active Vault instance; run 'make vault-init' to resync). Using existing environment INFOMANIAK_API_TOKEN (if any)." >&2
 		else
-			echo "WARNING: Vault reachable but no INFOMANIAK_API_TOKEN found; using existing environment value (if any)."
+			echo "WARNING: Vault AppRole login failed for acme-role (HTTP ${VAULT_HTTP_CODE}): ${VAULT_RESP_BODY}. Using existing environment INFOMANIAK_API_TOKEN (if any)." >&2
 		fi
 	else
-		echo "WARNING: Could not authenticate to Vault; using existing environment value (if any)."
+		VAULT_TOKEN=$(echo "$VAULT_RESP_BODY" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+
+		if [ -z "$VAULT_TOKEN" ]; then
+			echo "WARNING: Vault AppRole login succeeded for acme-role, but client_token was missing; using existing environment INFOMANIAK_API_TOKEN (if any)." >&2
+		elif ! vault_request GET "${VAULT_ADDR}/v1/secret/data/acme" "X-Vault-Token: ${VAULT_TOKEN}" ""; then
+			echo "WARNING: Could not reach Vault at ${VAULT_ADDR} while reading secret/data/acme (${VAULT_RESP_BODY}); using existing environment INFOMANIAK_API_TOKEN (if any)." >&2
+		elif [ "$VAULT_HTTP_CODE" -ne 200 ]; then
+			echo "WARNING: Failed to read secret/data/acme from Vault (HTTP ${VAULT_HTTP_CODE}): ${VAULT_RESP_BODY}. Using existing environment INFOMANIAK_API_TOKEN (if any)." >&2
+		else
+			FETCHED_TOKEN=$(echo "$VAULT_RESP_BODY" | grep -o '"INFOMANIAK_API_TOKEN":"[^"]*"' | cut -d'"' -f4)
+
+			if [ -n "$FETCHED_TOKEN" ]; then
+				INFOMANIAK_API_TOKEN="$FETCHED_TOKEN"
+				echo "=== INFOMANIAK_API_TOKEN retrieved from Vault ==="
+			else
+				echo "WARNING: Vault reachable but no INFOMANIAK_API_TOKEN found; using existing environment value (if any)."
+			fi
+		fi
 	fi
-else
-	echo "INFO: Vault disabled (USE_VAULT=false) or credentials not set; skipping Vault fetch."
 fi
 
 mkdir -p "$SSL_DIR"

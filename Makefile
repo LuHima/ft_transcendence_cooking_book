@@ -528,6 +528,26 @@ vault-init: env-check ## |Init Vault, policies and AppRoles (keys: ~/vault-keys)
 	@chmod +x ./scripts/vault-setup.sh
 	@./scripts/vault-setup.sh
 
+# Wait until Docker's HEALTHCHECK on the vault container reports "healthy"
+# (avoids a race where vault is unsealed via CLI before the 5s healthcheck
+# refreshes a stale "unhealthy" or "starting" container status).
+define WAIT_VAULT_HEALTHY
+	HEALTH=""; \
+	i=0; \
+	while [ $$i -lt 20 ]; do \
+		HEALTH=$$($(SUDO) docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{end}}' vault 2>/dev/null || true); \
+		if [ "$$HEALTH" = "healthy" ]; then \
+			break; \
+		fi; \
+		sleep 1; \
+		i=$$((i + 1)); \
+	done; \
+	if [ "$$HEALTH" != "healthy" ]; then \
+		echo "ERROR: Vault container did not become healthy within 20s (status: $${HEALTH:-unknown})."; \
+		exit 1; \
+	fi
+endef
+
 # Unseal Vault using 3-tier precedence:
 # CLI args -> .env vars -> interactive prompt
 .PHONY: vault-unseal
@@ -554,6 +574,7 @@ vault-unseal: ## [k1 k2 k3]|Unseal Vault via CLI args, .env keys, or prompt
 	SEALED=$$(echo "$$STATUS_OUT" | awk '$$1=="Sealed" {print $$2}'); \
 	if [ "$$SEALED" = "false" ]; then \
 		echo "Vault is already unsealed."; \
+		$(WAIT_VAULT_HEALTHY); \
 		exit 0; \
 	fi; \
 	echo "=== Vault Unseal Process ==="; \
@@ -595,6 +616,7 @@ vault-unseal: ## [k1 k2 k3]|Unseal Vault via CLI args, .env keys, or prompt
 	FINAL_SEALED=$$(docker exec -e VAULT_ADDR="http://127.0.0.1:8200" vault vault status 2>/dev/null | awk '$$1=="Sealed" {print $$2}'); \
 	if [ "$$FINAL_SEALED" = "false" ]; then \
 		echo "Vault successfully unsealed!"; \
+		$(WAIT_VAULT_HEALTHY); \
 	else \
 		echo "ERROR: Vault remains sealed. Check unseal keys."; \
 		exit 1; \
@@ -622,6 +644,8 @@ vault-check-auto-unseal:
 	if [ "$$SEALED" = "true" ]; then \
 		echo "Vault is sealed. Running unseal..."; \
 		$(MAKE) --no-print-directory vault-unseal; \
+	else \
+		$(WAIT_VAULT_HEALTHY); \
 	fi
 
 
