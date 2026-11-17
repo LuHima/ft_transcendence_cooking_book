@@ -180,7 +180,7 @@ function AdminReports() {
 	return (
 		<div ref={listTopRef} className="scroll-mt-24">
 			<div className="flex flex-wrap items-center gap-3">
-				<div className="flex flex-wrap gap-1" role="tablist" aria-label={t('moderation.status')}>
+				<div className="tab-row flex sm:flex-wrap gap-1" role="tablist" aria-label={t('moderation.status')}>
 					{STATUSES.map((s) => (
 						<button
 							key={s}

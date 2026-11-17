@@ -73,3 +73,17 @@ button {
 		animation: wc-skeleton-appear 0s linear 250ms both;
 	}
 }
+
+/* Tab bars: on phones one row that scrolls sideways instead of wrapping onto ragged lines */
+.tab-row {
+	overflow-x: auto;
+	scrollbar-width: none;
+	-webkit-overflow-scrolling: touch;
+}
+.tab-row::-webkit-scrollbar {
+	display: none;
+}
+.tab-row > * {
+	flex-shrink: 0;
+	white-space: nowrap;
+}

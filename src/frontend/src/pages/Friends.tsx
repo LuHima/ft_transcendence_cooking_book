@@ -170,7 +170,7 @@ function Friends() {
 			<h1 className="font-display text-3xl text-[var(--wc-saffron)]">{t('nav.friends')}</h1>
 			<p className="mt-1 text-sm text-[var(--wc-text-muted)]">{t('friends.intro')}</p>
 
-			<div className="mt-6 flex flex-wrap gap-2" role="tablist">
+			<div className="mt-6 tab-row flex sm:flex-wrap gap-2" role="tablist">
 				{TABS.map((x) => (
 					<button key={x} role="tab" aria-selected={tab === x} className={tabClass(x)} onClick={() => setTab(x)}>
 						{t(`friends.tabs.${x}`)}
