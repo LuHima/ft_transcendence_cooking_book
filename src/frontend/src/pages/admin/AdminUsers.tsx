@@ -271,7 +271,7 @@ function AdminUsers() {
 								<th className="p-3">{t('admin.users.user')}</th>
 								<th className="p-3">{t('admin.users.recipes')}</th>
 								<th className="p-3">{t('admin.users.role')}</th>
-								<th className="p-3">{t('admin.users.status')}</th>
+								<th className="whitespace-nowrap p-3">{t('admin.users.status')}</th>
 								<th className="p-3 text-right">{t('admin.users.actions')}</th>
 							</tr>
 						</thead>
@@ -320,7 +320,7 @@ function AdminUsers() {
 											</select>
 										</td>
 										<td className="p-3">
-											<span className={`font-medium ${STATUS_COLOR[status]}`}>{t(`admin.users.statuses.${status}`)}</span>
+											<span className={`whitespace-nowrap font-medium ${STATUS_COLOR[status]}`}>{t(`admin.users.statuses.${status}`)}</span>
 											{/* soft-deleted: account eliminato (deleted_at), distinto da un semplice "Disattivato" */}
 											{u.deleted_at && (
 												<span className="ml-2 rounded-full border border-[var(--wc-paprika)] px-2 py-0.5 text-[10px] uppercase text-[var(--wc-paprika)]">
