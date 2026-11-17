@@ -121,14 +121,12 @@ function IngredientPicker({ value, onChange, invalid }: IngredientPickerProps) {
 											choose(i)
 										}}
 										onMouseEnter={() => setActiveIndex(index)}
-										className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-[var(--wc-text)] ${
+										className={`block w-full px-3 py-2 text-left text-sm text-[var(--wc-text)] break-words ${
 											index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
 										}`}
 									>
-										<span className="truncate">{i.name}</span>
-										<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
-											{t(`ingredientCategory.${i.category}`)}
-										</span>
+										{/* Name only: the category label made names hard to read in the recipe form */}
+										{i.name}
 									</button>
 								</li>
 							))}
