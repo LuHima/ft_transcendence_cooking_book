@@ -95,6 +95,7 @@ CREATE TABLE "recipes" (
     "user_id" INTEGER,
     "owner_type" "OwnerType" NOT NULL DEFAULT 'user',
     "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "suspended_by_ban" BOOLEAN NOT NULL DEFAULT false,
     "privacy" "RecipePrivacy" NOT NULL DEFAULT 'public',
     "course" "Course" NOT NULL DEFAULT 'main_course',
     "difficulty" "RecipeDifficulty" NOT NULL DEFAULT 'easy',
@@ -335,13 +336,25 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE INDEX "users_status_deleted_at_created_at_idx" ON "users"("status", "deleted_at", "created_at");
+
+-- CreateIndex
 CREATE INDEX "recipes_privacy_is_active_idx" ON "recipes"("privacy", "is_active");
+
+-- CreateIndex
+CREATE INDEX "recipes_is_active_privacy_created_at_idx" ON "recipes"("is_active", "privacy", "created_at" DESC);
+
+-- CreateIndex
+CREATE INDEX "recipes_user_id_is_active_privacy_created_at_idx" ON "recipes"("user_id", "is_active", "privacy", "created_at" DESC);
 
 -- CreateIndex
 CREATE INDEX "recipe_translations_locale_title_idx" ON "recipe_translations"("locale", "title");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "recipe_steps_recipe_id_step_number_key" ON "recipe_steps"("recipe_id", "step_number");
+
+-- CreateIndex
+CREATE INDEX "recipe_tags_tag_id_idx" ON "recipe_tags"("tag_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ingredients_slug_key" ON "ingredients"("slug");
@@ -359,6 +372,9 @@ CREATE UNIQUE INDEX "tags_slug_key" ON "tags"("slug");
 CREATE INDEX "tag_translations_locale_name_idx" ON "tag_translations"("locale", "name");
 
 -- CreateIndex
+CREATE INDEX "recipe_ingredients_ingredient_id_idx" ON "recipe_ingredients"("ingredient_id");
+
+-- CreateIndex
 CREATE INDEX "friendships_addressee_id_status_idx" ON "friendships"("addressee_id", "status");
 
 -- CreateIndex
@@ -368,10 +384,40 @@ CREATE INDEX "friendships_requester_id_status_idx" ON "friendships"("requester_i
 CREATE UNIQUE INDEX "friendships_requester_id_addressee_id_key" ON "friendships"("requester_id", "addressee_id");
 
 -- CreateIndex
+CREATE INDEX "comments_recipe_id_is_active_idx" ON "comments"("recipe_id", "is_active");
+
+-- CreateIndex
+CREATE INDEX "comments_recipe_id_parent_id_created_at_idx" ON "comments"("recipe_id", "parent_id", "created_at");
+
+-- CreateIndex
+CREATE INDEX "comments_parent_id_created_at_idx" ON "comments"("parent_id", "created_at");
+
+-- CreateIndex
+CREATE INDEX "comments_user_id_is_active_idx" ON "comments"("user_id", "is_active");
+
+-- CreateIndex
+CREATE INDEX "comments_created_at_idx" ON "comments"("created_at");
+
+-- CreateIndex
+CREATE INDEX "likes_recipe_id_idx" ON "likes"("recipe_id");
+
+-- CreateIndex
 CREATE INDEX "notifications_user_id_is_read_created_at_idx" ON "notifications"("user_id", "is_read", "created_at");
 
 -- CreateIndex
-CREATE INDEX "user_blocks_blocker_id_idx" ON "user_blocks"("blocker_id");
+CREATE INDEX "notifications_actor_id_idx" ON "notifications"("actor_id");
+
+-- CreateIndex
+CREATE INDEX "notifications_subject_target_id_idx" ON "notifications"("subject", "target_id");
+
+-- CreateIndex
+CREATE INDEX "recipe_media_recipe_id_order_idx" ON "recipe_media"("recipe_id", "order");
+
+-- CreateIndex
+CREATE INDEX "jwt_sessions_id_user_id_session_idx" ON "jwt_sessions"("id_user", "id_session");
+
+-- CreateIndex
+CREATE INDEX "jwt_sessions_expire_time_jwt_idx" ON "jwt_sessions"("expire_time_jwt");
 
 -- CreateIndex
 CREATE INDEX "user_blocks_blocked_id_idx" ON "user_blocks"("blocked_id");
@@ -392,6 +438,9 @@ CREATE INDEX "reports_subject_status_target_id_idx" ON "reports"("subject", "sta
 CREATE INDEX "reports_resolved_by_id_idx" ON "reports"("resolved_by_id");
 
 -- CreateIndex
+CREATE INDEX "reports_reporter_id_subject_target_id_status_idx" ON "reports"("reporter_id", "subject", "target_id", "status");
+
+-- CreateIndex
 CREATE INDEX "ban_history_user_id_banned_at_idx" ON "ban_history"("user_id", "banned_at");
 
 -- CreateIndex
@@ -402,6 +451,9 @@ CREATE INDEX "ban_history_banned_by_id_idx" ON "ban_history"("banned_by_id");
 
 -- CreateIndex
 CREATE INDEX "ban_history_unbanned_by_id_idx" ON "ban_history"("unbanned_by_id");
+
+-- CreateIndex
+CREATE INDEX "ban_history_report_id_idx" ON "ban_history"("report_id");
 
 -- AddForeignKey
 ALTER TABLE "recipes" ADD CONSTRAINT "recipes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
