@@ -18,6 +18,10 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { resolveActiveJwtUser } from 'src/common/guards/auth.guard';
 import { getBlockedUserIds } from './notification-emit';
+import {
+  USER_EVICT_EVENT,
+  type UserEvictEventPayload,
+} from './notification-events';
 
 /*
  * Quando si usa WebSocket si aggancia allo stesso server e utilizza la stessa
@@ -179,8 +183,8 @@ export class NotificationGateway
       });
   }
 
-  @OnEvent('user.evict')
-  handleUserEviction(payload: { userId: number }) {
+  @OnEvent(USER_EVICT_EVENT)
+  handleUserEviction(payload: UserEvictEventPayload) {
     if (!payload?.userId || !this.server) return;
     this.server.in?.('room-' + payload.userId)?.disconnectSockets(true);
   }

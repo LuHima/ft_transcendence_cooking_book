@@ -75,6 +75,7 @@ import {
   ApiNotFoundResponseDto,
   ApiConflictResponseDto,
   ApiInternalServerErrorResponseDto,
+  ApiServiceUnavailableResponseDto,
 } from 'src/common/dto/api-error-response.dto';
 import { LocaleQueryDto } from 'src/common/dto/locale-query.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
@@ -251,18 +252,7 @@ export class RecipeController {
   })
   @ApiServiceUnavailableResponse({
     description: 'Translation service temporarily unavailable',
-    schema: {
-      type: 'object',
-      properties: {
-        statusCode: { type: 'number', example: 503 },
-        timestamp: { type: 'string', example: '2026-10-14T10:00:00.000Z' },
-        path: { type: 'string', example: '/api/recipes/42/translate' },
-        message: {
-          type: 'string',
-          example: 'Translation service temporarily unavailable',
-        },
-      },
-    },
+    type: ApiServiceUnavailableResponseDto,
   })
   @Auth()
   @Post(':id/translate')

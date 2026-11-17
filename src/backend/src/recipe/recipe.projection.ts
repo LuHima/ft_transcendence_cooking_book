@@ -48,7 +48,10 @@ export const RECIPE_SUMMARY_INCLUDE = (
     : false,
 });
 
-export const RECIPE_DETAIL_INCLUDE = (currentUserId?: number) => ({
+export const RECIPE_DETAIL_INCLUDE = (
+  currentUserId?: number,
+  includeAuthorRole = false,
+) => ({
   translations: true,
   steps: {
     include: {
@@ -86,7 +89,7 @@ export const RECIPE_DETAIL_INCLUDE = (currentUserId?: number) => ({
       id: true,
       username: true,
       avatar_url: true,
-      role: true,
+      ...(includeAuthorRole ? { role: true } : {}),
       deleted_at: true,
     },
   },

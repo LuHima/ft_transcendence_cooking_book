@@ -494,6 +494,9 @@ describe('AdminService', () => {
       await expect(
         service.updateUser(3, { role: Role.user }, 1),
       ).rejects.toThrow(HttpException);
+      expect(prisma.user.count).toHaveBeenCalledWith({
+        where: { role: Role.admin, status: UserStatus.active, deleted_at: null },
+      });
     });
 
     it('enforces last-admin safeguard: rejects disabling the last active administrator', async () => {

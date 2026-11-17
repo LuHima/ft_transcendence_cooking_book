@@ -282,13 +282,12 @@ export default function Book({
   const [turnedPageCount, setTurnedPageCount] = useState(0);
   const [isCoverClosed, setIsCoverClosed] = useState(true);
   const coverClosedRef = useRef(true);
-  const trackedTurnedPageCount = useRef(0);
   const pageProgressRefs = useMemo(
     () => recipes.map(() => ({ current: 0 })),
     [recipes],
   );
-  const { pageProgress, currentPage, nextPage, prevPage, turning, closePages } =
-    useBookPages(recipes.length, currentApiPage);
+  const { pageProgress, nextPage, prevPage, turning, closePages } =
+    useBookPages(recipes.length, currentApiPage, setTurnedPageCount);
   const { camera } = useThree();
   const [camPhase, setCamPhase] = useState<
     "idle" | "zooming-in" | "zooming-out"
@@ -306,10 +305,6 @@ export default function Book({
     setPrevRecipesLength(recipes.length);
     setTurnedPageCount(0);
   }
-
-  useEffect(() => {
-    trackedTurnedPageCount.current = 0;
-  }, [currentApiPage, recipes.length]);
 
   useEffect(() => {
     const closeBook = () => {
@@ -386,11 +381,6 @@ export default function Book({
   const pageGroupRefs = useRef<Array<Group | null>>([]);
 
   useFrame((_, delta) => {
-    if (trackedTurnedPageCount.current !== currentPage.current) {
-      trackedTurnedPageCount.current = currentPage.current;
-      setTurnedPageCount(currentPage.current);
-    }
-
     pageProgressRefs.forEach((ref, index) => {
       const p = pageProgress.current[index] ?? 0;
       ref.current = p;

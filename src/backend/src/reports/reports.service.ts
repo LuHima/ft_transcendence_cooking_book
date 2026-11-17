@@ -29,6 +29,10 @@ import {
   UserStatus,
 } from '@prisma/client';
 import { NotificationEmit } from '../notifications/notification-emit';
+import {
+  USER_EVICT_EVENT,
+  type UserEvictEventPayload,
+} from '../notifications/notification-events';
 import { createHttpException, errors } from '../common/config/error.config';
 import { BanHistoryService } from './ban-history.service';
 import {
@@ -911,6 +915,7 @@ export class ReportsService {
 
       return {
         reportSnapshot: report,
+        actionsExecuted: actionsToExecute,
         resolvedTargetUserId,
         result: {
           ...updatedReport,
@@ -923,15 +928,16 @@ export class ReportsService {
 
     await this.emitReportWarnNotification(
       txOutcome.reportSnapshot,
-      actions,
+      txOutcome.actionsExecuted,
       dto,
       callerId,
     );
 
-    if (actions.includes(ReportAction.ban)) {
+    if (txOutcome.actionsExecuted.includes(ReportAction.ban)) {
       const targetUserId = txOutcome.resolvedTargetUserId;
       if (targetUserId) {
-        this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+        const evictPayload: UserEvictEventPayload = { userId: targetUserId };
+        this.eventEmitter?.emit(USER_EVICT_EVENT, evictPayload);
       }
     }
 

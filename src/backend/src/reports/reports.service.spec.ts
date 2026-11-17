@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ReportsService } from './reports.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
@@ -22,9 +23,14 @@ import {
 } from '@prisma/client';
 import { ReportAction } from './dto/update-report.dto';
 import { NotificationEmit } from '../notifications/notification-emit';
+import { USER_EVICT_EVENT } from '../notifications/notification-events';
 
 const mockNotificationEmit = {
   notification: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockEventEmitter = {
+  emit: jest.fn(),
 };
 
 describe('ReportsService', () => {
@@ -105,6 +111,10 @@ describe('ReportsService', () => {
         {
           provide: NotificationEmit,
           useValue: mockNotificationEmit,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: mockEventEmitter,
         },
       ],
     }).compile();
@@ -1445,6 +1455,42 @@ describe('ReportsService', () => {
       );
 
       expect(mockNotificationEmit.notification).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not re-emit user.evict when re-resolving an already-banned report with additional actions', async () => {
+      mockPrisma.report.findUnique.mockResolvedValueOnce({
+        id: 1,
+        subject: ReportSubject.recipe,
+        target_id: 10,
+        reason: ReportReason.spam_scam,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.ban],
+      });
+      mockPrisma.recipe.findUnique.mockResolvedValueOnce({
+        id: 10,
+        user_id: 42,
+        user: { id: 42, role: Role.user },
+      });
+      mockPrisma.recipe.update.mockResolvedValueOnce({
+        id: 10,
+        is_active: false,
+      });
+      mockPrisma.report.update.mockResolvedValueOnce({
+        id: 1,
+        status: ReportStatus.action_taken,
+        actions: [ReportAction.ban, ReportAction.delete_content],
+      });
+
+      await service.updateReport(
+        1,
+        { actions: [ReportAction.ban, ReportAction.delete_content] },
+        { id: 1, role: Role.admin },
+      );
+
+      expect(mockEventEmitter.emit).not.toHaveBeenCalledWith(
+        USER_EVICT_EVENT,
+        expect.anything(),
+      );
     });
 
     it('hydrates resolved_by in updateReport response and returns null when resolved_by_id is null', async () => {

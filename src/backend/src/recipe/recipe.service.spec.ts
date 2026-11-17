@@ -1199,7 +1199,16 @@ describe('RecipeService', () => {
 
       expect(mockPrisma.recipe.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
-        include: expect.any(Object),
+        include: expect.objectContaining({
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar_url: true,
+              deleted_at: true,
+            },
+          },
+        }),
       });
 
       expect(result.id).toBe(1);

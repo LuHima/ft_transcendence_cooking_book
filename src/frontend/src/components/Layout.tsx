@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import ErrorBoundary from './ErrorBoundary'
-import Home from '../pages/Home'
+
+const Home = lazy(() => import('../pages/Home'))
 
 function Layout() {
 	const location = useLocation()
@@ -21,13 +22,17 @@ function Layout() {
 				{(hasVisitedHome || isHome) && (
 					<div className={isHome ? '' : 'hidden'} aria-hidden={!isHome}>
 						<ErrorBoundary key="persistent-home">
-							<Home active={isHome} />
+							<Suspense fallback={null}>
+								<Home active={isHome} />
+							</Suspense>
 						</ErrorBoundary>
 					</div>
 				)}
 				{!isHome && (
 					<ErrorBoundary key={location.pathname}>
-						<Outlet />
+						<Suspense fallback={null}>
+							<Outlet />
+						</Suspense>
 					</ErrorBoundary>
 				)}
 			</main>

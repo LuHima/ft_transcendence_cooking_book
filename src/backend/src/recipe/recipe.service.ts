@@ -114,6 +114,39 @@ export class RecipeService {
     );
   }
 
+  private extractBatchTranslation<TKey extends Record<string, unknown>>(
+    res: { success: boolean; translations: string[] },
+    textsToTranslate: string[],
+    fallbackTitle: string,
+    fallbackDesc: string,
+    stepKeys: TKey[],
+  ): {
+    title: string;
+    description: string;
+    preservation: string | null;
+    tips: string | null;
+    steps: Array<TKey & { title: string | null; description: string }>;
+  } | null {
+    if (!res.success || res.translations.length !== textsToTranslate.length) {
+      return null;
+    }
+    const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
+      res.translations;
+    const steps = stepKeys.map((keyFields, i) => ({
+      ...keyFields,
+      title: stepTexts[i * 2] || null,
+      description:
+        stepTexts[i * 2 + 1] || textsToTranslate[4 + i * 2 + 1] || '',
+    }));
+    return {
+      title: transTitle || fallbackTitle,
+      description: transDesc || fallbackDesc,
+      preservation: transPres || null,
+      tips: transTips || null,
+      steps,
+    };
+  }
+
   private async resolveCaller(
     currentUserOrId?: number | { id: number; role?: Role | string },
     roleOverride?: Role | string,
@@ -957,13 +990,15 @@ export class RecipeService {
       currentUserOrId,
       roleOverride,
     );
+    const isStaff =
+      currentUserRole === Role.admin || currentUserRole === Role.moderator;
 
     // Fetch the recipe from database, joining it with its translations
     const recipe: any = await this.prisma.recipe.findUnique({
       where: {
         id: id,
       },
-      include: RECIPE_DETAIL_INCLUDE(currentUserId),
+      include: RECIPE_DETAIL_INCLUDE(currentUserId, isStaff),
     });
 
     // If recipe is not found -> throw 404 Not Found
@@ -973,9 +1008,6 @@ export class RecipeService {
       currentUserId !== undefined &&
       recipe.user_id !== null &&
       recipe.user_id === currentUserId;
-
-    const isStaff =
-      currentUserRole === Role.admin || currentUserRole === Role.moderator;
 
     if (recipe.is_active === false) {
       if (!isStaff) {
@@ -1237,30 +1269,17 @@ export class RecipeService {
         recipe.source_lang,
         targetLang,
       );
-      if (!res.success || res.translations.length !== textsToTranslate.length) {
+      const extracted = this.extractBatchTranslation(
+        res,
+        textsToTranslate,
+        recipe.title,
+        recipe.description,
+        recipe.steps.map(() => ({})),
+      );
+      if (!extracted) {
         overallTranslationSuccess = false;
       } else {
-        const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
-          res.translations;
-        const translatedSteps: Array<{
-          title?: string | null;
-          description: string;
-        }> = [];
-        for (let i = 0; i < recipe.steps.length; i++) {
-          const stepTitle = stepTexts[i * 2] || null;
-          const stepDesc = stepTexts[i * 2 + 1] || recipe.steps[i].description;
-          translatedSteps.push({
-            title: stepTitle,
-            description: stepDesc,
-          });
-        }
-        translationsByLocale[targetLang] = {
-          title: transTitle || recipe.title,
-          description: transDesc || recipe.description,
-          preservation: transPres || null,
-          tips: transTips || null,
-          steps: translatedSteps,
-        };
+        translationsByLocale[targetLang] = extracted;
       }
     }
 
@@ -1758,35 +1777,18 @@ export class RecipeService {
           recipe.source_lang,
           targetLang,
         );
-        if (!res.success || res.translations.length !== textsToTranslate.length) {
+        const extracted = this.extractBatchTranslation(
+          res,
+          textsToTranslate,
+          sourceTitle,
+          sourceDesc,
+          stepsToTranslate.map((step) => ({ stepNumber: step.step_number })),
+        );
+        if (!extracted) {
           overallSuccess = false;
           break;
         }
-        const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
-          res.translations;
-        const stepTranslations: Array<{
-          stepNumber: number;
-          title: string | null;
-          description: string;
-        }> = [];
-        for (let i = 0; i < stepsToTranslate.length; i++) {
-          const step = stepsToTranslate[i];
-          const sTitle = stepTexts[i * 2] || null;
-          const fallbackDesc = textsToTranslate[4 + i * 2 + 1] ?? '';
-          const sDesc = stepTexts[i * 2 + 1] || fallbackDesc;
-          stepTranslations.push({
-            stepNumber: step.step_number,
-            title: sTitle,
-            description: sDesc,
-          });
-        }
-        translatedDataByLocale[targetLang] = {
-          title: transTitle || sourceTitle,
-          description: transDesc || sourceDesc,
-          preservation: transPres || null,
-          tips: transTips || null,
-          steps: stepTranslations,
-        };
+        translatedDataByLocale[targetLang] = extracted;
       }
 
       // Update translation status based on batch translation result
@@ -2317,35 +2319,18 @@ export class RecipeService {
         recipe.source_lang,
         targetLang,
       );
-      if (!res.success || res.translations.length !== textsToTranslate.length) {
+      const extracted = this.extractBatchTranslation(
+        res,
+        textsToTranslate,
+        sourceTrans.title,
+        sourceTrans.description,
+        recipe.steps.map((step) => ({ stepId: step.id })),
+      );
+      if (!extracted) {
         overallSuccess = false;
         break;
       }
-      const [transTitle, transDesc, transPres, transTips, ...stepTexts] =
-        res.translations;
-      const stepTranslations: Array<{
-        stepId: number;
-        title: string | null;
-        description: string;
-      }> = [];
-      for (let i = 0; i < recipe.steps.length; i++) {
-        const step = recipe.steps[i];
-        const sTitle = stepTexts[i * 2] || null;
-        const fallbackDesc = textsToTranslate[4 + i * 2 + 1] ?? '';
-        const sDesc = stepTexts[i * 2 + 1] || fallbackDesc;
-        stepTranslations.push({
-          stepId: step.id,
-          title: sTitle,
-          description: sDesc,
-        });
-      }
-      translatedDataByLocale[targetLang] = {
-        title: transTitle || sourceTrans.title,
-        description: transDesc || sourceTrans.description,
-        preservation: transPres || null,
-        tips: transTips || null,
-        steps: stepTranslations,
-      };
+      translatedDataByLocale[targetLang] = extracted;
     }
 
     // If translation service failed, keep failed status and throw 503 Service Unavailable

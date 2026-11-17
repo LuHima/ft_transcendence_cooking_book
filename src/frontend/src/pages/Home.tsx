@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import KitchenScene from '../3d/components/KitchenScene'
+
+const KitchenScene = lazy(() => import('../3d/components/KitchenScene'))
 
 import { api, qs, toPage } from '../api/client'
 import { useAuth } from '../context/auth'
@@ -96,7 +97,9 @@ function Home({ active = true }: { active?: boolean }) {
 	return (
 		<div>
 			<section className="relative h-[70vh] w-full overflow-hidden">
-				<KitchenScene active={active} />
+				<Suspense fallback={<div className="h-full w-full bg-[#120d09]" />}>
+					<KitchenScene active={active} />
+				</Suspense>
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--wc-bg)] to-transparent p-8">
 					<h1 className="font-display text-4xl text-[var(--wc-text)] md:text-5xl">{t('home.heroTitle')}</h1>
 					<p className="mt-2 max-w-md text-[var(--wc-text-muted)]">{t('home.heroText')}</p>

@@ -6,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
+  USER_EVICT_EVENT,
+  type UserEvictEventPayload,
+} from '../notifications/notification-events';
+import {
   NotificationSubject,
   OwnerType,
   Prisma,
@@ -716,7 +720,8 @@ export class AdminService {
     });
 
     if (shouldEvictSessions) {
-      this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+      const evictPayload: UserEvictEventPayload = { userId: targetUserId };
+      this.eventEmitter?.emit(USER_EVICT_EVENT, evictPayload);
     }
 
     return this.mapToAdminUserResponse(updatedUser);
@@ -810,7 +815,8 @@ export class AdminService {
         });
       });
 
-      this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+      const evictPayload: UserEvictEventPayload = { userId: targetUserId };
+      this.eventEmitter?.emit(USER_EVICT_EVENT, evictPayload);
 
       return { message: 'User deactivated successfully' };
     } else {
@@ -896,7 +902,8 @@ export class AdminService {
         });
       });
 
-      this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+      const evictPayload: UserEvictEventPayload = { userId: targetUserId };
+      this.eventEmitter?.emit(USER_EVICT_EVENT, evictPayload);
 
       // Remove avatar from disk if present
       await this.safeUnlink(targetUser.avatar_url);
@@ -913,7 +920,7 @@ export class AdminService {
         .$queryRaw`SELECT id FROM "users" WHERE role = 'admin'::"Role" AND status = 'active'::"UserStatus" AND deleted_at IS NULL ORDER BY id FOR UPDATE`;
     }
     const activeAdminsCount = await tx.user.count({
-      where: { role: Role.admin, status: UserStatus.active },
+      where: { role: Role.admin, status: UserStatus.active, deleted_at: null },
     });
     if (activeAdminsCount <= 1) {
       throw createHttpException(errors.admin.lastAdminRequired);
