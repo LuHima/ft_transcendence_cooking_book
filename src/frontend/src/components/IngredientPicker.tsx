@@ -113,26 +113,22 @@ function IngredientPicker({ value, onChange, invalid }: IngredientPickerProps) {
 					) : (
 						<>
 							{options.map((i, index) => (
-								<li
-									key={i.id}
-									id={`${listId}-opt-${index}`}
-									role="option"
-									aria-selected={index === activeIndex}
-									tabIndex={-1}
-									// onMouseDown + preventDefault: select before the input blur
-									onMouseDown={(e) => {
-										e.preventDefault()
-										choose(i)
-									}}
-									onMouseEnter={() => setActiveIndex(index)}
-									className={`flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left text-sm text-[var(--wc-text)] ${
-										index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
-									}`}
-								>
-									<span className="truncate">{i.name}</span>
-									<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
-										{t(`ingredientCategory.${i.category}`)}
-									</span>
+								<li key={i.id} role="option" aria-selected={index === activeIndex}>
+									{/* onMouseDown + preventDefault: select before the input blur */}
+									<button
+										type="button"
+										onMouseDown={(e) => {
+											e.preventDefault()
+											choose(i)
+										}}
+										onMouseEnter={() => setActiveIndex(index)}
+										className={`block w-full px-3 py-2 text-left text-sm text-[var(--wc-text)] break-words ${
+											index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
+										}`}
+									>
+										{/* Name only: the category label made names hard to read in the recipe form */}
+										{i.name}
+									</button>
 								</li>
 							))}
 							{hasMore && (
