@@ -28,19 +28,24 @@ describe('FriendsService', () => {
               findFirst: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
               delete: jest.fn(),
+              deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
               count: jest.fn(),
             },
             user: {
               findUnique: jest.fn(),
-              findFirst: jest.fn(),
+              findFirst: jest.fn().mockResolvedValue({ id: 2 }),
             },
             notification: {
               deleteMany: jest.fn(),
             },
             userBlock: {
-              findFirst: jest.fn(),
+              findFirst: jest.fn().mockResolvedValue(null),
             },
+            $transaction: jest.fn((cb: any) =>
+              cb((prisma as any)),
+            ),
           },
         },
         {
@@ -134,8 +139,8 @@ describe('FriendsService', () => {
         id: 10,
         status: 'accepted',
       });
-      (prisma.friendship.delete as jest.Mock<any>).mockResolvedValue({
-        id: 10,
+      (prisma.friendship.deleteMany as jest.Mock<any>).mockResolvedValue({
+        count: 1,
       });
       (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({
         count: 2,
@@ -144,8 +149,8 @@ describe('FriendsService', () => {
       const result = await service.removeFriend(1, 2);
 
       expect(result).toEqual({ message: 'Friend removed successfully' });
-      expect(prisma.friendship.delete).toHaveBeenCalledWith({
-        where: { id: 10 },
+      expect(prisma.friendship.deleteMany).toHaveBeenCalledWith({
+        where: { id: 10, status: 'accepted' },
       });
       expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
         where: {
@@ -202,9 +207,12 @@ describe('FriendsService', () => {
 
     it('should throw ConflictException if pending request already sent', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
-      (prisma.friendship.findFirst as jest.Mock<any>)
-        .mockResolvedValueOnce(null) // no accepted
-        .mockResolvedValueOnce({ id: 8, status: 'pending' }); // already sent
+      (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValueOnce({
+        id: 8,
+        requester_id: 1,
+        addressee_id: 2,
+        status: 'pending',
+      });
 
       await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(ConflictException);
     });
@@ -212,16 +220,13 @@ describe('FriendsService', () => {
     it('should throw ConflictException if recipient rejected request within 30 days', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
       const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-      (prisma.friendship.findFirst as jest.Mock<any>)
-        .mockResolvedValueOnce(null) // no accepted
-        .mockResolvedValueOnce(null) // no outgoing pending
-        .mockResolvedValueOnce({
-          id: 9,
-          requester_id: 1,
-          addressee_id: 2,
-          status: 'rejected',
-          updated_at: tenDaysAgo,
-        }); // rejected within cooldown
+      (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValueOnce({
+        id: 9,
+        requester_id: 1,
+        addressee_id: 2,
+        status: 'rejected',
+        updated_at: tenDaysAgo,
+      });
 
       await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(
         new ConflictException('Friend request cannot be sent to this user'),
@@ -231,16 +236,13 @@ describe('FriendsService', () => {
     it('should re-activate request if recipient rejected request more than 30 days ago', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
       const fortyDaysAgo = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
-      (prisma.friendship.findFirst as jest.Mock<any>)
-        .mockResolvedValueOnce(null) // no accepted
-        .mockResolvedValueOnce(null) // no outgoing pending
-        .mockResolvedValueOnce({
-          id: 9,
-          requester_id: 1,
-          addressee_id: 2,
-          status: 'rejected',
-          updated_at: fortyDaysAgo,
-        }); // rejected past cooldown
+      (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValueOnce({
+        id: 9,
+        requester_id: 1,
+        addressee_id: 2,
+        status: 'rejected',
+        updated_at: fortyDaysAgo,
+      });
 
       (prisma.friendship.update as jest.Mock<any>).mockResolvedValue({
         id: 9,
@@ -269,17 +271,13 @@ describe('FriendsService', () => {
     it('should allow user who previously rejected a request to initiate request at any time', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
       const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-      (prisma.friendship.findFirst as jest.Mock<any>)
-        .mockResolvedValueOnce(null) // no accepted
-        .mockResolvedValueOnce(null) // no outgoing pending
-        .mockResolvedValueOnce(null) // no outgoing rejected (requester -> recipient)
-        .mockResolvedValueOnce({
-          id: 11,
-          requester_id: 2,
-          addressee_id: 1,
-          status: 'rejected',
-          updated_at: twoDaysAgo,
-        }); // incoming rejected (recipient was rejected by requester)
+      (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValueOnce({
+        id: 11,
+        requester_id: 2,
+        addressee_id: 1,
+        status: 'rejected',
+        updated_at: twoDaysAgo,
+      });
 
       (prisma.friendship.update as jest.Mock<any>).mockResolvedValue({
         id: 11,
@@ -311,21 +309,15 @@ describe('FriendsService', () => {
 
     it('should auto-accept if recipient already sent pending request and prune caller notification', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
-      (prisma.friendship.findFirst as jest.Mock<any>)
-        .mockResolvedValueOnce(null) // no accepted
-        .mockResolvedValueOnce(null) // no outgoing pending
-        .mockResolvedValueOnce(null) // no outgoing rejected
-        .mockResolvedValueOnce(null) // no reverse rejected
-        .mockResolvedValueOnce({
-          id: 12,
-          requester_id: 2,
-          addressee_id: 1,
-          status: 'pending',
-        }); // incoming pending
-
-      (prisma.friendship.update as jest.Mock<any>).mockResolvedValue({
+      (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValueOnce({
         id: 12,
-        status: 'accepted',
+        requester_id: 2,
+        addressee_id: 1,
+        status: 'pending',
+      });
+
+      (prisma.friendship.updateMany as jest.Mock<any>).mockResolvedValue({
+        count: 1,
       });
       (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({
         count: 1,
@@ -337,8 +329,8 @@ describe('FriendsService', () => {
         message: 'Friend request accepted',
         status: 'accepted',
       });
-      expect(prisma.friendship.update).toHaveBeenCalledWith({
-        where: { id: 12 },
+      expect(prisma.friendship.updateMany).toHaveBeenCalledWith({
+        where: { id: 12, status: 'pending' },
         data: {
           status: 'accepted',
           updated_at: expect.any(Date),
@@ -360,11 +352,13 @@ describe('FriendsService', () => {
     it('should idempotently handle duplicate requests when unique constraint collision occurs', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
       (prisma.friendship.findFirst as jest.Mock<any>)
-        .mockResolvedValueOnce(null) // no accepted
-        .mockResolvedValueOnce(null) // no outgoing pending
-        .mockResolvedValueOnce(null) // no outgoing rejected
-        .mockResolvedValueOnce(null) // no reverse rejected
-        .mockResolvedValueOnce(null); // no incoming pending
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 14,
+          requester_id: 1,
+          addressee_id: 2,
+          status: 'pending',
+        });
 
       const p2002Error = new Prisma.PrismaClientKnownRequestError(
         'Unique constraint violation',
@@ -382,14 +376,115 @@ describe('FriendsService', () => {
       });
     });
 
-    it('should create pending request and emit notification when no prior relation exists', async () => {
+    it('should auto-accept when P2002 race was won by reverse request from recipient', async () => {
       (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
       (prisma.friendship.findFirst as jest.Mock<any>)
-        .mockResolvedValueOnce(null) // no accepted
-        .mockResolvedValueOnce(null) // no outgoing pending
-        .mockResolvedValueOnce(null) // no outgoing rejected
-        .mockResolvedValueOnce(null) // no reverse rejected
-        .mockResolvedValueOnce(null); // no incoming pending
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 99,
+          requester_id: 2,
+          addressee_id: 1,
+          status: 'pending',
+        });
+
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint violation',
+        { code: 'P2002', clientVersion: '7.8.0' },
+      );
+      (prisma.friendship.create as jest.Mock<any>).mockRejectedValue(
+        p2002Error,
+      );
+      (prisma.friendship.updateMany as jest.Mock<any>).mockResolvedValue({
+        count: 1,
+      });
+
+      const result = await service.sendFriendRequest(1, 2);
+
+      expect(result).toEqual({
+        message: 'Friend request accepted',
+        status: 'accepted',
+      });
+      expect(notificationEmit.notification).toHaveBeenCalledWith(
+        { id_user: 1, id_target: 2 },
+        { subject: 'user', action: 'friend_accept' },
+      );
+    });
+
+    it('should throw ConflictException on P2002 when raced friendship is rejected within cooldown', async () => {
+      (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      (prisma.friendship.findFirst as jest.Mock<any>)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 100,
+          requester_id: 1,
+          addressee_id: 2,
+          status: 'rejected',
+          updated_at: fiveDaysAgo,
+        });
+
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint violation',
+        { code: 'P2002', clientVersion: '7.8.0' },
+      );
+      (prisma.friendship.create as jest.Mock<any>).mockRejectedValue(
+        p2002Error,
+      );
+
+      await expect(service.sendFriendRequest(1, 2)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should retry transition and emit friend_request notification on P2002 when raced rejection is past cooldown', async () => {
+      (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
+      const fortyDaysAgo = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000);
+      (prisma.friendship.findFirst as jest.Mock<any>)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 101,
+          requester_id: 1,
+          addressee_id: 2,
+          status: 'rejected',
+          updated_at: fortyDaysAgo,
+        })
+        .mockResolvedValueOnce({
+          id: 101,
+          requester_id: 1,
+          addressee_id: 2,
+          status: 'rejected',
+          updated_at: fortyDaysAgo,
+        });
+
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint violation',
+        { code: 'P2002', clientVersion: '7.8.0' },
+      );
+      (prisma.friendship.create as jest.Mock<any>).mockRejectedValueOnce(
+        p2002Error,
+      );
+      (prisma.friendship.update as jest.Mock<any>).mockResolvedValueOnce({
+        id: 101,
+        status: 'pending',
+      });
+
+      const result = await service.sendFriendRequest(1, 2);
+
+      expect(result).toEqual({
+        message: 'Friend request sent',
+        status: 'pending',
+      });
+      expect(notificationEmit.notification).toHaveBeenCalledWith(
+        { id_user: 1, id_target: 2 },
+        { subject: 'user', action: 'friend_request' },
+      );
+    });
+
+    it('should create pending request and emit notification when no prior relation exists', async () => {
+      (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
+      (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValueOnce(
+        null,
+      );
 
       (prisma.friendship.create as jest.Mock<any>).mockResolvedValue({
         id: 15,
@@ -468,13 +563,14 @@ describe('FriendsService', () => {
 
   describe('acceptFriendRequest', () => {
     it('should accept pending request, emit notification, and delete incoming request notification', async () => {
+      (prisma.userBlock.findFirst as jest.Mock<any>).mockResolvedValue(null);
+      (prisma.user.findFirst as jest.Mock<any>).mockResolvedValue({ id: 2 });
       (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValue({
         id: 20,
         status: 'pending',
       });
-      (prisma.friendship.update as jest.Mock<any>).mockResolvedValue({
-        id: 20,
-        status: 'accepted',
+      (prisma.friendship.updateMany as jest.Mock<any>).mockResolvedValue({
+        count: 1,
       });
       (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({
         count: 1,
@@ -483,8 +579,8 @@ describe('FriendsService', () => {
       const result = await service.acceptFriendRequest(1, 2);
 
       expect(result).toEqual({ message: 'Friend request accepted' });
-      expect(prisma.friendship.update).toHaveBeenCalledWith({
-        where: { id: 20 },
+      expect(prisma.friendship.updateMany).toHaveBeenCalledWith({
+        where: { id: 20, status: 'pending' },
         data: {
           status: 'accepted',
           updated_at: expect.any(Date),
@@ -503,6 +599,21 @@ describe('FriendsService', () => {
       );
     });
 
+    it('should throw NotFoundException if requester is blocked or inactive', async () => {
+      (prisma.userBlock.findFirst as jest.Mock<any>).mockResolvedValueOnce({
+        id: 1,
+      });
+      await expect(service.acceptFriendRequest(1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      (prisma.userBlock.findFirst as jest.Mock<any>).mockResolvedValueOnce(null);
+      (prisma.user.findFirst as jest.Mock<any>).mockResolvedValueOnce(null);
+      await expect(service.acceptFriendRequest(1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
     it('should throw NotFoundException if request does not exist', async () => {
       (prisma.friendship.findFirst as jest.Mock<any>).mockResolvedValue(null);
 
@@ -516,9 +627,8 @@ describe('FriendsService', () => {
         id: 25,
         status: 'pending',
       });
-      (prisma.friendship.update as jest.Mock<any>).mockResolvedValue({
-        id: 25,
-        status: 'rejected',
+      (prisma.friendship.updateMany as jest.Mock<any>).mockResolvedValue({
+        count: 1,
       });
       (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({
         count: 1,
@@ -527,8 +637,8 @@ describe('FriendsService', () => {
       const result = await service.rejectFriendRequest(1, 2);
 
       expect(result).toEqual({ message: 'Friend request rejected' });
-      expect(prisma.friendship.update).toHaveBeenCalledWith({
-        where: { id: 25 },
+      expect(prisma.friendship.updateMany).toHaveBeenCalledWith({
+        where: { id: 25, status: 'pending' },
         data: {
           status: 'rejected',
           updated_at: expect.any(Date),
@@ -553,13 +663,19 @@ describe('FriendsService', () => {
         id: 30,
         status: 'pending',
       });
-      (prisma.friendship.delete as jest.Mock<any>).mockResolvedValue({ id: 30 });
-      (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({ count: 1 });
+      (prisma.friendship.deleteMany as jest.Mock<any>).mockResolvedValue({
+        count: 1,
+      });
+      (prisma.notification.deleteMany as jest.Mock<any>).mockResolvedValue({
+        count: 1,
+      });
 
       const result = await service.cancelFriendRequest(1, 2);
 
       expect(result).toEqual({ message: 'Friend request cancelled' });
-      expect(prisma.friendship.delete).toHaveBeenCalledWith({ where: { id: 30 } });
+      expect(prisma.friendship.deleteMany).toHaveBeenCalledWith({
+        where: { id: 30, status: 'pending' },
+      });
       expect(prisma.notification.deleteMany).toHaveBeenCalledWith({
         where: { user_id: 2, actor_id: 1, action: 'friend_request' },
       });

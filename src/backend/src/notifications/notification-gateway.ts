@@ -16,6 +16,12 @@ import {
 } from 'src/common/config/error.config';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { resolveActiveJwtUser } from 'src/common/guards/auth.guard';
+import { getBlockedUserIds } from './notification-emit';
+import {
+  USER_EVICT_EVENT,
+  type UserEvictEventPayload,
+} from './notification-events';
 
 /*
  * Quando si usa WebSocket si aggancia allo stesso server e utilizza la stessa
@@ -46,9 +52,14 @@ export class NotificationGateway
       .split(';')
       .find((str) => str.trim().startsWith('accessToken='));
     if (!accessToken) return '';
-    const jwt = accessToken.split('=');
-    if (!jwt) return '';
-    return jwt[1];
+    const eqIdx = accessToken.indexOf('=');
+    if (eqIdx === -1) return '';
+    const rawValue = accessToken.slice(eqIdx + 1).trim();
+    try {
+      return decodeURIComponent(rawValue);
+    } catch {
+      return rawValue;
+    }
   }
 
   private handleJwtVerification(jwt: string) {
@@ -70,12 +81,14 @@ export class NotificationGateway
       },
       select: { requester_id: true, addressee_id: true },
     });
-    return friendships.map((f) => {
-      const friendId = f.requester_id === id ? f.addressee_id : f.requester_id;
-      return {
-        friend_id: friendId,
-      };
-    });
+
+    const blockedSet = await getBlockedUserIds(this.prisma, id);
+
+    return friendships
+      .map((f) => ({
+        friend_id: f.requester_id === id ? f.addressee_id : f.requester_id,
+      }))
+      .filter((f) => !blockedSet.has(f.friend_id));
   }
 
   private async statusUser(idUser: number, online: boolean) {
@@ -109,7 +122,13 @@ export class NotificationGateway
       const payload = this.handleJwtVerification(jwt);
       if (!payload.sub || payload.type !== 'access')
         throw createWebSocketException(errors.socket.unauthorized);
-      client.data.user = { ...payload, id: payload.sub };
+
+      const activeUser = await resolveActiveJwtUser(this.prisma, payload);
+      if (!activeUser) {
+        throw createWebSocketException(errors.socket.unauthorized);
+      }
+
+      client.data.user = { ...payload, ...activeUser };
       client.join('room-' + payload.sub);
       // creo le stanze in maniere che piu utenti che entrano nello stesso
       // dispositivo ricevano le notifiche
@@ -162,6 +181,12 @@ export class NotificationGateway
         //        message: userNotification.message,
         target: userNotification.target,
       });
+  }
+
+  @OnEvent(USER_EVICT_EVENT)
+  handleUserEviction(payload: UserEvictEventPayload) {
+    if (!payload?.userId || !this.server) return;
+    this.server.in?.('room-' + payload.userId)?.disconnectSockets(true);
   }
 }
 

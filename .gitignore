@@ -29,8 +29,8 @@ db_data/
 postgres_data/
 
 # Prisma migrations
-# !**/prisma/migrations/**/*.sql
-src/backend/prisma/migrations
+!**/prisma/migrations/**/*.sql
+# src/backend/prisma/migrations
 src/backend/prisma/.migrations_archive/
 
 # ---------------------------------------------------------------------------- #

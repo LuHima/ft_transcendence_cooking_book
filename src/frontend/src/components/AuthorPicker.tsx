@@ -159,6 +159,7 @@ function AuthorPicker({ authorId, onChange }: AuthorPickerProps) {
 					aria-expanded={open && (options.length > 0 || status !== null)}
 					aria-controls={listId}
 					aria-autocomplete="list"
+					aria-activedescendant={open && options[activeIndex] ? `${listId}-opt-${activeIndex}` : undefined}
 					aria-busy={loading}
 					autoComplete="off"
 					placeholder={t('search.authorPlaceholder')}
@@ -179,21 +180,23 @@ function AuthorPicker({ authorId, onChange }: AuthorPickerProps) {
 						className="absolute left-0 right-0 top-full z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg"
 					>
 						{options.map((o, index) => (
-							<li key={o.id} role="option" aria-selected={index === activeIndex}>
-								<button
-									type="button"
-									onMouseDown={(e) => {
-										e.preventDefault()
-										choose(o)
-									}}
-									onMouseEnter={() => setActiveIndex(index)}
-									className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-sm text-[var(--wc-text)] ${
-										index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
-									}`}
-								>
-									<span className="truncate">@{o.username}</span>
-									{o.isMe && <span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">{t('search.you')}</span>}
-								</button>
+							<li
+								key={o.id}
+								id={`${listId}-opt-${index}`}
+								role="option"
+								aria-selected={index === activeIndex}
+								tabIndex={-1}
+								onMouseDown={(e) => {
+									e.preventDefault()
+									choose(o)
+								}}
+								onMouseEnter={() => setActiveIndex(index)}
+								className={`flex w-full cursor-pointer items-center justify-between px-3 py-1.5 text-left text-sm text-[var(--wc-text)] ${
+									index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
+								}`}
+							>
+								<span className="truncate">@{o.username}</span>
+								{o.isMe && <span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">{t('search.you')}</span>}
 							</li>
 						))}
 						{status && (

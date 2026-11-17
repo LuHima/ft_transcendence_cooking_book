@@ -2639,7 +2639,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Recipe deleted or suspended successfully"
+            "description": "Recipe deleted or suspended successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeMessageResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid recipe ID format (must be an integer)",
@@ -2766,6 +2773,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiInternalServerErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Translation service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiServiceUnavailableResponseDto"
                 }
               }
             }
@@ -8151,7 +8168,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Ingredient deleted successfully"
+            "description": "Ingredient deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogMessageResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
@@ -8386,7 +8410,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Tag deleted successfully"
+            "description": "Tag deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogMessageResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Authentication required: missing or invalid accessToken cookie",
@@ -9100,14 +9131,14 @@
           "email": {
             "type": "string",
             "description": "Registered user email address",
-            "example": "mario.rossi@example.com",
+            "example": "mario@example.com",
             "maxLength": 255,
             "format": "email"
           },
           "password": {
             "type": "string",
             "description": "User account password (minimum 9 characters)",
-            "example": "SuperSecret123!",
+            "example": "Password123",
             "minLength": 9,
             "maxLength": 72
           }
@@ -9229,7 +9260,7 @@
           "password": {
             "type": "string",
             "description": "User account password (minimum 9 characters)",
-            "example": "SuperSecret123!",
+            "example": "Password123",
             "minLength": 9,
             "maxLength": 72
           },
@@ -9624,6 +9655,15 @@
             "description": "Author avatar photo URL",
             "example": "/api/media/avatars/1/chef_mario.webp",
             "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "moderator",
+              "user"
+            ],
+            "description": "Author account role when included in staff/detail views"
           }
         },
         "required": [
@@ -11171,6 +11211,85 @@
           "message"
         ]
       },
+      "ApiServiceUnavailableResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code representing an upstream service or dependency temporarily unavailable",
+            "example": 503
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 formatted timestamp of when the error occurred",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested URL path that produced the error",
+            "example": "/api/recipes/42/translate"
+          },
+          "message": {
+            "type": "string",
+            "description": "Service unavailable message",
+            "example": "Translation service is currently unavailable. Please try again later."
+          }
+        },
+        "required": [
+          "statusCode",
+          "timestamp",
+          "path",
+          "message"
+        ]
+      },
+      "UpdateRecipeStepDto": {
+        "type": "object",
+        "properties": {
+          "step_number": {
+            "type": "number",
+            "description": "1-based sequential step order number",
+            "example": 1,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional summary title for this step (max 255 characters; empty resolves to null)",
+            "example": "Preparare il guanciale",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed instructions for this step in source_lang",
+            "example": "Tagliare il guanciale a striscioline spesse mezzo centimetro.",
+            "maxLength": 2000
+          },
+          "duration": {
+            "type": "number",
+            "description": "Step duration in minutes (0 to 8760)",
+            "example": 10,
+            "minimum": 0,
+            "maximum": 8760
+          },
+          "id": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Existing step ID used to preserve step image and translations when reordering or deleting steps",
+            "example": 10
+          },
+          "image_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional existing or cleared step image URL preserved during update",
+            "example": "/api/media/recipes/42/step-1.webp"
+          }
+        },
+        "required": [
+          "step_number",
+          "description"
+        ]
+      },
       "UpdateRecipeDto": {
         "type": "object",
         "properties": {
@@ -11268,11 +11387,11 @@
             "type": "string"
           },
           "steps": {
-            "description": "Ordered sequence of recipe preparation steps (1 to 50 steps)",
+            "description": "Ordered sequence of recipe preparation steps (minimum 1 step)",
             "minItems": 1,
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CreateRecipeStepDto"
+              "$ref": "#/components/schemas/UpdateRecipeStepDto"
             }
           },
           "ingredients": {
@@ -14216,6 +14335,19 @@
         },
         "required": [
           "translations"
+        ]
+      },
+      "CatalogMessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Confirmation message",
+            "example": "Catalog entry deleted successfully"
+          }
+        },
+        "required": [
+          "message"
         ]
       },
       "CreateTagDto": {

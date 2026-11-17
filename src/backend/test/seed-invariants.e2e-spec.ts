@@ -1,5 +1,6 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
 import * as fs from 'fs';
+import * as path from 'path';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
   FriendshipStatus,
@@ -22,8 +23,22 @@ describe('Database Seed Invariants (e2e against PostgreSQL)', () => {
   let prisma: PrismaClient;
 
   beforeAll(async () => {
+    dotenv.config();
+    dotenv.config({
+      path: path.resolve(__dirname, '../../../docker/.env'),
+    });
+
+    const fallbackUser = process.env.POSTGRES_USER ?? 'postgres';
+    const fallbackPass = process.env.POSTGRES_PASSWORD ?? '';
+    const fallbackDb = process.env.POSTGRES_DB ?? 'wecook';
+    const rawUrl = process.env.DATABASE_URL?.trim();
+    const connectionString =
+      rawUrl && !rawUrl.includes(':@')
+        ? rawUrl
+        : `postgresql://${encodeURIComponent(fallbackUser)}:${encodeURIComponent(fallbackPass)}@localhost:5432/${encodeURIComponent(fallbackDb)}?schema=public`;
+
     const adapter = new PrismaPg({
-      connectionString: process.env.DATABASE_URL ?? '',
+      connectionString,
     });
     prisma = new PrismaClient({ adapter });
     await runSeed(prisma, {

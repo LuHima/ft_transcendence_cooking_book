@@ -1,29 +1,30 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, useLocation, useNavigate, type Location } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
-
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Profile from './pages/Profile'
-import Anagrafica from './pages/Anagrafica'
-import Favorites from './pages/Favorites'
-import MyRecipes from './pages/MyRecipes'
-import RecipeForm from './pages/RecipeForm'
-import RecipeDetail from './pages/RecipeDetail'
-import SearchResults from './pages/SearchResults'
-import Contacts from './pages/Contacts'
-import About from './pages/About'
-import Privacy from './pages/Privacy'
-import Terms from './pages/Terms'
-import UserProfile from './pages/UserProfile'
-import Friends from './pages/Friends'
-import Admin from './pages/admin/Admin'
-import Moderation from './pages/Moderation'
-import NotFound from './pages/NotFound'
 import { useDialogDismiss } from './lib/useDialogDismiss'
+
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Profile = lazy(() => import('./pages/Profile'))
+const Anagrafica = lazy(() => import('./pages/Anagrafica'))
+const Favorites = lazy(() => import('./pages/Favorites'))
+const MyRecipes = lazy(() => import('./pages/MyRecipes'))
+const RecipeForm = lazy(() => import('./pages/RecipeForm'))
+const RecipeDetail = lazy(() => import('./pages/RecipeDetail'))
+const SearchResults = lazy(() => import('./pages/SearchResults'))
+const Contacts = lazy(() => import('./pages/Contacts'))
+const About = lazy(() => import('./pages/About'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Terms = lazy(() => import('./pages/Terms'))
+const UserProfile = lazy(() => import('./pages/UserProfile'))
+const Friends = lazy(() => import('./pages/Friends'))
+const Admin = lazy(() => import('./pages/admin/Admin'))
+const Moderation = lazy(() => import('./pages/Moderation'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
 function RecipeDetailOverlay() {
 	const { t } = useTranslation()
@@ -47,7 +48,9 @@ function RecipeDetailOverlay() {
 					← {t('recipe.backToKitchen')}
 				</button>
 			</div>
-			<RecipeDetail />
+			<Suspense fallback={null}>
+				<RecipeDetail />
+			</Suspense>
 		</div>
 	)
 }

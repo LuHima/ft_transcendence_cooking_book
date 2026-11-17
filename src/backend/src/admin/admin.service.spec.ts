@@ -494,6 +494,9 @@ describe('AdminService', () => {
       await expect(
         service.updateUser(3, { role: Role.user }, 1),
       ).rejects.toThrow(HttpException);
+      expect(prisma.user.count).toHaveBeenCalledWith({
+        where: { role: Role.admin, status: UserStatus.active, deleted_at: null },
+      });
     });
 
     it('enforces last-admin safeguard: rejects disabling the last active administrator', async () => {
@@ -635,7 +638,7 @@ describe('AdminService', () => {
       expect(result.deleted_at).toBeNull();
       expect(prisma.recipe.updateMany).toHaveBeenCalledWith({
         where: { user_id: 2, is_active: true },
-        data: { is_active: false },
+        data: { is_active: false, suspended_by_ban: true },
       });
       expect(prisma.jwtSession.deleteMany).toHaveBeenCalledWith({
         where: { id_user: 2 },
@@ -745,7 +748,7 @@ describe('AdminService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('leaves is_active=false recipes suspended when unbanning banned -> active and defaults blank unban_reason', async () => {
+    it('restores only ban-suspended recipes (suspended_by_ban: true) when unbanning banned -> active and defaults blank unban_reason', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue({
         ...mockTargetUser,
         status: UserStatus.banned,
@@ -765,7 +768,17 @@ describe('AdminService', () => {
         1,
       );
 
-      expect(prisma.recipe.updateMany).not.toHaveBeenCalled();
+      expect(prisma.recipe.updateMany).toHaveBeenCalledWith({
+        where: {
+          user_id: 2,
+          is_active: false,
+          suspended_by_ban: true,
+        },
+        data: {
+          is_active: true,
+          suspended_by_ban: false,
+        },
+      });
       expect(mockBanHistoryService.recordUnban).toHaveBeenCalledWith(
         2,
         1,
@@ -911,6 +924,53 @@ describe('AdminService', () => {
       expect(prisma.user.delete).toHaveBeenCalledWith({
         where: { id: 2 },
       });
+    });
+
+    it('tombstones root comments with third-party replies and dismisses open reports on hard delete', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockTargetUser);
+      (prisma as any).comment.findMany = jest
+        .fn()
+        .mockResolvedValue([{ id: 77 }]);
+      (prisma as any).report = {
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      };
+      (prisma as any).notification = {
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      };
+
+      try {
+        await service.deleteUser(2, 1, true);
+
+        expect(prisma.comment.updateMany).toHaveBeenCalledWith({
+          where: {
+            user_id: 2,
+            replies: {
+              some: {
+                OR: [
+                  { user_id: { not: 2 } },
+                  { user_id: null, is_active: true },
+                ],
+              },
+            },
+          },
+          data: {
+            user_id: null,
+            is_active: false,
+            content: '',
+          },
+        });
+        expect((prisma as any).report.updateMany).toHaveBeenCalled();
+        expect((prisma as any).notification.deleteMany).toHaveBeenCalledWith({
+          where: {
+            subject: 'comment',
+            target_id: { in: [77] },
+          },
+        });
+      } finally {
+        delete (prisma as any).comment.findMany;
+        delete (prisma as any).report;
+        delete (prisma as any).notification;
+      }
     });
   });
 

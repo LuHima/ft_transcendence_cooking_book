@@ -101,14 +101,14 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
       jest.restoreAllMocks();
     });
 
-    it('skips recipes, social, and moderation seeders when recipe.count() > 0', async () => {
+    it('skips recipes, social, and moderation seeders when seed counts are already satisfied', async () => {
       jest.spyOn(catalogSeeder, 'seedCatalog').mockResolvedValue();
       const recipesSpy = jest
         .spyOn(recipesSeeder, 'seedRecipes')
-        .mockResolvedValue();
+        .mockResolvedValue({} as never);
       const socialSpy = jest
         .spyOn(socialSeeder, 'seedSocial')
-        .mockResolvedValue();
+        .mockResolvedValue({} as never);
       const modSpy = jest
         .spyOn(moderationSeeder, 'seedModeration')
         .mockResolvedValue();
@@ -123,6 +123,8 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
             ),
         },
         recipe: { count: jest.fn().mockResolvedValue(50) },
+        friendship: { count: jest.fn().mockResolvedValue(5) },
+        report: { count: jest.fn().mockResolvedValue(5) },
       };
 
       await runSeed(mockPrisma as never, { DB_SEED_ENV: 'dev' });
@@ -130,6 +132,70 @@ describe('Users Seeder, 2FA Encryption & Non-Destructive Idempotency (#200)', ()
       expect(recipesSpy).not.toHaveBeenCalled();
       expect(socialSpy).not.toHaveBeenCalled();
       expect(modSpy).not.toHaveBeenCalled();
+    });
+
+    it('resets and re-seeds when partial recipe seed state is detected', async () => {
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wecook-partial-'));
+      jest.spyOn(catalogSeeder, 'seedCatalog').mockResolvedValue();
+      const recipesSpy = jest
+        .spyOn(recipesSeeder, 'seedRecipes')
+        .mockResolvedValue({} as never);
+      const socialSpy = jest
+        .spyOn(socialSeeder, 'seedSocial')
+        .mockResolvedValue({} as never);
+      const modSpy = jest
+        .spyOn(moderationSeeder, 'seedModeration')
+        .mockResolvedValue();
+      const del = () => ({ deleteMany: jest.fn().mockResolvedValue({ count: 0 }) });
+
+      const mockPrisma = {
+        user: {
+          upsert: jest
+            .fn()
+            .mockImplementation(
+              ({ create }: { create: Record<string, unknown> }) =>
+                Promise.resolve({ id: 1, ...create }),
+            ),
+          deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        },
+        recipe: {
+          count: jest.fn().mockResolvedValue(1),
+          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+        friendship: {
+          count: jest.fn().mockResolvedValue(0),
+          deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        },
+        report: {
+          count: jest.fn().mockResolvedValue(0),
+          deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        },
+        banHistory: del(),
+        userBlock: del(),
+        jwtSession: del(),
+        notification: del(),
+        like: del(),
+        comment: del(),
+        recipeMedia: del(),
+        recipeStepTranslation: del(),
+        recipeStep: del(),
+        recipeIngredient: del(),
+        recipeTag: del(),
+        recipeTranslation: del(),
+      };
+
+      try {
+        await runSeed(mockPrisma as never, {
+          DB_SEED_ENV: 'dev',
+          UPLOADS_DIR: tmpDir,
+        });
+
+        expect(recipesSpy).toHaveBeenCalledTimes(1);
+        expect(socialSpy).toHaveBeenCalledTimes(1);
+        expect(modSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
     });
 
     it('deletes all domain tables in FK order and cleans UPLOADS_DIR/recipes on reset', async () => {

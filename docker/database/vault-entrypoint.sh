@@ -49,22 +49,35 @@ vault_request() {
 
 echo "=== Authenticating to Vault (database-role) ==="
 
-vault_request POST "${VAULT_ADDR}/v1/auth/approle/login" "" \
-	"{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}"
-
-if [ "$VAULT_HTTP_CODE" -ne 200 ]; then
-	if [ "$VAULT_HTTP_CODE" -eq 400 ] || [ "$VAULT_HTTP_CODE" -eq 403 ]; then
+VAULT_TOKEN=""
+VAULT_HTTP_CODE=0
+VAULT_RESP_BODY=""
+attempts=0
+while [ "$attempts" -lt 30 ]; do
+	if ! vault_request POST "${VAULT_ADDR}/v1/auth/approle/login" "" \
+		"{\"role_id\":\"${VAULT_ROLE_ID}\",\"secret_id\":\"${VAULT_SECRET_ID}\"}"; then
+		VAULT_HTTP_CODE=0
+		VAULT_RESP_BODY="connection error"
+	elif [ "$VAULT_HTTP_CODE" -eq 200 ]; then
+		VAULT_TOKEN=$(echo "$VAULT_RESP_BODY" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+		if [ -z "$VAULT_TOKEN" ]; then
+			echo "ERROR: Failed to parse client_token from Vault AppRole login response." >&2
+			exit 1
+		fi
+		break
+	elif [ "$VAULT_HTTP_CODE" -eq 400 ] || [ "$VAULT_HTTP_CODE" -eq 403 ]; then
 		echo "ERROR: Vault AppRole login rejected for database-role (HTTP ${VAULT_HTTP_CODE}): ${VAULT_RESP_BODY}. Check DATABASE_VAULT_ROLE_ID and DATABASE_VAULT_SECRET_ID in docker/.env (they must match the active Vault instance; run 'make vault-init' to resync)." >&2
-	else
-		echo "ERROR: Vault AppRole login failed for database-role (HTTP ${VAULT_HTTP_CODE}): ${VAULT_RESP_BODY}." >&2
+		exit 1
 	fi
-	exit 1
-fi
-
-VAULT_TOKEN=$(echo "$VAULT_RESP_BODY" | grep -o '"client_token":"[^"]*"' | cut -d'"' -f4)
+	attempts=$((attempts + 1))
+	if [ "$attempts" -lt 30 ]; then
+		echo "Vault not ready (HTTP ${VAULT_HTTP_CODE}: ${VAULT_RESP_BODY}, attempt ${attempts}/30), retrying in 5s..."
+		sleep 5
+	fi
+done
 
 if [ -z "$VAULT_TOKEN" ]; then
-	echo "ERROR: Failed to parse client_token from Vault AppRole login response." >&2
+	echo "ERROR: Vault AppRole login failed for database-role after ${attempts} attempts (HTTP ${VAULT_HTTP_CODE}): ${VAULT_RESP_BODY}." >&2
 	exit 1
 fi
 
@@ -83,6 +96,8 @@ if [ -z "$POSTGRES_PASSWORD" ]; then
 	echo "ERROR: POSTGRES_PASSWORD not found in Vault response." >&2
 	exit 1
 fi
+
+unset VAULT_SECRET_ID VAULT_TOKEN VAULT_RESP_BODY VAULT_HTTP_CODE _raw
 
 echo "=== Secret retrieved successfully. Starting PostgreSQL ==="
 

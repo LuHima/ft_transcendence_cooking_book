@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by daromoli, gmercuri, mdalloli, lhima, sel-khao.*
+_This project has been created as part of the 42 curriculum by daromoli, gmercuri, mdalloli, lhima, sel-khao._
 
 <p align="center">
   <img src="fern/assets/logo.svg" alt="WeCook logo" width="140" />
@@ -117,31 +117,31 @@ On startup the backend applies the Prisma migrations and seeds the database with
 
 ### Useful commands
 
-| Command | Description |
-| --- | --- |
-| `make` | Start the stack (dev or prod according to `PRODUCTION_FLAG`) |
-| `make dev` | Development stack: hot reload, ports 5432 / 5555 |
-| `make prod` | Production stack: hardened images, no debug ports |
-| `make down` | Stop and remove containers (keeps data) |
-| `make re` | Rebuild everything from scratch (deletes volumes) |
-| `make logs [service]` / `make logsf [service]` | Show / follow logs |
-| `make exec <service>` | Open a shell in a container |
-| `make db-reset` | Reset the database and re-seed |
-| `make db-studio start` | Open Prisma Studio on port 5555 |
-| `make api` | Regenerate `openapi.json` and the Postman collection |
-| `make postman-test` | Run the API contract tests with Newman |
-| `make help` | List every target |
+| Command                                        | Description                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------ |
+| `make`                                         | Start the stack (dev or prod according to `PRODUCTION_FLAG`) |
+| `make dev`                                     | Development stack: hot reload, ports 5432 / 5555             |
+| `make prod`                                    | Production stack: hardened images, no debug ports            |
+| `make down`                                    | Stop and remove containers (keeps data)                      |
+| `make re`                                      | Rebuild everything from scratch (deletes volumes)            |
+| `make logs [service]` / `make logsf [service]` | Show / follow logs                                           |
+| `make exec <service>`                          | Open a shell in a container                                  |
+| `make db-reset`                                | Reset the database and re-seed                               |
+| `make db-studio start`                         | Open Prisma Studio on port 5555                              |
+| `make api`                                     | Regenerate `openapi.json` and the Postman collection         |
+| `make postman-test`                            | Run the API contract tests with Newman                       |
+| `make help`                                    | List every target                                            |
 
 ### Demo accounts
 
 All seeded accounts use the password `Password123`.
 
-| Email | Role |
-| --- | --- |
-| `marghe@example.com` | admin |
-| `sarah@example.com` | moderator |
-| `mario@example.com`, `giulia@example.com`, `marco@example.com`, … | user |
-| `alex2fa@example.com` | user with 2FA enabled |
+| Email                                                             | Role                  |
+| ----------------------------------------------------------------- | --------------------- |
+| `marghe@example.com`                                              | admin                 |
+| `sarah@example.com`                                               | moderator             |
+| `mario@example.com`, `giulia@example.com`, `marco@example.com`, … | user                  |
+| `alex2fa@example.com`                                             | user with 2FA enabled |
 
 These accounts exist for evaluation and development only.
 
@@ -149,23 +149,23 @@ These accounts exist for evaluation and development only.
 
 ## Team Information
 
-| Login | Name | Role(s) | Responsibilities |
-| --- | --- | --- | --- |
-| daromoli | Dario Romoli | **Technical Lead**, Developer | As Tech Lead: owns the technical architecture and stack choices, records design decisions as ADRs, keeps the API contract (OpenAPI / Postman) in sync and reviews critical changes. As Developer: most backend domains (recipes, users, friends, feed, catalog, reports, admin, media, translation), database schema, Nginx/WAF tuning, Makefile |
-| lhima | Luis Hima | **Product Owner**, Developer | As PO: defines the product vision and feature priorities, validates completed features against the subject requirements. As Developer: authentication (JWT sessions, Google OAuth, 2FA), CASL authorization, WebSocket notification gateway, initial backend and Docker setup |
-| mdalloli | Margherita Dallolio | **Project Manager**, Developer | As PM: organizes the work, distributes tasks, plans and tracks progress and deadlines, coordinates the team. As Developer: frontend application (all pages, components, API client, auth flow, real-time UI), internationalization, admin and moderation panels |
-| gmercuri | Giovanni Mercurio | Developer | 3D kitchen scene and interactive recipe book (Three.js / React Three Fiber) |
-| sel-khao | Sara El Khaouly | Developer | DevOps and security: HashiCorp Vault, ACME/Let's Encrypt container, Nginx/ModSecurity, Docker networks, ingredient catalog |
+| Login    | Name                | Role(s)                        | Responsibilities                                                                                                                                                                                                                                                                                                                                 |
+| -------- | ------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| daromoli | Dario Romoli        | **Technical Lead**, Developer  | As Tech Lead: owns the technical architecture and stack choices, records design decisions as ADRs, keeps the API contract (OpenAPI / Postman) in sync and reviews critical changes. As Developer: most backend domains (recipes, users, friends, feed, catalog, reports, admin, media, translation), database schema, Nginx/WAF tuning, Makefile |
+| lhima    | Luis Hima           | **Product Owner**, Developer   | As PO: defines the product vision and feature priorities, validates completed features against the subject requirements. As Developer: authentication (JWT sessions, Google OAuth, 2FA), CASL authorization, WebSocket notification gateway, initial backend and Docker setup                                                                    |
+| mdalloli | Margherita Dallolio | **Project Manager**, Developer | As PM: organizes the work, distributes tasks, plans and tracks progress and deadlines, coordinates the team. As Developer: frontend application (all pages, components, API client, auth flow, real-time UI), internationalization, admin and moderation panels                                                                                  |
+| gmercuri | Giovanni Mercurio   | Developer                      | 3D kitchen scene and interactive recipe book (Three.js / React Three Fiber)                                                                                                                                                                                                                                                                      |
+| sel-khao | Sara El Khaouly     | Developer                      | DevOps and security: HashiCorp Vault, ACME/Let's Encrypt container, Nginx/ModSecurity, Docker networks, ingredient catalog                                                                                                                                                                                                                       |
 
 ---
 
 ## Project Management
 
-- **Work organization**: `<describe: e.g. weekly meetings, task split by domain (backend, frontend, 3D, DevOps), feature branches merged through pull requests>`.
+- **Work organization**: weekly meetings, task split by domain (backend, frontend, 3D, DevOps), feature branches merged through pull requests.
 - **Design decisions** are recorded as **Architecture Decision Records** in [`docs/adr`](docs/adr) (35 ADRs), and a shared vocabulary is kept in [`GLOSSARY.md`](GLOSSARY.md).
 - **API contract**: the OpenAPI specification ([`openapi.json`](openapi.json)) is generated from the backend code and turned into a Postman collection, so frontend and backend always agree on endpoints and payloads. Public docs are built with Fern.
-- **Tools**: GitHub (repository, issues, pull requests), `<GitHub Issues / Projects / Trello / Notion>`, Postman.
-- **Communication**: `<Discord / WhatsApp / Slack>` and in-person sessions at 42 Firenze.
+- **Tools**: GitHub (repository, issues, pull requests), Notion, Postman, Fern.
+- **Communication**: Whatsapp groupchat, dedicated Discord server and in-person sessions at 42Firenze.
 
 ---
 
@@ -173,16 +173,16 @@ These accounts exist for evaluation and development only.
 
 ### Frontend
 
-| Technology | Use |
-| --- | --- |
-| **React 19** + **TypeScript** | SPA framework |
-| **Vite** | Dev server and build tool |
-| **React Router 7** | Client-side routing, protected and modal routes |
-| **Tailwind CSS 4** | Styling, with custom design tokens |
-| **Three.js**, **React Three Fiber**, **drei** | 3D kitchen and animated recipe book |
-| **i18next** / **react-i18next** | Interface translation (IT / EN / FR) |
-| **socket.io-client** | Real-time notifications and presence |
-| **jsPDF** | Client-side PDF export |
+| Technology                                    | Use                                             |
+| --------------------------------------------- | ----------------------------------------------- |
+| **React 19** + **TypeScript**                 | SPA framework                                   |
+| **Vite**                                      | Dev server and build tool                       |
+| **React Router 7**                            | Client-side routing, protected and modal routes |
+| **Tailwind CSS 4**                            | Styling, with custom design tokens              |
+| **Three.js**, **React Three Fiber**, **drei** | 3D kitchen and animated recipe book             |
+| **i18next** / **react-i18next**               | Interface translation (IT / EN / FR)            |
+| **socket.io-client**                          | Real-time notifications and presence            |
+| **jsPDF**                                     | Client-side PDF export                          |
 
 ### Backend
 
@@ -207,14 +207,14 @@ These accounts exist for evaluation and development only.
 
 ### Infrastructure
 
-| Technology | Use |
-| --- | --- |
-| **Docker** + **Docker Compose** | Containerization, single-command deployment |
-| **Nginx** + **ModSecurity** + **OWASP CRS** | Reverse proxy, TLS termination, WAF (paranoia level 3) |
-| **HashiCorp Vault** | Secret storage with one AppRole and policy per service |
-| **acme.sh** (Let's Encrypt, DNS-01) | Trusted TLS certificates in production, self-signed fallback |
-| **LibreTranslate** | Self-hosted machine translation (no data sent to third parties) |
-| **Fern**, **Postman** | API documentation and collections |
+| Technology                                  | Use                                                             |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| **Docker** + **Docker Compose**             | Containerization, single-command deployment                     |
+| **Nginx** + **ModSecurity** + **OWASP CRS** | Reverse proxy, TLS termination, WAF (paranoia level 3)          |
+| **HashiCorp Vault**                         | Secret storage with one AppRole and policy per service          |
+| **acme.sh** (Let's Encrypt, DNS-01)         | Trusted TLS certificates in production, self-signed fallback    |
+| **LibreTranslate**                          | Self-hosted machine translation (no data sent to third parties) |
+| **Fern**, **Postman**                       | API documentation and collections                               |
 
 ### Justification of major choices
 
@@ -269,13 +269,13 @@ PostgreSQL schema managed by Prisma ([`src/backend/prisma/schema.prisma`](src/ba
 
 ```mermaid
 erDiagram
-    users ||--o{ recipes : "authors"
-    users ||--o{ comments : "writes"
+    users |o--o{ recipes : "authors"
+    users |o--o{ comments : "writes"
     users ||--o{ likes : "favorites"
     users ||--o{ friendships : "requests / receives"
     users ||--o{ user_blocks : "blocks / is blocked"
     users ||--o{ notifications : "receives / triggers"
-    users ||--o{ reports : "submits"
+    users ||--o{ reports : "submits / resolves"
     users ||--o{ ban_history : "is banned / issues"
     users ||--o{ jwt_sessions : "has"
 
@@ -290,9 +290,9 @@ erDiagram
     tags ||--|{ tag_translations : "localized as"
     recipes ||--o{ recipe_media : "gallery / video"
     recipes ||--o{ comments : "has"
-    comments ||--o{ comments : "replies"
+    comments |o--o{ comments : "replies"
     recipes ||--o{ likes : "liked by"
-    reports ||--o{ ban_history : "may cause"
+    reports |o--o{ ban_history : "may cause"
 
     users {
         int id PK
@@ -306,19 +306,23 @@ erDiagram
         varchar two_factor "AES-256-GCM encrypted TOTP secret"
         bool is_two_factor_enabled
         timestamp banned_until
+        timestamp deleted_at "soft delete"
     }
     recipes {
         int id PK
-        int user_id FK
+        int user_id FK "nullable"
+        enum owner_type "user | platform"
         enum privacy "public | friends_only | private"
         enum course
         enum difficulty "easy | medium | hard"
         int prep_time
         int cook_time
+        int total_time
         int servings
         varchar source_lang "it | en | fr"
-        enum translation_status
+        enum translation_status "completed | failed"
         bool is_active "soft delete"
+        bool suspended_by_ban
     }
     recipe_translations {
         int recipe_id PK,FK
@@ -337,12 +341,12 @@ erDiagram
         int id PK
         int requester_id FK
         int addressee_id FK
-        enum status "pending | accepted | rejected"
+        enum status "pending | accepted | rejected | none"
     }
     comments {
         int id PK
         int recipe_id FK
-        int user_id FK
+        int user_id FK "nullable"
         int parent_id FK "threaded replies"
         text content
         bool is_active
@@ -360,26 +364,41 @@ erDiagram
     reports {
         int id PK
         int reporter_id FK
+        int resolved_by_id FK "nullable"
         enum subject "recipe | comment | user"
         int target_id
         enum reason
-        enum status
+        enum status "pending | dismissed | action_taken"
         enum_array actions
+    }
+    ban_history {
+        uuid id PK
+        int user_id FK
+        int banned_by_id FK "nullable"
+        int unbanned_by_id FK "nullable"
+        int report_id FK "nullable"
+        enum action
+        enum reason
+        int duration_days
+        bool is_permanent
+        timestamp banned_at
+        timestamp expires_at
+        timestamp unbanned_at
     }
 ```
 
-| Table | Purpose |
-| --- | --- |
-| `users` | Accounts, profile, role, status, privacy, 2FA |
-| `jwt_sessions` | Hashed refresh tokens with expiry (cleaned daily by a cron job) |
-| `recipes` | Language-independent recipe data |
-| `recipe_translations`, `recipe_steps`, `recipe_step_translations` | Localized text, one row per language |
-| `ingredients`, `tags` (+ `_translations`) | Curated multilingual catalogs |
-| `recipe_ingredients`, `recipe_tags`, `recipe_media` | Recipe composition and media |
-| `comments`, `likes` | Threaded comments and favorites |
-| `friendships`, `user_blocks` | Social graph and mutual blocking |
-| `notifications` | Persistent notifications, pushed in real time |
-| `reports`, `ban_history` | Moderation queue and sanction history |
+| Table                                                             | Purpose                                                         |
+| ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| `users`                                                           | Accounts, profile, role, status, privacy, 2FA                   |
+| `jwt_sessions`                                                    | Hashed refresh tokens with expiry (cleaned daily by a cron job) |
+| `recipes`                                                         | Language-independent recipe data                                |
+| `recipe_translations`, `recipe_steps`, `recipe_step_translations` | Localized text, one row per language                            |
+| `ingredients`, `tags` (+ `_translations`)                         | Curated multilingual catalogs                                   |
+| `recipe_ingredients`, `recipe_tags`, `recipe_media`               | Recipe composition and media                                    |
+| `comments`, `likes`                                               | Threaded comments and favorites                                 |
+| `friendships`, `user_blocks`                                      | Social graph and mutual blocking                                |
+| `notifications`                                                   | Persistent notifications, pushed in real time                   |
+| `reports`, `ban_history`                                          | Moderation queue and sanction history                           |
 
 ---
 
@@ -420,24 +439,25 @@ erDiagram
 
 The subject requires **14 points** (Major = 2 pts, Minor = 1 pt).
 
-| #   | Category             | Module                                               | Type  | Pts    | How it is implemented                                                                                                                                                                                                | Member(s)                 |
-| --- | -------------------- | ---------------------------------------------------- | ----- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| 1   | Web                  | Use a framework for both the frontend and backend    | Major | 2      | React 19 SPA + NestJS 11 API                                                                                                                                                                                         | all                       |
-| 2   | Web                  | Real-time features using WebSockets                  | Major | 2      | Socket.IO gateway authenticated by the JWT cookie; live notifications and friends' presence; snapshot re-requested on reconnection; one shared client connection                                                     | lhima, mdalloli           |
-| 3   | Web                  | Use an ORM for the database                          | Minor | 1      | Prisma: schema, migrations, seed                                                                                                                                                                                     | daromoli, lhima, mdalloli |
-| 4   | Web                  | Complete notification system                         | Minor | 1      | Event-based notifications (`@nestjs/event-emitter`) stored in DB and pushed by Socket.IO; notification bell with unread count                                                                                        | lhima, daromoli, mdalloli |
-| 5   | Web                  | Advanced search with filters, sorting and pagination | Minor | 1      | `GET /api/recipes` with combinable filters and sort contract; search page with URL-synced filters                                                                                                                    | daromoli, mdalloli        |
-| 6   | Web                  | File upload and management system                    | Minor | 1      | Images and videos; client- and server-side validation (type, size); Sharp / FFmpeg processing; access-controlled media endpoint; previews; progress bars; deletion                                                   | daromoli, mdalloli        |
-| 7   | Accessibility & i18n | Support for multiple languages (3)                   | Minor | 1      | i18next with IT / EN / FR, language switcher, persisted choice; recipe content translated by the backend                                                                                                             | mdalloli, daromoli        |
-| 8   | User Management      | Standard user management and authentication          | Major | 2      | Profile editing, avatar upload with default, friends with online status, profile pages                                                                                                                               | lhima, daromoli, mdalloli |
-| 9   | User Management      | Remote authentication with OAuth 2.0                 | Minor | 1      | Google Sign-In; ID token verified with `google-auth-library`                                                                                                                                                         | lhima, mdalloli           |
-| 10  | User Management      | Advanced permissions system                          | Major | 2      | Roles admin / moderator / user (+ guest); admin user CRUD; CASL policies; role-based routes and actions                                                                                                              | daromoli, lhima, mdalloli |
-| 11  | User Management      | Two-Factor Authentication                            | Minor | 1      | TOTP (otplib) with QR code, encrypted secret, login challenge                                                                                                                                                        | lhima, mdalloli           |
-| 12  | Cybersecurity        | WAF/ModSecurity (hardened) + HashiCorp Vault         | Major | 2      | OWASP CRS at paranoia level 3; Vault KV v2 with one AppRole and least-privilege policy per service                                                                                                                   | sel-khao, daromoli        |
-| 13  | Gaming & UX          | Advanced 3D graphics (Three.js)                      | Major | 2      | 3D kitchen, PBR leather book, custom page-curl shader, dynamic recipe textures                                                                                                                                       | gmercuri                  |
-| 14  | Web                  | Custom-made design system (10+ reusable components)  | Minor | 1      | Shared colour tokens (`--wc-*`), display typography, icons; reusable components (RecipeCard, Avatar, Pagination, ConfirmDialog, ReportDialog, Skeleton, PasswordInput, DateInput, IngredientPicker, PrivacyBadge, …) | mdalloli                  |
-| 15  | Modules of choice    | Automated multilingual content translation           | Minor | 1      | See justification below                                                                                                                                                                                              | daromoli                  |
-|     |                      | **Total**                                            |       | **22** |                                                                                                                                                                                                                      |                           |
+| #   | Category             | Module                                               | Type  | Pts    | How it is implemented                                                                                                                                                                                                | Member(s)                           |
+| --- | -------------------- | ---------------------------------------------------- | ----- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 1   | Web                  | Use a framework for both the frontend and backend    | Major | 2      | React 19 SPA + NestJS 11 API                                                                                                                                                                                         | all                                 |
+| 2   | Web                  | Real-time features using WebSockets                  | Major | 2      | Socket.IO gateway authenticated by the JWT cookie; live notifications and friends' presence; snapshot re-requested on reconnection; one shared client connection                                                     | lhima, gmercuri                     |
+| 3   | Web                  | Use an ORM for the database                          | Minor | 1      | Prisma: schema, migrations, seed                                                                                                                                                                                     | daromoli, lhima, mdalloli           |
+| 4   | Web                  | Complete notification system                         | Minor | 1      | Event-based notifications (`@nestjs/event-emitter`) stored in DB and pushed by Socket.IO; notification bell with unread count                                                                                        | lhima, daromoli, mdalloli, gmercuri |
+| 5   | Web                  | Advanced search with filters, sorting and pagination | Minor | 1      | `GET /api/recipes` with combinable filters and sort contract; search page with URL-synced filters                                                                                                                    | daromoli, mdalloli                  |
+| 6   | Web                  | File upload and management system                    | Minor | 1      | Images and videos; client- and server-side validation (type, size); Sharp / FFmpeg processing; access-controlled media endpoint; previews; progress bars; deletion                                                   | daromoli, mdalloli                  |
+| 7   | Accessibility & i18n | Support for multiple languages (3)                   | Minor | 1      | i18next with IT / EN / FR, language switcher, persisted choice; recipe content translated by the backend                                                                                                             | mdalloli, daromoli, gmercuri        |
+| 8   | User Management      | Standard user management and authentication          | Major | 2      | Profile editing, avatar upload with default, friends with online status, profile pages                                                                                                                               | lhima, daromoli, mdalloli           |
+| 9   | User Management      | Remote authentication with OAuth 2.0                 | Minor | 1      | Google Sign-In; ID token verified with `google-auth-library`                                                                                                                                                         | lhima, mdalloli                     |
+| 10  | User Management      | Advanced permissions system                          | Major | 2      | Roles admin / moderator / user (+ guest); admin user CRUD; CASL policies; role-based routes and actions                                                                                                              | daromoli, lhima, mdalloli           |
+| 11  | User Management      | Two-Factor Authentication                            | Minor | 1      | TOTP (otplib) with QR code, encrypted secret, login challenge                                                                                                                                                        | lhima, mdalloli                     |
+| 12  | Cybersecurity        | WAF/ModSecurity (hardened) + HashiCorp Vault         | Major | 2      | OWASP CRS at paranoia level 3; Vault KV v2 with one AppRole and least-privilege policy per service                                                                                                                   | sel-khao, daromoli                  |
+| 13  | Gaming & UX          | Advanced 3D graphics (Three.js)                      | Major | 2      | 3D kitchen, PBR leather book, custom page-curl shader, dynamic recipe textures                                                                                                                                       | gmercuri                            |
+| 14  | Web                  | Custom-made design system (10+ reusable components)  | Minor | 1      | Shared colour tokens (`--wc-*`), display typography, icons; reusable components (RecipeCard, Avatar, Pagination, ConfirmDialog, ReportDialog, Skeleton, PasswordInput, DateInput, IngredientPicker, PrivacyBadge, …) | mdalloli                            |
+| 15  | Modules of choice    | Automated multilingual content translation           | Minor | 1      | See justification below                                                                                                                                                                                              | daromoli                            |
+| 16  | Web                  | Support for additional browsers                      | Minor | 1      | See justification below                                                                                                                                                                                              | daromoli                            |
+|     |                      | **Total**                                            |       | **22** |                                                                                                                                                                                                                      |                                     |
 
 ### Justification of the module choices
 
@@ -459,7 +479,7 @@ Details: [ADR 0004](docs/adr/0004-relational-multilingual-translations-and-libre
 ### daromoli — Dario Romoli (Technical Lead, Developer)
 
 - Designed most of the backend: recipes (creation, editing, steps, media, projections, search and sorting), users and profiles, friends, feed, comments, likes, catalog, reports and bans, admin endpoints, protected media streaming, translation service.
-- Main author of the Prisma schema and seed, and of the 35 Architecture Decision Records and the glossary.
+- Co-author of the Prisma schema and seed, and of the 35 Architecture Decision Records and the glossary.
 - Built the OpenAPI generation, Postman synchronization and Newman contract tests; Fern documentation.
 - Tuned the Nginx/ModSecurity configuration, Makefile and Vault scripts with the DevOps team.
 - **Challenges**: the WAF blocked binary multipart video uploads, so ModSecurity is disabled only on the video upload route while keeping all other routes protected. Synchronous FFmpeg transcoding can take more than a minute on slow CPUs, so upload timeouts were aligned across frontend and backend.
@@ -470,27 +490,28 @@ Details: [ADR 0004](docs/adr/0004-relational-multilingual-translations-and-libre
 - Google OAuth 2.0 and TOTP two-factor authentication with AES-256-GCM encrypted secrets.
 - CASL-based authorization, rate limiting, early backend structure and Docker setup.
 - Socket.IO notification gateway: cookie-based handshake authentication, per-user rooms, online status broadcast to friends.
-- **Challenges**: `<to be completed>`.
+- **Challenges**: coordinating JWT access and refresh-token flows with Google OAuth and two-factor authentication, while keeping session handling and authorization secure across both HTTP requests and WebSocket connections.
 
 ### mdalloli — Margherita Dallolio (Project Manager, Developer)
 
+- Designed and implemented the initial database structure and seed data.
 - Built the frontend application: routing, every page and reusable component, API client with automatic token refresh, auth flows (2FA, Google, banned accounts), uploads with progress, search, friends, notifications, admin and moderation panels, PDF export.
 - Internationalization in Italian, English and French, Privacy Policy and Terms of Service.
-- Contributed to the Prisma schema and seed data.
-- **Challenges**: `<to be completed>`.
+- **Challenges**: keeping authentication flows, API-driven features and the Italian, English and French interfaces consistent, while providing clear feedback for asynchronous actions such as uploads.
 
 ### gmercuri — Giovanni Mercurio (Developer)
 
 - Built the 3D home scene: kitchen GLB model, lighting and shadows, camera controls, leather-textured book, recipe pages drawn as canvas textures, custom page-curl material, loading overlay.
 - Integrated the book with the API (paginated recipe loading) and with the recipe detail modal route.
-- **Challenges**: `<to be completed>`.
+- Implemented frontend Socket.IO integration for real-time notifications and online-status updates.
+- **Challenges**: combining a custom page-curl shader with recipe pages rendered as canvas textures, while keeping the interactive book synchronized with paginated API data and the recipe detail view.
 
 ### sel-khao — Sara El Khaouly (Developer)
 
 - Set up HashiCorp Vault (policies, AppRoles, bootstrap and unseal scripts) and the ACME container for Let's Encrypt certificates via DNS-01, with a self-signed fallback.
 - Worked on the Nginx/ModSecurity gateway, Docker Compose networks and Dockerfiles, and the LibreTranslate container.
 - Worked on the ingredient catalog API.
-- **Challenges**: `<to be completed>`.
+- **Challenges**: coordinating Vault secret provisioning, HTTPS certificate setup and gateway security across Docker services, while keeping the deployment reliable with bootstrap and self-signed certificate fallbacks.
 
 ---
 
@@ -498,7 +519,7 @@ Details: [ADR 0004](docs/adr/0004-relational-multilingual-translations-and-libre
 
 - **Browse**: open the cookbook on the home page and turn the pages, or switch to the Community / Friends feeds. Clicking a recipe opens its detail page.
 - **Search**: use the top bar for quick suggestions, or `/search` for advanced filters.
-- **Cook**: sign up, then go to *My recipes → New recipe*. Write in your language: the other two are generated automatically.
+- **Cook**: sign up, then go to _My recipes → New recipe_. Write in your language: the other two are generated automatically.
 - **Socialize**: add friends from their profile, comment, save favorites, watch the bell for notifications.
 - **Moderate**: log in as `sarah@example.com` (moderator) or `marghe@example.com` (admin) and open `/moderation` or `/admin`.
 - **API**: interactive documentation at `https://localhost:8443/api/docs`.
@@ -511,7 +532,6 @@ Details: [ADR 0004](docs/adr/0004-relational-multilingual-translations-and-libre
 - Videos are transcoded synchronously, so large uploads can take up to a few minutes.
 - Vault is sealed after every restart by design: unseal keys must be provided (in `.env` or interactively).
 - There is no chat system, so the "Allow users to interact with other users" module is **not** claimed.
-- Only the latest stable Google Chrome is officially supported.
 
 ---
 
@@ -532,11 +552,12 @@ Details: [ADR 0004](docs/adr/0004-relational-multilingual-translations-and-libre
 
 ### Use of AI
 
-`<Describe honestly, for each member if needed: which AI tools were used, for which tasks (e.g. explaining concepts, debugging, reviewing code, writing tests, translating locale files, drafting documentation) and on which parts of the project. State that all AI output was reviewed, understood and tested by the team before being committed.>`
+AI tools have been used as supporting tools during the development of this project, mainly for:
 
-This README was drafted with the help of an AI assistant (Claude) from the repository contents (source code, ADRs, Git history), then reviewed and completed by the team.
-
----
+- Clarifying concepts and resolving doubts.
+- Debugging and troubleshooting.
+- Testing.
+- Support the writing of project documentation.
 
 ## Credits and License
 

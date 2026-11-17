@@ -71,12 +71,17 @@ describe('RecipeProjection', () => {
         orderBy: { order: 'asc' },
       });
       expect(configNoUser.likes).toBe(false);
+      expect(configNoUser.user.select).not.toHaveProperty('role');
 
       const configWithUser = RECIPE_DETAIL_INCLUDE(99);
       expect(configWithUser.likes).toEqual({
         where: { user_id: 99 },
         select: { user_id: true },
       });
+      expect(configWithUser.user.select).not.toHaveProperty('role');
+
+      const configStaff = RECIPE_DETAIL_INCLUDE(99, true);
+      expect(configStaff.user.select).toHaveProperty('role', true);
     });
   });
 

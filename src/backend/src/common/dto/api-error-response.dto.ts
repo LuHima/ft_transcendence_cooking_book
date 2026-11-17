@@ -268,3 +268,33 @@ export class ApiInternalServerErrorResponseDto {
   })
   message: string;
 }
+
+/**
+ * Standard 503 Service Unavailable error response.
+ */
+export class ApiServiceUnavailableResponseDto {
+  @ApiProperty({
+    description:
+      'HTTP status code representing an upstream service or dependency temporarily unavailable',
+    example: 503,
+  })
+  statusCode: number;
+
+  @ApiProperty({
+    description: 'ISO 8601 formatted timestamp of when the error occurred',
+    example: '2026-10-14T10:00:00.000Z',
+  })
+  timestamp: string;
+
+  @ApiProperty({
+    description: 'Requested URL path that produced the error',
+    example: '/api/recipes/42/translate',
+  })
+  path: string;
+
+  @ApiProperty({
+    description: 'Service unavailable message',
+    example: 'Translation service is currently unavailable. Please try again later.',
+  })
+  message: string;
+}

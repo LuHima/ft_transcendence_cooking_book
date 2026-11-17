@@ -23,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { CatalogService } from '../catalog/catalog.service';
 import {
+  CatalogMessageResponseDto,
   IngredientDetailResponseDto,
   PaginatedAdminIngredientsResponseDto,
   PaginatedAdminTagsResponseDto,
@@ -261,6 +262,7 @@ export class AdminCatalogController {
   })
   @ApiOkResponse({
     description: 'Ingredient deleted successfully',
+    type: CatalogMessageResponseDto,
   })
   @ApiForbiddenResponse({
     description: 'Only administrators can delete catalog ingredients',
@@ -370,6 +372,7 @@ export class AdminCatalogController {
   })
   @ApiOkResponse({
     description: 'Tag deleted successfully',
+    type: CatalogMessageResponseDto,
   })
   @ApiForbiddenResponse({
     description: 'Only administrators can delete catalog tags',

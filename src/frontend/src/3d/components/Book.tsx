@@ -17,8 +17,6 @@ import type { BookProps, ApiPageButtonProps } from "../interfaces.ts";
 import {
   leatherColorUrl,
   leatherColorUrl1,
-  leatherDispUrl,
-  leatherDispUrl1,
   leatherNormalUrl,
   leatherNormalUrl1,
   leatherRoughnessUrl,
@@ -186,21 +184,19 @@ function cloneLeatherTexture(texture: Texture, isColorMap = false) {
 
 function useLeatherMaterial() {
   // carica le texture della pelle per la copertina principale del libro
-  const [colorSource, roughnessSource, normalSource, dispSource] = useTexture([
+  const [colorSource, roughnessSource, normalSource] = useTexture([
     leatherColorUrl,
     leatherRoughnessUrl,
     leatherNormalUrl,
-    leatherDispUrl,
   ]);
 
-  const [colorMap, roughnessMap, normalMap, dispMap] = useMemo(
+  const [colorMap, roughnessMap, normalMap] = useMemo(
     () => [
       cloneLeatherTexture(colorSource, true),
       cloneLeatherTexture(roughnessSource),
       cloneLeatherTexture(normalSource),
-      cloneLeatherTexture(dispSource),
     ],
-    [colorSource, roughnessSource, normalSource, dispSource],
+    [colorSource, roughnessSource, normalSource],
   );
 
   useEffect(
@@ -208,31 +204,28 @@ function useLeatherMaterial() {
       colorMap.dispose();
       roughnessMap.dispose();
       normalMap.dispose();
-      dispMap.dispose();
     },
-    [colorMap, roughnessMap, normalMap, dispMap],
+    [colorMap, roughnessMap, normalMap],
   );
 
-  return { colorMap, roughnessMap, normalMap, dispMap };
+  return { colorMap, roughnessMap, normalMap };
 }
 
 function useLeatherMaterial1() {
   // carica un altro set di texture per il materiale della cerniera del libro
-  const [colorSource1, roughnessSource1, normalSource1, dispSource1] = useTexture([
+  const [colorSource1, roughnessSource1, normalSource1] = useTexture([
     leatherColorUrl1,
     leatherRoughnessUrl1,
     leatherNormalUrl1,
-    leatherDispUrl1,
   ]);
 
-  const [colorMap1, roughnessMap1, normalMap1, dispMap1] = useMemo(
+  const [colorMap1, roughnessMap1, normalMap1] = useMemo(
     () => [
       cloneLeatherTexture(colorSource1, true),
       cloneLeatherTexture(roughnessSource1),
       cloneLeatherTexture(normalSource1),
-      cloneLeatherTexture(dispSource1),
     ],
-    [colorSource1, roughnessSource1, normalSource1, dispSource1],
+    [colorSource1, roughnessSource1, normalSource1],
   );
 
   useEffect(
@@ -240,12 +233,11 @@ function useLeatherMaterial1() {
       colorMap1.dispose();
       roughnessMap1.dispose();
       normalMap1.dispose();
-      dispMap1.dispose();
     },
-    [colorMap1, roughnessMap1, normalMap1, dispMap1],
+    [colorMap1, roughnessMap1, normalMap1],
   );
 
-  return { colorMap1, roughnessMap1, normalMap1, dispMap1 };
+  return { colorMap1, roughnessMap1, normalMap1 };
 }
 
 export default function Book({
@@ -290,13 +282,12 @@ export default function Book({
   const [turnedPageCount, setTurnedPageCount] = useState(0);
   const [isCoverClosed, setIsCoverClosed] = useState(true);
   const coverClosedRef = useRef(true);
-  const trackedTurnedPageCount = useRef(0);
   const pageProgressRefs = useMemo(
     () => recipes.map(() => ({ current: 0 })),
     [recipes],
   );
-  const { pageProgress, currentPage, nextPage, prevPage, turning, closePages } =
-    useBookPages(recipes.length, currentApiPage);
+  const { pageProgress, nextPage, prevPage, turning, closePages } =
+    useBookPages(recipes.length, currentApiPage, setTurnedPageCount);
   const { camera } = useThree();
   const [camPhase, setCamPhase] = useState<
     "idle" | "zooming-in" | "zooming-out"
@@ -314,10 +305,6 @@ export default function Book({
     setPrevRecipesLength(recipes.length);
     setTurnedPageCount(0);
   }
-
-  useEffect(() => {
-    trackedTurnedPageCount.current = 0;
-  }, [currentApiPage, recipes.length]);
 
   useEffect(() => {
     const closeBook = () => {
@@ -394,11 +381,6 @@ export default function Book({
   const pageGroupRefs = useRef<Array<Group | null>>([]);
 
   useFrame((_, delta) => {
-    if (trackedTurnedPageCount.current !== currentPage.current) {
-      trackedTurnedPageCount.current = currentPage.current;
-      setTurnedPageCount(currentPage.current);
-    }
-
     pageProgressRefs.forEach((ref, index) => {
       const p = pageProgress.current[index] ?? 0;
       ref.current = p;
@@ -727,10 +709,14 @@ export default function Book({
               {
                 key: "left-inner",
                 y: 0.215,
-                action: () =>
-                  navigate(`/recipes/${recipes[turnedPageCount - 1].id}`, {
-                    state: { backgroundLocation: location },
-                  }),
+                action: () => {
+                  const target = recipes[turnedPageCount - 1];
+                  if (target) {
+                    navigate(`/recipes/${target.id}`, {
+                      state: { backgroundLocation: location },
+                    });
+                  }
+                },
               },
             ]
           : []),
@@ -739,10 +725,14 @@ export default function Book({
               {
                 key: "right-inner",
                 y: 0.081,
-                action: () =>
-                  navigate(`/recipes/${recipes[turnedPageCount].id}`, {
-                    state: { backgroundLocation: location },
-                  }),
+                action: () => {
+                  const target = recipes[turnedPageCount];
+                  if (target) {
+                    navigate(`/recipes/${target.id}`, {
+                      state: { backgroundLocation: location },
+                    });
+                  }
+                },
               },
               { key: "right-outer", y: -0.029, action: nextPage },
             ]

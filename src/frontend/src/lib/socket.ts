@@ -6,7 +6,10 @@ let socket: Socket | null = null
 let users = 0
 
 export function acquireSocket(): Socket {
-	if (!socket) socket = io(window.location.origin, { withCredentials: true, transports: ['websocket'] })
+	if (!socket) {
+		const baseUrl = (import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_BASE_URL || window.location.origin).replace(/\/api\/?$/, '')
+		socket = io(baseUrl, { withCredentials: true, transports: ['websocket'] })
+	}
 	users += 1
 	return socket
 }

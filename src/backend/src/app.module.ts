@@ -45,7 +45,7 @@ import { ProductionConfigModule } from './common/config/production-config.module
     // non appena finisce il sistemma setta in automatico un'altro timer per
     // la volta successiva.
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{ ttl: 100, limit: 4 }]),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     CaslModule,
     ProductionConfigModule,
     EventEmitterModule.forRoot(),

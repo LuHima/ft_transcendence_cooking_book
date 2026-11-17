@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { Group, SpotLight } from "three";
 
 export function SceneLights({
@@ -9,6 +10,13 @@ export function SceneLights({
   sideLightRef: React.RefObject<SpotLight | null>;
   sideTargetRef: React.RefObject<Group | null>;
 }) {
+  useEffect(() => {
+    if (sideLightRef.current && sideTargetRef.current) {
+      sideLightRef.current.target = sideTargetRef.current;
+      sideLightRef.current.target.updateMatrixWorld();
+    }
+  }, [isBullseyeOn, sideLightRef, sideTargetRef]);
+
   return (
     <>
       <ambientLight intensity={0.2} color="#ffffff" />
@@ -42,7 +50,7 @@ export function SceneLights({
           intensity={100}
           color="#4e310b"
           distance={3}
-          angle={-Math.PI / 2}
+          angle={Math.PI / 3}
           penumbra={0.3}
           decay={2}
           castShadow

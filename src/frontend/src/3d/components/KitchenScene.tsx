@@ -157,13 +157,6 @@ export default function Scene({ active }: { active: boolean }) {
     }
   }
 
-  useEffect(() => {
-    if (sideLightRef.current && sideTargetRef.current) {
-      sideLightRef.current.target = sideTargetRef.current;
-      sideLightRef.current.target.updateMatrixWorld();
-    }
-  }, []);
-
   return (
     <div className="relative h-full w-full">
       <button
@@ -213,13 +206,13 @@ export default function Scene({ active }: { active: boolean }) {
           <div className="flex h-full w-full items-center justify-center bg-[#120d09] px-6 text-center text-amber-100">
             <div className="max-w-lg space-y-3">
               <p className="text-xs font-medium uppercase tracking-[0.3em] text-amber-200/80">
-                {t("scene.webglTitle")}
+                {t("scene.webglUnavailable")}
               </p>
               <h2 className="text-2xl font-semibold text-amber-50">
-                {t("scene.webglHeading")}
+                {t("scene.webglDisabledTitle")}
               </h2>
               <p className="text-sm text-amber-100/80">
-                {t("scene.webglBody")}
+                {t("scene.webglDisabledBody")}
               </p>
             </div>
           </div>

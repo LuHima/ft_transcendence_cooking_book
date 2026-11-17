@@ -5,7 +5,7 @@ import { api, ApiError, getErrorMessage, qs } from '../../api/client'
 import { useAuth } from '../../context/auth'
 import { useToast } from '../../context/toast'
 import { useLang } from '../../lib/useLang'
-import { canEditRecipe, canPurge, canRestoreRecipe } from '../../lib/permissions'
+import { canDeleteRecipe, canEditRecipe, canPurge, canRestoreRecipe } from '../../lib/permissions'
 import { reportsHref, useStaffBasePath } from '../../lib/staffLinks'
 import { useScrollIntoViewOnChange } from '../../lib/useScrollIntoViewOnChange'
 import { DEFAULT_RECIPE_SORT, RECIPE_SORT_OPTIONS } from '../../lib/recipeSort'
@@ -301,7 +301,8 @@ function AdminRecipes() {
 						const inactive = r.is_active === false
 						// modifica: autore o admin; riattivazione: staff; eliminazione definitiva: solo admin
 						const canEdit = canEditRecipe(user, r.author?.id)
-						const canReactivate = canRestoreRecipe(user)
+						const canReactivate = canRestoreRecipe(user, r.author?.role)
+						const canSuspend = canDeleteRecipe(user, r.author?.id, r.author?.role)
 						const totalReports = r.reports_count ?? 0
 						const pendingReports = r.pending_reports_count ?? 0
 						const hasReports = Boolean(r.has_pending_reports) || totalReports > 0
@@ -396,7 +397,7 @@ function AdminRecipes() {
 													{t('admin.recipes.reactivate')}
 												</button>
 											)
-										: (
+										: canSuspend && (
 												<button
 													onClick={() => setSuspending(r)}
 													disabled={busyId === r.id}

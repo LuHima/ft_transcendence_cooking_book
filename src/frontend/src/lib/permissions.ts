@@ -11,15 +11,19 @@ export function canEditRecipe(u: Actor, authorId: number | null | undefined): bo
 	return Boolean(u && ((authorId != null && authorId === u.id) || isAdmin(u)))
 }
 
-// Suspend a recipe (DELETE /recipes/:id, soft delete): author or staff.
-// The backend enforces the role hierarchy: moderators get 403 on admin recipes (ADR 0023).
-export function canDeleteRecipe(u: Actor, authorId: number | null | undefined): boolean {
-	return Boolean(u && ((authorId != null && authorId === u.id) || isStaff(u)))
+// Suspend a recipe (DELETE /recipes/:id, soft delete): author or staff (moderators cannot moderate admin recipes).
+export function canDeleteRecipe(u: Actor, authorId: number | null | undefined, authorRole?: User['role'] | null): boolean {
+	if (!u) return false
+	if (authorId != null && authorId === u.id) return true
+	if (isAdmin(u)) return true
+	return isModerator(u) && authorRole !== 'admin'
 }
 
-// Reactivate a suspended recipe (PATCH { is_active: true }): staff only (admin or moderator; moderators get 403 on admin recipes)
-export function canRestoreRecipe(u: Actor): boolean {
-	return isStaff(u)
+// Reactivate a suspended recipe (PATCH { is_active: true }): staff only (moderators cannot moderate admin recipes).
+export function canRestoreRecipe(u: Actor, authorRole?: User['role'] | null): boolean {
+	if (!u) return false
+	if (isAdmin(u)) return true
+	return isModerator(u) && authorRole !== 'admin'
 }
 
 // Permanent deletion (?hard=true): admins only

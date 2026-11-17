@@ -53,7 +53,7 @@ export default function LoadingOverlay({
   }
 
   return (
-    <div className="loader">
+    <div className="loader" role="status" aria-live="polite">
       <div className="loader-bar">
         <div style={{ width: `${displayProgress}%` }} />
       </div>

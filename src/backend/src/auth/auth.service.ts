@@ -64,7 +64,7 @@ export class AuthService {
     });
 
     if (userSessions.length >= 5) {
-      await this.prisma.jwtSession.delete({
+      await this.prisma.jwtSession.deleteMany({
         where: { id_session: userSessions[0].id_session },
       });
     }
@@ -125,19 +125,33 @@ export class AuthService {
         isTemporary && new Date((user as any).banned_until) < new Date();
 
       if (isExpired) {
-        // Automatically reactivate expired temporary ban
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: {
-            status: UserStatus.active,
-            banned_until: null,
-          },
+        // Automatically reactivate expired temporary ban and restore ban-suspended recipes
+        await this.prisma.$transaction(async (tx) => {
+          await tx.user.update({
+            where: { id: user.id },
+            data: {
+              status: UserStatus.active,
+              banned_until: null,
+            },
+          });
+          await tx.recipe.updateMany({
+            where: {
+              user_id: user.id,
+              is_active: false,
+              suspended_by_ban: true,
+            },
+            data: {
+              is_active: true,
+              suspended_by_ban: false,
+            },
+          });
+          await this.banHistoryService.recordUnban(
+            user.id,
+            null,
+            'Automated expiration upon login',
+            tx,
+          );
         });
-        await this.banHistoryService.recordUnban(
-          user.id,
-          null,
-          'Automated expiration upon login',
-        );
         user.status = UserStatus.active;
       } else {
         const latestBan = await this.banHistoryService.getLatestActiveBan(

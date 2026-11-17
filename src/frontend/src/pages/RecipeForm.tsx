@@ -48,11 +48,12 @@ interface IngredientRow {
 	ingredient: CatalogIngredient | null
 	quantity: string
 	unit: Unit
-	notes: unknown
+	notes: string
 }
 
 interface StepRow {
 	key: number
+	id?: number
 	title: string
 	description: string
 	duration: string
@@ -196,7 +197,7 @@ function RecipeForm() {
 	const uiLang = useLang()
 	const toast = useToast()
 	const { user } = useAuth()
-	const newIngredient = (): IngredientRow => ({ key: nextKey(), ingredient: null, quantity: '', unit: 'g', notes: undefined })
+	const newIngredient = (): IngredientRow => ({ key: nextKey(), ingredient: null, quantity: '', unit: 'g', notes: '' })
 	const newStep = (): StepRow => ({
 		key: nextKey(),
 		title: '',
@@ -326,7 +327,7 @@ function RecipeForm() {
 							ingredient: { id: ing.id, slug: ing.slug, category: ing.category, name: ing.name },
 							quantity: String(ing.quantity),
 							unit: ing.unit,
-							notes: ing.notes ?? undefined,
+							notes: typeof ing.notes === 'string' ? ing.notes : '',
 						}))
 					: [newIngredient()],
 			)
@@ -336,6 +337,7 @@ function RecipeForm() {
 							.sort((a, b) => a.step_number - b.step_number)
 							.map((s) => ({
 								key: nextKey(),
+								id: s.id,
 								title: s.title ?? '',
 								description: s.description,
 								duration: s.duration != null ? String(s.duration) : '',
@@ -522,16 +524,20 @@ function RecipeForm() {
 			...(tips.trim() ? { tips: tips.trim() } : {}),
 			tag_ids: tagIds,
 			steps: steps.map((s, i) => ({
+				...(isEdit && s.id != null ? { id: s.id } : {}),
 				step_number: i + 1,
 				description: s.description.trim(),
 				...(s.title.trim() ? { title: s.title.trim() } : {}),
 				...(s.duration.trim() !== '' ? { duration: Number(s.duration) } : {}),
+				...(isEdit && !s.removeExistingImage && !s.imageFile && s.existingImageUrl
+					? { image_url: s.existingImageUrl }
+					: {}),
 			})),
 			ingredients: ingredients.map((r) => ({
 				ingredient_id: r.ingredient!.id,
 				quantity: Number(r.quantity),
 				unit: r.unit,
-				...(r.notes != null ? { notes: r.notes } : {}),
+				...(r.notes.trim() ? { notes: r.notes.trim() } : {}),
 			})),
 			privacy,
 		}
@@ -956,6 +962,16 @@ function RecipeForm() {
 												</option>
 											))}
 										</select>
+										<input
+											type="text"
+											autoComplete="off"
+											maxLength={200}
+											aria-label={t('form.ingredientNotes', { defaultValue: 'Notes' })}
+											placeholder={t('form.ingredientNotesPlaceholder', { defaultValue: 'Notes (optional)' })}
+											value={row.notes}
+											onChange={(e) => updateIngredient(row.key, { notes: e.target.value })}
+											className={`${FIELD_BASE} h-[42px] min-w-[140px] flex-1`}
+										/>
 										<button
 											type="button"
 											onClick={() => setIngredients((prev) => prev.filter((r) => r.key !== row.key))}

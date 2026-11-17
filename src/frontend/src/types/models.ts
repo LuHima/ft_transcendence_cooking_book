@@ -151,6 +151,7 @@ export interface RecipeAuthor {
 	id: number
 	username: string
 	avatar_url: string | null
+	role?: User['role']
 }
 
 export interface RecipeTag {
@@ -330,7 +331,7 @@ export interface CreateRecipeBody {
 	cook_time: number
 	servings: number
 	source_lang: Lang
-	steps: { step_number: number; title?: string; description: string; duration?: number }[]
+	steps: { id?: number; step_number: number; title?: string; description: string; duration?: number; image_url?: string | null }[]
 	ingredients: { ingredient_id: number; quantity: number; unit: Unit; notes?: unknown }[]
 	tag_ids?: number[]
 	privacy?: RecipePrivacy

@@ -58,8 +58,9 @@ async function readErrorBody(res) {
   }
   const data = (await res.json()).data.data;
   for (const [k, v] of Object.entries(data)) {
-    if (!/^[A-Z_][A-Z0-9_]*$/.test(k) || String(v).includes("\x27")) throw new FatalVaultError("unsafe key/value: " + k);
-    console.log("export " + k + "=\x27" + v + "\x27");
+    if (!/^[A-Z_][A-Z0-9_]*$/.test(k)) throw new FatalVaultError("unsafe key: " + k);
+    const escaped = String(v).replace(/\x27/g, () => "\x27\\\x27\x27");
+    console.log("export " + k + "=\x27" + escaped + "\x27");
   }
 })().catch((e) => {
   console.error("ERROR:", e.message);
@@ -99,8 +100,10 @@ fi
 
 # Handle Prisma client generation and database migrations
 if [ -x "./node_modules/.bin/prisma" ]; then
-  echo "Generating Prisma Client..."
-  ./node_modules/.bin/prisma generate
+  if [ "${NODE_ENV}" != "production" ]; then
+    echo "Generating Prisma Client..."
+    ./node_modules/.bin/prisma generate
+  fi
 
   # Apply any pending database migrations
   echo "Applying database migrations..."

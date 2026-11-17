@@ -83,6 +83,7 @@ function IngredientPicker({ value, onChange, invalid }: IngredientPickerProps) {
 				aria-autocomplete="list"
 				aria-expanded={open}
 				aria-controls={listId}
+				aria-activedescendant={open && !status && options[activeIndex] ? `${listId}-opt-${activeIndex}` : undefined}
 				aria-busy={open && loading}
 				aria-invalid={invalid || undefined}
 				autoComplete="off"

@@ -3,6 +3,8 @@ import {
   ParseIntPipe,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Patch,
   Post,
   Delete,
@@ -478,6 +480,7 @@ export class UsersController {
   })
   @Auth()
   @Post(':id/block')
+  @HttpCode(HttpStatus.OK)
   async blockUser(
     @CurrentUser('id') blockerId: number,
     @Param('id', ParseIntPipe) targetId: number,
