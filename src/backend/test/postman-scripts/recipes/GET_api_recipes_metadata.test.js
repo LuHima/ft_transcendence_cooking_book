@@ -7,8 +7,6 @@ pm.test("Response adheres to CatalogMetadataResponseDto schema", function () {
   pm.expect(jsonData).to.be.an("object");
   pm.expect(jsonData).to.have.property("courses").that.is.an("array");
   pm.expect(jsonData).to.have.property("difficulties").that.is.an("array");
-  pm.expect(jsonData).to.have.property("cooking_methods").that.is.an("array");
-  pm.expect(jsonData).to.have.property("pricing_tiers").that.is.an("array");
   pm.expect(jsonData).to.have.property("units").that.is.an("array");
-  pm.expect(jsonData).to.have.property("languages").that.is.an("array");
+  pm.expect(jsonData).to.have.property("categories").that.is.an("array");
 });

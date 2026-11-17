@@ -347,6 +347,17 @@ export class PaginatedIngredientsResponseDto {
 }
 
 /**
+ * Confirmation message returned by catalog deletion endpoints.
+ */
+export class CatalogMessageResponseDto {
+  @ApiProperty({
+    description: 'Confirmation message',
+    example: 'Catalog entry deleted successfully',
+  })
+  message: string;
+}
+
+/**
  * Paginated collection envelope for public localized tag listings.
  */
 export class PaginatedTagsResponseDto {

@@ -461,7 +461,7 @@ db-studio: env-check ## <start/kill>|Launch/Stop Prisma Studio GUI on port 5555
 			;; \
 		kill) \
 			echo "Stopping Prisma Studio"; \
-			$(SUDO) docker compose -f docker/docker-compose.yml exec backend \
+			$(SUDO) docker compose -f $(COMPOSE_FILE) exec backend \
 			node -e "const fs = require('fs'); \
 			fs.readdirSync('/proc') \
 			.filter(pid => /^[0-9]+/.test(pid)) \
@@ -691,12 +691,20 @@ env-check: ## |Verify .env exists and required vars are present
 	fi
 
 # Copies .env.example to .env (prompts if .env already exists)
-# TODO!
 .PHONY: env-init
 env-init: ## |Initialize .env from .env.example
-	@echo "This feature is not implemented yet!"; \
-	echo -n "Manually copy the $(ENV_EXAMPLE) file into "; \
-	echo "$(ENV_FILE) and adjust the values."
+	@if [ ! -f "$(ENV_EXAMPLE)" ]; then \
+		echo "Missing template file: $(ENV_EXAMPLE)"; \
+		exit 1; \
+	fi; \
+	if [ -f "$(ENV_FILE)" ]; then \
+		read -r -p "$(ENV_FILE) already exists. Overwrite from $(ENV_EXAMPLE)? [y/N] " ans; \
+		case "$$ans" in \
+			[yY]|[yY][eE][sS]) ;; \
+			*) echo "Keeping existing $(ENV_FILE)."; exit 0 ;; \
+		esac; \
+	fi; \
+	cp "$(ENV_EXAMPLE)" "$(ENV_FILE)" && echo "Initialized $(ENV_FILE) from $(ENV_EXAMPLE)."
 
 # Quick project setup rule
 .PHONY: setup

@@ -1,6 +1,13 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Optional,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { PrismaService } from '../../prisma/prisma.service';
+import { resolveActiveJwtUser } from './auth.guard';
 
 /**
  * Optional authentication guard.
@@ -11,7 +18,10 @@ import { Request } from 'express';
  */
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    @Optional() private readonly prisma?: PrismaService,
+  ) {}
 
   private extractTokenFromCookie(request: Request): string | undefined {
     return request.cookies?.accessToken;
@@ -29,12 +39,10 @@ export class OptionalAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync(token);
 
       if (payload.sub && payload.type === 'access') {
-        request.user = {
-          id: payload.sub,
-          username: payload.username,
-          role: payload.role,
-          session: payload.session,
-        };
+        const activeUser = await resolveActiveJwtUser(this.prisma, payload);
+        if (activeUser) {
+          request.user = activeUser;
+        }
       }
     } catch {
       // Intentionally ignored: allow guest execution

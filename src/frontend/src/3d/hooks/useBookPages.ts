@@ -61,13 +61,13 @@ export function useBookPages(numPages: number, pageSetKey: number) {
 	})
 
 	function nextPage() {
-		if (turning.current || currentPage.current >= numPages) return
+		if (closing.current || turning.current || currentPage.current >= numPages) return
 		direction.current = 1
 		turning.current = true
 	}
 
 	function prevPage() {
-		if (turning.current || currentPage.current <= 0) return
+		if (closing.current || turning.current || currentPage.current <= 0) return
 		direction.current = -1
 		turning.current = true
 	}

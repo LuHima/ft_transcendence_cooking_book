@@ -16,13 +16,13 @@ import { VALIDATION_MESSAGES } from '../../common/validators/validation-constant
 export class SignInUserDto {
   /**
    * User account email address.
-   * @example 'mario.rossi@example.com'
+   * @example 'mario@example.com'
    */
   @ApiProperty({
     type: String,
     format: 'email',
     description: 'Registered user email address',
-    example: 'mario.rossi@example.com',
+    example: 'mario@example.com',
     maxLength: 255,
   })
   @Transform(trimLowerCase)
@@ -33,12 +33,12 @@ export class SignInUserDto {
 
   /**
    * User account password.
-   * @example 'SuperSecret123!'
+   * @example 'Password123'
    */
   @ApiProperty({
     type: String,
     description: 'User account password (minimum 9 characters)',
-    example: 'SuperSecret123!',
+    example: 'Password123',
     minLength: 9,
     maxLength: 72,
   })

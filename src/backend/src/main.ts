@@ -17,6 +17,7 @@ import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.set('trust proxy', 1);
   // Spegnimanto pulito in caso di SIGINT ecc..
   app.enableShutdownHooks();
   // Assicura che le directory uploads esistano

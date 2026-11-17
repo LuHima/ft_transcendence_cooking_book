@@ -2,8 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Optional,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
+  NotificationSubject,
   OwnerType,
   Prisma,
   RecipePrivacy,
@@ -40,6 +43,7 @@ import { UserSortBy, SortOrder } from '../users/dto/search-user-query.dto';
 import { ImageProcessingService } from '../common/services/image-processing.service';
 import { buildPaginatedResponse } from '../common/dto/pagination-query.dto';
 import {
+  dismissOpenReports,
   extractTargetReportCounters,
   getBatchReportMetrics,
   getPendingCommentReportTargetIds,
@@ -94,6 +98,7 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly imageProcessingService: ImageProcessingService,
     private readonly banHistoryService: BanHistoryService,
+    @Optional() private readonly eventEmitter?: EventEmitter2,
   ) {}
 
   /**
@@ -378,12 +383,12 @@ export class AdminService {
     }
   }
 
-  private async assertAdminUpdateGuards(
+  private assertAdminUpdateGuards(
     targetUserId: number,
     currentAdminId: number,
     targetUser: { role: Role; status: UserStatus },
     dto: UpdateAdminUserDto,
-  ): Promise<void> {
+  ): void {
     if (targetUserId === currentAdminId) {
       if (dto.role !== undefined && dto.role !== targetUser.role) {
         throw createHttpException(errors.admin.cannotModifySelf);
@@ -394,24 +399,6 @@ export class AdminService {
         dto.status !== targetUser.status
       ) {
         throw createHttpException(errors.admin.cannotModifySelf);
-      }
-    }
-
-    const isTargetActiveAdmin =
-      targetUser.role === Role.admin && targetUser.status === UserStatus.active;
-    const isDemotingAdmin =
-      dto.role !== undefined && dto.role !== Role.admin && isTargetActiveAdmin;
-    const isDisablingAdmin =
-      dto.status !== undefined &&
-      dto.status !== UserStatus.active &&
-      isTargetActiveAdmin;
-
-    if (isDemotingAdmin || isDisablingAdmin) {
-      const activeAdminsCount = await this.prisma.user.count({
-        where: { role: Role.admin, status: UserStatus.active },
-      });
-      if (activeAdminsCount <= 1) {
-        throw createHttpException(errors.admin.lastAdminRequired);
       }
     }
   }
@@ -532,6 +519,17 @@ export class AdminService {
       }
 
       if (targetUser.status === UserStatus.banned) {
+        await tx.recipe.updateMany({
+          where: {
+            user_id: targetUserId,
+            is_active: false,
+            suspended_by_ban: true,
+          },
+          data: {
+            is_active: true,
+            suspended_by_ban: false,
+          },
+        });
         await this.banHistoryService.recordUnban(
           targetUserId,
           currentAdminId,
@@ -550,6 +548,16 @@ export class AdminService {
       );
     }
 
+    if (dto.status === UserStatus.disabled) {
+      await dismissOpenReports(
+        tx,
+        ReportSubject.user,
+        [targetUserId],
+        currentAdminId,
+        'Target user deactivated',
+      );
+    }
+
     if (isBanning) {
       if (targetUser.status === UserStatus.banned) {
         await this.banHistoryService.closeOpenBans(
@@ -563,7 +571,7 @@ export class AdminService {
       // Suspend all active authored recipes without Platform Custody Transfer
       await tx.recipe.updateMany({
         where: { user_id: targetUserId, is_active: true },
-        data: { is_active: false },
+        data: { is_active: false, suspended_by_ban: true },
       });
 
       await this.banHistoryService.recordSanction(
@@ -606,7 +614,7 @@ export class AdminService {
     }
 
     this.validateUpdateUserPayload(dto, targetUser);
-    await this.assertAdminUpdateGuards(
+    this.assertAdminUpdateGuards(
       targetUserId,
       currentAdminId,
       targetUser,
@@ -642,7 +650,20 @@ export class AdminService {
       isDisablingFromBanned,
     );
 
+    const isTargetActiveAdmin =
+      targetUser.role === Role.admin && targetUser.status === UserStatus.active;
+    const isDemotingAdmin =
+      dto.role !== undefined && dto.role !== Role.admin && isTargetActiveAdmin;
+    const isDisablingAdmin =
+      dto.status !== undefined &&
+      dto.status !== UserStatus.active &&
+      isTargetActiveAdmin;
+
     const updatedUser = await this.prisma.$transaction(async (tx) => {
+      if (isDemotingAdmin || isDisablingAdmin) {
+        await this.assertNotLastActiveAdmin(tx);
+      }
+
       await this.applyStatusTransitionSideEffects(tx, {
         targetUserId,
         currentAdminId,
@@ -694,6 +715,10 @@ export class AdminService {
       });
     });
 
+    if (shouldEvictSessions) {
+      this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+    }
+
     return this.mapToAdminUserResponse(updatedUser);
   }
 
@@ -722,18 +747,8 @@ export class AdminService {
       throw createHttpException(errors.admin.cannotModifySelf);
     }
 
-    // Last-Admin Safeguard
-    if (
-      targetUser.role === Role.admin &&
-      targetUser.status === UserStatus.active
-    ) {
-      const activeAdminsCount = await this.prisma.user.count({
-        where: { role: Role.admin, status: UserStatus.active },
-      });
-      if (activeAdminsCount <= 1) {
-        throw createHttpException(errors.admin.lastAdminRequired);
-      }
-    }
+    const isTargetActiveAdmin =
+      targetUser.role === Role.admin && targetUser.status === UserStatus.active;
 
     if (!hard) {
       if (targetUser.deleted_at !== null) {
@@ -742,6 +757,10 @@ export class AdminService {
 
       // Soft deletion lifecycle
       await this.prisma.$transaction(async (tx) => {
+        if (isTargetActiveAdmin) {
+          await this.assertNotLastActiveAdmin(tx);
+        }
+
         // 1. Evict active sessions
         await tx.jwtSession.deleteMany({
           where: { id_user: targetUserId },
@@ -769,7 +788,16 @@ export class AdminService {
           );
         }
 
-        // 5. Update user account status
+        // 5. Auto-dismiss open user reports targeting the deactivated user
+        await dismissOpenReports(
+          tx,
+          ReportSubject.user,
+          [targetUserId],
+          currentAdminId,
+          'Target user deactivated',
+        );
+
+        // 6. Update user account status
         await tx.user.update({
           where: { id: targetUserId },
           data: {
@@ -782,10 +810,25 @@ export class AdminService {
         });
       });
 
+      this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+
       return { message: 'User deactivated successfully' };
     } else {
       // Hard deletion lifecycle
       await this.prisma.$transaction(async (tx) => {
+        if (isTargetActiveAdmin) {
+          await this.assertNotLastActiveAdmin(tx);
+        }
+
+        // Dismiss open user reports targeting the permanently deleted user
+        await dismissOpenReports(
+          tx,
+          ReportSubject.user,
+          [targetUserId],
+          currentAdminId,
+          'Target user permanently deleted',
+        );
+
         // Disassociate authored recipes and transfer to platform custody
         await tx.recipe.updateMany({
           where: { user_id: targetUserId },
@@ -795,7 +838,54 @@ export class AdminService {
           },
         });
 
-        // Delete comments authored by user
+        // Clean up open reports and notifications for all user comments (both deleted and tombstoned)
+        if (tx.comment?.findMany) {
+          const commentsToDelete = await tx.comment.findMany({
+            where: { user_id: targetUserId },
+            select: { id: true },
+          });
+          const deleteCommentIds = (commentsToDelete ?? []).map(
+            (c: { id: number }) => c.id,
+          );
+          await dismissOpenReports(
+            tx,
+            ReportSubject.comment,
+            deleteCommentIds,
+            currentAdminId,
+            'Target comment author permanently deleted',
+          );
+          if (deleteCommentIds.length > 0 && tx.notification?.deleteMany) {
+            await tx.notification.deleteMany({
+              where: {
+                subject: NotificationSubject.comment,
+                target_id: { in: deleteCommentIds },
+              },
+            });
+          }
+        }
+
+        // Preserve parent comments with replies from other users as anonymized tombstones
+        // so onDelete: Cascade on Comment.parent does not delete other users' replies
+        await tx.comment.updateMany({
+          where: {
+            user_id: targetUserId,
+            replies: {
+              some: {
+                OR: [
+                  { user_id: { not: targetUserId } },
+                  { user_id: null, is_active: true },
+                ],
+              },
+            },
+          },
+          data: {
+            user_id: null,
+            is_active: false,
+            content: '',
+          },
+        });
+
+        // Delete remaining comments authored by user (leaves and self-only threads)
         await tx.comment.deleteMany({
           where: { user_id: targetUserId },
         });
@@ -806,10 +896,27 @@ export class AdminService {
         });
       });
 
+      this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+
       // Remove avatar from disk if present
       await this.safeUnlink(targetUser.avatar_url);
 
       return { message: 'User permanently deleted' };
+    }
+  }
+
+  private async assertNotLastActiveAdmin(
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    if (typeof (tx as any).$queryRaw === 'function') {
+      await (tx as any)
+        .$queryRaw`SELECT id FROM "users" WHERE role = 'admin'::"Role" AND status = 'active'::"UserStatus" AND deleted_at IS NULL ORDER BY id FOR UPDATE`;
+    }
+    const activeAdminsCount = await tx.user.count({
+      where: { role: Role.admin, status: UserStatus.active },
+    });
+    if (activeAdminsCount <= 1) {
+      throw createHttpException(errors.admin.lastAdminRequired);
     }
   }
 
@@ -865,14 +972,14 @@ export class AdminService {
       throw createHttpException(errors.users.notFound);
     }
 
-    // Unlink avatar from disk if present
-    await this.safeUnlink(targetUser.avatar_url);
-
-    // Reset database reference
+    // Reset database reference first so failed updates do not orphan DB links
     await this.prisma.user.update({
       where: { id: targetUserId },
       data: { avatar_url: null },
     });
+
+    // Unlink avatar from disk after DB commit
+    await this.safeUnlink(targetUser.avatar_url);
 
     return { message: 'Avatar deleted successfully' };
   }

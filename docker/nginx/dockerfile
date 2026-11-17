@@ -18,7 +18,8 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
 
 EXPOSE 8443 8080
 
-# Define the default command: starts Nginx in foreground.
-# The flag -g passes global directives to Nginx: 'daemon off;' is crucial in
-# Docker so the main process stays in foreground (PID 1).
+# Background watcher for ACME certificate renewal markers on the shared volume.
+COPY --chmod=755 cert-reload-watcher.sh /docker-entrypoint.d/99-cert-reload-watcher.sh
+
+# Keep "nginx" as $1 so /docker-entrypoint.sh runs all /docker-entrypoint.d/* hooks.
 CMD ["nginx", "-g", "daemon off;"]

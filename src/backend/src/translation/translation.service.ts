@@ -81,12 +81,27 @@ export class TranslationService {
       return { translations: [], success: true };
     }
 
+    // Send only non-empty strings so LibreTranslate cannot drop or collapse
+    // empty optional fields and shift subsequent step indices
+    const nonEmptyIndices: number[] = [];
+    const nonEmptyTexts: string[] = [];
+    texts.forEach((text, index) => {
+      if (text.trim().length > 0) {
+        nonEmptyIndices.push(index);
+        nonEmptyTexts.push(text);
+      }
+    });
+
+    if (nonEmptyTexts.length === 0) {
+      return { translations: [...texts], success: true };
+    }
+
     try {
       const response = await fetch(`${this.baseUrl}/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          q: texts,
+          q: nonEmptyTexts,
           source: sourceLang,
           target: targetLang,
           format: 'text',
@@ -102,12 +117,30 @@ export class TranslationService {
       }
 
       const data = (await response.json()) as {
-        translatedText: string | string[];
+        translatedText?: unknown;
       };
 
-      const translations = Array.isArray(data.translatedText)
+      const translatedItems = Array.isArray(data.translatedText)
         ? data.translatedText
-        : [data.translatedText];
+        : typeof data.translatedText === 'string' && nonEmptyTexts.length === 1
+          ? [data.translatedText]
+          : null;
+
+      if (
+        !translatedItems ||
+        translatedItems.length !== nonEmptyTexts.length ||
+        !translatedItems.every((item): item is string => typeof item === 'string')
+      ) {
+        this.logger.warn(
+          `LibreTranslate batch response mismatch: expected ${nonEmptyTexts.length} strings, got ${Array.isArray(data.translatedText) ? data.translatedText.length : typeof data.translatedText}`,
+        );
+        return { translations: texts, success: false };
+      }
+
+      const translations = [...texts];
+      nonEmptyIndices.forEach((originalIndex, batchIndex) => {
+        translations[originalIndex] = translatedItems[batchIndex];
+      });
 
       return {
         translations,

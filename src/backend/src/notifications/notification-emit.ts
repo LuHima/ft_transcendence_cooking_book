@@ -18,6 +18,28 @@ export interface NotificationStructDto {
   details?: string | null;
 }
 
+export async function getBlockedUserIds(
+  prisma: PrismaService,
+  userId: number,
+): Promise<Set<number>> {
+  const blocks = (prisma as any).userBlock?.findMany
+    ? await (prisma as any).userBlock.findMany({
+        where: {
+          OR: [{ blocker_id: userId }, { blocked_id: userId }],
+        },
+        select: {
+          blocker_id: true,
+          blocked_id: true,
+        },
+      })
+    : [];
+  const blockedIds = new Set<number>();
+  for (const b of blocks ?? []) {
+    blockedIds.add(b.blocker_id === userId ? b.blocked_id : b.blocker_id);
+  }
+  return blockedIds;
+}
+
 @Injectable()
 export class NotificationEmit {
   constructor(
@@ -82,12 +104,13 @@ export class NotificationEmit {
       },
     });
 
+    const blockedIds = await getBlockedUserIds(this.prisma, id);
+
     const friendIds: number[] = [];
     for (const f of friends) {
-      if (f.requester_id === id) {
-        friendIds.push(f.addressee_id);
-      } else {
-        friendIds.push(f.requester_id);
+      const friendId = f.requester_id === id ? f.addressee_id : f.requester_id;
+      if (!blockedIds.has(friendId)) {
+        friendIds.push(friendId);
       }
     }
     return friendIds;

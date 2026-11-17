@@ -81,4 +81,8 @@ COPY --from=builder /usr/src/app/prisma/seed/data/*.json ./dist/prisma/seed/data
 COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
 
+RUN mkdir -p /usr/src/app/uploads && chown -R node:node /usr/src/app
+
+USER node
+
 CMD ["node", "dist/main.js"]

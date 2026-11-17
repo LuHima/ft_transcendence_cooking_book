@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   Course,
   IngredientCategory,
   MediaType,
   RecipeDifficulty,
   RecipePrivacy,
+  Role,
   TranslationStatus,
   TranslationSource,
   UnitOfMeasure,
@@ -275,6 +276,12 @@ export class RecipeAuthorSummaryDto {
     nullable: true,
   })
   avatar_url: string | null;
+
+  @ApiPropertyOptional({
+    enum: Role,
+    description: 'Author account role when included in staff/detail views',
+  })
+  role?: Role;
 }
 
 /**

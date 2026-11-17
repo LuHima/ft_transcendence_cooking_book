@@ -234,7 +234,13 @@ export class UsersService {
           created_at: true,
           _count: {
             select: {
-              recipes: true,
+              recipes: {
+                where: {
+                  owner_type: OwnerType.user,
+                  is_active: true,
+                  privacy: RecipePrivacy.public,
+                },
+              },
             },
           },
         },
@@ -344,21 +350,6 @@ export class UsersService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const [recipesCount, friendsCount, totalLikesReceived] = await Promise.all([
-      this.prisma.recipe.count({
-        where: { user_id: id },
-      }),
-      this.prisma.friendship.count({
-        where: {
-          status: 'accepted',
-          OR: [{ requester_id: id }, { addressee_id: id }],
-        },
-      }),
-      this.prisma.like.count({
-        where: { recipe: { user_id: id } },
-      }),
-    ]);
-
     let friendship_status:
       | 'none'
       | 'pending_sent'
@@ -398,6 +389,32 @@ export class UsersService {
     const isAdmin = currentUserRole === Role.admin;
     const isModerator = currentUserRole === Role.moderator;
     const isStaff = isAdmin || isModerator;
+
+    const visibleRecipeWhere: Prisma.RecipeWhereInput = {
+      user_id: id,
+      owner_type: OwnerType.user,
+      is_active: true,
+      ...(isSelf
+        ? {}
+        : isFriend || isStaff
+          ? { privacy: { in: [RecipePrivacy.public, RecipePrivacy.friends_only] } }
+          : { privacy: RecipePrivacy.public }),
+    };
+
+    const [recipesCount, friendsCount, totalLikesReceived] = await Promise.all([
+      this.prisma.recipe.count({
+        where: visibleRecipeWhere,
+      }),
+      this.prisma.friendship.count({
+        where: {
+          status: 'accepted',
+          OR: [{ requester_id: id }, { addressee_id: id }],
+        },
+      }),
+      this.prisma.like.count({
+        where: { recipe: visibleRecipeWhere },
+      }),
+    ]);
 
     const profilePrivacy = user.profile_privacy ?? ProfilePrivacy.public;
 
@@ -733,14 +750,14 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Remove the existing avatar file from disk if present
-    await this.safeUnlink(user.avatar_url);
-
-    // Set the avatar URL in database to null
+    // Set the avatar URL in database to null first so DB failures preserve disk file
     await this.prisma.user.update({
       where: { id: userId },
       data: { avatar_url: null },
     });
+
+    // Remove the existing avatar file from disk after DB commit
+    await this.safeUnlink(user.avatar_url);
 
     return { message: 'Avatar deleted successfully' };
   }
@@ -817,17 +834,80 @@ export class UsersService {
     return { recipes, total };
   }
 
+  private async buildLikedRecipeVisibilityContext(userId: number): Promise<{
+    recipeWhere: Prisma.RecipeWhereInput;
+    blockedIds: number[];
+    friendIds: number[];
+  }> {
+    const blockedIds = await this.getBlockedUserIds(userId);
+    const friendships = this.prisma.friendship?.findMany
+      ? ((await this.prisma.friendship.findMany({
+          where: {
+            status: 'accepted',
+            OR: [{ requester_id: userId }, { addressee_id: userId }],
+          },
+          select: { requester_id: true, addressee_id: true },
+        })) ?? [])
+      : [];
+
+    const blockedSet = new Set(blockedIds);
+    const friendIds = friendships
+      .map((f) => (f.requester_id === userId ? f.addressee_id : f.requester_id))
+      .filter((fid) => !blockedSet.has(fid));
+
+    const visibilityScopes: Prisma.RecipeWhereInput[] = [
+      { privacy: RecipePrivacy.public },
+      { user_id: userId },
+    ];
+    if (friendIds.length > 0) {
+      visibilityScopes.push({
+        privacy: RecipePrivacy.friends_only,
+        user_id: { in: friendIds },
+        user: { deleted_at: null },
+      });
+    }
+
+    const recipeWhere: Prisma.RecipeWhereInput = {
+      is_active: true,
+      ...(blockedIds.length > 0
+        ? {
+            AND: [
+              { OR: [{ user_id: null }, { user_id: { notIn: blockedIds } }] },
+              { OR: visibilityScopes },
+            ],
+          }
+        : { OR: visibilityScopes }),
+    };
+
+    return { recipeWhere, blockedIds, friendIds };
+  }
+
   private async resolveLikedRecipesSortedByTitle(
     userId: number,
     query: UserCookbookQueryDto,
     skip: number,
     limit: number,
+    visibility: {
+      recipeWhere: Prisma.RecipeWhereInput;
+      blockedIds: number[];
+      friendIds: number[];
+    },
   ): Promise<{ recipes: any[]; total: number }> {
     const targetLocale = query.lang || null;
     const sortOrder =
       query.sort_order === RecipeSortOrder.desc ? 'desc' : 'asc';
     const orderSql =
       sortOrder === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+
+    const { recipeWhere, blockedIds, friendIds } = visibility;
+    const blockSql =
+      blockedIds.length > 0
+        ? Prisma.sql`AND (r.user_id IS NULL OR r.user_id NOT IN (${Prisma.join(blockedIds)}))`
+        : Prisma.empty;
+    const friendsSql =
+      friendIds.length > 0
+        ? Prisma.sql`OR (r.privacy = 'friends_only'::"RecipePrivacy" AND r.user_id IN (${Prisma.join(friendIds)}) AND EXISTS (SELECT 1 FROM users u WHERE u.id = r.user_id AND u.deleted_at IS NULL))`
+        : Prisma.empty;
 
     const [rawRows, total] = await Promise.all([
       this.prisma.$queryRaw<{ id: number }[]>`
@@ -838,11 +918,13 @@ export class UsersService {
         LEFT JOIN recipe_translations t_source ON (t_source.recipe_id = r.id AND t_source.locale = r.source_lang)
         LEFT JOIN recipe_translations t_en ON (t_en.recipe_id = r.id AND t_en.locale = 'en')
         WHERE r.is_active = true
+          ${blockSql}
+          AND (r.privacy = 'public'::"RecipePrivacy" OR r.user_id = ${userId} ${friendsSql})
         ORDER BY LOWER(COALESCE(t_target.title, t_source.title, t_en.title)) ${orderSql}, r.id ${orderSql}
         LIMIT ${limit} OFFSET ${skip}
       `,
       this.prisma.like.count({
-        where: { user_id: userId, recipe: { is_active: true } },
+        where: { user_id: userId, recipe: recipeWhere },
       }),
     ]);
 
@@ -873,6 +955,7 @@ export class UsersService {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
+    const visibility = await this.buildLikedRecipeVisibilityContext(userId);
     let recipes: any[];
     let total: number;
 
@@ -882,6 +965,7 @@ export class UsersService {
         query,
         skip,
         limit,
+        visibility,
       );
       recipes = titleResult.recipes;
       total = titleResult.total;
@@ -897,7 +981,7 @@ export class UsersService {
 
       const [likes, count] = await Promise.all([
         this.prisma.like.findMany({
-          where: { user_id: userId, recipe: { is_active: true } },
+          where: { user_id: userId, recipe: visibility.recipeWhere },
           skip,
           take: limit,
           orderBy,
@@ -908,7 +992,7 @@ export class UsersService {
           },
         }),
         this.prisma.like.count({
-          where: { user_id: userId, recipe: { is_active: true } },
+          where: { user_id: userId, recipe: visibility.recipeWhere },
         }),
       ]);
 

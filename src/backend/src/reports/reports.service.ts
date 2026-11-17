@@ -4,7 +4,9 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  Optional,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RecipeService } from '../recipe/recipe.service';
 import { RecipeProjection } from '../recipe/recipe.projection';
@@ -45,6 +47,7 @@ export class ReportsService {
     private readonly banHistoryService: BanHistoryService,
     private readonly notificationEmit: NotificationEmit,
     private readonly recipeProjection: RecipeProjection,
+    @Optional() private readonly eventEmitter?: EventEmitter2,
   ) {}
 
   /**
@@ -106,15 +109,28 @@ export class ReportsService {
     }
 
     // 3. Create report
-    const created = await this.prisma.report.create({
-      data: {
-        reporter_id: reporterId,
-        subject: dto.subject,
-        target_id: dto.target_id,
-        reason: dto.reason,
-        description: dto.description?.trim() || null,
-      },
-    });
+    let created;
+    try {
+      created = await this.prisma.report.create({
+        data: {
+          reporter_id: reporterId,
+          subject: dto.subject,
+          target_id: dto.target_id,
+          reason: dto.reason,
+          description: dto.description?.trim() || null,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A pending report already exists for this item',
+        );
+      }
+      throw error;
+    }
 
     return {
       ...created,
@@ -543,26 +559,33 @@ export class ReportsService {
     targetAuthorRole: Role | undefined,
     actions: ReportAction[],
   ): void {
-    if (callerRole !== Role.moderator || targetAuthorRole !== Role.admin) {
+    const isPrivilegedTarget =
+      targetAuthorRole === Role.admin || targetAuthorRole === Role.moderator;
+    if (callerRole !== Role.moderator || !isPrivilegedTarget) {
       return;
     }
+
+    const roleLabel =
+      targetAuthorRole === Role.admin ? 'administrators' : 'other moderators';
+    const singularLabel =
+      targetAuthorRole === Role.admin ? 'administrator' : 'moderator';
 
     if (actions.includes(ReportAction.warn)) {
       throw createHttpException(
         errors.common.forbidden,
-        'Moderators cannot moderate or warn administrators',
+        `Moderators cannot moderate or warn ${roleLabel}`,
       );
     }
     if (actions.includes(ReportAction.delete_content)) {
       throw createHttpException(
         errors.common.forbidden,
-        'Moderators cannot moderate or delete administrator content',
+        `Moderators cannot moderate or delete ${singularLabel} content`,
       );
     }
     if (actions.includes(ReportAction.ban)) {
       throw createHttpException(
         errors.moderation.cannotBanAdmin,
-        'Moderators cannot moderate or ban administrator',
+        `Moderators cannot moderate or ban ${singularLabel}`,
       );
     }
   }
@@ -574,7 +597,7 @@ export class ReportsService {
     if (report.subject === ReportSubject.recipe) {
       await tx.recipe.update({
         where: { id: report.target_id },
-        data: { is_active: false },
+        data: { is_active: false, suspended_by_ban: false },
       });
       this.logger.log(
         `Audit: Report #${report.id} resolved with delete_content. Recipe #${report.target_id} suspended.`,
@@ -661,7 +684,7 @@ export class ReportsService {
 
     await tx.recipe.updateMany({
       where: { user_id: resolvedTargetUserId, is_active: true },
-      data: { is_active: false },
+      data: { is_active: false, suspended_by_ban: true },
     });
 
     await tx.jwtSession.deleteMany({
@@ -747,36 +770,64 @@ export class ReportsService {
     dto: UpdateReportDto,
     caller?: number | { id: number; role?: Role | string },
   ): Promise<ReportItemDto> {
-    const report = await this.prisma.report.findUnique({
-      where: { id: reportId },
-    });
-    if (!report) {
-      throw new NotFoundException('Report not found');
-    }
-
     const callerRole = typeof caller === 'object' ? caller.role : undefined;
     const callerId = typeof caller === 'number' ? caller : caller?.id;
     const actions: ReportAction[] = [...(dto.actions ?? [])];
-    const targetStatus = this.resolveTargetStatus(dto, report.status, actions);
 
-    if (
-      (actions.includes(ReportAction.ban) ||
-        actions.includes(ReportAction.warn)) &&
-      !callerId
-    ) {
-      throw createHttpException(
-        errors.common.unauthorized,
-        'Authenticated staff user ID is required to issue sanctions',
+    const txOutcome = await this.prisma.$transaction(async (tx) => {
+      if (typeof (tx as any).$queryRaw === 'function') {
+        await (tx as any)
+          .$queryRaw`SELECT id FROM "reports" WHERE id = ${reportId} FOR UPDATE`;
+      }
+
+      const report = await tx.report.findUnique({
+        where: { id: reportId },
+      });
+      if (!report) {
+        throw new NotFoundException('Report not found');
+      }
+
+      if (report.status === ReportStatus.dismissed) {
+        throw new ConflictException('Report has already been dismissed');
+      }
+
+      const targetStatus = this.resolveTargetStatus(dto, report.status, actions);
+
+      if (
+        (actions.includes(ReportAction.ban) ||
+          actions.includes(ReportAction.warn)) &&
+        !callerId
+      ) {
+        throw createHttpException(
+          errors.common.unauthorized,
+          'Authenticated staff user ID is required to issue sanctions',
+        );
+      }
+
+      const effectiveReason = dto.resolution_reason ?? report.reason;
+      const previousActions = new Set(report.actions ?? []);
+      const actionsToExecute = actions.filter(
+        (action) => !previousActions.has(action),
       );
-    }
+      const mergedActions = Array.from(
+        new Set([...(report.actions ?? []), ...actions]),
+      );
+      const mergedValidation = validateReportActions(
+        mergedActions,
+        targetStatus,
+      );
+      if (!mergedValidation.valid) {
+        throw createHttpException(
+          errors.common.badRequest,
+          mergedValidation.message,
+        );
+      }
 
-    const effectiveReason = dto.resolution_reason ?? report.reason;
-    const requiresTargetResolution =
-      actions.includes(ReportAction.delete_content) ||
-      actions.includes(ReportAction.ban) ||
-      actions.includes(ReportAction.warn);
+      const requiresTargetResolution =
+        actions.includes(ReportAction.delete_content) ||
+        actions.includes(ReportAction.ban) ||
+        actions.includes(ReportAction.warn);
 
-    const result = await this.prisma.$transaction(async (tx) => {
       let resolvedTargetUserId: number | null = null;
       let previousBansCount = 0;
       let previousWarningsCount = 0;
@@ -801,7 +852,7 @@ export class ReportsService {
             )
           : 0;
 
-        if (actions.includes(ReportAction.warn) && resolvedTargetUserId) {
+        if (actionsToExecute.includes(ReportAction.warn) && resolvedTargetUserId) {
           await this.banHistoryService.recordSanction(
             {
               userId: resolvedTargetUserId,
@@ -819,11 +870,11 @@ export class ReportsService {
           );
         }
 
-        if (actions.includes(ReportAction.delete_content)) {
+        if (actionsToExecute.includes(ReportAction.delete_content)) {
           await this.executeReportContentDeactivation(tx, report);
         }
 
-        if (actions.includes(ReportAction.ban)) {
+        if (actionsToExecute.includes(ReportAction.ban)) {
           await this.executeReportBanAction(tx, {
             reportId: report.id,
             callerId,
@@ -839,9 +890,12 @@ export class ReportsService {
         where: { id: reportId },
         data: {
           status: targetStatus,
-          actions,
+          actions: mergedActions,
           resolution_reason: effectiveReason,
-          resolution_description: dto.resolution_description?.trim() || null,
+          resolution_description:
+            dto.resolution_description !== undefined
+              ? dto.resolution_description?.trim() || null
+              : undefined,
           resolution_notes:
             dto.resolution_notes !== undefined
               ? dto.resolution_notes?.trim() || null
@@ -856,18 +910,38 @@ export class ReportsService {
       });
 
       return {
-        ...updatedReport,
-        actions: updatedReport.actions ?? actions,
-        previous_bans_count: previousBansCount,
-        previous_warnings_count: previousWarningsCount,
+        reportSnapshot: report,
+        resolvedTargetUserId,
+        result: {
+          ...updatedReport,
+          actions: updatedReport.actions ?? mergedActions,
+          previous_bans_count: previousBansCount,
+          previous_warnings_count: previousWarningsCount,
+        },
       };
     });
 
-    await this.emitReportWarnNotification(report, actions, dto, callerId);
+    await this.emitReportWarnNotification(
+      txOutcome.reportSnapshot,
+      actions,
+      dto,
+      callerId,
+    );
 
-    const [hydratedResult] = await this.hydrateReportItems([result], '', {
-      skipSanctionCounts: true,
-    });
+    if (actions.includes(ReportAction.ban)) {
+      const targetUserId = txOutcome.resolvedTargetUserId;
+      if (targetUserId) {
+        this.eventEmitter?.emit('user.evict', { userId: targetUserId });
+      }
+    }
+
+    const [hydratedResult] = await this.hydrateReportItems(
+      [txOutcome.result],
+      '',
+      {
+        skipSanctionCounts: true,
+      },
+    );
     return hydratedResult;
   }
 }

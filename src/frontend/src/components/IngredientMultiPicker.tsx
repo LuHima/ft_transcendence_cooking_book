@@ -45,7 +45,7 @@ function IngredientMultiPicker({ label, selectedIds, names, disabledIds = [], on
 		if (e.key === 'ArrowDown') {
 			e.preventDefault()
 			setOpen(true)
-			setActiveIndex((i) => Math.min(i + 1, options.length - 1))
+			setActiveIndex((i) => Math.max(0, Math.min(i + 1, options.length - 1)))
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault()
 			setActiveIndex((i) => Math.max(i - 1, 0))
@@ -96,6 +96,7 @@ function IngredientMultiPicker({ label, selectedIds, names, disabledIds = [], on
 					aria-expanded={open}
 					aria-controls={listId}
 					aria-autocomplete="list"
+					aria-activedescendant={open && !status && options[activeIndex] ? `${listId}-opt-${activeIndex}` : undefined}
 					aria-busy={open && loading}
 					autoComplete="off"
 					placeholder={t('form.ingredientPlaceholder')}
@@ -122,22 +123,24 @@ function IngredientMultiPicker({ label, selectedIds, names, disabledIds = [], on
 						) : (
 							<>
 								{options.map((i, index) => (
-									<li key={i.id} role="option" aria-selected={index === activeIndex}>
-										<button
-											type="button"
-											// onMouseDown: select before the input blur closes the list
-											onMouseDown={(e) => {
-												e.preventDefault()
-												add(i)
-											}}
-											onMouseEnter={() => setActiveIndex(index)}
-											className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-sm text-[var(--wc-text)] ${
-												index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
-											}`}
-										>
-											<span className="truncate">{i.name}</span>
-											<span className="shrink-0 text-[10px] text-[var(--wc-text-muted)]">{t(`ingredientCategory.${i.category}`)}</span>
-										</button>
+									<li
+										key={i.id}
+										id={`${listId}-opt-${index}`}
+										role="option"
+										aria-selected={index === activeIndex}
+										tabIndex={-1}
+										// onMouseDown: select before the input blur closes the list
+										onMouseDown={(e) => {
+											e.preventDefault()
+											add(i)
+										}}
+										onMouseEnter={() => setActiveIndex(index)}
+										className={`flex w-full cursor-pointer items-center justify-between px-3 py-1.5 text-left text-sm text-[var(--wc-text)] ${
+											index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
+										}`}
+									>
+										<span className="truncate">{i.name}</span>
+										<span className="shrink-0 text-[10px] text-[var(--wc-text-muted)]">{t(`ingredientCategory.${i.category}`)}</span>
 									</li>
 								))}
 							</>

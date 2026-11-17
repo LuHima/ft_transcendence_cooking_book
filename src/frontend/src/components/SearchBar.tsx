@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, qs, toPage } from '../api/client'
@@ -25,6 +25,7 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 	const { t } = useTranslation()
 	const lang = useLang()
 	const navigate = useNavigate()
+	const listId = useId()
 	const [value, setValue] = useState('')
 	const [suggestions, setSuggestions] = useState<Suggestion[]>([])
 	const [open, setOpen] = useState(false)
@@ -130,6 +131,7 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 			<input
 				ref={inputRef}
 				type="search"
+				role="combobox"
 				value={value}
 				onChange={(e) => {
 					setValue(e.target.value)
@@ -141,7 +143,8 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 				aria-label={t('search.placeholder')}
 				aria-autocomplete="list"
 				aria-expanded={showList}
-				aria-controls="search-suggestions"
+				aria-controls={listId}
+				aria-activedescendant={showList && activeIndex >= 0 ? `${listId}-opt-${activeIndex}` : undefined}
 				autoComplete="off"
 				className="w-full rounded-l-full border border-[var(--wc-border)] bg-[var(--wc-surface)] px-4 py-2 text-sm text-[var(--wc-text)] placeholder:text-[var(--wc-text-muted)] outline-none focus:border-[var(--wc-basil)]"
 			/>
@@ -154,25 +157,27 @@ function SearchBar({ className = '', placeholder }: SearchBarProps) {
 
 			{showList && (
 				<ul
-					id="search-suggestions"
+					id={listId}
 					role="listbox"
 					className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-[var(--wc-border)] bg-[var(--wc-surface)] shadow-lg"
 				>
 					{suggestions.map((s, index) => (
-						<li key={`${s.kind}-${s.id}`} role="option" aria-selected={index === activeIndex}>
-							<button
-								type="button"
-								onMouseEnter={() => setActiveIndex(index)}
-								onClick={() => goTo(s)}
-								className={`flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm text-[var(--wc-text)] ${
-									index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
-								}`}
-							>
-								<span className="truncate">{s.kind === 'user' ? `@${s.label}` : s.label}</span>
-								<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
-									{s.kind === 'user' ? t('search.userLabel') : t('search.recipeLabel')}
-								</span>
-							</button>
+						<li
+							key={`${s.kind}-${s.id}`}
+							id={`${listId}-opt-${index}`}
+							role="option"
+							aria-selected={index === activeIndex}
+							tabIndex={-1}
+							onMouseEnter={() => setActiveIndex(index)}
+							onClick={() => goTo(s)}
+							className={`flex w-full cursor-pointer items-center justify-between gap-2 px-4 py-2 text-left text-sm text-[var(--wc-text)] ${
+								index === activeIndex ? 'bg-[var(--wc-surface-raised)]' : ''
+							}`}
+						>
+							<span className="truncate">{s.kind === 'user' ? `@${s.label}` : s.label}</span>
+							<span className="shrink-0 text-[10px] uppercase text-[var(--wc-text-muted)]">
+								{s.kind === 'user' ? t('search.userLabel') : t('search.recipeLabel')}
+							</span>
 						</li>
 					))}
 				</ul>

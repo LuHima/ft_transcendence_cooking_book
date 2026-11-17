@@ -47,6 +47,10 @@ describe('AuthService', () => {
       findUnique: jest.Mock;
       update: jest.Mock;
     };
+    recipe: {
+      updateMany: jest.Mock;
+    };
+    $transaction: jest.Mock;
   };
   let banHistoryService: {
     recordSanction: jest.Mock;
@@ -104,6 +108,10 @@ describe('AuthService', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
       },
+      recipe: {
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+      $transaction: jest.fn((cb: (tx: any) => any) => cb(prisma)),
     };
 
     encryptionService = {
@@ -188,7 +196,7 @@ describe('AuthService', () => {
         { id_session: 5 },
       ];
       prisma.jwtSession.findMany.mockResolvedValue(existingSessions);
-      prisma.jwtSession.delete.mockResolvedValue({});
+      prisma.jwtSession.deleteMany.mockResolvedValue({ count: 1 });
       prisma.jwtSession.create.mockResolvedValue({ id_session: 6 });
       jwtService.signAsync
         .mockResolvedValueOnce('refresh-token')
@@ -198,7 +206,7 @@ describe('AuthService', () => {
 
       await service.signIn('mario@example.com', 'Password123!');
 
-      expect(prisma.jwtSession.delete).toHaveBeenCalledWith({
+      expect(prisma.jwtSession.deleteMany).toHaveBeenCalledWith({
         where: { id_session: 1 },
       });
     });
@@ -335,10 +343,22 @@ describe('AuthService', () => {
         where: { id: 1 },
         data: { status: UserStatus.active, banned_until: null },
       });
+      expect(prisma.recipe.updateMany).toHaveBeenCalledWith({
+        where: {
+          user_id: 1,
+          is_active: false,
+          suspended_by_ban: true,
+        },
+        data: {
+          is_active: true,
+          suspended_by_ban: false,
+        },
+      });
       expect(banHistoryService.recordUnban).toHaveBeenCalledWith(
         1,
         null,
         'Automated expiration upon login',
+        prisma,
       );
       expect(result).toEqual({
         accessToken: 'access-token',
@@ -1277,10 +1297,22 @@ describe('AuthService', () => {
         where: { id: mockUser.id },
         data: { status: UserStatus.active, banned_until: null },
       });
+      expect(prisma.recipe.updateMany).toHaveBeenCalledWith({
+        where: {
+          user_id: mockUser.id,
+          is_active: false,
+          suspended_by_ban: true,
+        },
+        data: {
+          is_active: true,
+          suspended_by_ban: false,
+        },
+      });
       expect(banHistoryService.recordUnban).toHaveBeenCalledWith(
         mockUser.id,
         null,
         'Automated expiration upon login',
+        prisma,
       );
       expect(result).toEqual({
         accessToken: 'access-token',
