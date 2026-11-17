@@ -33,9 +33,7 @@ export function Page({
   useFrame(() => {
     if (matRef.current) {
       const rawProgress = progressRef?.current ?? progress ?? 0;
-      matRef.current.uProgress = easeInOutCubic(
-        Math.min(1, Math.max(0, rawProgress)),
-      );
+      matRef.current.uProgress = easeInOutCubic(rawProgress + 0.1); // aggiungi un piccolo offset per evitare problemi di precisione
     }
   });
 
