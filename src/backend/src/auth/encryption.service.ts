@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { errorMonitor } from 'events';
-import { createHttpException, errors } from 'src/common/config/error.config';
+import { createHttpException, errors } from '../common/config/error.config';
 
 @Injectable()
 export class EncryptionService {
