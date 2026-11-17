@@ -269,13 +269,13 @@ PostgreSQL schema managed by Prisma ([`src/backend/prisma/schema.prisma`](src/ba
 
 ```mermaid
 erDiagram
-    users ||--o{ recipes : "authors"
-    users ||--o{ comments : "writes"
+    users |o--o{ recipes : "authors"
+    users |o--o{ comments : "writes"
     users ||--o{ likes : "favorites"
     users ||--o{ friendships : "requests / receives"
     users ||--o{ user_blocks : "blocks / is blocked"
     users ||--o{ notifications : "receives / triggers"
-    users ||--o{ reports : "submits"
+    users ||--o{ reports : "submits / resolves"
     users ||--o{ ban_history : "is banned / issues"
     users ||--o{ jwt_sessions : "has"
 
@@ -290,9 +290,9 @@ erDiagram
     tags ||--|{ tag_translations : "localized as"
     recipes ||--o{ recipe_media : "gallery / video"
     recipes ||--o{ comments : "has"
-    comments ||--o{ comments : "replies"
+    comments |o--o{ comments : "replies"
     recipes ||--o{ likes : "liked by"
-    reports ||--o{ ban_history : "may cause"
+    reports |o--o{ ban_history : "may cause"
 
     users {
         int id PK
@@ -306,19 +306,23 @@ erDiagram
         varchar two_factor "AES-256-GCM encrypted TOTP secret"
         bool is_two_factor_enabled
         timestamp banned_until
+        timestamp deleted_at "soft delete"
     }
     recipes {
         int id PK
-        int user_id FK
+        int user_id FK "nullable"
+        enum owner_type "user | platform"
         enum privacy "public | friends_only | private"
         enum course
         enum difficulty "easy | medium | hard"
         int prep_time
         int cook_time
+        int total_time
         int servings
         varchar source_lang "it | en | fr"
-        enum translation_status
+        enum translation_status "completed | failed"
         bool is_active "soft delete"
+        bool suspended_by_ban
     }
     recipe_translations {
         int recipe_id PK,FK
@@ -337,12 +341,12 @@ erDiagram
         int id PK
         int requester_id FK
         int addressee_id FK
-        enum status "pending | accepted | rejected"
+        enum status "pending | accepted | rejected | none"
     }
     comments {
         int id PK
         int recipe_id FK
-        int user_id FK
+        int user_id FK "nullable"
         int parent_id FK "threaded replies"
         text content
         bool is_active
@@ -360,11 +364,26 @@ erDiagram
     reports {
         int id PK
         int reporter_id FK
+        int resolved_by_id FK "nullable"
         enum subject "recipe | comment | user"
         int target_id
         enum reason
-        enum status
+        enum status "pending | dismissed | action_taken"
         enum_array actions
+    }
+    ban_history {
+        uuid id PK
+        int user_id FK
+        int banned_by_id FK "nullable"
+        int unbanned_by_id FK "nullable"
+        int report_id FK "nullable"
+        enum action
+        enum reason
+        int duration_days
+        bool is_permanent
+        timestamp banned_at
+        timestamp expires_at
+        timestamp unbanned_at
     }
 ```
 
