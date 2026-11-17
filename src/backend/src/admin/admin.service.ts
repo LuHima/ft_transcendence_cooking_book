@@ -5,10 +5,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import {
-  USER_EVICT_EVENT,
-  type UserEvictEventPayload,
-} from '../notifications/notification-events';
+import { emitUserEvict } from '../notifications/notification-events';
 import {
   NotificationSubject,
   OwnerType,
@@ -720,8 +717,7 @@ export class AdminService {
     });
 
     if (shouldEvictSessions) {
-      const evictPayload: UserEvictEventPayload = { userId: targetUserId };
-      this.eventEmitter?.emit(USER_EVICT_EVENT, evictPayload);
+      emitUserEvict(this.eventEmitter, targetUserId);
     }
 
     return this.mapToAdminUserResponse(updatedUser);
@@ -815,8 +811,7 @@ export class AdminService {
         });
       });
 
-      const evictPayload: UserEvictEventPayload = { userId: targetUserId };
-      this.eventEmitter?.emit(USER_EVICT_EVENT, evictPayload);
+      emitUserEvict(this.eventEmitter, targetUserId);
 
       return { message: 'User deactivated successfully' };
     } else {
@@ -902,8 +897,7 @@ export class AdminService {
         });
       });
 
-      const evictPayload: UserEvictEventPayload = { userId: targetUserId };
-      this.eventEmitter?.emit(USER_EVICT_EVENT, evictPayload);
+      emitUserEvict(this.eventEmitter, targetUserId);
 
       // Remove avatar from disk if present
       await this.safeUnlink(targetUser.avatar_url);

@@ -23,7 +23,6 @@ export function useBookPages(
 		currentPage.current = 0
 		turning.current = false
 		closing.current = false
-		onPageChangeRef.current?.(0)
 	}, [numPages, pageSetKey])
 
 	
